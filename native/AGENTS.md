@@ -33,3 +33,24 @@
 - **Taffy error type is `TaffyError`** (not a custom enum). Wrap it in your own `LayoutError` if you need domain-specific variants.
 - **`pub mod` declarations are alphabetically sorted by `cargo fmt`** — add new modules in alpha order or fmt will rearrange them.
 - **`FrameBuffer::resize()` does NOT preserve content.** If you need content preserved, copy cells before resize.
+
+## PTY API
+
+- `PtyConfig.working_directory` (not `working_dir`).
+- `PtyConfig.env` is `Vec<(String, String)>`, not HashMap.
+- `PtyProcess::spawn(config)` takes only config — size is in config.size.
+
+## Scheduler
+
+- `RenderScheduler` replaced with enhanced `Scheduler` — update renderer imports.
+- `Scheduler` supports priority queue, frame budgeting, animation frames, idle callbacks.
+
+## Borrow Checker Patterns
+
+- When iterating `&self.field` while calling `self.method()`, clone the collection first: `let items = self.field.clone(); for item in &items { self.method(item); }`.
+
+## Local Font Bundling
+
+- Use `include_bytes!("../../fonts/FontName.otf")` to embed fonts at compile time.
+- Font files go in `native/engine/fonts/`.
+- `LocalFontDetector` checks bundled font first, then system fonts.

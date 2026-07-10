@@ -28,3 +28,38 @@
 
 - `copy_from(&mut self, other)` was added — not in original API. Needed for the double-buffer snapshot pattern.
 - `resize()` does NOT preserve existing cell content. Tests should not assert old content survives resize.
+- `get(x, y)` returns `&Cell` directly (not Option). Check `in_bounds()` first or get static EMPTY cell.
+- Cell is `Copy` type — use `*cell` to dereference, not `.cloned()`.
+
+## Compositor
+
+- Layer z-index ordering: Background(0) < Content(10) < Selection(20) < Overlay(30) < Popup(40) < Tooltip(50) < Cursor(60).
+- `get_cell()` returns `Option<Cell>` (not Option<&Cell>) since Cell is Copy.
+- Use `cell.is_empty()` not `cell.is_transparent()` — Cell has no is_transparent method.
+
+## Glyph Cache
+
+- **Module inception:** `glyph/glyph.rs` triggers clippy — rename to `character.rs`.
+- Emoji ranges: `0x2600..=0x26FF` overlaps with Symbol detection. Remove from emoji check to avoid false positives.
+- Box drawing: Clippy catches `0x2500..=0x257F | 0x2580..=0x259F | 0x25A0..=0x25FF` — simplify to `0x2500..=0x25FF`.
+
+## PTY API
+
+- `PtyConfig.working_directory` (not `working_dir`).
+- `PtyConfig.env` is `Vec<(String, String)>`, not HashMap.
+- `PtyProcess::spawn(config)` takes only config — size is in config.size.
+
+## Scheduler
+
+- `RenderScheduler` replaced with enhanced `Scheduler` — update renderer imports.
+- `Scheduler` supports priority queue, frame budgeting, animation frames, idle callbacks.
+
+## Borrow Checker Patterns
+
+- When iterating `&self.field` while calling `self.method()`, clone the collection first: `let items = self.field.clone(); for item in &items { self.method(item); }`.
+
+## Local Font Bundling
+
+- Use `include_bytes!("../../fonts/FontName.otf")` to embed fonts at compile time.
+- Font files go in `native/engine/fonts/`.
+- `LocalFontDetector` checks bundled font first, then system fonts.

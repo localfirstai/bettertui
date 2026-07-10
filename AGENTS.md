@@ -44,3 +44,10 @@
 - **`@bettertui/shared` is the true foundation:** All packages import types from `@bettertui/shared`. `@bettertui/core` is just a re-export layer plus a few extras (NodeType, NodeOptions, TreeDiff). New packages should depend on `@bettertui/shared` directly, not `@bettertui/core`, unless they need the core-specific types.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/testing`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
+
+## Rust Engine Testing
+
+- Run tests: `cargo test -p bettertui-engine --lib`
+- Run clippy: `cargo clippy -p bettertui-engine --lib -- -D warnings`
+- All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
+- Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
