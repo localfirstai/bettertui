@@ -21,5 +21,6 @@ tracing-subscriber.workspace = true
 parking_lot.workspace = true
 slotmap.workspace = true
 smallvec.workspace = true
+bitflags.workspace = true
 
 [dev-dependencies]

@@ -1,13 +1,11 @@
-pub struct ProtocolHandler;
+pub mod buffer;
+pub mod command;
+pub mod error;
+pub mod processor;
+pub mod result;
 
-impl Default for ProtocolHandler {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ProtocolHandler {
-    pub fn new() -> Self {
-        Self
-    }
-}
+pub use buffer::CommandBuffer;
+pub use command::Command;
+pub use error::{CommandError, CommandWarning};
+pub use processor::CommandProcessor;
+pub use result::CommandResult;
