@@ -22,5 +22,6 @@ parking_lot.workspace = true
 slotmap.workspace = true
 smallvec.workspace = true
 bitflags.workspace = true
+portable-pty.workspace = true
 
 [dev-dependencies]
