@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+  "native/engine",
+  "native/bindings",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/bettertui/bettertui.git"
+description = "High-performance terminal UI framework"
+
+[workspace.dependencies]
+napi = { version = "3", features = ["async"] }
+napi-derive = "3"
+taffy = "0.7"
+crossterm = "0.28"
+ropey = "1.1"
+unicode-width = "0.2"
+unicode-segmentation = "1.12"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+parking_lot = "0.12"
+slotmap = "1.0"
+smallvec = "1.13"

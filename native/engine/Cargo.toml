@@ -1,0 +1,25 @@
+[package]
+name = "bettertui-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "BetterTUI native rendering engine"
+
+[lib]
+name = "bettertui_engine"
+path = "src/lib.rs"
+
+[dependencies]
+taffy.workspace = true
+crossterm.workspace = true
+ropey.workspace = true
+unicode-width.workspace = true
+unicode-segmentation.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+parking_lot.workspace = true
+slotmap.workspace = true
+smallvec.workspace = true
+
+[dev-dependencies]

@@ -1,0 +1,19 @@
+{
+  "name": "example-text-editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsup src/index.ts --format esm --watch",
+    "build": "tsup src/index.ts --format esm",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@bettertui/react": "workspace:*",
+    "@bettertui/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0"
+  }
+}

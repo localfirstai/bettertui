@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+target/
+.turbo/
+pnpm-lock.yaml
+Cargo.lock
+*.tsbuildinfo

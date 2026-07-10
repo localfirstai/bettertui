@@ -1,0 +1,4 @@
+packages:
+  - "packages/*"
+  - "native/bindings"
+  - "examples/*"

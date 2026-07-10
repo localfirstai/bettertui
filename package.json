@@ -1,0 +1,34 @@
+{
+  "name": "bettertui",
+  "private": true,
+  "version": "0.0.0",
+  "description": "High-performance terminal UI framework powered by Rust and TypeScript",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bettertui/bettertui.git"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "cargo:check": "cargo check --workspace",
+    "cargo:test": "cargo test --workspace",
+    "cargo:fmt": "cargo fmt --all",
+    "cargo:clippy": "cargo clippy --workspace -- -D warnings",
+    "clean": "turbo run clean && cargo clean"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "prettier": "^3.4.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

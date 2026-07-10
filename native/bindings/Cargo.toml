@@ -1,0 +1,22 @@
+[package]
+name = "bettertui-bindings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "BetterTUI Node.js bindings via napi-rs"
+
+[lib]
+name = "bettertui_bindings"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+bettertui-engine = { path = "../engine" }
+napi.workspace = true
+napi-derive.workspace = true
+
+[build-dependencies]
+napi-build = "2"
+
+[dev-dependencies]
