@@ -6,6 +6,11 @@
 - tsup config: ESM only, `dts: true`, `clean: true`, `sourcemap: true`.
 - Packages with React as a dep must set `external: ["react"]` in tsup config.
 
+## Biome Formatting
+
+- Function signatures: biome formats single-line params when they fit on one line (e.g., `function foo(a: string, b: number): void` not multi-line).
+- Union types must be single-line if they fit — biome rejects multi-line unions that fit on one line.
+
 ## Common Errors
 
 - **Unused type imports**: TypeScript `noUnusedLocals` catches unused type imports in `.ts` files. This causes DTS generation to fail even though the JS build succeeds. Always check `pnpm build` output for DTS errors.

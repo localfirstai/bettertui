@@ -15,6 +15,7 @@
 
 - Configured in `biome.json` at root. All packages run `biome check src/` for lint.
 - Union types must be single-line if they fit — biome rejects multi-line unions that fit on one line.
+- Function signatures: biome formats single-line params when they fit on one line (e.g., `function foo(a: string, b: number): void` not multi-line).
 - Biome is the **only** formatter and linter for TypeScript/JavaScript/JSON. No Prettier, no ESLint.
 - VCS integration is enabled: `biome.json` has `vcs.enabled = true` with `useIgnoreFile = true`, so `.gitignore` is respected automatically.
 - The `.husky/pre-commit` hook runs `biome check --write --staged .` on staged files only.
