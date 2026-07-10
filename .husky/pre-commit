@@ -1,5 +1,8 @@
 # Format TypeScript/JS/JSON, organize imports, and apply safe lint fixes
-npx --no-install biome check --write --staged . || exit 1
+# Skip biome if no TS/JS/JSON files are staged (e.g., markdown-only commits)
+if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx|json)$'; then
+  npx --no-install biome check --write --staged . || exit 1
+fi
 
 # Format all Rust files (fast operation)
 cargo fmt --all
