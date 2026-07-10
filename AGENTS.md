@@ -35,3 +35,11 @@
 - CI workflow in `.github/workflows/ci.yml`.
 - Runs Biome CI, Rust formatting check, Clippy with `-D warnings`, TypeScript typecheck, and workspace build.
 - Separate job for `cargo test --workspace`.
+
+## Architecture
+
+- **Canonical design docs:** `docs/architecture/` contains the definitive architecture. Root `ARCHITECTURE.md`, `ROADMAP.md`, `CONTRIBUTING.md` are older summaries — prefer docs/architecture/ for design decisions.
+- **Dead dependencies:** `@bettertui/reconciler` and `@bettertui/widgets` list `@bettertui/core` as a dependency in package.json but only import from `@bettertui/shared`. The `@bettertui/core` dep is unused.
+- **`@bettertui/shared` is the true foundation:** All packages import types from `@bettertui/shared`. `@bettertui/core` is just a re-export layer plus a few extras (NodeType, NodeOptions, TreeDiff). New packages should depend on `@bettertui/shared` directly, not `@bettertui/core`, unless they need the core-specific types.
+- **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/testing`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
+- **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
