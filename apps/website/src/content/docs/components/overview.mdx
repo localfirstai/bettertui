@@ -1,0 +1,72 @@
+---
+title: Components Overview
+description: BetterTUI widget library
+---
+
+BetterTUI provides a rich set of terminal UI components. All components are accessible, typed, and composable.
+
+## Core Components
+
+| Component | Description |
+|-----------|-------------|
+| [Text](/docs/components/text) | Display text with styles |
+| [Box](/docs/components/box) | Flexbox container |
+| [Button](/docs/components/button) | Interactive button |
+| [Input](/docs/components/input) | Text input field |
+| [Table](/docs/components/table) | Data table |
+| [Tree](/docs/components/tree) | Hierarchical data |
+| [Dialog](/docs/components/dialog) | Modal dialog |
+
+## Using Components
+
+```tsx
+import { Box, Text, Button } from '@bettertui/react';
+
+function App() {
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold color="cyan">Hello, World!</Text>
+      <Button onPress={() => console.log('clicked')}>
+        Click me
+      </Button>
+    </Box>
+  );
+}
+```
+
+## Composition
+
+Components compose naturally:
+
+```tsx
+<Box borderStyle="round" padding={1}>
+  <Box flexDirection="column">
+    <Text bold>Title</Text>
+    <Text dimColor>Description</Text>
+  </Box>
+  <Button>Action</Button>
+</Box>
+```
+
+## Styling
+
+All components accept style props:
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `color` | `string` | Foreground color |
+| `bgColor` | `string` | Background color |
+| `bold` | `boolean` | Bold text |
+| `dimColor` | `boolean` | Dimmed text |
+| `italic` | `boolean` | Italic text |
+| `underline` | `boolean` | Underlined text |
+| `strikethrough` | `boolean` | Strikethrough text |
+
+## Accessibility
+
+All components follow WAI-ARIA best practices:
+
+- Semantic HTML equivalents
+- Keyboard navigation
+- Screen reader support
+- Focus management

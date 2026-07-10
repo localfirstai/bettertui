@@ -1,0 +1,60 @@
+---
+title: Rendering Pipeline
+description: How BetterTUI renders to the terminal
+---
+
+The rendering pipeline transforms component trees into terminal output.
+
+## Pipeline Stages
+
+### 1. React Render
+
+React calls reconciler host config methods. The reconciler maintains an internal tree of BetterTUI nodes.
+
+### 2. Tree Diff
+
+On commit, dirty nodes are diffed against the previous frame. Only changed nodes produce render commands.
+
+### 3. Command Batching
+
+Render commands are batched into a single frame. This minimizes napi-rs bridge overhead.
+
+### 4. Layout Calculation
+
+The Rust engine runs Taffy's flexbox layout. Only dirty subtrees are recalculated.
+
+### 5. Frame Buffer Composition
+
+A cell-based frame buffer is composed. Each cell contains a character, foreground color, background color, and style attributes.
+
+### 6. Terminal Output
+
+ANSI escape sequences are written to the terminal. Only changed cells are written (dirty rect optimization).
+
+## Frame Scheduling
+
+```
+┌─ Frame N ─────────────────────────────┐
+│  React render                          │
+│  Tree diff                             │
+│  Command batch                         │
+│  Layout calculation                    │
+│  Frame buffer composition              │
+│  Terminal output                       │
+└────────────────────────────────────────┘
+         ↓ (vsync @ 60fps)
+┌─ Frame N+1 ───────────────────────────┐
+│  ...                                   │
+└────────────────────────────────────────┘
+```
+
+## Dirty Rect Diffing
+
+Only regions that changed between frames are redrawn. This reduces terminal I/O and improves performance.
+
+```
+Frame 1:  [A][B][C][D][E]
+                 ↓ (B changes)
+Frame 2:  [A][B'][C][D][E]
+              ↑ only B is redrawn
+```

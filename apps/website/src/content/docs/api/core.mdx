@@ -1,0 +1,98 @@
+---
+title: Core API
+description: "bettertui/core API reference"
+---
+
+The core package provides tree operations and framework-agnostic utilities.
+
+## Tree Operations
+
+### createNode
+
+```ts
+createNode(type: string, props: Record<string, any>): Node
+```
+
+Create a new BetterTUI node.
+
+### appendChild
+
+```ts
+appendChild(parent: Node, child: Node): void
+```
+
+Add a child node.
+
+### removeChild
+
+```ts
+removeChild(parent: Node, child: Node): void
+```
+
+Remove a child node.
+
+### insertBefore
+
+```ts
+insertBefore(parent: Node, newChild: Node, referenceChild: Node): void
+```
+
+Insert a child before a reference node.
+
+### commitUpdate
+
+```ts
+commitUpdate(node: Node, updates: Record<string, any>): void
+```
+
+Apply property updates to a node.
+
+## Types
+
+### Node
+
+```ts
+interface Node {
+  id: string;
+  type: string;
+  props: Record<string, any>;
+  children: Node[];
+  parent: Node | null;
+}
+```
+
+### RenderCommand
+
+```ts
+interface RenderCommand {
+  type: 'create' | 'update' | 'delete';
+  nodeId: string;
+  props?: Record<string, any>;
+}
+```
+
+## Utilities
+
+### diffTree
+
+```ts
+diffTree(oldTree: Node, newTree: Node): RenderCommand[]
+```
+
+Compute the diff between two trees.
+
+### flattenTree
+
+```ts
+flattenTree(root: Node): Node[]
+```
+
+Flatten a tree into a list.
+
+### findNode
+
+```ts
+findNode(root: Node, predicate: (node: Node) => boolean): Node | null
+```
+
+Find a node by predicate.

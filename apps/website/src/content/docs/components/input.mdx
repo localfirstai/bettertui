@@ -1,0 +1,63 @@
+---
+title: Input
+description: Text input field component
+---
+
+The `Input` component provides a text input field with cursor support.
+
+## Usage
+
+```tsx
+import { Input } from '@bettertui/react';
+
+function App() {
+  const [value, setValue] = useState('');
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text>Name:</Text>
+      <Input
+        value={value}
+        onChange={setValue}
+        placeholder="Enter your name"
+      />
+      <Text>You typed: {value}</Text>
+    </Box>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `string` | `''` | Controlled value |
+| `onChange` | `(value: string) => void` | — | Change handler |
+| `onSubmit` | `(value: string) => void` | — | Submit handler (Enter) |
+| `onFocus` | `() => void` | — | Focus handler |
+| `onBlur` | `() => void` | — | Blur handler |
+| `placeholder` | `string` | — | Placeholder text |
+| `mask` | `string` | — | Input mask (e.g., `*` for passwords) |
+| `isDisabled` | `boolean` | `false` | Disable input |
+| `width` | `number` | — | Input width |
+
+## Keyboard Shortcuts
+
+- **Left/Right**: Move cursor
+- **Home/End**: Move to start/end
+- **Backspace/Delete**: Delete characters
+- **Enter**: Submit (if `onSubmit` provided)
+- **Ctrl+A**: Select all
+- **Ctrl+C**: Copy
+- **Ctrl+V**: Paste
+
+## Password Input
+
+```tsx
+<Input
+  value={password}
+  onChange={setPassword}
+  mask="*"
+  placeholder="Enter password"
+/>
+```

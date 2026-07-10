@@ -1,0 +1,96 @@
+---
+title: Animations
+description: Add motion to your terminal UI
+---
+
+BetterTUI includes a tween-based animation engine.
+
+## Basic Animation
+
+```tsx
+import { useAnimation } from '@bettertui/react';
+
+function App() {
+  const { value, start } = useAnimation({
+    from: 0,
+    to: 100,
+    duration: 1000,
+    easing: 'easeInOut',
+  });
+
+  return (
+    <Box>
+      <Text>Progress: {value}%</Text>
+      <Button onPress={start}>Animate</Button>
+    </Box>
+  );
+}
+```
+
+## Easing Functions
+
+| Easing | Description |
+|--------|-------------|
+| `linear` | Constant speed |
+| `easeIn` | Slow start |
+| `easeOut` | Slow end |
+| `easeInOut` | Slow start and end |
+| `spring` | Spring physics |
+
+## Keyframe Animation
+
+```tsx
+import { useKeyframes } from '@bettertui/react';
+
+function App() {
+  const { value } = useKeyframes({
+    keyframes: [
+      { offset: 0, opacity: 0 },
+      { offset: 0.5, opacity: 1 },
+      { offset: 1, opacity: 0 },
+    ],
+    duration: 2000,
+    iterations: Infinity,
+  });
+
+  return <Text style={{ opacity: value }}>Fading text</Text>;
+}
+```
+
+## Spinner
+
+```tsx
+import { useSpinner } from '@bettertui/react';
+
+function LoadingSpinner() {
+  const frame = useSpinner();
+
+  return <Text>{frame}</Text>;
+}
+```
+
+## Progress Bar
+
+```tsx
+import { useProgressBar } from '@bettertui/react';
+
+function App() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(p => Math.min(p + 1, 100));
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Box>
+      <Text>
+        [{'█'.repeat(progress / 5)}{'░'.repeat(20 - progress / 5)}]
+        {' '}{progress}%
+      </Text>
+    </Box>
+  );
+}
+```

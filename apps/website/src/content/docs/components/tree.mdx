@@ -1,0 +1,64 @@
+---
+title: Tree
+description: Hierarchical tree view component
+---
+
+The `Tree` component displays hierarchical data with expand/collapse.
+
+## Usage
+
+```tsx
+import { Tree } from '@bettertui/widgets';
+
+const data = {
+  name: 'root',
+  children: [
+    {
+      name: 'src',
+      children: [
+        { name: 'App.tsx' },
+        { name: 'index.tsx' },
+      ],
+    },
+    {
+      name: 'package.json',
+    },
+  ],
+};
+
+function App() {
+  return (
+    <Tree
+      data={data}
+      onSelect={(node) => console.log('Selected:', node.name)}
+    />
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `data` | `TreeNode` | — | Tree data |
+| `onSelect` | `(node: TreeNode) => void` | — | Selection handler |
+| `onToggle` | `(node: TreeNode) => void` | — | Toggle handler |
+
+## Tree Node
+
+```ts
+interface TreeNode {
+  name: string;
+  children?: TreeNode[];
+  icon?: string;
+  isExpanded?: boolean;
+}
+```
+
+## Keyboard Navigation
+
+- **Up/Down**: Navigate nodes
+- **Left**: Collapse node or move to parent
+- **Right**: Expand node or move to child
+- **Enter**: Select node
+- **Home/End**: Jump to first/last node

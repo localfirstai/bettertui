@@ -1,0 +1,63 @@
+---
+title: Dialog
+description: Modal dialog component
+---
+
+The `Dialog` component creates a modal overlay with content.
+
+## Usage
+
+```tsx
+import { Dialog, Button, Text } from '@bettertui/react';
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Box>
+      <Button onPress={() => setIsOpen(true)}>
+        Open Dialog
+      </Button>
+
+      <Dialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Confirm Action"
+      >
+        <Text>Are you sure you want to continue?</Text>
+        <Box flexDirection="row" gap={1} marginTop={1}>
+          <Button onPress={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onPress={handleConfirm} color="red">
+            Confirm
+          </Button>
+        </Box>
+      </Dialog>
+    </Box>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `isOpen` | `boolean` | — | Control visibility |
+| `onClose` | `() => void` | — | Close handler |
+| `title` | `string` | — | Dialog title |
+| `children` | `ReactNode` | — | Dialog content |
+| `width` | `number` | `60` | Dialog width |
+
+## Keyboard Interaction
+
+- **Escape**: Close dialog
+- **Tab**: Move focus within dialog
+- **Enter**: Confirm (if focused on confirm button)
+
+## Accessibility
+
+- Focus is trapped within the dialog
+- Background content is inert
+- Screen readers announce the dialog
+- Focus returns to trigger on close

@@ -1,0 +1,67 @@
+---
+title: Installation
+description: Install BetterTUI and its dependencies
+---
+
+## Prerequisites
+
+- Node.js >= 20.0.0
+- Rust toolchain (for native engine)
+- pnpm (recommended) or npm
+
+## Install
+
+```bash
+# Create a new project
+npx create-bettertui@latest my-app
+cd my-app
+pnpm install
+```
+
+Or add to an existing project:
+
+```bash
+pnpm add @bettertui/react @bettertui/core
+```
+
+## Rust Engine
+
+The Rust engine is built automatically via napi-rs during `pnpm install`. No manual steps required.
+
+For development, ensure you have the Rust toolchain:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+## Project Structure
+
+```
+my-app/
+├── src/
+│   ├── App.tsx          # Main component
+│   └── index.tsx        # Entry point
+├── package.json
+└── tsconfig.json
+```
+
+## Configuration
+
+BetterTUI works out of the box. Optional configuration in `bettertui.config.ts`:
+
+```ts
+import { defineConfig } from '@bettertui/core';
+
+export default defineConfig({
+  theme: 'default',
+  renderer: {
+    fps: 60,
+    dirtyRectDiffing: true,
+  },
+});
+```
+
+## Next Steps
+
+- [Quick Start](/docs/getting-started/quick-start) — Build your first app
+- [Architecture](/docs/core-concepts/architecture) — Understand the system

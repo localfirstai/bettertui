@@ -1,0 +1,67 @@
+---
+const code1 = `import { Box, Text, useInput } from '@bettertui/react';
+
+function App() {
+  const [count, setCount] = useState(0);
+
+  useInput((key) => {
+    if (key === '+') setCount(c => c + 1);
+    if (key === '-') setCount(c => c - 1);
+  });
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold>Counter: {count}</Text>
+      <Text color="gray">+/- to adjust</Text>
+    </Box>
+  );
+}`;
+
+const code2 = `import { Table } from '@bettertui/widgets';
+
+const data = [
+  { name: 'Alice', role: 'Engineer' },
+  { name: 'Bob', role: 'Designer' },
+];
+
+function TeamList() {
+  return (
+    <Table
+      columns={[
+        { key: 'name', title: 'Name' },
+        { key: 'role', title: 'Role' },
+      ]}
+      data={data}
+      bordered
+      selectable
+    />
+  );
+}`;
+---
+
+<section class="border-t border-border py-24">
+  <div class="container">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <h2 class="mb-4 text-3xl font-bold md:text-4xl">Write React. Get terminal.</h2>
+      <p class="text-text-muted">
+        Familiar React patterns. Components, hooks, state. Ships as a native terminal app.
+      </p>
+    </div>
+
+    <div class="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+      <div class="overflow-hidden rounded-xl border border-border bg-code-bg">
+        <div class="flex items-center gap-2 border-b border-border px-4 py-3">
+          <span class="text-xs text-text-subtle">App.tsx</span>
+        </div>
+        <pre class="overflow-x-auto p-6 text-sm leading-relaxed"><code class="text-code-text">{code1}</code></pre>
+      </div>
+
+      <div class="overflow-hidden rounded-xl border border-border bg-code-bg">
+        <div class="flex items-center gap-2 border-b border-border px-4 py-3">
+          <span class="text-xs text-text-subtle">table-demo.tsx</span>
+        </div>
+        <pre class="overflow-x-auto p-6 text-sm leading-relaxed"><code class="text-code-text">{code2}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,66 @@
+---
+title: Box
+description: Flexbox container component
+---
+
+The `Box` component is the primary layout container. It uses CSS Flexbox.
+
+## Usage
+
+```tsx
+import { Box, Text } from '@bettertui/react';
+
+function App() {
+  return (
+    <Box flexDirection="row" gap={1}>
+      <Text>Left</Text>
+      <Text>Right</Text>
+    </Box>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `flexDirection` | `'row' \| 'column'` | `'column'` | Main axis direction |
+| `justifyContent` | `string` | — | Main axis alignment |
+| `alignItems` | `string` | — | Cross axis alignment |
+| `flexWrap` | `string` | — | Wrap behavior |
+| `flexGrow` | `number` | — | Grow factor |
+| `flexShrink` | `number` | — | Shrink factor |
+| `width` | `number \| string` | — | Width in columns |
+| `height` | `number \| string` | — | Height in rows |
+| `padding` | `number \| object` | `0` | Inner spacing |
+| `margin` | `number \| object` | `0` | Outer spacing |
+| `gap` | `number` | `0` | Gap between children |
+| `borderStyle` | `string` | — | Border style |
+| `borderColor` | `string` | — | Border color |
+
+## Examples
+
+### Row Layout
+
+```tsx
+<Box flexDirection="row" gap={2}>
+  <Box flexGrow={1}><Text>Left</Text></Box>
+  <Box flexGrow={1}><Text>Right</Text></Box>
+</Box>
+```
+
+### Centered Content
+
+```tsx
+<Box justifyContent="center" alignItems="center" width="100%" height="100%">
+  <Text>Centered</Text>
+</Box>
+```
+
+### Bordered Container
+
+```tsx
+<Box borderStyle="round" padding={1}>
+  <Text>Content</Text>
+</Box>
+```

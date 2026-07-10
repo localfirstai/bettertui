@@ -1,0 +1,71 @@
+---
+title: Quick Start
+description: Build your first BetterTUI terminal application
+---
+
+## Create a Project
+
+```bash
+npx create-bettertui@latest my-terminal-app
+cd my-terminal-app
+pnpm install
+```
+
+## Project Files
+
+### `src/App.tsx`
+
+```tsx
+import { Box, Text, useInput } from '@bettertui/react';
+
+export default function App() {
+  const [count, setCount] = useState(0);
+
+  useInput((key) => {
+    if (key === '+') setCount(c => c + 1);
+    if (key === '-') setCount(c => c - 1);
+    if (key === 'q') process.exit(0);
+  });
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold color="cyan">
+        BetterTUI Counter
+      </Text>
+      <Text>Count: {count}</Text>
+      <Text dimColor>
+        +/- to adjust • q to quit
+      </Text>
+    </Box>
+  );
+}
+```
+
+### `src/index.tsx`
+
+```tsx
+import { render } from '@bettertui/react';
+import App from './App';
+
+render(<App />);
+```
+
+## Run
+
+```bash
+pnpm dev
+```
+
+## What Happens
+
+1. React renders your component tree
+2. The custom reconciler diffs the tree
+3. Changed nodes produce render commands
+4. Commands are sent to the Rust engine via napi-rs
+5. The engine renders to the terminal at 60fps
+
+## Next Steps
+
+- [Components](/docs/components/overview) — Explore the widget library
+- [Theming](/docs/guides/theming) — Customize the look
+- [API Reference](/docs/api/core) — Full API docs

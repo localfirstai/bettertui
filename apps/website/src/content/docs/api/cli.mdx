@@ -1,0 +1,102 @@
+---
+title: CLI
+description: BetterTUI CLI reference
+---
+
+The BetterTUI CLI helps you create and manage projects.
+
+## Commands
+
+### create
+
+```bash
+npx create-bettertui@latest <project-name>
+```
+
+Create a new BetterTUI project.
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--template` | Template to use (`default`, `minimal`) |
+| `--no-install` | Skip dependency installation |
+
+### dev
+
+```bash
+pnpm dev
+```
+
+Start the development server with hot reload.
+
+### build
+
+```bash
+pnpm build
+```
+
+Build the project for production.
+
+### preview
+
+```bash
+pnpm preview
+```
+
+Preview the production build.
+
+## Configuration
+
+### bettertui.config.ts
+
+```ts
+import { defineConfig } from '@bettertui/core';
+
+export default defineConfig({
+  // Theme configuration
+  theme: 'default',
+
+  // Renderer options
+  renderer: {
+    fps: 60,
+    dirtyRectDiffing: true,
+    debug: false,
+  },
+
+  // Build options
+  build: {
+    target: 'node',
+    minify: true,
+  },
+});
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BETTERTUI_FPS` | Target frame rate | `60` |
+| `BETTERTUI_DEBUG` | Enable debug mode | `false` |
+| `BETTERTUI_THEME` | Override theme | — |
+
+## Troubleshooting
+
+### Build fails with napi-rs errors
+
+Ensure Rust toolchain is installed:
+
+```bash
+rustup update stable
+```
+
+### Terminal not rendering correctly
+
+Check terminal capabilities:
+
+```bash
+echo $TERM
+echo $COLORTERM
+```
+
+BetterTUI requires a terminal with 256 color support or higher.

@@ -1,0 +1,65 @@
+---
+title: Table
+description: Data table component
+---
+
+The `Table` component displays tabular data with sorting and selection.
+
+## Usage
+
+```tsx
+import { Table } from '@bettertui/widgets';
+
+const data = [
+  { name: 'Alice', role: 'Engineer', status: 'Active' },
+  { name: 'Bob', role: 'Designer', status: 'Active' },
+  { name: 'Charlie', role: 'Manager', status: 'Away' },
+];
+
+function App() {
+  return (
+    <Table
+      columns={[
+        { key: 'name', title: 'Name' },
+        { key: 'role', title: 'Role' },
+        { key: 'status', title: 'Status' },
+      ]}
+      data={data}
+      bordered
+      selectable
+      onSelect={(row) => console.log('Selected:', row)}
+    />
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columns` | `Column[]` | — | Column definitions |
+| `data` | `Row[]` | — | Row data |
+| `bordered` | `boolean` | `false` | Show borders |
+| `selectable` | `boolean` | `false` | Enable row selection |
+| `onSelect` | `(row: Row) => void` | — | Selection handler |
+| `sortBy` | `string` | — | Sort column |
+| `sortOrder` | `'asc' \| 'desc'` | `'asc'` | Sort direction |
+
+## Column Definition
+
+```ts
+interface Column {
+  key: string;
+  title: string;
+  width?: number;
+  align?: 'left' | 'center' | 'right';
+  render?: (value: any, row: any) => string;
+}
+```
+
+## Keyboard Navigation
+
+- **Up/Down**: Navigate rows
+- **Enter**: Select row
+- **Space**: Toggle selection
+- **Page Up/Down**: Scroll by page

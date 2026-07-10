@@ -1,0 +1,79 @@
+---
+title: Architecture
+description: System architecture of BetterTUI
+---
+
+BetterTUI uses a layered architecture with clear separation between rendering and UI logic.
+
+## Layers
+
+### React Layer
+
+Your application code. Standard React components, hooks, and state management.
+
+### Reconciler
+
+A custom React reconciler that translates React's virtual DOM operations into BetterTUI's native tree format.
+
+- `createInstance` — Create a new node
+- `appendChild` / `removeChild` — Tree manipulation
+- `commitUpdate` — Apply property changes
+- `prepareUpdate` — Compute diff
+
+### Core Tree
+
+An internal tree of BetterTUI nodes. Framework-agnostic. Contains layout props, style properties, and event handlers.
+
+### napi-rs Bridge
+
+Transfers tree operations from JavaScript to Rust. Binary protocol for maximum throughput.
+
+### Rust Engine
+
+Handles all performance-critical operations:
+
+| Module | Responsibility |
+|--------|---------------|
+| `renderer` | Frame buffer composition and terminal output |
+| `layout` | Flexbox/CSS layout via Taffy |
+| `scheduler` | Async task scheduling and frame timing |
+| `terminal` | Terminal size, capabilities, raw mode |
+| `framebuffer` | Cell-based frame buffer |
+| `events` | Event dispatch and routing |
+| `keyboard` | Key parsing and modifier tracking |
+| `mouse` | Mouse button, position, and drag tracking |
+| `animation` | Tween engine with keyframes |
+| `clipboard` | System clipboard read/write |
+| `editor` | Rope-based text buffer with cursor |
+
+## Data Flow
+
+```
+User Code (React components)
+    ↓ (React render)
+Reconciler (host config)
+    ↓ (tree diff)
+BetterTUI Tree (@bettertui/core)
+    ↓ (napi-rs bridge)
+Rust Engine
+    ↓ (layout + render)
+Terminal Output
+```
+
+## Design Principles
+
+### Framework Agnosticism
+
+The Rust engine has zero knowledge of React, Vue, or any UI framework. It exposes a generic tree-based rendering API.
+
+### Separation of Concerns
+
+- **Rust**: Rendering, layout, input, scheduling
+- **TypeScript**: API design, developer experience, framework bindings
+
+### Zero-Config Performance
+
+- Dirty rect diffing (only redraw changed regions)
+- Frame scheduling (60fps target with vsync)
+- Layout caching (incremental recalculation)
+- Memory pooling (reuse allocations)

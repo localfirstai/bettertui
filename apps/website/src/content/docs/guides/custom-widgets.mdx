@@ -1,0 +1,102 @@
+---
+title: Custom Widgets
+description: Build your own terminal UI components
+---
+
+Create reusable widgets by composing BetterTUI primitives.
+
+## Basic Widget
+
+```tsx
+import { Box, Text, useInput } from '@bettertui/react';
+
+interface CardProps {
+  title: string;
+  description: string;
+}
+
+export function Card({ title, description }: CardProps) {
+  return (
+    <Box
+      borderStyle="round"
+      flexDirection="column"
+      padding={1}
+      gap={1}
+    >
+      <Text bold color="cyan">{title}</Text>
+      <Text dimColor>{description}</Text>
+    </Box>
+  );
+}
+```
+
+## Interactive Widget
+
+```tsx
+import { Box, Text, useInput, useFocus } from '@bettertui/react';
+
+interface ToggleProps {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+export function Toggle({ label, checked, onChange }: ToggleProps) {
+  const [isFocused, focusProps] = useFocus();
+
+  useInput((key) => {
+    if (isFocused && (key === ' ' || key === 'enter')) {
+      onChange(!checked);
+    }
+  }, isFocused);
+
+  return (
+    <Box {...focusProps} gap={1}>
+      <Text color={checked ? 'green' : 'red'}>
+        {checked ? '[x]' : '[ ]'}
+      </Text>
+      <Text>{label}</Text>
+    </Box>
+  );
+}
+```
+
+## Composite Widget
+
+```tsx
+import { Box, Text, Button, Dialog } from '@bettertui/react';
+
+interface ConfirmDialogProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  return (
+    <Dialog isOpen={isOpen} onClose={onCancel} title={title}>
+      <Text>{message}</Text>
+      <Box flexDirection="row" gap={1} marginTop={1}>
+        <Button onPress={onCancel}>Cancel</Button>
+        <Button onPress={onConfirm} color="red">Confirm</Button>
+      </Box>
+    </Dialog>
+  );
+}
+```
+
+## Best Practices
+
+1. **Keep widgets focused** — One responsibility per widget
+2. **Use composition** — Build complex widgets from primitives
+3. **Type everything** — Full TypeScript support
+4. **Handle focus** — Make interactive widgets focusable
+5. **Support accessibility** — ARIA labels, keyboard navigation

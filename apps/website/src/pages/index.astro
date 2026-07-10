@@ -1,7 +1,25 @@
 ---
+import Footer from "../components/Footer.astro";
+import Navbar from "../components/Navbar.astro";
+import Architecture from "../components/landing/Architecture.astro";
+import CodeExample from "../components/landing/CodeExample.astro";
+import Community from "../components/landing/Community.astro";
+import Features from "../components/landing/Features.astro";
+import Hero from "../components/landing/Hero.astro";
+import Performance from "../components/landing/Performance.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
 import "../styles/global.css";
 ---
 
-<h1 class="text-3xl font-bold underline">
-  Hello world!
-</h1>
+<BaseLayout title="BetterTUI">
+  <Navbar />
+  <main>
+    <Hero />
+    <Features />
+    <Architecture />
+    <CodeExample />
+    <Performance />
+    <Community />
+  </main>
+  <Footer />
+</BaseLayout>

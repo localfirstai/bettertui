@@ -1,0 +1,96 @@
+---
+title: Event System
+description: Keyboard, mouse, and custom events
+---
+
+BetterTUI provides a comprehensive event system for terminal input.
+
+## Keyboard Events
+
+```tsx
+import { useInput } from '@bettertui/react';
+
+function App() {
+  useInput((key, event) => {
+    if (key === 'q') process.exit(0);
+    if (event.ctrl && key === 'c') process.exit(0);
+    if (event.key === 'up') moveUp();
+  });
+
+  return <Text>Press q to quit</Text>;
+}
+```
+
+### Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `key` | `string` | The key pressed |
+| `ctrl` | `boolean` | Ctrl modifier |
+| `shift` | `boolean` | Shift modifier |
+| `alt` | `boolean` | Alt/Option modifier |
+| `meta` | `boolean` | Cmd/Win modifier |
+
+## Mouse Events
+
+```tsx
+import { useMouse } from '@bettertui/react';
+
+function App() {
+  useMouse((event) => {
+    if (event.action === 'click') {
+      handleClick(event.x, event.y);
+    }
+    if (event.action === 'scroll') {
+      handleScroll(event.delta);
+    }
+  });
+
+  return <Text>Click or scroll</Text>;
+}
+```
+
+### Mouse Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `x` | `number` | Column position |
+| `y` | `number` | Row position |
+| `action` | `string` | `click`, `release`, `scroll`, `drag` |
+| `button` | `string` | `left`, `right`, `middle` |
+
+## Focus Management
+
+```tsx
+import { useFocus } from '@bettertui/react';
+
+function App() {
+  const [isFocused, focusProps] = useFocus();
+
+  return (
+    <Box {...focusProps} borderStyle={isFocused ? 'double' : 'single'}>
+      <Text>{isFocused ? 'Focused' : 'Not focused'}</Text>
+    </Box>
+  );
+}
+```
+
+## Custom Events
+
+Emit and listen for custom events:
+
+```tsx
+import { useEvent, emit } from '@bettertui/core';
+
+function App() {
+  useEvent('item:select', (item) => {
+    console.log('Selected:', item);
+  });
+
+  return (
+    <Button onPress={() => emit('item:select', currentItem)}>
+      Select
+    </Button>
+  );
+}
+```

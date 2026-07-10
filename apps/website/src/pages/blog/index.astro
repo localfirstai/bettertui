@@ -1,0 +1,31 @@
+---
+import Footer from "../../components/Footer.astro";
+import Navbar from "../../components/Navbar.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/global.css";
+---
+
+<BaseLayout title="Blog">
+  <Navbar />
+  <main class="container py-24">
+    <div class="mx-auto max-w-2xl">
+      <h1 class="mb-8 text-4xl font-bold">Blog</h1>
+      <p class="mb-12 text-text-muted">
+        Updates, guides, and deep dives on BetterTUI.
+      </p>
+
+      <div class="space-y-8">
+        <article class="rounded-xl border border-border bg-surface p-6 transition-all hover:border-primary/50">
+          <div class="mb-2 flex items-center gap-2">
+            <time class="text-sm text-text-subtle">Coming Soon</time>
+          </div>
+          <h2 class="mb-2 text-xl font-semibold">Introducing BetterTUI</h2>
+          <p class="text-text-muted">
+            Why we built a terminal UI framework with a Rust engine and React bindings.
+          </p>
+        </article>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

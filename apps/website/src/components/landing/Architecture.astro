@@ -1,0 +1,36 @@
+---
+---
+
+<section class="border-t border-border py-24">
+  <div class="container">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <h2 class="mb-4 text-3xl font-bold md:text-4xl">Architecture</h2>
+      <p class="text-text-muted">
+        Clean separation between rendering performance and UI logic.
+      </p>
+    </div>
+
+    <div class="mx-auto max-w-4xl">
+      <div class="overflow-hidden rounded-xl border border-border bg-surface p-8">
+        <pre class="overflow-x-auto text-sm leading-relaxed"><code class="text-code-text"><span class="text-text-subtle">┌─────────────────────────────┐</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#7c3aed]">React Components</span>           <span class="text-text-subtle">│</span>  <span class="text-text-subtle">← Your UI code</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#7c3aed]">packages/react/</span>            <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">└─────────────┬───────────────┘</span>
+              <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">┌─────────────▼───────────────┐</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#06b6d4]">Custom Reconciler</span>         <span class="text-text-subtle">│</span>  <span class="text-text-subtle">← Tree diffing</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#06b6d4]">packages/reconciler/</span>      <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">└─────────────┬───────────────┘</span>
+              <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">┌─────────────▼───────────────┐</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#10b981]">Rust Engine</span>               <span class="text-text-subtle">│</span>  <span class="text-text-subtle">← Layout, render, events</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#10b981]">native/engine/</span>            <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">└─────────────┬───────────────┘</span>
+              <span class="text-text-subtle">│</span>
+<span class="text-text-subtle">┌─────────────▼───────────────┐</span>
+<span class="text-text-subtle">│</span>  <span class="text-[#f59e0b]">Terminal</span>                  <span class="text-text-subtle">│</span>  <span class="text-text-subtle">← crossterm I/O</span>
+<span class="text-text-subtle">└─────────────────────────────┘</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>

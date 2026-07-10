@@ -1,0 +1,62 @@
+---
+title: Text
+description: Display styled text in the terminal
+---
+
+The `Text` component displays text with optional styling.
+
+## Usage
+
+```tsx
+import { Text } from '@bettertui/react';
+
+function App() {
+  return (
+    <Box flexDirection="column">
+      <Text>Plain text</Text>
+      <Text bold>Bold text</Text>
+      <Text color="cyan">Colored text</Text>
+      <Text dimColor>Dimmed text</Text>
+    </Box>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `color` | `string` | — | Foreground color |
+| `bgColor` | `string` | — | Background color |
+| `bold` | `boolean` | `false` | Bold weight |
+| `dimColor` | `boolean` | `false` | Dimmed appearance |
+| `italic` | `boolean` | `false` | Italic style |
+| `underline` | `boolean` | `false` | Underline decoration |
+| `strikethrough` | `boolean` | `false` | Strikethrough decoration |
+| `inverse` | `boolean` | `false` | Inverted colors |
+
+## Colors
+
+```tsx
+<Text color="red">Red</Text>
+<Text color="#ff6600">Hex color</Text>
+<Text color="rgb(255,0,0)">RGB color</Text>
+```
+
+## Children
+
+`Text` accepts string children:
+
+```tsx
+<Text>{`Count: ${count}`}</Text>
+```
+
+## Truncation
+
+Long text is truncated to fit the container:
+
+```tsx
+<Box width={10}>
+  <Text>This is a very long text that gets truncated</Text>
+</Box>
+```

@@ -1,0 +1,52 @@
+---
+title: Button
+description: Interactive button component
+---
+
+The `Button` component provides an interactive button with focus and press states.
+
+## Usage
+
+```tsx
+import { Button } from '@bettertui/react';
+
+function App() {
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Button onPress={() => console.log('clicked')}>
+        Click me
+      </Button>
+      <Button onPress={() => process.exit(0)} color="red">
+        Quit
+      </Button>
+    </Box>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `onPress` | `() => void` | — | Press handler |
+| `onFocus` | `() => void` | — | Focus handler |
+| `onBlur` | `() => void` | — | Blur handler |
+| `isDisabled` | `boolean` | `false` | Disable interaction |
+| `color` | `string` | — | Button color |
+
+## Keyboard Interaction
+
+- **Enter** / **Space**: Press the button
+- **Tab**: Move focus to next focusable element
+- **Shift+Tab**: Move focus to previous focusable element
+
+## Focus Styling
+
+```tsx
+<Button
+  onPress={handlePress}
+  focusStyle={{ borderStyle: 'double', borderColor: 'cyan' }}
+>
+  Focusable Button
+</Button>
+```

@@ -1,0 +1,118 @@
+---
+title: React Bindings
+description: "bettertui/react API reference"
+---
+
+The React package provides React components and hooks for BetterTUI.
+
+## Components
+
+### Box
+
+```tsx
+<Box
+  flexDirection="row"
+  justifyContent="center"
+  alignItems="center"
+  padding={1}
+  gap={1}
+  borderStyle="round"
+  width={40}
+  height={10}
+>
+  {children}
+</Box>
+```
+
+### Text
+
+```tsx
+<Text bold color="cyan" dimColor italic underline>
+  Hello, World!
+</Text>
+```
+
+### Button
+
+```tsx
+<Button onPress={handlePress} isDisabled={false}>
+  Click me
+</Button>
+```
+
+### Input
+
+```tsx
+<Input
+  value={value}
+  onChange={setValue}
+  onSubmit={handleSubmit}
+  placeholder="Type here"
+  mask="*"
+/>
+```
+
+## Hooks
+
+### useInput
+
+```tsx
+useInput((key, event) => {
+  // Handle key press
+}, isActive);
+```
+
+### useFocus
+
+```tsx
+const [isFocused, focusProps] = useFocus();
+```
+
+### useApp
+
+```tsx
+const { exit, isRawModeSupported, rawMode } = useApp();
+```
+
+### useStdoutDimensions
+
+```tsx
+const [columns, rows] = useStdoutDimensions();
+```
+
+### useTheme
+
+```tsx
+const { theme, setTheme, toggleTheme } = useTheme();
+```
+
+### useAnimation
+
+```tsx
+const { value, start, stop } = useAnimation({
+  from: 0,
+  to: 100,
+  duration: 1000,
+  easing: 'easeInOut',
+});
+```
+
+### useEvent
+
+```tsx
+useEvent('custom:event', (data) => {
+  // Handle event
+});
+```
+
+## render
+
+```tsx
+import { render } from '@bettertui/react';
+
+render(<App />, {
+  exitOnCtrlC: true,
+  stdin: process.stdin,
+  stdout: process.stdout,
+});
+```

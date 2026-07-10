@@ -1,0 +1,60 @@
+---
+title: Introduction
+description: High-performance terminal UI framework powered by Rust and TypeScript
+---
+
+BetterTUI is a terminal UI framework that combines a Rust rendering engine with React. Build fast, beautiful CLI applications with familiar tools.
+
+## Why BetterTUI?
+
+- **Rust Engine**: 60fps rendering via native code. Dirty rect diffing, layout caching, memory pooling.
+- **React First**: Write components with React. Custom reconciler, not Ink. Full React 19 support.
+- **Flexbox Layout**: CSS Flexbox via Taffy. No custom layout DSL.
+- **Rich Widgets**: Text, Input, Table, Tree, Dialog. Accessible, typed, composable.
+- **Theme System**: CSS variables, dark mode, custom palettes.
+
+## Architecture
+
+```
+React Components
+    ↓
+Custom Reconciler (tree diff)
+    ↓
+BetterTUI Tree (@bettertui/core)
+    ↓
+napi-rs Bridge
+    ↓
+Rust Engine (layout + render)
+    ↓
+Terminal Output
+```
+
+The Rust engine has zero knowledge of React. It exposes a generic tree-based rendering API. Framework adapters translate their component trees into this format.
+
+## Quick Example
+
+```tsx
+import { Box, Text, useInput } from '@bettertui/react';
+
+function App() {
+  const [count, setCount] = useState(0);
+
+  useInput((key) => {
+    if (key === '+') setCount(c => c + 1);
+    if (key === '-') setCount(c => c - 1);
+  });
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold>Counter: {count}</Text>
+      <Text color="gray">+/- to adjust</Text>
+    </Box>
+  );
+}
+```
+
+## Next Steps
+
+- [Installation](/docs/getting-started/installation) — Set up BetterTUI in your project
+- [Quick Start](/docs/getting-started/quick-start) — Build your first terminal app
+- [Architecture](/docs/core-concepts/architecture) — Understand the system design

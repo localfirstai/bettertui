@@ -1,0 +1,70 @@
+---
+title: Layout System
+description: Flexbox layout powered by Taffy
+---
+
+BetterTUI uses CSS Flexbox layout via [Taffy](https://github.com/DioxusLabs/taffy). The same layout model you know from the web.
+
+## Flexbox Properties
+
+### Direction
+
+```tsx
+<Box flexDirection="row">...</Box>
+<Box flexDirection="column">...</Box>
+```
+
+### Alignment
+
+```tsx
+<Box justifyContent="center" alignItems="center">...</Box>
+<Box justifyContent="space-between">...</Box>
+```
+
+### Sizing
+
+```tsx
+<Box width={40} height={10}>...</Box>
+<Box flexGrow={1}>...</Box>
+<Box flexShrink={0}>...</Box>
+```
+
+### Padding & Margin
+
+```tsx
+<Box padding={1}>...</Box>
+<Box padding={{ top: 1, bottom: 2, left: 3, right: 4 }}>...</Box>
+<Box margin={{ top: 1 }}>...</Box>
+```
+
+### Borders
+
+```tsx
+<Box borderStyle="single">...</Box>
+<Box borderStyle="double">...</Box>
+<Box borderStyle="round">...</Box>
+```
+
+## Layout Caching
+
+Taffy caches layout results. On re-render, only dirty subtrees are recalculated. This keeps layout fast even for large component trees.
+
+## Responsive Layout
+
+Use terminal size to create responsive layouts:
+
+```tsx
+import { useStdoutDimensions } from '@bettertui/react';
+
+function App() {
+  const [width, height] = useStdoutDimensions();
+  const isWide = width > 80;
+
+  return (
+    <Box flexDirection={isWide ? 'row' : 'column'}>
+      <Sidebar />
+      <Content />
+    </Box>
+  );
+}
+```
