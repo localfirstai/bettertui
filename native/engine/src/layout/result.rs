@@ -6,7 +6,7 @@ use crate::tree::Rect;
 /// All values are integers — fractional Taffy output is rounded at the last step.
 ///
 /// **Memory:** 20 bytes per node. Stack-allocated.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct LayoutResult {
     /// Absolute X position in terminal cells (from left edge).
     pub x: u16,
@@ -20,19 +20,6 @@ pub struct LayoutResult {
     pub content_width: u16,
     /// Inner height excluding padding and border (in cells).
     pub content_height: u16,
-}
-
-impl Default for LayoutResult {
-    fn default() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-            content_width: 0,
-            content_height: 0,
-        }
-    }
 }
 
 impl LayoutResult {

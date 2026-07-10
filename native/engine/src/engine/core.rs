@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn engine_create_node() {
         let mut engine = Engine::new();
-        let id = engine.create_node(NodeKind::Box);
+        let _id = engine.create_node(NodeKind::Box);
         // The node is created in the arena, but with a different ID
         // than what we requested. For now, just check the count.
         assert_eq!(engine.node_count(), 2);

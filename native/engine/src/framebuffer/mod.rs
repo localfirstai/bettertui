@@ -1,13 +1,5 @@
-pub struct FrameBuffer;
+mod buffer;
+mod cell;
 
-impl Default for FrameBuffer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl FrameBuffer {
-    pub fn new() -> Self {
-        Self
-    }
-}
+pub use buffer::FrameBuffer;
+pub use cell::{Cell, CellAttributes};

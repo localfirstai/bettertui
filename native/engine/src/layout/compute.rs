@@ -1,14 +1,47 @@
 use std::collections::HashMap;
 
 use crate::tree::NodeId;
-use crate::tree::layout::{AlignItems, FlexDirection, JustifyContent, LayoutProps, Sizing};
+use crate::tree::layout::{
+    AlignItems, FlexDirection, JustifyContent, LayoutProps, RectValues, Sizing,
+};
 
 use super::result::LayoutResult;
+
+#[derive(Debug)]
+pub enum LayoutError {
+    NodeNotRegistered(NodeId),
+    TaffyError(taffy::TaffyError),
+}
+
+impl std::fmt::Display for LayoutError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LayoutError::NodeNotRegistered(id) => {
+                write!(f, "Node {id:?} not registered in layout engine")
+            }
+            LayoutError::TaffyError(e) => write!(f, "Taffy error: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for LayoutError {}
+
+impl From<taffy::TaffyError> for LayoutError {
+    fn from(e: taffy::TaffyError) -> Self {
+        LayoutError::TaffyError(e)
+    }
+}
 
 pub struct LayoutEngine {
     taffy: taffy::TaffyTree<()>,
     node_map: HashMap<NodeId, taffy::NodeId>,
     reverse_map: HashMap<taffy::NodeId, NodeId>,
+}
+
+impl Default for LayoutEngine {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LayoutEngine {
@@ -18,6 +51,14 @@ impl LayoutEngine {
             node_map: HashMap::new(),
             reverse_map: HashMap::new(),
         }
+    }
+
+    pub fn has_node(&self, id: NodeId) -> bool {
+        self.node_map.contains_key(&id)
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.node_map.len()
     }
 
     pub fn register_node(&mut self, id: NodeId) {
@@ -72,8 +113,11 @@ impl LayoutEngine {
         root: NodeId,
         width: f32,
         height: f32,
-    ) -> Result<(), taffy::Error> {
-        let &taffy_root = self.node_map.get(&root).ok_or(taffy::Error::NotFound)?;
+    ) -> Result<(), LayoutError> {
+        let &taffy_root = self
+            .node_map
+            .get(&root)
+            .ok_or(LayoutError::NodeNotRegistered(root))?;
         let size = taffy::Size {
             width: taffy::AvailableSpace::Definite(width),
             height: taffy::AvailableSpace::Definite(height),
@@ -86,7 +130,6 @@ impl LayoutEngine {
         let mut results = HashMap::new();
         for (&node_id, &taffy_id) in &self.node_map {
             if let Ok(layout) = self.taffy.layout(taffy_id) {
-                let order = self.taffy.children(taffy_id).map(|c| c.len()).unwrap_or(0);
                 results.insert(
                     node_id,
                     LayoutResult {
@@ -96,7 +139,6 @@ impl LayoutEngine {
                         height: (layout.size.height.round() as i32).max(0) as u16,
                         content_width: 0,
                         content_height: 0,
-                        order: order as u32,
                     },
                 );
             }
@@ -113,31 +155,23 @@ fn sizing_to_taffy(sizing: Option<Sizing>) -> taffy::Dimension {
     }
 }
 
-fn sizing_to_length_percentage(sizing: Option<Sizing>) -> taffy::LengthPercentage {
-    match sizing {
-        Some(Sizing::Points(p)) => taffy::LengthPercentage::Length(p),
-        Some(Sizing::Percent(p)) => taffy::LengthPercentage::Percent(p.clamp(0.0, 1.0)),
-        Some(Sizing::Auto) | None => taffy::LengthPercentage::Length(0.0),
-    }
-}
-
 fn rect_values_to_taffy(r: &RectValues) -> taffy::Rect<taffy::LengthPercentage> {
     taffy::Rect {
         top: r
             .top
-            .map(|v| taffy::LengthPercentage::Length(v))
+            .map(taffy::LengthPercentage::Length)
             .unwrap_or(taffy::LengthPercentage::Length(0.0)),
         right: r
             .right
-            .map(|v| taffy::LengthPercentage::Length(v))
+            .map(taffy::LengthPercentage::Length)
             .unwrap_or(taffy::LengthPercentage::Length(0.0)),
         bottom: r
             .bottom
-            .map(|v| taffy::LengthPercentage::Length(v))
+            .map(taffy::LengthPercentage::Length)
             .unwrap_or(taffy::LengthPercentage::Length(0.0)),
         left: r
             .left
-            .map(|v| taffy::LengthPercentage::Length(v))
+            .map(taffy::LengthPercentage::Length)
             .unwrap_or(taffy::LengthPercentage::Length(0.0)),
     }
 }
@@ -146,19 +180,19 @@ fn rect_values_to_taffy_auto(r: &RectValues) -> taffy::Rect<taffy::LengthPercent
     taffy::Rect {
         top: r
             .top
-            .map(|v| taffy::LengthPercentageAuto::Length(v))
+            .map(taffy::LengthPercentageAuto::Length)
             .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
         right: r
             .right
-            .map(|v| taffy::LengthPercentageAuto::Length(v))
+            .map(taffy::LengthPercentageAuto::Length)
             .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
         bottom: r
             .bottom
-            .map(|v| taffy::LengthPercentageAuto::Length(v))
+            .map(taffy::LengthPercentageAuto::Length)
             .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
         left: r
             .left
-            .map(|v| taffy::LengthPercentageAuto::Length(v))
+            .map(taffy::LengthPercentageAuto::Length)
             .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
     }
 }
@@ -197,11 +231,21 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
     let padding = props
         .padding
         .map(|r| rect_values_to_taffy(&r))
-        .unwrap_or_default();
+        .unwrap_or(taffy::Rect {
+            top: taffy::LengthPercentage::Length(0.0),
+            right: taffy::LengthPercentage::Length(0.0),
+            bottom: taffy::LengthPercentage::Length(0.0),
+            left: taffy::LengthPercentage::Length(0.0),
+        });
     let margin = props
         .margin
         .map(|r| rect_values_to_taffy_auto(&r))
-        .unwrap_or_default();
+        .unwrap_or(taffy::Rect {
+            top: taffy::LengthPercentageAuto::Length(0.0),
+            right: taffy::LengthPercentageAuto::Length(0.0),
+            bottom: taffy::LengthPercentageAuto::Length(0.0),
+            left: taffy::LengthPercentageAuto::Length(0.0),
+        });
 
     let gap = match props.gap {
         Some(g) => taffy::Size {
@@ -252,12 +296,13 @@ mod tests {
     use super::*;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;
+    use crate::tree::render_node::RenderNode;
 
     fn make_ids(count: usize) -> Vec<NodeId> {
         let mut arena = NodeArena::new();
         let mut ids = Vec::new();
         for _ in 0..count {
-            ids.push(arena.insert(crate::tree::render_node::RenderNode::new(NodeKind::Box)));
+            ids.push(arena.insert(RenderNode::new(NodeKind::Box)));
         }
         ids
     }

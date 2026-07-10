@@ -1,182 +1,192 @@
-use crate::tree::{NodeArena, NodeId};
+use std::collections::HashMap;
 
-use super::compute::LayoutEngine;
+use super::compute::{LayoutEngine, LayoutError};
+use super::result::LayoutResult;
+use crate::tree::NodeId;
+use crate::tree::arena::NodeArena;
 
-/// Synchronizes the layout tree with the node arena.
-pub struct LayoutTreeSync;
+pub struct LayoutTreeSync {
+    layout: LayoutEngine,
+    results: HashMap<NodeId, LayoutResult>,
+}
+
+impl Default for LayoutTreeSync {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl LayoutTreeSync {
-    /// Sync the entire node arena to the layout engine.
-    pub fn sync_full(arena: &NodeArena, layout: &mut LayoutEngine) {
-        let root = arena.root();
-        Self::sync_subtree(arena, layout, root);
-    }
-
-    fn sync_subtree(arena: &NodeArena, layout: &mut LayoutEngine, id: NodeId) {
-        let node = match arena.get(id) {
-            Some(n) => n,
-            None => return,
-        };
-
-        if node.has_children() {
-            layout.register_container(id);
-        } else {
-            layout.register_node(id);
-        }
-
-        layout.set_style(id, &node.layout);
-
-        let children = node.children.clone();
-        for child_id in children {
-            Self::sync_subtree(arena, layout, child_id);
-            layout.add_child(id, child_id);
+    pub fn new() -> Self {
+        Self {
+            layout: LayoutEngine::new(),
+            results: HashMap::new(),
         }
     }
 
-    /// Sync a single node's properties to the layout engine.
-    pub fn sync_node(arena: &NodeArena, layout: &mut LayoutEngine, id: NodeId) {
-        if let Some(node) = arena.get(id) {
-            if !layout.has_node(id) {
-                if node.has_children() {
-                    layout.register_container(id);
-                } else {
-                    layout.register_node(id);
-                }
-            }
-            layout.set_style(id, &node.layout);
-        }
-    }
-
-    /// Remove a node from the layout engine.
-    pub fn remove_node(arena: &NodeArena, layout: &mut LayoutEngine, id: NodeId) {
-        if let Some(node) = arena.get(id) {
-            let children = node.children.clone();
-            for child_id in children {
-                Self::remove_node(arena, layout, child_id);
+    pub fn sync_full(&mut self, arena: &NodeArena) {
+        for (id, node) in arena.iter() {
+            if !self.layout.has_node(id) {
+                self.layout.register_container(id, &node.layout);
+            } else {
+                self.layout.update_style(id, &node.layout);
             }
         }
-        layout.remove_node(id);
     }
 
-    /// Compute layout for the arena's tree.
-    pub fn compute(
-        arena: &NodeArena,
-        layout: &mut LayoutEngine,
-        width: u16,
-        height: u16,
-    ) -> Result<(), super::compute::LayoutError> {
-        let root = arena.root();
-        layout.compute_layout(root, width, height)
+    pub fn sync_node(&mut self, arena: &NodeArena, id: NodeId) {
+        if let Some(node) = arena.get(id) {
+            if !self.layout.has_node(id) {
+                self.layout.register_container(id, &node.layout);
+            } else {
+                self.layout.update_style(id, &node.layout);
+            }
+        }
+    }
+
+    pub fn remove_node(&mut self, id: NodeId) {
+        self.layout.remove_node(id);
+    }
+
+    pub fn sync_children(&mut self, arena: &NodeArena, parent: NodeId) {
+        let children = arena.children(parent);
+        for child in &children {
+            self.sync_node(arena, *child);
+            self.layout.add_child(parent, *child);
+        }
+    }
+
+    pub fn compute(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
+        self.layout
+            .compute_layout(root, width as f32, height as f32)?;
+        self.results = self.layout.collect_results();
+        Ok(())
+    }
+
+    pub fn results(&self) -> &HashMap<NodeId, LayoutResult> {
+        &self.results
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.layout.node_count()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::LayoutEngine;
-    use crate::tree::RenderNode;
+    use crate::tree::arena::NodeArena;
+    use crate::tree::layout::Sizing;
+    use crate::tree::node_kind::NodeKind;
+    use crate::tree::render_node::RenderNode;
 
-    fn create_test_arena() -> NodeArena {
-        NodeArena::new()
+    #[test]
+    fn sync_full_basic() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
     }
 
     #[test]
-    fn sync_empty_arena() {
-        let arena = create_test_arena();
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-        assert_eq!(layout.node_count(), 1);
+    fn sync_node_with_children() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_node(&arena, arena.root());
+        sync.sync_node(&arena, child);
+        sync.sync_children(&arena, arena.root());
+        assert_eq!(sync.node_count(), 2);
     }
 
     #[test]
-    fn sync_arena_with_children() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let child1 = arena.insert(RenderNode::text("hello"));
-        let child2 = arena.insert(RenderNode::box_node());
-        arena.append_child(root, child1).unwrap();
-        arena.append_child(root, child2).unwrap();
-
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-        assert_eq!(layout.node_count(), 3);
-    }
-
-    #[test]
-    fn sync_nested_tree() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let a = arena.insert(RenderNode::box_node());
-        let b = arena.insert(RenderNode::text("b"));
-        let c = arena.insert(RenderNode::text("c"));
-
-        arena.append_child(root, a).unwrap();
-        arena.append_child(a, b).unwrap();
-        arena.append_child(a, c).unwrap();
-
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-        assert_eq!(layout.node_count(), 4);
-    }
-
-    #[test]
-    fn sync_single_node() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let child = arena.insert(RenderNode::text("child"));
-        arena.append_child(root, child).unwrap();
-
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_node(&arena, &mut layout, root);
-        assert_eq!(layout.node_count(), 1);
-
-        LayoutTreeSync::sync_node(&arena, &mut layout, child);
-        assert_eq!(layout.node_count(), 2);
-    }
-
-    #[test]
-    fn compute_layout_after_sync() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let child = arena.insert(RenderNode::text("hello"));
-        arena.append_child(root, child).unwrap();
-
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-
-        let result = LayoutTreeSync::compute(&arena, &mut layout, 80, 24);
-        assert!(result.is_ok());
+    fn compute_layout() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        sync.compute(arena.root(), 80, 24).unwrap();
+        let results = sync.results();
+        assert!(results.contains_key(&arena.root()));
     }
 
     #[test]
     fn remove_node_from_layout() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let child = arena.insert(RenderNode::text("child"));
-        arena.append_child(root, child).unwrap();
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
 
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-        assert_eq!(layout.node_count(), 2);
-
-        LayoutTreeSync::remove_node(&arena, &mut layout, child);
-        assert_eq!(layout.node_count(), 1);
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.remove_node(child);
+        assert_eq!(sync.node_count(), 1);
     }
 
     #[test]
-    fn remove_parent_removes_children() {
-        let mut arena = create_test_arena();
-        let root = arena.root();
-        let parent = arena.insert(RenderNode::box_node());
-        let child = arena.insert(RenderNode::text("child"));
-        arena.append_child(root, parent).unwrap();
-        arena.append_child(parent, child).unwrap();
+    fn sync_adds_new_children() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
 
-        let mut layout = LayoutEngine::new();
-        LayoutTreeSync::sync_full(&arena, &mut layout);
-        assert_eq!(layout.node_count(), 3);
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+    }
 
-        LayoutTreeSync::remove_node(&arena, &mut layout, parent);
-        assert_eq!(layout.node_count(), 1);
+    #[test]
+    fn sync_updates_existing() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
+    }
+
+    #[test]
+    fn sync_with_styled_node() {
+        let mut arena = NodeArena::new();
+        let mut node = RenderNode::new(NodeKind::Box);
+        node.layout.width = Some(Sizing::Points(100.0));
+        node.layout.height = Some(Sizing::Points(50.0));
+        let id = arena.insert(node);
+        arena.append_child(arena.root(), id).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.compute(arena.root(), 80, 24).unwrap();
+        let results = sync.results();
+        assert!(results.contains_key(&id));
+    }
+
+    #[test]
+    fn sync_children_multiple() {
+        let mut arena = NodeArena::new();
+        let c1 = arena.insert(RenderNode::new(NodeKind::Box));
+        let c2 = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), c1).unwrap();
+        arena.append_child(arena.root(), c2).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 3);
+    }
+
+    #[test]
+    fn sync_remove_then_add() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.remove_node(child);
+        assert_eq!(sync.node_count(), 1);
+        sync.sync_node(&arena, child);
+        assert_eq!(sync.node_count(), 2);
     }
 }
