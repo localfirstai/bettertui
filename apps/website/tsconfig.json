@@ -2,6 +2,9 @@
   "extends": "astro/tsconfigs/base",
   "include": [".astro/types.d.ts", "**/*"],
   "compilerOptions": {
+    "paths": {
+      "~/*": ["./src/*"]
+    },
     "plugins": [
       {
         "name": "@astrojs/ts-plugin"
