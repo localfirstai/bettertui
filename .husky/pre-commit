@@ -1,0 +1,8 @@
+# Format TypeScript/JS/JSON, organize imports, and apply safe lint fixes
+npx --no-install biome check --write --staged . || exit 1
+
+# Format all Rust files (fast operation)
+cargo fmt --all
+
+# Re-stage files modified by formatting
+git update-index --again

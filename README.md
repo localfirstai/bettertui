@@ -103,6 +103,8 @@ pnpm dev
 - **Language**: TypeScript 5+
 - **Monorepo**: TurboRepo + pnpm
 - **React**: React 19 + custom reconciler
+- **Formatting/Linting**: Biome (TS/JS/JSON), rustfmt + clippy (Rust)
+- **Git Hooks**: Husky
 
 ## License
 

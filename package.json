@@ -12,18 +12,20 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm cargo:check",
     "cargo:check": "cargo check --workspace",
     "cargo:test": "cargo test --workspace",
     "cargo:fmt": "cargo fmt --all",
     "cargo:clippy": "cargo clippy --workspace -- -D warnings",
-    "clean": "turbo run clean && cargo clean"
+    "clean": "turbo run clean && cargo clean",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "prettier": "^3.4.0",
+    "husky": "^9.1.7",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },

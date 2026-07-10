@@ -18,6 +18,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "biome check src/",
+    "format": "biome format --write src/",
+    "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

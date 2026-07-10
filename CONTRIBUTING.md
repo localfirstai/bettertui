@@ -64,6 +64,7 @@ cargo clippy --workspace -- -D warnings
 - Prefer `type` over `interface` for simple shapes
 - Use `const` assertions where appropriate
 - All exports must be typed
+- Formatting and linting enforced by **Biome** (no ESLint or Prettier)
 
 ### Rust
 
@@ -72,6 +73,7 @@ cargo clippy --workspace -- -D warnings
 - Use `parking_lot` for synchronization primitives
 - Prefer `smallvec` for small collections
 - Document public APIs with `///` doc comments
+- Formatting enforced by **rustfmt**, linting by **clippy**
 
 ### General
 
@@ -80,6 +82,41 @@ cargo clippy --workspace -- -D warnings
 - No TODO comments in committed code
 - Keep functions small and focused
 - Write descriptive commit messages
+
+## Pre-commit Hooks
+
+This repository uses **Husky** to automatically format code before every commit:
+
+```bash
+# TypeScript/JS/JSON: formatted with Biome (lint + organize imports)
+# Rust: formatted with rustfmt
+# Modified files are automatically re-staged
+```
+
+If pre-commit formatting fails, the commit is aborted. Fix the reported issues and try again.
+
+## Editor Setup
+
+### VS Code (recommended)
+
+Install these extensions:
+
+- **Biome** (`biomejs.biome`) — formatter and linter for TypeScript/JS/JSON
+- **Rust Analyzer** (`rust-lang.rust-analyzer`) — Rust language support
+
+Configure format on save in `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" }
+}
+```
 
 ## Pull Request Process
 
