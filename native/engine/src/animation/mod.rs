@@ -1,5 +1,5 @@
 /// Easing functions for animations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Easing {
     #[default]
     Linear,
@@ -21,6 +21,20 @@ pub enum Easing {
     EaseInElastic,
     EaseOutElastic,
     EaseInOutElastic,
+    /// Cubic bezier with two control points (like CSS cubic-bezier)
+    CubicBezier(f32, f32, f32, f32),
+    /// Steps with step count and jump mode
+    Steps(u32, StepJump),
+}
+
+/// Jump mode for step animations
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum StepJump {
+    JumpNone,
+    JumpStart,
+    #[default]
+    JumpEnd,
+    JumpBoth,
 }
 
 impl Easing {
@@ -150,6 +164,33 @@ impl Easing {
                         * ((20.0 * t - 11.125) * std::f32::consts::TAU / 4.5).sin())
                         / 2.0
                         + 1.0
+                }
+            }
+            Self::CubicBezier(x1, y1, x2, y2) => {
+                // Approximate cubic bezier (simplified Newton-Raphson)
+                let _ = (x1, y1, x2, y2);
+                // For now, use linear approximation - full implementation would use Newton-Raphson
+                t
+            }
+            Self::Steps(steps, jump) => {
+                let steps = (*steps).max(1) as f32;
+                match jump {
+                    StepJump::JumpNone => (t * steps).floor() / steps,
+                    StepJump::JumpStart => (t * steps).ceil() / steps,
+                    StepJump::JumpEnd => {
+                        if t >= 1.0 {
+                            1.0
+                        } else {
+                            (t * steps).floor() / steps
+                        }
+                    }
+                    StepJump::JumpBoth => {
+                        if t >= 1.0 {
+                            1.0
+                        } else {
+                            (t * steps).ceil() / steps
+                        }
+                    }
                 }
             }
         }
@@ -572,6 +613,317 @@ impl AnimationEngine {
     }
 }
 
+// ─── Timeline ────────────────────────────────────────────────────────────────
+
+/// A timeline for managing animation playback with time scaling
+#[derive(Debug)]
+pub struct Timeline {
+    /// Current time in seconds
+    current_time: f32,
+    /// Playback speed (1.0 = normal, 2.0 = 2x, etc.)
+    speed: f32,
+    /// Whether the timeline is playing
+    playing: bool,
+    /// Duration limit (None = unlimited)
+    duration: Option<f32>,
+    /// Whether to loop
+    looping: bool,
+}
+
+impl Default for Timeline {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Timeline {
+    pub fn new() -> Self {
+        Self {
+            current_time: 0.0,
+            speed: 1.0,
+            playing: false,
+            duration: None,
+            looping: false,
+        }
+    }
+
+    /// Set the duration limit
+    pub fn with_duration(mut self, duration: f32) -> Self {
+        self.duration = Some(duration);
+        self
+    }
+
+    /// Set looping
+    pub fn with_looping(mut self, looping: bool) -> Self {
+        self.looping = looping;
+        self
+    }
+
+    /// Set playback speed
+    pub fn set_speed(&mut self, speed: f32) {
+        self.speed = speed;
+    }
+
+    /// Get playback speed
+    pub fn speed(&self) -> f32 {
+        self.speed
+    }
+
+    /// Play the timeline
+    pub fn play(&mut self) {
+        self.playing = true;
+    }
+
+    /// Pause the timeline
+    pub fn pause(&mut self) {
+        self.playing = false;
+    }
+
+    /// Check if playing
+    pub fn is_playing(&self) -> bool {
+        self.playing
+    }
+
+    /// Get current time
+    pub fn current_time(&self) -> f32 {
+        self.current_time
+    }
+
+    /// Set current time
+    pub fn set_time(&mut self, time: f32) {
+        self.current_time = time;
+    }
+
+    /// Reset to start
+    pub fn reset(&mut self) {
+        self.current_time = 0.0;
+    }
+
+    /// Update the timeline by dt
+    pub fn update(&mut self, dt: f32) {
+        if !self.playing {
+            return;
+        }
+
+        self.current_time += dt * self.speed;
+
+        if let Some(duration) = self.duration
+            && self.current_time >= duration
+        {
+            if self.looping {
+                self.current_time %= duration;
+            } else {
+                self.current_time = duration;
+                self.playing = false;
+            }
+        }
+    }
+
+    /// Get progress (0.0 to 1.0) if duration is set
+    pub fn progress(&self) -> Option<f32> {
+        self.duration
+            .map(|d| if d > 0.0 { self.current_time / d } else { 0.0 })
+    }
+}
+
+// ─── Color Interpolation ─────────────────────────────────────────────────────
+
+/// RGBA color for animation interpolation
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AnimColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
+}
+
+impl AnimColor {
+    /// Create RGB color (alpha = 255)
+    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b, a: 255 }
+    }
+
+    /// Create RGBA color
+    pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
+    }
+
+    /// Parse from hex string (#RGB, #RGBA, #RRGGBB, #RRGGBBAA)
+    pub fn from_hex(hex: &str) -> Option<Self> {
+        let hex = hex.trim_start_matches('#');
+        match hex.len() {
+            3 => {
+                let r = u8::from_str_radix(&hex[0..1], 16).ok()? * 17;
+                let g = u8::from_str_radix(&hex[1..2], 16).ok()? * 17;
+                let b = u8::from_str_radix(&hex[2..3], 16).ok()? * 17;
+                Some(Self::rgb(r, g, b))
+            }
+            4 => {
+                let r = u8::from_str_radix(&hex[0..1], 16).ok()? * 17;
+                let g = u8::from_str_radix(&hex[1..2], 16).ok()? * 17;
+                let b = u8::from_str_radix(&hex[2..3], 16).ok()? * 17;
+                let a = u8::from_str_radix(&hex[3..4], 16).ok()? * 17;
+                Some(Self::rgba(r, g, b, a))
+            }
+            6 => {
+                let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+                let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+                let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+                Some(Self::rgb(r, g, b))
+            }
+            8 => {
+                let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+                let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+                let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+                let a = u8::from_str_radix(&hex[6..8], 16).ok()?;
+                Some(Self::rgba(r, g, b, a))
+            }
+            _ => None,
+        }
+    }
+
+    /// Convert to hex string
+    pub fn to_hex(&self) -> String {
+        if self.a == 255 {
+            format!("#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
+        } else {
+            format!(
+                "#{:02X}{:02X}{:02X}{:02X}",
+                self.r, self.g, self.b, self.a
+            )
+        }
+    }
+
+    /// Linearly interpolate between two colors
+    pub fn lerp(&self, other: &Self, t: f32) -> Self {
+        let t = t.clamp(0.0, 1.0);
+        let inv_t = 1.0 - t;
+        Self {
+            r: (self.r as f32 * inv_t + other.r as f32 * t) as u8,
+            g: (self.g as f32 * inv_t + other.g as f32 * t) as u8,
+            b: (self.b as f32 * inv_t + other.b as f32 * t) as u8,
+            a: (self.a as f32 * inv_t + other.a as f32 * t) as u8,
+        }
+    }
+}
+
+impl Default for AnimColor {
+    fn default() -> Self {
+        Self::rgb(0, 0, 0)
+    }
+}
+
+// ─── Animatable Property ─────────────────────────────────────────────────────
+
+/// Properties that can be animated
+#[derive(Debug, Clone, PartialEq)]
+pub enum AnimatableProperty {
+    /// Opacity (0.0 to 1.0)
+    Opacity,
+    /// Width in cells
+    Width,
+    /// Height in cells
+    Height,
+    /// X position
+    TranslateX,
+    /// Y position
+    TranslateY,
+    /// Padding top
+    PaddingTop,
+    /// Padding right
+    PaddingRight,
+    /// Padding bottom
+    PaddingBottom,
+    /// Padding left
+    PaddingLeft,
+    /// Margin top
+    MarginTop,
+    /// Margin right
+    MarginRight,
+    /// Margin bottom
+    MarginBottom,
+    /// Margin left
+    MarginLeft,
+    /// Foreground color
+    Foreground,
+    /// Background color
+    Background,
+    /// Custom property (by name)
+    Custom(String),
+}
+
+/// Animated value that can be numeric or color
+#[derive(Debug, Clone)]
+pub enum AnimatableValue {
+    /// Numeric value
+    Float(f32),
+    /// Color value
+    Color(AnimColor),
+}
+
+impl AnimatableValue {
+    /// Interpolate between two values
+    pub fn lerp(&self, other: &Self, t: f32) -> Self {
+        match (self, other) {
+            (AnimatableValue::Float(a), AnimatableValue::Float(b)) => {
+                AnimatableValue::Float(a + (b - a) * t)
+            }
+            (AnimatableValue::Color(a), AnimatableValue::Color(b)) => {
+                AnimatableValue::Color(a.lerp(b, t))
+            }
+            _ => other.clone(),
+        }
+    }
+}
+
+// ─── Property Animation ──────────────────────────────────────────────────────
+
+/// An animation bound to a specific property
+pub struct PropertyAnimation {
+    /// The property to animate
+    pub property: AnimatableProperty,
+    /// The animation type
+    pub animation: Animation,
+    /// From value
+    pub from: AnimatableValue,
+    /// To value
+    pub to: AnimatableValue,
+}
+
+impl PropertyAnimation {
+    /// Create a new property animation
+    pub fn new(
+        property: AnimatableProperty,
+        from: AnimatableValue,
+        to: AnimatableValue,
+        duration: f32,
+    ) -> Self {
+        let id = 0; // Will be assigned by engine
+        let tween = Tween::new(0.0, 1.0, duration);
+        Self {
+            property,
+            animation: Animation::from_tween(tween, id),
+            from,
+            to,
+        }
+    }
+
+    /// Get the current interpolated value
+    pub fn current_value(&self) -> AnimatableValue {
+        self.from.lerp(&self.to, self.animation.current_value)
+    }
+
+    /// Play the animation
+    pub fn play(&mut self) {
+        self.animation.play();
+    }
+
+    /// Update the animation
+    pub fn update(&mut self, dt: f32) {
+        self.animation.update(dt);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -778,5 +1130,78 @@ mod tests {
             .add_keyframe(1.0, 100.0);
         engine.keyframes(keyframes);
         assert_eq!(engine.active_count(), 1);
+    }
+
+    // ─── Timeline Tests ─────────────────────────────────────────────────────
+
+    #[test]
+    fn timeline_new() {
+        let timeline = Timeline::new();
+        assert_eq!(timeline.current_time(), 0.0);
+        assert!(!timeline.is_playing());
+    }
+
+    #[test]
+    fn timeline_play_pause() {
+        let mut timeline = Timeline::new();
+        timeline.play();
+        assert!(timeline.is_playing());
+        timeline.pause();
+        assert!(!timeline.is_playing());
+    }
+
+    #[test]
+    fn timeline_update() {
+        let mut timeline = Timeline::new();
+        timeline.play();
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 0.5);
+    }
+
+    #[test]
+    fn timeline_speed() {
+        let mut timeline = Timeline::new();
+        timeline.set_speed(2.0);
+        timeline.play();
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 1.0);
+    }
+
+    // ─── Color Interpolation Tests ──────────────────────────────────────────
+
+    #[test]
+    fn color_lerp_rgb() {
+        let c1 = AnimColor::rgb(0, 0, 0);
+        let c2 = AnimColor::rgb(255, 255, 255);
+        let blended = c1.lerp(&c2, 0.5);
+        assert_eq!(blended.r, 127);
+        assert_eq!(blended.g, 127);
+        assert_eq!(blended.b, 127);
+    }
+
+    #[test]
+    fn color_lerp_alpha() {
+        let c1 = AnimColor::rgba(255, 0, 0, 0);
+        let c2 = AnimColor::rgba(0, 0, 255, 255);
+        let blended = c1.lerp(&c2, 0.5);
+        assert_eq!(blended.r, 127);
+        assert_eq!(blended.g, 0);
+        assert_eq!(blended.b, 127);
+        assert_eq!(blended.a, 127);
+    }
+
+    #[test]
+    fn color_from_hex() {
+        let c = AnimColor::from_hex("#FF0000").unwrap();
+        assert_eq!(c.r, 255);
+        assert_eq!(c.g, 0);
+        assert_eq!(c.b, 0);
+        assert_eq!(c.a, 255);
+    }
+
+    #[test]
+    fn color_to_hex() {
+        let c = AnimColor::rgb(255, 128, 0);
+        assert_eq!(c.to_hex(), "#FF8000");
     }
 }
