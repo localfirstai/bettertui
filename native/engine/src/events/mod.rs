@@ -1,13 +1,10 @@
-pub struct EventSystem;
+pub mod bus;
+pub mod dispatch;
+pub mod types;
 
-impl Default for EventSystem {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl EventSystem {
-    pub fn new() -> Self {
-        Self
-    }
-}
+pub use bus::EventBus;
+pub use dispatch::EventDispatcher;
+pub use types::{
+    BlurEvent, Event, EventPhase, EventResult, FocusEvent, Key, KeyEvent, LifecycleEvent,
+    Modifiers, MouseButton, MouseEvent, PasteEvent, ResizeEvent,
+};

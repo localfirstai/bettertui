@@ -47,3 +47,4 @@ Cargo.lock
 # Rust
 native/engine/target/
 native/bindings/target/
+.plan

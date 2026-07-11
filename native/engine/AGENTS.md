@@ -63,3 +63,15 @@
 - Use `include_bytes!("../../fonts/FontName.otf")` to embed fonts at compile time.
 - Font files go in `native/engine/fonts/`.
 - `LocalFontDetector` checks bundled font first, then system fonts.
+
+## Widget Framework
+
+- **Test modules need explicit imports of sibling types.** `super::*` in `pipeline.rs` tests only brings in `pipeline.rs` imports, not `WidgetId` from `widgets/mod.rs`. Add `use crate::widgets::WidgetId;` explicitly.
+- **WidgetId is a tuple struct.** `WidgetId(pub NodeId)` — construct with `WidgetId(node_id)`, not field syntax.
+- **WidgetContext requires lifetime annotation** in return types: `WidgetContext<'_>` not `WidgetContext`.
+- **NodeArena::append_child returns Result.** Handle with `let _ = ctx.append_child(parent, child);` or propagate error.
+- **Widget::create returns WidgetId.** The trait signature is `fn create(&self, ctx: &mut WidgetContext) -> WidgetId`.
+- **FlexDirection, not Direction.** FlexWidget uses `FlexDirection::Column` (not `Direction::Vertical`).
+- **Theme has no is_dark() method.** Check `theme.colors.is_empty()` or store the mode separately.
+- **Key::Character(char) is the variant name.** Not `Key::Char` — it's `Key::Character(c)` in the enum.
+- **BoxWidget and ContainerWidget need #[derive(Default)].** Clippy `derivable_impls` fires if manual impl is identical to derived.

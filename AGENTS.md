@@ -51,3 +51,4 @@
 - Run clippy: `cargo clippy -p bettertui-engine --lib -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
+- Widget framework has ~100 tests (total engine: ~777).

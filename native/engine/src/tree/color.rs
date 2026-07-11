@@ -39,6 +39,12 @@ pub enum NamedColor {
     BrightWhite,
 }
 
+impl Color {
+    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self::Rgb { r, g, b }
+    }
+}
+
 impl NamedColor {
     /// Returns the ANSI color index (0-15) for this named color.
     pub fn ansi_index(&self) -> u8 {
