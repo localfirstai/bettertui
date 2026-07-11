@@ -115,7 +115,7 @@ impl EventDispatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::types::{Key, KeyEvent, Modifiers};
+    use crate::events::types::{Key, KeyEvent};
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;
     use crate::tree::render_node::RenderNode;
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn dispatcher_register_handler() {
         let mut dispatcher = EventDispatcher::new();
-        let (arena, child) = make_arena_with_child();
+        let (_arena, child) = make_arena_with_child();
         dispatcher.on(child, |_: &mut Event| EventResult::Ignored);
         assert!(dispatcher.has_handlers(child));
         assert_eq!(dispatcher.handler_count(), 1);
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn dispatcher_remove_handlers() {
         let mut dispatcher = EventDispatcher::new();
-        let (arena, child) = make_arena_with_child();
+        let (_arena, child) = make_arena_with_child();
         dispatcher.on(child, |_: &mut Event| EventResult::Ignored);
         dispatcher.remove_handlers(child);
         assert!(!dispatcher.has_handlers(child));
@@ -281,7 +281,7 @@ mod tests {
     #[test]
     fn dispatcher_clear() {
         let mut dispatcher = EventDispatcher::new();
-        let (arena, child) = make_arena_with_child();
+        let (_arena, child) = make_arena_with_child();
         dispatcher.on(child, |_: &mut Event| EventResult::Ignored);
         dispatcher.on_global(|_: &mut Event| EventResult::Ignored);
         dispatcher.clear();

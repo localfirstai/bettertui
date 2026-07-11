@@ -1,3 +1,5 @@
+//! Keyboard handler placeholder.
+
 pub struct KeyboardHandler;
 
 impl Default for KeyboardHandler {

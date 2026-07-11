@@ -85,8 +85,10 @@ mod tests {
 
     #[test]
     fn box_widget_with_layout() {
-        let mut layout = LayoutProps::default();
-        layout.width = Some(Sizing::Points(20.0));
+        let layout = LayoutProps {
+            width: Some(Sizing::Points(20.0)),
+            ..Default::default()
+        };
         let w = BoxWidget::new().with_layout(layout);
         assert_eq!(w.layout.width, Some(Sizing::Points(20.0)));
     }

@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn color_support_detect() {
         let support = ColorSupport::detect();
-        assert!(support.max_colors() >= 0);
+        let _ = support;
     }
 
     #[test]
@@ -151,6 +151,6 @@ mod tests {
     #[test]
     fn render_capabilities_detect() {
         let caps = RenderCapabilities::detect();
-        assert!(caps.color_support.max_colors() >= 0);
+        let _ = caps;
     }
 }

@@ -1,6 +1,7 @@
-use slotmap::SlotMap;
+//! Pane management: split panes with recursive layout, focus navigation, and resize.
 
 use crate::tree::visual::{Point, Rect, Size};
+use slotmap::SlotMap;
 
 slotmap::new_key_type! {
     pub struct PaneId;

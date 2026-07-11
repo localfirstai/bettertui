@@ -1,3 +1,5 @@
+//! Event system: bus, dispatcher, and typed event definitions (key, mouse, focus, paste, resize).
+
 pub mod bus;
 pub mod dispatch;
 pub mod types;

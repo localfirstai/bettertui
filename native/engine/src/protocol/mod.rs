@@ -1,3 +1,6 @@
+//! Command protocol layer for communicating with the rendering engine.
+//! Defines commands, buffers, processing, and error types.
+
 pub mod buffer;
 pub mod command;
 pub mod error;

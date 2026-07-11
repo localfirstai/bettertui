@@ -1,3 +1,5 @@
+//! Selection manager placeholder.
+
 pub struct SelectionManager;
 
 impl Default for SelectionManager {

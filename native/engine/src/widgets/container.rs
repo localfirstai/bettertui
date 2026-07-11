@@ -100,8 +100,10 @@ mod tests {
 
     #[test]
     fn container_with_layout() {
-        let mut layout = LayoutProps::default();
-        layout.width = Some(Sizing::Points(50.0));
+        let layout = LayoutProps {
+            width: Some(Sizing::Points(50.0)),
+            ..Default::default()
+        };
         let w = ContainerWidget::new().with_layout(layout);
         assert_eq!(w.layout.width, Some(Sizing::Points(50.0)));
     }

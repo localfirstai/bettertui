@@ -1,3 +1,5 @@
+//! Clipboard manager placeholder.
+
 pub struct ClipboardManager;
 
 impl Default for ClipboardManager {

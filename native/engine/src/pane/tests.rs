@@ -44,7 +44,7 @@ fn split_horizontal() {
 #[test]
 fn split_vertical() {
     let mut mgr = small_pane();
-    let new_pane = mgr
+    let _new_pane = mgr
         .split(mgr.root(), SplitDirection::Vertical, 0.5)
         .unwrap();
 
@@ -77,7 +77,6 @@ fn split_horizontal_bounds() {
         .split(mgr.root(), SplitDirection::Horizontal, 0.5)
         .unwrap();
 
-    let root_bounds = mgr.bounds(mgr.root()).unwrap();
     let first_bounds = mgr.bounds(root_bounds_in(mgr.root(), 0, &mgr)).unwrap();
     let second_bounds = mgr.bounds(new_pane).unwrap();
 

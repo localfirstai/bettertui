@@ -1,3 +1,5 @@
+//! Terminal interaction: crossterm-based terminal event handling, queries, and VT emulation.
+
 pub mod query;
 pub mod vt;
 

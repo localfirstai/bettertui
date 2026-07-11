@@ -1,3 +1,5 @@
+//! Graphics context placeholder.
+
 pub struct GraphicsContext;
 
 impl Default for GraphicsContext {

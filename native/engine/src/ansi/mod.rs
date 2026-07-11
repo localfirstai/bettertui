@@ -1,3 +1,5 @@
+//! ANSI escape sequence encoding and parsing (CSI, OSC, SGR).
+
 mod encoder;
 pub mod parser;
 

@@ -5,7 +5,7 @@ use bettertui_engine::layout::LayoutTreeSync;
 use bettertui_engine::painter::Painter;
 use bettertui_engine::render_object::{PaintContext, PaintFlags, RenderObject, RenderTree};
 use bettertui_engine::renderer::Renderer;
-use bettertui_engine::scheduler::RenderScheduler;
+use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::arena::NodeArena;
 
@@ -42,7 +42,7 @@ fn integration_full_pipeline_single_node() {
     let frame = renderer.render_full(&arena);
     assert_eq!(frame.width, 80);
     assert_eq!(frame.height, 24);
-    assert!(!frame.ansi_data.is_empty());
+    assert!(!frame.output_data.is_empty());
     assert!(!frame.dirty_regions.is_empty());
 }
 
@@ -51,7 +51,7 @@ fn integration_full_pipeline_parent_child() {
     let mut renderer = Renderer::new(80, 24);
     let arena = make_parent_child_arena();
     let frame = renderer.render_full(&arena);
-    assert!(!frame.ansi_data.is_empty());
+    assert!(!frame.output_data.is_empty());
     assert!(!frame.dirty_regions.is_empty());
 }
 
@@ -60,7 +60,7 @@ fn integration_full_pipeline_nested() {
     let mut renderer = Renderer::new(80, 24);
     let arena = make_nested_arena();
     let frame = renderer.render_full(&arena);
-    assert!(!frame.ansi_data.is_empty());
+    assert!(!frame.output_data.is_empty());
 }
 
 #[test]
@@ -69,8 +69,8 @@ fn integration_double_render_reduces_dirty() {
     let arena = make_parent_child_arena();
     let frame1 = renderer.render_full(&arena);
     let frame2 = renderer.render(&arena);
-    assert!(!frame1.ansi_data.is_empty());
-    assert!(!frame2.ansi_data.is_empty());
+    assert!(!frame1.output_data.is_empty());
+    assert!(!frame2.output_data.is_empty());
 }
 
 #[test]
@@ -137,16 +137,15 @@ fn integration_painter_renders_text() {
 
 #[test]
 fn integration_scheduler_coalescing() {
-    let mut sched = RenderScheduler::with_fps(60);
-    assert!(sched.status() != bettertui_engine::scheduler::FrameStatus::Idle || true);
+    let mut sched = Scheduler::with_fps(60);
+    assert_eq!(
+        sched.status(),
+        bettertui_engine::scheduler::FrameStatus::Idle
+    );
     sched.request_frame();
-    sched.begin_frame();
-    sched.request_frame();
-    let status = sched.status();
-    assert!(
-        status == bettertui_engine::scheduler::FrameStatus::Pending
-            || status == bettertui_engine::scheduler::FrameStatus::Idle
-            || true
+    assert_eq!(
+        sched.status(),
+        bettertui_engine::scheduler::FrameStatus::Pending
     );
 }
 

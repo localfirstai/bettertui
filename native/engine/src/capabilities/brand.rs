@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn brand_detect_returns_value() {
         let brand = TerminalBrand::detect();
-        assert!(brand.name().len() > 0);
+        assert!(!brand.name().is_empty());
     }
 
     #[test]

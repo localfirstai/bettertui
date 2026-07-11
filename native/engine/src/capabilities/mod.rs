@@ -1,3 +1,5 @@
+//! Terminal capability detection: brand, color, unicode, input, rendering, and clipboard support.
+
 mod brand;
 mod clipboard;
 mod detection;

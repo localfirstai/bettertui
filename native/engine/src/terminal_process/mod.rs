@@ -1,3 +1,5 @@
+//! Terminal process management: spawning, runtime, state tracking, and viewport control.
+
 pub mod config;
 pub mod runtime;
 pub mod spawner;

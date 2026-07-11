@@ -1,5 +1,6 @@
-use crate::framebuffer::Cell;
+//! Scrollback buffer: ring buffer of terminal lines with configurable max size.
 
+use crate::framebuffer::Cell;
 const DEFAULT_SCROLLBACK_LINES: usize = 10_000;
 
 #[derive(Debug, Clone)]

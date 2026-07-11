@@ -1,3 +1,5 @@
+//! Rendering pipeline: Renderer, RenderFrame, and the RenderBackend trait for ANSI output.
+
 pub mod backend;
 
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};

@@ -1,3 +1,5 @@
+//! Mouse handler placeholder.
+
 pub struct MouseHandler;
 
 impl Default for MouseHandler {

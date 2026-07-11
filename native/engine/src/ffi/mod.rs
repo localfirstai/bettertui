@@ -1,3 +1,5 @@
+//! FFI bridge placeholder.
+
 pub struct FfiBridge;
 
 impl Default for FfiBridge {

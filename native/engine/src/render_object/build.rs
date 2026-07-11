@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn build_render_tree_basic() {
         let (tree, _) = build_tree_with_layout();
-        assert!(tree.len() >= 1);
+        assert!(!tree.is_empty());
         assert!(tree.root().is_some());
     }
 

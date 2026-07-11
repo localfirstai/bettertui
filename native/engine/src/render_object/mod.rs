@@ -1,3 +1,6 @@
+//! Render tree construction: builds a sorted render tree from the arena + layout results.
+//! Provides paint context and clip bounds for the painting phase.
+
 mod build;
 mod object;
 mod paint;

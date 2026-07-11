@@ -193,8 +193,10 @@ mod tests {
             theme: &theme,
         };
 
-        let mut layout = LayoutProps::default();
-        layout.width = Some(Sizing::Points(10.0));
+        let layout = LayoutProps {
+            width: Some(Sizing::Points(10.0)),
+            ..Default::default()
+        };
         let style = Style {
             bg: Some(Color::Named(NamedColor::Blue)),
             ..Style::default()

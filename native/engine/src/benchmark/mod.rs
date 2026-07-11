@@ -1,3 +1,5 @@
+//! Benchmark harness placeholder.
+
 pub struct BenchmarkHarness;
 
 impl Default for BenchmarkHarness {

@@ -1,3 +1,5 @@
+//! Frame scheduler with priority queue, frame budgeting, and idle/animation callbacks.
+
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};

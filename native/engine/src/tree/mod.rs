@@ -1,3 +1,6 @@
+//! Tree data structures: arena-backed node tree with layout, style, and visual properties.
+//! The core data model for BetterTUI's render tree.
+
 pub mod arena;
 pub mod color;
 pub mod interaction;

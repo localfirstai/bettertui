@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn graphics_capabilities_detect() {
         let caps = GraphicsCapabilities::detect();
-        assert!(caps.kitty_graphics || caps.sixel || caps.iterm_images || true);
+        let _ = caps;
     }
 
     #[test]

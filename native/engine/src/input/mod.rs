@@ -1,3 +1,5 @@
+//! Input runtime: manages keyboard, mouse, and clipboard input state and event queue.
+
 mod clipboard;
 mod event;
 mod keyboard;

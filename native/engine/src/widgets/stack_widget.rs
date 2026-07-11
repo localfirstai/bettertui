@@ -122,8 +122,10 @@ mod tests {
 
     #[test]
     fn stack_widget_with_layout() {
-        let mut layout = LayoutProps::default();
-        layout.flex_grow = 1.0;
+        let layout = LayoutProps {
+            flex_grow: 1.0,
+            ..Default::default()
+        };
         let w = StackWidget::new().with_layout(layout);
         assert_eq!(w.layout.flex_grow, 1.0);
     }

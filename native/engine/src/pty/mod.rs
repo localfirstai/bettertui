@@ -1,3 +1,5 @@
+//! PTY abstraction: portable pseudo-terminal with process spawning, reading, and writing.
+
 mod process;
 mod reader;
 mod writer;

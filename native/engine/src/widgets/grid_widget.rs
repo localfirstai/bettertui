@@ -148,8 +148,10 @@ mod tests {
 
     #[test]
     fn grid_widget_with_layout() {
-        let mut layout = LayoutProps::default();
-        layout.flex_grow = 1.0;
+        let layout = LayoutProps {
+            flex_grow: 1.0,
+            ..Default::default()
+        };
         let w = GridWidget::new().with_layout(layout);
         assert_eq!(w.layout.flex_grow, 1.0);
     }

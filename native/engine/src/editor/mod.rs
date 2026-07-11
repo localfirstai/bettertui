@@ -1,3 +1,5 @@
+//! Editor placeholder.
+
 pub struct Editor;
 
 impl Default for Editor {

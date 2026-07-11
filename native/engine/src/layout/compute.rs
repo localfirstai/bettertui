@@ -329,9 +329,11 @@ mod tests {
         let mut engine = LayoutEngine::new();
         let ids = make_ids(1);
         let id = ids[0];
-        let mut props = LayoutProps::default();
-        props.width = Some(Sizing::Points(80.0));
-        props.height = Some(Sizing::Points(24.0));
+        let props = LayoutProps {
+            width: Some(Sizing::Points(80.0)),
+            height: Some(Sizing::Points(24.0)),
+            ..Default::default()
+        };
         engine.register_container(id, &props);
         engine.compute_layout(id, 80.0, 24.0).unwrap();
         let results = engine.collect_results();
@@ -347,12 +349,16 @@ mod tests {
         let ids = make_ids(2);
         let parent = ids[0];
         let child = ids[1];
-        let mut parent_props = LayoutProps::default();
-        parent_props.width = Some(Sizing::Points(80.0));
-        parent_props.height = Some(Sizing::Points(24.0));
-        let mut child_props = LayoutProps::default();
-        child_props.width = Some(Sizing::Points(20.0));
-        child_props.height = Some(Sizing::Points(10.0));
+        let parent_props = LayoutProps {
+            width: Some(Sizing::Points(80.0)),
+            height: Some(Sizing::Points(24.0)),
+            ..Default::default()
+        };
+        let child_props = LayoutProps {
+            width: Some(Sizing::Points(20.0)),
+            height: Some(Sizing::Points(10.0)),
+            ..Default::default()
+        };
         engine.register_container(parent, &parent_props);
         engine.register_container(child, &child_props);
         engine.add_child(parent, child);
@@ -369,12 +375,16 @@ mod tests {
         let parent = ids[0];
         let child1 = ids[1];
         let child2 = ids[2];
-        let mut parent_props = LayoutProps::default();
-        parent_props.width = Some(Sizing::Points(80.0));
-        parent_props.height = Some(Sizing::Points(24.0));
-        let mut child_props = LayoutProps::default();
-        child_props.width = Some(Sizing::Points(40.0));
-        child_props.height = Some(Sizing::Points(5.0));
+        let parent_props = LayoutProps {
+            width: Some(Sizing::Points(80.0)),
+            height: Some(Sizing::Points(24.0)),
+            ..Default::default()
+        };
+        let child_props = LayoutProps {
+            width: Some(Sizing::Points(40.0)),
+            height: Some(Sizing::Points(5.0)),
+            ..Default::default()
+        };
         engine.register_container(parent, &parent_props);
         engine.register_container(child1, &child_props);
         engine.register_container(child2, &child_props);
@@ -391,13 +401,17 @@ mod tests {
         let ids = make_ids(2);
         let parent = ids[0];
         let child = ids[1];
-        let mut parent_props = LayoutProps::default();
-        parent_props.width = Some(Sizing::Points(80.0));
-        parent_props.height = Some(Sizing::Points(24.0));
-        parent_props.direction = FlexDirection::Column;
-        let mut child_props = LayoutProps::default();
-        child_props.width = Some(Sizing::Points(20.0));
-        child_props.height = Some(Sizing::Points(10.0));
+        let parent_props = LayoutProps {
+            width: Some(Sizing::Points(80.0)),
+            height: Some(Sizing::Points(24.0)),
+            direction: FlexDirection::Column,
+            ..Default::default()
+        };
+        let child_props = LayoutProps {
+            width: Some(Sizing::Points(20.0)),
+            height: Some(Sizing::Points(10.0)),
+            ..Default::default()
+        };
         engine.register_container(parent, &parent_props);
         engine.register_container(child, &child_props);
         engine.add_child(parent, child);
@@ -416,13 +430,17 @@ mod tests {
         let ids = make_ids(2);
         let parent = ids[0];
         let child = ids[1];
-        let mut parent_props = LayoutProps::default();
-        parent_props.width = Some(Sizing::Points(80.0));
-        parent_props.height = Some(Sizing::Points(24.0));
-        parent_props.direction = FlexDirection::Row;
-        let mut child_props = LayoutProps::default();
-        child_props.width = Some(Sizing::Points(20.0));
-        child_props.height = Some(Sizing::Points(10.0));
+        let parent_props = LayoutProps {
+            width: Some(Sizing::Points(80.0)),
+            height: Some(Sizing::Points(24.0)),
+            direction: FlexDirection::Row,
+            ..Default::default()
+        };
+        let child_props = LayoutProps {
+            width: Some(Sizing::Points(20.0)),
+            height: Some(Sizing::Points(10.0)),
+            ..Default::default()
+        };
         engine.register_container(parent, &parent_props);
         engine.register_container(child, &child_props);
         engine.add_child(parent, child);

@@ -1,3 +1,5 @@
+//! Compositor: layer-based rendering with z-ordering (background, content, overlay, cursor).
+
 mod layer;
 mod renderer;
 

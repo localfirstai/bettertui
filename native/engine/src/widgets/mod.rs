@@ -1,3 +1,5 @@
+//! Widget framework: Widget trait, built-in widgets, context, reconciliation, and theming.
+
 pub mod app;
 pub mod badge_widget;
 pub mod box_widget;

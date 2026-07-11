@@ -564,7 +564,7 @@ mod tests {
         assert!(result.is_ok());
 
         let node = proc.get_node(root).unwrap();
-        assert!(node.attributes.get("data-testid").is_none());
+        assert!(!node.attributes.contains_key("data-testid"));
     }
 
     #[test]

@@ -1,3 +1,5 @@
+//! Text engine: buffer, cursor, selection, search, and undo management.
+
 mod buffer;
 mod cursor;
 mod search;

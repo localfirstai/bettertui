@@ -1,3 +1,5 @@
+//! Animation engine: easing functions, springs, tweens, keyframes, and animation state management.
+
 /// Easing functions for animations.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Easing {
@@ -357,8 +359,7 @@ impl Keyframes {
 
     pub fn add_keyframe(mut self, time: f32, value: f32) -> Self {
         self.keyframes.push(Keyframe { time, value });
-        self.keyframes
-            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
+        self.keyframes.sort_by(|a, b| a.time.total_cmp(&b.time));
         self
     }
 
@@ -941,14 +942,14 @@ mod tests {
     }
 
     #[test]
-    fn easingEaseIn() {
+    fn easing_ease_in() {
         let easing = Easing::EaseIn;
         assert!((easing.apply(0.25) - 0.0625).abs() < 0.001);
         assert!((easing.apply(0.5) - 0.25).abs() < 0.001);
     }
 
     #[test]
-    fn easingEaseOut() {
+    fn easing_ease_out() {
         let easing = Easing::EaseOut;
         assert!((easing.apply(0.25) - 0.4375).abs() < 0.001);
         assert!((easing.apply(0.5) - 0.75).abs() < 0.001);

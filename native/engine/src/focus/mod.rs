@@ -1,3 +1,5 @@
+//! Focus management: focus state, manager, scope, traversal, and events.
+
 mod events;
 mod manager;
 mod scope;
