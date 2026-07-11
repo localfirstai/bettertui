@@ -1,5 +1,5 @@
 import { Button } from "@components/ui/button";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy } from "@phosphor-icons/react";
 import { useState } from "react";
 
 interface CopyButtonProps {

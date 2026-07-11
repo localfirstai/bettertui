@@ -1,5 +1,5 @@
 import { Button } from "@components/ui/button";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
