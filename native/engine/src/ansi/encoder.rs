@@ -214,11 +214,34 @@ impl AnsiEncoder {
 
     fn move_to(&mut self, x: u16, y: u16) {
         self.buffer.extend_from_slice(b"\x1b[");
-        let y_str = format!("{}", y + 1);
-        let x_str = format!("{}", x + 1);
-        self.buffer.extend_from_slice(y_str.as_bytes());
+        let mut buf = [0u8; 10];
+        let mut i = buf.len();
+        let mut val = (y + 1) as u32;
+        if val == 0 {
+            i -= 1;
+            buf[i] = b'0';
+        } else {
+            while val > 0 {
+                i -= 1;
+                buf[i] = b'0' + (val % 10) as u8;
+                val /= 10;
+            }
+        }
+        self.buffer.extend_from_slice(&buf[i..]);
         self.buffer.push(b';');
-        self.buffer.extend_from_slice(x_str.as_bytes());
+        let mut i = buf.len();
+        let mut val = (x + 1) as u32;
+        if val == 0 {
+            i -= 1;
+            buf[i] = b'0';
+        } else {
+            while val > 0 {
+                i -= 1;
+                buf[i] = b'0' + (val % 10) as u8;
+                val /= 10;
+            }
+        }
+        self.buffer.extend_from_slice(&buf[i..]);
         self.buffer.push(b'H');
     }
 

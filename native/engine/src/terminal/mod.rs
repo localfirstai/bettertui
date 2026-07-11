@@ -1,3 +1,6 @@
+pub mod query;
+pub mod vt;
+
 use std::io::{self, Write, stdout};
 
 use crossterm::{

@@ -15,7 +15,40 @@ pub enum CsiCommand {
     CursorPositionSave,
     CursorPositionRestore,
     AttributeReset,
+    DeviceAttributes(Vec<u32>),
+    SecondaryDeviceAttributes(Vec<u32>),
+    TertiaryDeviceAttributes(String),
+    KittyKeyEvent {
+        keycode: u32,
+        modifiers: u32,
+        event_type: KittyEventType,
+        associated_text: Option<String>,
+    },
+    KittyEnhancementLevel {
+        level: u8,
+        action: ModeAction,
+    },
+    KittyKeyboardQuery(Vec<u32>),
     Unknown(u8, Vec<u32>),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KittyEventType {
+    Press,
+    Repeat,
+    Release,
+    Unknown,
+}
+
+impl KittyEventType {
+    pub fn from_flag(flag: u32) -> Self {
+        match flag {
+            1 => Self::Press,
+            2 => Self::Repeat,
+            3 => Self::Release,
+            _ => Self::Unknown,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -229,16 +262,33 @@ impl CsiCommand {
                 }
             }
             b'c' => {
-                if params.is_empty() || params.first() == Some(&0) {
-                    Some(Self::DeviceStatus(DeviceStatus::DeviceAttributes))
+                if intermediate.first() == Some(&b'?') {
+                    Some(Self::DeviceAttributes(params.to_vec()))
+                } else if intermediate.first() == Some(&b'>') {
+                    Some(Self::SecondaryDeviceAttributes(params.to_vec()))
                 } else {
-                    Some(Self::DeviceStatus(DeviceStatus::DeviceAttributes2))
+                    Some(Self::DeviceStatus(DeviceStatus::DeviceAttributes))
+                }
+            }
+            b'}' | b'|' => {
+                if intermediate.first() == Some(&b'!') {
+                    Some(Self::TertiaryDeviceAttributes(String::new()))
+                } else {
+                    None
                 }
             }
             b'h' => {
                 if intermediate.first() == Some(&b'?') {
                     let mode = params.first().copied().unwrap_or(0);
-                    Some(Self::Mode(ModeAction::Set, ModeType::Private(mode)))
+                    if mode == 27127 {
+                        let level = params.get(1).copied().unwrap_or(1) as u8;
+                        Some(Self::KittyEnhancementLevel {
+                            level,
+                            action: ModeAction::Set,
+                        })
+                    } else {
+                        Some(Self::Mode(ModeAction::Set, ModeType::Private(mode)))
+                    }
                 } else {
                     let mode = params.first().copied().unwrap_or(0);
                     Some(Self::Mode(ModeAction::Set, ModeType::Normal(mode)))
@@ -247,14 +297,43 @@ impl CsiCommand {
             b'l' => {
                 if intermediate.first() == Some(&b'?') {
                     let mode = params.first().copied().unwrap_or(0);
-                    Some(Self::Mode(ModeAction::Reset, ModeType::Private(mode)))
+                    if mode == 27127 {
+                        let level = params.get(1).copied().unwrap_or(1) as u8;
+                        Some(Self::KittyEnhancementLevel {
+                            level,
+                            action: ModeAction::Reset,
+                        })
+                    } else {
+                        Some(Self::Mode(ModeAction::Reset, ModeType::Private(mode)))
+                    }
                 } else {
                     let mode = params.first().copied().unwrap_or(0);
                     Some(Self::Mode(ModeAction::Reset, ModeType::Normal(mode)))
                 }
             }
             b's' => Some(Self::CursorPositionSave),
-            b'u' => Some(Self::CursorPositionRestore),
+            b'u' => {
+                if intermediate.first() == Some(&b'?') {
+                    Some(Self::KittyKeyboardQuery(params.to_vec()))
+                } else if params.is_empty()
+                    || params.first() == Some(&0)
+                    || params.first() == Some(&1)
+                {
+                    Some(Self::CursorPositionRestore)
+                } else {
+                    let keycode = params[0];
+                    let modifiers = params.get(1).copied().unwrap_or(0);
+                    let event_type_value = params.get(2).copied().unwrap_or(1);
+                    let event_type = KittyEventType::from_flag(event_type_value);
+                    let associated_text = None;
+                    Some(Self::KittyKeyEvent {
+                        keycode,
+                        modifiers,
+                        event_type,
+                        associated_text,
+                    })
+                }
+            }
             b'm' => Some(Self::Sgr(parse_sgr(params))),
             b'g' => {
                 let action = match params.first().copied().unwrap_or(0) {

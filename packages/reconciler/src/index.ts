@@ -287,3 +287,15 @@ export function createReconciler(buffer: CommandBuffer): {
     resetAfterCommit,
   };
 }
+
+export type {
+  Container,
+  CommandBufferConsumer,
+  ReconcilerType,
+  OpaqueRoot,
+} from "./renderer";
+export {
+  createBetterTUIReconciler,
+  createContainer,
+  updateContainer,
+} from "./renderer";

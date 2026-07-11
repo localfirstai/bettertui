@@ -18,8 +18,8 @@ export type EventCallback = (event: KeyEvent | MouseEvent) => void;
 export interface EventLoop {
   start(): void;
   stop(): void;
-  pushKey(key: string, modifiers: string, targetId: string): void;
-  pushMouse(button: string, x: number, y: number, targetId: string): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, targetId: number): void;
+  pushMouse(button: string, x: number, y: number, targetId: number): void;
   drain(): string;
   onEvent(callback: EventCallback): void;
 }
@@ -31,20 +31,21 @@ export function createEventLoop(eventBus: NapiEventBus): EventLoop {
 
   function stop(): void {}
 
-  function pushKey(key: string, modifiers: string, targetId: string): void {
-    eventBus.pushKey(key, modifiers, targetId);
+  function pushKey(
+    key: string,
+    ctrl: boolean,
+    shift: boolean,
+    alt: boolean,
+    targetId: number,
+  ): void {
+    eventBus.pushKey(key, ctrl, shift, alt, targetId);
     for (const cb of callbacks) {
-      cb({
-        key,
-        ctrl: modifiers.includes("ctrl"),
-        shift: modifiers.includes("shift"),
-        alt: modifiers.includes("alt"),
-      });
+      cb({ key, ctrl, shift, alt });
     }
   }
 
-  function pushMouse(button: string, x: number, y: number, targetId: string): void {
-    eventBus.pushMouseButton(button, x, y, targetId);
+  function pushMouse(button: string, x: number, y: number, targetId: number): void {
+    eventBus.pushMouse(button, x, y, targetId);
     for (const cb of callbacks) {
       cb({ button: button as "left" | "right" | "middle", x, y });
     }

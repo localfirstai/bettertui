@@ -8,10 +8,6 @@ pub use writer::PtyWriter;
 
 pub struct PtyRuntime {
     process: Option<PtyProcess>,
-    #[allow(dead_code)]
-    reader: Option<PtyReader>,
-    #[allow(dead_code)]
-    writer: Option<PtyWriter>,
 }
 
 impl Default for PtyRuntime {
@@ -22,11 +18,7 @@ impl Default for PtyRuntime {
 
 impl PtyRuntime {
     pub fn new() -> Self {
-        Self {
-            process: None,
-            reader: None,
-            writer: None,
-        }
+        Self { process: None }
     }
 
     pub fn spawn(&mut self, config: PtyConfig) -> Result<(), PtyError> {

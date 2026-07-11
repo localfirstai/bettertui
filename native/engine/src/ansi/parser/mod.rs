@@ -3,7 +3,10 @@ mod osc;
 mod sgr;
 mod state;
 
-pub use csi::{CsiCommand, CursorMovement, EraseMode, ScrollDirection};
+pub use csi::{
+    BackgroundColor, CsiCommand, CursorMovement, DeviceStatus, EraseMode, ForegroundColor,
+    KittyEventType, ModeAction, ModeType, ScrollDirection, TabStopAction,
+};
 pub use osc::{ClipboardData, Hyperlink, OscCommand};
 pub use sgr::{SgrAttribute, SgrState};
 pub use state::{ParserEvent, ParserState};
@@ -103,15 +106,15 @@ impl AnsiParser {
                 }
             }
             ParserState::Csi => {
-                if (0x30..=0x3f).contains(&byte) {
-                    if byte == b';' {
-                        self.params.push(0);
-                    } else if let Some(last) = self.params.last_mut() {
+                if byte == b';' {
+                    self.params.push(0);
+                } else if (0x30..=0x39).contains(&byte) {
+                    if let Some(last) = self.params.last_mut() {
                         *last = *last * 10 + (byte - 0x30) as u32;
                     } else {
                         self.params.push((byte - 0x30) as u32);
                     }
-                } else if (0x20..=0x2f).contains(&byte) {
+                } else if (0x3c..=0x3f).contains(&byte) || (0x20..=0x2f).contains(&byte) {
                     self.intermediate.push(byte);
                 } else if (0x40..=0x7e).contains(&byte) {
                     self.process_csi(byte);
@@ -147,7 +150,8 @@ impl AnsiParser {
             }
             ParserState::DcsTerminator => {
                 if byte == b'\\' {
-                    self.events.push_back(ParserEvent::Dcs(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Dcs(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -157,7 +161,8 @@ impl AnsiParser {
             }
             ParserState::Pm => {
                 if byte == 0x07 {
-                    self.events.push_back(ParserEvent::Pm(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::PmTerminator;
@@ -167,7 +172,8 @@ impl AnsiParser {
             }
             ParserState::PmTerminator => {
                 if byte == b'\\' {
-                    self.events.push_back(ParserEvent::Pm(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -177,7 +183,8 @@ impl AnsiParser {
             }
             ParserState::Sos => {
                 if byte == 0x07 {
-                    self.events.push_back(ParserEvent::Sos(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::SosTerminator;
@@ -187,7 +194,8 @@ impl AnsiParser {
             }
             ParserState::SosTerminator => {
                 if byte == b'\\' {
-                    self.events.push_back(ParserEvent::Sos(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -197,7 +205,8 @@ impl AnsiParser {
             }
             ParserState::Apc => {
                 if byte == 0x07 {
-                    self.events.push_back(ParserEvent::Apc(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::ApcTerminator;
@@ -207,7 +216,8 @@ impl AnsiParser {
             }
             ParserState::ApcTerminator => {
                 if byte == b'\\' {
-                    self.events.push_back(ParserEvent::Apc(self.buffer.clone()));
+                    self.events
+                        .push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);

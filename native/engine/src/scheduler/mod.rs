@@ -65,6 +65,7 @@ impl Ord for FrameRequest {
 }
 
 pub type IdleCallback = Box<dyn FnOnce() + Send>;
+type AnimationCallback = Box<dyn FnMut(u64) + Send>;
 
 pub struct FrameBudget {
     pub target_frame_time: Duration,
@@ -139,7 +140,7 @@ pub struct Scheduler {
     dropped_frames: u64,
     priority_queue: BinaryHeap<FrameRequest>,
     idle_callbacks: Vec<IdleCallback>,
-    animation_frames: Vec<Box<dyn FnMut(u64) + Send>>,
+    animation_frames: Vec<(u64, AnimationCallback)>,
     animation_frame_id: u64,
     frame_budget: FrameBudget,
     stats: SchedulerStats,
@@ -212,14 +213,14 @@ impl Scheduler {
 
     pub fn schedule_animation(&mut self, callback: impl FnMut(u64) + Send + 'static) -> u64 {
         let id = self.animation_frame_id;
-        self.animation_frames.push(Box::new(callback));
+        self.animation_frames.push((id, Box::new(callback)));
         self.animation_frame_id += 1;
         id
     }
 
     pub fn cancel_animation(&mut self, id: u64) {
-        if (id as usize) < self.animation_frames.len() {
-            let _ = self.animation_frames.remove(id as usize);
+        if let Some(pos) = self.animation_frames.iter().position(|(fid, _)| *fid == id) {
+            drop(self.animation_frames.swap_remove(pos));
         }
     }
 
@@ -271,6 +272,12 @@ impl Scheduler {
         }
 
         self.stats.budget_exceeded = self.frame_budget.budget_exceeded_count;
+
+        let prev_avg = self.stats.avg_frame_time.as_nanos() as f64;
+        let new_dur = self.frame_budget.last_frame_duration.as_nanos() as f64;
+        let count = self.frame_count.max(1) as f64;
+        let smoothed = prev_avg + (new_dur - prev_avg) / count;
+        self.stats.avg_frame_time = Duration::from_nanos(smoothed as u64);
     }
 
     pub fn execute_idle_callbacks(&mut self) {

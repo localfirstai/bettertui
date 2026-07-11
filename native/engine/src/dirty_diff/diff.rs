@@ -93,7 +93,8 @@ impl DirtyDiff {
         self.last_generation = generation;
 
         let dirty_cells = Self::find_dirty_cells(current, previous);
-        self.regions = Self::merge_cells_to_regions(&dirty_cells, current.width());
+        self.regions =
+            Self::merge_cells_to_regions(&dirty_cells, current.width(), current.height());
         &self.regions
     }
 
@@ -131,14 +132,15 @@ impl DirtyDiff {
         dirty
     }
 
-    fn merge_cells_to_regions(cells: &[(u16, u16)], width: u16) -> Vec<DirtyRegion> {
+    fn merge_cells_to_regions(cells: &[(u16, u16)], width: u16, height: u16) -> Vec<DirtyRegion> {
         if cells.is_empty() {
             return Vec::new();
         }
 
-        let mut grid = vec![false; (width as usize) * 256];
+        let max_height = height as usize;
+        let mut grid = vec![false; (width as usize) * max_height];
         for &(x, y) in cells {
-            if (y as usize) < 256 {
+            if (y as usize) < max_height {
                 grid[(y as usize) * (width as usize) + (x as usize)] = true;
             }
         }
@@ -161,7 +163,8 @@ impl DirtyDiff {
             }
 
             let mut row = y;
-            while row + 1 < 256 {
+            let max_height_u16 = max_height as u16;
+            while row + 1 < max_height_u16 {
                 let mut can_extend = true;
                 for cx in x..=max_x {
                     if !grid[((row + 1) as usize) * (width as usize) + (cx as usize)] {

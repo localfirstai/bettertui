@@ -49,6 +49,10 @@ impl TextEngine {
         &self.buffer
     }
 
+    pub fn buffer_mut(&mut self) -> &mut TextBuffer {
+        &mut self.buffer
+    }
+
     pub fn cursor(&self) -> &Cursor {
         &self.cursor
     }
@@ -215,6 +219,14 @@ impl TextEngine {
 
     pub fn text(&self) -> String {
         self.buffer.to_string()
+    }
+
+    pub fn line_to_char(&self, line: usize) -> usize {
+        self.buffer.line_to_char(line)
+    }
+
+    pub fn char_to_line(&self, char_idx: usize) -> usize {
+        self.buffer.char_to_line(char_idx)
     }
 }
 

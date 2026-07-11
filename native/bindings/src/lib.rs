@@ -50,19 +50,31 @@ enum CommandJson {
     SetFlexDirection { id: u64, direction: String },
     SetJustifyContent { id: u64, value: String },
     SetAlignItems { id: u64, value: String },
+    SetAlignSelf { id: u64, value: String },
     SetWidth { id: u64, value: SizingJson },
     SetHeight { id: u64, value: SizingJson },
+    SetMinWidth { id: u64, value: SizingJson },
+    SetMinHeight { id: u64, value: SizingJson },
+    SetMaxWidth { id: u64, value: SizingJson },
+    SetMaxHeight { id: u64, value: SizingJson },
+    SetFlexBasis { id: u64, value: SizingJson },
     SetPadding { id: u64, value: RectValuesJson },
     SetMargin { id: u64, value: RectValuesJson },
     SetGap { id: u64, value: GapJson },
     SetFlexGrow { id: u64, value: f32 },
     SetFlexShrink { id: u64, value: f32 },
     SetPosition { id: u64, value: String },
+    SetInset { id: u64, value: RectValuesJson },
     SetDisplay { id: u64, value: String },
     SetOpacity { id: u64, value: f32 },
     SetClip { id: u64, value: bool },
     SetZIndex { id: u64, value: i32 },
     SetOverflow { id: u64, value: String },
+    SetAttribute { id: u64, key: String, value: String },
+    RemoveAttribute { id: u64, key: String },
+    SetTranslateX { id: u64, value: i32 },
+    SetTranslateY { id: u64, value: i32 },
+    SetTabIndex { id: u64, value: i32 },
     FocusNode { id: u64 },
     BlurNode { id: u64 },
     BeginFrame { frame_id: u64 },
@@ -465,13 +477,36 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetAlignItems { id, value } => {
             let v = match value.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::AlignItems::FlexStart,
+                "start" | "Start" | "flex_start" | "FlexStart" => {
+                    bettertui_engine::tree::AlignItems::FlexStart
+                }
+                "end" | "End" | "flex_end" | "FlexEnd" => {
+                    bettertui_engine::tree::AlignItems::FlexEnd
+                }
                 "center" | "Center" => bettertui_engine::tree::AlignItems::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::AlignItems::FlexEnd,
                 "stretch" | "Stretch" => bettertui_engine::tree::AlignItems::Stretch,
+                "baseline" | "Baseline" => bettertui_engine::tree::AlignItems::Baseline,
                 _ => bettertui_engine::tree::AlignItems::Stretch,
             };
             Some(Command::SetAlignItems {
+                id: u64_to_node_id(id),
+                value: v,
+            })
+        }
+        CommandJson::SetAlignSelf { id, value } => {
+            let v = match value.as_str() {
+                "start" | "Start" | "flex_start" | "FlexStart" => {
+                    bettertui_engine::tree::AlignSelf::FlexStart
+                }
+                "end" | "End" | "flex_end" | "FlexEnd" => {
+                    bettertui_engine::tree::AlignSelf::FlexEnd
+                }
+                "center" | "Center" => bettertui_engine::tree::AlignSelf::Center,
+                "stretch" | "Stretch" => bettertui_engine::tree::AlignSelf::Stretch,
+                "baseline" | "Baseline" => bettertui_engine::tree::AlignSelf::Baseline,
+                _ => bettertui_engine::tree::AlignSelf::Stretch,
+            };
+            Some(Command::SetAlignSelf {
                 id: u64_to_node_id(id),
                 value: v,
             })
@@ -481,6 +516,26 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
             value: value.into(),
         }),
         CommandJson::SetHeight { id, value } => Some(Command::SetHeight {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
+        CommandJson::SetMinWidth { id, value } => Some(Command::SetMinWidth {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
+        CommandJson::SetMinHeight { id, value } => Some(Command::SetMinHeight {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
+        CommandJson::SetMaxWidth { id, value } => Some(Command::SetMaxWidth {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
+        CommandJson::SetMaxHeight { id, value } => Some(Command::SetMaxHeight {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
+        CommandJson::SetFlexBasis { id, value } => Some(Command::SetFlexBasis {
             id: u64_to_node_id(id),
             value: value.into(),
         }),
@@ -515,6 +570,10 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 value: v,
             })
         }
+        CommandJson::SetInset { id, value } => Some(Command::SetInset {
+            id: u64_to_node_id(id),
+            value: value.into(),
+        }),
         CommandJson::SetDisplay { id, value } => {
             let v = match value.as_str() {
                 "none" | "None" => bettertui_engine::tree::VisibilityDisplay::None,
@@ -548,6 +607,27 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 value: v,
             })
         }
+        CommandJson::SetAttribute { id, key, value } => Some(Command::SetAttribute {
+            id: u64_to_node_id(id),
+            key,
+            value,
+        }),
+        CommandJson::RemoveAttribute { id, key } => Some(Command::RemoveAttribute {
+            id: u64_to_node_id(id),
+            key,
+        }),
+        CommandJson::SetTranslateX { id, value } => Some(Command::SetTranslateX {
+            id: u64_to_node_id(id),
+            value,
+        }),
+        CommandJson::SetTranslateY { id, value } => Some(Command::SetTranslateY {
+            id: u64_to_node_id(id),
+            value,
+        }),
+        CommandJson::SetTabIndex { id, value } => Some(Command::SetTabIndex {
+            id: u64_to_node_id(id),
+            value,
+        }),
         CommandJson::FocusNode { id } => Some(Command::FocusNode {
             id: u64_to_node_id(id),
         }),
@@ -1151,6 +1231,16 @@ impl NapiEventBus {
             .push_mouse(btn, Point::new(x as u16, y as u16), target);
     }
 
+    /// Push a mouse motion event.
+    #[napi]
+    pub fn push_mouse_motion(&mut self, x: u32, y: u32, target_id: u32) {
+        use bettertui_engine::events::types::MouseButton;
+        use bettertui_engine::tree::visual::Point;
+        let target = u64_to_node_id(target_id as u64);
+        self.bus
+            .push_mouse(MouseButton::None, Point::new(x as u16, y as u16), target);
+    }
+
     /// Push a paste event.
     #[napi]
     pub fn push_paste(&mut self, text: String, target_id: u32) {
@@ -1252,26 +1342,28 @@ impl NapiFocusManager {
         }
     }
 
-    /// Focus a node.
+    /// Focus a node. Returns true if focus changed.
     #[napi]
-    pub fn focus(&mut self, id: u32) {
+    pub fn focus(&mut self, id: u32) -> bool {
         let node_id = u64_to_node_id(id as u64);
-        self.manager.focus(node_id);
+        self.manager.focus(node_id).is_some()
     }
 
     /// Blur the currently focused node.
     #[napi]
-    pub fn blur_current(&mut self) {
+    pub fn blur_current(&mut self) -> bool {
         if let Some(focused) = self.manager.focused() {
-            let _ = self.manager.blur(focused);
+            self.manager.blur(focused).is_some()
+        } else {
+            false
         }
     }
 
-    /// Blur a specific node.
+    /// Blur a specific node. Returns true if the node was blurred.
     #[napi]
-    pub fn blur(&mut self, id: u32) {
+    pub fn blur(&mut self, id: u32) -> bool {
         let node_id = u64_to_node_id(id as u64);
-        let _ = self.manager.blur(node_id);
+        self.manager.blur(node_id).is_some()
     }
 
     /// Get the currently focused node ID (0 if none).
@@ -1283,17 +1375,44 @@ impl NapiFocusManager {
             .unwrap_or(0)
     }
 
-    /// Traverse focus to next/previous node.
+    /// Check if a specific node is focused.
     #[napi]
-    pub fn traverse(&mut self, forward: bool) {
-        let next = if forward {
-            bettertui_engine::focus::FocusTraversal::next(&self.manager)
-        } else {
-            bettertui_engine::focus::FocusTraversal::previous(&self.manager)
+    pub fn is_focused(&self, id: u32) -> bool {
+        let node_id = u64_to_node_id(id as u64);
+        self.manager.is_focused(node_id)
+    }
+
+    /// Traverse focus to next/previous node. Returns the newly focused node ID (0 if none).
+    #[napi]
+    pub fn traverse(&mut self, direction: String) -> u32 {
+        let dir = match direction.to_lowercase().as_str() {
+            "forward" | "next" => bettertui_engine::focus::FocusDirection::Forward,
+            "backward" | "previous" | "prev" => bettertui_engine::focus::FocusDirection::Backward,
+            "first" => bettertui_engine::focus::FocusDirection::First,
+            "last" => bettertui_engine::focus::FocusDirection::Last,
+            "up" => bettertui_engine::focus::FocusDirection::Up,
+            "down" => bettertui_engine::focus::FocusDirection::Down,
+            "left" => bettertui_engine::focus::FocusDirection::Left,
+            "right" => bettertui_engine::focus::FocusDirection::Right,
+            _ => bettertui_engine::focus::FocusDirection::Forward,
         };
+        let next = bettertui_engine::focus::FocusTraversal::traverse(&self.manager, dir);
         if let Some(id) = next {
             self.manager.focus(id);
+            node_id_to_u64(id) as u32
+        } else {
+            0
         }
+    }
+
+    /// Get focus order list.
+    #[napi]
+    pub fn focus_order(&self) -> Vec<u32> {
+        self.manager
+            .tab_order()
+            .iter()
+            .map(|id| node_id_to_u64(*id) as u32)
+            .collect()
     }
 }
 
@@ -1327,88 +1446,244 @@ impl NapiTextEngine {
         self.engine.insert_str(&text);
     }
 
-    /// Delete the character before the cursor.
+    /// Insert text at the cursor position (alias for insertStr for compatibility).
+    #[napi]
+    pub fn insert_text(&mut self, text: String) {
+        self.engine.insert_str(&text);
+    }
+
+    /// Delete the character before the cursor (backspace).
     #[napi]
     pub fn delete_char(&mut self) {
         self.engine.delete_char();
     }
 
-    /// Undo the last action.
+    /// Delete character after the cursor (forward delete).
     #[napi]
-    pub fn undo(&mut self) -> bool {
-        self.engine.undo()
+    pub fn delete_char_forward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let total = self.engine.char_count();
+        if pos < total {
+            self.engine.buffer_mut().delete_char(pos);
+        }
     }
 
-    /// Redo the last undone action.
+    /// Delete the word before the cursor.
     #[napi]
-    pub fn redo(&mut self) -> bool {
-        self.engine.redo()
+    pub fn delete_word_backward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let boundary = self.engine.buffer().word_boundary_left(pos);
+        if boundary < pos {
+            self.engine.buffer_mut().delete_range(boundary, pos);
+            self.engine.cursor_mut().set_position(boundary);
+        }
     }
 
-    /// Get the full text content.
+    /// Delete the word after the cursor.
     #[napi]
-    pub fn text(&self) -> String {
-        self.engine.text()
+    pub fn delete_word_forward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let boundary = self.engine.buffer().word_boundary_right(pos);
+        if boundary > pos {
+            self.engine.buffer_mut().delete_range(pos, boundary);
+        }
     }
 
-    /// Get the character count.
+    /// Delete from cursor to start of line.
     #[napi]
-    pub fn char_count(&self) -> u32 {
+    pub fn delete_line_backward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let line = self.engine.buffer().char_to_line(pos);
+        let line_start = self.engine.buffer().line_to_char(line);
+        if line_start < pos {
+            self.engine.buffer_mut().delete_range(line_start, pos);
+            self.engine.cursor_mut().set_position(line_start);
+        }
+    }
+
+    /// Delete from cursor to end of line.
+    #[napi]
+    pub fn delete_line_forward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let line = self.engine.buffer().char_to_line(pos);
+        let line_end = if line + 1 < self.engine.line_count() {
+            self.engine.buffer().line_to_char(line + 1)
+        } else {
+            self.engine.char_count()
+        };
+        if pos < line_end {
+            self.engine.buffer_mut().delete_range(pos, line_end);
+        }
+    }
+
+    /// Move cursor left one character.
+    #[napi]
+    pub fn cursor_left(&mut self) {
+        if self.engine.cursor().position() > 0 {
+            self.engine.cursor_mut().move_left();
+        }
+    }
+
+    /// Move cursor right one character.
+    #[napi]
+    pub fn cursor_right(&mut self) {
+        if self.engine.cursor().position() < self.engine.char_count() {
+            self.engine.cursor_mut().move_right();
+        }
+    }
+
+    /// Move cursor up one line.
+    #[napi]
+    pub fn cursor_up(&mut self) {
+        let line = self
+            .engine
+            .buffer()
+            .char_to_line(self.engine.cursor().position());
+        if line > 0 {
+            let current_line_start = self.engine.buffer().line_to_char(line);
+            let prev_line_start = self.engine.buffer().line_to_char(line - 1);
+            let prev_line_len = current_line_start - prev_line_start - 1;
+            let col = self.engine.cursor().position() - current_line_start;
+            let new_col = col.min(prev_line_len);
+            self.engine
+                .cursor_mut()
+                .set_position(prev_line_start + new_col);
+        }
+    }
+
+    /// Move cursor down one line.
+    #[napi]
+    pub fn cursor_down(&mut self) {
+        let line = self
+            .engine
+            .buffer()
+            .char_to_line(self.engine.cursor().position());
+        if line + 1 < self.engine.line_count() {
+            let current_line_start = self.engine.buffer().line_to_char(line);
+            let next_line_start = self.engine.buffer().line_to_char(line + 1);
+            let next_line_len = if line + 2 < self.engine.line_count() {
+                self.engine.buffer().line_to_char(line + 2) - next_line_start - 1
+            } else {
+                self.engine.char_count() - next_line_start
+            };
+            let col = self.engine.cursor().position() - current_line_start;
+            let new_col = col.min(next_line_len);
+            self.engine
+                .cursor_mut()
+                .set_position(next_line_start + new_col);
+        }
+    }
+
+    /// Move cursor to start of the current line.
+    #[napi]
+    pub fn cursor_line_start(&mut self) {
+        let line = self
+            .engine
+            .buffer()
+            .char_to_line(self.engine.cursor().position());
+        let line_start = self.engine.buffer().line_to_char(line);
+        self.engine.cursor_mut().set_position(line_start);
+    }
+
+    /// Move cursor to end of the current line.
+    #[napi]
+    pub fn cursor_line_end(&mut self) {
+        let line = self
+            .engine
+            .buffer()
+            .char_to_line(self.engine.cursor().position());
+        let line_end = if line + 1 < self.engine.line_count() {
+            self.engine.buffer().line_to_char(line + 1) - 1
+        } else {
+            self.engine.char_count()
+        };
+        self.engine.cursor_mut().set_position(line_end);
+    }
+
+    /// Insert text at a specific position.
+    #[napi]
+    pub fn insert_at(&mut self, position: u32, text: String) {
+        let pos = position as usize;
+        if pos <= self.engine.char_count() {
+            self.engine.buffer_mut().insert_str(pos, &text);
+        }
+    }
+
+    /// Delete a range of characters. Returns the deleted text.
+    #[napi]
+    pub fn delete_at(&mut self, position: u32, length: u32) -> String {
+        let pos = position as usize;
+        let end = pos + length as usize;
+        let max = self.engine.char_count();
+        let actual_end = end.min(max);
+        if pos < actual_end {
+            let deleted = self.engine.buffer().substring(pos, actual_end);
+            self.engine.buffer_mut().delete_range(pos, actual_end);
+            deleted
+        } else {
+            String::new()
+        }
+    }
+
+    /// Get the character at a position.
+    #[napi]
+    pub fn char_at(&self, position: u32) -> String {
+        let result = self.engine.buffer().char_at(position as usize);
+        if result == '\0' {
+            String::new()
+        } else {
+            result.to_string()
+        }
+    }
+
+    /// Get a substring of the text buffer.
+    #[napi]
+    pub fn substring(&self, start: u32, end: u32) -> String {
+        self.engine.buffer().substring(start as usize, end as usize)
+    }
+
+    /// Replace all occurrences of a pattern with replacement. Returns number of replacements.
+    #[napi]
+    pub fn replace_all(
+        &mut self,
+        pattern: String,
+        replacement: String,
+        case_sensitive: bool,
+    ) -> u32 {
+        use bettertui_engine::text::SearchOptions;
+        let options = SearchOptions {
+            case_sensitive,
+            ..Default::default()
+        };
+        self.engine.replace(&pattern, &replacement, options) as u32
+    }
+
+    /// Check if undo is available.
+    #[napi]
+    pub fn can_undo(&self) -> bool {
+        self.engine.undo_manager().can_undo()
+    }
+
+    /// Check if redo is available.
+    #[napi]
+    pub fn can_redo(&self) -> bool {
+        self.engine.undo_manager().can_redo()
+    }
+
+    /// Get the total length in characters.
+    #[napi]
+    pub fn length(&self) -> u32 {
         self.engine.char_count() as u32
     }
 
-    /// Get the line count.
+    /// Get all lines as a string array.
     #[napi]
-    pub fn line_count(&self) -> u32 {
-        self.engine.line_count() as u32
-    }
-
-    /// Get the word count.
-    #[napi]
-    pub fn word_count(&self) -> u32 {
-        self.engine.word_count() as u32
-    }
-
-    /// Check if the buffer is empty.
-    #[napi]
-    pub fn is_empty(&self) -> bool {
-        self.engine.is_empty()
-    }
-
-    /// Clear the buffer.
-    #[napi]
-    pub fn clear(&mut self) {
-        self.engine.clear();
-    }
-
-    /// Get cursor position.
-    #[napi]
-    pub fn cursor_position(&self) -> u32 {
-        self.engine.cursor().position() as u32
-    }
-
-    /// Set cursor position.
-    #[napi]
-    pub fn set_cursor_position(&mut self, pos: u32) {
-        self.engine.cursor_mut().set_position(pos as usize);
-    }
-
-    /// Search for a pattern.
-    #[napi]
-    pub fn search(&mut self, pattern: String) -> String {
-        let results = self.engine.search(&pattern, Default::default());
-        let json_results: Vec<serde_json::Value> = results
-            .iter()
-            .map(|r| {
-                serde_json::json!({
-                    "start": r.range.start,
-                    "end": r.range.end,
-                    "line": r.line,
-                    "column": r.column,
-                })
-            })
-            .collect();
-        serde_json::to_string(&json_results).unwrap_or_else(|_| "[]".into())
+    pub fn lines(&self) -> Vec<String> {
+        let mut result = Vec::new();
+        for i in 0..self.engine.line_count() {
+            result.push(self.engine.line(i).unwrap_or_default());
+        }
+        result
     }
 }
 
@@ -1468,6 +1743,36 @@ impl NapiScheduler {
     pub fn dropped_frames(&self) -> String {
         self.scheduler.dropped_frames().to_string()
     }
+
+    /// Get the current FPS.
+    #[napi]
+    pub fn fps(&self) -> String {
+        let interval = self.scheduler.frame_budget().target_frame_time;
+        if interval.is_zero() {
+            "0".into()
+        } else {
+            (1000 / interval.as_millis()).to_string()
+        }
+    }
+
+    /// Get the frame budget in milliseconds.
+    #[napi]
+    pub fn frame_budget_ms(&self) -> String {
+        self.scheduler
+            .frame_budget()
+            .target_frame_time
+            .as_millis()
+            .to_string()
+    }
+
+    /// Check if the scheduler is idle.
+    #[napi]
+    pub fn is_idle(&self) -> bool {
+        matches!(
+            self.scheduler.status(),
+            bettertui_engine::scheduler::FrameStatus::Idle
+        )
+    }
 }
 
 // ─── NapiCapabilities ────────────────────────────────────────────────────────
@@ -1480,8 +1785,22 @@ pub struct NapiCapabilities {
     bracketed_paste: bool,
     mouse_support: bool,
     osc52_clipboard: bool,
+    osc8: bool,
+    synchronized_output: bool,
+    underline_color: bool,
+    strikethrough: bool,
+    cursor_style: bool,
+    alternate_scroll: bool,
+    kitty_graphics: bool,
+    sixel: bool,
+    iterm_images: bool,
+    focus_events: bool,
+    csi_u: bool,
     term_width: u32,
     term_height: u32,
+    pixel_width: u32,
+    pixel_height: u32,
+    has_pixel_size: bool,
 }
 
 #[napi]
@@ -1490,6 +1809,7 @@ impl NapiCapabilities {
     pub fn detect() -> Self {
         let caps = bettertui_engine::capabilities::global_capabilities();
         let (w, h) = caps.terminal_size();
+        let pixel = caps.pixel_size();
         Self {
             brand: format!("{:?}", caps.brand()),
             true_color: caps.supports_true_color(),
@@ -1497,8 +1817,22 @@ impl NapiCapabilities {
             bracketed_paste: caps.supports_bracketed_paste(),
             mouse_support: caps.input.mouse_modes.normal_mouse,
             osc52_clipboard: caps.supports_osc52(),
+            osc8: caps.supports_osc8(),
+            synchronized_output: caps.features().synchronized_output,
+            underline_color: caps.features().underline_color,
+            strikethrough: caps.features().strikethrough,
+            cursor_style: caps.features().cursor_style,
+            alternate_scroll: caps.features().alternate_scroll,
+            kitty_graphics: caps.supports_kitty_graphics(),
+            sixel: caps.supports_sixel(),
+            iterm_images: caps.supports_iterm_images(),
+            focus_events: caps.supports_focus_events(),
+            csi_u: caps.supports_csi_u(),
             term_width: w as u32,
             term_height: h as u32,
+            pixel_width: pixel.map_or(0, |p| p.0),
+            pixel_height: pixel.map_or(0, |p| p.1),
+            has_pixel_size: pixel.is_some(),
         }
     }
 
@@ -1536,6 +1870,70 @@ impl NapiCapabilities {
     pub fn get_terminal_size(&self) -> Vec<u32> {
         vec![self.term_width, self.term_height]
     }
+
+    #[napi(getter)]
+    pub fn get_pixel_size(&self) -> Vec<u32> {
+        if self.has_pixel_size {
+            vec![self.pixel_width, self.pixel_height]
+        } else {
+            vec![]
+        }
+    }
+
+    #[napi(getter)]
+    pub fn get_osc8(&self) -> bool {
+        self.osc8
+    }
+
+    #[napi(getter)]
+    pub fn get_synchronized_output(&self) -> bool {
+        self.synchronized_output
+    }
+
+    #[napi(getter)]
+    pub fn get_underline_color(&self) -> bool {
+        self.underline_color
+    }
+
+    #[napi(getter)]
+    pub fn get_strikethrough(&self) -> bool {
+        self.strikethrough
+    }
+
+    #[napi(getter)]
+    pub fn get_cursor_style(&self) -> bool {
+        self.cursor_style
+    }
+
+    #[napi(getter)]
+    pub fn get_alternate_scroll(&self) -> bool {
+        self.alternate_scroll
+    }
+
+    #[napi(getter)]
+    pub fn get_kitty_graphics(&self) -> bool {
+        self.kitty_graphics
+    }
+
+    #[napi(getter)]
+    pub fn get_sixel(&self) -> bool {
+        self.sixel
+    }
+
+    #[napi(getter)]
+    pub fn get_iterm_images(&self) -> bool {
+        self.iterm_images
+    }
+
+    #[napi(getter)]
+    pub fn get_focus_events(&self) -> bool {
+        self.focus_events
+    }
+
+    #[napi(getter)]
+    pub fn get_csi_u(&self) -> bool {
+        self.csi_u
+    }
 }
 
 // ─── Global Functions ────────────────────────────────────────────────────────
@@ -1551,14 +1949,28 @@ pub fn get_version() -> String {
 pub fn detect_capabilities() -> String {
     let caps = bettertui_engine::capabilities::global_capabilities();
     let (w, h) = caps.terminal_size();
+    let pixel = caps.pixel_size();
+    let features = caps.features();
     serde_json::json!({
         "brand": format!("{:?}", caps.brand()),
         "trueColor": caps.supports_true_color(),
         "kittyKeyboard": caps.supports_kitty_keyboard(),
+        "csi_u": caps.supports_csi_u(),
         "bracketedPaste": caps.supports_bracketed_paste(),
+        "focusEvents": caps.supports_focus_events(),
         "mouse": caps.input.mouse_modes.normal_mouse,
         "osc52": caps.supports_osc52(),
+        "osc8": caps.supports_osc8(),
+        "sync": features.synchronized_output,
+        "sgrPixel": caps.supports_kitty_graphics(),
+        "underlineColor": features.underline_color,
+        "strikethrough": features.strikethrough,
+        "cursorStyle": features.cursor_style,
+        "alternateScroll": features.alternate_scroll,
+        "inlineImages": caps.supports_iterm_images(),
+        "sixel": caps.supports_sixel(),
         "terminalSize": { "width": w, "height": h },
+        "pixelSize": pixel.map(|(pw, ph)| { serde_json::json!({ "width": pw, "height": ph }) }),
     })
     .to_string()
 }

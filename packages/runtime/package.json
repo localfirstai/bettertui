@@ -1,5 +1,5 @@
 {
-  "name": "@bettertui/reconciler",
+  "name": "@bettertui/runtime",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -24,16 +24,14 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bettertui/core": "workspace:*",
-    "@bettertui/shared": "workspace:*",
-    "react-reconciler": "^0.31.0"
+    "@bettertui/reconciler": "workspace:*",
+    "@bettertui/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "@types/react-reconciler": "^0.31.0",
     "react": "^19.0.0",
     "tsup": "^8.3.0",
     "typescript": "catalog:"

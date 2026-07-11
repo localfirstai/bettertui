@@ -1,6 +1,38 @@
-use std::process::{Command, Stdio};
+use std::io::{Read, Write};
+
+use portable_pty::{CommandBuilder, MasterPty, PtySize as PortablePtySize};
 
 use super::PtyError;
+
+#[cfg(unix)]
+mod platform {
+    const SIGTERM: i32 = 15;
+    const SIGKILL: i32 = 9;
+
+    unsafe extern "C" {
+        fn kill(pid: i32, sig: i32) -> i32;
+    }
+
+    pub fn send_signal(pid: u32, sig: i32) -> Result<(), String> {
+        let ret = unsafe { kill(pid as i32, sig) };
+        if ret != 0 {
+            Err(std::io::Error::last_os_error().to_string())
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn terminate(pid: u32) -> Result<(), String> {
+        send_signal(pid, SIGTERM).or_else(|_| send_signal(pid, SIGKILL))
+    }
+}
+
+#[cfg(windows)]
+mod platform {
+    pub fn terminate(_pid: u32) -> Result<(), String> {
+        Err("Force-kill not supported on Windows yet".to_string())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct PtyConfig {
@@ -86,71 +118,97 @@ impl PtySize {
         self.pixel_height = height;
         self
     }
+
+    #[allow(clippy::wrong_self_convention)]
+    fn to_portable(self) -> PortablePtySize {
+        PortablePtySize {
+            rows: self.rows,
+            cols: self.cols,
+            pixel_width: self.pixel_width as u16,
+            pixel_height: self.pixel_height as u16,
+        }
+    }
 }
 
 pub struct PtyProcess {
-    child: Option<std::process::Child>,
-    stdin: Option<std::process::ChildStdin>,
-    stdout: Option<std::process::ChildStdout>,
+    child: Option<Box<dyn portable_pty::Child + Send + Sync>>,
+    reader: Option<Box<dyn Read + Send>>,
+    writer: Option<Box<dyn Write + Send>>,
+    master: Option<Box<dyn MasterPty + Send>>,
     size: PtySize,
+    pid: Option<u32>,
 }
 
 impl PtyProcess {
     pub fn spawn(config: PtyConfig) -> Result<Self, PtyError> {
-        let mut cmd = Command::new(&config.program);
-        cmd.args(&config.args);
+        let system = portable_pty::native_pty_system();
+        let pair = system
+            .openpty(config.size.to_portable())
+            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
 
+        let mut cmd = CommandBuilder::new(&config.program);
+        for arg in &config.args {
+            cmd.arg(arg);
+        }
         for (key, value) in &config.env {
             cmd.env(key, value);
         }
-
         if let Some(ref dir) = config.working_directory {
-            cmd.current_dir(dir);
+            cmd.cwd(dir);
         }
 
-        cmd.stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-
-        let mut child = cmd
-            .spawn()
+        let child = pair
+            .slave
+            .spawn_command(cmd)
             .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let pid = child.process_id();
 
-        let stdin = child.stdin.take();
-        let stdout = child.stdout.take();
+        let reader = pair
+            .master
+            .try_clone_reader()
+            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let writer = pair
+            .master
+            .take_writer()
+            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
 
         Ok(Self {
             child: Some(child),
-            stdin,
-            stdout,
+            reader: Some(reader),
+            writer: Some(writer),
+            master: Some(pair.master),
             size: config.size,
+            pid,
         })
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, PtyError> {
-        use std::io::Read;
-        if let Some(ref mut stdout) = self.stdout {
-            stdout
+        if let Some(ref mut reader) = self.reader {
+            reader
                 .read(buf)
                 .map_err(|e| PtyError::ReadFailed(e.to_string()))
         } else {
-            Err(PtyError::ReadFailed("No stdout".to_string()))
+            Err(PtyError::ReadFailed("No reader".to_string()))
         }
     }
 
     pub fn write(&mut self, data: &[u8]) -> Result<usize, PtyError> {
-        use std::io::Write;
-        if let Some(ref mut stdin) = self.stdin {
-            stdin
+        if let Some(ref mut writer) = self.writer {
+            writer
                 .write(data)
                 .map_err(|e| PtyError::WriteFailed(e.to_string()))
         } else {
-            Err(PtyError::WriteFailed("No stdin".to_string()))
+            Err(PtyError::WriteFailed("No writer".to_string()))
         }
     }
 
     pub fn resize(&mut self, size: PtySize) -> Result<(), PtyError> {
         self.size = size;
+        if let Some(ref master) = self.master {
+            master
+                .resize(size.to_portable())
+                .map_err(|e| PtyError::ResizeFailed(e.to_string()))?;
+        }
         Ok(())
     }
 
@@ -168,17 +226,21 @@ impl PtyProcess {
                 .try_wait()
                 .ok()
                 .flatten()
-                .and_then(|status| status.code())
+                .map(|status| status.exit_code() as i32)
         } else {
             None
         }
     }
 
     pub fn kill(&mut self) -> Result<(), PtyError> {
-        if let Some(ref mut child) = self.child {
-            child
-                .kill()
-                .map_err(|e| PtyError::KillFailed(e.to_string()))?;
+        // Close master end first to send SIGHUP to child process group
+        self.master.take();
+        self.reader.take();
+        self.writer.take();
+
+        // Also send SIGTERM via platform mechanism
+        if let Some(pid) = self.pid {
+            platform::terminate(pid).map_err(PtyError::KillFailed)?;
         }
         Ok(())
     }
@@ -188,7 +250,7 @@ impl PtyProcess {
             let status = child
                 .wait()
                 .map_err(|e| PtyError::KillFailed(e.to_string()))?;
-            Ok(status.code())
+            Ok(Some(status.exit_code() as i32))
         } else {
             Err(PtyError::NotRunning)
         }
@@ -196,6 +258,10 @@ impl PtyProcess {
 
     pub fn size(&self) -> PtySize {
         self.size
+    }
+
+    pub fn pid(&self) -> Option<u32> {
+        self.pid
     }
 }
 
@@ -240,5 +306,23 @@ mod tests {
         let size = PtySize::default();
         assert_eq!(size.cols, 80);
         assert_eq!(size.rows, 24);
+    }
+
+    #[test]
+    fn pty_size_to_portable() {
+        let size = PtySize::new(80, 24);
+        let p = size.to_portable();
+        assert_eq!(p.cols, 80);
+        assert_eq!(p.rows, 24);
+    }
+
+    #[test]
+    fn pty_size_with_pixel() {
+        let size = PtySize::new(80, 24).with_pixel_size(800, 600);
+        assert_eq!(size.pixel_width, 800);
+        assert_eq!(size.pixel_height, 600);
+        let p = size.to_portable();
+        assert_eq!(p.pixel_width as u32, 800);
+        assert_eq!(p.pixel_height as u32, 600);
     }
 }

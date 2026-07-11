@@ -1,7 +1,3 @@
-import type { NodeId, Point, Style } from "@bettertui/shared";
-
-export type { NodeId, Style, Point };
-
 export interface ProcessResult {
   success: number;
   errors: string[];
@@ -15,7 +11,13 @@ export interface TerminalCapabilities {
   sync: boolean;
   sgrPixel: boolean;
   kittyKeyboard: boolean;
+  csi_u: boolean;
+  focusEvents: boolean;
   osc8: boolean;
+  underlineColor: boolean;
+  strikethrough: boolean;
+  cursorStyle: boolean;
+  alternateScroll: boolean;
   hyperlinks: boolean;
   inlineImages: boolean;
   sixel: boolean;
@@ -47,10 +49,10 @@ export interface NapiEngine {
 }
 
 export interface NapiEventBus {
-  pushKey(key: string, modifiers: string, targetId: string): void;
-  pushMouseButton(button: string, x: number, y: number, targetId: string): void;
-  pushMouseMotion(x: number, y: number, targetId: string): void;
-  pushPaste(text: string, targetId: string): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, targetId: number): void;
+  pushMouse(button: string, x: number, y: number, targetId: number): void;
+  pushMouseMotion(x: number, y: number, targetId: number): void;
+  pushPaste(text: string, targetId: number): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -59,16 +61,17 @@ export interface NapiEventBus {
 }
 
 export interface NapiFocusManager {
-  focus(nodeId: string): boolean;
-  blur(nodeId: string): boolean;
-  focused(): string | null;
-  traverse(direction: string): string | null;
-  setScope(scopeId: string): void;
+  focus(nodeId: number): boolean;
+  blur(nodeId: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  focusedInScope(): number | null;
+  traverse(direction: string): number;
+  setScope(scopeId: number): void;
   clearScope(): void;
-  focusedInScope(): string | null;
-  scopeId(): string | null;
-  focusOrder(): string[];
-  isFocused(nodeId: string): boolean;
+  scopeId(): number | null;
+  focusOrder(): number[];
+  isFocused(nodeId: number): boolean;
 }
 
 export interface NapiTextEngine {
@@ -114,20 +117,4 @@ export interface NapiScheduler {
   fps(): string;
   frameBudgetMs(): string;
   isIdle(): boolean;
-}
-
-export interface TerminalCapabilities {
-  trueColor: boolean;
-  mouse: boolean;
-  bracketedPaste: boolean;
-  sync: boolean;
-  sgrPixel: boolean;
-  kittyKeyboard: boolean;
-  osc8: boolean;
-  hyperlinks: boolean;
-  inlineImages: boolean;
-  sixel: boolean;
-  terminalSize: { columns: number; rows: number };
-  pixelSize: { width: number; height: number } | null;
-  brand: string;
 }
