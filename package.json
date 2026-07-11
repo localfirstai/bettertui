@@ -27,7 +27,7 @@
     "@biomejs/biome": "^1.9.0",
     "husky": "^9.1.7",
     "turbo": "^2.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "catalog:"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {

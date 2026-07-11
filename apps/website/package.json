@@ -1,8 +1,9 @@
 {
   "name": "@bettertui/website",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -12,9 +13,10 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "biome check src/",
-    "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "typecheck": "astro check"
+    "format:check": "biome format src/",
+    "typecheck": "astro check",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.2",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0"
+    "@types/react-dom": "^19.2.0",
+    "typescript": "catalog:"
   }
 }
