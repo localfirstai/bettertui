@@ -1,4 +1,4 @@
-import type { Command, CommandBuffer } from "@bettertui/reconciler";
+import type { Command, CommandBuffer } from "@bettertui/core";
 import type { NapiEngine, NapiEventBus, ProcessResult } from "./types.js";
 
 export interface RenderResult {

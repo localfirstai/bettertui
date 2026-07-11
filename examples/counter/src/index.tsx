@@ -1,6 +1,5 @@
-import { Box, Text, Flex, Provider } from "@bettertui/react";
-import { CommandBuffer } from "@bettertui/reconciler";
-import { createReconciler } from "@bettertui/reconciler";
+import { CommandBuffer, createReconciler } from "@bettertui/core";
+import { Box, Flex, Provider, Text } from "@bettertui/react";
 
 const buffer = new CommandBuffer();
 const reconciler = createReconciler(buffer);

@@ -18,7 +18,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bettertui/shared": "workspace:*"
+    "@bettertui/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

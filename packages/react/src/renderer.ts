@@ -1,7 +1,7 @@
+import type { CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority } from "react-reconciler/constants";
-import type { Command, Instance, TextInstance } from "./index";
 
 let nextId = 0;
 function generateId(): string {
@@ -14,10 +14,6 @@ export interface Container {
   buffer: CommandBufferConsumer;
 }
 
-export interface CommandBufferConsumer {
-  push(command: Command): void;
-}
-
 export type ReconcilerType = Reconciler.Reconciler<
   Container,
   Instance,
@@ -25,6 +21,9 @@ export type ReconcilerType = Reconciler.Reconciler<
   Instance,
   Instance
 >;
+
+// biome-ignore lint/suspicious/noExplicitAny: opaque react-reconciler root type
+export type OpaqueRoot = any;
 
 export function createBetterTUIReconciler(buffer: CommandBufferConsumer): ReconcilerType {
   // biome-ignore format: host config is complex
@@ -54,8 +53,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       props: Record<string, unknown>,
       _rootContainer: Container,
       _hostContext: Record<string, unknown>,
-      _internalHandle: // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      any,
+      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
+      _internalHandle: any,
     ): Instance {
       const id = generateId();
       const { children, style, layout, ...restProps } = props;
@@ -79,8 +78,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       text: string,
       _rootContainer: Container,
       _hostContext: Record<string, unknown>,
-      _internalHandle: // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      any,
+      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
+      _internalHandle: any,
     ): TextInstance {
       const id = generateId();
       const instance = {
@@ -257,7 +256,10 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       buffer.push({ type: "RemoveNode", id: childInstance.id });
     },
 
-    removeChildFromContainer(container: Container, child: Instance | TextInstance | Instance): void {
+    removeChildFromContainer(
+      container: Container,
+      child: Instance | TextInstance | Instance,
+    ): void {
       const childInstance = child as Instance;
       childInstance.parent = null;
       const index = container.children.indexOf(childInstance);
@@ -282,8 +284,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       _type: string,
       _prevProps: Record<string, unknown>,
       _nextProps: Record<string, unknown>,
-      _internalHandle: // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      any,
+      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
+      _internalHandle: any,
     ): void {
       Object.assign(instance.props, updatePayload);
       if (updatePayload.style) {
@@ -328,9 +330,6 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
   return Reconciler(hostConfig);
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: the opaque root type is internal to react-reconciler
-export type OpaqueRoot = any;
-
 export function createContainer(
   reconciler: ReconcilerType,
   buffer: CommandBufferConsumer,
@@ -342,15 +341,15 @@ export function createContainer(
   };
   return reconciler.createContainer(
     container,
-    0, // LegacyRoot
-    null, // hydrationCallbacks
-    false, // isStrictMode
-    null, // concurrentUpdatesByDefaultOverride
-    "", // identifierPrefix
+    0,
+    null,
+    false,
+    null,
+    "",
     (error: Error) => {
       console.error(error);
     },
-    null, // transitionCallbacks
+    null,
   );
 }
 

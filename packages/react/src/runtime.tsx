@@ -1,6 +1,35 @@
+import { Runtime } from "@bettertui/core";
 import { createContext, useCallback, useContext, useRef } from "react";
 import type { ReactNode } from "react";
-import type { Runtime } from "./runtime";
+import { createBetterTUIReconciler, createContainer, updateContainer } from "./renderer";
+import type { OpaqueRoot } from "./renderer";
+
+export function render(element: ReactNode): {
+  root: OpaqueRoot;
+  runtime: Runtime;
+  dispose: () => void;
+} {
+  const runtime = new Runtime();
+  const reconciler = createBetterTUIReconciler({
+    push(command) {
+      runtime.commandBuffer.push(command);
+    },
+  });
+  const root = createContainer(reconciler, {
+    push(command) {
+      runtime.commandBuffer.push(command);
+    },
+  });
+  updateContainer(reconciler, element, root);
+
+  return {
+    root,
+    runtime,
+    dispose: () => {
+      runtime.dispose();
+    },
+  };
+}
 
 interface RuntimeContextValue {
   runtime: Runtime;

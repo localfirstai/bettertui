@@ -51,10 +51,9 @@ bettertui/
 │   ├── engine/       # Rust rendering engine
 │   └── bindings/     # napi-rs Node.js bindings
 ├── packages/
-│   ├── core/         # Node model, protocol, tree operations
+│   ├── core/         # Framework-agnostic runtime, command protocol, tree ops
 │   ├── shared/       # Framework-agnostic type definitions
-│   ├── reconciler/   # React reconciler host config
-│   ├── react/        # Public React component API
+│   ├── react/        # React adapter (host config, renderer, hooks, components)
 │   ├── native/       # Engine/native runtime wrapper
 │   ├── widgets/      # Widget library
 │   ├── themes/       # Theme definitions
@@ -71,9 +70,8 @@ bettertui/
 | Package | Description | Status |
 |---------|-------------|--------|
 | `@bettertui/shared` | Framework-agnostic type definitions | Types complete |
-| `@bettertui/core` | Node model, protocol, tree operations | Types |
-| `@bettertui/reconciler` | React reconciler host config | In progress |
-| `@bettertui/react` | Public React component API | Stub components |
+| `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | Framework complete |
+| `@bettertui/react` | React adapter (renderer, hooks, components) | Stub components |
 | `@bettertui/native` | napi bindings wrapper and runtime | Implemented |
 | `@bettertui/widgets` | Reusable widget components | Interface only |
 | `@bettertui/themes` | Theme definitions and utilities | Partial |

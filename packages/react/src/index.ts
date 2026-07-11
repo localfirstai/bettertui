@@ -1,6 +1,4 @@
-import type { JSX, ReactNode } from "react";
-
-// Re-export hooks
+// Re-export all hooks and providers
 export {
   Provider,
   useTheme,
@@ -12,7 +10,7 @@ export {
   useFrame,
   useClipboard,
   useAnimation,
-} from "./hooks";
+} from "./hooks/index";
 
 export type {
   Theme,
@@ -20,9 +18,22 @@ export type {
   ThemeSpacing,
   ProviderProps,
   KeyEvent,
-} from "./hooks";
+} from "./hooks/index";
+
+// Runtime (render + RuntimeProvider + useRuntime)
+export { render, RuntimeProvider, useRuntime } from "./runtime";
+
+// Re-export core types that users need
+export type {
+  Command,
+  CommandBuffer,
+  Instance,
+  Runtime,
+} from "@bettertui/core";
 
 // Box component
+import type { JSX, ReactNode } from "react";
+
 export interface BoxProps {
   children?: ReactNode;
   flexDirection?: "row" | "column";

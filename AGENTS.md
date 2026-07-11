@@ -40,8 +40,13 @@
 ## Architecture
 
 - **Canonical design docs:** `docs/architecture/` contains the definitive architecture. Root `ARCHITECTURE.md`, `ROADMAP.md`, `CONTRIBUTING.md` are older summaries — prefer docs/architecture/ for design decisions.
-- **Dead dependencies:** `@bettertui/reconciler` and `@bettertui/widgets` list `@bettertui/core` as a dependency in package.json but only import from `@bettertui/shared`. The `@bettertui/core` dep is unused.
-- **`@bettertui/shared` is the true foundation:** All packages import types from `@bettertui/shared`. `@bettertui/core` is just a re-export layer plus a few extras (NodeType, NodeOptions, TreeDiff). New packages should depend on `@bettertui/shared` directly, not `@bettertui/core`, unless they need the core-specific types.
+- **Package layering:** Application → `@bettertui/react` → `@bettertui/core` → `@bettertui/native` → Rust Engine. React may depend on Core. Core may depend on Native. Nothing may bypass Core.
+- **`@bettertui/core` is the framework-agnostic foundation:** Contains the CommandBuffer, Command protocol, Runtime class, tree manipulation (Instance, TextInstance), HostConfig types, and the framework-agnostic createReconciler(). Zero React dependency. Future adapters (Vue, Solid, Svelte) depend on core directly.
+- **`@bettertui/react` is the React adapter:** Absorbs the old `@bettertui/reconciler` and `@bettertui/runtime` packages. Contains the react-reconciler HostConfig, createRenderer, render(), RuntimeProvider, useRuntime, hooks (useTheme, useFocus, useKeyboard, etc.), and component stubs. Internal implementation details are not exported.
+- **`@bettertui/reconciler` and `@bettertui/runtime` removed:** Absorbed into `@bettertui/react` (React-specific parts) and `@bettertui/core` (framework-agnostic parts). Do not reference these packages.
+- **`@bettertui/native` depends on `@bettertui/core`**: The native bridge imports `Command` and `CommandBuffer` from core rather than the old reconciler.
+- **`@bettertui/shared` is the type foundation:** Pure type definitions, zero runtime dependencies. Both core and react re-export shared types.
+- **`@bettertui/widgets`** provides the Widget interface and version constant. Depends on `@bettertui/core`.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/testing`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
 
@@ -51,4 +56,4 @@
 - Run clippy: `cargo clippy -p bettertui-engine --lib -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
-- Widget framework has ~100 tests (total engine: ~777).
+- Widget framework has ~100 tests (total engine: ~1071).

@@ -1,4 +1,5 @@
-import { type Command, CommandBuffer } from "@bettertui/reconciler";
+import type { Command } from "./command-buffer";
+import { CommandBuffer } from "./command-buffer";
 
 export class Runtime {
   private buffer: CommandBuffer;
