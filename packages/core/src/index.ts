@@ -15,11 +15,14 @@ export type {
   MouseButton,
   MouseEvent,
   ResizeEvent,
+  PasteEvent,
   ColorValue,
   Color,
   Style,
   BorderStyle,
   Theme,
+  ThemeColors,
+  ThemeSpacing,
   Frame,
   FrameCell,
   RenderNode,
@@ -52,6 +55,7 @@ export type {
 } from "./command-buffer";
 export {
   CommandBuffer,
+  generateId,
   createInstance,
   createTextInstance,
   appendChild,

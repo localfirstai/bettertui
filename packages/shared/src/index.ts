@@ -42,7 +42,9 @@ export interface RenderCommand {
   style?: Style;
 }
 
-export type EventType = "key" | "mouse" | "resize" | "focus" | "blur" | "custom";
+// ─── Events ──────────────────────────────────────────────
+
+export type EventType = "key" | "mouse" | "resize" | "focus" | "blur" | "paste" | "custom";
 
 export interface Event {
   type: EventType;
@@ -74,6 +76,13 @@ export interface ResizeEvent {
   rows: number;
 }
 
+export interface PasteEvent {
+  text: string;
+  bracketed: boolean;
+}
+
+// ─── Styling ─────────────────────────────────────────────
+
 export type ColorValue = string;
 
 export interface Color {
@@ -99,11 +108,49 @@ export interface BorderStyle {
   fg?: ColorValue;
 }
 
+// ─── Theme ───────────────────────────────────────────────
+
+export interface ThemeColors {
+  background: string;
+  surface: string;
+  surfaceHigh: string;
+  surfaceLow: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  text: string;
+  textMuted: string;
+  textDim: string;
+  border: string;
+  borderFocused: string;
+  accent: string;
+  accentForeground: string;
+  error: string;
+  warning: string;
+  success: string;
+  info: string;
+}
+
+export interface ThemeSpacing {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+}
+
 export interface Theme {
   name: string;
-  colors: Record<string, ColorValue>;
+  colors: ThemeColors;
+  spacing: ThemeSpacing;
   borders: BorderStyle;
 }
+
+// ─── Frame ───────────────────────────────────────────────
 
 export interface Frame {
   width: number;

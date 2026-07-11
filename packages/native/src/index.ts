@@ -24,7 +24,10 @@ export { createRuntime } from "./runtime.js";
 export type { Runtime, RuntimeOptions } from "./runtime.js";
 
 export { createEventLoop } from "./events.js";
-export type { EventLoop, EventCallback, KeyEvent, MouseEvent } from "./events.js";
+export type { EventLoop, EventCallback } from "./events.js";
+
+// Re-export shared event types for consumer convenience
+export type { KeyEvent, MouseEvent } from "./events.js";
 
 let nativeAddon: Record<string, unknown> | null = null;
 

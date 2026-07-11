@@ -1,48 +1,15 @@
+import type { KeyEvent as SharedKeyEvent, Theme as SharedTheme } from "@bettertui/shared";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-// Theme types
-export interface ThemeColors {
-  background: string;
-  surface: string;
-  surfaceHigh: string;
-  surfaceLow: string;
-  primary: string;
-  primaryForeground: string;
-  secondary: string;
-  secondaryForeground: string;
-  text: string;
-  textMuted: string;
-  textDim: string;
-  border: string;
-  borderFocused: string;
-  accent: string;
-  accentForeground: string;
-  error: string;
-  warning: string;
-  success: string;
-  info: string;
-}
-
-export interface ThemeSpacing {
-  none: number;
-  xxs: number;
-  xs: number;
-  sm: number;
-  md: number;
-  lg: number;
-  xl: number;
-  xxl: number;
-}
-
-export interface Theme {
-  name: string;
-  colors: ThemeColors;
-  spacing: ThemeSpacing;
-}
+// Re-export shared types for consumer convenience
+export type Theme = SharedTheme;
+export type ThemeColors = SharedTheme["colors"];
+export type ThemeSpacing = SharedTheme["spacing"];
+export type KeyEvent = SharedKeyEvent;
 
 // Default dark theme
-const defaultDarkTheme: Theme = {
+const defaultDarkTheme: SharedTheme = {
   name: "dark",
   colors: {
     background: "#1e1e28",
@@ -75,12 +42,16 @@ const defaultDarkTheme: Theme = {
     xl: 16,
     xxl: 24,
   },
+  borders: {
+    style: "single",
+    fg: "#3c3c50",
+  },
 };
 
 // Theme context
 interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  theme: SharedTheme;
+  setTheme: (theme: SharedTheme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -91,13 +62,13 @@ const ThemeContext = createContext<ThemeContextValue>({
 // Theme provider
 export interface ProviderProps {
   children: ReactNode;
-  theme?: Theme;
+  theme?: SharedTheme;
 }
 
 export function Provider({ children, theme = defaultDarkTheme }: ProviderProps) {
-  const [currentTheme, setCurrentTheme] = useState<Theme>(theme);
+  const [currentTheme, setCurrentTheme] = useState<SharedTheme>(theme);
 
-  const setTheme = useCallback((newTheme: Theme) => {
+  const setTheme = useCallback((newTheme: SharedTheme) => {
     setCurrentTheme(newTheme);
   }, []);
 
@@ -164,15 +135,7 @@ export function useFocus() {
 }
 
 // Keyboard handling
-export interface KeyEvent {
-  key: string;
-  ctrl: boolean;
-  shift: boolean;
-  alt: boolean;
-  meta: boolean;
-}
-
-export function useKeyboard(handler: (event: KeyEvent) => boolean) {
+export function useKeyboard(handler: (event: SharedKeyEvent) => boolean) {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 
@@ -180,13 +143,15 @@ export function useKeyboard(handler: (event: KeyEvent) => boolean) {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       const ke = event as unknown as {
         key: string;
+        code: string;
         ctrlKey: boolean;
         shiftKey: boolean;
         altKey: boolean;
         metaKey: boolean;
       };
-      const keyEvent: KeyEvent = {
+      const keyEvent: SharedKeyEvent = {
         key: ke.key,
+        code: ke.code,
         ctrl: ke.ctrlKey,
         shift: ke.shiftKey,
         alt: ke.altKey,

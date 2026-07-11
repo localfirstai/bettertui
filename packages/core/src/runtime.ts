@@ -1,18 +1,39 @@
 import type { Command } from "./command-buffer";
 import { CommandBuffer } from "./command-buffer";
 
+export interface RuntimeOptions {
+  frameIntervalMs?: number;
+  autoStart?: boolean;
+}
+
 export class Runtime {
   private buffer: CommandBuffer;
   private running = false;
   private frameHandle: ReturnType<typeof setTimeout> | null = null;
   private subscribers: Array<(commands: Command[]) => void> = [];
+  private frameCallbacks: Array<(deltaMs: number) => void> = [];
+  private lastFrameTime = 0;
+  private frameIntervalMs: number;
 
-  constructor(buffer?: CommandBuffer) {
-    this.buffer = buffer ?? new CommandBuffer();
+  constructor(bufferOrOptions?: CommandBuffer | RuntimeOptions) {
+    if (bufferOrOptions instanceof CommandBuffer) {
+      this.buffer = bufferOrOptions;
+      this.frameIntervalMs = 16;
+    } else {
+      this.buffer = new CommandBuffer();
+      this.frameIntervalMs = bufferOrOptions?.frameIntervalMs ?? 16;
+      if (bufferOrOptions?.autoStart) {
+        this.startFrameLoop();
+      }
+    }
   }
 
   get commandBuffer(): CommandBuffer {
     return this.buffer;
+  }
+
+  get isRunning(): boolean {
+    return this.running;
   }
 
   drain(): Command[] {
@@ -35,13 +56,30 @@ export class Runtime {
     };
   }
 
-  startFrameLoop(intervalMs = 16): void {
+  onFrame(callback: (deltaMs: number) => void): () => void {
+    this.frameCallbacks.push(callback);
+    return () => {
+      this.frameCallbacks = this.frameCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  startFrameLoop(intervalMs?: number): void {
     if (this.running) return;
     this.running = true;
+    if (intervalMs !== undefined) {
+      this.frameIntervalMs = intervalMs;
+    }
+    this.lastFrameTime = performance.now();
     const tick = () => {
       if (!this.running) return;
+      const now = performance.now();
+      const delta = now - this.lastFrameTime;
+      this.lastFrameTime = now;
+      for (const cb of this.frameCallbacks) {
+        cb(delta);
+      }
       this.flush();
-      this.frameHandle = setTimeout(tick, intervalMs);
+      this.frameHandle = setTimeout(tick, this.frameIntervalMs);
     };
     tick();
   }
@@ -54,9 +92,15 @@ export class Runtime {
     }
   }
 
+  requestFrame(): void {
+    if (!this.running) return;
+    this.flush();
+  }
+
   dispose(): void {
     this.stopFrameLoop();
     this.subscribers = [];
+    this.frameCallbacks = [];
     this.buffer.clear();
   }
 }

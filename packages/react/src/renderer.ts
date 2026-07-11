@@ -1,12 +1,8 @@
 import type { CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
+import { generateId } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority } from "react-reconciler/constants";
-
-let nextId = 0;
-function generateId(): string {
-  return `${nextId++}`;
-}
 
 export interface Container {
   id: string;

@@ -1,34 +1,23 @@
 {
-  "name": "@bettertui/core",
+  "name": "@bettertui/benchmark",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "files": ["dist"],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "bench": "vitest bench",
     "lint": "biome check src/",
     "format": "biome format --write src/",
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bettertui/shared": "workspace:*"
+    "@bettertui/core": "workspace:*",
+    "@bettertui/shared": "workspace:*",
+    "@bettertui/themes": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.3.0",
     "typescript": "catalog:",
     "vitest": "^3.2.0"
   }
