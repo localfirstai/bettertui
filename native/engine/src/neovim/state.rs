@@ -1,15 +1,8 @@
-#[derive(Debug, Clone)]
-pub struct NeovimState {
-    running: bool,
-    mode: NeovimMode,
-    modified: bool,
-    filename: Option<String>,
-    line_count: usize,
-    cursor_position: (usize, usize),
-}
+use crate::terminal_process::TerminalState;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum NeovimMode {
+    #[default]
     Normal,
     Insert,
     Visual,
@@ -31,6 +24,16 @@ impl NeovimMode {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct NeovimState {
+    base: TerminalState,
+    mode: NeovimMode,
+    modified: bool,
+    filename: Option<String>,
+    line_count: usize,
+    cursor_position: (usize, usize),
+}
+
 impl Default for NeovimState {
     fn default() -> Self {
         Self::new()
@@ -40,7 +43,7 @@ impl Default for NeovimState {
 impl NeovimState {
     pub fn new() -> Self {
         Self {
-            running: false,
+            base: TerminalState::new(),
             mode: NeovimMode::Normal,
             modified: false,
             filename: None,
@@ -49,12 +52,24 @@ impl NeovimState {
         }
     }
 
+    pub fn base_state(&self) -> &TerminalState {
+        &self.base
+    }
+
+    pub fn base_state_mut(&mut self) -> &mut TerminalState {
+        &mut self.base
+    }
+
     pub fn is_running(&self) -> bool {
-        self.running
+        self.base.is_running()
     }
 
     pub fn set_running(&mut self, running: bool) {
-        self.running = running;
+        if running {
+            self.base.mark_started(0);
+        } else {
+            self.base.mark_exited(0);
+        }
     }
 
     pub fn mode(&self) -> NeovimMode {
@@ -123,6 +138,13 @@ mod tests {
     }
 
     #[test]
+    fn state_base_delegation() {
+        let mut state = NeovimState::new();
+        state.base_state_mut().mark_started(42);
+        assert!(state.is_running());
+    }
+
+    #[test]
     fn state_mode() {
         let mut state = NeovimState::new();
         state.set_mode(NeovimMode::Insert);
@@ -173,5 +195,14 @@ mod tests {
         assert_eq!(NeovimMode::Command.mode_name(), "COMMAND");
         assert_eq!(NeovimMode::Replace.mode_name(), "REPLACE");
         assert_eq!(NeovimMode::Terminal.mode_name(), "TERMINAL");
+    }
+
+    #[test]
+    fn state_running_delegation() {
+        let mut state = NeovimState::new();
+        state.set_running(true);
+        assert!(state.is_running());
+        state.set_running(false);
+        assert!(!state.is_running());
     }
 }

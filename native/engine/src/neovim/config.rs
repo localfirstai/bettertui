@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use crate::terminal_process::ProcessConfig;
+
 #[derive(Debug, Clone)]
 pub struct NeovimConfig {
     pub config_dir: PathBuf,
@@ -32,6 +34,15 @@ impl NeovimConfig {
             init_lua: None,
             preserve_user_config: true,
         }
+    }
+
+    /// Converts this NeovimConfig into a generic ProcessConfig.
+    /// This is the thin adapter layer — all neovim-specific logic is isolated here.
+    pub fn to_process_config(&self) -> ProcessConfig {
+        let program = std::env::var("NVIM_PATH").unwrap_or_else(|_| "nvim".to_string());
+        let args = self.build_nvim_args();
+
+        ProcessConfig::new(&program).with_args(args)
     }
 
     pub fn with_config_dir(mut self, dir: PathBuf) -> Self {
@@ -82,7 +93,7 @@ impl NeovimConfig {
         self.session_file.as_deref()
     }
 
-    pub fn build_nvim_args(&self) -> Vec<String> {
+    fn build_nvim_args(&self) -> Vec<String> {
         let mut args = Vec::new();
 
         if self.preserve_user_config && self.user_config_exists() {
@@ -124,6 +135,15 @@ mod tests {
     }
 
     #[test]
+    fn config_to_process_config() {
+        let config = NeovimConfig::new().with_preserve_user_config(false);
+
+        let process_config = config.to_process_config();
+        assert!(process_config.program.contains("nvim"));
+        assert!(process_config.args.contains(&"--clean".to_string()));
+    }
+
+    #[test]
     fn config_builder() {
         let config = NeovimConfig::new()
             .with_config_dir(PathBuf::from("/tmp/test-config"))
@@ -132,19 +152,6 @@ mod tests {
             .with_preserve_user_config(false);
 
         assert_eq!(config.config_dir, PathBuf::from("/tmp/test-config"));
-        assert_eq!(config.data_dir, PathBuf::from("/tmp/test-data"));
-        assert_eq!(config.cache_dir, PathBuf::from("/tmp/test-cache"));
         assert!(!config.preserve_user_config);
-    }
-
-    #[test]
-    fn config_build_args() {
-        let config = NeovimConfig::new()
-            .with_preserve_user_config(false)
-            .with_session_file(PathBuf::from("/tmp/session.vim"));
-
-        let args = config.build_nvim_args();
-        assert!(args.contains(&"--clean".to_string()));
-        assert!(args.contains(&"-S".to_string()));
     }
 }

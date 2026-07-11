@@ -1,12 +1,12 @@
 use super::config::NeovimConfig;
 use super::state::NeovimState;
-use crate::pty::{PtyConfig, PtyProcess, PtySize};
+use crate::pty::PtySize;
+use crate::terminal_process::{TerminalError, TerminalRuntime};
 
 #[derive(Debug)]
 pub enum NeovimError {
     SpawnFailed(String),
-    PtyError(String),
-    IoError(std::io::Error),
+    TerminalError(TerminalError),
     NotRunning,
 }
 
@@ -14,8 +14,7 @@ impl std::fmt::Display for NeovimError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SpawnFailed(msg) => write!(f, "Failed to spawn Neovim: {}", msg),
-            Self::PtyError(msg) => write!(f, "PTY error: {}", msg),
-            Self::IoError(err) => write!(f, "IO error: {}", err),
+            Self::TerminalError(err) => write!(f, "Terminal error: {}", err),
             Self::NotRunning => write!(f, "Neovim is not running"),
         }
     }
@@ -23,22 +22,16 @@ impl std::fmt::Display for NeovimError {
 
 impl std::error::Error for NeovimError {}
 
-impl From<std::io::Error> for NeovimError {
-    fn from(err: std::io::Error) -> Self {
-        Self::IoError(err)
-    }
-}
-
-impl From<crate::pty::PtyError> for NeovimError {
-    fn from(err: crate::pty::PtyError) -> Self {
-        Self::PtyError(err.to_string())
+impl From<TerminalError> for NeovimError {
+    fn from(err: TerminalError) -> Self {
+        Self::TerminalError(err)
     }
 }
 
 pub struct NeovimProcess {
-    process: Option<PtyProcess>,
-    config: NeovimConfig,
+    runtime: TerminalRuntime,
     state: NeovimState,
+    config: NeovimConfig,
 }
 
 impl Default for NeovimProcess {
@@ -50,103 +43,95 @@ impl Default for NeovimProcess {
 impl NeovimProcess {
     pub fn new() -> Self {
         Self {
-            process: None,
-            config: NeovimConfig::new(),
+            runtime: TerminalRuntime::new(),
             state: NeovimState::new(),
+            config: NeovimConfig::new(),
         }
     }
 
     pub fn with_config(config: NeovimConfig) -> Self {
         Self {
-            process: None,
-            config,
+            runtime: TerminalRuntime::with_config(config.to_process_config()),
             state: NeovimState::new(),
+            config,
         }
     }
 
     pub fn spawn(&mut self, size: PtySize) -> Result<(), NeovimError> {
-        if self.process.is_some() {
+        if self.runtime.is_running() {
             return Err(NeovimError::SpawnFailed("Already running".to_string()));
         }
 
-        self.config.ensure_dirs()?;
+        self.config.ensure_dirs().map_err(|e| {
+            NeovimError::SpawnFailed(format!("Failed to create directories: {}", e))
+        })?;
 
-        let nvim_path = std::env::var("NVIM_PATH").unwrap_or_else(|_| "nvim".to_string());
+        self.runtime.config_mut().size = size;
+        self.runtime.config_mut().args = self.config.to_process_config().args;
 
-        let args = self.config.build_nvim_args();
-
-        let pty_config = PtyConfig {
-            program: nvim_path,
-            args,
-            env: Vec::new(),
-            working_directory: None,
-            size,
-        };
-
-        let process = PtyProcess::spawn(pty_config)?;
-        self.process = Some(process);
+        self.runtime.spawn()?;
         self.state.set_running(true);
 
         Ok(())
     }
 
     pub fn write_input(&mut self, data: &[u8]) -> Result<(), NeovimError> {
-        if let Some(ref mut process) = self.process {
-            process.write(data)?;
-            Ok(())
-        } else {
-            Err(NeovimError::NotRunning)
+        if !self.runtime.is_running() {
+            return Err(NeovimError::NotRunning);
         }
+        self.runtime.write(data)?;
+        Ok(())
     }
 
     pub fn read_output(&mut self) -> Result<Vec<u8>, NeovimError> {
-        if let Some(ref mut process) = self.process {
-            let mut buf = vec![0u8; 4096];
-            let n = process.read(&mut buf)?;
-            buf.truncate(n);
-            Ok(buf)
-        } else {
-            Err(NeovimError::NotRunning)
+        if !self.runtime.is_running() {
+            return Err(NeovimError::NotRunning);
         }
+        let mut buf = vec![0u8; 4096];
+        let n = self.runtime.read(&mut buf)?;
+        buf.truncate(n);
+        Ok(buf)
     }
 
     pub fn resize(&mut self, size: PtySize) -> Result<(), NeovimError> {
-        if let Some(ref mut process) = self.process {
-            process.resize(size)?;
-            Ok(())
-        } else {
-            Err(NeovimError::NotRunning)
+        if !self.runtime.is_running() {
+            return Err(NeovimError::NotRunning);
         }
+        self.runtime.resize(size)?;
+        Ok(())
     }
 
     pub fn kill(&mut self) -> Result<(), NeovimError> {
-        if let Some(ref mut process) = self.process {
-            process.kill()?;
-            self.state.set_running(false);
-            Ok(())
-        } else {
-            Err(NeovimError::NotRunning)
+        if !self.runtime.is_running() {
+            return Err(NeovimError::NotRunning);
         }
+        self.runtime.kill()?;
+        self.state.set_running(false);
+        Ok(())
     }
 
     pub fn is_running(&self) -> bool {
-        self.process.is_some() && self.state.is_running()
+        self.runtime.is_running() && self.state.is_running()
     }
 
     pub fn state(&self) -> &NeovimState {
         &self.state
     }
 
+    pub fn state_mut(&mut self) -> &mut NeovimState {
+        &mut self.state
+    }
+
     pub fn config(&self) -> &NeovimConfig {
         &self.config
     }
 
-    pub fn process(&self) -> Option<&PtyProcess> {
-        self.process.as_ref()
+    pub fn runtime(&self) -> &TerminalRuntime {
+        &self.runtime
     }
 
-    pub fn process_mut(&mut self) -> Option<&mut PtyProcess> {
-        self.process.as_mut()
+    pub fn runtime_mut(&mut self) -> &mut TerminalRuntime {
+        &mut self.runtime
     }
 }
 
@@ -180,5 +165,12 @@ mod tests {
         assert!(process.write_input(b"test").is_err());
         assert!(process.read_output().is_err());
         assert!(process.kill().is_err());
+    }
+
+    #[test]
+    fn process_delegates_to_runtime() {
+        let process = NeovimProcess::new();
+        assert!(!process.runtime().is_running());
+        assert_eq!(process.runtime().config().program, "");
     }
 }
