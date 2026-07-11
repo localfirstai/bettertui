@@ -21,6 +21,7 @@ pub mod layout;
 pub mod mouse;
 pub mod neovim;
 pub mod nerdfont;
+pub mod pane;
 pub mod painter;
 pub mod protocol;
 pub mod pty;
