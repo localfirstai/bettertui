@@ -1,12 +1,15 @@
 ## Development
 
-When starting the dev server, use background mode:
+Start dev server:
 
-```
-astro dev --background
+```sh
+pnpm dev          # foreground (standard)
+pnpm dev -- --background   # background for CI/automation
 ```
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+Stop a background server: `pnpm exec astro dev stop`
+
+The dev server runs at **http://localhost:4321** with live HMR.
 
 ## Documentation
 

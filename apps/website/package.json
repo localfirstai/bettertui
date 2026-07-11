@@ -8,7 +8,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "astro dev",
+    "dev": "ASTRO_DEV_BACKGROUND=0 astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
