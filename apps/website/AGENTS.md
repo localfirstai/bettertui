@@ -1,3 +1,11 @@
+## Project Overview
+
+This is an Astro project. The primary goals are:
+
+- **Responsive Design** — Make the website highly responsive across all device sizes using Tailwind CSS v4 responsive utilities.
+- **shadcn UI Components** — Use shadcn standard UI components for both Astro and React. All base UI components live in `src/components/ui/`.
+- **SEO Optimization** — Maximize SEO using Astro's built-in features (static page generation, sitemap, canonical URLs, meta tags, structured data). Prefer `.astro` components over `.tsx` for content-oriented pages since they are server-rendered with zero client JS.
+
 ## Development
 
 Start dev server:

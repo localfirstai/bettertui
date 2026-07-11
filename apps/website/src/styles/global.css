@@ -39,37 +39,106 @@
   --radius-xl: 1rem;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar-background: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
 @layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #6366f1;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #1e293b;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #06b6d4;
+    --accent-foreground: #ffffff;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #6366f1;
+    --radius: 0.5rem;
+    --sidebar-background: #f8fafc;
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #6366f1;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e2e8f0;
+    --sidebar-accent-foreground: #0f172a;
+    --sidebar-border: #e2e8f0;
+    --sidebar-ring: #6366f1;
+  }
+
+  .dark {
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
+    --primary: #818cf8;
+    --primary-foreground: #0f172a;
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+    --accent: #22d3ee;
+    --accent-foreground: #0f172a;
+    --destructive: #ef4444;
+    --destructive-foreground: #f8fafc;
+    --border: #334155;
+    --input: #334155;
+    --ring: #818cf8;
+    --sidebar-background: #1e293b;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #818cf8;
+    --sidebar-primary-foreground: #0f172a;
+    --sidebar-accent: #334155;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #334155;
+    --sidebar-ring: #818cf8;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  html.dark {
-    --color-bg: #0f172a;
-    --color-bg-muted: #1e293b;
-    --color-bg-subtle: #334155;
-    --color-bg-accent: #475569;
-    --color-surface: #1e293b;
-    --color-surface-raised: #334155;
-    --color-border: #334155;
-    --color-border-muted: #1e293b;
-
-    --color-text: #f8fafc;
-    --color-text-muted: #94a3b8;
-    --color-text-subtle: #64748b;
-
-    --color-primary: #818cf8;
-    --color-primary-hover: #6366f1;
-    --color-primary-muted: #312e81;
-
-    --color-accent: #22d3ee;
-    --color-accent-hover: #06b6d4;
-    --color-accent-muted: #164e63;
-
-    --color-code-bg: #0f172a;
-    --color-code-text: #e2e8f0;
+  * {
+    border-color: var(--border);
   }
 
   body {
@@ -111,7 +180,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  html.dark .glass {
+  .dark .glass {
     background: rgba(15, 23, 42, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
@@ -120,7 +189,7 @@
     box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
   }
 
-  html.dark .glow {
+  .dark .glow {
     box-shadow: 0 0 60px rgba(99, 102, 241, 0.2);
   }
 }
