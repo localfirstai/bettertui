@@ -32,3 +32,7 @@
 
 - `@bettertui/reconciler` — absorbed into `@bettertui/react` (internal host config)
 - `@bettertui/runtime` — split: `Runtime` class -> `@bettertui/core`, wrappers -> `@bettertui/react`
+
+## Placeholder Examples
+
+- `example-table`, `example-dashboard`, `example-text-editor`, `example-mouse`, `example-tree` have `export {}` as their entire source — they are placeholders with no real code. Their `package.json` lists dependencies (`@bettertui/react`, etc.) that are NOT actually imported. Don't waste time debugging build issues in these — `tsup` tolerates empty entries. Real example code lives in `examples/counter` only.

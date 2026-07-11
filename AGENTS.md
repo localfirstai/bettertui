@@ -5,11 +5,13 @@
 - Build outputs must be `["dist/**"]`, not `[".next/**"]` — the default starter is Next.js-specific.
 - `turbo.json` tasks: `build`, `dev`, `lint`, `format`, `format:check`, `typecheck`, `clean`. No `check-types` (renamed to `typecheck`).
 - `format` and `format:check` tasks have `cache: false` since formatting is fast and should always run.
+- **Cache cascading**: Modifying a shared dep (like `@bettertui/core`) triggers cache misses for all downstream packages. Running individual package builds masks broken dependents — always run `pnpm build` from root after a refactor.
 
 ## pnpm Workspace
 
 - `pnpm-workspace.yaml` must include `native/bindings` (has package.json) but NOT `native/engine` (pure Rust).
 - Use `pnpm@9.15.0` (pinned in `packageManager` field).
+- **Package deletion order**: Update all dependents' package.json FIRST (remove the deleted package from their deps), THEN run `pnpm install -r`. The lockfile auto-regenerates. Deleting the package dir before updating dependents causes `pnpm install` to fail with unresolved workspace deps.
 
 ## Biome
 
