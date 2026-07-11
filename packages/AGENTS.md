@@ -35,4 +35,10 @@
 
 ## Placeholder Examples
 
-- `example-table`, `example-dashboard`, `example-text-editor`, `example-mouse`, `example-tree` have `export {}` as their entire source — they are placeholders with no real code. Their `package.json` lists dependencies (`@bettertui/react`, etc.) that are NOT actually imported. Don't waste time debugging build issues in these — `tsup` tolerates empty entries. Real example code lives in `examples/counter` only.
+- ~~`example-table`, `example-dashboard`, `example-text-editor`, `example-mouse`, `example-tree` have `export {}` as their entire source — they are placeholders with no real code.~~ **All examples now have runnable implementations.** Each has real React components with proper imports from `@bettertui/react`.
+
+## Benchmarking
+
+- **Use Vitest bench mode** for TypeScript benchmarks (not Criterion — that's for Rust). Add `bench` scripts in package.json, configure with `vitest.config.ts` using `benchmark` test name pattern.
+- Benchmark files use `.bench.ts` suffix and `describe/it/bench` from vitest's bench API.
+- Run with: `pnpm vitest bench --run` or `pnpm vitest --watch=false` for test mode.

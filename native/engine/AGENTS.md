@@ -59,6 +59,13 @@
 ## Borrow Checker Patterns
 
 - When iterating `&self.field` while calling `self.method()`, clone the collection first: `let items = self.field.clone(); for item in &items { self.method(item); }`.
+
+## FFI Bridge (`ffi/mod.rs`)
+
+- **Must match actual Engine API.** The FFI module was rewritten because it assumed methods (`width()`, `height()`, `resize()`, `EngineError`) that don't exist on `Engine`. Always verify the struct's actual public API before writing FFI functions.
+- **`NodeId` (DefaultKey) field is private.** `NodeId` is `slotmap::DefaultKey` — field `0` is private. Cannot access `node.0` directly. Must use `NodeArena::insert()` to get valid IDs.
+- **Test helpers cannot construct NodeId directly.** `mouse/mod.rs` and `selection/mod.rs` test helpers must use `NodeArena::insert()` instead of non-existent `crate::tree::Key` or `crate::tree::GenerationalIndex`.
+- **Editor::set_content must reset engine state.** Calls `engine.clear()` not `buffer_mut().clear()` to properly reset cursor position.
 - Struct field and method with the same name (e.g., `status: ProcessStatus` field + `fn status()` method): accessing `self.status` in the impl block goes to the FIELD. Call the field when you mean it, or rename if ambiguous.
 
 ## Local Font Bundling
@@ -82,3 +89,5 @@
 - **Theme has no is_dark() method.** Check `theme.colors.is_empty()` or store the mode separately.
 - **Key::Character(char) is the variant name.** Not `Key::Char` — it's `Key::Character(c)` in the enum.
 - **BoxWidget and ContainerWidget need #[derive(Default)].** Clippy `derivable_impls` fires if manual impl is identical to derived.
+- **TextEngine doesn't derive Debug.** Types containing it (like Editor) need manual Debug impl or `#[derive(Default)]` won't work with `#[derive(Debug)]`.
+- **NodeKind has no Inline or Image variants.** Variants are: Text, Box, Flex, Input, List, Table, Tree, Scroll, Tab, Modal, Spacer, Separator, Custom(u16).
