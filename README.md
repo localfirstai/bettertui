@@ -13,25 +13,25 @@ BetterTUI is a **framework**, not an application, IDE, or AI tool. It provides t
 
 ## Architecture
 
-```
-Framework Adapter (React, …)
-        ↓ commands
-  TypeScript packages (@bettertui/core, @bettertui/react, …)
-        ↓ napi-rs FFI
-  Rust Native Engine (bettertui-engine)
-        ↓ crossterm
-    Terminal
+```mermaid
+graph TD
+    A[Application] --> B[@bettertui/react]
+    B --> C[@bettertui/core]
+    C --> D[@bettertui/native]
+    D -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
+    E --> F[bettertui-engine]
+    F -->|crossterm + portable-pty| G[(Terminal / PTY)]
 ```
 
 The Rust engine owns:
 
 - **Rendering** — double-buffered, cell-based frame buffer with dirty-region diffing
 - **Layout** — Taffy-based flexbox adapted to terminal cells
-- **Input** — keyboard, mouse, and paste parsing
-- **Terminal** — capability detection, raw mode, alternate screen
-- **Scheduler** — frame timing and async task orchestration
-- **Animation** — tween engine with keyframes
-- **Text editing** — rope-based buffer with cursor, selection, and undo/redo
+- **Input** — keyboard, mouse, and paste parsing (incl. Kitty / CSI-u)
+- **Terminal** — capability detection, raw mode, alternate screen, VT emulation
+- **Scheduler** — frame timing and priority scheduling
+- **Animation** — tween/spring/keyframe engine
+- **Text editing** — rope-based buffer with cursor, selection, undo/redo
 - **PTY & clipboard** — embedded terminal processes and system clipboard
 
 TypeScript owns:
@@ -41,42 +41,49 @@ TypeScript owns:
 - **Themes** — design-token system
 - **Icons** — icon registry
 
-See [`docs/architecture`](docs/architecture/README.md) for the full design.
+See [`docs/architecture`](docs/architecture/README.md) for the full design, and [`docs/`](docs/README.md) for the complete documentation index.
 
 ## Project Layout
 
 ```
 bettertui/
 ├── native/
-│   ├── engine/       # Rust rendering engine
-│   └── bindings/     # napi-rs Node.js bindings
+│   ├── engine/        # bettertui-engine (Rust library)
+│   └── bindings/      # bettertui-bindings (napi-rs cdylib)
 ├── packages/
-│   ├── core/         # Framework-agnostic runtime, command protocol, tree ops
-│   ├── shared/       # Framework-agnostic type definitions
-│   ├── react/        # React adapter (host config, renderer, hooks, components)
-│   ├── native/       # Engine/native runtime wrapper
-│   ├── widgets/      # Widget library
-│   ├── themes/       # Theme definitions
-│   ├── icons/        # Icon registry
-│   └── devtools/     # Developer tooling
-├── examples/         # Example applications
-├── docs/             # Architecture documentation
-├── benchmarks/       # Performance harness
-└── scripts/          # Build and maintenance scripts
+│   ├── shared/        # @bettertui/shared  — type-only foundation
+│   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime
+│   ├── react/         # @bettertui/react   — React 19 adapter
+│   ├── native/        # @bettertui/native  — napi bridge + runtime
+│   ├── widgets/       # @bettertui/widgets — widget interface (stub)
+│   ├── themes/        # @bettertui/themes  — theme defs + factory
+│   ├── icons/         # @bettertui/icons   — icon registry
+│   └── devtools/      # @bettertui/devtools — devtools stub
+├── apps/
+│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
+├── examples/          # example apps (mostly stubs; counter partially wired)
+├── docs/              # this documentation
+├── benchmarks/        # empty placeholder (no harness yet)
+├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
+├── Cargo.toml         # Rust workspace
+├── package.json       # root TS manifest + pnpm scripts
+├── pnpm-workspace.yaml
+├── turbo.json
+└── biome.json
 ```
 
 ## Package Overview
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| `@bettertui/shared` | Framework-agnostic type definitions | Types complete |
-| `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | Framework complete |
-| `@bettertui/react` | React adapter (renderer, hooks, components) | Stub components |
-| `@bettertui/native` | napi bindings wrapper and runtime | Implemented |
-| `@bettertui/widgets` | Reusable widget components | Interface only |
-| `@bettertui/themes` | Theme definitions and utilities | Partial |
-| `@bettertui/icons` | Icon registry and management | Scaffolded |
-| `@bettertui/devtools` | Developer tools and debugging | Stub |
+| `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
+| `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
+| `@bettertui/react` | React adapter (renderer, hooks, components) | ⚠️ reconciler+hooks real, components stubs |
+| `@bettertui/native` | napi bindings wrapper and runtime | ✅ Implemented (needs native addon) |
+| `@bettertui/widgets` | Reusable widget components | ❌ Interface only |
+| `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
+| `@bettertui/icons` | Icon registry and management | ✅ Scaffolded (empty) |
+| `@bettertui/devtools` | Developer tooling | ❌ Stub |
 
 ## Getting Started
 
@@ -84,8 +91,11 @@ bettertui/
 # Install dependencies
 pnpm install
 
-# Build all packages (compiles the Rust engine via napi-rs)
+# Build all TypeScript packages (does NOT compile Rust)
 pnpm build
+
+# Build the native Rust addon (required before running anything native)
+cargo build -p bettertui-bindings
 
 # Type-check and lint
 pnpm typecheck
@@ -102,7 +112,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Tech Stack
 
-- **Engine:** Rust (napi-rs, taffy, crossterm, ropey)
+- **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap)
 - **Runtime:** Node.js
 - **Language:** TypeScript 5+
 - **Monorepo:** TurboRepo + pnpm
@@ -112,11 +122,13 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part of the project: the rendering pipeline, layout, frame buffer, events, input, animation, text engine, PTY, and Nerd Font support are implemented and covered by tests. The TypeScript side — React components, the reconciler, widgets, and examples — is still early and largely stubbed. Integration between the two layers is ongoing.
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by ~1071 passing tests. The TypeScript side is partial: `@bettertui/core` and `@bettertui/native` are implemented; `@bettertui/react` has a real reconciler + hooks but its components are still stubs; `@bettertui/widgets` and `@bettertui/devtools` are stubs. The single wired example is `examples/counter/src/index.tsx`.
 
 ## Documentation
 
-- [Architecture](docs/architecture/README.md) — engine and protocol design
+- [Architecture (root summary)](ARCHITECTURE.md)
+- [Architecture (full reference)](docs/architecture/README.md)
+- [Documentation index](docs/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)

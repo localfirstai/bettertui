@@ -7,9 +7,9 @@ Thank you for your interest in contributing to BetterTUI.
 ### Prerequisites
 
 - Node.js >= 20
-- pnpm >= 9
+- pnpm >= 9 (the repo pins `pnpm@9.15.0`)
 - Rust (stable, with `cargo` and `rustup`)
-- napi CLI (`npm install -g @napi-rs/cli`)
+- napi CLI is **not** required — the native build uses Cargo build scripts
 
 ### Getting Started
 
@@ -21,8 +21,11 @@ cd bettertui
 # Install dependencies
 pnpm install
 
-# Build all packages
+# Build all TypeScript packages (does NOT compile Rust)
 pnpm build
+
+# Build the native Rust addon (required before running anything native)
+cargo build -p bettertui-bindings
 
 # Run linting
 pnpm lint
@@ -37,8 +40,8 @@ pnpm typecheck
 # Check the engine compiles
 cargo check --workspace
 
-# Run tests
-cargo test --workspace
+# Run tests (engine has ~1071, use --lib to skip integration tests)
+cargo test -p bettertui-engine --lib
 
 # Format code
 cargo fmt --all
@@ -49,11 +52,12 @@ cargo clippy --workspace -- -D warnings
 
 ## Project Structure
 
-- `native/engine/` — Rust rendering engine
-- `native/bindings/` — napi-rs Node.js bindings
-- `packages/` — TypeScript packages (core, reconciler, react, etc.)
-- `examples/` — Example applications
-- `docs/` — Documentation
+- `native/engine/` — Rust rendering engine (`bettertui-engine`, library)
+- `native/bindings/` — napi-rs Node.js bindings (`bettertui-bindings`, cdylib)
+- `packages/` — TypeScript packages (`shared`, `core`, `react`, `native`, `widgets`, `themes`, `icons`, `devtools`)
+- `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
+- `examples/` — example apps (mostly stubs; `counter` partially wired)
+- `docs/` — the documentation you are reading (canonical source of truth)
 
 ## Code Standards
 
@@ -74,12 +78,13 @@ cargo clippy --workspace -- -D warnings
 - Prefer `smallvec` for small collections
 - Document public APIs with `///` doc comments
 - Formatting enforced by **rustfmt**, linting by **clippy**
+- All structs with `new()` must derive or implement `Default` (clippy requirement)
 
 ### General
 
 - Feature-first architecture
 - No dead code — remove unused imports and variables
-- No TODO comments in committed code
+- No TODO comments in committed code (track work in `tasks/`)
 - Keep functions small and focused
 - Write descriptive commit messages
 
@@ -123,7 +128,7 @@ Configure format on save in `.vscode/settings.json`:
 1. Create a feature branch from `main`
 2. Make your changes following the code standards
 3. Ensure all checks pass: `pnpm lint && pnpm typecheck && pnpm build`
-4. Ensure Rust checks pass: `cargo check --workspace && cargo test --workspace`
+4. Ensure Rust checks pass: `cargo check --workspace && cargo test -p bettertui-engine --lib`
 5. Submit a pull request with a clear description
 
 ## Reporting Issues

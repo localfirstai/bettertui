@@ -1,101 +1,106 @@
 # Architecture
 
-This document describes the internal architecture of BetterTUI.
+This document is the root-level architecture summary. The **canonical, module-by-module** reference lives in [`docs/architecture/`](docs/architecture/README.md) and is generated from the implementation.
 
-## Dependency Flow
+## What BetterTUI is
 
-```
-┌─────────────────────┐
-│   Framework Adapter  │  ← React, Vue, Solid, Svelte...
-│  (packages/react/)   │
-└─────────┬───────────┘
-          │
-┌─────────▼───────────┐
-│   @bettertui/shared  │  ← Framework-agnostic type definitions
-│  (packages/shared/)  │
-└─────────┬───────────┘
-          │
-┌─────────▼───────────┐
-│     @bettertui/core  │  ← Node model, protocol, tree ops (re-exports shared)
-│  (packages/core/)    │
-└─────────┬───────────┘
-          │
-┌─────────▼───────────┐
-│  Rust Native Engine  │  ← Rendering, layout, events
-│ (native/engine/)     │
-└─────────┬───────────┘
-          │
-┌─────────▼───────────┐
-│      Terminal        │  ← crossterm I/O
-└─────────────────────┘
+A **framework-agnostic terminal UI rendering engine**. Rust owns rendering, layout, input, animation, text editing, and terminal emulation. TypeScript owns the developer experience (typed APIs, framework bindings, theming). A napi-rs FFI boundary carries **commands** — never framework concepts.
+
+BetterTUI is **never** an application, IDE, AI framework, or editor. It is infrastructure that applications are built on.
+
+## Dependency flow (the rule)
+
+```mermaid
+graph TD
+    App[Application] --> React[@bettertui/react]
+    React --> Core[@bettertui/core]
+    Core --> Native[@bettertui/native]
+    Native -->|napi-rs FFI| Bindings[bettertui-bindings]
+    Bindings --> Engine[bettertui-engine]
+    Engine --> Term[(crossterm / portable-pty)]
+    Core --> Shared[@bettertui/shared]
+    React --> Shared
+    Themes[@bettertui/themes] --> Shared
+    Widgets[@bettertui/widgets] --> Core
+    Widgets --> Shared
 ```
 
-## Principles
+- `bettertui-engine` never imports any JS framework.
+- `@bettertui/core` never imports React.
+- Only `@bettertui/react` imports React.
+- The only boundary between a UI framework and the engine is the **command** — so Vue/Solid/Svelte/vanilla-TS adapters require no Rust changes.
 
-### Framework Agnosticism
+## Layer model
 
-The Rust engine has zero knowledge of React, Vue, or any UI framework. It exposes a generic tree-based rendering API. Framework adapters translate their component trees into this generic format.
-
-### Separation of Concerns
-
-- **Rust** handles all performance-critical operations (rendering, layout, input, scheduling)
-- **TypeScript** handles API design, developer experience, and framework bindings
-- **No business logic** lives in the engine — it is purely a rendering framework
-
-### Zero-Config Performance
-
-The engine automatically handles:
-- Dirty rect diffing (only redraw changed regions)
-- Frame scheduling (60fps target with vsync)
-- Layout caching (incremental recalculation)
-- Memory pooling (reuse allocations)
-
-## Engine Modules
-
-| Module | Responsibility |
-|--------|---------------|
-| `renderer` | Frame buffer composition and terminal output |
-| `layout` | Flexbox/CSS layout via Taffy |
-| `scheduler` | Async task scheduling and frame timing |
-| `terminal` | Terminal size, capabilities, raw mode |
-| `framebuffer` | Cell-based frame buffer |
-| `events` | Event dispatch and routing |
-| `keyboard` | Key parsing and modifier tracking |
-| `mouse` | Mouse button, position, and drag tracking |
-| `selection` | Text selection with range management |
-| `clipboard` | System clipboard read/write |
-| `editor` | Rope-based text buffer with cursor |
-| `animation` | Tween engine with keyframes |
-| `widgets` | Native widget implementations |
-| `graphics` | Color, style, and border rendering |
-| `screen` | Multi-layer compositing |
-| `protocol` | ANSI escape sequence handling |
-| `capabilities` | Terminal feature detection |
-| `benchmark` | Performance measurement harness |
-| `ffi` | Foreign function interface bridge |
-
-## React Integration
-
-BetterTUI uses a **custom React reconciler** (not Ink). The reconciler translates React's virtual DOM operations into BetterTUI's native tree format:
-
-1. React calls reconciler host config methods (createInstance, appendChild, etc.)
-2. Reconciler maintains an internal tree of BetterTUI nodes
-3. On commit, dirty nodes are diffed against the previous frame
-4. Changed nodes produce render commands
-5. Commands are batched and sent to the Rust engine via napi-rs
-
-This approach gives React full control over component lifecycle while the engine handles all rendering performance.
-
-## Data Flow
-
+```mermaid
+graph TD
+    subgraph L1[Framework Adapter — TypeScript]
+        R[@bettertui/react]
+    end
+    subgraph L2[Core TypeScript]
+        C[@bettertui/core]
+        N[@bettertui/native]
+        S[@bettertui/shared]
+    end
+    subgraph L3[Rust Engine]
+        E[bettertui-engine]
+    end
+    subgraph L4[Terminal]
+        T[crossterm / portable-pty]
+    end
+    R --> C
+    C --> N
+    N -->|napi-rs| E
+    E --> T
 ```
-User Code (React components)
-    ↓ (React render)
-Reconciler (host config)
-    ↓ (tree diff)
-BetterTUI Tree (@bettertui/core)
-    ↓ (napi-rs bridge)
-Rust Engine
-    ↓ (layout + render)
-Terminal Output
-```
+
+## Rust engine: what it owns
+
+| Subsystem | Module | Implemented? |
+|-----------|--------|--------------|
+| Arena / node tree | `tree` | ✅ |
+| Command protocol | `protocol` | ✅ |
+| Renderer / frame production | `renderer`, `render_object`, `painter` | ✅ |
+| Frame buffer | `framebuffer` | ✅ |
+| Dirty diff | `dirty_diff` | ✅ |
+| Layout (Taffy) | `layout` | ✅ |
+| Events | `events` | ✅ |
+| Input parsing | `input`, `ansi` | ✅ |
+| Animation | `animation` | ✅ (callback path partial) |
+| Scheduler | `scheduler` | ✅ |
+| Capabilities | `capabilities` | ✅ |
+| Terminal I/O + VT | `terminal`, `terminal/vt` | ✅ |
+| PTY / process | `pty`, `terminal_process` | ✅ |
+| Compositor / screen | `compositor`, `screen` | ✅ |
+| Text editing (rope) | `text` | ✅ |
+| Widgets | `widgets` | ✅ (~200 tests) |
+| FFI surface | `bindings` (cdylib) | ✅ |
+
+> Note: the top-level `keyboard/`, `mouse/`, `editor/`, `clipboard/`, `selection/`, `ffi/` engine modules are **stubs**; the real logic lives in `input/`, `text/`, `capabilities/`, `terminal/vt`, and the `bindings` crate.
+
+## TypeScript: what it owns
+
+| Package | Role | Status |
+|---------|------|--------|
+| `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
+| `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
+| `@bettertui/react` | React adapter (reconciler + hooks + components) | ⚠️ reconciler/hooks real, components stubs |
+| `@bettertui/native` | napi bridge + runtime | ✅ (needs native addon) |
+| `@bettertui/widgets` | Widget library | ❌ stub |
+| `@bettertui/themes` | Theme defs + factory | ✅ |
+| `@bettertui/icons` | Icon registry | ✅ (empty) |
+| `@bettertui/devtools` | DevTools | ❌ stub |
+
+## Architecture principles
+
+1. **Framework first.** The engine is framework-agnostic; React is only the first adapter.
+2. **Rust owns rendering.** TypeScript never renders; it emits commands.
+3. **No business logic in the engine.** It is a rendering/layout/input framework.
+4. **Future adapters (Vue, Solid, Svelte, Astro, vanilla TS) must not require Rust changes.**
+
+## Further reading
+
+- [docs/architecture/ — full design reference](docs/architecture/README.md)
+- [docs/ — documentation index](docs/README.md)
+- [ROADMAP.md](ROADMAP.md) — current, code-accurate status
+- [CONTRIBUTING.md](CONTRIBUTING.md)
