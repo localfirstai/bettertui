@@ -11,7 +11,12 @@ This document describes the internal architecture of BetterTUI.
 └─────────┬───────────┘
           │
 ┌─────────▼───────────┐
-│     @bettertui/core  │  ← Shared types, tree diffing
+│   @bettertui/shared  │  ← Framework-agnostic type definitions
+│  (packages/shared/)  │
+└─────────┬───────────┘
+          │
+┌─────────▼───────────┐
+│     @bettertui/core  │  ← Node model, protocol, tree ops (re-exports shared)
 │  (packages/core/)    │
 └─────────┬───────────┘
           │

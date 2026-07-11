@@ -81,20 +81,9 @@ Events propagate through capture → target → bubble phases.
 | `@bettertui/react` | React component API | Stub components |
 | `@bettertui/widgets` | Widget library | Interface only |
 | `@bettertui/themes` | Theme system | Partially implemented |
-| `@bettertui/icons` | Icon registry | Working, empty |
+| `@bettertui/icons` | Icon registry | Scaffolded |
 | `@bettertui/devtools` | Developer tools | Stub |
-
-### Proposed Packages
-
-| Package | Reason |
-|---------|--------|
-| `@bettertui/protocol` | Protocol codec for alternative transports |
-| `@bettertui/renderer` | TypeScript renderer wrapper |
-| `@bettertui/hooks` | Framework-agnostic hook utilities |
-| `@bettertui/testing` | Headless renderer, mock input, snapshots |
-| `@bettertui/animations` | Animation API backed by Rust engine |
-| `@bettertui/editor` | Text editor component backed by Rust rope |
-| `@bettertui/graphics` | Canvas-like API backed by Rust framebuffer |
+| `@bettertui/native` | napi bindings wrapper + runtime | Implemented |
 
 ## Rust Module Structure
 
@@ -132,31 +121,6 @@ bettertui-engine
 | Memory per node | <256 bytes |
 | Total engine memory | <10MB |
 
-## Implementation Timeline
-
-| Phase | Duration | Deliverable |
-|-------|----------|-------------|
-| 0: Architecture | 1 week | Design documents (this) |
-| 1: Engine Core | 2-3 weeks | Terminal I/O, frame buffer |
-| 2: Node Tree | 2-3 weeks | Arena-based node tree |
-| 3: Layout Engine | 2-3 weeks | Taffy flexbox layout |
-| 4: Event System | 2 weeks | Keyboard, mouse input |
-| 5: Protocol Layer | 2-3 weeks | TypeScript ↔ Rust communication |
-| 6: React Integration | 3-4 weeks | Working React components |
-| 7: Widgets | 3-4 weeks | Reusable widget library |
-| 8: Rendering Pipeline | 2-3 weeks | Diffing, optimization |
-| 9: Theming | 1-2 weeks | Theme system |
-| 10: Animation | 2-3 weeks | Tween engine |
-| 11: DevTools | 2-3 weeks | Inspector, profiler |
-| 12: Advanced Features | 3-4 weeks | Clipboard, selection, editing |
-| 13: Plugin System | 2-3 weeks | Extensibility |
-| 14: Documentation | 2-3 weeks | Docs and examples |
-| 15: Multi-Framework | 4-6 weeks | Vue, Solid, Svelte adapters |
-| **Total** | **~6 months** | **Complete framework** |
-
 ## Next Steps
 
-1. **Review this architecture** with the team.
-2. **Prioritize Phase 1** — Engine Core.
-3. **Set up CI/CD** for automated testing.
-4. **Begin implementation** of terminal module and frame buffer.
+See [ROADMAP.md](../../ROADMAP.md) for the current, code-accurate status. The engine and its napi-rs bindings lead development; the TypeScript framework bindings follow.

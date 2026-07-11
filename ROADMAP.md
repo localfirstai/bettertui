@@ -1,90 +1,59 @@
 # Roadmap
 
-## Phase 1: Foundation (Current)
+BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the TypeScript framework bindings follow. This roadmap reflects what is implemented today and what remains.
 
-- [x] Repository scaffolding
-- [x] Rust workspace setup
-- [x] TypeScript package structure
-- [x] TurboRepo + pnpm configuration
-- [x] CI/CD pipeline
+## Status at a glance
 
-## Phase 2: Engine Core
+| Layer | State | Notes |
+|-------|-------|-------|
+| Rust engine | Implemented | Rendering, layout, input, events, animation, text, PTY |
+| napi-rs bindings | Implemented | `@bettertui/native` exposes the engine to Node.js |
+| TypeScript core | Partial | Types and command model defined |
+| React components | Stub | Component signatures exist; rendering not wired |
+| Reconciler | In progress | Host config scaffolding present |
+| Widgets | Interface only | Public API surface defined, not implemented |
+| Examples | Scaffolded | Placeholder entry points |
+| DevTools | Stub | Not implemented |
 
-- [ ] Terminal detection and capability querying
-- [ ] Raw mode and alternate screen management
-- [ ] Frame buffer with cell-based rendering
-- [ ] Basic ANSI escape sequence output
-- [ ] Keyboard input parsing
-- [ ] Mouse input parsing (SGR mode)
+## Completed
 
-## Phase 3: Layout Engine
+- [x] Repository scaffolding (TurboRepo + pnpm workspace)
+- [x] Rust workspace and engine modules
+- [x] Node arena with generational indices
+- [x] Taffy-based flexbox layout adapted to terminal cells
+- [x] Double-buffered frame buffer with dirty-region diffing
+- [x] ANSI encoding/decoding (CSI, OSC, DCS)
+- [x] Keyboard, mouse, and paste input parsing
+- [x] DOM-style event dispatch (capture → target → bubble)
+- [x] Animation tween engine
+- [x] Rope-based text engine with cursor, selection, undo/redo, search
+- [x] Terminal capability detection
+- [x] PTY runtime for embedded terminal processes
+- [x] Nerd Font support
+- [x] Compositor with layered output
+- [x] napi-rs bindings exposing the engine to Node.js
+- [x] Focus management
+- [x] Clipboard integration
+- [x] Architecture documentation
 
-- [ ] Taffy integration for flexbox layout
-- [ ] Node tree management
-- [ ] Constraint-based sizing
-- [ ] Layout caching and invalidation
-- [ ] Absolute and relative positioning
+## In progress
 
-## Phase 4: Rendering Pipeline
+- [ ] React reconciler host config producing commands
+- [ ] React components emitting element descriptors
+- [ ] Engine wrapper lifecycle (render loop, terminal raw mode)
+- [ ] Input event → widget dispatch
 
-- [ ] Dirty rect diffing
-- [ ] Double-buffered frame output
-- [ ] Style application (colors, bold, etc.)
-- [ ] Border rendering (single, double, rounded)
-- [ ] Text wrapping and truncation
-- [ ] Scroll container support
+## Planned
 
-## Phase 5: React Integration
-
-- [ ] Custom reconciler host config
-- [ ] Component lifecycle management
-- [ ] State and effect hooks support
-- [ ] Context propagation
-- [ ] Error boundaries
-
-## Phase 6: Widget Library
-
-- [ ] Box container
-- [ ] Text display
-- [ ] Text input (single/multi-line)
-- [ ] List with scrolling
-- [ ] Table with sorting
-- [ ] Tree view
-- [ ] Tab bar
-- [ ] Modal dialog
-- [ ] Toast notifications
-- [ ] Progress bar
-- [ ] Spinner/loader
-
-## Phase 7: Advanced Features
-
-- [ ] Animation system (tweens, keyframes)
-- [ ] Clipboard integration
-- [ ] Text selection
-- [ ] Search and highlight
-- [ ] Theming engine
+- [ ] Widget library (Box, Text, Input, List, Table, Tree, Tabs, Modal, …)
+- [ ] Theme token system
+- [ ] Icon registry with bundled icon sets
+- [ ] Developer tools (inspector, profiler, error overlay)
+- [ ] Example applications wired to the engine
+- [ ] Additional framework adapters (Vue, Solid, Svelte, vanilla TypeScript)
 - [ ] Plugin system
+- [ ] Public API reference documentation per package
 
-## Phase 8: Developer Experience
+## Non-goals
 
-- [ ] DevTools overlay
-- [ ] Performance profiler
-- [ ] Component inspector
-- [ ] Hot reload support
-- [ ] Error overlay
-
-## Phase 9: Documentation & Examples
-
-- [ ] API reference documentation
-- [ ] Getting started guide
-- [ ] All example applications
-- [ ] Video tutorials
-- [ ] Migration guide from Ink
-
-## Future Framework Support
-
-- [ ] Vue adapter
-- [ ] Solid adapter
-- [ ] Svelte adapter
-- [ ] Preact adapter
-- [ ] Vanilla TypeScript API
+BetterTUI is not an application, IDE, or AI framework. It does not ship a terminal emulator frontend, a code editor, or an agent runtime. Those are built by consumers on top of the engine.

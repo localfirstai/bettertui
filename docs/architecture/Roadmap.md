@@ -1,6 +1,8 @@
-# Roadmap
+# Roadmap (Historical Design Plan)
 
-> The implementation roadmap for BetterTUI.
+> **Status:** This is the original detailed phase design plan. It is preserved as a historical reference for the intended engineering breakdown.
+> **Canonical status:** See [ROADMAP.md](../../ROADMAP.md) at the repository root for the current, code-accurate status.
+>
 > Phased, incremental, each phase building on the previous.
 
 ## Phase 0: Architecture (Current)
