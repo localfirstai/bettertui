@@ -1,4 +1,6 @@
 ---
+import "../styles/global.css";
+
 interface Props {
   title: string;
   description?: string;
@@ -8,7 +10,7 @@ interface Props {
 
 const {
   title,
-  description = "High-performance terminal UI framework powered by Rust and TypeScript",
+  description = "Build beautiful, interactive terminal user interfaces with React, SolidJS, Astro, and more. TypeScript-first. Zero runtime overhead.",
   image = "/og-default.png",
   canonicalURL,
 } = Astro.props;
@@ -43,8 +45,12 @@ const currentURL = canonicalURL || Astro.url.href;
     <meta name="twitter:image" content={new URL(image, Astro.site)} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
     <script is:inline>
       const theme = (() => {
@@ -63,19 +69,7 @@ const currentURL = canonicalURL || Astro.url.href;
       }
     </script>
   </head>
-  <body class="min-h-screen bg-bg text-text antialiased">
+  <body class="min-h-screen bg-background text-foreground antialiased">
     <slot />
   </body>
 </html>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("theme-toggle");
-    if (toggle) {
-      toggle.addEventListener("click", () => {
-        const isDark = document.documentElement.classList.toggle("dark");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
-      });
-    }
-  });
-</script>

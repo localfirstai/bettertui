@@ -1,97 +1,75 @@
 ---
 const features = [
   {
-    icon: "zap",
-    title: "Rust-Powered Rendering",
-    description:
-      "60fps terminal rendering powered by a native Rust engine. Dirty rect diffing, layout caching, and memory pooling — zero config.",
+    icon: "globe",
+    title: "Framework Agnostic",
+    description: "Use React, SolidJS, Astro, or any framework. One API, infinite possibilities.",
   },
   {
-    icon: "react",
-    title: "React First-Class",
-    description:
-      "Build terminal UIs with React components, hooks, and state management. Custom reconciler, not Ink. Full React 19 support.",
+    icon: "shield",
+    title: "Type-Safe",
+    description: "Full TypeScript support with autocomplete and compile-time safety.",
   },
   {
-    icon: "layout",
-    title: "Flexbox Layout",
-    description:
-      "CSS Flexbox layout via Taffy. Responsive, predictable, familiar. No custom layout DSL to learn.",
+    icon: "cursor",
+    title: "Interactive Components",
+    description: "Buttons, inputs, selects, tables, and more — all terminal-native.",
   },
   {
     icon: "palette",
-    title: "Theme System",
-    description:
-      "Built-in theming with CSS variables. Dark mode, custom palettes, and design tokens out of the box.",
+    title: "Theming",
+    description: "Built-in dark mode and custom theme support with CSS variables.",
   },
   {
-    icon: "box",
-    title: "Rich Widget Library",
-    description:
-      "Text, Input, Table, Tree, Dialog, and more. Accessible, composable, and fully typed.",
+    icon: "keyboard",
+    title: "Keyboard Navigation",
+    description: "Full keyboard support with focus management and shortcuts.",
   },
   {
-    icon: "terminal",
-    title: "Framework Agnostic Engine",
-    description:
-      "The Rust engine has zero framework knowledge. Clean API boundary. Adapters for React, Vue, Solid, and Svelte.",
+    icon: "feather",
+    title: "Lightweight",
+    description: "Zero runtime overhead. Tree-shakeable and dependency-free core.",
   },
 ];
+
+const icons = {
+  globe:
+    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z",
+  shield:
+    "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z",
+  cursor: "M4 2l15 10-6.5 1.5L10 19 4 2z",
+  palette:
+    "M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.1 0 2-.9 2-2 0-.29-.06-.55-.17-.79-.11-.25-.17-.52-.17-.81 0-.55.45-1 1-1h1.17c3.2 0 5.84-2.34 5.99-5.4C21.59 7.08 17.22 2 12 2zm-5.5 8C5.67 10 5 9.33 5 8.5S5.67 7 6.5 7 8 7.67 8 8.5 7.33 10 6.5 10zm3-3C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 3c-.83 0-1.5-.67-1.5-1.5S16.67 7 17.5 7s1.5.67 1.5 1.5S18.33 10 17.5 10z",
+  keyboard:
+    "M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z",
+  feather:
+    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z",
+};
 ---
 
 <section class="py-24">
-  <div class="container">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
-      <h2 class="mb-4 text-3xl font-bold md:text-4xl">Built for performance</h2>
-      <p class="text-text-muted">
-        Every architectural decision optimizes for speed. The Rust engine handles rendering, layout,
-        and input. React handles the UI.
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">Features</p>
+      <h2 class="text-section mt-2">Everything you need for terminal UIs</h2>
+      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
+        From interactive forms to real-time dashboards, BetterTUI provides the primitives you need.
       </p>
     </div>
 
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {features.map((feature) => (
-        <div class="group rounded-xl border border-border bg-surface p-6 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-muted">
-            {feature.icon === "zap" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        <article class="group relative overflow-hidden rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border hover:-translate-y-0.5 hover:shadow-lg">
+          <div class="p-6">
+            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={icons[feature.icon as keyof typeof icons]} />
               </svg>
-            )}
-            {feature.icon === "react" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
-                <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="2" transform="rotate(0 12 12)"></ellipse>
-                <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="2" transform="rotate(60 12 12)"></ellipse>
-                <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="2" transform="rotate(120 12 12)"></ellipse>
-              </svg>
-            )}
-            {feature.icon === "layout" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"></rect>
-                <line x1="3" y1="9" x2="21" y2="9" stroke-width="2"></line>
-                <line x1="9" y1="21" x2="9" y2="9" stroke-width="2"></line>
-              </svg>
-            )}
-            {feature.icon === "palette" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
-            )}
-            {feature.icon === "box" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-            )}
-            {feature.icon === "terminal" && (
-              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-            )}
+            </div>
+            <h3 class="text-lg font-semibold">{feature.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
           </div>
-          <h3 class="mb-2 text-lg font-semibold">{feature.title}</h3>
-          <p class="text-sm text-text-muted">{feature.description}</p>
-        </div>
+        </article>
       ))}
     </div>
   </div>

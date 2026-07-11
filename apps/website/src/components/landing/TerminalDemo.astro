@@ -1,0 +1,56 @@
+---
+---
+
+<section class="border-t border-border bg-muted/30 py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <h2 class="text-section">See it in action</h2>
+      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
+        A fully interactive terminal app built with BetterTUI.
+      </p>
+    </div>
+
+    <div class="mx-auto max-w-4xl">
+      <div class="overflow-hidden rounded-xl border border-border bg-code-bg shadow-2xl shadow-black/5 dark:shadow-black/20">
+        <div class="flex items-center gap-1.5 border-b border-code-border bg-background/50 px-4 py-3">
+          <div class="h-3 w-3 rounded-full bg-red-400/80" />
+          <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
+          <div class="h-3 w-3 rounded-full bg-green-400/80" />
+          <span class="ml-2 font-mono text-xs text-muted-foreground">bettertui-demo</span>
+          <div class="ml-auto flex gap-2">
+            <span class="rounded bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"> my-app </span>
+          </div>
+        </div>
+
+        <div class="space-y-1 p-6 font-mono text-sm leading-relaxed">
+          <div class="text-muted-foreground">$ <span class="text-foreground">npm install bettertui@latest</span></div>
+          <div class="text-terminal">✓ Package installed successfully!</div>
+          <div class="text-muted-foreground">$ <span class="text-foreground">npm run dev</span></div>
+          <div class="text-terminal">✓ Dev server started on port 3000</div>
+          <div class="mt-4 rounded border border-border bg-background p-4">
+            <div class="mb-2 flex items-center gap-4 border-b border-border pb-2 text-xs text-muted-foreground">
+              <span class="text-terminal">●</span>
+              <span>Todo App</span>
+              <span class="ml-auto">Press <kbd class="rounded bg-muted px-1">Tab</kbd> to navigate</span>
+            </div>
+            <div class="space-y-1">
+              {[
+                { label: "Learn BetterTUI", done: true },
+                { label: "Build a terminal app", done: false },
+                { label: "Ship to production", done: false },
+              ].map((item, i) => (
+                <div class="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-muted/50">
+                  <span class={item.done ? "text-terminal" : "text-muted-foreground"}>
+                    {item.done ? "☑" : "☐"}
+                  </span>
+                  <span class={item.done ? "text-muted-foreground line-through" : "text-foreground"}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div class="mt-2 text-muted-foreground">Press <kbd class="rounded bg-muted px-1">q</kbd> to quit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

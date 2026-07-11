@@ -1,25 +1,26 @@
 ---
 import Footer from "../components/Footer.astro";
 import Navbar from "../components/Navbar.astro";
-import Architecture from "../components/landing/Architecture.astro";
+import CTA from "../components/landing/CTA.astro";
 import CodeExample from "../components/landing/CodeExample.astro";
-import Community from "../components/landing/Community.astro";
 import Features from "../components/landing/Features.astro";
+import FrameworkLogos from "../components/landing/FrameworkLogos.astro";
 import Hero from "../components/landing/Hero.astro";
-import Performance from "../components/landing/Performance.astro";
+import TerminalDemo from "../components/landing/TerminalDemo.astro";
+import Testimonials from "../components/landing/Testimonials.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import "../styles/global.css";
 ---
 
-<BaseLayout title="BetterTUI">
+<BaseLayout title="BetterTUI — Terminal UIs for Any Framework">
   <Navbar />
-  <main>
+  <main class="pt-16">
     <Hero />
+    <FrameworkLogos />
     <Features />
-    <Architecture />
     <CodeExample />
-    <Performance />
-    <Community />
+    <TerminalDemo />
+    <Testimonials />
+    <CTA />
   </main>
   <Footer />
 </BaseLayout>

@@ -1,66 +1,101 @@
 ---
-const code1 = `import { Box, Text, useInput } from '@bettertui/react';
+const code1 = `import { Box, Text, useInput } from "bettertui";
 
 function App() {
   const [count, setCount] = useState(0);
 
-  useInput((key) => {
-    if (key === '+') setCount(c => c + 1);
-    if (key === '-') setCount(c => c - 1);
+  useInput((input) => {
+    if (input === "q") process.exit();
   });
 
   return (
-    <Box flexDirection="column" padding={1}>
-      <Text bold>Counter: {count}</Text>
-      <Text color="gray">+/- to adjust</Text>
+    <Box borderStyle="round" padding={1}>
+      <Text color="green">Count: {count}</Text>
+      <Text dimColor>Press 'q' to quit</Text>
     </Box>
   );
 }`;
 
-const code2 = `import { Table } from '@bettertui/widgets';
+const code2 = `// React
+import { render } from "bettertui/react";
 
-const data = [
-  { name: 'Alice', role: 'Engineer' },
-  { name: 'Bob', role: 'Designer' },
-];
+// SolidJS
+import { render } from "bettertui/solid";
 
-function TeamList() {
-  return (
-    <Table
-      columns={[
-        { key: 'name', title: 'Name' },
-        { key: 'role', title: 'Role' },
-      ]}
-      data={data}
-      bordered
-      selectable
-    />
-  );
-}`;
+// Astro
+import BetterTUI from "bettertui/astro";`;
 ---
 
-<section class="border-t border-border py-24">
-  <div class="container">
+<section class="py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
-      <h2 class="mb-4 text-3xl font-bold md:text-4xl">Write React. Get terminal.</h2>
-      <p class="text-text-muted">
-        Familiar React patterns. Components, hooks, state. Ships as a native terminal app.
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">How it works</p>
+      <h2 class="text-section mt-2">Define your UI</h2>
+      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
+        Familiar component patterns. Write once, run in any terminal.
       </p>
     </div>
 
-    <div class="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
-      <div class="overflow-hidden rounded-xl border border-border bg-code-bg">
-        <div class="flex items-center gap-2 border-b border-border px-4 py-3">
-          <span class="text-xs text-text-subtle">App.tsx</span>
+    <div class="grid items-center gap-12 lg:grid-cols-2">
+      <div>
+        <div class="relative overflow-hidden rounded-xl border border-code-border bg-code-bg">
+          <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
+            <div class="h-3 w-3 rounded-full bg-red-400/80" />
+            <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
+            <div class="h-3 w-3 rounded-full bg-green-400/80" />
+            <span class="ml-2 font-mono text-xs text-muted-foreground">App.tsx</span>
+          </div>
+          <pre class="overflow-x-auto p-4"><code class="font-mono text-code leading-relaxed text-foreground">{code1}</code></pre>
         </div>
-        <pre class="overflow-x-auto p-6 text-sm leading-relaxed"><code class="text-code-text">{code1}</code></pre>
       </div>
 
-      <div class="overflow-hidden rounded-xl border border-border bg-code-bg">
-        <div class="flex items-center gap-2 border-b border-border px-4 py-3">
-          <span class="text-xs text-text-subtle">table-demo.tsx</span>
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-full max-w-sm rounded-xl border-2 border-terminal/30 bg-code-bg p-6 shadow-lg">
+          <div class="mb-3 flex items-center gap-1.5">
+            <div class="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+            <div class="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
+            <div class="h-2.5 w-2.5 rounded-full bg-green-400/80" />
+          </div>
+          <div class="rounded border border-border bg-background p-4 font-mono text-sm">
+            <div class="text-terminal font-semibold">Count: 0</div>
+            <div class="mt-1 text-muted-foreground">Press 'q' to quit</div>
+          </div>
         </div>
-        <pre class="overflow-x-auto p-6 text-sm leading-relaxed"><code class="text-code-text">{code2}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="border-t border-border py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <h2 class="text-section">Any Framework</h2>
+      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
+        One engine. Your favorite framework.
+      </p>
+    </div>
+
+    <div class="grid items-center gap-12 lg:grid-cols-2">
+      <div class="flex flex-col items-center justify-center">
+        <div class="flex flex-wrap items-center justify-center gap-6">
+          {["React", "SolidJS", "Astro", "Vue", "Svelte"].map((fw) => (
+            <div class="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card/50 px-6 py-4 text-sm font-medium backdrop-blur-sm">
+              {fw}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div class="relative overflow-hidden rounded-xl border border-code-border bg-code-bg">
+          <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
+            <div class="h-3 w-3 rounded-full bg-red-400/80" />
+            <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
+            <div class="h-3 w-3 rounded-full bg-green-400/80" />
+            <span class="ml-2 font-mono text-xs text-muted-foreground">adapters.tsx</span>
+          </div>
+          <pre class="overflow-x-auto p-4"><code class="font-mono text-code leading-relaxed text-foreground">{code2}</code></pre>
+        </div>
       </div>
     </div>
   </div>

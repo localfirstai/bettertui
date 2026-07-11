@@ -1,0 +1,27 @@
+---
+import { Button } from "@components/ui/button";
+---
+
+<section class="border-t border-border py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background via-background to-terminal-muted/20 p-12 text-center md:p-16">
+      <div class="dot-grid pointer-events-none absolute inset-0 opacity-50" />
+
+      <div class="relative">
+        <h2 class="text-section text-balance">Ready to build better terminal apps?</h2>
+        <p class="text-section-sub mt-4 text-muted-foreground">
+          Get started in minutes with our CLI installer.
+        </p>
+
+        <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <a href="/docs/getting-started/quick-start">
+            <Button size="lg">Get Started</Button>
+          </a>
+          <a href="/docs">
+            <Button variant="outline" size="lg">Read the Docs</Button>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
