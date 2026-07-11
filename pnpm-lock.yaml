@@ -91,23 +91,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  examples/counter:
-    dependencies:
-      '@bettertui/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@bettertui/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-    devDependencies:
-      tsup:
-        specifier: ^8.3.0
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  examples/dashboard:
+  examples/_template:
     dependencies:
       '@bettertui/core':
         specifier: workspace:*
@@ -126,17 +110,17 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  examples/mouse:
+  examples/fundamentals/counter:
     dependencies:
       '@bettertui/core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../../packages/core
       '@bettertui/react':
         specifier: workspace:*
-        version: link:../../packages/react
+        version: link:../../../packages/react
       '@bettertui/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../../packages/shared
     devDependencies:
       tsup:
         specifier: ^8.3.0
@@ -145,17 +129,17 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  examples/table:
+  examples/fundamentals/forms:
     dependencies:
       '@bettertui/core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../../packages/core
       '@bettertui/react':
         specifier: workspace:*
-        version: link:../../packages/react
+        version: link:../../../packages/react
       '@bettertui/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../../packages/shared
     devDependencies:
       tsup:
         specifier: ^8.3.0
@@ -164,17 +148,17 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  examples/text-editor:
+  examples/fundamentals/hello-world:
     dependencies:
       '@bettertui/core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../../packages/core
       '@bettertui/react':
         specifier: workspace:*
-        version: link:../../packages/react
+        version: link:../../../packages/react
       '@bettertui/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../../packages/shared
     devDependencies:
       tsup:
         specifier: ^8.3.0
@@ -183,17 +167,207 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  examples/tree:
+  examples/fundamentals/layouts:
     dependencies:
       '@bettertui/core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../../packages/core
       '@bettertui/react':
         specifier: workspace:*
-        version: link:../../packages/react
+        version: link:../../../packages/react
       '@bettertui/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/fundamentals/tables:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/fundamentals/terminal:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/fundamentals/tree:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/capability-inspector:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/dashboard:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/markdown-viewer:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/performance-lab:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/system-monitor:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/terminal-showcase:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  examples/showcase/widget-gallery:
+    dependencies:
+      '@bettertui/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@bettertui/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      '@bettertui/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
     devDependencies:
       tsup:
         specifier: ^8.3.0

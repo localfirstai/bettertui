@@ -3,6 +3,7 @@ packages:
   - "packages/*"
   - "native/bindings"
   - "examples/*"
+  - "examples/*/*"
 
 catalog:
   typescript: ^5.7.0
