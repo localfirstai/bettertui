@@ -48,6 +48,8 @@
 - `PtyConfig.working_directory` (not `working_dir`).
 - `PtyConfig.env` is `Vec<(String, String)>`, not HashMap.
 - `PtyProcess::spawn(config)` takes only config — size is in config.size.
+- `PtyProcess::is_running(&mut self)` — takes `&mut self` (calls `child.try_wait()`). Cannot be called from `&self` context.
+- `TerminalRuntime::is_running(&self)` works by checking its own `TerminalState`, NOT by calling `PtyProcess::is_running()`.
 
 ## Scheduler
 
@@ -57,12 +59,17 @@
 ## Borrow Checker Patterns
 
 - When iterating `&self.field` while calling `self.method()`, clone the collection first: `let items = self.field.clone(); for item in &items { self.method(item); }`.
+- Struct field and method with the same name (e.g., `status: ProcessStatus` field + `fn status()` method): accessing `self.status` in the impl block goes to the FIELD. Call the field when you mean it, or rename if ambiguous.
 
 ## Local Font Bundling
 
 - Use `include_bytes!("../../fonts/FontName.otf")` to embed fonts at compile time.
 - Font files go in `native/engine/fonts/`.
 - `LocalFontDetector` checks bundled font first, then system fonts.
+
+## Error Chaining
+
+- `terminal_process` error chain: `PtyError` → `TerminalError` → `NeovimError`. Each impls `From<T>` for the next level up, so `?` auto-converts. Adding new error types should follow this chain.
 
 ## Widget Framework
 

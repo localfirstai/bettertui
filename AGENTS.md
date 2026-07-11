@@ -47,7 +47,7 @@
 
 ## Rust Engine Testing
 
-- Run tests: `cargo test -p bettertui-engine --lib`
+- Run tests: `cargo test -p bettertui-engine --lib` — the `--lib` flag excludes integration tests (`tests/` dir). Without it, pre-existing integration failures block CI.
 - Run clippy: `cargo clippy -p bettertui-engine --lib -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).

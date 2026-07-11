@@ -33,6 +33,8 @@
 - **Taffy error type is `TaffyError`** (not a custom enum). Wrap it in your own `LayoutError` if you need domain-specific variants.
 - **`pub mod` declarations are alphabetically sorted by `cargo fmt`** — add new modules in alpha order or fmt will rearrange them.
 - **`FrameBuffer::resize()` does NOT preserve content.** If you need content preserved, copy cells before resize.
+- **Two separate `GlyphCategory` enums exist:** `glyph::character::GlyphCategory` (10 variants: Ascii, AsciiExtended, Unicode, Emoji, NerdFont, BoxDrawing, Braille, CJK, Diacritical, Symbol) and `nerdfont::font::GlyphCategory` (13 variants: Powerline, Devicons, FontLogos, Octicons, etc.). Same name, different module, different purpose — import the right one.
+- **Edition 2024 enables `let` chains in `if`:** `if let Some(x) = expr && condition && let Some(y) = other_expr`. Use to collapse nested if-let blocks in process lifecycle code.
 
 ## PTY API
 
