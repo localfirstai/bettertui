@@ -4,6 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
+import { GITHUB_URL } from "./src/lib/constants.ts";
 
 export default defineConfig({
   site: "https://bettertui.dev",
@@ -15,7 +16,7 @@ export default defineConfig({
         src: "./src/assets/logo.svg",
         alt: "BetterTUI",
       },
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/bettertui/bettertui" }],
+      social: [{ icon: "github", label: "GitHub", href: GITHUB_URL }],
       sidebar: [
         {
           label: "Getting Started",

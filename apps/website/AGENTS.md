@@ -19,6 +19,28 @@ Stop a background server: `pnpm exec astro dev stop`
 
 The dev server runs at **http://localhost:4321** with live HMR.
 
+## SVG Download
+
+Add SVGs using the shadcn/ui CLI
+
+```bash
+pnpm dlx shadcn@latest add @svgl/sanity
+```
+
+Add multiple SVGs at once:
+
+```bash
+pnpm dlx shadcn@latest add @svgl/sanity @svgl/github @svgl/supabase @svgl/vercel
+```
+
+Or use Shadcn MCP Server (Recommendation)
+
+```
+# Prompts
+> Can you add the "GitHub" SVG from SVGL registry?
+> Please add React, Svelte and Vue SVGs from SVGL registry.
+```
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
