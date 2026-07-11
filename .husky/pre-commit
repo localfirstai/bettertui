@@ -1,11 +1,15 @@
+# Ensure node is in PATH (handles nvm, fnm, etc. for non-interactive shells/GUIs)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Format TypeScript/JS/JSON, organize imports, and apply safe lint fixes
 # Skip biome if no TS/JS/JSON files are staged (e.g., markdown-only commits)
 if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx|json)$'; then
-  npx --no-install biome check --write --staged . || exit 1
+  pnpm exec biome check --write --staged . || exit 1
 fi
 
 # Format all Rust files (fast operation)
-cargo fmt --all
+pnpm run cargo:fmt
 
 # Re-stage files modified by formatting
 git update-index --again
