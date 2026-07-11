@@ -1,212 +1,421 @@
-# Implementation TODO
+# Integration TODO
 
-## Phase 1: Framework Agnostic UI Model (Rust Types)
+> **Status:** Active
+> **Objective:** Bridge the Rust engine and TypeScript ecosystem into a production-ready framework.
+> **Architecture is mature.** No new subsystems. Only integration.
 
-### 1.1 Core Types
-- [ ] `NodeId` — generational index type alias
-- [ ] `NodeKind` — enum (Text, Box, Flex, Input, List, Table, Tree, Scroll, Tab, Modal, Spacer, Separator, Custom)
-- [ ] `RenderNode` — complete node struct with all fields
-- [ ] `Style` — visual styling (fg, bg, bold, italic, etc.)
-- [ ] `Color` — color representation (Named, Indexed, Rgb, Default)
-- [ ] `NamedColor` — 16 named terminal colors
+---
 
-### 1.2 Layout Types
-- [ ] `LayoutProps` — flexbox layout properties
-- [ ] `Sizing` — width/height values (Points, Percent, Auto)
-- [ ] `Display` — display mode (Flex, None)
-- [ ] `FlexDirection` — row/column/reverse
-- [ ] `JustifyContent` — main axis alignment
-- [ ] `AlignItems` — cross axis alignment
-- [ ] `AlignSelf` — per-child cross axis override
-- [ ] `Gap` — gap between children
-- [ ] `RectValues` — padding/margin/inset values
-- [ ] `Position` — relative/absolute
+## Dependency Graph
 
-### 1.3 Visual Types
-- [ ] `Visibility` — display, opacity, clip
-- [ ] `Transform` — translate_x, translate_y, z_index
-- [ ] `Overflow` — visible/hidden/scroll
-- [ ] `CursorProps` — cursor style and position
-- [ ] `CursorStyle` — block/underline/bar/none
-- [ ] `Point` — x, y coordinates
-- [ ] `Size` — width, height
-- [ ] `Rect` — x, y, width, height
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    React Application                                │
+│  (User code: components, hooks, state)                              │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ React.render()
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    @bettertui/react                                  │
+│  Box, Text, Flex, Spacer, Provider, etc.                            │
+│  Real JSX components that emit element descriptors                   │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ uses react-reconciler
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    @bettertui/reconciler                             │
+│  react-reconciler host config                                      │
+│  createInstance, appendChild, commitUpdate, resetAfterCommit        │
+│  Translates React operations → CommandBuffer                        │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ CommandBuffer.drain()
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    @bettertui/core                                   │
+│  CommandBuffer → JSON serialization                                 │
+│  Engine wrapper class (napi-rs binding)                              │
+│  NodeId conversion (string ↔ u32)                                   │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ napi-rs FFI
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    native/bindings (napi-rs)                         │
+│  #[napi] Engine class with processCommands()                        │
+│  #[napi] Renderer class with render()                               │
+│  #[napi] EventBus, FocusManager, Scheduler                          │
+│  #[napi] TextEngine, PtyRuntime                                     │
+│  #[napi] CapabilityDetector                                         │
+│  #[napi] Compositor                                                 │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ Rust FFI
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    bettertui-engine (Rust)                           │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ CommandProcessor → NodeArena → Tree operations             │     │
+│  └───────────────────────────────────────────────────────────┘     │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ LayoutEngine (Taffy) → Layout results                     │     │
+│  └───────────────────────────────────────────────────────────┘     │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ Renderer → Painter → FrameBuffer → DirtyDiff → AnsiBackend│     │
+│  └───────────────────────────────────────────────────────────┘     │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ EventBus → EventDispatcher → Widget event handling         │     │
+│  └───────────────────────────────────────────────────────────┘     │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ Scheduler (priority queue, frame budget, animation)        │     │
+│  └───────────────────────────────────────────────────────────┘     │
+│  ┌───────────────────────────────────────────────────────────┐     │
+│  │ FocusManager, CapabilityDetector, TextEngine, Compositor   │     │
+│  │ PtyRuntime, NeovimProcess, GlyphCache, NerdFont            │     │
+│  └───────────────────────────────────────────────────────────┘     │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ crossterm
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Terminal Emulator                                  │
+│  stdout → ANSI escape sequences → display                           │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-### 1.4 Interaction Types
-- [ ] `FocusProps` — tab_index, focusable, focused
-- [ ] `EventHandlers` — placeholder for future event callbacks
-- [ ] `NodeState` — scroll offsets, dirty flags, content size
-- [ ] `UpdateFlags` — bitflags for dirty propagation
+### Data Flow (Detailed)
 
-### 1.5 Metadata Types
-- [ ] `Metadata` — key, test_id, aria_label, tooltip
-- [ ] `Accessibility` — role, label, description, live, hidden
-- [ ] `AriaRole` — accessibility roles
-- [ ] `AriaLive` — live region modes
+```
+React Component Tree
+    ↓ [react-reconciler]
+Host Config Operations (createInstance, appendChild, etc.)
+    ↓ [CommandBuffer]
+TypeScript Command[] (JSON)
+    ↓ [napi-rs FFI]
+Rust Command[] (native)
+    ↓ [CommandProcessor]
+NodeArena mutated
+    ↓ [LayoutTreeSync → Taffy]
+Layout results (position + size per node)
+    ↓ [build_render_tree]
+Render tree (visible nodes with resolved styles)
+    ↓ [Painter]
+FrameBuffer (cell grid)
+    ↓ [DirtyDiff]
+Dirty regions (changed cells)
+    ↓ [AnsiBackend]
+ANSI escape sequences (bytes)
+    ↓ [stdout]
+Terminal display
+```
 
-### 1.6 Tests
-- [ ] Type sizes match architecture spec
-- [ ] Default implementations produce valid initial state
-- [ ] Style inheritance works (None = inherit)
+---
 
-## Phase 2: Rust Runtime (Arena + Tree) ✅
+## Integration Plan
 
-### 2.1 Arena
-- [x] `NodeArena` struct with slotmap backing
-- [x] `new()` — create arena with root node
-- [x] `insert()` — allocate node, return NodeId
-- [x] `get()` / `get_mut()` — O(1) node access
-- [x] `remove()` — free node, return it
-- [x] `contains()` — check if node exists
-- [x] `len()` / `is_empty()` — node count
-- [x] `clear()` — remove all nodes
-- [x] `root()` — get root NodeId
-- [x] `iter()` / `iter_mut()` — iterate all nodes
+### Phase 1: napi-rs Bindings (Foundation)
 
-### 2.2 Tree Operations
-- [x] `append_child()` — add child to parent
-- [x] `insert_before()` — insert before reference node
-- [x] `move_node()` — move node to new parent
-- [x] `replace_node()` — replace one node with another
-- [x] `remove_subtree()` — recursively remove node and descendants
-- [x] `detach()` — remove node from parent (keep in arena)
-- [x] `depth()` — compute node depth
-- [x] `is_ancestor()` — check ancestor relationship
+**Goal:** Expose Rust engine to Node.js.
 
-### 2.3 Iterators
-- [x] `children()` — direct children of a node
-- [x] `descendants()` — all descendants (DFS)
-- [x] `ancestors()` — parent chain to root
-- [x] `descendant_count()` — count all descendants
+**Files to modify:**
+- `native/bindings/src/lib.rs` — add #[napi] wrappers
+- `native/bindings/Cargo.toml` — ensure all deps
 
-### 2.4 Validation
-- [x] Tree invariant maintained (one parent per node except root)
-- [x] No cycles in tree
-- [x] All children exist in arena
-- [x] Parent references are consistent
+**What to expose (in order of priority):**
 
-### 2.5 Tests
-- [x] Insert and retrieve nodes
-- [x] Parent-child relationships
-- [x] Move node between parents
-- [x] Remove subtree cleans up all descendants
-- [x] Arena reuse after removal (generational indices)
-- [x] Tree validation catches inconsistencies
-- [x] Deep tree traversal
-- [x] Large tree performance (1000+ nodes)
+| # | Rust Type | napi Class/Function | Key Methods |
+|---|-----------|---------------------|-------------|
+| 1 | `Engine` | `NapiEngine` class | `new()`, `processCommands(json)`, `beginFrame()`, `commitFrame()`, `nodeCount()`, `printTree()`, `treeSummary()`, `validate()`, `root()` |
+| 2 | `Command` | JSON serialization | Convert TS Command → Rust Command via JSON |
+| 3 | `NodeId` | `string` (u32 → string) | Bidirectional conversion |
+| 4 | `Renderer` | `NapiRenderer` class | `new(w,h)`, `resize(w,h)`, `render(arena)`, `renderFull(arena)`, `requestFrame()`, `shouldRender()`, `dimensions()` |
+| 5 | `Scheduler` | (via Renderer) | `withFps()`, `requestFrame()`, `status()` |
+| 6 | `EventBus` | `NapiEventBus` class | `new()`, `pushKey()`, `pushMouse()`, `pushPaste()`, `pushResize()`, `drain()`, `len()`, `isEmpty()`, `clear()` |
+| 7 | `FocusManager` | `NapiFocusManager` class | `new()`, `focus()`, `blur()`, `focused()`, `traverse()`, `setScope()` |
+| 8 | `CapabilityDetector` | `NapiCapabilities` class | `detect()`, `brand()`, `supportsTrueColor()`, `terminalSize()`, `pixelSize()` |
+| 9 | `TextEngine` | `NapiTextEngine` class | `new()`, `withText()`, `insertChar()`, `insertStr()`, `deleteChar()`, `undo()`, `redo()`, `text()`, `search()`, `lineCount()`, `charCount()` |
+| 10 | `Compositor` | `NapiCompositor` class | `new(w,h)`, `resize(w,h)`, `addLayer()`, `removeLayer()`, `layerCount()`, `compositeToBuffer()` |
+| 11 | `PtyRuntime` | `NapiPty` class | `new()`, `spawn(config)`, `read()`, `write()`, `resize()`, `kill()`, `isRunning()`, `exitStatus()` |
+| 12 | `WidgetHost` | `NapiWidgetHost` class | `new()`, `register()`, `mount()`, `unmount()`, `handleEvent()`, `update()`, `widgetCount()` |
+| 13 | `Global functions` | `detectCapabilities()`, `getVersion()` | Standalone functions |
 
-## Phase 3: Protocol (Command System) ✅
+**Command Serialization Strategy:**
+- TypeScript sends commands as JSON arrays
+- Rust deserializes via `serde_json`
+- Commands are applied atomically via `CommandProcessor::process_batch()`
+- Results returned as JSON (success count, errors, warnings)
 
-### 3.1 Command Types
-- [x] `Command` enum with all variants
-- [x] Tree commands: CreateNode, RemoveNode, AppendChild, InsertBefore, MoveNode, ReplaceNode, DetachNode
-- [x] Style commands: SetStyle, SetForeground, SetBackground, SetBold, etc.
-- [x] Layout commands: SetLayout, SetFlexDirection, SetWidth, etc.
-- [x] Content commands: SetText, SetAttribute, RemoveAttribute
-- [x] Visibility commands: SetDisplay, SetOpacity, SetClip
-- [x] Transform commands: SetTranslateX, SetTranslateY, SetZIndex
-- [x] Overflow commands: SetOverflow
-- [x] Focus commands: FocusNode, BlurNode, SetTabIndex
-- [x] Frame commands: BeginFrame, CommitFrame, Invalidate
-- [x] Lifecycle commands: Shutdown
+**NodeId Strategy:**
+- Rust: `slotmap::DefaultKey` (8 bytes = u32 index + u32 generation)
+- TypeScript: `string` = `"index:generation"` format
+- napi layer handles conversion in both directions
 
-### 3.2 Command Processing
-- [x] `CommandProcessor` struct
-- [x] `process_batch()` — process Vec<Command> atomically
-- [x] `process_single()` — process one Command
-- [x] Validation before application
-- [x] Dirty flag propagation after mutations
-- [x] Error collection (CommandError, CommandWarning)
+### Phase 2: TypeScript Runtime
 
-### 3.3 Command Results
-- [x] `CommandResult` — success, errors, warnings
-- [x] `CommandError` — NodeNotFound, CycleDetected, InvalidOperation
-- [x] `CommandWarning` — non-fatal issues
+**Goal:** Wire reconciler → command buffer → napi → Rust.
 
-### 3.4 Batch Management
-- [x] `CommandBuffer` — pre-allocated Vec<Command>
-- [x] `clear()` / `push()` / `drain()`
-- [x] Size estimation
+**Files created/modified:**
+- `packages/reconciler/src/index.ts` — modified to accept CommandBuffer, emit commands on every operation
+- `packages/native/src/index.ts` — created: exports createEngine, createEventBus, etc.
+- `packages/native/src/types.ts` — created: TypeScript types mirroring napi bindings
+- `packages/native/src/runtime.ts` — created: Runtime class orchestrating React → commands → native engine
+- `packages/react/src/index.ts` — updated: real React components (Box, Text, Flex, Spacer, Provider)
 
-### 3.5 Tests
-- [x] CreateNode allocates in arena
-- [x] AppendChild maintains parent-child
-- [x] RemoveNode cleans up subtree
-- [x] Invalid commands produce errors
-- [x] Batch processing is atomic
-- [x] Dirty flags propagate correctly
-- [x] 1000 commands process in <2ms
+**Key changes:**
+1. `createReconciler(buffer: CommandBuffer)` now accepts a shared command buffer
+2. Every reconciler operation emits a Command (CreateNode, AppendChild, RemoveNode, etc.)
+3. Native wrapper (`@bettertui/native`) loads napi bindings and provides typed APIs
+4. `createRuntime()` orchestrates: flush CommandBuffer → engine.processCommands() → engine.render()
+5. NodeId = numeric string (matches Rust engine's temp IDs)
 
-## Phase 4: React Reconciler (HostConfig) ✅
+### Phase 3: React Components
 
-### 4.1 Host Config
-- [x] `createInstance()` — create node from type + props
-- [x] `createTextInstance()` — create text node
-- [x] `appendChild()` — add child to parent
-- [x] `removeChild()` — remove child from parent
-- [x] `insertBefore()` — insert before reference
-- [x] `prepareUpdate()` — compute update payload
-- [x] `commitUpdate()` — apply update payload
-- [x] `commitTextUpdate()` — update text content
-- [x] `finalizeInitialChildren()` — post-creation setup
-- [x] `resetAfterCommit()` — flush batch to engine
+**Goal:** Replace placeholder components.
 
-### 4.2 Command Generation
-- [x] Command type definitions
-- [x] CommandBuffer class for batching commands
+**Files to modify:**
+- `packages/react/src/index.ts` — real implementations
 
-### 4.3 Tests
-- [x] TypeScript typecheck passes
-- [x] Biome lint passes
+**Component implementations:**
+- `Box` → renders `<box>` element with flex layout props
+- `Text` → renders `<text>` element with style props
+- `Flex` → renders `<box>` with flexDirection
+- `Spacer` → renders `<spacer>` element
+- `Provider` → provides theme context
 
-## Phase 5: Rust Engine (Command Receiver) ✅
+All components emit element descriptors that the reconciler translates to commands.
 
-### 5.1 Engine
-- [x] `Engine` struct with arena + command buffer
-- [x] `process_commands()` — receive and apply commands
-- [x] `print_tree()` — debug tree printing
-- [x] `node_count()` — current node count
-- [x] `validate()` — tree integrity check
-- [x] `create_node()` — create node and return ID
-- [x] `append_child()` — append child to parent
-- [x] `remove_node()` — remove node and descendants
-- [x] `set_text()` — set text content
-- [x] `set_style()` — set style
-- [x] `set_layout()` — set layout
-- [x] `begin_frame()` / `commit_frame()` — frame management
-- [x] `tree_summary()` — summary of tree state
+### Phase 4: Renderer Lifecycle
 
-### 5.2 Debug Output
-- [x] Tree printing with indentation
-- [x] Node properties display
-- [x] Style display
-- [x] Layout props display
-- [x] Tree summary with node counts and depth
+**Goal:** Connect Terminal → Input → EventBus → Widget Tree → Render → Scheduler → Output.
 
-### 5.3 Tests
-- [x] Engine processes CreateNode correctly
-- [x] Engine processes AppendChild correctly
-- [x] Engine processes RemoveNode correctly
-- [x] Engine maintains tree invariants
-- [x] Debug output is human-readable
-- [x] 1000 commands produce correct tree
+**Files to create/modify:**
+- `packages/core/src/loop.ts` — main render loop
+- `packages/core/src/terminal.ts` — terminal raw mode, crossterm integration
 
-## Phase 6: Developer Inspector ✅
+**Render loop:**
+1. Enter raw mode via crossterm
+2. Read input events → push to EventBus
+3. Process events → dispatch to widgets
+4. Check if frame is due (Scheduler)
+5. If due: render(arena) → get RenderFrame → write to stdout
+6. Repeat until shutdown
 
-### 6.1 Tree Inspector
-- [x] `print_tree_detail()` — formatted tree with indentation
-- [x] `tree_summary()` — node count, depth, kind distribution
+### Phase 5: Input Integration
 
-### 6.2 Protocol Logger
-- [x] `log_command()` — log commands with timestamps
-- [x] `recent_commands()` — get recent commands
-- [x] `commands_for_node()` — get commands for a specific node
+**Goal:** Connect input events to widget system.
 
-### 6.3 Mutation Logger
-- [x] `log_mutation()` — track tree mutations
-- [x] `mutation_log()` — get mutation log
+**Files to modify:**
+- `packages/core/src/input.ts` — input handling
+- `packages/react/src/index.ts` — event handler props
 
-### 6.4 Tests
-- [x] Tree inspector output is correct
-- [x] Protocol logger captures all commands
-- [x] Mutation logger tracks changes
+**Input events to handle:**
+- Keyboard → EventBus::push_key
+- Mouse → EventBus::push_mouse
+- Paste → EventBus::push_paste
+- Resize → EventBus::push_resize + Renderer::resize
+- Focus → FocusManager::focus/blur
+
+### Phase 6: Widget State
+
+**Goal:** Persist widget state between renders.
+
+**Files to modify:**
+- `packages/reconciler/src/index.ts` — state management
+- `packages/react/src/index.ts` — useState/useReducer hooks
+
+**State strategy:**
+- React hooks manage state on TS side
+- State changes trigger re-reconciliation
+- Reconciler emits update commands to Rust
+- Rust updates NodeArena
+
+### Phase 7: Dirty Rendering
+
+**Goal:** Complete dirty tracking.
+
+**Files to modify:**
+- `native/engine/src/dirty_diff/mod.rs` — improve collect_dirty_nodes
+
+**Strategy:**
+- Track which nodes changed in CommandProcessor
+- Propagate dirty flags up ancestor chain
+- Only layout/render dirty subtrees
+- Skip unchanged regions in diff
+
+### Phase 8: Example Applications
+
+**Goal:** Upgrade examples to real applications.
+
+**Files to modify:**
+- `examples/counter/src/index.ts`
+- `examples/dashboard/src/index.ts`
+- `examples/mouse/src/index.ts`
+- `examples/tree/src/index.ts`
+- `examples/table/src/index.ts`
+- `examples/text-editor/src/index.ts`
+
+### Phase 9: Developer Tools
+
+**Goal:** Implement inspector, FPS counter, paint flashing.
+
+**Files to modify:**
+- `packages/devtools/src/index.ts`
+- `native/engine/src/engine/inspector.rs`
+
+### Phase 10: Testing
+
+**Goal:** Expand test coverage.
+
+**Files to create/modify:**
+- `native/bindings/src/tests/` — Rust binding tests
+- `packages/reconciler/src/__tests__/` — reconciler tests
+- `packages/react/src/__tests__/` — component tests
+- Integration tests (Rust ↔ TypeScript)
+
+---
+
+## Phase Details
+
+### Phase 1: napi-rs Bindings
+
+**Estimated files modified:** 3
+**Estimated files created:** 0
+
+**Critical constraints:**
+- All napi types must be `Send + Sync` (napi requirement)
+- `#[napi]` structs cannot contain `&mut` references
+- Use `napi::threadsafe_function` for callbacks (events Rust → TS)
+- `NodeId` (slotmap::DefaultKey) is not napi-compatible — convert to u64 for FFI
+- `Command` enum is not napi-compatible — serialize to JSON
+
+**NodeId conversion:**
+```rust
+// Rust → JS: encode as u64 via transmute (both are 8-byte #[repr(transparent)])
+fn node_id_to_u64(id: NodeId) -> u64 {
+    unsafe { std::mem::transmute(id) }
+}
+
+// JS → Rust: decode from u64 via transmute
+fn u64_to_node_id(val: u64) -> NodeId {
+    unsafe { std::mem::transmute(val) }
+}
+```
+
+**Command serialization:**
+```rust
+// In napi binding:
+#[napi]
+fn process_commands(&mut self, commands_json: String) -> String {
+    let commands: Vec<CommandSerde> = serde_json::from_str(&commands_json).unwrap();
+    let rust_commands: Vec<Command> = commands.into_iter().map(|c| c.into()).collect();
+    let result = self.engine.process_commands(rust_commands);
+    serde_json::to_string(&result).unwrap()
+}
+```
+
+### Phase 2: TypeScript Runtime
+
+**Estimated files modified:** 4
+**Estimated files created:** 2
+
+**New files:**
+- `packages/core/src/engine.ts` — Engine wrapper class
+- `packages/core/src/command-serializer.ts` — Command JSON serialization
+
+**Engine wrapper:**
+```typescript
+import { NapiEngine } from 'bettertui-bindings';
+
+export class Engine {
+  private native: NapiEngine;
+  
+  constructor() {
+    this.native = new NapiEngine();
+  }
+  
+  processCommands(commands: Command[]): CommandResult {
+    const json = JSON.stringify(commands);
+    const resultJson = this.native.processCommands(json);
+    return JSON.parse(resultJson);
+  }
+  
+  beginFrame(): void { this.native.beginFrame(); }
+  commitFrame(): void { this.native.commitFrame(); }
+  nodeCount(): number { return this.native.nodeCount(); }
+  printTree(): string { return this.native.printTree(); }
+}
+```
+
+### Phase 3: React Components
+
+**Estimated files modified:** 1
+
+**Component pattern:**
+```tsx
+export function Box(props: BoxProps): JSX.Element {
+  return createElement('box', {
+    flexDirection: props.flexDirection ?? 'column',
+    justifyContent: props.justifyContent ?? 'flex-start',
+    alignItems: props.alignItems ?? 'stretch',
+    padding: props.padding,
+    margin: props.margin,
+    width: props.width,
+    height: props.height,
+    style: props.style,
+    children: props.children,
+  });
+}
+```
+
+The reconciler's host config translates these element descriptors into commands.
+
+---
+
+## File Impact Summary
+
+| File | Action | Phase | Description |
+|------|--------|-------|-------------|
+| `native/bindings/src/lib.rs` | **MODIFY** | 1 | Expand from 6 lines to full napi bindings |
+| `native/bindings/Cargo.toml` | **MODIFY** | 1 | Add serde, serde_json deps |
+| `packages/core/src/engine.ts` | **CREATE** | 2 | Engine wrapper class |
+| `packages/core/src/command-serializer.ts` | **CREATE** | 2 | Command JSON serialization |
+| `packages/core/src/index.ts` | **MODIFY** | 2 | Export Engine, update types |
+| `packages/reconciler/src/index.ts` | **MODIFY** | 2 | Add react-reconciler, emit commands |
+| `packages/shared/src/index.ts` | **MODIFY** | 2 | Update NodeId, add command types |
+| `packages/react/src/index.ts` | **MODIFY** | 3 | Real component implementations |
+| `packages/core/src/loop.ts` | **CREATE** | 4 | Main render loop |
+| `packages/core/src/terminal.ts` | **CREATE** | 4 | Terminal raw mode |
+| `packages/core/src/input.ts` | **CREATE** | 5 | Input event handling |
+| `packages/devtools/src/index.ts` | **MODIFY** | 9 | Inspector, FPS counter |
+| `examples/*/src/index.ts` | **MODIFY** | 8 | Real example applications |
+
+---
+
+## Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| napi-rs `Send + Sync` requirement | Engine must be thread-safe | Use `parking_lot::Mutex<Engine>` |
+| NodeId conversion overhead | Performance | Use u64 encoding, batch conversions |
+| JSON serialization overhead | Performance | Use `simd-json` or binary protocol |
+| react-reconciler complexity | Correctness | Follow Ink's pattern as reference |
+| Terminal raw mode from TS | Platform compat | Use crossterm via napi, not Node.js |
+| Event callbacks Rust → TS | Latency | Use threadsafe_function for async |
+
+---
+
+## Success Criteria
+
+1. **napi bindings expose 15+ Rust types** to Node.js
+2. **React components render to terminal** via reconciler → commands → napi → Rust
+3. **Input events flow** from terminal → EventBus → widgets → re-render
+4. **60fps rendering** with dirty diff and frame scheduling
+5. **All 777 existing Rust tests pass** (no regressions)
+6. **All 6 examples work** as real applications
+7. **Developer tools** show live inspector, FPS, paint flashing
+
+---
+
+## Next Milestone
+
+After integration is complete, the next milestone is:
+- **Plugin system** for extending the engine
+- **Remote rendering** via WebSocket
+- **GPU acceleration** for high-density displays
+- **Multi-window** terminal support

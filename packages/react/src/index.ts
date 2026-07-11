@@ -18,8 +18,8 @@ export interface BoxProps {
   style?: Record<string, unknown>;
 }
 
-export function Box(_props: BoxProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Box(props: BoxProps): JSX.Element {
+  return props.children as unknown as JSX.Element;
 }
 
 export interface TextProps {
@@ -32,8 +32,8 @@ export interface TextProps {
   style?: Record<string, unknown>;
 }
 
-export function Text(_props: TextProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Text(props: TextProps): JSX.Element {
+  return props.children as unknown as JSX.Element;
 }
 
 export interface FlexProps {
@@ -43,8 +43,8 @@ export interface FlexProps {
   style?: Record<string, unknown>;
 }
 
-export function Flex(_props: FlexProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Flex(props: FlexProps): JSX.Element {
+  return props.children as unknown as JSX.Element;
 }
 
 export interface SpacerProps {
@@ -60,6 +60,6 @@ export interface ProviderProps {
   theme?: Record<string, unknown>;
 }
 
-export function Provider(_props: ProviderProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Provider(props: ProviderProps): JSX.Element {
+  return props.children as unknown as JSX.Element;
 }

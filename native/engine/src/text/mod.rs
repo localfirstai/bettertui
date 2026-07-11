@@ -53,6 +53,10 @@ impl TextEngine {
         &self.cursor
     }
 
+    pub fn cursor_mut(&mut self) -> &mut Cursor {
+        &mut self.cursor
+    }
+
     pub fn selection(&self) -> &Selection {
         &self.selection
     }
