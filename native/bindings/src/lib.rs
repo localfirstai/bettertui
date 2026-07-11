@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 
+use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
 use bettertui_engine::events::EventBus;
 use bettertui_engine::focus::FocusManager;
@@ -7,7 +8,6 @@ use bettertui_engine::renderer::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::text::TextEngine;
 use bettertui_engine::tree::{Color, LayoutProps, NodeKind, Style};
-use bettertui_engine::VERSION;
 use napi_derive::napi;
 use std::collections::HashMap;
 
@@ -722,9 +722,13 @@ impl NapiEngine {
                 "bright_black" | "dark_gray" => bettertui_engine::tree::NamedColor::BrightBlack,
                 "bright_red" | "light_red" => bettertui_engine::tree::NamedColor::BrightRed,
                 "bright_green" | "light_green" => bettertui_engine::tree::NamedColor::BrightGreen,
-                "bright_yellow" | "light_yellow" => bettertui_engine::tree::NamedColor::BrightYellow,
+                "bright_yellow" | "light_yellow" => {
+                    bettertui_engine::tree::NamedColor::BrightYellow
+                }
                 "bright_blue" | "light_blue" => bettertui_engine::tree::NamedColor::BrightBlue,
-                "bright_magenta" | "light_magenta" => bettertui_engine::tree::NamedColor::BrightMagenta,
+                "bright_magenta" | "light_magenta" => {
+                    bettertui_engine::tree::NamedColor::BrightMagenta
+                }
                 "bright_cyan" | "light_cyan" => bettertui_engine::tree::NamedColor::BrightCyan,
                 "bright_white" | "light_gray" => bettertui_engine::tree::NamedColor::BrightWhite,
                 _ => bettertui_engine::tree::NamedColor::White,
@@ -743,9 +747,13 @@ impl NapiEngine {
                 "bright_black" | "dark_gray" => bettertui_engine::tree::NamedColor::BrightBlack,
                 "bright_red" | "light_red" => bettertui_engine::tree::NamedColor::BrightRed,
                 "bright_green" | "light_green" => bettertui_engine::tree::NamedColor::BrightGreen,
-                "bright_yellow" | "light_yellow" => bettertui_engine::tree::NamedColor::BrightYellow,
+                "bright_yellow" | "light_yellow" => {
+                    bettertui_engine::tree::NamedColor::BrightYellow
+                }
                 "bright_blue" | "light_blue" => bettertui_engine::tree::NamedColor::BrightBlue,
-                "bright_magenta" | "light_magenta" => bettertui_engine::tree::NamedColor::BrightMagenta,
+                "bright_magenta" | "light_magenta" => {
+                    bettertui_engine::tree::NamedColor::BrightMagenta
+                }
                 "bright_cyan" | "light_cyan" => bettertui_engine::tree::NamedColor::BrightCyan,
                 "bright_white" | "light_gray" => bettertui_engine::tree::NamedColor::BrightWhite,
                 _ => bettertui_engine::tree::NamedColor::White,

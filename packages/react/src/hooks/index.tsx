@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 // Theme types
@@ -132,23 +132,14 @@ export function FocusProvider({ children }: { children: ReactNode }) {
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const focusableIds = useRef<string[]>([]);
 
-  const registerFocusable = useCallback((id: string) => {
-    if (!focusableIds.current.includes(id)) {
-      focusableIds.current.push(id);
-    }
-  }, []);
-
-  const unregisterFocusable = useCallback((id: string) => {
-    focusableIds.current = focusableIds.current.filter((fid) => fid !== id);
-  }, []);
-
   const focusNext = useCallback(() => {
     const ids = focusableIds.current;
     if (ids.length === 0) return;
 
     const currentIndex = ids.indexOf(focusedId ?? "");
     const nextIndex = (currentIndex + 1) % ids.length;
-    setFocusedId(ids[nextIndex]);
+    const next = ids[nextIndex];
+    if (next !== undefined) setFocusedId(next);
   }, [focusedId]);
 
   const focusPrevious = useCallback(() => {
@@ -157,13 +148,12 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
     const currentIndex = ids.indexOf(focusedId ?? "");
     const previousIndex = (currentIndex - 1 + ids.length) % ids.length;
-    setFocusedId(ids[previousIndex]);
+    const prev = ids[previousIndex];
+    if (prev !== undefined) setFocusedId(prev);
   }, [focusedId]);
 
   return (
-    <FocusContext.Provider
-      value={{ focusedId, setFocusedId, focusNext, focusPrevious }}
-    >
+    <FocusContext.Provider value={{ focusedId, setFocusedId, focusNext, focusPrevious }}>
       {children}
     </FocusContext.Provider>
   );
@@ -188,12 +178,19 @@ export function useKeyboard(handler: (event: KeyEvent) => boolean) {
 
   useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      const ke = event as unknown as {
+        key: string;
+        ctrlKey: boolean;
+        shiftKey: boolean;
+        altKey: boolean;
+        metaKey: boolean;
+      };
       const keyEvent: KeyEvent = {
-        key: event.key,
-        ctrl: event.ctrlKey,
-        shift: event.shiftKey,
-        alt: event.altKey,
-        meta: event.metaKey,
+        key: ke.key,
+        ctrl: ke.ctrlKey,
+        shift: ke.shiftKey,
+        alt: ke.altKey,
+        meta: ke.metaKey,
       };
 
       if (handlerRef.current(keyEvent)) {
@@ -201,9 +198,13 @@ export function useKeyboard(handler: (event: KeyEvent) => boolean) {
       }
     };
 
-    if (typeof window !== "undefined") {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+    if (typeof globalThis !== "undefined" && "addEventListener" in globalThis) {
+      const g = globalThis as unknown as {
+        addEventListener(name: string, fn: (e: globalThis.KeyboardEvent) => void): void;
+        removeEventListener(name: string, fn: (e: globalThis.KeyboardEvent) => void): void;
+      };
+      g.addEventListener("keydown", handleKeyDown);
+      return () => g.removeEventListener("keydown", handleKeyDown);
     }
     return undefined;
   }, []);
@@ -230,9 +231,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TerminalContext.Provider
-      value={{ width: size.width, height: size.height, resize }}
-    >
+    <TerminalContext.Provider value={{ width: size.width, height: size.height, resize }}>
       {children}
     </TerminalContext.Provider>
   );
@@ -264,15 +263,21 @@ export function useClipboard() {
   const [clipboard, setClipboard] = useState("");
 
   const copy = useCallback(async (text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(text);
+    const n = globalThis as unknown as {
+      navigator?: { clipboard?: { writeText(t: string): Promise<void> } };
+    };
+    if (n.navigator?.clipboard) {
+      await n.navigator.clipboard.writeText(text);
     }
     setClipboard(text);
   }, []);
 
   const paste = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      const text = await navigator.clipboard.readText();
+    const n = globalThis as unknown as {
+      navigator?: { clipboard?: { readText(): Promise<string> } };
+    };
+    if (n.navigator?.clipboard) {
+      const text = await n.navigator.clipboard.readText();
       setClipboard(text);
       return text;
     }
@@ -281,6 +286,24 @@ export function useClipboard() {
 
   return { clipboard, copy, paste };
 }
+
+const _raf = (cb: (t: number) => void): number => {
+  const g = globalThis as unknown as {
+    requestAnimationFrame?: (cb: (t: number) => void) => number;
+    setTimeout?: (cb: () => void, ms: number) => number;
+  };
+  if (g.requestAnimationFrame) return g.requestAnimationFrame(cb);
+  return g.setTimeout?.(() => cb(performance.now()), 16) ?? 0;
+};
+
+const _caf = (id: number): void => {
+  const g = globalThis as unknown as {
+    cancelAnimationFrame?: (id: number) => void;
+    clearTimeout?: (id: number) => void;
+  };
+  if (g.cancelAnimationFrame) g.cancelAnimationFrame(id);
+  else g.clearTimeout?.(id);
+};
 
 // Animation
 export function useAnimation(
@@ -303,17 +326,16 @@ export function useAnimation(
       callbackRef.current(progress);
 
       if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate);
+        animationFrame = _raf(animate);
       }
     };
 
-    animationFrame = requestAnimationFrame(animate);
+    animationFrame = _raf(animate);
 
     return () => {
       if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
+        _caf(animationFrame);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [duration, ...deps]);
 }

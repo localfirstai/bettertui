@@ -234,13 +234,15 @@ export function createReconciler(buffer: CommandBuffer): {
 
   function wrappedAppendChild(parent: Instance, child: Instance | TextInstance): void {
     appendChild(parent, child);
-    const childId = "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
+    const childId =
+      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
     emitAppendChild(parent.id, childId);
   }
 
   function wrappedRemoveChild(parent: Instance, child: Instance | TextInstance): void {
     removeChild(parent, child);
-    const childId = "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
+    const childId =
+      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
     emitRemoveNode(childId);
   }
 
@@ -250,8 +252,10 @@ export function createReconciler(buffer: CommandBuffer): {
     reference: Instance | TextInstance,
   ): void {
     insertBefore(parent, child, reference);
-    const childId = "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
-    const refId = "id" in reference ? (reference as Instance).id : (reference as unknown as { id: string }).id;
+    const childId =
+      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
+    const refId =
+      "id" in reference ? (reference as Instance).id : (reference as unknown as { id: string }).id;
     emitInsertBefore(refId, childId);
   }
 

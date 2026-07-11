@@ -87,10 +87,7 @@ impl Rgba {
         if self.a == 255 {
             format!("#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
         } else {
-            format!(
-                "#{:02X}{:02X}{:02X}{:02X}",
-                self.r, self.g, self.b, self.a
-            )
+            format!("#{:02X}{:02X}{:02X}{:02X}", self.r, self.g, self.b, self.a)
         }
     }
 
@@ -366,10 +363,7 @@ mod tests {
     fn color_intent() {
         assert_eq!(Color::Named(NamedColor::Red).intent(), ColorIntent::Rgb);
         assert_eq!(Color::Indexed(196).intent(), ColorIntent::Indexed);
-        assert_eq!(
-            Color::Rgb { r: 0, g: 0, b: 0 }.intent(),
-            ColorIntent::Rgb
-        );
+        assert_eq!(Color::Rgb { r: 0, g: 0, b: 0 }.intent(), ColorIntent::Rgb);
         assert_eq!(Color::Default.intent(), ColorIntent::Default);
     }
 
@@ -484,7 +478,10 @@ mod tests {
     fn named_color_from_index() {
         assert_eq!(NamedColor::from_ansi_index(0), Some(NamedColor::Black));
         assert_eq!(NamedColor::from_ansi_index(1), Some(NamedColor::Red));
-        assert_eq!(NamedColor::from_ansi_index(15), Some(NamedColor::BrightWhite));
+        assert_eq!(
+            NamedColor::from_ansi_index(15),
+            Some(NamedColor::BrightWhite)
+        );
         assert_eq!(NamedColor::from_ansi_index(16), None);
     }
 

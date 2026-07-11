@@ -2,11 +2,11 @@ import type {
   NapiEngine,
   NapiEventBus,
   NapiFocusManager,
-  NapiTextEngine,
   NapiScheduler,
+  NapiTextEngine,
   ProcessResult,
-  TerminalCapabilities,
   SchedulerStats,
+  TerminalCapabilities,
 } from "./types.js";
 
 export type {
@@ -38,7 +38,7 @@ function loadNativeAddon(): Record<string, unknown> {
       "Failed to load native bindings. Run `cargo build -p bettertui-bindings` first.",
     );
   }
-  return nativeAddon;
+  return nativeAddon as Record<string, unknown>;
 }
 
 export function createEngine(width?: number, height?: number): NapiEngine {

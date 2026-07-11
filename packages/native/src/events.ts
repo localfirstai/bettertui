@@ -20,26 +20,26 @@ export interface EventLoop {
   stop(): void;
   pushKey(key: string, modifiers: string, targetId: string): void;
   pushMouse(button: string, x: number, y: number, targetId: string): void;
-  drain(): string[];
+  drain(): string;
   onEvent(callback: EventCallback): void;
 }
 
 export function createEventLoop(eventBus: NapiEventBus): EventLoop {
-  let isRunning = false;
   const callbacks: EventCallback[] = [];
 
-  function start(): void {
-    isRunning = true;
-  }
+  function start(): void {}
 
-  function stop(): void {
-    isRunning = false;
-  }
+  function stop(): void {}
 
   function pushKey(key: string, modifiers: string, targetId: string): void {
     eventBus.pushKey(key, modifiers, targetId);
     for (const cb of callbacks) {
-      cb({ key, ctrl: modifiers.includes("ctrl"), shift: modifiers.includes("shift"), alt: modifiers.includes("alt") });
+      cb({
+        key,
+        ctrl: modifiers.includes("ctrl"),
+        shift: modifiers.includes("shift"),
+        alt: modifiers.includes("alt"),
+      });
     }
   }
 
@@ -50,7 +50,7 @@ export function createEventLoop(eventBus: NapiEventBus): EventLoop {
     }
   }
 
-  function drain(): string[] {
+  function drain(): string {
     return eventBus.drain();
   }
 

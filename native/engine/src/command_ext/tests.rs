@@ -1,0 +1,1 @@
+// Command platform extension tests

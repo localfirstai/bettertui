@@ -105,7 +105,7 @@ export interface InputProps {
   style?: Record<string, unknown>;
 }
 
-export function Input(props: InputProps): JSX.Element {
+export function Input(_props: InputProps): JSX.Element {
   return null as unknown as JSX.Element;
 }
 
@@ -119,7 +119,7 @@ export interface TextareaProps {
   style?: Record<string, unknown>;
 }
 
-export function Textarea(props: TextareaProps): JSX.Element {
+export function Textarea(_props: TextareaProps): JSX.Element {
   return null as unknown as JSX.Element;
 }
 
@@ -137,7 +137,7 @@ export interface TabsProps {
   style?: Record<string, unknown>;
 }
 
-export function Tabs(props: TabsProps): JSX.Element {
+export function Tabs(_props: TabsProps): JSX.Element {
   return null as unknown as JSX.Element;
 }
 

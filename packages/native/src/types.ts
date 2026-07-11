@@ -1,4 +1,4 @@
-import type { NodeId, Style, Point } from "@bettertui/shared";
+import type { NodeId, Point, Style } from "@bettertui/shared";
 
 export type { NodeId, Style, Point };
 

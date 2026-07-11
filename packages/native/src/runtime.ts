@@ -1,9 +1,5 @@
-import type { CommandBuffer, Command } from "@bettertui/reconciler";
-import type {
-  NapiEngine,
-  NapiEventBus,
-  ProcessResult,
-} from "@bettertui/native";
+import type { Command, CommandBuffer } from "@bettertui/reconciler";
+import type { NapiEngine, NapiEventBus, ProcessResult } from "./types.js";
 
 export interface RenderResult {
   output_data: number[];
@@ -33,8 +29,6 @@ export function createRuntime(
   eventBus: NapiEventBus,
   buffer: CommandBuffer,
 ): Runtime {
-  let isRunning = false;
-
   function serializeCommands(commands: Command[]): string {
     return JSON.stringify(commands);
   }
@@ -61,7 +55,6 @@ export function createRuntime(
   }
 
   function shutdown(): void {
-    isRunning = false;
     buffer.push({ type: "Shutdown" });
     processCommands();
   }
