@@ -1,8 +1,16 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
-import { Badge, Box, Flex, Heading, Provider, Separator, StatusLine, Text } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
+import {
+  Badge,
+  Box,
+  Flex,
+  Heading,
+  Provider,
+  Separator,
+  StatusLine,
+  Text,
+  render,
+  useKeyboard,
+  useRuntime,
+} from "@bettertui/react";
 
 interface Section {
   id: string;
@@ -43,7 +51,7 @@ const sections: Section[] = [
     id: "usage",
     title: "Basic Usage",
     content: [
-      "Import CommandBuffer and createReconciler from core.",
+      "Import render from @bettertui/react.",
       "Import components from @bettertui/react.",
       "Wrap your app in Provider and render.",
     ],
@@ -52,11 +60,7 @@ const sections: Section[] = [
   {
     id: "code-example",
     title: "Code Example",
-    content: [
-      "const buffer = new CommandBuffer();",
-      "const reconciler = createReconciler(buffer);",
-      "reconciler.createInstance('Provider', { children: element });",
-    ],
+    content: ["import { render } from '@bettertui/react';", "render(<App />);"],
     level: 3,
   },
 ];
@@ -64,7 +68,22 @@ const sections: Section[] = [
 let selectedIndex = 0;
 
 function MarkdownViewer() {
+  const runtime = useRuntime();
   const section = sections[selectedIndex];
+
+  useKeyboard((key) => {
+    if (key.key === "j") {
+      selectedIndex = Math.min(selectedIndex + 1, sections.length - 1);
+      renderApp();
+    } else if (key.key === "k") {
+      selectedIndex = Math.max(selectedIndex - 1, 0);
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -111,8 +130,7 @@ function MarkdownViewer() {
 }
 
 function renderApp() {
-  const element = <MarkdownViewer />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<MarkdownViewer />);
 }
 
 console.log("BetterTUI Markdown Viewer");
@@ -122,16 +140,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "j") {
-    selectedIndex = Math.min(selectedIndex + 1, sections.length - 1);
-    renderApp();
-  } else if (key === "k") {
-    selectedIndex = Math.max(selectedIndex - 1, 0);
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

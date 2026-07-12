@@ -1,75 +1,201 @@
+import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
 // ─── Layout Components ───────────────────────────────────
 
+export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";
+
+export type JustifyContent =
+  | "flex-start"
+  | "center"
+  | "flex-end"
+  | "space-between"
+  | "space-around"
+  | "space-evenly";
+
+export type AlignItems = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
+
+export type AlignSelf = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
+
+export type Position = "relative" | "absolute";
+
+export type Sizing = number | string;
+
+export interface Padding {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+export interface Margin {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+export interface Inset {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
 export interface BoxProps {
   children?: ReactNode;
-  flexDirection?: "row" | "column";
-  justifyContent?:
-    | "flex-start"
-    | "center"
-    | "flex-end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly";
-  alignItems?: "flex-start" | "center" | "flex-end" | "stretch";
-  padding?: number;
-  margin?: number;
-  width?: number | string;
-  height?: number | string;
+  flexDirection?: FlexDirection;
+  justifyContent?: JustifyContent;
+  alignItems?: AlignItems;
+  alignSelf?: AlignSelf;
+  flexWrap?: "nowrap" | "wrap";
+  flexGrow?: number;
+  flexShrink?: number;
+  flexBasis?: Sizing;
+  gap?: number | { row?: number; column?: number };
+  padding?: number | Padding;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  margin?: number | Margin;
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  width?: Sizing;
+  height?: Sizing;
+  minWidth?: Sizing;
+  maxWidth?: Sizing;
+  minHeight?: Sizing;
+  maxHeight?: Sizing;
+  position?: Position;
+  inset?: Inset;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+  zIndex?: number;
+  visible?: boolean;
   style?: Record<string, unknown>;
 }
 
 export function Box(props: BoxProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Box", { style: userStyle, ...rest }, children);
 }
 
 export interface FlexProps {
   children?: ReactNode;
-  flexDirection?: "row" | "column";
-  gap?: number;
-  justifyContent?:
-    | "flex-start"
-    | "center"
-    | "flex-end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly";
-  alignItems?: "flex-start" | "center" | "flex-end" | "stretch";
+  flexDirection?: FlexDirection;
+  justifyContent?: JustifyContent;
+  alignItems?: AlignItems;
+  alignSelf?: AlignSelf;
+  flexWrap?: "nowrap" | "wrap";
+  flexGrow?: number;
+  flexShrink?: number;
+  flexBasis?: Sizing;
+  gap?: number | { row?: number; column?: number };
+  padding?: number | Padding;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  margin?: number | Margin;
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  width?: Sizing;
+  height?: Sizing;
+  minWidth?: Sizing;
+  maxWidth?: Sizing;
+  minHeight?: Sizing;
+  maxHeight?: Sizing;
+  position?: Position;
+  inset?: Inset;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+  zIndex?: number;
+  visible?: boolean;
   style?: Record<string, unknown>;
 }
 
 export function Flex(props: FlexProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Flex", { style: userStyle, ...rest }, children);
 }
 
 export interface GridProps {
   children?: ReactNode;
   columns?: number;
   rows?: number;
-  gap?: number;
+  gap?: number | { row?: number; column?: number };
+  columnGap?: number;
+  rowGap?: number;
+  padding?: number | Padding;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  margin?: number | Margin;
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  width?: Sizing;
+  height?: Sizing;
+  minWidth?: Sizing;
+  maxWidth?: Sizing;
+  minHeight?: Sizing;
+  maxHeight?: Sizing;
+  position?: Position;
+  inset?: Inset;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+  zIndex?: number;
+  visible?: boolean;
   style?: Record<string, unknown>;
 }
 
 export function Grid(props: GridProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Grid", { style: userStyle, ...rest }, children);
 }
 
 export interface StackProps {
   children?: ReactNode;
+  width?: Sizing;
+  height?: Sizing;
+  padding?: number | Padding;
+  margin?: number | Margin;
+  position?: Position;
+  zIndex?: number;
+  visible?: boolean;
   style?: Record<string, unknown>;
 }
 
+export interface StackChildProps {
+  zIndex?: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
 export function Stack(props: StackProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Stack", { style: userStyle, ...rest }, children);
 }
 
 export interface SpacerProps {
   size?: number;
 }
 
-export function Spacer(_props: SpacerProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Spacer(props: SpacerProps): JSX.Element {
+  return createElement("Spacer", { size: props.size });
 }
 
 export interface SeparatorProps {
@@ -77,8 +203,8 @@ export interface SeparatorProps {
   style?: Record<string, unknown>;
 }
 
-export function Separator(_props: SeparatorProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Separator(props: SeparatorProps): JSX.Element {
+  return createElement("Separator", { orientation: props.orientation, style: props.style });
 }
 
 // ─── Typography Components ───────────────────────────────
@@ -96,7 +222,8 @@ export interface TextProps {
 }
 
 export function Text(props: TextProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Text", { style: userStyle, ...rest }, children);
 }
 
 export interface HeadingProps {
@@ -106,7 +233,8 @@ export interface HeadingProps {
 }
 
 export function Heading(props: HeadingProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Heading", { style: userStyle, ...rest }, children);
 }
 
 export interface LabelProps {
@@ -116,7 +244,8 @@ export interface LabelProps {
 }
 
 export function Label(props: LabelProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Label", { style: userStyle, ...rest }, children);
 }
 
 export interface CodeProps {
@@ -127,7 +256,8 @@ export interface CodeProps {
 }
 
 export function Code(props: CodeProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Code", { style: userStyle, ...rest }, children);
 }
 
 export interface BlockquoteProps {
@@ -136,7 +266,8 @@ export interface BlockquoteProps {
 }
 
 export function Blockquote(props: BlockquoteProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Blockquote", { style: userStyle, ...rest }, children);
 }
 
 // ─── Interactive Components ──────────────────────────────
@@ -150,7 +281,8 @@ export interface ButtonProps {
 }
 
 export function Button(props: ButtonProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Button", { style: userStyle, ...rest }, children);
 }
 
 export interface InputProps {
@@ -163,8 +295,8 @@ export interface InputProps {
   style?: Record<string, unknown>;
 }
 
-export function Input(_props: InputProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Input(props: InputProps): JSX.Element {
+  return createElement("Input", props);
 }
 
 export interface TextareaProps {
@@ -176,8 +308,8 @@ export interface TextareaProps {
   style?: Record<string, unknown>;
 }
 
-export function Textarea(_props: TextareaProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Textarea(props: TextareaProps): JSX.Element {
+  return createElement("Textarea", props);
 }
 
 export interface CheckboxProps {
@@ -188,8 +320,8 @@ export interface CheckboxProps {
   style?: Record<string, unknown>;
 }
 
-export function Checkbox(_props: CheckboxProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Checkbox(props: CheckboxProps): JSX.Element {
+  return createElement("Checkbox", props);
 }
 
 export interface RadioProps {
@@ -202,8 +334,8 @@ export interface RadioProps {
   style?: Record<string, unknown>;
 }
 
-export function Radio(_props: RadioProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Radio(props: RadioProps): JSX.Element {
+  return createElement("Radio", props);
 }
 
 export interface SwitchProps {
@@ -214,8 +346,8 @@ export interface SwitchProps {
   style?: Record<string, unknown>;
 }
 
-export function Switch(_props: SwitchProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Switch(props: SwitchProps): JSX.Element {
+  return createElement("Switch", props);
 }
 
 export interface SliderProps {
@@ -228,8 +360,8 @@ export interface SliderProps {
   style?: Record<string, unknown>;
 }
 
-export function Slider(_props: SliderProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Slider(props: SliderProps): JSX.Element {
+  return createElement("Slider", props);
 }
 
 export interface SelectProps {
@@ -241,8 +373,9 @@ export interface SelectProps {
   style?: Record<string, unknown>;
 }
 
-export function Select(_props: SelectProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Select(props: SelectProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Select", { style: userStyle, ...rest }, children);
 }
 
 export interface ComboboxProps {
@@ -255,8 +388,9 @@ export interface ComboboxProps {
   style?: Record<string, unknown>;
 }
 
-export function Combobox(_props: ComboboxProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Combobox(props: ComboboxProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Combobox", { style: userStyle, ...rest }, children);
 }
 
 // ─── Navigation Components ───────────────────────────────
@@ -274,8 +408,8 @@ export interface TabsProps {
   style?: Record<string, unknown>;
 }
 
-export function Tabs(_props: TabsProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Tabs(props: TabsProps): JSX.Element {
+  return createElement("Tabs", props);
 }
 
 export interface AccordionProps {
@@ -286,8 +420,9 @@ export interface AccordionProps {
   style?: Record<string, unknown>;
 }
 
-export function Accordion(_props: AccordionProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Accordion(props: AccordionProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Accordion", { style: userStyle, ...rest }, children);
 }
 
 // ─── Feedback Components ─────────────────────────────────
@@ -299,7 +434,8 @@ export interface BadgeProps {
 }
 
 export function Badge(props: BadgeProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Badge", { style: userStyle, ...rest }, children);
 }
 
 export interface ProgressProps {
@@ -308,8 +444,8 @@ export interface ProgressProps {
   style?: Record<string, unknown>;
 }
 
-export function Progress(_props: ProgressProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Progress(props: ProgressProps): JSX.Element {
+  return createElement("Progress", props);
 }
 
 export interface SpinnerProps {
@@ -318,8 +454,8 @@ export interface SpinnerProps {
   style?: Record<string, unknown>;
 }
 
-export function Spinner(_props: SpinnerProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Spinner(props: SpinnerProps): JSX.Element {
+  return createElement("Spinner", props);
 }
 
 // ─── Data Display Components ─────────────────────────────
@@ -337,8 +473,8 @@ export interface ListProps {
   style?: Record<string, unknown>;
 }
 
-export function List(_props: ListProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function List(props: ListProps): JSX.Element {
+  return createElement("List", props);
 }
 
 export interface TreeNode {
@@ -356,8 +492,8 @@ export interface TreeProps {
   style?: Record<string, unknown>;
 }
 
-export function Tree(_props: TreeProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Tree(props: TreeProps): JSX.Element {
+  return createElement("Tree", props);
 }
 
 export interface TableColumn<T = Record<string, unknown>> {
@@ -375,8 +511,8 @@ export interface TableProps<T = Record<string, unknown>> {
   style?: Record<string, unknown>;
 }
 
-export function Table(_props: TableProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Table(props: TableProps): JSX.Element {
+  return createElement("Table", props);
 }
 
 export interface DataTableProps<T = Record<string, unknown>> {
@@ -389,8 +525,8 @@ export interface DataTableProps<T = Record<string, unknown>> {
   style?: Record<string, unknown>;
 }
 
-export function DataTable(_props: DataTableProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function DataTable(props: DataTableProps): JSX.Element {
+  return createElement("DataTable", props);
 }
 
 // ─── Overlay Components ──────────────────────────────────
@@ -404,7 +540,8 @@ export interface TooltipProps {
 }
 
 export function Tooltip(props: TooltipProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Tooltip", { style: userStyle, ...rest }, children);
 }
 
 export interface ModalProps {
@@ -416,7 +553,8 @@ export interface ModalProps {
 }
 
 export function Modal(props: ModalProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Modal", { style: userStyle, ...rest }, children);
 }
 
 export interface PopoverProps {
@@ -427,7 +565,8 @@ export interface PopoverProps {
 }
 
 export function Popover(props: PopoverProps): JSX.Element {
-  return props.children as unknown as JSX.Element;
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Popover", { style: userStyle, ...rest }, children);
 }
 
 export interface DropdownProps {
@@ -437,8 +576,9 @@ export interface DropdownProps {
   style?: Record<string, unknown>;
 }
 
-export function Dropdown(_props: DropdownProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Dropdown(props: DropdownProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Dropdown", { style: userStyle, ...rest }, children);
 }
 
 export interface ContextMenuProps {
@@ -448,8 +588,9 @@ export interface ContextMenuProps {
   style?: Record<string, unknown>;
 }
 
-export function ContextMenu(_props: ContextMenuProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function ContextMenu(props: ContextMenuProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("ContextMenu", { style: userStyle, ...rest }, children);
 }
 
 // ─── Status Components ───────────────────────────────────
@@ -462,8 +603,8 @@ export interface ToastProps {
   style?: Record<string, unknown>;
 }
 
-export function Toast(_props: ToastProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Toast(props: ToastProps): JSX.Element {
+  return createElement("Toast", props);
 }
 
 export interface StatusLineProps {
@@ -472,8 +613,9 @@ export interface StatusLineProps {
   style?: Record<string, unknown>;
 }
 
-export function StatusLine(_props: StatusLineProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function StatusLine(props: StatusLineProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("StatusLine", { style: userStyle, ...rest }, children);
 }
 
 // ─── Container Components ────────────────────────────────
@@ -486,8 +628,9 @@ export interface PaneProps {
   style?: Record<string, unknown>;
 }
 
-export function Pane(_props: PaneProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Pane(props: PaneProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Pane", { style: userStyle, ...rest }, children);
 }
 
 export interface ViewportProps {
@@ -499,8 +642,9 @@ export interface ViewportProps {
   style?: Record<string, unknown>;
 }
 
-export function Viewport(_props: ViewportProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Viewport(props: ViewportProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("Viewport", { style: userStyle, ...rest }, children);
 }
 
 export interface CalendarProps {
@@ -511,8 +655,8 @@ export interface CalendarProps {
   style?: Record<string, unknown>;
 }
 
-export function Calendar(_props: CalendarProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Calendar(props: CalendarProps): JSX.Element {
+  return createElement("Calendar", props);
 }
 
 export interface ChartProps {
@@ -523,6 +667,173 @@ export interface ChartProps {
   style?: Record<string, unknown>;
 }
 
-export function Chart(_props: ChartProps): JSX.Element {
-  return null as unknown as JSX.Element;
+export function Chart(props: ChartProps): JSX.Element {
+  return createElement("Chart", props);
+}
+
+// ─── Scroll Components ────────────────────────────────────
+
+export interface ScrollAreaProps {
+  children?: ReactNode;
+  scrollTop?: number;
+  scrollLeft?: number;
+  showScrollbar?: boolean;
+  onScroll?: (scrollTop: number, scrollLeft: number) => void;
+  style?: Record<string, unknown>;
+}
+
+export function ScrollArea(props: ScrollAreaProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("ScrollArea", { style: userStyle, ...rest }, children);
+}
+
+// ─── Content Components ───────────────────────────────────
+
+export interface MarkdownProps {
+  content?: string;
+  indent?: number;
+  headingStyle?: Record<string, unknown>;
+  boldStyle?: Record<string, unknown>;
+  italicStyle?: Record<string, unknown>;
+  codeStyle?: Record<string, unknown>;
+  codeBlockStyle?: Record<string, unknown>;
+  linkStyle?: Record<string, unknown>;
+  quoteStyle?: Record<string, unknown>;
+  ruleStyle?: Record<string, unknown>;
+  style?: Record<string, unknown>;
+}
+
+export function Markdown(props: MarkdownProps): JSX.Element {
+  return createElement("Markdown", props);
+}
+
+export interface CodeBlockProps {
+  code?: string;
+  language?: string;
+  showLineNumbers?: boolean;
+  style?: Record<string, unknown>;
+}
+
+export function CodeBlock(props: CodeBlockProps): JSX.Element {
+  return createElement("CodeBlock", props);
+}
+
+export interface DiffProps {
+  oldText?: string;
+  newText?: string;
+  unified?: boolean;
+  style?: Record<string, unknown>;
+}
+
+export function Diff(props: DiffProps): JSX.Element {
+  return createElement("Diff", props);
+}
+
+// ─── Chat/AI Components ───────────────────────────────────
+
+export interface PromptComposerProps {
+  placeholder?: string;
+  value?: string;
+  cursorStyle?: "line" | "block" | "underline";
+  maxLines?: number;
+  history?: string[];
+  disabled?: boolean;
+  onSubmit?: (value: string) => void;
+  onChange?: (value: string) => void;
+  style?: Record<string, unknown>;
+}
+
+export function PromptComposer(props: PromptComposerProps): JSX.Element {
+  return createElement("PromptComposer", props);
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface ChatViewProps {
+  messages?: ChatMessage[];
+  messageStyle?: Record<string, unknown>;
+  userStyle?: Record<string, unknown>;
+  assistantStyle?: Record<string, unknown>;
+  systemStyle?: Record<string, unknown>;
+  separatorStyle?: Record<string, unknown>;
+  style?: Record<string, unknown>;
+}
+
+export function ChatView(props: ChatViewProps): JSX.Element {
+  return createElement("ChatView", props);
+}
+
+export interface StatusBarProps {
+  children?: ReactNode;
+  items?: Array<{ label: string; value?: string; style?: Record<string, unknown> }>;
+  style?: Record<string, unknown>;
+}
+
+export function StatusBar(props: StatusBarProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("StatusBar", { style: userStyle, ...rest }, children);
+}
+
+export interface ThinkingIndicatorProps {
+  label?: string;
+  style?: Record<string, unknown>;
+}
+
+export function ThinkingIndicator(props: ThinkingIndicatorProps): JSX.Element {
+  return createElement("ThinkingIndicator", props);
+}
+
+// ─── Terminal Components ──────────────────────────────────
+
+export interface TerminalProps {
+  program?: string;
+  args?: string[];
+  cwd?: string;
+  env?: Record<string, string>;
+  cols?: number;
+  rows?: number;
+  autoFocus?: boolean;
+  cursorStyle?: "block" | "underline" | "bar";
+  cursorBlink?: boolean;
+  mouseTracking?: boolean;
+  onInput?: (data: string) => void;
+  onResize?: (cols: number, rows: number) => void;
+  onExit?: (code: number) => void;
+  style?: Record<string, unknown>;
+}
+
+export function Terminal(props: TerminalProps): JSX.Element {
+  return createElement("Terminal", props);
+}
+
+export interface TerminalViewportProps {
+  children?: ReactNode;
+  scrollOffset?: number;
+  scrollMode?: "fixed" | "scrollable" | "infinite";
+  style?: Record<string, unknown>;
+}
+
+export function TerminalViewport(props: TerminalViewportProps): JSX.Element {
+  const { children, style: userStyle, ...rest } = props;
+  return createElement("TerminalViewport", { style: userStyle, ...rest }, children);
+}
+
+export interface TerminalProcessProps {
+  program?: string;
+  args?: string[];
+  cwd?: string;
+  env?: Record<string, string>;
+  autoRestart?: boolean;
+  restartDelay?: number;
+  onSpawn?: (pid: number) => void;
+  onExit?: (code: number) => void;
+  onError?: (error: string) => void;
+  style?: Record<string, unknown>;
+}
+
+export function TerminalProcess(props: TerminalProcessProps): JSX.Element {
+  return createElement("TerminalProcess", props);
 }

@@ -39,7 +39,7 @@ TypeScript owns:
 - **API** — typed, framework-agnostic interfaces
 - **React bindings** — reconciler host config and components
 - **Themes** — design-token system
-- **Icons** — icon registry
+- **Hooks** — useTheme, useFocus, useKeyboard, useMouse, useAnimation, useTimeline, etc.
 
 See [`docs/architecture`](docs/architecture/README.md) for the full design, and [`docs/`](docs/README.md) for the complete documentation index.
 
@@ -55,13 +55,11 @@ bettertui/
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime
 │   ├── react/         # @bettertui/react   — React 19 adapter
 │   ├── native/        # @bettertui/native  — napi bridge + runtime
-│   ├── widgets/       # @bettertui/widgets — widget interface (stub)
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   ├── icons/         # @bettertui/icons   — icon registry
-│   └── devtools/      # @bettertui/devtools — devtools stub
+│   └── icons/         # @bettertui/icons   — icon registry
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
-├── examples/          # example apps (mostly stubs; counter partially wired)
+├── examples/          # 12 runnable examples
 ├── docs/              # this documentation
 ├── benchmarks/        # empty placeholder (no harness yet)
 ├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
@@ -78,12 +76,41 @@ bettertui/
 |---------|-------------|--------|
 | `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
-| `@bettertui/react` | React adapter (renderer, hooks, components) | ⚠️ reconciler+hooks real, components stubs |
+| `@bettertui/react` | React adapter (renderer, hooks, components) | ✅ Reconciler + 50+ components |
 | `@bettertui/native` | napi bindings wrapper and runtime | ✅ Implemented (needs native addon) |
-| `@bettertui/widgets` | Reusable widget components | ❌ Interface only |
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
 | `@bettertui/icons` | Icon registry and management | ✅ Scaffolded (empty) |
-| `@bettertui/devtools` | Developer tooling | ❌ Stub |
+| `@bettertui/devtools` | Developer tooling | ✅ Scaffolded (stub) |
+
+## React Components
+
+BetterTUI provides 50+ React components:
+
+**Layout:** Box, Flex, Grid, Stack, Spacer, Separator
+**Text:** Text, Heading, Label, Code, Blockquote
+**Input:** Button, Input, Textarea, Checkbox, Radio, Switch, Slider, Select, Combobox
+**Navigation:** Tabs, Accordion
+**Data Display:** Badge, Progress, Spinner, List, Tree, Table, DataTable
+**Overlays:** Tooltip, Modal, Popover, Dropdown, ContextMenu, Toast
+**Status:** StatusLine, StatusBar
+**Layout:** Pane, Viewport
+**Specialized:** Calendar, Chart, ScrollArea, Markdown, CodeBlock, Diff
+**AI-specific:** PromptComposer, ChatView, ThinkingIndicator
+**Terminal:** Terminal, TerminalViewport, TerminalProcess
+
+## React Hooks
+
+- `useTheme` / `Provider` — theme context with dark theme default
+- `useFocus` / `FocusProvider` — basic focus tracking by string ID
+- `useKeyboard` — keyboard event handling
+- `useMouse` — mouse event handling
+- `useTerminal` / `TerminalProvider` — terminal size context
+- `useFrame` — frame request mechanism
+- `useClipboard` — clipboard operations
+- `useAnimation` — animation with easing (21 easing functions)
+- `useTimeline` — timeline-based animation sequencing
+- `useSelection` / `SelectionProvider` — text selection tracking
+- `useCapabilities` / `CapabilitiesProvider` — terminal capability detection
 
 ## Getting Started
 
@@ -122,7 +149,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by ~1071 passing tests. The TypeScript side is partial: `@bettertui/core` and `@bettertui/native` are implemented; `@bettertui/react` has a real reconciler + hooks but its components are still stubs; `@bettertui/widgets` and `@bettertui/devtools` are stubs. The single wired example is `examples/counter/src/index.tsx`.
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by ~1193 passing tests. The TypeScript side is implemented: `@bettertui/core` and `@bettertui/native` are implemented; `@bettertui/react` has a real reconciler + hooks + 50+ components; 12 runnable examples are available.
 
 ## Documentation
 
@@ -131,7 +158,6 @@ The Rust engine and its napi-rs bindings are the most complete part: rendering, 
 - [Documentation index](docs/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Roadmap](ROADMAP.md)
-- [Changelog](CHANGELOG.md)
 
 ## Contributing
 

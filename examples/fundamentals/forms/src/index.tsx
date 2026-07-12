@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -15,10 +14,10 @@ import {
   Switch,
   Text,
   Textarea,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface FormState {
   inputValue: string;
@@ -39,6 +38,43 @@ const state: FormState = {
 };
 
 function FormDemo() {
+  const runtime = useRuntime();
+
+  useKeyboard((key) => {
+    if (key.key === "i") {
+      state.inputValue = state.inputValue === "Hello" ? "World" : "Hello";
+      renderApp();
+    } else if (key.key === "t") {
+      state.textareaValue = state.textareaValue === "" ? "Line 1\nLine 2\nLine 3" : "";
+      renderApp();
+    } else if (key.key === "c") {
+      state.checkboxOn = !state.checkboxOn;
+      renderApp();
+    } else if (key.key === "s") {
+      state.switchOn = !state.switchOn;
+      renderApp();
+    } else if (key.key === "+") {
+      state.sliderValue = Math.min(state.sliderValue + 5, 100);
+      renderApp();
+    } else if (key.key === "-") {
+      state.sliderValue = Math.max(state.sliderValue - 5, 0);
+      renderApp();
+    } else if (key.key === "1") {
+      state.radioValue = "option-a";
+      renderApp();
+    } else if (key.key === "2") {
+      state.radioValue = "option-b";
+      renderApp();
+    } else if (key.key === "3") {
+      state.radioValue = "option-c";
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -146,8 +182,7 @@ function FormDemo() {
 }
 
 function renderApp() {
-  const element = <FormDemo />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<FormDemo />);
 }
 
 console.log("BetterTUI Forms Demo");
@@ -157,37 +192,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "i") {
-    state.inputValue = state.inputValue === "Hello" ? "World" : "Hello";
-    renderApp();
-  } else if (key === "t") {
-    state.textareaValue = state.textareaValue === "" ? "Line 1\nLine 2\nLine 3" : "";
-    renderApp();
-  } else if (key === "c") {
-    state.checkboxOn = !state.checkboxOn;
-    renderApp();
-  } else if (key === "s") {
-    state.switchOn = !state.switchOn;
-    renderApp();
-  } else if (key === "+") {
-    state.sliderValue = Math.min(state.sliderValue + 5, 100);
-    renderApp();
-  } else if (key === "-") {
-    state.sliderValue = Math.max(state.sliderValue - 5, 0);
-    renderApp();
-  } else if (key === "1") {
-    state.radioValue = "option-a";
-    renderApp();
-  } else if (key === "2") {
-    state.radioValue = "option-b";
-    renderApp();
-  } else if (key === "3") {
-    state.radioValue = "option-c";
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

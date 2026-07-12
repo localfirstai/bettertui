@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -12,10 +11,10 @@ import {
   Spacer,
   StatusLine,
   Text,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface MonitorState {
   tick: number;
@@ -316,6 +315,63 @@ function StatusFooter() {
 }
 
 function SystemMonitor() {
+  const runtime = useRuntime();
+
+  useKeyboard((key) => {
+    if (key.key === "j") {
+      state.selectedProcess = Math.min(state.selectedProcess + 1, state.processes.length - 1);
+      renderApp();
+    } else if (key.key === "k") {
+      state.selectedProcess = Math.max(state.selectedProcess - 1, 0);
+      renderApp();
+    } else if (key.key === "1") {
+      if (state.sortColumn === "pid") {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColumn = "pid";
+        state.sortAsc = true;
+      }
+      renderApp();
+    } else if (key.key === "2") {
+      if (state.sortColumn === "name") {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColumn = "name";
+        state.sortAsc = true;
+      }
+      renderApp();
+    } else if (key.key === "3") {
+      if (state.sortColumn === "cpu") {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColumn = "cpu";
+        state.sortAsc = false;
+      }
+      renderApp();
+    } else if (key.key === "4") {
+      if (state.sortColumn === "mem") {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColumn = "mem";
+        state.sortAsc = false;
+      }
+      renderApp();
+    } else if (key.key === " ") {
+      const proc = state.processes[state.selectedProcess];
+      if (proc) {
+        proc.status = proc.status === "running" ? "stopped" : "running";
+      }
+      renderApp();
+    } else if (key.key === "h") {
+      state.showHelp = !state.showHelp;
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -359,8 +415,7 @@ function SystemMonitor() {
 
 function renderApp() {
   sortProcesses();
-  const element = <SystemMonitor />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<SystemMonitor />);
 }
 
 console.log("BetterTUI System Monitor");
@@ -375,57 +430,7 @@ setInterval(() => {
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "j") {
-    state.selectedProcess = Math.min(state.selectedProcess + 1, state.processes.length - 1);
-    renderApp();
-  } else if (key === "k") {
-    state.selectedProcess = Math.max(state.selectedProcess - 1, 0);
-    renderApp();
-  } else if (key === "1") {
-    if (state.sortColumn === "pid") {
-      state.sortAsc = !state.sortAsc;
-    } else {
-      state.sortColumn = "pid";
-      state.sortAsc = true;
-    }
-    renderApp();
-  } else if (key === "2") {
-    if (state.sortColumn === "name") {
-      state.sortAsc = !state.sortAsc;
-    } else {
-      state.sortColumn = "name";
-      state.sortAsc = true;
-    }
-    renderApp();
-  } else if (key === "3") {
-    if (state.sortColumn === "cpu") {
-      state.sortAsc = !state.sortAsc;
-    } else {
-      state.sortColumn = "cpu";
-      state.sortAsc = false;
-    }
-    renderApp();
-  } else if (key === "4") {
-    if (state.sortColumn === "mem") {
-      state.sortAsc = !state.sortAsc;
-    } else {
-      state.sortColumn = "mem";
-      state.sortAsc = false;
-    }
-    renderApp();
-  } else if (key === " ") {
-    const proc = state.processes[state.selectedProcess];
-    if (proc) {
-      proc.status = proc.status === "running" ? "stopped" : "running";
-    }
-    renderApp();
-  } else if (key === "h") {
-    state.showHelp = !state.showHelp;
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

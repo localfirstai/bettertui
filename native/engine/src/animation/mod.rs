@@ -1,5 +1,7 @@
 //! Animation engine: easing functions, springs, tweens, keyframes, and animation state management.
 
+use std::sync::Arc;
+
 /// Easing functions for animations.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Easing {
@@ -23,6 +25,12 @@ pub enum Easing {
     EaseInElastic,
     EaseOutElastic,
     EaseInOutElastic,
+    EaseInCirc,
+    EaseOutCirc,
+    EaseInOutCirc,
+    EaseInBack,
+    EaseOutBack,
+    EaseInOutBack,
     /// Cubic bezier with two control points (like CSS cubic-bezier)
     CubicBezier(f32, f32, f32, f32),
     /// Steps with step count and jump mode
@@ -37,6 +45,61 @@ pub enum StepJump {
     #[default]
     JumpEnd,
     JumpBoth,
+}
+
+/// Solve cubic bezier for a given t using Newton-Raphson iteration.
+fn cubic_bezier(t: f32, x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
+    // Find the x value at parameter t using Newton-Raphson, then evaluate y
+    let cx = 3.0 * x1;
+    let bx = 3.0 * (x2 - x1) - cx;
+    let ax = 1.0 - cx - bx;
+
+    let cy = 3.0 * y1;
+    let by = 3.0 * (y2 - y1) - cy;
+    let ay = 1.0 - cy - by;
+
+    // Solve for parameter u where x(u) = t
+    let u = sample_curve_x(t, ax, bx, cx);
+
+    // Evaluate y at that parameter
+    sample_curve_y(u, ay, by, cy)
+}
+
+fn sample_curve_x(t: f32, ax: f32, bx: f32, cx: f32) -> f32 {
+    // Newton-Raphson iteration
+    let mut u = t;
+    for _ in 0..8 {
+        let x = ((ax * u + bx) * u + cx) * u - t;
+        if x.abs() < 1e-6 {
+            return u;
+        }
+        let dx = (3.0 * ax * u + 2.0 * bx) * u + cx;
+        if dx.abs() < 1e-6 {
+            break;
+        }
+        u -= x / dx;
+    }
+    // Fall back to bisection if Newton-Raphson fails
+    let mut a = 0.0f32;
+    let mut b = 1.0f32;
+    u = t;
+    for _ in 0..20 {
+        let x = ((ax * u + bx) * u + cx) * u;
+        if (x - t).abs() < 1e-6 {
+            return u;
+        }
+        if x < t {
+            a = u;
+        } else {
+            b = u;
+        }
+        u = (a + b) / 2.0;
+    }
+    u
+}
+
+fn sample_curve_y(t: f32, ay: f32, by: f32, cy: f32) -> f32 {
+    ((ay * t + by) * t + cy) * t
 }
 
 impl Easing {
@@ -168,12 +231,35 @@ impl Easing {
                         + 1.0
                 }
             }
-            Self::CubicBezier(x1, y1, x2, y2) => {
-                // Approximate cubic bezier (simplified Newton-Raphson)
-                let _ = (x1, y1, x2, y2);
-                // For now, use linear approximation - full implementation would use Newton-Raphson
-                t
+            Self::EaseInCirc => 1.0 - (1.0 - t * t).sqrt(),
+            Self::EaseOutCirc => (1.0 - (t - 1.0).powi(2)).sqrt(),
+            Self::EaseInOutCirc => {
+                if t < 0.5 {
+                    -0.5 * ((1.0 - (2.0 * t).powi(2)).sqrt() - 1.0)
+                } else {
+                    0.5 * ((1.0 - (-2.0 * t + 2.0).powi(2)).sqrt() + 1.0)
+                }
             }
+            Self::EaseInBack => {
+                let s = 1.70158;
+                t * t * ((s + 1.0) * t - s)
+            }
+            Self::EaseOutBack => {
+                let s = 1.70158;
+                let t = t - 1.0;
+                t * t * ((s + 1.0) * t + s) + 1.0
+            }
+            Self::EaseInOutBack => {
+                let s = 1.70158 * 1.525;
+                let t2 = t * 2.0;
+                if t2 < 1.0 {
+                    0.5 * (t2 * t2 * ((s + 1.0) * t2 - s))
+                } else {
+                    let t2 = t2 - 2.0;
+                    0.5 * (t2 * t2 * ((s + 1.0) * t2 + s) + 2.0)
+                }
+            }
+            Self::CubicBezier(x1, y1, x2, y2) => cubic_bezier(t, *x1, *y1, *x2, *y2),
             Self::Steps(steps, jump) => {
                 let steps = (*steps).max(1) as f32;
                 match jump {
@@ -410,8 +496,40 @@ pub struct Animation {
     pub state: AnimationState,
     pub elapsed: f32,
     pub current_value: f32,
-    pub on_complete: Option<Box<dyn Fn() + Send + Sync>>,
-    pub on_update: Option<Box<dyn Fn(f32) + Send + Sync>>,
+    pub on_complete: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub on_update: Option<Arc<dyn Fn(f32) + Send + Sync>>,
+}
+
+impl Clone for Animation {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            tween: self.tween.clone(),
+            spring: self.spring.clone(),
+            keyframes: self.keyframes.clone(),
+            state: self.state,
+            elapsed: self.elapsed,
+            current_value: self.current_value,
+            on_complete: self.on_complete.clone(),
+            on_update: self.on_update.clone(),
+        }
+    }
+}
+
+impl std::fmt::Debug for Animation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Animation")
+            .field("id", &self.id)
+            .field("tween", &self.tween)
+            .field("spring", &self.spring)
+            .field("keyframes", &self.keyframes)
+            .field("state", &self.state)
+            .field("elapsed", &self.elapsed)
+            .field("current_value", &self.current_value)
+            .field("on_complete", &self.on_complete.is_some())
+            .field("on_update", &self.on_update.is_some())
+            .finish()
+    }
 }
 
 impl Default for Animation {
@@ -461,12 +579,12 @@ impl Animation {
     }
 
     pub fn with_on_complete(mut self, handler: impl Fn() + Send + Sync + 'static) -> Self {
-        self.on_complete = Some(Box::new(handler));
+        self.on_complete = Some(Arc::new(handler));
         self
     }
 
     pub fn with_on_update(mut self, handler: impl Fn(f32) + Send + Sync + 'static) -> Self {
-        self.on_update = Some(Box::new(handler));
+        self.on_update = Some(Arc::new(handler));
         self
     }
 
@@ -616,8 +734,38 @@ impl AnimationEngine {
 
 // ─── Timeline ────────────────────────────────────────────────────────────────
 
-/// A timeline for managing animation playback with time scaling
-#[derive(Debug)]
+/// A timeline item type
+#[derive(Debug, Clone)]
+pub enum TimelineItemType {
+    /// An animation item with start time
+    Animation(TimelineAnimationItem),
+    /// A callback to execute at a specific time
+    Callback(TimelineCallbackItem),
+}
+
+/// An animation scheduled on a timeline
+#[derive(Debug, Clone)]
+pub struct TimelineAnimationItem {
+    /// Start time in seconds
+    pub start_time: f32,
+    /// The animation to run
+    pub animation: Animation,
+    /// Whether this item has been started
+    pub started: bool,
+    /// Whether this item has completed
+    pub completed: bool,
+}
+
+/// A callback scheduled on a timeline
+#[derive(Debug, Clone)]
+pub struct TimelineCallbackItem {
+    /// When to execute
+    pub start_time: f32,
+    /// The callback to execute
+    pub executed: bool,
+}
+
+/// A timeline for managing animation playback with time scaling and sequencing
 pub struct Timeline {
     /// Current time in seconds
     current_time: f32,
@@ -629,6 +777,40 @@ pub struct Timeline {
     duration: Option<f32>,
     /// Whether to loop
     looping: bool,
+    /// Whether the timeline has completed
+    complete: bool,
+    /// Scheduled items
+    items: Vec<TimelineItemType>,
+    /// Sub-timelines synced to this timeline
+    sub_timelines: Vec<SubTimeline>,
+    /// Callback when timeline completes
+    on_complete: Option<Arc<dyn Fn() + Send + Sync>>,
+}
+
+impl std::fmt::Debug for Timeline {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Timeline")
+            .field("current_time", &self.current_time)
+            .field("speed", &self.speed)
+            .field("playing", &self.playing)
+            .field("duration", &self.duration)
+            .field("looping", &self.looping)
+            .field("complete", &self.complete)
+            .field("items", &self.items)
+            .field("sub_timelines", &self.sub_timelines)
+            .field("on_complete", &self.on_complete.is_some())
+            .finish()
+    }
+}
+
+/// A sub-timeline synced to a parent
+#[derive(Debug, Clone)]
+#[expect(dead_code, reason = "sub-timeline infrastructure for future use")]
+struct SubTimeline {
+    /// Start time in parent timeline
+    start_time: f32,
+    /// Whether this sub-timeline has been started
+    started: bool,
 }
 
 impl Default for Timeline {
@@ -645,6 +827,10 @@ impl Timeline {
             playing: false,
             duration: None,
             looping: false,
+            complete: false,
+            items: Vec::new(),
+            sub_timelines: Vec::new(),
+            on_complete: None,
         }
     }
 
@@ -660,6 +846,12 @@ impl Timeline {
         self
     }
 
+    /// Set callback for when timeline completes
+    pub fn with_on_complete(mut self, handler: impl Fn() + Send + Sync + 'static) -> Self {
+        self.on_complete = Some(Arc::new(handler));
+        self
+    }
+
     /// Set playback speed
     pub fn set_speed(&mut self, speed: f32) {
         self.speed = speed;
@@ -670,14 +862,67 @@ impl Timeline {
         self.speed
     }
 
+    /// Add an animation at a specific start time (in seconds)
+    pub fn add_animation(&mut self, animation: Animation, start_time: f32) {
+        self.items
+            .push(TimelineItemType::Animation(TimelineAnimationItem {
+                start_time,
+                animation,
+                started: false,
+                completed: false,
+            }));
+    }
+
+    /// Add a callback at a specific start time (in seconds)
+    pub fn add_callback(&mut self, start_time: f32) {
+        self.items
+            .push(TimelineItemType::Callback(TimelineCallbackItem {
+                start_time,
+                executed: false,
+            }));
+    }
+
+    /// Check if the timeline has completed
+    pub fn is_complete(&self) -> bool {
+        self.complete
+    }
+
     /// Play the timeline
     pub fn play(&mut self) {
+        if self.complete {
+            self.restart();
+            return;
+        }
         self.playing = true;
     }
 
     /// Pause the timeline
     pub fn pause(&mut self) {
         self.playing = false;
+    }
+
+    /// Restart the timeline from the beginning
+    pub fn restart(&mut self) {
+        self.current_time = 0.0;
+        self.complete = false;
+        self.playing = true;
+        self.reset_items();
+    }
+
+    /// Reset all items to their initial state
+    fn reset_items(&mut self) {
+        for item in &mut self.items {
+            match item {
+                TimelineItemType::Animation(a) => {
+                    a.started = false;
+                    a.completed = false;
+                    a.animation.reset();
+                }
+                TimelineItemType::Callback(c) => {
+                    c.executed = false;
+                }
+            }
+        }
     }
 
     /// Check if playing
@@ -698,24 +943,55 @@ impl Timeline {
     /// Reset to start
     pub fn reset(&mut self) {
         self.current_time = 0.0;
+        self.complete = false;
+        self.reset_items();
     }
 
     /// Update the timeline by dt
     pub fn update(&mut self, dt: f32) {
-        if !self.playing {
+        if !self.playing || self.complete {
             return;
         }
 
         self.current_time += dt * self.speed;
 
+        // Evaluate scheduled items
+        for item in &mut self.items {
+            match item {
+                TimelineItemType::Animation(a) => {
+                    if self.current_time >= a.start_time && !a.completed {
+                        if !a.started {
+                            a.started = true;
+                            a.animation.play();
+                        }
+                        a.animation.update(dt * self.speed);
+                        if a.animation.state == AnimationState::Completed {
+                            a.completed = true;
+                        }
+                    }
+                }
+                TimelineItemType::Callback(c) => {
+                    if self.current_time >= c.start_time && !c.executed {
+                        c.executed = true;
+                    }
+                }
+            }
+        }
+
+        // Check if duration limit reached
         if let Some(duration) = self.duration
             && self.current_time >= duration
         {
             if self.looping {
                 self.current_time %= duration;
+                self.reset_items();
             } else {
                 self.current_time = duration;
                 self.playing = false;
+                self.complete = true;
+                if let Some(ref handler) = self.on_complete {
+                    handler();
+                }
             }
         }
     }
@@ -956,6 +1232,47 @@ mod tests {
     }
 
     #[test]
+    fn easing_in_circ() {
+        let easing = Easing::EaseInCirc;
+        assert!((easing.apply(0.0) - 0.0).abs() < 0.001);
+        assert!((easing.apply(0.5) - 0.13397).abs() < 0.01);
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn easing_out_circ() {
+        let easing = Easing::EaseOutCirc;
+        assert!((easing.apply(0.0) - 0.0).abs() < 0.001);
+        assert!((easing.apply(0.5) - 0.86603).abs() < 0.01);
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn easing_in_back() {
+        let easing = Easing::EaseInBack;
+        assert!((easing.apply(0.0) - 0.0).abs() < 0.001);
+        assert!(easing.apply(0.5) < 0.0); // Should overshoot backwards
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn easing_out_back() {
+        let easing = Easing::EaseOutBack;
+        assert!((easing.apply(0.0) - 0.0).abs() < 0.001);
+        assert!(easing.apply(0.5) > 1.0); // Should overshoot forwards
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn easing_cubic_bezier() {
+        // Test with linear bezier (0,0,1,1)
+        let easing = Easing::CubicBezier(0.0, 0.0, 1.0, 1.0);
+        assert!((easing.apply(0.0) - 0.0).abs() < 0.01);
+        assert!((easing.apply(0.5) - 0.5).abs() < 0.05);
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.01);
+    }
+
+    #[test]
     fn tween_basic() {
         let tween = Tween::new(0.0, 100.0, 1.0);
         assert_eq!(tween.value_at(0.0), 0.0);
@@ -1137,6 +1454,7 @@ mod tests {
         let timeline = Timeline::new();
         assert_eq!(timeline.current_time(), 0.0);
         assert!(!timeline.is_playing());
+        assert!(!timeline.is_complete());
     }
 
     #[test]
@@ -1163,6 +1481,79 @@ mod tests {
         timeline.play();
         timeline.update(0.5);
         assert_eq!(timeline.current_time(), 1.0);
+    }
+
+    #[test]
+    fn timeline_add_animation() {
+        let mut timeline = Timeline::new();
+        let animation = Animation::from_tween(Tween::new(0.0, 100.0, 1.0), 1);
+        timeline.add_animation(animation, 0.0);
+        timeline.play();
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 0.5);
+    }
+
+    #[test]
+    fn timeline_sequential_animations() {
+        let mut timeline = Timeline::new();
+        let anim1 = Animation::from_tween(Tween::new(0.0, 50.0, 1.0), 1);
+        let anim2 = Animation::from_tween(Tween::new(50.0, 100.0, 1.0), 2);
+        timeline.add_animation(anim1, 0.0);
+        timeline.add_animation(anim2, 1.0);
+        timeline.play();
+
+        // First animation should be running
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 0.5);
+
+        // Second animation should start at t=1.0
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 1.0);
+    }
+
+    #[test]
+    fn timeline_with_duration() {
+        let mut timeline = Timeline::new().with_duration(2.0);
+        timeline.play();
+        timeline.update(3.0);
+        assert_eq!(timeline.current_time(), 2.0);
+        assert!(!timeline.is_playing());
+        assert!(timeline.is_complete());
+    }
+
+    #[test]
+    fn timeline_with_looping() {
+        let mut timeline = Timeline::new().with_duration(1.0).with_looping(true);
+        timeline.play();
+        timeline.update(1.5);
+        assert!((timeline.current_time() - 0.5).abs() < 0.001);
+        assert!(timeline.is_playing());
+    }
+
+    #[test]
+    fn timeline_restart() {
+        let mut timeline = Timeline::new().with_duration(1.0);
+        timeline.play();
+        timeline.update(0.5);
+        assert_eq!(timeline.current_time(), 0.5);
+        timeline.restart();
+        assert_eq!(timeline.current_time(), 0.0);
+        assert!(timeline.is_playing());
+    }
+
+    #[test]
+    fn timeline_on_complete() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        let completed = std::sync::Arc::new(AtomicBool::new(false));
+        let completed_clone = completed.clone();
+        let mut timeline = Timeline::new()
+            .with_duration(1.0)
+            .with_on_complete(move || {
+                completed_clone.store(true, Ordering::SeqCst);
+            });
+        timeline.play();
+        timeline.update(1.5);
+        assert!(completed.load(Ordering::SeqCst));
     }
 
     // ─── Color Interpolation Tests ──────────────────────────────────────────

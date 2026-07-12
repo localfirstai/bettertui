@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -9,10 +8,10 @@ import {
   Spacer,
   StatusLine,
   Text,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface AppProps {
   count: number;
@@ -22,7 +21,30 @@ interface AppProps {
 }
 
 function App({ count, min, max, direction }: AppProps) {
+  const runtime = useRuntime();
   const variant = count > 0 ? "success" : count < 0 ? "danger" : "default";
+
+  useKeyboard((key) => {
+    if (key.key === "+") {
+      count++;
+      direction = "up";
+      if (count > max) max = count;
+      renderApp(count, min, max, direction);
+    } else if (key.key === "-") {
+      count--;
+      direction = "down";
+      if (count < min) min = count;
+      renderApp(count, min, max, direction);
+    } else if (key.key === "r") {
+      count = 0;
+      direction = "none";
+      renderApp(count, min, max, direction);
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -69,15 +91,18 @@ function App({ count, min, max, direction }: AppProps) {
   );
 }
 
-function renderApp(count: number, min: number, max: number, direction: string) {
-  const element = <App count={count} min={min} max={max} direction={direction} />;
-  reconciler.createInstance("Provider", { children: element });
-}
-
 let count = 0;
 let min = 0;
 let max = 0;
 let direction = "none";
+
+function renderApp(newCount: number, newMin: number, newMax: number, newDirection: string) {
+  count = newCount;
+  min = newMin;
+  max = newMax;
+  direction = newDirection;
+  render(<App count={count} min={min} max={max} direction={direction} />);
+}
 
 console.log("BetterTUI Counter Demo");
 console.log("Press +/- to increment/decrement, r to reset, q to quit");
@@ -86,24 +111,7 @@ renderApp(count, min, max, direction);
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "+") {
-    count++;
-    direction = "up";
-    if (count > max) max = count;
-    renderApp(count, min, max, direction);
-  } else if (key === "-") {
-    count--;
-    direction = "down";
-    if (count < min) min = count;
-    renderApp(count, min, max, direction);
-  } else if (key === "r") {
-    count = 0;
-    direction = "none";
-    renderApp(count, min, max, direction);
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

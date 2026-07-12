@@ -1,5 +1,15 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
-import { Badge, Box, Flex, Heading, Separator, StatusLine, Text } from "@bettertui/react";
+import {
+  Badge,
+  Box,
+  Flex,
+  Heading,
+  Separator,
+  StatusLine,
+  Text,
+  render,
+  useKeyboard,
+  useRuntime,
+} from "@bettertui/react";
 
 interface Capability {
   name: string;
@@ -210,6 +220,7 @@ const CATEGORIES = [
 ];
 
 function Inspector() {
+  const runtime = useRuntime();
   const allCapabilities = [
     ...detectTerminalInfo(),
     ...detectDisplayCapabilities(),
@@ -220,6 +231,14 @@ function Inspector() {
     ...detectSizeCapabilities(),
     ...detectEnvironmentCapabilities(),
   ];
+
+  useKeyboard((key) => {
+    if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Flex flexDirection="column" width="100%" height="100%">
@@ -262,25 +281,18 @@ function Inspector() {
   );
 }
 
-async function main() {
-  const buffer = new CommandBuffer();
-  const reconciler = createReconciler(buffer);
-
-  const element = reconciler.createInstance(Inspector, {});
-  const root = reconciler.createInstance("Provider", { children: element });
-  reconciler.update(root);
-
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode?.(true);
-    process.stdin.resume();
-    process.stdin.on("data", (data: Buffer) => {
-      const key = data.toString();
-      if (key === "q") {
-        reconciler.unmount(root);
-        process.exit(0);
-      }
-    });
-  }
+function renderApp() {
+  render(<Inspector />);
 }
 
-main();
+console.log("BetterTUI Capability Inspector");
+console.log("Press q to quit");
+
+renderApp();
+
+process.stdin.setRawMode?.(true);
+process.stdin.resume();
+
+process.on("SIGINT", () => {
+  process.exit(0);
+});

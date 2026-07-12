@@ -1,8 +1,16 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
-import { Badge, Box, Flex, Heading, Provider, Separator, StatusLine, Text } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
+import {
+  Badge,
+  Box,
+  Flex,
+  Heading,
+  Provider,
+  Separator,
+  StatusLine,
+  Text,
+  render,
+  useKeyboard,
+  useRuntime,
+} from "@bettertui/react";
 
 interface KeyEvent {
   key: string;
@@ -13,7 +21,40 @@ interface KeyEvent {
 const keyHistory: KeyEvent[] = [];
 const maxHistory = 10;
 
+function formatKey(data: string): string {
+  if (data === "\x1b[A") return "↑";
+  if (data === "\x1b[B") return "↓";
+  if (data === "\x1b[C") return "→";
+  if (data === "\x1b[D") return "←";
+  if (data === "\t") return "Tab";
+  if (data === "\r") return "Enter";
+  if (data === "\x03") return "Ctrl+C";
+  return data;
+}
+
 function TerminalShowcase() {
+  const runtime = useRuntime();
+
+  useKeyboard((key) => {
+    if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+
+    keyHistory.unshift({
+      key: formatKey(key.key),
+      raw: JSON.stringify(key.key),
+      timestamp: Date.now(),
+    });
+
+    if (keyHistory.length > maxHistory) {
+      keyHistory.pop();
+    }
+
+    renderApp();
+    return true;
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -66,19 +107,7 @@ function TerminalShowcase() {
 }
 
 function renderApp() {
-  const element = <TerminalShowcase />;
-  reconciler.createInstance("Provider", { children: element });
-}
-
-function formatKey(data: string): string {
-  if (data === "\x1b[A") return "↑";
-  if (data === "\x1b[B") return "↓";
-  if (data === "\x1b[C") return "→";
-  if (data === "\x1b[D") return "←";
-  if (data === "\t") return "Tab";
-  if (data === "\r") return "Enter";
-  if (data === "\x03") return "Ctrl+C";
-  return data;
+  render(<TerminalShowcase />);
 }
 
 console.log("BetterTUI Terminal Showcase");
@@ -88,22 +117,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "q") {
-    process.exit(0);
-  }
-
-  keyHistory.unshift({
-    key: formatKey(key),
-    raw: JSON.stringify(key),
-    timestamp: Date.now(),
-  });
-
-  if (keyHistory.length > maxHistory) {
-    keyHistory.pop();
-  }
-
-  renderApp();
+process.on("SIGINT", () => {
+  process.exit(0);
 });

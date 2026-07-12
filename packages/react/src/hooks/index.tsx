@@ -1,5 +1,13 @@
 import type { KeyEvent as SharedKeyEvent, Theme as SharedTheme } from "@bettertui/shared";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 
 // Re-export shared types for consumer convenience
@@ -270,27 +278,155 @@ const _caf = (id: number): void => {
   else g.clearTimeout?.(id);
 };
 
+// Easing functions
+export type EasingFunction = (t: number) => number;
+
+export const easings = {
+  linear: (t: number) => t,
+  inQuad: (t: number) => t * t,
+  outQuad: (t: number) => t * (2 - t),
+  inOutQuad: (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+  inCubic: (t: number) => t * t * t,
+  outCubic: (t: number) => {
+    const t1 = t - 1;
+    return t1 * t1 * t1 + 1;
+  },
+  inOutCubic: (t: number) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
+  inExpo: (t: number) => (t === 0 ? 0 : 2 ** (10 * (t - 1))),
+  outExpo: (t: number) => (t === 1 ? 1 : 1 - 2 ** (-10 * t)),
+  inOutExpo: (t: number) => {
+    if (t === 0 || t === 1) return t;
+    return t < 0.5 ? 2 ** (20 * t - 10) / 2 : (2 - 2 ** (-20 * t + 10)) / 2;
+  },
+  inSine: (t: number) => 1 - Math.cos((t * Math.PI) / 2),
+  outSine: (t: number) => Math.sin((t * Math.PI) / 2),
+  inOutSine: (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
+  inBounce: (t: number) => 1 - easings.outBounce(1 - t),
+  outBounce: (t: number) => {
+    if (t < 1 / 2.75) return 7.5625 * t * t;
+    let t2 = t;
+    if (t2 < 2 / 2.75) {
+      t2 -= 1.5 / 2.75;
+      return 7.5625 * t2 * t2 + 0.75;
+    }
+    if (t2 < 2.5 / 2.75) {
+      t2 -= 2.25 / 2.75;
+      return 7.5625 * t2 * t2 + 0.9375;
+    }
+    t2 -= 2.625 / 2.75;
+    return 7.5625 * t2 * t2 + 0.984375;
+  },
+  inOutBounce: (t: number) =>
+    t < 0.5 ? easings.inBounce(t * 2) * 0.5 : easings.outBounce(t * 2 - 1) * 0.5 + 0.5,
+  inElastic: (t: number) => {
+    if (t === 0 || t === 1) return t;
+    return -(2 ** (10 * (t - 1))) * Math.sin((t - 1.1) * 5 * Math.PI);
+  },
+  outElastic: (t: number) => {
+    if (t === 0 || t === 1) return t;
+    return 2 ** (-10 * t) * Math.sin((t - 0.1) * 5 * Math.PI) + 1;
+  },
+  inOutElastic: (t: number) => {
+    if (t === 0 || t === 1) return t;
+    return t < 0.5
+      ? -(2 ** (20 * t - 10) * Math.sin((20 * t - 11.125) * ((2 * Math.PI) / 4.5))) / 2
+      : (2 ** (-20 * t + 10) * Math.sin((20 * t - 11.125) * ((2 * Math.PI) / 4.5))) / 2 + 1;
+  },
+  inBack: (t: number) => t * t * (2.70158 * t - 1.70158),
+  outBack: (t: number) => {
+    const s = 1.70158;
+    const t1 = t - 1;
+    return t1 * t1 * ((s + 1) * t1 + s) + 1;
+  },
+  inOutBack: (t: number) => {
+    const s = 1.70158 * 1.525;
+    const t2 = t * 2;
+    if (t2 < 1) return 0.5 * (t2 * t2 * ((s + 1) * t2 - s));
+    const t3 = t2 - 2;
+    return 0.5 * (t3 * t3 * ((s + 1) * t3 + s) + 2);
+  },
+};
+
 // Animation
+export interface UseAnimationOptions {
+  duration: number;
+  easing?: EasingFunction | keyof typeof easings;
+  loop?: boolean | number;
+  alternate?: boolean;
+  delay?: number;
+  onComplete?: () => void;
+  onStart?: () => void;
+}
+
 export function useAnimation(
   callback: (progress: number) => void,
-  duration: number,
+  options: UseAnimationOptions | number,
   deps: unknown[] = [],
 ) {
+  const opts: UseAnimationOptions = typeof options === "number" ? { duration: options } : options;
+  const {
+    duration,
+    easing = "linear",
+    loop = false,
+    alternate = false,
+    delay = 0,
+    onComplete,
+    onStart,
+  } = opts;
+
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const onStartRef = useRef(onStart);
+  onStartRef.current = onStart;
+  const loopRef = useRef(loop);
+  loopRef.current = loop;
+  const alternateRef = useRef(alternate);
+  alternateRef.current = alternate;
+
+  const easingFn: EasingFunction =
+    typeof easing === "function" ? easing : (easings[easing] ?? easings.linear);
+  const easingFnRef = useRef(easingFn);
+  easingFnRef.current = easingFn;
 
   useEffect(() => {
     let animationFrame: number;
     let startTime: number;
+    let iterationCount = 0;
+    const maxIterations =
+      typeof loopRef.current === "number"
+        ? loopRef.current
+        : loopRef.current
+          ? Number.POSITIVE_INFINITY
+          : 1;
 
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const elapsed = currentTime - startTime - delay;
 
-      callbackRef.current(progress);
+      if (elapsed < 0) {
+        animationFrame = _raf(animate);
+        return;
+      }
 
-      if (progress < 1) {
+      const rawProgress = Math.min(elapsed / duration, 1);
+      const easedProgress = easingFnRef.current(rawProgress);
+      const direction =
+        alternateRef.current && iterationCount % 2 === 1 ? 1 - easedProgress : easedProgress;
+
+      callbackRef.current(direction);
+
+      if (rawProgress === 1) {
+        iterationCount++;
+        if (iterationCount < maxIterations) {
+          startTime = currentTime;
+          if (iterationCount === 1) onStartRef.current?.();
+          animationFrame = _raf(animate);
+        } else {
+          onCompleteRef.current?.();
+        }
+      } else {
         animationFrame = _raf(animate);
       }
     };
@@ -302,5 +438,346 @@ export function useAnimation(
         _caf(animationFrame);
       }
     };
-  }, [duration, ...deps]);
+  }, [duration, delay, ...deps]);
+}
+
+// Timeline
+export interface TimelineAnimation {
+  id: number;
+  target: Record<string, number>;
+  props: Record<string, { from: number; to: number }>;
+  startTime: number;
+  duration: number;
+  easing: EasingFunction;
+  onComplete?: () => void;
+}
+
+export interface Timeline {
+  add: (
+    target: Record<string, number>,
+    props: Record<string, { from: number; to: number }>,
+    startTime?: number,
+    duration?: number,
+    easing?: EasingFunction | keyof typeof easings,
+  ) => number;
+  call: (callback: () => void, startTime: number) => void;
+  play: () => void;
+  pause: () => void;
+  reset: () => void;
+  isPlaying: () => boolean;
+  progress: () => number;
+}
+
+export function useTimeline(deps: unknown[] = []): Timeline {
+  const animationsRef = useRef<TimelineAnimation[]>([]);
+  const callbacksRef = useRef<Array<{ time: number; fn: () => void }>>([]);
+  const playingRef = useRef(false);
+  const startTimeRef = useRef(0);
+  const currentTimeRef = useRef(0);
+  const idCounterRef = useRef(0);
+
+  const add = useCallback(
+    (
+      target: Record<string, number>,
+      props: Record<string, { from: number; to: number }>,
+      startTime = 0,
+      duration = 300,
+      easing: EasingFunction | keyof typeof easings = "linear",
+    ) => {
+      const id = idCounterRef.current++;
+      const easingFn: EasingFunction =
+        typeof easing === "function" ? easing : (easings[easing] ?? easings.linear);
+      animationsRef.current.push({
+        id,
+        target,
+        props,
+        startTime,
+        duration,
+        easing: easingFn,
+      });
+      return id;
+    },
+    [],
+  );
+
+  const call = useCallback((callback: () => void, startTime: number) => {
+    callbacksRef.current.push({ time: startTime, fn: callback });
+  }, []);
+
+  const play = useCallback(() => {
+    playingRef.current = true;
+    startTimeRef.current = performance.now() - currentTimeRef.current;
+  }, []);
+
+  const pause = useCallback(() => {
+    playingRef.current = false;
+  }, []);
+
+  const reset = useCallback(() => {
+    playingRef.current = false;
+    currentTimeRef.current = 0;
+    for (const anim of animationsRef.current) {
+      for (const key of Object.keys(anim.props)) {
+        const prop = anim.props[key];
+        if (prop) {
+          anim.target[key] = prop.from;
+        }
+      }
+    }
+  }, []);
+
+  const isPlaying = useCallback(() => playingRef.current, []);
+
+  const progress = useCallback(() => {
+    const maxDuration = Math.max(...animationsRef.current.map((a) => a.startTime + a.duration), 1);
+    return currentTimeRef.current / maxDuration;
+  }, []);
+
+  useEffect(() => {
+    let animationFrame: number;
+
+    const animate = (currentTime: number) => {
+      if (!playingRef.current) {
+        animationFrame = _raf(animate);
+        return;
+      }
+
+      const elapsed = currentTime - startTimeRef.current;
+      currentTimeRef.current = elapsed;
+
+      // Execute callbacks
+      const cbs = callbacksRef.current;
+      if (cbs) {
+        const remaining: Array<{ time: number; fn: () => void }> = [];
+        for (const cb of cbs) {
+          if (elapsed >= cb.time) {
+            cb.fn();
+          } else {
+            remaining.push(cb);
+          }
+        }
+        callbacksRef.current = remaining;
+      }
+
+      // Update animations
+      for (const anim of animationsRef.current) {
+        const animElapsed = elapsed - anim.startTime;
+        if (animElapsed < 0) continue;
+
+        const rawProgress = Math.min(animElapsed / anim.duration, 1);
+        const easedProgress = anim.easing(rawProgress);
+
+        for (const key of Object.keys(anim.props)) {
+          const prop = anim.props[key];
+          if (prop) {
+            const { from, to } = prop;
+            anim.target[key] = from + (to - from) * easedProgress;
+          }
+        }
+
+        if (rawProgress === 1 && anim.onComplete) {
+          anim.onComplete();
+        }
+      }
+
+      animationFrame = _raf(animate);
+    };
+
+    animationFrame = _raf(animate);
+
+    return () => {
+      if (animationFrame) {
+        _caf(animationFrame);
+      }
+    };
+  }, [...deps]);
+
+  return useMemo(
+    () => ({
+      add,
+      call,
+      play,
+      pause,
+      reset,
+      isPlaying,
+      progress,
+    }),
+    [add, call, play, pause, reset, isPlaying, progress],
+  );
+}
+
+// Mouse events
+export interface MouseState {
+  x: number;
+  y: number;
+  button: "left" | "right" | "middle" | "other";
+  pressed: boolean;
+  shift: boolean;
+  ctrl: boolean;
+  alt: boolean;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: event handler typing
+type MouseEventHandler = (e: any) => void;
+
+export function useMouse(handler: (event: MouseState) => boolean) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    const buttonMap: Record<number, MouseState["button"]> = {
+      0: "left",
+      1: "middle",
+      2: "right",
+    };
+
+    const handleMouseDown: MouseEventHandler = (e) => {
+      const mouseEvent: MouseState = {
+        x: e.clientX,
+        y: e.clientY,
+        button: buttonMap[e.button] ?? "other",
+        pressed: true,
+        shift: e.shiftKey,
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+      };
+      if (handlerRef.current(mouseEvent)) {
+        e.preventDefault();
+      }
+    };
+
+    const handleMouseUp: MouseEventHandler = (e) => {
+      const mouseEvent: MouseState = {
+        x: e.clientX,
+        y: e.clientY,
+        button: buttonMap[e.button] ?? "other",
+        pressed: false,
+        shift: e.shiftKey,
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+      };
+      if (handlerRef.current(mouseEvent)) {
+        e.preventDefault();
+      }
+    };
+
+    const handleMouseMove: MouseEventHandler = (e) => {
+      const mouseEvent: MouseState = {
+        x: e.clientX,
+        y: e.clientY,
+        button: "other",
+        pressed: false,
+        shift: e.shiftKey,
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+      };
+      handlerRef.current(mouseEvent);
+    };
+
+    const g = globalThis as unknown as {
+      addEventListener(name: string, fn: MouseEventHandler): void;
+      removeEventListener(name: string, fn: MouseEventHandler): void;
+    };
+    g.addEventListener("mousedown", handleMouseDown);
+    g.addEventListener("mouseup", handleMouseUp);
+    g.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      g.removeEventListener("mousedown", handleMouseDown);
+      g.removeEventListener("mouseup", handleMouseUp);
+      g.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+}
+
+// Selection
+interface SelectionContextValue {
+  selection: { start: { x: number; y: number }; end: { x: number; y: number } } | null;
+  setSelection: (
+    sel: { start: { x: number; y: number }; end: { x: number; y: number } } | null,
+  ) => void;
+  getSelectedText: () => string;
+}
+
+const SelectionContext = createContext<SelectionContextValue>({
+  selection: null,
+  setSelection: () => {},
+  getSelectedText: () => "",
+});
+
+export function SelectionProvider({ children }: { children: ReactNode }) {
+  const [selection, setSelection] = useState<SelectionContextValue["selection"]>(null);
+
+  const getSelectedText = useCallback(() => {
+    if (!selection) return "";
+    const n = globalThis as unknown as {
+      getSelection?: () => { toString(): string } | null;
+    };
+    return n.getSelection?.()?.toString() ?? "";
+  }, [selection]);
+
+  return (
+    <SelectionContext.Provider value={{ selection, setSelection, getSelectedText }}>
+      {children}
+    </SelectionContext.Provider>
+  );
+}
+
+export function useSelection() {
+  return useContext(SelectionContext);
+}
+
+// Capabilities
+interface CapabilitiesContextValue {
+  capabilities: {
+    kittyKeyboard: boolean;
+    sgrMouse: boolean;
+    urxvtMouse: boolean;
+    bracketedPaste: boolean;
+    focusEvents: boolean;
+    osc52Clipboard: boolean;
+    trueColor: boolean;
+  };
+  updateCapabilities: (caps: Partial<CapabilitiesContextValue["capabilities"]>) => void;
+}
+
+const CapabilitiesContext = createContext<CapabilitiesContextValue>({
+  capabilities: {
+    kittyKeyboard: false,
+    sgrMouse: false,
+    urxvtMouse: false,
+    bracketedPaste: false,
+    focusEvents: false,
+    osc52Clipboard: false,
+    trueColor: false,
+  },
+  updateCapabilities: () => {},
+});
+
+export function CapabilitiesProvider({ children }: { children: ReactNode }) {
+  const [capabilities, setCapabilities] = useState<CapabilitiesContextValue["capabilities"]>({
+    kittyKeyboard: false,
+    sgrMouse: false,
+    urxvtMouse: false,
+    bracketedPaste: false,
+    focusEvents: false,
+    osc52Clipboard: false,
+    trueColor: false,
+  });
+
+  const updateCapabilities = useCallback(
+    (caps: Partial<CapabilitiesContextValue["capabilities"]>) => {
+      setCapabilities((prev) => ({ ...prev, ...caps }));
+    },
+    [],
+  );
+
+  return (
+    <CapabilitiesContext.Provider value={{ capabilities, updateCapabilities }}>
+      {children}
+    </CapabilitiesContext.Provider>
+  );
+}
+
+export function useCapabilities() {
+  return useContext(CapabilitiesContext);
 }

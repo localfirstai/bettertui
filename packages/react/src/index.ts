@@ -10,9 +10,26 @@ export {
   useFrame,
   useClipboard,
   useAnimation,
+  useMouse,
+  SelectionProvider,
+  useSelection,
+  CapabilitiesProvider,
+  useCapabilities,
+  useTimeline,
+  easings,
 } from "./hooks/index";
 
-export type { Theme, ThemeColors, ThemeSpacing, ProviderProps } from "./hooks/index";
+export type {
+  Theme,
+  ThemeColors,
+  ThemeSpacing,
+  ProviderProps,
+  MouseState,
+  EasingFunction,
+  UseAnimationOptions,
+  TimelineAnimation,
+  Timeline,
+} from "./hooks/index";
 
 // Runtime (render + RuntimeProvider + useRuntime)
 export { render, RuntimeProvider, useRuntime } from "./runtime";
@@ -26,15 +43,28 @@ export type {
   KeyEvent,
   MouseEvent,
   MouseButton,
-  ResizeEvent,
-  PasteEvent,
   Style,
   ColorValue,
   BorderStyle,
   Rect,
   Point,
-  Size,
 } from "@bettertui/core";
+
+// Re-export shared layout types
+export type {
+  FlexDirection as SharedFlexDirection,
+  JustifyContent as SharedJustifyContent,
+  AlignItems as SharedAlignItems,
+  AlignSelf as SharedAlignSelf,
+  Position as SharedPosition,
+  Sizing as SharedSizing,
+  Overflow as SharedOverflow,
+  Padding as SharedPadding,
+  Margin as SharedMargin,
+  Inset as SharedInset,
+  Gap as SharedGap,
+  LayoutConstraints,
+} from "@bettertui/shared";
 
 // Re-export all components
 export {
@@ -78,9 +108,29 @@ export {
   Viewport,
   Calendar,
   Chart,
+  ScrollArea,
+  Markdown,
+  CodeBlock,
+  Diff,
+  PromptComposer,
+  ChatView,
+  StatusBar,
+  ThinkingIndicator,
+  Terminal,
+  TerminalViewport,
+  TerminalProcess,
 } from "./components";
 
 export type {
+  FlexDirection,
+  JustifyContent,
+  AlignItems,
+  AlignSelf,
+  Position,
+  Sizing,
+  Padding,
+  Margin,
+  Inset,
   BoxProps,
   FlexProps,
   GridProps,
@@ -125,4 +175,16 @@ export type {
   ViewportProps,
   CalendarProps,
   ChartProps,
+  ScrollAreaProps,
+  MarkdownProps,
+  CodeBlockProps,
+  DiffProps,
+  PromptComposerProps,
+  ChatMessage,
+  ChatViewProps,
+  StatusBarProps,
+  ThinkingIndicatorProps,
+  TerminalProps,
+  TerminalViewportProps,
+  TerminalProcessProps,
 } from "./components";

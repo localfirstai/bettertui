@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -10,10 +9,10 @@ import {
   StatusLine,
   Text,
   Tree,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface TreeNode {
   id: string;
@@ -126,6 +125,7 @@ function TreeDemo({
   selectedId: string;
   expandedIds: Set<string>;
 }) {
+  const runtime = useRuntime();
   const { files, folders } = countFilesAndFolders(projectTree);
   const nodesWithExpanded = projectTree.map(function attachExpanded(
     node: TreeNode,
@@ -137,6 +137,33 @@ function TreeDemo({
     };
   });
   const parentPath = findParentPath(projectTree, selectedId);
+  const visible = getVisibleNodes(projectTree, expandedIds);
+  const currentIdx = visible.indexOf(selectedId);
+
+  useKeyboard((key) => {
+    if (key.key === "j") {
+      if (currentIdx < visible.length - 1) {
+        selectedId = visible[currentIdx + 1];
+      }
+      renderApp();
+    } else if (key.key === "k") {
+      if (currentIdx > 0) {
+        selectedId = visible[currentIdx - 1];
+      }
+      renderApp();
+    } else if (key.key === "Enter" || key.key === " ") {
+      if (expandedIds.has(selectedId)) {
+        expandedIds.delete(selectedId);
+      } else {
+        expandedIds.add(selectedId);
+      }
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -195,15 +222,12 @@ function TreeDemo({
   );
 }
 
-let selectedId = "src";
+const selectedId = "src";
 const expandedIds = new Set(["src", "components", "hooks"]);
 
 function renderApp() {
-  const element = <TreeDemo selectedId={selectedId} expandedIds={expandedIds} />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<TreeDemo selectedId={selectedId} expandedIds={expandedIds} />);
 }
-
-const visibleNodes = () => getVisibleNodes(projectTree, expandedIds);
 
 console.log("BetterTUI Tree View Demo");
 console.log("j/k=navigate Enter=toggle q=quit");
@@ -212,29 +236,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
-  const visible = visibleNodes();
-  const currentIdx = visible.indexOf(selectedId);
 
-  if (key === "j") {
-    if (currentIdx < visible.length - 1) {
-      selectedId = visible[currentIdx + 1];
-    }
-    renderApp();
-  } else if (key === "k") {
-    if (currentIdx > 0) {
-      selectedId = visible[currentIdx - 1];
-    }
-    renderApp();
-  } else if (key === "\r" || key === " ") {
-    if (expandedIds.has(selectedId)) {
-      expandedIds.delete(selectedId);
-    } else {
-      expandedIds.add(selectedId);
-    }
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

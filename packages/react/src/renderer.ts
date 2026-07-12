@@ -10,6 +10,237 @@ export interface Container {
   buffer: CommandBufferConsumer;
 }
 
+// ─── Layout Props → Command Mapping ──────────────────────────────────────────
+
+const LAYOUT_PROPS = new Set([
+  "flexDirection",
+  "justifyContent",
+  "alignItems",
+  "alignSelf",
+  "flexGrow",
+  "flexShrink",
+  "flexBasis",
+  "flexWrap",
+  "position",
+  "padding",
+  "paddingX",
+  "paddingY",
+  "paddingTop",
+  "paddingRight",
+  "paddingBottom",
+  "paddingLeft",
+  "margin",
+  "marginX",
+  "marginY",
+  "marginTop",
+  "marginRight",
+  "marginBottom",
+  "marginLeft",
+  "gap",
+  "width",
+  "height",
+  "minWidth",
+  "minHeight",
+  "maxWidth",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "overflow",
+  "opacity",
+  "zIndex",
+]);
+
+const STYLE_PROPS = new Set([
+  "color",
+  "bgColor",
+  "bold",
+  "italic",
+  "underline",
+  "dim",
+  "strikethrough",
+  "inverse",
+  "hidden",
+  "blink",
+]);
+
+function extractLayoutCommands(
+  id: string,
+  props: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const commands: Array<Record<string, unknown>> = [];
+
+  if (props.flexDirection !== undefined) {
+    commands.push({ type: "SetFlexDirection", id, direction: props.flexDirection });
+  }
+  if (props.justifyContent !== undefined) {
+    commands.push({ type: "SetJustifyContent", id, value: props.justifyContent });
+  }
+  if (props.alignItems !== undefined) {
+    commands.push({ type: "SetAlignItems", id, value: props.alignItems });
+  }
+  if (props.alignSelf !== undefined) {
+    commands.push({ type: "SetAlignSelf", id, value: props.alignSelf });
+  }
+  if (props.flexGrow !== undefined) {
+    commands.push({ type: "SetFlexGrow", id, value: props.flexGrow });
+  }
+  if (props.flexShrink !== undefined) {
+    commands.push({ type: "SetFlexShrink", id, value: props.flexShrink });
+  }
+  if (props.flexBasis !== undefined) {
+    commands.push({ type: "SetFlexBasis", id, value: props.flexBasis });
+  }
+  if (props.position !== undefined) {
+    commands.push({ type: "SetPosition", id, value: props.position });
+  }
+  if (props.width !== undefined) {
+    commands.push({ type: "SetWidth", id, value: props.width });
+  }
+  if (props.height !== undefined) {
+    commands.push({ type: "SetHeight", id, value: props.height });
+  }
+  if (props.minWidth !== undefined) {
+    commands.push({ type: "SetMinWidth", id, value: props.minWidth });
+  }
+  if (props.minHeight !== undefined) {
+    commands.push({ type: "SetMinHeight", id, value: props.minHeight });
+  }
+  if (props.maxWidth !== undefined) {
+    commands.push({ type: "SetMaxWidth", id, value: props.maxWidth });
+  }
+  if (props.maxHeight !== undefined) {
+    commands.push({ type: "SetMaxHeight", id, value: props.maxHeight });
+  }
+  if (props.overflow !== undefined) {
+    commands.push({ type: "SetOverflow", id, value: props.overflow });
+  }
+  if (props.opacity !== undefined) {
+    commands.push({ type: "SetOpacity", id, value: props.opacity });
+  }
+  if (props.zIndex !== undefined) {
+    commands.push({ type: "SetZIndex", id, value: props.zIndex });
+  }
+
+  // Padding shortcuts
+  if (props.padding !== undefined) {
+    commands.push({ type: "SetPadding", id, value: { all: props.padding } });
+  }
+  if (props.paddingX !== undefined) {
+    commands.push({
+      type: "SetPadding",
+      id,
+      value: { horizontal: props.paddingX },
+    });
+  }
+  if (props.paddingY !== undefined) {
+    commands.push({ type: "SetPadding", id, value: { vertical: props.paddingY } });
+  }
+  if (props.paddingTop !== undefined) {
+    commands.push({ type: "SetPadding", id, value: { top: props.paddingTop } });
+  }
+  if (props.paddingRight !== undefined) {
+    commands.push({ type: "SetPadding", id, value: { right: props.paddingRight } });
+  }
+  if (props.paddingBottom !== undefined) {
+    commands.push({
+      type: "SetPadding",
+      id,
+      value: { bottom: props.paddingBottom },
+    });
+  }
+  if (props.paddingLeft !== undefined) {
+    commands.push({ type: "SetPadding", id, value: { left: props.paddingLeft } });
+  }
+
+  // Margin shortcuts
+  if (props.margin !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { all: props.margin } });
+  }
+  if (props.marginX !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { horizontal: props.marginX } });
+  }
+  if (props.marginY !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { vertical: props.marginY } });
+  }
+  if (props.marginTop !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { top: props.marginTop } });
+  }
+  if (props.marginRight !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { right: props.marginRight } });
+  }
+  if (props.marginBottom !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { bottom: props.marginBottom } });
+  }
+  if (props.marginLeft !== undefined) {
+    commands.push({ type: "SetMargin", id, value: { left: props.marginLeft } });
+  }
+
+  // Gap
+  if (props.gap !== undefined) {
+    commands.push({ type: "SetGap", id, value: { width: props.gap, height: props.gap } });
+  }
+
+  // Inset (top/right/bottom/left for absolute positioning)
+  if (
+    props.top !== undefined ||
+    props.right !== undefined ||
+    props.bottom !== undefined ||
+    props.left !== undefined
+  ) {
+    commands.push({
+      type: "SetInset",
+      id,
+      value: {
+        top: props.top,
+        right: props.right,
+        bottom: props.bottom,
+        left: props.left,
+      },
+    });
+  }
+
+  return commands;
+}
+
+function extractStyleCommands(
+  id: string,
+  props: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const commands: Array<Record<string, unknown>> = [];
+
+  if (props.color !== undefined) {
+    commands.push({ type: "SetForeground", id, color: props.color });
+  }
+  if (props.bgColor !== undefined) {
+    commands.push({ type: "SetBackground", id, color: props.bgColor });
+  }
+  if (props.bold !== undefined) {
+    commands.push({ type: "SetBold", id, value: props.bold });
+  }
+  if (props.italic !== undefined) {
+    commands.push({ type: "SetItalic", id, value: props.italic });
+  }
+  if (props.underline !== undefined) {
+    commands.push({ type: "SetUnderline", id, value: props.underline });
+  }
+  if (props.dim !== undefined) {
+    commands.push({ type: "SetDim", id, value: props.dim });
+  }
+  if (props.strikethrough !== undefined) {
+    commands.push({ type: "SetStrikethrough", id, value: props.strikethrough });
+  }
+  if (props.inverse !== undefined) {
+    commands.push({ type: "SetInverse", id, value: props.inverse });
+  }
+  if (props.hidden !== undefined) {
+    commands.push({ type: "SetHidden", id, value: props.hidden });
+  }
+
+  return commands;
+}
+
 export type ReconcilerType = Reconciler.Reconciler<
   Container,
   Instance,
@@ -63,10 +294,41 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
         children: [],
         parent: null,
       };
+
+      // Create node in Rust engine
       buffer.push({ type: "CreateNode", id, kind: type });
+
+      // Forward style object if provided
       if (Object.keys(instance.style).length > 0) {
         buffer.push({ type: "SetStyle", id, style: instance.style });
       }
+
+      // Extract and forward layout props as individual commands
+      const layoutCommands = extractLayoutCommands(id, restProps);
+      for (const cmd of layoutCommands) {
+        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
+        buffer.push(cmd as any);
+      }
+
+      // Extract and forward style props (color, bold, italic, etc.)
+      const styleCmds = extractStyleCommands(id, restProps);
+      for (const cmd of styleCmds) {
+        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
+        buffer.push(cmd as any);
+      }
+
+      // Forward remaining props as SetAttribute commands
+      for (const [key, value] of Object.entries(restProps)) {
+        if (!LAYOUT_PROPS.has(key) && !STYLE_PROPS.has(key) && value !== undefined) {
+          buffer.push({
+            type: "SetAttribute",
+            id,
+            key,
+            value: typeof value === "string" ? value : JSON.stringify(value),
+          });
+        }
+      }
+
       return instance;
     },
 
@@ -283,26 +545,72 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
       _internalHandle: any,
     ): void {
+      // Update instance props
       Object.assign(instance.props, updatePayload);
-      if (updatePayload.style) {
-        buffer.push({
-          type: "SetStyle",
-          id: instance.id,
-          style: updatePayload.style as Style,
-        });
+
+      // Handle style object update
+      if (updatePayload.__style) {
+        instance.style = updatePayload.__style as Style;
+        buffer.push({ type: "SetStyle", id: instance.id, style: instance.style });
+      }
+
+      // Extract and forward layout prop changes
+      const layoutCommands = extractLayoutCommands(instance.id, updatePayload);
+      for (const cmd of layoutCommands) {
+        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
+        buffer.push(cmd as any);
+      }
+
+      const styleCommands = extractStyleCommands(instance.id, updatePayload);
+      for (const cmd of styleCommands) {
+        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
+        buffer.push(cmd as any);
+      }
+
+      // Forward remaining changed props as SetAttribute commands
+      for (const [key, value] of Object.entries(updatePayload)) {
+        if (
+          key !== "__style" &&
+          !LAYOUT_PROPS.has(key) &&
+          !STYLE_PROPS.has(key) &&
+          value !== undefined
+        ) {
+          buffer.push({
+            type: "SetAttribute",
+            id: instance.id,
+            key,
+            value: typeof value === "string" ? value : JSON.stringify(value),
+          });
+        }
       }
     },
 
     prepareUpdate(
       _instance: Instance,
       _type: string,
-      _oldProps: Record<string, unknown>,
+      oldProps: Record<string, unknown>,
       newProps: Record<string, unknown>,
       _rootContainer: Container,
       _hostContext: Record<string, unknown>,
     ): Record<string, unknown> | null {
-      const { children, style, layout, ...restProps } = newProps;
-      return restProps;
+      const { children: _oldChildren, style: _oldStyle, layout: _oldLayout, ...oldRest } = oldProps;
+      const { children: _newChildren, style: _newStyle, layout: _newLayout, ...newRest } = newProps;
+
+      // Build diff of changed props
+      const diff: Record<string, unknown> = {};
+      const allKeys = new Set([...Object.keys(oldRest), ...Object.keys(newRest)]);
+      for (const key of allKeys) {
+        if (oldRest[key] !== newRest[key]) {
+          diff[key] = newRest[key];
+        }
+      }
+
+      // Include style if changed
+      if (_newStyle !== _oldStyle) {
+        diff.__style = _newStyle;
+      }
+
+      return Object.keys(diff).length > 0 ? diff : null;
     },
 
     hideInstance(_instance: Instance): void {},

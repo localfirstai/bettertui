@@ -1,4 +1,4 @@
-export type NodeId = string;
+// ─── Geometry ─────────────────────────────────────────────
 
 export interface Point {
   x: number;
@@ -17,40 +17,98 @@ export interface Rect {
   height: number;
 }
 
-export type Direction = "horizontal" | "vertical";
+export interface Size {
+  width: number;
+  height: number;
+}
 
-export type Alignment = "start" | "center" | "end" | "stretch";
+// ─── Layout ───────────────────────────────────────────────
+
+export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";
+
+export type JustifyContent =
+  | "flex-start"
+  | "center"
+  | "flex-end"
+  | "space-between"
+  | "space-around"
+  | "space-evenly";
+
+export type AlignItems = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
+
+export type AlignSelf = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
+
+export type Position = "relative" | "absolute";
+
+export type Sizing = number | string;
 
 export type Overflow = "visible" | "hidden" | "scroll";
 
+export interface Padding {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+export interface Margin {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+export interface Inset {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
+export interface Gap {
+  row?: number;
+  column?: number;
+}
+
 export interface LayoutConstraints {
-  minWidth?: number;
-  maxWidth?: number;
-  minHeight?: number;
-  maxHeight?: number;
-}
-
-export interface LayoutResult {
-  rect: Rect;
-  children: LayoutResult[];
-}
-
-export interface RenderCommand {
-  type: "text" | "rect" | "clear";
-  rect?: Rect;
-  text?: string;
-  style?: Style;
+  display?: "flex" | "none";
+  flexDirection?: FlexDirection;
+  justifyContent?: JustifyContent;
+  alignItems?: AlignItems;
+  alignSelf?: AlignSelf;
+  flexWrap?: "nowrap" | "wrap";
+  flexGrow?: number;
+  flexShrink?: number;
+  flexBasis?: Sizing;
+  gap?: number | Gap;
+  padding?: number | Padding;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  margin?: number | Margin;
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  width?: Sizing;
+  height?: Sizing;
+  minWidth?: Sizing;
+  maxWidth?: Sizing;
+  minHeight?: Sizing;
+  maxHeight?: Sizing;
+  position?: Position;
+  inset?: Inset;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+  zIndex?: number;
+  visible?: boolean;
+  overflow?: Overflow;
 }
 
 // ─── Events ──────────────────────────────────────────────
-
-export type EventType = "key" | "mouse" | "resize" | "focus" | "blur" | "paste" | "custom";
-
-export interface Event {
-  type: EventType;
-  timestamp: number;
-  data: unknown;
-}
 
 export interface KeyEvent {
   key: string;
@@ -71,26 +129,9 @@ export interface MouseEvent {
   alt: boolean;
 }
 
-export interface ResizeEvent {
-  columns: number;
-  rows: number;
-}
-
-export interface PasteEvent {
-  text: string;
-  bracketed: boolean;
-}
-
 // ─── Styling ─────────────────────────────────────────────
 
 export type ColorValue = string;
-
-export interface Color {
-  r: number;
-  g: number;
-  b: number;
-  a?: number;
-}
 
 export interface Style {
   fg?: ColorValue;
@@ -148,26 +189,4 @@ export interface Theme {
   colors: ThemeColors;
   spacing: ThemeSpacing;
   borders: BorderStyle;
-}
-
-// ─── Frame ───────────────────────────────────────────────
-
-export interface Frame {
-  width: number;
-  height: number;
-  cells: FrameCell[];
-}
-
-export interface FrameCell {
-  char: string;
-  style: Style;
-}
-
-export interface RenderNode {
-  id: NodeId;
-  type: string;
-  props: Record<string, unknown>;
-  children: RenderNode[];
-  style: Style;
-  layout: LayoutConstraints;
 }

@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   DataTable,
@@ -10,10 +9,10 @@ import {
   StatusLine,
   Table,
   Text,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 const employees = [
   {
@@ -111,9 +110,44 @@ interface TablesAppProps {
 }
 
 function TablesApp({ selectedIndex, sortColumn, sortDirection }: TablesAppProps) {
+  const runtime = useRuntime();
   const sorted = sortEmployees(employees, sortColumn, sortDirection);
   const summaryRows = departmentSummary(employees);
   const arrow = sortDirection === "asc" ? " ^" : " v";
+
+  useKeyboard((key) => {
+    if (key.key === "j" || key.key === "ArrowDown") {
+      selectedIndex = Math.min(selectedIndex + 1, sorted.length - 1);
+      renderApp();
+    } else if (key.key === "k" || key.key === "ArrowUp") {
+      selectedIndex = Math.max(selectedIndex - 1, 0);
+      renderApp();
+    } else if (key.key === "1") {
+      sortColumn = "name";
+      selectedIndex = 0;
+      renderApp();
+    } else if (key.key === "2") {
+      sortColumn = "role";
+      selectedIndex = 0;
+      renderApp();
+    } else if (key.key === "3") {
+      sortColumn = "department";
+      selectedIndex = 0;
+      renderApp();
+    } else if (key.key === "4") {
+      sortColumn = "salary";
+      selectedIndex = 0;
+      renderApp();
+    } else if (key.key === "5") {
+      sortColumn = "status";
+      selectedIndex = 0;
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -170,19 +204,18 @@ function TablesApp({ selectedIndex, sortColumn, sortDirection }: TablesAppProps)
   );
 }
 
-let selectedIndex = 0;
-let sortColumn: SortColumn = "name";
+const selectedIndex = 0;
+const sortColumn: SortColumn = "name";
 const sortDirection: "asc" | "desc" = "asc";
 
 function renderApp() {
-  const element = (
+  render(
     <TablesApp
       selectedIndex={selectedIndex}
       sortColumn={sortColumn}
       sortDirection={sortDirection}
-    />
+    />,
   );
-  reconciler.createInstance("Provider", { children: element });
 }
 
 console.log("BetterTUI Tables Demo");
@@ -192,37 +225,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
-  const sorted = sortEmployees(employees, sortColumn, sortDirection);
 
-  if (key === "j" || key === "\x1b[B") {
-    selectedIndex = Math.min(selectedIndex + 1, sorted.length - 1);
-    renderApp();
-  } else if (key === "k" || key === "\x1b[A") {
-    selectedIndex = Math.max(selectedIndex - 1, 0);
-    renderApp();
-  } else if (key === "1") {
-    sortColumn = "name";
-    selectedIndex = 0;
-    renderApp();
-  } else if (key === "2") {
-    sortColumn = "role";
-    selectedIndex = 0;
-    renderApp();
-  } else if (key === "3") {
-    sortColumn = "department";
-    selectedIndex = 0;
-    renderApp();
-  } else if (key === "4") {
-    sortColumn = "salary";
-    selectedIndex = 0;
-    renderApp();
-  } else if (key === "5") {
-    sortColumn = "status";
-    selectedIndex = 0;
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

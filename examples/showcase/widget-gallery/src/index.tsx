@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Accordion,
   Badge,
@@ -40,11 +39,11 @@ import {
   Tooltip,
   Tree,
   Viewport,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
 import type { ReactNode } from "react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface GalleryState {
   activeTab: number;
@@ -377,8 +376,54 @@ const categories: Category[] = [
 ];
 
 function WidgetGallery(state: GalleryState) {
+  const runtime = useRuntime();
   const category = categories[state.activeTab];
   if (!category) return null;
+
+  useKeyboard((key) => {
+    if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    } else if (key.key === "Tab") {
+      state.activeTab = (state.activeTab + 1) % categories.length;
+      state.lastInteraction = `Tab → ${categories[state.activeTab]?.name ?? ""}`;
+      renderApp();
+    } else if (key.key === "Shift+Tab" || (key.key === "Tab" && key.shift)) {
+      state.activeTab = (state.activeTab - 1 + categories.length) % categories.length;
+      state.lastInteraction = `Shift+Tab → ${categories[state.activeTab]?.name ?? ""}`;
+      renderApp();
+    } else if (key.key === "c") {
+      state.checkboxOn = !state.checkboxOn;
+      state.lastInteraction = `Checkbox → ${state.checkboxOn}`;
+      renderApp();
+    } else if (key.key === "s") {
+      state.switchOn = !state.switchOn;
+      state.lastInteraction = `Switch → ${state.switchOn}`;
+      renderApp();
+    } else if (key.key === "+" || key.key === "=") {
+      state.sliderValue = Math.min(100, state.sliderValue + 10);
+      state.lastInteraction = `Slider → ${state.sliderValue}`;
+      renderApp();
+    } else if (key.key === "-") {
+      state.sliderValue = Math.max(0, state.sliderValue - 10);
+      state.lastInteraction = `Slider → ${state.sliderValue}`;
+      renderApp();
+    } else if (key.key === "1") {
+      state.radioValue = "red";
+      state.lastInteraction = "Radio → red";
+      renderApp();
+    } else if (key.key === "2") {
+      state.radioValue = "green";
+      state.lastInteraction = "Radio → green";
+      renderApp();
+    } else if (key.key === "3") {
+      state.radioValue = "blue";
+      state.lastInteraction = "Radio → blue";
+      renderApp();
+    }
+    return true;
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -435,8 +480,7 @@ const state: GalleryState = {
 };
 
 function renderApp() {
-  const element = <WidgetGallery {...state} />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<WidgetGallery {...state} />);
 }
 
 console.log("BetterTUI Widget Gallery");
@@ -446,46 +490,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "q") {
-    process.exit(0);
-  } else if (key === "\t") {
-    state.activeTab = (state.activeTab + 1) % categories.length;
-    state.lastInteraction = `Tab → ${categories[state.activeTab]?.name ?? ""}`;
-    renderApp();
-  } else if (key === "\u001b[Z") {
-    state.activeTab = (state.activeTab - 1 + categories.length) % categories.length;
-    state.lastInteraction = `Shift+Tab → ${categories[state.activeTab]?.name ?? ""}`;
-    renderApp();
-  } else if (key === "c") {
-    state.checkboxOn = !state.checkboxOn;
-    state.lastInteraction = `Checkbox → ${state.checkboxOn}`;
-    renderApp();
-  } else if (key === "s") {
-    state.switchOn = !state.switchOn;
-    state.lastInteraction = `Switch → ${state.switchOn}`;
-    renderApp();
-  } else if (key === "+" || key === "=") {
-    state.sliderValue = Math.min(100, state.sliderValue + 10);
-    state.lastInteraction = `Slider → ${state.sliderValue}`;
-    renderApp();
-  } else if (key === "-") {
-    state.sliderValue = Math.max(0, state.sliderValue - 10);
-    state.lastInteraction = `Slider → ${state.sliderValue}`;
-    renderApp();
-  } else if (key === "1") {
-    state.radioValue = "red";
-    state.lastInteraction = "Radio → red";
-    renderApp();
-  } else if (key === "2") {
-    state.radioValue = "green";
-    state.lastInteraction = "Radio → green";
-    renderApp();
-  } else if (key === "3") {
-    state.radioValue = "blue";
-    state.lastInteraction = "Radio → blue";
-    renderApp();
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

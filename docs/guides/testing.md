@@ -27,6 +27,54 @@ All TypeScript packages are ESM + `dts` via `tsup`. Biome is the only TS formatt
 
 `.husky/pre-commit` runs `biome check --write --staged` then `cargo fmt --all`, then `git update-index --again`. If formatting fails, the commit is aborted.
 
+## Testing Utilities
+
+The `@bettertui/testing` package provides utilities for testing BetterTUI applications:
+
+```typescript
+import {
+  MockCommandCollector,
+  createPoint,
+  createRect,
+  createMockHandler,
+  expectCommandBuffer,
+} from "@bettertui/testing";
+```
+
+### MockCommandCollector
+
+A mock command collector that records commands for testing:
+
+```typescript
+const collector = new MockCommandCollector();
+collector.commandBuffer.push({ type: "Shutdown" });
+expect(collector.getCommands()).toHaveLength(1);
+expect(collector.getLastCommand()?.type).toBe("Shutdown");
+```
+
+### createMockHandler
+
+Creates a mock event handler that records calls:
+
+```typescript
+const handler = createMockHandler<(x: number) => void>();
+handler(1);
+handler(2);
+expect(handler.calls).toHaveLength(2);
+handler.clear();
+expect(handler.calls).toHaveLength(0);
+```
+
+### expectCommandBuffer
+
+Assertion helper for checking command buffer contents:
+
+```typescript
+const buffer = new CommandBuffer();
+buffer.push({ type: "CreateNode", id: "1", kind: "Box" });
+expectCommandBuffer(buffer, { length: 1, types: ["CreateNode"] });
+```
+
 ## Coverage reality
 
 | Layer | Status |
@@ -34,9 +82,9 @@ All TypeScript packages are ESM + `dts` via `tsup`. Biome is the only TS formatt
 | Rust engine unit tests | ~1071 passing |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
-| pnpm build | 17/17 |
-| pnpm lint | 11/11 |
-| pnpm typecheck | 11/11 |
-| pnpm format:check | 10/10 |
+| pnpm build | 23/23 (excluding website) |
+| pnpm lint | 12/12 |
+| pnpm typecheck | 12/12 |
+| pnpm format:check | 11/11 |
 
-There is **no** dedicated `@bettertui/testing` package yet (proposed in the architecture), and `benchmarks/` is an empty placeholder — no Criterion/benchmark harness is implemented.
+The `@bettertui/testing` package is now available for testing BetterTUI applications.

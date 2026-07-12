@@ -1,14 +1,37 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
-import { Box, Flex, Grid, Heading, Provider, Separator, Spacer, Text } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Provider,
+  Separator,
+  Spacer,
+  Text,
+  render,
+  useKeyboard,
+  useRuntime,
+} from "@bettertui/react";
 
 let showPadding = true;
 let gridMode = false;
 
 function LayoutsDemo() {
+  const runtime = useRuntime();
   const pad = showPadding ? 1 : 0;
+
+  useKeyboard((key) => {
+    if (key.key === "1") {
+      showPadding = !showPadding;
+      renderApp();
+    } else if (key.key === "2") {
+      gridMode = !gridMode;
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -98,8 +121,7 @@ function LayoutsDemo() {
 }
 
 function renderApp() {
-  const element = <LayoutsDemo />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<LayoutsDemo />);
 }
 
 console.log("BetterTUI Layouts Demo");
@@ -109,16 +131,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "1") {
-    showPadding = !showPadding;
-    renderApp();
-  } else if (key === "2") {
-    gridMode = !gridMode;
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

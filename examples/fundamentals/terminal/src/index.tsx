@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -9,10 +8,10 @@ import {
   Spacer,
   StatusLine,
   Text,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 const unicodeSets = [
   {
@@ -114,9 +113,27 @@ interface AppProps {
 }
 
 function App({ unicodeIdx, emojiIdx, styleIdx }: AppProps) {
+  const runtime = useRuntime();
   const unicode = unicodeSets[unicodeIdx];
   const emoji = emojiSets[emojiIdx];
   const style = styleSets[styleIdx];
+
+  useKeyboard((key) => {
+    if (key.key === "u") {
+      unicodeIdx = (unicodeIdx + 1) % unicodeSets.length;
+      renderApp(unicodeIdx, emojiIdx, styleIdx);
+    } else if (key.key === "e") {
+      emojiIdx = (emojiIdx + 1) % emojiSets.length;
+      renderApp(unicodeIdx, emojiIdx, styleIdx);
+    } else if (key.key === "s") {
+      styleIdx = (styleIdx + 1) % styleSets.length;
+      renderApp(unicodeIdx, emojiIdx, styleIdx);
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
 
   return (
     <Provider>
@@ -186,14 +203,16 @@ function App({ unicodeIdx, emojiIdx, styleIdx }: AppProps) {
   );
 }
 
-function renderApp(unicodeIdx: number, emojiIdx: number, styleIdx: number) {
-  const element = <App unicodeIdx={unicodeIdx} emojiIdx={emojiIdx} styleIdx={styleIdx} />;
-  reconciler.createInstance("Provider", { children: element });
-}
-
 let unicodeIdx = 0;
 let emojiIdx = 0;
 let styleIdx = 0;
+
+function renderApp(newUnicodeIdx: number, newEmojiIdx: number, newStyleIdx: number) {
+  unicodeIdx = newUnicodeIdx;
+  emojiIdx = newEmojiIdx;
+  styleIdx = newStyleIdx;
+  render(<App unicodeIdx={unicodeIdx} emojiIdx={emojiIdx} styleIdx={styleIdx} />);
+}
 
 console.log("BetterTUI Terminal Demo");
 console.log("Press u/e/c to cycle sections, q to quit");
@@ -202,19 +221,7 @@ renderApp(unicodeIdx, emojiIdx, styleIdx);
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "u") {
-    unicodeIdx = (unicodeIdx + 1) % unicodeSets.length;
-    renderApp(unicodeIdx, emojiIdx, styleIdx);
-  } else if (key === "e") {
-    emojiIdx = (emojiIdx + 1) % emojiSets.length;
-    renderApp(unicodeIdx, emojiIdx, styleIdx);
-  } else if (key === "s") {
-    styleIdx = (styleIdx + 1) % styleSets.length;
-    renderApp(unicodeIdx, emojiIdx, styleIdx);
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

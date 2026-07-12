@@ -1,4 +1,3 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
 import {
   Badge,
   Box,
@@ -12,10 +11,10 @@ import {
   Stack,
   StatusLine,
   Text,
+  render,
+  useKeyboard,
+  useRuntime,
 } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
 
 interface StatCardProps {
   label: string;
@@ -55,6 +54,19 @@ function ActivityItem({ time, message, level }: ActivityItemProps) {
 }
 
 function Dashboard({ tick }: { tick: number }) {
+  const runtime = useRuntime();
+
+  useKeyboard((key) => {
+    if (key.key === "r") {
+      tick++;
+      renderApp();
+    } else if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+    return true;
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -109,11 +121,10 @@ function Dashboard({ tick }: { tick: number }) {
   );
 }
 
-let tick = 0;
+const tick = 0;
 
 function renderApp() {
-  const element = <Dashboard tick={tick} />;
-  reconciler.createInstance("Provider", { children: element });
+  render(<Dashboard tick={tick} />);
 }
 
 console.log("BetterTUI Dashboard Showcase");
@@ -123,13 +134,7 @@ renderApp();
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  const key = data.toString();
 
-  if (key === "r") {
-    tick++;
-    renderApp();
-  } else if (key === "q") {
-    process.exit(0);
-  }
+process.on("SIGINT", () => {
+  process.exit(0);
 });

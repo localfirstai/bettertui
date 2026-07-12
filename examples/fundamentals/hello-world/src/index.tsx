@@ -1,10 +1,15 @@
-import { CommandBuffer, createReconciler } from "@bettertui/core";
-import { Box, Flex, Provider, Text } from "@bettertui/react";
-
-const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
+import { Box, Flex, Provider, Text, render, useKeyboard, useRuntime } from "@bettertui/react";
 
 function App() {
+  const runtime = useRuntime();
+
+  useKeyboard((key) => {
+    if (key.key === "q") {
+      runtime?.dispose();
+      process.exit(0);
+    }
+  });
+
   return (
     <Provider>
       <Flex flexDirection="column" gap={1}>
@@ -17,9 +22,7 @@ function App() {
           </Box>
         </Flex>
         <Box padding={1}>
-          <Text dimColor>
-            A high-performance terminal UI framework powered by Rust and TypeScript
-          </Text>
+          <Text dim>A high-performance terminal UI framework powered by Rust and TypeScript</Text>
         </Box>
         <Flex flexDirection="row" gap={1}>
           <Box padding={1}>
@@ -31,13 +34,14 @@ function App() {
   );
 }
 
-const element = <App />;
-reconciler.createInstance("Provider", { children: element });
+const { dispose } = render(<App />);
 
 process.stdin.setRawMode?.(true);
 process.stdin.resume();
-process.stdin.on("data", (data) => {
-  if (data.toString() === "q") {
-    process.exit(0);
-  }
+
+// Cleanup on exit
+process.on("exit", dispose);
+process.on("SIGINT", () => {
+  dispose();
+  process.exit(0);
 });
