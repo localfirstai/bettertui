@@ -5,11 +5,7 @@ export default mergeConfig(
   configShared,
   defineProject({
     test: {
-      name: "benchmark",
-      include: ["src/**/*.bench.ts"],
-      bench: {
-        reporters: ["default"],
-      },
+      name: "themes",
     },
   }),
 );

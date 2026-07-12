@@ -11,6 +11,10 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.mts"
+    },
+    "./stdin-bridge": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
     }
   },
   "files": ["dist"],
@@ -21,6 +25,7 @@
     "format": "biome format --write src/",
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -36,6 +41,7 @@
     "@types/react-reconciler": "^0.31.0",
     "react": "^19.0.0",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

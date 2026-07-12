@@ -16,11 +16,13 @@
     "format:check": "turbo run format:check",
     "typecheck": "turbo run typecheck",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm cargo:check",
+    "test": "turbo run test",
     "cargo:check": "cargo check --manifest-path packages/core/Cargo.toml",
     "cargo:test": "cargo test --manifest-path packages/core/Cargo.toml",
     "cargo:fmt": "cargo fmt --manifest-path packages/core/Cargo.toml --all",
     "cargo:clippy": "cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings",
     "cargo:build": "cargo build --manifest-path packages/core/Cargo.toml",
+    "postcargo:build": "node -e \"const fs=require('fs'); const p=require('path'); const exts=['.dylib','.so','.dll']; for (const e of exts) { const f=p.join('packages/core/target/debug/libbettertui_bindings'+e); if(fs.existsSync(f)) fs.copyFileSync(f, p.join('packages/core/target/debug/bettertui_bindings.node')); }\"",
     "clean": "turbo run clean && cargo clean --manifest-path packages/core/Cargo.toml",
     "prepare": "husky"
   },

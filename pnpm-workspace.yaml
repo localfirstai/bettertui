@@ -9,3 +9,4 @@ catalog:
   tsdown: ^0.22.5
   react: ^19.0.0
   "@types/react": ^19.0.0
+  vitest: ^3.2.0

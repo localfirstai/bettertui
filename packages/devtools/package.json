@@ -21,10 +21,12 @@
     "format": "biome format --write src/",
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
