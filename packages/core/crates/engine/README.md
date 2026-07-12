@@ -138,6 +138,6 @@ engine.render(); // Returns ANSI output
 
 ## Notes
 
-- This is the most mature part of the project with ~1,071 passing tests.
+- This is the most mature part of the project with 1,204 passing lib tests.
 - Edition 2024. All workspace dependencies defined in root `Cargo.toml`.
 - Clippy: `-D warnings` enforced in CI.

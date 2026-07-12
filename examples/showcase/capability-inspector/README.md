@@ -49,4 +49,4 @@ A comprehensive display of terminal capabilities organized by category. Each cap
 
 - Many capabilities require native detection (not available in pure JS)
 - Falls back to env var reading and defaults
-- React component stubs; rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.

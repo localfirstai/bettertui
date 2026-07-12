@@ -35,4 +35,4 @@ flowchart TD
 
 ## Status
 
-Renderer + hooks + runtime are real; the 20+ components are stubs. Do not document components as rendering yet.
+Renderer + hooks + runtime are real and wired. 69 component functions are exported but are currently thin wrappers (they emit element descriptors, not yet connected to a live native render loop). Do not document components as painting pixels yet.

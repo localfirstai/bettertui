@@ -83,12 +83,12 @@ graph TD
 |---------|------|--------|
 | `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
-| `@bettertui/react` | React adapter (reconciler + hooks + components) | ⚠️ reconciler/hooks real, components stubs |
+| `@bettertui/react` | React adapter (reconciler + hooks + 69 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
-| `@bettertui/widgets` | Widget library | ❌ stub |
 | `@bettertui/themes` | Theme defs + factory | ✅ |
-| `@bettertui/icons` | Icon registry | ✅ (empty) |
-| `@bettertui/devtools` | DevTools | ❌ stub |
+| `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |
+| `@bettertui/testing` | Testing utilities | 🟡 scaffolding |
+| `@bettertui/benchmark` | Vitest benchmarks | ✅ |
 
 ## Architecture principles
 

@@ -8,9 +8,9 @@ React adapter for BetterTUI. Provides a custom `react-reconciler` host config, h
 
 - **Reconciler host config** (`renderer.ts`): Implements `react-reconciler`'s `HostConfig` interface, translating React tree operations into BetterTUI commands.
 - **`render()` function:** Creates a `Runtime`, sets up the reconciler, and returns `{ root, runtime, dispose }`.
-- **Hooks:** `useTheme`, `useFocus`, `useKeyboard`, `useTerminal`, `useFrame`, `useClipboard`, `useAnimation`, `useRuntime`.
-- **Components:** Box, Text, Flex, Button, Input, Textarea, Tabs, Modal, Badge, Progress, Spinner, Tooltip, Separator, Heading, Label, Code, Grid, Stack.
-- **Providers:** `Provider` (theme), `FocusProvider`, `TerminalProvider`, `RuntimeProvider`.
+- **Hooks:** `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`, `useTimeline`, `useMouse`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`, `useRuntime`.
+- **Components (69 exported):** Box, Text, Flex, Grid, Stack, Spacer, Separator, Heading, Label, Code, Blockquote, Button, Input, Textarea, Checkbox, Radio, Switch, Slider, Select, Combobox, Tabs, Accordion, Badge, Progress, Spinner, List, Tree, Table, DataTable, Tooltip, Modal, Popover, Dropdown, ContextMenu, Toast, StatusLine, StatusBar, Pane, Viewport, Calendar, Chart, ScrollArea, Markdown, CodeBlock, Diff, PromptComposer, ChatView, ThinkingIndicator, Terminal, TerminalViewport, TerminalProcess.
+- **Providers:** `Provider` (theme), `FocusProvider`, `TerminalProvider`, `RuntimeProvider`, `SelectionProvider`, `CapabilitiesProvider`.
 
 ## Public API
 
@@ -105,5 +105,5 @@ const { runtime, dispose } = render(<App />);
 
 ## Notes
 
-- Components are currently stub implementations (return `props.children` or `null`). They will be implemented once the native rendering pipeline is fully connected.
-- `useKeyboard` hooks into `globalThis.addEventListener("keydown")` — for browser environments. Terminal keyboard handling is not yet wired through the TypeScript layer.
+- Components are currently thin wrappers that emit element descriptors via `createElement`; they are not yet wired to a live native render loop. The reconciler (`renderer.ts`) and hooks are fully implemented.
+- `useTheme`'s `Theme`/`ThemeColors`/`ThemeSpacing` is React-authored and distinct from `@bettertui/shared`'s `Theme`. Map between them at the render boundary.

@@ -50,5 +50,5 @@ A form showcase with all widget types displayed and interactive via keyboard. St
 
 ## Known Limitations
 
-- React component stubs; actual widget rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.
 - Select/Combobox are conceptual (dropdown not yet implemented in React layer)

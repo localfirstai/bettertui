@@ -29,13 +29,13 @@ The Rust workspace is independent of pnpm; the TS `build` task does not compile 
 | `pnpm typecheck` | `turbo run typecheck` |
 | `pnpm format:check` | Biome format check |
 | `pnpm check` | lint + format:check + typecheck + `cargo:check` |
-| `cargo test --workspace` | all Rust tests (engine has ~1071) |
+| `cargo test --workspace` | all Rust tests (engine has 1,204 lib tests) |
 | `cargo clippy --workspace -- -D warnings` | lint, warnings are errors |
 | `cargo fmt --all` | rustfmt |
 
-## Running the only wired example
+## Running the examples
 
-`examples/counter` has a real implementation in `src/index.tsx` (built on `@bettertui/core` + `@bettertui/react`), but its `package.json` entry is still the stub `src/index.ts`. To run the real version:
+All 14 examples under `examples/` have real implementations in `src/index.tsx` (built on `@bettertui/core` + `@bettertui/react`). To run one:
 
 ```bash
 cd examples/counter
@@ -43,7 +43,9 @@ pnpm exec tsup src/index.tsx --format esm
 node dist/index.js
 ```
 
-The other examples (`dashboard`, `mouse`, `table`, `text-editor`, `tree`) are placeholder stubs that print `— coming soon`.
+The example suite covers fundamentals (`counter`, `hello-world`, `layouts`, `forms`, `tables`, `tree`, `terminal`) and showcases (`dashboard`, `widget-gallery`, `markdown-viewer`, `system-monitor`, `capability-inspector`, `performance-lab`, `terminal-showcase`).
+
+> The React component functions are thin wrappers that emit element descriptors; the live native render loop is not yet connected, so running an example exercises the API surface and reconciler rather than painting pixels to the terminal.
 
 ## Architecture at a glance
 

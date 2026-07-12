@@ -50,6 +50,6 @@ A performance testing interface with selectable stress tests. Running a test sho
 
 ## Known Limitations
 
-- React component stubs; actual rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.
 - Memory usage is simulated
 - FPS measured at application level (not true vsync)

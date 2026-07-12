@@ -4,7 +4,7 @@ See [Guides: Testing](guides/testing.md) for commands. Summary of the current qu
 
 | Gate | Result |
 |------|--------|
-| Rust engine unit tests | ~1071 passing |
+| Rust engine unit tests | 1,204 lib tests passing |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | `pnpm build` | 17/17 |

@@ -42,15 +42,16 @@ bettertui/
 │   │       ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
 │   │       └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── widgets/       # @bettertui/widgets — widget interface (stub)
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   ├── icons/         # @bettertui/icons   — icon registry
-│   └── devtools/      # @bettertui/devtools — devtools stub
+│   ├── icons/         # @bettertui/icons   — icon registry (NOT YET A PACKAGE; proposed)
+│   ├── devtools/      # @bettertui/devtools — devtools stub
+│   ├── testing/       # @bettertui/testing  — testing utilities (scaffolding)
+│   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
-│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
-├── examples/          # example apps (mostly stubs; counter is partially wired)
+│   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
+│   └── performance/   # @bettertui/performance — OpenTUI vs BetterTUI benchmark site
+├── examples/          # 14 example apps (fundamentals/ + showcase/)
 ├── docs/              # this documentation
-├── benchmarks/        # empty placeholder (no harness implemented)
 ├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
 ├── tasks/             # PRDs, reports, archived slop
 ├── Cargo.lock
@@ -69,11 +70,12 @@ All TypeScript packages are ESM-only, built with `tsup` (`dts: true`), and expor
 |---------|-----------|-----------|------|
 | `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
 | `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
-| `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, components) |
-| `@bettertui/widgets` | yes | `core`, `shared` | `Widget` interface + version constant (stub) |
+| `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 69 component exports) |
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
-| `@bettertui/icons` | yes | — | In-memory icon registry |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
+| `@bettertui/testing` | yes | `core`, `shared` | Testing utilities (scaffolding) |
+| `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
+| `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/WidgetModel.md` note) |
 
 ```mermaid
 graph TD

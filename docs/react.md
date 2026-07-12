@@ -16,7 +16,7 @@ flowchart TD
 - **Reconciler** (`renderer.ts`): `createBetterTUIReconciler(buffer)`, `createContainer`, `updateContainer`. Host config in mutation mode over core `Instance`/`TextInstance`/`CommandBufferConsumer`.
 - **Runtime** (`runtime.tsx`): `render(element) -> { root, runtime, dispose }`; `RuntimeProvider` + `useRuntime`.
 - **Hooks** (`hooks/index.tsx`): `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`.
-- **Components**: `Box, Text, Flex, Spacer, Button, Input, Textarea, Tabs, Modal, Badge, Progress, Spinner, Tooltip, Separator, Heading, Label, Code, Grid, Stack` — **currently stubs** returning children or `null`.
+- **Components**: `Box, Text, Flex, Spacer, Button, Input, Textarea, Tabs, Modal, Badge, Progress, Spinner, Tooltip, Separator, Heading, Label, Code, Grid, Stack` and 50 more — **69 exported component functions**, each a thin wrapper that emits an element descriptor via `createElement`.
 
 ## Lifecycle
 
@@ -39,4 +39,4 @@ sequenceDiagram
 
 ## Status
 
-Renderer + hooks + runtime are real. Components are stubs. Dependencies: `core`, `shared`, `react-reconciler`; peer `react@^19`. Only `@bettertui/react` imports React.
+Renderer + hooks + runtime are real and wired. 69 component functions are exported but are currently thin wrappers (emit element descriptors, not yet connected to a live native render loop). Dependencies: `core`, `shared`, `react-reconciler`; peer `react@^19`. Only `@bettertui/react` imports React.

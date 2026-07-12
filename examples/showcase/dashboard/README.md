@@ -44,4 +44,4 @@ A professional dashboard layout with stat cards, activity feed, progress bar, an
 
 - No real system metrics (simulated data)
 - No mouse interaction
-- React component stubs; rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.

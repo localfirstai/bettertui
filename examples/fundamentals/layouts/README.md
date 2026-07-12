@@ -43,5 +43,5 @@ A showcase of layout primitives demonstrating column, row, and grid arrangements
 
 ## Known Limitations
 
-- React component stubs; actual rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.
 - Grid columns are fixed; responsive grid not yet implemented

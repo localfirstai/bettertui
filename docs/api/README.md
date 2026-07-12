@@ -8,13 +8,14 @@ This is the index for per-package API docs. Every entry below is generated from 
 |---------|---------|--------|
 | `@bettertui/shared` | [shared.md](packages/shared.md) | Implemented (types only) |
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
-| `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks real, components stubs) |
+| `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks real; 69 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
-| `@bettertui/widgets` | [widgets.md](packages/widgets.md) | Stub |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
-| `@bettertui/icons` | [icons.md](packages/icons.md) | Implemented (empty registry) |
-| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub |
-| `@bettertui/testing` | [testing.md](packages/testing.md) | Implemented |
+| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |
+| `@bettertui/testing` | [testing.md](packages/testing.md) | Scaffolding |
+| `@bettertui/benchmark` | — | Implemented (Vitest bench) |
+| `@bettertui/widgets` | [widgets.md](packages/widgets.md) | Proposed (not a package yet) |
+| `@bettertui/icons` | [icons.md](packages/icons.md) | Proposed (not a package yet) |
 
 ## Rust crates
 

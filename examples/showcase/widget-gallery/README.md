@@ -48,5 +48,5 @@ A categorized gallery of all widgets. Tab through categories to see each group.
 
 ## Known Limitations
 
-- React component stubs; widget rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.
 - Overlay widgets (Tooltip, Modal, etc.) are conceptual

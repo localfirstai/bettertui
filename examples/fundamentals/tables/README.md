@@ -48,4 +48,4 @@ Two tables displayed: a simple one and a full-featured DataTable. Rows can be na
 
 ## Known Limitations
 
-- React component stubs; table rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.

@@ -47,4 +47,4 @@ A clean display showing the current count, action buttons, and a status line. Co
 
 ## Known Limitations
 
-- React component stubs; actual rendering via Rust engine
+- React components are thin wrappers (element descriptors); the live native render loop is not yet connected, so this example exercises the API surface and reconciler rather than painting pixels.

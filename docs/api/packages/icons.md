@@ -1,16 +1,12 @@
 # @bettertui/icons
 
-**In-memory icon registry.** No internal dependencies. Implemented (but no icons pre-registered).
+**Proposed icon registry package. This package does not exist yet** — there is no `packages/icons` directory. It is listed in the architecture as a planned future package.
 
-## Exports
+## Planned scope
 
-| Export | Type | Notes |
-|--------|------|-------|
-| `Icon` | `interface` | `{ name, char, tags[] }` |
-| `registerIcon(icon: Icon): void` | function | adds to module-level `Map` |
-| `getIcon(name: string): Icon \| undefined` | function | lookup |
-| `listIcons(): Icon[]` | function | all registered icons |
+- An `Icon` interface and in-memory registry (`registerIcon`, `getIcon`, `listIcons`).
+- Per the project taste guidance, Phosphor icons are the preferred icon set, but no icon sets are bundled yet.
 
 ## Status
 
-Functional registry. Per the project taste guidance, Phosphor icons are the preferred icon set, but no icon sets are bundled yet.
+Not implemented as a package. The registry design exists in the architecture only. Do not document concrete icons.

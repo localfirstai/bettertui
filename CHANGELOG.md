@@ -8,16 +8,19 @@ The project is pre-1.0; the public API is not yet stable.
 
 ### Added
 - napi-rs bindings exposing the Rust engine (originally `@bettertui/native`, now internal to `@bettertui/core`): engine, event bus, focus manager, text engine, scheduler, capability detection (`createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`, `createRuntime`, `createEventLoop`).
-- `@bettertui/core` framework-agnostic command buffer, tree operations, reconciler wrapper, and `Runtime`.
-- React 19 adapter (`@bettertui/react`): `react-reconciler` host config, `render()`, `RuntimeProvider`/`useRuntime`, and hooks (`Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`).
-- Rust engine subsystems: arena node model, command protocol, renderer, frame buffer, dirty diff, Taffy layout, events, input (keyboard/mouse/paste), ANSI parser, animation engine, scheduler, capability detection, terminal I/O + VT emulation, PTY runtime, compositor, rope-based text engine, widget framework.
+- `@bettertui/core` framework-agnostic command buffer, tree operations, reconciler wrapper, native bridge, and `Runtime`.
+- React 19 adapter (`@bettertui/react`): `react-reconciler` host config, `render()`, `RuntimeProvider`/`useRuntime`, hooks (`Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `useMouse`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`, `useTimeline`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`), and 69 component functions (thin wrappers emitting element descriptors).
+- Rust engine subsystems: arena node model, command protocol, renderer, frame buffer, dirty diff, Taffy layout, events, input (keyboard/mouse/paste), ANSI parser, animation engine (tween/spring/keyframe), scheduler, capability detection, terminal I/O + VT emulation, PTY runtime, compositor, rope-based text engine, widget framework.
 - `@bettertui/themes` default theme and `createTheme()` factory.
-- `@bettertui/icons` in-memory icon registry.
-- `examples/counter` real implementation (`src/index.tsx`).
+- `@bettertui/testing` utilities (`MockCommandCollector`, `expectCommandBuffer`, `createPoint`, `createRect`, `createMockHandler`, `createTestTree`, `sleep`, `flushMicrotasks`, `renderToString`, `expectToMatchSnapshot`).
+- `@bettertui/benchmark` Vitest benchmark harness for the TypeScript packages.
+- 14 example applications under `examples/fundamentals/*` and `examples/showcase/*`.
+- `apps/performance` benchmark site comparing BetterTUI against OpenTUI.
 
 ### Changed
 - Architecture split: reconciler/runtime absorbed into `@bettertui/core` (framework-agnostic) and `@bettertui/react` (React-specific). `@bettertui/reconciler` and `@bettertui/runtime` packages removed.
-- Documentation regenerated to reflect the implementation; obsolete Phase-0 design docs archived to `tasks/slop/docs/`.
+- `@bettertui/native` package merged into `@bettertui/core` as an internal native bridge; Cargo workspace root moved to `packages/core/Cargo.toml`.
+- Documentation regenerated to reflect the implementation; obsolete Phase-0 design docs and AI iteration reports archived to `tasks/slop/`.
 
 ### Fixed
 - Husky pre-commit errors (deprecated shebang, node PATH).
@@ -26,7 +29,7 @@ The project is pre-1.0; the public API is not yet stable.
 
 ### Added
 - Rust workspace with rendering engine modules (tree, layout, render, framebuffer, terminal, input, events, animation, scheduler, graphics, protocol, selection, clipboard, editor, plugin, capabilities, ffi, benchmark, error).
-- TypeScript packages: `core`, `shared`, `react`, `widgets`, `themes`, `icons`, `devtools`.
+- TypeScript packages: `core`, `shared`, `react`, `themes`, `devtools`, `testing`, `benchmark`.
 - TurboRepo + pnpm monorepo configuration.
 - Biome for TypeScript/JSON and rustfmt + clippy for Rust.
 - Husky pre-commit hooks.

@@ -40,7 +40,7 @@ pnpm typecheck
 # Check the engine compiles
 cargo check --workspace
 
-# Run tests (engine has ~1071, use --lib to skip integration tests)
+# Run tests (engine has 1,204 lib tests, use --lib to skip integration tests)
 cargo test -p bettertui-engine --lib
 
 # Format code

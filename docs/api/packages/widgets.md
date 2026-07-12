@@ -1,14 +1,12 @@
 # @bettertui/widgets
 
-**High-level widget library (intended).** Depends on `@bettertui/core`, `@bettertui/shared`. Currently a **stub**.
+**Proposed TypeScript widget library. This package does not exist yet** — there is no `packages/widgets` directory. It is listed in the architecture as a planned future package.
 
-## Exports
+## Planned scope
 
-| Export | Type | Notes |
-|--------|------|-------|
-| `Widget` | `interface` | `{ type: string; render(): unknown }` |
-| `WIDGET_VERSION` | `const` | `"0.0.0"` |
+- A `Widget` interface and version constant on the TypeScript side.
+- A bridge to the Rust widget framework (`bettertui-engine/src/widgets/`, ~200 tests): `BoxWidget`, `TextWidget`, `ButtonWidget`, `TableWidget`, `MarkdownRenderer`, `ChatView`, `PromptComposer`, and more.
 
 ## Status
 
-Only the interface and version constant exist. The real widget framework lives in the Rust engine (`widgets` module, ~200 tests) but is not exposed here yet. Do not document concrete widgets on the TS side.
+Not implemented as a package. The real widget framework lives in the Rust engine; it is not exposed through TypeScript yet. Do not document concrete TS-side widgets. See [Architecture: Widget Model](../../architecture/WidgetModel.md).

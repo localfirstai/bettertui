@@ -5,7 +5,7 @@ BetterTUI verifies at two layers: Rust (engine + bindings) and TypeScript (Biome
 ## Rust
 
 ```bash
-cargo test --workspace                 # all tests (engine ~1071 passing)
+cargo test --workspace                 # all tests (engine 1,204 lib tests passing)
 cargo test -p bettertui-engine --lib   # engine unit tests only (excludes tests/ dir)
 cargo clippy --workspace -- -D warnings
 cargo fmt --all
@@ -79,7 +79,7 @@ expectCommandBuffer(buffer, { length: 1, types: ["CreateNode"] });
 
 | Layer | Status |
 |-------|--------|
-| Rust engine unit tests | ~1071 passing |
+| Rust engine unit tests | 1,204 lib tests passing |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | pnpm build | 23/23 (excluding website) |

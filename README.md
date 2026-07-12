@@ -54,12 +54,15 @@ bettertui/
 │   │       └── bindings/      # bettertui-bindings (napi-rs cdylib)
 │   ├── react/         # @bettertui/react   — React 19 adapter
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   └── icons/         # @bettertui/icons   — icon registry
+│   ├── devtools/      # @bettertui/devtools — devtools stub
+│   ├── testing/       # @bettertui/testing  — testing utilities (scaffolding)
+│   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
-│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
-├── examples/          # 12 runnable examples
+│   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
+│   └── performance/   # @bettertui/performance — OpenTUI vs BetterTUI benchmark site
+├── examples/          # 14 example apps (fundamentals/ + showcase/)
 ├── docs/              # this documentation
-├── benchmarks/        # empty placeholder (no harness yet)
+├── tasks/             # PRDs, reports, archived slop
 ├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
 ├── packages/core/Cargo.toml         # Rust workspace
 ├── package.json       # root TS manifest + pnpm scripts
@@ -74,15 +77,18 @@ bettertui/
 |---------|-------------|--------|
 | `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
-| `@bettertui/react` | React adapter (renderer, hooks, components) | ✅ Reconciler + 50+ components |
+| `@bettertui/react` | React adapter (renderer, hooks, 69 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
-| `@bettertui/icons` | Icon registry and management | ✅ Scaffolded (empty) |
-| `@bettertui/devtools` | Developer tooling | ✅ Scaffolded (stub) |
+| `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
+| `@bettertui/testing` | Testing utilities | 🟡 Scaffolding |
+| `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
+| `@bettertui/widgets` | Widget library (proposed) | 🔜 Not yet a package |
+| `@bettertui/icons` | Icon registry (proposed) | 🔜 Not yet a package |
 
 ## React Components
 
-BetterTUI provides 50+ React components:
+BetterTUI provides 69 React component functions (thin wrappers that emit element descriptors; not yet wired to a live native render loop):
 
 **Layout:** Box, Flex, Grid, Stack, Spacer, Separator
 **Text:** Text, Heading, Label, Code, Blockquote
@@ -147,7 +153,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by ~1193 passing tests. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real reconciler + hooks + 50+ components; 12 runnable examples are available.
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,204 passing lib tests**. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 69 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **14 runnable example apps** are available under `examples/`.
 
 ## Documentation
 

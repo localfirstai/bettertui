@@ -6,20 +6,21 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 
 | Layer | State | Notes |
 |-------|-------|-------|
-| Rust engine (`bettertui-engine`) | ✅ Implemented | ~1071 passing tests; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
+| Rust engine (`bettertui-engine`) | ✅ Implemented | 1,204 passing lib tests; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
 | napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
 | `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
 | `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
 | `@bettertui/themes` | 🟡 Partial | `defaultTheme` + `createTheme`; no preset themes |
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
-| `@bettertui/react` (components) | ❌ Stubs | 20+ components return children/`null` |
-| `@bettertui/widgets` | ❌ Stub | `Widget` interface + version const |
-| `@bettertui/icons` | 🟡 Scaffolded | Registry works; no icons bundled |
+| `@bettertui/react` (components) | 🟡 Thin wrappers | 69 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
-| Examples | 🟡 Partial | Only `examples/counter/src/index.tsx` is wired |
-| Benchmarks | ❌ Empty | No harness |
-| `@bettertui/testing` | ❌ Not started | Proposed |
+| `@bettertui/testing` | 🟡 Scaffolding | Utilities present (`MockCommandCollector`, `expectCommandBuffer`, etc.) |
+| `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
+| Examples | ✅ Wired | 14 example apps implemented (`examples/fundamentals/*`, `examples/showcase/*`) |
+| Benchmarks | ✅ Implemented | `apps/performance` site (OpenTUI vs BetterTUI) + `packages/benchmark` |
+| `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
+| `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |
 
 ## Completed
 
