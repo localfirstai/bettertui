@@ -31,7 +31,7 @@ Example applications live under `examples/`. There are **14 examples** across tw
 ```bash
 cd examples/counter
 pnpm exec tsdown src/index.tsx --format esm
-node dist/index.js
+node dist/index.mjs
 ```
 
 ## Status

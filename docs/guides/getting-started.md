@@ -40,7 +40,7 @@ All 14 examples under `examples/` have real implementations in `src/index.tsx` (
 ```bash
 cd examples/counter
 pnpm exec tsdown src/index.tsx --format esm
-node dist/index.js
+node dist/index.mjs
 ```
 
 The example suite covers fundamentals (`counter`, `hello-world`, `layouts`, `forms`, `tables`, `tree`, `terminal`) and showcases (`dashboard`, `widget-gallery`, `markdown-viewer`, `system-monitor`, `capability-inspector`, `performance-lab`, `terminal-showcase`).
