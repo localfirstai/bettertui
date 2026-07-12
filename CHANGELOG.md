@@ -28,7 +28,7 @@ The project is pre-1.0; the public API is not yet stable.
 
 ### Added
 - Rust workspace with rendering engine modules (tree, layout, render, framebuffer, terminal, input, events, animation, scheduler, graphics, protocol, selection, clipboard, editor, plugin, capabilities, ffi, benchmark, error).
-- TypeScript packages: `core`, `shared`, `react`, `themes`, `devtools`, `testing`, `benchmark`.
+- TypeScript packages: `core`, `shared`, `react`, `themes`, `devtools`, `benchmark` (testing is per-package via Vitest, no `@bettertui/testing` package).
 - TurboRepo + pnpm monorepo configuration.
 - Biome for TypeScript/JSON and rustfmt + clippy for Rust.
 - Husky pre-commit hooks.

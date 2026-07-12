@@ -63,7 +63,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 - [ ] Example applications wired to the engine (dashboard, mouse, table, text-editor, tree)
 - [ ] Additional framework adapters (Vue, Solid, Svelte, vanilla TypeScript) — require no Rust changes
 - [ ] Plugin system
-- [ ] `@bettertui/testing` (headless renderer, mock input, snapshot testing)
+- [ ] Per-package test coverage: expand Vitest suites in each package (mock input, snapshot assertions via `renderToStringAsync`); no separate `@bettertui/testing` package
 - [ ] Benchmark harness (`benchmarks/`)
 - [ ] Public API reference documentation per package (see `docs/api/`)
 
