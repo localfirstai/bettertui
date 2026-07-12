@@ -59,6 +59,7 @@ import {
   Viewport,
   easings,
   render,
+  renderToStringAsync,
   useAnimation,
   useCapabilities,
   useClipboard,
@@ -101,6 +102,10 @@ describe("public API exports", () => {
 
   it("exports render function", () => {
     expect(typeof render).toBe("function");
+  });
+
+  it("exports renderToStringAsync function", () => {
+    expect(typeof renderToStringAsync).toBe("function");
   });
 
   it("exports useRuntime", () => {

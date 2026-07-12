@@ -7,6 +7,7 @@ export {
   useKeyboard,
   TerminalProvider,
   useTerminal,
+  useResize,
   useFrame,
   useClipboard,
   useAnimation,
@@ -119,6 +120,8 @@ export {
   Terminal,
   TerminalViewport,
   TerminalProcess,
+  Slot,
+  NerdFont,
 } from "./components";
 
 export type {
@@ -187,4 +190,7 @@ export type {
   TerminalProps,
   TerminalViewportProps,
   TerminalProcessProps,
+  SlotProps,
+  NerdFontProps,
 } from "./components";
+export { renderToStringAsync, type TestRendererOptions } from "./testing";

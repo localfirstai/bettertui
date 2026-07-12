@@ -6,6 +6,9 @@ export default mergeConfig(
   defineProject({
     test: {
       name: "react",
+      environment: "jsdom",
+      globals: true,
+      setupFiles: ["./src/__tests__/setup.ts"],
     },
   }),
 );

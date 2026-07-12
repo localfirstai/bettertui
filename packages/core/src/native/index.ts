@@ -31,17 +31,51 @@ export type { KeyEvent, MouseEvent } from "./events";
 
 let nativeAddon: Record<string, unknown> | null = null;
 
+function findDevArtifact(): unknown {
+  const path = require("node:path");
+  const fs = require("node:fs") as typeof import("node:fs");
+  const profiles = ["debug", "release"];
+  const roots: string[] = [];
+  const cwd = process.cwd();
+  roots.push(
+    cwd,
+    path.join(cwd, "packages/core"),
+    path.join(cwd, "../core"),
+    path.join(cwd, "../../packages/core"),
+    path.join(cwd, ".."),
+    path.join(cwd, "../.."),
+  );
+  for (const root of roots) {
+    for (const profile of profiles) {
+      const file = path.resolve(root, "target", profile, "bettertui_bindings.node");
+      if (fs.existsSync(file)) {
+        try {
+          return require(file);
+        } catch {
+          // require failed (e.g. wrong arch); keep searching
+        }
+      }
+    }
+  }
+  throw new Error("dev artifact not found");
+}
+
 function loadNativeAddon(): Record<string, unknown> {
   if (nativeAddon) return nativeAddon;
 
-  try {
-    nativeAddon = require("bettertui_bindings");
-  } catch {
-    throw new Error(
-      "Failed to load native bindings. Run `cargo build -p bettertui-bindings` first.",
-    );
+  const candidates: Array<() => unknown> = [() => require("bettertui_bindings"), findDevArtifact];
+
+  for (const attempt of candidates) {
+    try {
+      nativeAddon = attempt() as Record<string, unknown>;
+      return nativeAddon;
+    } catch {
+      // try next candidate
+    }
   }
-  return nativeAddon as Record<string, unknown>;
+  throw new Error(
+    "Failed to load native bindings. Run `cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml` first, or install the `bettertui_bindings` package.",
+  );
 }
 
 export function createEngine(width?: number, height?: number): NapiEngine {

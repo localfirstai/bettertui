@@ -1,13 +1,18 @@
 import type { CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
 import { generateId } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
+import { createContext } from "react";
 import Reconciler from "react-reconciler";
-import { DefaultEventPriority } from "react-reconciler/constants";
+import { DefaultEventPriority, NoEventPriority } from "react-reconciler/constants";
+
+// Module-level update priority state (required by react-reconciler@0.31+)
+let currentUpdatePriority = NoEventPriority;
 
 export interface Container {
   id: string;
   children: Array<Instance | TextInstance>;
   buffer: CommandBufferConsumer;
+  onCommit?: () => void;
 }
 
 // ─── Layout Props → Command Mapping ──────────────────────────────────────────
@@ -254,21 +259,12 @@ export type OpaqueRoot = any;
 
 export function createBetterTUIReconciler(buffer: CommandBufferConsumer): ReconcilerType {
   // biome-ignore format: host config is complex
-  const hostConfig: Reconciler.HostConfig<
-    string,
-    Record<string, unknown>,
-    Container,
-    Instance,
-    TextInstance,
-    Instance,
-    Instance,
-    Instance,
-    Record<string, unknown>,
-    Record<string, unknown>,
-    Instance[],
-    number,
-    number
-  > = {
+  // Host config is inferred (not annotated) because the installed @types/react-reconciler@0.31
+  // lags the runtime reconciler; some forward-compat methods (setCurrentUpdatePriority,
+  // resolveUpdatePriority, shouldAttemptEagerTransition, NotPendingTransition) are valid at
+  // runtime but absent from the type defs. Inference + the Reconciler() call below still
+  // type-checks the required surface without rejecting the extra members.
+  const hostConfig = {
     supportsMutation: true,
     supportsPersistence: false,
     supportsHydration: false,
@@ -297,6 +293,15 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
 
       // Create node in Rust engine
       buffer.push({ type: "CreateNode", id, kind: type });
+
+      // Special handling for Text nodes: if children is a string, set text directly
+      // Text nodes in the Rust engine are leaf nodes (not containers)
+      // Also set width based on text length for proper layout
+      if (type === "Text" && typeof children === "string") {
+        buffer.push({ type: "SetText", id, text: children });
+        // Set width to text length so layout engine can position it correctly
+        buffer.push({ type: "SetWidth", id, value: { points: children.length } });
+      }
 
       // Forward style object if provided
       if (Object.keys(instance.style).length > 0) {
@@ -374,12 +379,14 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       return false;
     },
 
-    shouldSetTextContent(_type: string, _props: Record<string, unknown>): boolean {
-      return false;
+    shouldSetTextContent(type: string, _props: Record<string, unknown>): boolean {
+      // Text nodes in the Rust engine are leaf nodes - they can't have children
+      // So we tell React to set text content directly instead of creating TextInstances
+      return type === "Text";
     },
 
-    getRootHostContext(_rootContainer: Container): Record<string, unknown> | null {
-      return null;
+    getRootHostContext(_rootContainer: Container): Record<string, unknown> {
+      return { isInsideText: false };
     },
 
     getChildHostContext(
@@ -387,7 +394,7 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       _type: string,
       _rootContainer: Container,
     ): Record<string, unknown> {
-      return parentHostContext;
+      return { ...parentHostContext };
     },
 
     getPublicInstance(instance: Instance | TextInstance): Instance {
@@ -399,7 +406,9 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       return null;
     },
 
-    resetAfterCommit(_containerInfo: Container): void {},
+    resetAfterCommit(container: Container): void {
+      container.onCommit?.();
+    },
 
     preparePortalMount(_containerInfo: Container): void {},
 
@@ -629,6 +638,71 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
     scheduleMicrotask(fn: () => unknown): void {
       queueMicrotask(fn);
     },
+
+    // ─── Update priority (required by react-reconciler@0.31+) ────────────────
+    setCurrentUpdatePriority(newPriority: number): void {
+      currentUpdatePriority = newPriority;
+    },
+
+    getCurrentUpdatePriority(): number {
+      return currentUpdatePriority;
+    },
+
+    resolveUpdatePriority(): number {
+      if (currentUpdatePriority !== NoEventPriority) {
+        return currentUpdatePriority;
+      }
+      return DefaultEventPriority;
+    },
+
+    // ─── Transition config ───────────────────────────────────────────────────
+    shouldAttemptEagerTransition(): boolean {
+      return false;
+    },
+
+    NotPendingTransition: null,
+
+    HostTransitionContext: createContext(null),
+
+    // ─── Suspend config ─────────────────────────────────────────────────────
+    maySuspendCommit(): boolean {
+      return false;
+    },
+
+    maySuspendCommitOnUpdate(): boolean {
+      return false;
+    },
+
+    maySuspendCommitInSyncRender(): boolean {
+      return false;
+    },
+
+    preloadInstance(): boolean {
+      return true;
+    },
+
+    startSuspendingCommit(): void {},
+
+    suspendInstance(): void {},
+
+    waitForCommitToBeReady(): null {
+      return null;
+    },
+
+    // ─── Misc stubs ─────────────────────────────────────────────────────────
+    resetFormInstance(): void {},
+
+    requestPostPaintCallback(): void {},
+
+    trackSchedulerEvent(): void {},
+
+    resolveEventType(): null {
+      return null;
+    },
+
+    resolveEventTimeStamp(): number {
+      return -1;
+    },
   };
 
   return Reconciler(hostConfig);
@@ -637,11 +711,13 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
 export function createContainer(
   reconciler: ReconcilerType,
   buffer: CommandBufferConsumer,
+  options?: { id?: string; onCommit?: () => void },
 ): OpaqueRoot {
   const container: Container = {
-    id: generateId(),
+    id: options?.id ?? generateId(),
     children: [],
     buffer,
+    ...(options?.onCommit ? { onCommit: options.onCommit } : {}),
   };
   return reconciler.createContainer(
     container,
