@@ -1,6 +1,5 @@
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type {
-  DevToolsOptions,
   LogLevel,
   LogEntry,
   CommandType,
@@ -335,17 +334,17 @@ export function createDevTools(options?: CreateDevToolsOptions): DevTools {
       const root = tree.getRoot();
       return createExport(
         {
-          logs: logger.getEntries() as never[],
-          commands: commands.getCommands() as never[],
-          events: events.getEvents() as never[],
-          frames: performance.getFrames() as never[],
+          logs: logger.getEntries(),
+          commands: commands.getCommands(),
+          events: events.getEvents(),
+          frames: performance.getFrames(),
           performance: performance.getSnapshot(),
           ...(root !== null ? { tree: root } : {}),
           scheduler: scheduler.getSnapshot(),
           focus: focus.getSnapshot(),
           capabilities: capabilities.get(),
-          timeline: timeline.getEntries() as never[],
-          snapshots: snapshots.getSnapshots() as never[],
+          timeline: timeline.getEntries(),
+          snapshots: snapshots.getSnapshots(),
         },
         options,
       );

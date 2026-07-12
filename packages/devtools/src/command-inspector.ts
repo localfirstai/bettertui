@@ -67,7 +67,7 @@ export class CommandInspector {
   }
 
   /** Get a summary of command activity */
-  getSummary(): {
+  getSummary(frameCount?: number): {
     total: number;
     byType: Record<string, number>;
     lastTimestamp: number | null;
@@ -86,7 +86,8 @@ export class CommandInspector {
       total: this.commands.length,
       byType,
       lastTimestamp,
-      avgCommandsPerFrame: 0, // Computed externally if needed
+      avgCommandsPerFrame:
+        frameCount != null && frameCount > 0 ? this.commands.length / frameCount : 0,
     };
   }
 }

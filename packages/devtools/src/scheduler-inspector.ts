@@ -71,7 +71,13 @@ export class SchedulerInspector {
     this.frameCount = 0;
     this.droppedFrames = 0;
     this.pendingFrames = 0;
+    this.isRunning = false;
+    this.isRendering = false;
+    this.hasScheduledRender = false;
+    this.highestPriority = "idle";
     this.idleCallbacksPending = 0;
     this.animationFramesPending = 0;
+    this.frameBudgetMs = 16.67;
+    this.utilization = 0;
   }
 }

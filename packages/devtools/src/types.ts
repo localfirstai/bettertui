@@ -1,22 +1,3 @@
-// ─── DevTools Configuration ──────────────────────────────────────────────────
-
-export interface DevToolsOptions {
-  /** Enable or disable the DevTools. When false, all methods are no-ops. */
-  enabled: boolean;
-  /** Maximum number of events to retain in each inspector ring buffer. */
-  maxEvents?: number | undefined;
-  /** Enable structured logging. */
-  logging?: boolean | undefined;
-  /** Minimum log level to record. */
-  logLevel?: LogLevel | undefined;
-  /** Enable timeline recording. */
-  timeline?: boolean | undefined;
-  /** Enable performance tracking. */
-  performance?: boolean | undefined;
-  /** Enable snapshot capture. */
-  snapshots?: boolean | undefined;
-}
-
 // ─── Log Levels ──────────────────────────────────────────────────────────────
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "trace";
@@ -216,15 +197,15 @@ export interface DiagnosticExport {
   version: string;
   timestamp: number;
   duration: number;
-  logs: LogEntry[];
-  commands: RecordedCommand[];
-  events: RecordedEvent[];
-  frames: FrameMetrics[];
+  logs: readonly LogEntry[];
+  commands: readonly RecordedCommand[];
+  events: readonly RecordedEvent[];
+  frames: readonly FrameMetrics[];
   performance: PerformanceSnapshot;
   tree?: TreeNode | undefined;
   scheduler?: SchedulerSnapshot | undefined;
   focus?: FocusSnapshot | undefined;
   capabilities?: TerminalCapabilities | undefined;
-  timeline: TimelineEntry[];
-  snapshots: TreeSnapshot[];
+  timeline: readonly TimelineEntry[];
+  snapshots: readonly TreeSnapshot[];
 }

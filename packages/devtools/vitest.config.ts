@@ -6,6 +6,9 @@ export default mergeConfig(
   defineProject({
     test: {
       name: "devtools",
+      coverage: {
+        exclude: ["**/types.ts", "**/__tests__/**"],
+      },
     },
   }),
 );

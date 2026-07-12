@@ -29,6 +29,11 @@ describe("createDevTools", () => {
     expect(devtools.enabled).toBe(false);
   });
 
+  it("returns no-op DevTools when enabled is undefined", () => {
+    const devtools = createDevTools({ enabled: undefined });
+    expect(devtools.enabled).toBe(false);
+  });
+
   it("returns enabled DevTools when enabled is true", () => {
     const devtools = createDevTools({ enabled: true });
     expect(devtools.enabled).toBe(true);
@@ -210,6 +215,7 @@ describe("createDevTools", () => {
     expect(summary).toContain("Scheduler");
     expect(summary).toContain("Focus");
     expect(summary).toContain("Terminal");
+    expect(summary).toContain("Avg Commands/Frame");
   });
 
   it("enabled DevTools respects maxEvents option", () => {
@@ -567,14 +573,27 @@ describe("PerformanceTracker", () => {
     expect(tracker.getFps()).toBe(0);
   });
 
-  it("getFps returns 0 when elapsed is 0", () => {
+  it("getFps with sampleSize smaller than total frames", () => {
     const tracker = new PerformanceTracker();
-    tracker.beginFrame(0);
-    tracker.endFrame();
-    tracker.beginFrame(0);
-    tracker.endFrame();
-    const fps = tracker.getFps();
+    for (let i = 0; i < 10; i++) {
+      tracker.beginFrame(1);
+      tracker.endFrame();
+    }
+    const fps = tracker.getFps(3);
     expect(fps).toBeGreaterThanOrEqual(0);
+    expect(typeof fps).toBe("number");
+  });
+
+  it("getFps calculates correctly with multiple frames", () => {
+    const tracker = new PerformanceTracker();
+    // Use beginFrame/endFrame which uses performance.now() internally
+    for (let i = 0; i < 5; i++) {
+      tracker.beginFrame(1);
+      tracker.endFrame();
+    }
+    const fps = tracker.getFps(5);
+    expect(fps).toBeGreaterThan(0);
+    expect(typeof fps).toBe("number");
   });
 
   it("returns snapshot with correct totals", () => {
@@ -650,7 +669,7 @@ describe("PerformanceTracker", () => {
     expect(frame.ffiDuration).toBe(1);
   });
 
-  it("calls onFrame callback", () => {
+  it("calls onFrame callback via recordFrame", () => {
     let captured = false;
     const tracker = new PerformanceTracker({
       onFrame: () => {
@@ -659,6 +678,21 @@ describe("PerformanceTracker", () => {
     });
     tracker.recordFrame({ duration: 16 });
     expect(captured).toBe(true);
+  });
+
+  it("calls onFrame callback via beginFrame/endFrame", () => {
+    let called = false;
+    const tracker = new PerformanceTracker({
+      onFrame: () => {
+        called = true;
+      },
+    });
+    tracker.beginFrame(5);
+    tracker.endFrame({ dirtyRegionCount: 2 });
+    expect(called).toBe(true);
+    const frames = tracker.getFrames();
+    expect(frames[0]?.commandCount).toBe(5);
+    expect(frames[0]?.dirtyRegionCount).toBe(2);
   });
 
   it("getRecentFrames returns correct count", () => {
@@ -877,6 +911,22 @@ describe("TreeInspector", () => {
     const path = inspector.getPath("root");
     expect(path).toHaveLength(1);
     expect(path[0]?.id).toBe("root");
+  });
+
+  it("getPath with 3+ levels deep tree", () => {
+    const inspector = new TreeInspector();
+    inspector.buildTree([
+      { id: "root", type: "Box" },
+      { id: "child", type: "Flex", parent: "root" },
+      { id: "grandchild", type: "Text", parent: "child" },
+      { id: "great-grandchild", type: "Text", parent: "grandchild" },
+    ]);
+    const path = inspector.getPath("great-grandchild");
+    expect(path).toHaveLength(4);
+    expect(path[0]?.id).toBe("root");
+    expect(path[1]?.id).toBe("child");
+    expect(path[2]?.id).toBe("grandchild");
+    expect(path[3]?.id).toBe("great-grandchild");
   });
 
   it("getPath for non-existent node returns empty", () => {

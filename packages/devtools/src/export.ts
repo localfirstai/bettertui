@@ -30,13 +30,13 @@ export interface ExportOptions {
 
 export interface ExportData {
   /** Logs to include */
-  logs?: LogEntry[] | undefined;
+  logs?: readonly LogEntry[] | undefined;
   /** Commands to include */
-  commands?: RecordedCommand[] | undefined;
+  commands?: readonly RecordedCommand[] | undefined;
   /** Events to include */
-  events?: RecordedEvent[] | undefined;
+  events?: readonly RecordedEvent[] | undefined;
   /** Frame metrics to include */
-  frames?: FrameMetrics[] | undefined;
+  frames?: readonly FrameMetrics[] | undefined;
   /** Performance snapshot */
   performance?: PerformanceSnapshot | undefined;
   /** Render tree */
@@ -48,9 +48,9 @@ export interface ExportData {
   /** Terminal capabilities */
   capabilities?: TerminalCapabilities | undefined;
   /** Timeline entries */
-  timeline?: TimelineEntry[] | undefined;
+  timeline?: readonly TimelineEntry[] | undefined;
   /** Tree snapshots */
-  snapshots?: TreeSnapshot[] | undefined;
+  snapshots?: readonly TreeSnapshot[] | undefined;
 }
 
 /** Create a diagnostic export from collected data */
@@ -110,6 +110,7 @@ export function createSummary(exportData: DiagnosticExport): string {
     `  Avg Frame Time: ${exportData.performance.avgFrameTime.toFixed(2)}ms`,
     `  Dropped Frames: ${exportData.performance.droppedFrames}/${exportData.performance.totalFrames}`,
     `  Total Commands: ${exportData.performance.commandCount}`,
+    `  Avg Commands/Frame: ${exportData.performance.totalFrames > 0 ? (exportData.commands.length / exportData.performance.totalFrames).toFixed(2) : "0.00"}`,
     "",
     "## Activity",
     `  Logs: ${exportData.logs.length}`,
