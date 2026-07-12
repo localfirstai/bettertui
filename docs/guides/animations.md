@@ -23,6 +23,6 @@ function Spinner() {
 
 ## Native usage
 
-`@bettertui/native` exposes `NapiScheduler.schedule_animation()` and the scheduler frame API (`beginFrame`, `endFrame`, `requestFrame`, `shouldRender`, `fps`, `frameBudgetMs`, `isIdle`, `frameCount`, `droppedFrames`).
+`@bettertui/core`'s native bridge exposes `NapiScheduler.schedule_animation()` and the scheduler frame API (`beginFrame`, `endFrame`, `requestFrame`, `shouldRender`, `fps`, `frameBudgetMs`, `isIdle`, `frameCount`, `droppedFrames`).
 
 > Known gap (Phase 8 review): `schedule_animation`/`cancel_animation` exist but animation callbacks were not being executed at review time. Use the lower-level scheduler frame API for now.

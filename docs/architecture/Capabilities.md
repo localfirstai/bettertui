@@ -1,6 +1,6 @@
 # Capabilities
 
-Capability detection identifies what a terminal supports so the renderer and input system only use features the terminal understands. Code: `native/engine/src/capabilities/`.
+Capability detection identifies what a terminal supports so the renderer and input system only use features the terminal understands. Code: `packages/core/crates/engine/src/capabilities/`.
 
 ## Detection
 
@@ -30,4 +30,4 @@ Each sub-capability module (`rendering.rs`, `input.rs`, `graphics.rs`, `window.r
 
 ## TypeScript surface
 
-`@bettertui/native` exposes `detectCapabilities() -> TerminalCapabilities` (JSON, camelCase fields) and `NapiCapabilities` (17 fields). Clipboard capability specifics live in `capabilities/clipboard.rs` (`ClipboardCapabilities { osc52, osc8 }`).
+`@bettertui/core` exposes `detectCapabilities() -> TerminalCapabilities` (JSON, camelCase fields) and `NapiCapabilities` (17 fields). Clipboard capability specifics live in `capabilities/clipboard.rs` (`ClipboardCapabilities { osc52, osc8 }`).

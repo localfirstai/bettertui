@@ -1,6 +1,6 @@
 # Frame Buffer
 
-The frame buffer is the cell grid the renderer writes into and diffs against the previous frame. Code: `native/engine/src/framebuffer/`. Dirty-region diffing: `native/engine/src/dirty_diff/`.
+The frame buffer is the cell grid the renderer writes into and diffs against the previous frame. Code: `packages/core/crates/engine/src/framebuffer/`. Dirty-region diffing: `packages/core/crates/engine/src/dirty_diff/`.
 
 ## Structure
 

@@ -1,6 +1,6 @@
 # Terminal & PTY
 
-BetterTUI can embed a live terminal process (shell, REPL) inside the UI via a PTY, and it can parse/emit ANSI through a VT state machine. This is engine-level functionality exposed through `@bettertui/native`.
+BetterTUI can embed a live terminal process (shell, REPL) inside the UI via a PTY, and it can parse/emit ANSI through a VT state machine. This is engine-level functionality exposed through `@bettertui/core`'s native bridge.
 
 ## Components
 
@@ -24,7 +24,7 @@ flowchart TD
 
 ## TypeScript surface
 
-`@bettertui/native` exposes factories `createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`, and `createRuntime` (ties engine + event bus + core `CommandBuffer`). The PTY lifecycle is driven through the native engine's process API.
+`@bettertui/core`'s native bridge exposes factories `createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`, and `createRuntime` (ties engine + event bus + core `CommandBuffer`). The PTY lifecycle is driven through the native engine's process API.
 
 ## Known gaps
 

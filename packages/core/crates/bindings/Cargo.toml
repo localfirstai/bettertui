@@ -12,7 +12,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-bettertui-engine = { path = "../engine" }
+bettertui-engine = { path = "../../crates/engine" }
 napi.workspace = true
 napi-derive.workspace = true
 serde.workspace = true

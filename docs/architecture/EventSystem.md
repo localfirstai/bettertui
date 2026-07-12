@@ -1,6 +1,6 @@
 # Event System
 
-Events flow from terminal input up to nodes and back down, following DOM-style capture → target → bubble. Code: `native/engine/src/events/`.
+Events flow from terminal input up to nodes and back down, following DOM-style capture → target → bubble. Code: `packages/core/crates/engine/src/events/`.
 
 ## Event enum
 

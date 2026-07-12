@@ -25,7 +25,7 @@ pnpm install
 pnpm build
 
 # Build the native Rust addon (required before running anything native)
-cargo build -p bettertui-bindings
+cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml
 
 # Run linting
 pnpm lint
@@ -52,9 +52,9 @@ cargo clippy --workspace -- -D warnings
 
 ## Project Structure
 
-- `native/engine/` — Rust rendering engine (`bettertui-engine`, library)
-- `native/bindings/` — napi-rs Node.js bindings (`bettertui-bindings`, cdylib)
-- `packages/` — TypeScript packages (`shared`, `core`, `react`, `native`, `widgets`, `themes`, `icons`, `devtools`)
+- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, library)
+- `packages/core/crates/bindings/` — napi-rs Node.js bindings (`bettertui-bindings`, cdylib)
+- `packages/` — TypeScript packages (`shared`, `core`, `react`, `widgets`, `themes`, `icons`, `devtools`)
 - `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
 - `examples/` — example apps (mostly stubs; `counter` partially wired)
 - `docs/` — the documentation you are reading (canonical source of truth)

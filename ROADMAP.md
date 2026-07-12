@@ -10,7 +10,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
 | `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
-| `@bettertui/native` | ✅ Implemented | Bridge + runtime + event loop (requires native addon) |
+| `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
 | `@bettertui/themes` | 🟡 Partial | `defaultTheme` + `createTheme`; no preset themes |
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
 | `@bettertui/react` (components) | ❌ Stubs | 20+ components return children/`null` |
@@ -43,7 +43,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 - [x] Clipboard capability detection (OSC 52/8)
 - [x] React reconciler host config producing commands
 - [x] `@bettertui/core` command buffer + runtime
-- [x] `@bettertui/native` bridge (factories, runtime, event loop)
+- [x] `@bettertui/core` native bridge (factories, runtime, event loop; merged from `@bettertui/native`)
 - [x] `@bettertui/themes` default theme + factory
 
 ## In progress

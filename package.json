@@ -16,11 +16,12 @@
     "format:check": "turbo run format:check",
     "typecheck": "turbo run typecheck",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm cargo:check",
-    "cargo:check": "cargo check --workspace",
-    "cargo:test": "cargo test --workspace",
-    "cargo:fmt": "cargo fmt --all",
-    "cargo:clippy": "cargo clippy --workspace -- -D warnings",
-    "clean": "turbo run clean && cargo clean",
+    "cargo:check": "cargo check --manifest-path packages/core/Cargo.toml",
+    "cargo:test": "cargo test --manifest-path packages/core/Cargo.toml",
+    "cargo:fmt": "cargo fmt --manifest-path packages/core/Cargo.toml --all",
+    "cargo:clippy": "cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings",
+    "cargo:build": "cargo build --manifest-path packages/core/Cargo.toml",
+    "clean": "turbo run clean && cargo clean --manifest-path packages/core/Cargo.toml",
     "prepare": "husky"
   },
   "devDependencies": {

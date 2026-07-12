@@ -24,7 +24,7 @@ flowchart TD
 
 `render(element)` creates a `Runtime`, a reconciler, and a container, then returns `{ root, runtime, dispose() }`. `RuntimeProvider` + `useRuntime()` expose the runtime to components for key handlers and frame control.
 
-## Native Runtime (`@bettertui/native`)
+## Native Runtime (inside `@bettertui/core`)
 
 `createRuntime(engine, eventBus, buffer)` returns `{ engine, eventBus, buffer, processCommands(), renderFrame(), resize(), shutdown() }` — the actual bridge that drives the Rust engine each frame.
 

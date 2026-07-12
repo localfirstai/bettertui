@@ -53,3 +53,31 @@ export {
   warnIfInvalid,
 } from "./validation";
 export type { ValidationError, ValidationResult } from "./validation";
+
+// Native bridge (Rust napi-rs bindings)
+export type {
+  NapiEngine,
+  NapiEventBus,
+  NapiFocusManager,
+  NapiTextEngine,
+  NapiScheduler,
+  ProcessResult,
+  TerminalCapabilities,
+  SchedulerStats,
+} from "./native/types";
+export {
+  createEngine,
+  createEventBus,
+  createFocusManager,
+  createTextEngine,
+  createScheduler,
+  detectCapabilities,
+  getVersion,
+} from "./native/index";
+export { createRuntime } from "./native/runtime";
+export type {
+  Runtime as NativeRuntime,
+  RuntimeOptions as NativeRuntimeOptions,
+} from "./native/runtime";
+export { createEventLoop } from "./native/events";
+export type { EventLoop, EventCallback } from "./native/events";

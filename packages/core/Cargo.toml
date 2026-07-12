@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-  "native/engine",
-  "native/bindings",
+  "crates/engine",
+  "crates/bindings",
 ]
 
 [workspace.package]

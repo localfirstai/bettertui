@@ -9,8 +9,7 @@ BetterTUI is a **framework-agnostic terminal UI rendering engine**. Rust owns al
 graph TD
     A[Application] --> B[@bettertui/react]
     B --> C[@bettertui/core]
-    C --> D[@bettertui/native]
-    D -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
+    C -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
     E --> F[bettertui-engine]
     F -->|crossterm + portable-pty| G[(Terminal / PTY)]
     C --> H[@bettertui/widgets]
@@ -53,4 +52,4 @@ graph TD
 
 The Rust engine (`bettertui-engine`, ~1,071 passing tests) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
 
-The TypeScript side is partial: `@bettertui/core` (command buffer, reconciler wrapper, runtime) and `@bettertui/native` (FFI bridge) are implemented; `@bettertui/react` has a real reconciler + hooks but its components are still stubs; `@bettertui/widgets`, `@bettertui/devtools`, and `@bettertui/themes` are minimal. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.
+The TypeScript side is partial: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real reconciler + hooks but its components are still stubs; `@bettertui/widgets`, `@bettertui/devtools`, and `@bettertui/themes` are minimal. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.

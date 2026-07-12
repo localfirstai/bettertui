@@ -11,7 +11,7 @@ cargo clippy --workspace -- -D warnings
 cargo fmt --all
 ```
 
-The `--lib` flag matters: `native/engine/tests/integration_test.rs` has pre-existing integration failures that would otherwise block CI. The CI job separates `cargo test --workspace` from the lib-target run.
+The `--lib` flag matters: `packages/core/crates/engine/tests/integration_test.rs` has pre-existing integration failures that would otherwise block CI. The CI job separates `cargo test --workspace` from the lib-target run.
 
 ## TypeScript
 

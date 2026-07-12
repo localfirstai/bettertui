@@ -1,6 +1,6 @@
 # Layout System
 
-BetterTUI lays out nodes with **Taffy** (CSS flexbox) adapted to a terminal cell grid. Code lives in `native/engine/src/layout/`.
+BetterTUI lays out nodes with **Taffy** (CSS flexbox) adapted to a terminal cell grid. Code lives in `packages/core/crates/engine/src/layout/`.
 
 ## Mapping
 

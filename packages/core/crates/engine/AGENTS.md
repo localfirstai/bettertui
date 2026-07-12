@@ -71,7 +71,7 @@
 ## Local Font Bundling
 
 - Use `include_bytes!("../../fonts/FontName.otf")` to embed fonts at compile time.
-- Font files go in `native/engine/fonts/`.
+- Font files go in `packages/core/crates/engine/fonts/`.
 - `LocalFontDetector` checks bundled font first, then system fonts.
 
 ## Error Chaining

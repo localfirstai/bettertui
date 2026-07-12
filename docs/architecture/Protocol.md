@@ -46,7 +46,7 @@ Files: `protocol/command.rs` (enum), `protocol/processor.rs` (`CommandProcessor`
 
 ## TypeScript side
 
-`@bettertui/core` builds commands incrementally in a `CommandBuffer` and drains them at frame boundaries. The `Runtime` (also in `@bettertui/core`) owns the buffer and flushes to subscribers. `@bettertui/native`'s `createRuntime()` ties a native engine + event bus + core `CommandBuffer` together and drives `processCommands()` / `renderFrame()`.
+`@bettertui/core` builds commands incrementally in a `CommandBuffer` and drains them at frame boundaries. The `Runtime` (also in `@bettertui/core`) owns the buffer and flushes to subscribers. `@bettertui/core`'s `createRuntime()` ties a native engine + event bus + core `CommandBuffer` together and drives `processCommands()` / `renderFrame()`.
 
 ```mermaid
 flowchart TD

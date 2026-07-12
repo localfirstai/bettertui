@@ -14,6 +14,6 @@ See [Guides: Testing](guides/testing.md) for commands. Summary of the current qu
 
 ## Notes
 
-- `cargo test -p bettertui-engine --lib` excludes `native/engine/tests/` (pre-existing integration failures would block CI otherwise).
+- `cargo test -p bettertui-engine --lib` excludes `packages/core/crates/engine/tests/` (pre-existing integration failures would block CI otherwise).
 - Biome is the only TS formatter/linter.
 - No `@bettertui/testing` package, no snapshot/headless harness, no `benchmarks/` implementation.

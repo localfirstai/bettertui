@@ -9,7 +9,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/shared` | [shared.md](packages/shared.md) | Implemented (types only) |
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
 | `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks real, components stubs) |
-| `@bettertui/native` | [native.md](packages/native.md) | Implemented (requires native addon) |
+| `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
 | `@bettertui/widgets` | [widgets.md](packages/widgets.md) | Stub |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
 | `@bettertui/icons` | [icons.md](packages/icons.md) | Implemented (empty registry) |
@@ -33,4 +33,4 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 - `@bettertui/core` re-exports `shared` types and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
 - `@bettertui/react` `Theme` (hook-authored) differs from `@bettertui/shared` `Theme` (engine colors+borders) — do not conflate them.
-- `@bettertui/native` depends on an **unbuilt** `bettertui_bindings` addon (not declared in package.json).
+- `@bettertui/core`'s native bridge depends on an **unbuilt** `bettertui_bindings` addon (not declared in package.json).

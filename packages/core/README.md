@@ -92,7 +92,7 @@ function createReconciler(buffer: CommandBuffer): {
 ## Consumers
 
 - `@bettertui/react` — uses `CommandBuffer`, `Instance`, `TextInstance`, `Runtime`, `createReconciler`
-- `@bettertui/native` — uses `CommandBuffer`, `Command`
+- `@bettertui/core` (native bridge) — uses `CommandBuffer`, `Command` internally
 - `@bettertui/widgets` — depends on this package
 - Examples — counter example demonstrates usage
 

@@ -1,6 +1,6 @@
 # Compositor & Screen
 
-Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Code: `native/engine/src/compositor/` and `native/engine/src/screen/`.
+Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Code: `packages/core/crates/engine/src/compositor/` and `packages/core/crates/engine/src/screen/`.
 
 ## Layers
 

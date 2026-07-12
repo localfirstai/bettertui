@@ -22,27 +22,26 @@ graph LR
 - **pnpm workspace** (`pnpm-workspace.yaml`) declares the publishable/linked packages:
   - `apps/*`
   - `packages/*`
-  - `native/bindings` (the napi-rs cdylib)
+  - `packages/core/crates/bindings` (the napi-rs cdylib)
   - `examples/*`
 - **TurboRepo** (`turbo.json`) orchestrates `build`, `dev`, `lint`, `format`, `format:check`, `typecheck`, `clean`. `build`/`lint`/`typecheck` depend on `^build`/`^lint`/`^typecheck` so dependencies build before dependents.
-- **Cargo workspace** (`Cargo.toml`, `resolver = "2"`) contains the two Rust crates:
-  - `native/engine` → `bettertui-engine` (the library)
-  - `native/bindings` → `bettertui-bindings` (the napi-rs cdylib)
+- **Cargo workspace** (`packages/core/Cargo.toml`, `resolver = "2"`) contains the two Rust crates:
+  - `packages/core/crates/engine` → `bettertui-engine` (the library)
+  - `packages/core/crates/bindings` → `bettertui-bindings` (the napi-rs cdylib)
 
-> Note: `native/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
+> Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
 
 ## Directory Layout
 
 ```
 bettertui/
-├── native/
-│   ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
-│   └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 ├── packages/
 │   ├── shared/        # @bettertui/shared  — type-only foundation (zero runtime code)
-│   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime
+│   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
+│   │   └── crates/
+│   │       ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
+│   │       └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── native/        # @bettertui/native  — bridge to the Rust engine addon
 │   ├── widgets/       # @bettertui/widgets — widget interface (stub)
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
 │   ├── icons/         # @bettertui/icons   — icon registry
@@ -54,7 +53,6 @@ bettertui/
 ├── benchmarks/        # empty placeholder (no harness implemented)
 ├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
 ├── tasks/             # PRDs, reports, archived slop
-├── Cargo.toml         # Rust workspace manifest
 ├── Cargo.lock
 ├── package.json       # root TS manifest + pnpm scripts
 ├── pnpm-workspace.yaml
@@ -70,9 +68,8 @@ All TypeScript packages are ESM-only, built with `tsup` (`dts: true`), and expor
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|
 | `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
-| `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime |
+| `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, components) |
-| `@bettertui/native` | **no** | `core` | Loads `bettertui_bindings` addon; factories + runtime + event loop |
 | `@bettertui/widgets` | yes | `core`, `shared` | `Widget` interface + version constant (stub) |
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/icons` | yes | — | In-memory icon registry |
@@ -83,7 +80,6 @@ graph TD
     shared[shared]
     core[core]
     react[react]
-    native[native]
     widgets[widgets]
     themes[themes]
     icons[icons]
@@ -93,7 +89,6 @@ graph TD
     shared --> themes
     shared --> widgets
     core --> react
-    core --> native
     core --> widgets
     icons -.leaf.-> icons
     devtools -.leaf.-> devtools
@@ -123,7 +118,7 @@ flowchart TD
     B --> C{build order by ^dep}
     C --> D[build @bettertui/shared]
     D --> E[build @bettertui/core]
-    E --> F[build @bettertui/react / native / themes / widgets]
+    E --> F[build @bettertui/react / themes / widgets]
     B -. optional .-> G[cargo build -p bettertui-bindings]
     G --> H[bettertui_bindings.node addon]
     F -->|requires| H
@@ -140,7 +135,7 @@ Key root scripts:
 | `pnpm check` | lint + format:check + typecheck + `cargo:check` |
 | `pnpm cargo:check/test/fmt/clippy` | Cargo passthroughs |
 
-The Rust addon (`bettertui_bindings`) is **not** declared in any package.json — `@bettertui/native` `require("bettertui_bindings")` at runtime and throws a clear error if the addon was not built first (`cargo build -p bettertui-bindings`).
+The Rust addon (`bettertui_bindings`) is **not** declared in any package.json — `@bettertui/core` loads `require("bettertui_bindings")` at runtime and throws a clear error if the addon was not built first (`cargo build -p bettertui-bindings`).
 
 ## Dependency Direction (the rule)
 
@@ -148,8 +143,7 @@ The Rust addon (`bettertui_bindings`) is **not** declared in any package.json �
 graph TD
     App[Application] --> React
     React --> Core
-    Core --> Native
-    Native --> Engine[bettertui-engine]
+    Core -->|napi-rs| Engine[bettertui-engine]
     Engine --> Terminal[(Terminal)]
     Core --> Shared
     React --> Shared
@@ -173,7 +167,6 @@ graph TD
     end
     subgraph L2[Core TypeScript Layer]
         C[@bettertui/core]
-        N[@bettertui/native]
         S[@bettertui/shared]
     end
     subgraph L3[Rust Engine Layer]
@@ -183,8 +176,7 @@ graph TD
         T[crossterm / portable-pty]
     end
     R --> C
-    C --> N
-    N -->|napi-rs| E
+    C -->|napi-rs| E
     E --> T
 ```
 

@@ -22,9 +22,7 @@
 
 - `@bettertui/react` depends on `@bettertui/core`, `@bettertui/shared`, and `react-reconciler`. Peers `react@^19.0.0`.
 - `@bettertui/core` depends on `@bettertui/shared`. No React dependency. Framework-agnostic.
-- `@bettertui/native` depends on `@bettertui/core`. No React dependency.
 - `@bettertui/themes` depends on `@bettertui/shared`. No React dependency.
-- `@bettertui/widgets` depends on `@bettertui/core` and `@bettertui/shared`. No React dependency.
 - `@bettertui/devtools` and `@bettertui/icons` have no dependencies.
 - All example projects depend on `@bettertui/react` and `@bettertui/core`.
 

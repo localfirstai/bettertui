@@ -1,6 +1,6 @@
 # Text Editing
 
-BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `textEngine` (no arena dependency). Code: `native/engine/src/text/` (the top-level `editor/` module is a stub).
+BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `textEngine` (no arena dependency). Code: `packages/core/crates/engine/src/text/` (the top-level `editor/` module is a stub).
 
 ## Engine
 
@@ -42,7 +42,7 @@ classDiagram
 
 ## TypeScript surface
 
-`@bettertui/native` exposes `NapiTextEngine` (~25 methods):
+`@bettertui/core` exposes `NapiTextEngine` (~25 methods):
 
 | Group | Methods |
 |-------|---------|

@@ -45,6 +45,5 @@ Cargo.lock
 *.tsbuildinfo
 
 # Rust
-native/engine/target/
-native/bindings/target/
+packages/core/target/
 .plan

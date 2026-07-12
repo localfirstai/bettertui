@@ -1,6 +1,6 @@
 # Scheduler
 
-The scheduler owns frame timing, a priority queue, frame budget tracking, idle callbacks, and animation frame scheduling. Code: `native/engine/src/scheduler/mod.rs` (~18 tests).
+The scheduler owns frame timing, a priority queue, frame budget tracking, idle callbacks, and animation frame scheduling. Code: `packages/core/crates/engine/src/scheduler/mod.rs` (~18 tests).
 
 ## Responsibilities
 

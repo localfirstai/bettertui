@@ -25,7 +25,7 @@ Consequence for this harness:
   under `src/bench/apps/bettertui/` are scaffolded but will fail to `import` until
   BetterTUI is published (see v1.0 work item #1 in the report).
 
-**To unblock:** publish `@bettertui/core`, `@bettertui/native`, `@bettertui/react`
+**To unblock:** publish `@bettertui/core` (includes the native bridge formerly `@bettertui/native`), `@bettertui/react`
 (with the napi addon as an optional platform dependency, mirroring
 `@opentui/core-darwin-arm64`), then add them to this package's `dependencies`.
 

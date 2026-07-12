@@ -14,8 +14,7 @@ BetterTUI is **never** an application, IDE, AI framework, or editor. It is infra
 graph TD
     App[Application] --> React[@bettertui/react]
     React --> Core[@bettertui/core]
-    Core --> Native[@bettertui/native]
-    Native -->|napi-rs FFI| Bindings[bettertui-bindings]
+    Core -->|napi-rs FFI| Bindings[packages/core/crates/bindings]
     Bindings --> Engine[bettertui-engine]
     Engine --> Term[(crossterm / portable-pty)]
     Core --> Shared[@bettertui/shared]
@@ -39,18 +38,18 @@ graph TD
     end
     subgraph L2[Core TypeScript]
         C[@bettertui/core]
-        N[@bettertui/native]
         S[@bettertui/shared]
     end
     subgraph L3[Rust Engine]
+        B[packages/core/crates/bindings]
         E[bettertui-engine]
     end
     subgraph L4[Terminal]
         T[crossterm / portable-pty]
     end
     R --> C
-    C --> N
-    N -->|napi-rs| E
+    C -->|napi-rs| B
+    B --> E
     E --> T
 ```
 
@@ -85,7 +84,7 @@ graph TD
 | `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
 | `@bettertui/react` | React adapter (reconciler + hooks + components) | ⚠️ reconciler/hooks real, components stubs |
-| `@bettertui/native` | napi bridge + runtime | ✅ (needs native addon) |
+| `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
 | `@bettertui/widgets` | Widget library | ❌ stub |
 | `@bettertui/themes` | Theme defs + factory | ✅ |
 | `@bettertui/icons` | Icon registry | ✅ (empty) |

@@ -1,6 +1,6 @@
 # Widget Model
 
-Widgets are the high-level, composable UI layer built on top of the arena. Code: `native/engine/src/widgets/` (~200 tests across 30+ files).
+Widgets are the high-level, composable UI layer built on top of the arena. Code: `packages/core/crates/engine/src/widgets/` (~200 tests across 30+ files).
 
 ## Trait
 

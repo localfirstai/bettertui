@@ -7,7 +7,7 @@ The project is pre-1.0; the public API is not yet stable.
 ## [Unreleased]
 
 ### Added
-- napi-rs bindings exposing the Rust engine (`@bettertui/native`): engine, event bus, focus manager, text engine, scheduler, capability detection (`createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`, `createRuntime`, `createEventLoop`).
+- napi-rs bindings exposing the Rust engine (originally `@bettertui/native`, now internal to `@bettertui/core`): engine, event bus, focus manager, text engine, scheduler, capability detection (`createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`, `createRuntime`, `createEventLoop`).
 - `@bettertui/core` framework-agnostic command buffer, tree operations, reconciler wrapper, and `Runtime`.
 - React 19 adapter (`@bettertui/react`): `react-reconciler` host config, `render()`, `RuntimeProvider`/`useRuntime`, and hooks (`Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`).
 - Rust engine subsystems: arena node model, command protocol, renderer, frame buffer, dirty diff, Taffy layout, events, input (keyboard/mouse/paste), ANSI parser, animation engine, scheduler, capability detection, terminal I/O + VT emulation, PTY runtime, compositor, rope-based text engine, widget framework.

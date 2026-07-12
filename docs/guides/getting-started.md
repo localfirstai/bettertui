@@ -17,9 +17,9 @@ pnpm build            # turbo run build across all TS packages
 cargo build -p bettertui-bindings   # produces the bettertui_bindings addon
 ```
 
-> `@bettertui/native` calls `require("bettertui_bindings")` at runtime. If you skip the `cargo build` step, native factories throw: `Failed to load native bindings. Run cargo build -p bettertui-bindings first.`
+> `@bettertui/core`'s native bridge calls `require("bettertui_bindings")` at runtime. If you skip the `cargo build` step, native factories throw: `Failed to load native bindings. Run cargo build -p bettertui-bindings first.`
 
-The Rust workspace is independent of pnpm; the TS `build` task does not compile Rust. Build the addon explicitly (or wire it into your app's build) before running anything that touches `@bettertui/native`.
+The Rust workspace is independent of pnpm; the TS `build` task does not compile Rust. Build the addon explicitly (or wire it into your app's build) before running anything that touches the native bridge (`@bettertui/core`'s native module at `packages/core/src/native/`).
 
 ## Useful scripts
 
@@ -51,7 +51,7 @@ The other examples (`dashboard`, `mouse`, `table`, `text-editor`, `tree`) are pl
 graph TD
     App[Your app] --> React[@bettertui/react]
     React --> Core[@bettertui/core: CommandBuffer + Runtime]
-    Core --> Native[@bettertui/native: load bettertui_bindings]
+    Core --> Native[core native bridge: load bettertui_bindings]
     Native --> Engine[Rust engine]
     Engine --> Term[crossterm / portable-pty]
 ```

@@ -1,6 +1,6 @@
 # Animation
 
-The animation engine provides tween, spring, keyframe, and color interpolation. Code: `native/engine/src/animation/` (single `mod.rs`, ~1200 lines, ~30 tests). It is decoupled from rendering and driven by the `Scheduler`.
+The animation engine provides tween, spring, keyframe, and color interpolation. Code: `packages/core/crates/engine/src/animation/` (single `mod.rs`, ~1200 lines, ~30 tests). It is decoupled from rendering and driven by the `Scheduler`.
 
 ## Types
 
@@ -64,6 +64,6 @@ sequenceDiagram
 
 ## From TypeScript
 
-`@bettertui/react` exposes `useAnimation()`; `@bettertui/native` exposes `NapiScheduler.schedule_animation()` through the bindings.
+`@bettertui/react` exposes `useAnimation()`; `@bettertui/core` exposes `NapiScheduler.schedule_animation()` through the bindings.
 
 > Known issue (Phase 8 review): `schedule_animation()`/`cancel_animation()` exist but animation callbacks were not being executed at the time of the review — documented as a half-implemented path.

@@ -1,6 +1,6 @@
-# @bettertui/native
+# @bettertui/core (native bridge)
 
-**Bridge to the Rust engine addon (`bettertui_bindings`).** Depends on `@bettertui/core`. Published (`private: false`).
+**The native bridge (at `packages/core/src/native/`) loads the Rust engine addon (`bettertui_bindings` at `packages/core/crates/bindings/`).** Previously the separate `@bettertui/native` package; now part of `@bettertui/core`.
 
 ## Loading
 
@@ -48,4 +48,4 @@ flowchart TD
 
 ## Status
 
-Implemented against the napi surface. All native factories throw at runtime unless the Rust addon is built first.
+Implemented at `packages/core/src/native/`. All native factories throw at runtime unless the Rust addon is built first.
