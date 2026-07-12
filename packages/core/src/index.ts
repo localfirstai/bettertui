@@ -94,7 +94,9 @@ export {
   createScheduler,
   detectCapabilities,
   getVersion,
+  highlightCode,
 } from "./native";
+export type { HighlightSegment } from "./native";
 export { createRuntime } from "./native/runtime";
 export type {
   Runtime as NativeRuntime,

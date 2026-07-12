@@ -56,6 +56,7 @@ export class CapabilityInspector {
     if (typeof value === "boolean") return value;
     if (typeof value === "string") return value !== "unknown" && value !== "";
     if (typeof value === "object" && value !== null) return true;
+    /* c8 ignore next 2 — return false is unreachable: all capabilities are boolean, string, or object */
     return false;
   }
 

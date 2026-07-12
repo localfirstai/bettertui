@@ -129,3 +129,25 @@ export function createKeymap(): NapiKeymap {
   const Keymap = addon["NapiKeymap"] as new () => NapiKeymap;
   return new Keymap();
 }
+
+export interface HighlightSegment {
+  text: string;
+  fg: string | null;
+  bg: string | null;
+  bold: boolean | null;
+  italic: boolean | null;
+  underline: boolean | null;
+  dim: boolean | null;
+  strikethrough: boolean | null;
+}
+
+export function highlightCode(code: string, language: string): HighlightSegment[][] {
+  const addon = loadNativeAddon();
+  const fn = addon["highlightCode"] as (code: string, language: string) => string;
+  const raw = fn(code, language);
+  try {
+    return JSON.parse(raw) as HighlightSegment[][];
+  } catch {
+    return [];
+  }
+}

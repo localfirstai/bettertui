@@ -146,7 +146,8 @@ impl From<ColorJson> for Color {
                 "light_magenta" | "lightmagenta" => {
                     Color::Named(bettertui_engine::tree::NamedColor::BrightMagenta)
                 }
-                _ => Color::Named(bettertui_engine::tree::NamedColor::White),
+                _ => bettertui_engine::tree::color::Color::parse(&name)
+                    .unwrap_or(Color::Named(bettertui_engine::tree::NamedColor::White)),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
         }
@@ -329,6 +330,7 @@ fn parse_node_kind(kind: &str) -> NodeKind {
         "scrollarea" | "scroll" => NodeKind::Scroll,
         "tabs" | "tab" => NodeKind::Tab,
         "modal" => NodeKind::Modal,
+        "code" => NodeKind::Code,
         "spacer" => NodeKind::Spacer,
         "separator" => NodeKind::Separator,
         _ => NodeKind::Box,
@@ -2226,4 +2228,51 @@ pub fn detect_capabilities() -> String {
         "pixelSize": pixel.map(|(pw, ph)| { serde_json::json!({ "width": pw, "height": ph }) }),
     })
     .to_string()
+}
+
+/// Highlight source code using tree-sitter syntax highlighting.
+///
+/// Returns a JSON array of lines, each line being an array of segments.
+/// Each segment has `text`, `fg`, `bg`, `bold`, `italic`, `underline`, and `dim` fields.
+/// Colors are hex strings like `"#ff7b72"` or named strings like `"red"`.
+#[napi]
+pub fn highlight_code(code: String, language: String) -> String {
+    let mut hl = bettertui_engine::syntax::global_highlighter()
+        .lock()
+        .unwrap();
+    let lines = hl.highlight(&code, &language);
+    match lines {
+        Some(lines) => {
+            let json_lines: Vec<serde_json::Value> = lines
+                .iter()
+                .map(|line| {
+                    let segments: Vec<serde_json::Value> = line
+                        .segments
+                        .iter()
+                        .map(|seg| {
+                            let fg = seg.style.fg.map(color_to_hex);
+                            let bg = seg.style.bg.map(color_to_hex);
+                            serde_json::json!({
+                                "text": seg.text,
+                                "fg": fg,
+                                "bg": bg,
+                                "bold": seg.style.bold,
+                                "italic": seg.style.italic,
+                                "underline": seg.style.underline,
+                                "dim": seg.style.dim,
+                                "strikethrough": seg.style.strikethrough,
+                            })
+                        })
+                        .collect();
+                    serde_json::json!(segments)
+                })
+                .collect();
+            serde_json::to_string(&json_lines).unwrap_or_default()
+        }
+        None => "[]".to_string(),
+    }
+}
+
+fn color_to_hex(c: bettertui_engine::tree::color::Color) -> String {
+    c.to_rgba(255).to_hex()
 }

@@ -1,10 +1,12 @@
-use super::ast::{InlineNode, MarkdownNode};
+use crate::syntax::global_highlighter;
 use crate::tree::color::Color;
 use crate::tree::layout::{FlexDirection, LayoutProps};
 use crate::tree::node_id::NodeId;
 use crate::tree::style::Style;
 use crate::widgets::WidgetId;
 use crate::widgets::context::WidgetContext;
+
+use super::ast::{InlineNode, MarkdownNode};
 
 pub struct MarkdownRenderer {
     pub base_style: Style,
@@ -176,6 +178,49 @@ impl MarkdownRenderer {
                 Some(flex_id)
             }
             MarkdownNode::CodeBlock { language, code } => {
+                if let Some(lang) = language
+                    && !lang.as_ref().is_empty()
+                {
+                    // Try syntax highlighting
+                    let lines = {
+                        let mut hl = global_highlighter().lock().unwrap();
+                        hl.highlight(code, lang.as_ref())
+                    };
+
+                    if let Some(lines) = lines {
+                        let layout = LayoutProps {
+                            direction: FlexDirection::Column,
+                            ..LayoutProps::default()
+                        };
+                        let flex_id = ctx.make_flex(layout, self.code_block_style);
+
+                        for line in &lines {
+                            if line.segments.len() <= 1 {
+                                let style = merge_with_base(
+                                    line.segments.first().map(|s| &s.style),
+                                    &self.code_block_style,
+                                );
+                                let tid = ctx.make_text(line.text(), style);
+                                ctx.append_child(flex_id, tid);
+                            } else {
+                                let row_layout = LayoutProps {
+                                    direction: FlexDirection::Row,
+                                    ..LayoutProps::default()
+                                };
+                                let row_id = ctx.make_flex(row_layout, self.code_block_style);
+                                for seg in &line.segments {
+                                    let seg_style =
+                                        merge_with_base(Some(&seg.style), &self.code_block_style);
+                                    let tid = ctx.make_text(seg.text.as_str(), seg_style);
+                                    ctx.append_child(row_id, tid);
+                                }
+                                ctx.append_child(flex_id, row_id);
+                            }
+                        }
+                        return Some(flex_id);
+                    }
+                }
+                // Fallback: plain text with language label
                 let mut text = String::new();
                 if let Some(lang) = language {
                     text.push_str(lang.as_ref());
@@ -267,6 +312,24 @@ impl MarkdownRenderer {
             }
         }
         result
+    }
+}
+
+/// Merge a highlight segment style with a base code block style.
+/// Segment attributes override the base.
+fn merge_with_base(segment_style: Option<&Style>, base: &Style) -> Style {
+    match segment_style {
+        Some(s) => Style {
+            fg: s.fg.or(base.fg),
+            bg: base.bg.or(s.bg),
+            bold: s.bold.or(base.bold),
+            italic: s.italic.or(base.italic),
+            underline: s.underline.or(base.underline),
+            dim: s.dim.or(base.dim),
+            strikethrough: s.strikethrough.or(base.strikethrough),
+            ..Style::default()
+        },
+        None => *base,
     }
 }
 

@@ -37,6 +37,7 @@ pub mod screen;
 pub mod scrollback;
 pub mod selection;
 pub mod snapshot;
+pub mod syntax;
 pub mod terminal;
 pub mod terminal_process;
 pub mod text;

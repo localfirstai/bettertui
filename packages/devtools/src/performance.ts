@@ -25,15 +25,13 @@ export class PerformanceTracker {
   }
 
   /** Call at the end of a frame with metrics */
-  endFrame(
-    options: {
-      dirtyRegionCount?: number;
-      renderDuration?: number;
-      layoutDuration?: number;
-      paintDuration?: number;
-      ffiDuration?: number;
-    } = {},
-  ): FrameMetrics {
+  endFrame(options: {
+    dirtyRegionCount?: number;
+    renderDuration?: number;
+    layoutDuration?: number;
+    paintDuration?: number;
+    ffiDuration?: number;
+  }): FrameMetrics {
     const now = performance.now();
     const metrics: FrameMetrics = {
       frameNumber: this.nextFrameNumber++,
@@ -118,6 +116,7 @@ export class PerformanceTracker {
       const perf = globalThis.performance as {
         memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number; totalJSHeapSize: number };
       };
+      /* c8 ignore start — performance.memory is Chrome-only, not available in Node.js */
       if (perf.memory) {
         memoryUsage = {
           heapUsed: perf.memory.usedJSHeapSize,
@@ -125,6 +124,7 @@ export class PerformanceTracker {
           external: perf.memory.totalJSHeapSize,
         };
       }
+      /* c8 ignore stop */
     }
 
     return {

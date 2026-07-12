@@ -1,3 +1,4 @@
+import { highlightCode } from "@bettertui/core";
 import type { JSX } from "react";
 import { Box, Flex } from "./layout";
 import { Text } from "./typography";
@@ -40,12 +41,45 @@ export interface CodeBlockProps {
   style?: Record<string, unknown> | undefined;
 }
 
-export function CodeBlock({ code, showLineNumbers, style }: CodeBlockProps): JSX.Element {
-  const lines = (code || "").split("\n");
+export function CodeBlock({ code, language, showLineNumbers, style }: CodeBlockProps): JSX.Element {
+  const content = code || "";
+  const lines = language ? highlightCode(content, language) : [];
+
+  if (lines.length > 0) {
+    return (
+      <Flex flexDirection="column" style={style}>
+        {lines.map((segments, lineIdx) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: parser output is static, lines may repeat
+          <Flex key={`l-${lineIdx}`} flexDirection="row">
+            {showLineNumbers && (
+              <Box width={4}>
+                <Text dim>{String(lineIdx + 1).padStart(3, " ")} </Text>
+              </Box>
+            )}
+            {segments.map((seg, segIdx) => (
+              <Text
+                // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional tokens
+                key={`s-${segIdx}`}
+                color={seg.fg || undefined}
+                bold={seg.bold ?? undefined}
+                italic={seg.italic ?? undefined}
+                dim={seg.dim ?? undefined}
+                underline={seg.underline ?? undefined}
+              >
+                {seg.text}
+              </Text>
+            ))}
+          </Flex>
+        ))}
+      </Flex>
+    );
+  }
+
+  const plainLines = content.split("\n");
   return (
     <Flex flexDirection="column" style={style}>
-      {lines.map((line) => (
-        <Flex key={line} flexDirection="row">
+      {plainLines.map((line, i) => (
+        <Flex key={`${i}-${line}`} flexDirection="row">
           {showLineNumbers && (
             <Box width={4}>
               <Text dim>{String(i + 1).padStart(3, " ")} </Text>

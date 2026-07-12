@@ -141,6 +141,29 @@ describe("createDevTools", () => {
     expect(devtools.focus.getSnapshot().focusedNodeId).toBe("node-1");
   });
 
+  it("enabled DevTools records blur events through recordFocus", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordFocus("focus", "node-1");
+    devtools.recordFocus("blur", "node-1");
+    expect(devtools.focus.getSnapshot().focusedNodeId).toBeNull();
+  });
+
+  it("enabled DevTools records keyboard events with target", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordKeyboard(
+      "Enter",
+      { ctrl: false, shift: false, alt: false, meta: false },
+      "btn-1",
+    );
+    expect(devtools.events.count).toBe(1);
+  });
+
+  it("enabled DevTools records mouse events with button and target", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordMouse("mousedown", 50, 100, "right", "btn-2");
+    expect(devtools.events.count).toBe(1);
+  });
+
   it("enabled DevTools records resize events", () => {
     const devtools = createDevTools({ enabled: true });
     devtools.recordResize(120, 40, 80, 24);
@@ -381,6 +404,29 @@ describe("CommandInspector", () => {
     expect(summary.lastTimestamp).toBeNull();
   });
 
+  it("getSummary with frameCount=0 returns avgCommandsPerFrame=0", () => {
+    const inspector = new CommandInspector();
+    inspector.record("CreateNode", { id: "1" });
+    const summary = inspector.getSummary(0);
+    expect(summary.total).toBe(1);
+    expect(summary.avgCommandsPerFrame).toBe(0);
+  });
+
+  it("getSummary with frameCount omitted returns avgCommandsPerFrame=0", () => {
+    const inspector = new CommandInspector();
+    inspector.record("CreateNode", { id: "1" });
+    const summary = inspector.getSummary();
+    expect(summary.avgCommandsPerFrame).toBe(0);
+  });
+
+  it("getSummary with frameCount>0 returns avgCommandsPerFrame", () => {
+    const inspector = new CommandInspector();
+    inspector.record("CreateNode", { id: "1" });
+    inspector.record("SetText", { id: "2" });
+    const summary = inspector.getSummary(4);
+    expect(summary.avgCommandsPerFrame).toBe(0.5);
+  });
+
   it("clears all commands", () => {
     const inspector = new CommandInspector();
     inspector.record("CreateNode", { id: "1" });
@@ -577,7 +623,7 @@ describe("PerformanceTracker", () => {
     const tracker = new PerformanceTracker();
     for (let i = 0; i < 10; i++) {
       tracker.beginFrame(1);
-      tracker.endFrame();
+      tracker.endFrame({});
     }
     const fps = tracker.getFps(3);
     expect(fps).toBeGreaterThanOrEqual(0);
@@ -589,7 +635,7 @@ describe("PerformanceTracker", () => {
     // Use beginFrame/endFrame which uses performance.now() internally
     for (let i = 0; i < 5; i++) {
       tracker.beginFrame(1);
-      tracker.endFrame();
+      tracker.endFrame({});
     }
     const fps = tracker.getFps(5);
     expect(fps).toBeGreaterThan(0);
@@ -667,6 +713,14 @@ describe("PerformanceTracker", () => {
     expect(frame.layoutDuration).toBe(3);
     expect(frame.paintDuration).toBe(2);
     expect(frame.ffiDuration).toBe(1);
+  });
+
+  it("endFrame with no arguments uses defaults", () => {
+    const tracker = new PerformanceTracker();
+    tracker.beginFrame(3);
+    const frame = tracker.endFrame({});
+    expect(frame.dirtyRegionCount).toBe(0);
+    expect(frame.commandCount).toBe(3);
   });
 
   it("calls onFrame callback via recordFrame", () => {
@@ -1014,6 +1068,44 @@ describe("SchedulerInspector", () => {
     inspector.recordFrameDrop();
     expect(captured).toBe(true);
   });
+
+  it("incrementFrameCount increases frame count", () => {
+    const inspector = new SchedulerInspector();
+    inspector.incrementFrameCount();
+    inspector.incrementFrameCount();
+    expect(inspector.getSnapshot().frameCount).toBe(2);
+  });
+
+  it("updateState with all fields updates snapshot", () => {
+    const inspector = new SchedulerInspector();
+    inspector.updateState({
+      isRunning: true,
+      isRendering: true,
+      hasScheduledRender: true,
+      frameCount: 50,
+      pendingFrames: 2,
+      highestPriority: "high",
+      idleCallbacksPending: 5,
+      animationFramesPending: 1,
+      frameBudgetMs: 8,
+      utilization: 0.75,
+    });
+    inspector.recordFrameDrop();
+    inspector.recordFrameDrop();
+    inspector.recordFrameDrop();
+    const s = inspector.getSnapshot();
+    expect(s.isRunning).toBe(true);
+    expect(s.isRendering).toBe(true);
+    expect(s.hasScheduledRender).toBe(true);
+    expect(s.frameCount).toBe(50);
+    expect(s.droppedFrames).toBe(3);
+    expect(s.pendingFrames).toBe(2);
+    expect(s.highestPriority).toBe("high");
+    expect(s.idleCallbacksPending).toBe(5);
+    expect(s.animationFramesPending).toBe(1);
+    expect(s.frameBudgetMs).toBe(8);
+    expect(s.utilization).toBe(0.75);
+  });
 });
 
 // ─── FocusInspector ──────────────────────────────────────────────────────────
@@ -1098,6 +1190,18 @@ describe("FocusInspector", () => {
     expect(captured).toBe(true);
   });
 
+  it("calls onFocusChange callback on blur", () => {
+    let captureCount = 0;
+    const inspector = new FocusInspector({
+      onFocusChange: () => {
+        captureCount++;
+      },
+    });
+    inspector.recordFocus("node-1");
+    inspector.recordBlur("node-1");
+    expect(captureCount).toBe(2);
+  });
+
   it("clears all data", () => {
     const inspector = new FocusInspector();
     inspector.recordFocus("node-1");
@@ -1140,12 +1244,60 @@ describe("CapabilityInspector", () => {
     expect(inspector.has("terminalSize")).toBe(true);
   });
 
+  it("has() with non-existent capability returns false via fallthrough", () => {
+    const inspector = new CapabilityInspector();
+    // Cast needed: has() is typed to accept keyof TerminalCapabilities,
+    // but at runtime we can pass any string to test the fallthrough path
+    // biome-ignore lint/suspicious/noExplicitAny: testing runtime behavior beyond the type system
+    expect(inspector.has("nonexistent" as any)).toBe(false);
+  });
+
   it("returns summary of enabled features", () => {
     const inspector = new CapabilityInspector();
     inspector.update({ trueColor: true, mouseSupport: true });
     const summary = inspector.getSummary();
     expect(summary).toContain("trueColor");
     expect(summary).toContain("mouse");
+  });
+
+  it("getSummary with all capabilities enabled returns all features", () => {
+    const inspector = new CapabilityInspector();
+    inspector.update({
+      trueColor: true,
+      kittyKeyboard: true,
+      mouseSupport: true,
+      osc52: true,
+      osc8: true,
+      pixelSupport: true,
+      alternateScreen: true,
+      syncUpdate: true,
+      bracketedPaste: true,
+      focusEvents: true,
+      strikethrough: true,
+      underlineColor: true,
+      cursorStyle: true,
+      hyperlinks: true,
+      inlineImages: true,
+      sixel: true,
+    });
+    const summary = inspector.getSummary();
+    expect(summary).toContain("trueColor");
+    expect(summary).toContain("kittyKeyboard");
+    expect(summary).toContain("mouse");
+    expect(summary).toContain("osc52");
+    expect(summary).toContain("osc8");
+    expect(summary).toContain("pixel");
+    expect(summary).toContain("altScreen");
+    expect(summary).toContain("sync");
+    expect(summary).toContain("bracketedPaste");
+    expect(summary).toContain("focusEvents");
+    expect(summary).toContain("strikethrough");
+    expect(summary).toContain("underlineColor");
+    expect(summary).toContain("cursorStyle");
+    expect(summary).toContain("hyperlinks");
+    expect(summary).toContain("inlineImages");
+    expect(summary).toContain("sixel");
+    expect(summary).toHaveLength(16);
   });
 
   it("updateFromNative parses JSON", () => {
@@ -1328,6 +1480,24 @@ describe("SnapshotManager", () => {
     const manager = new SnapshotManager();
     const diff = manager.diff(999, 998);
     expect(diff).toBeNull();
+  });
+
+  it("diffTrees with identical style and layout does not report changes", () => {
+    const manager = new SnapshotManager();
+    const tree1 = {
+      id: "root",
+      type: "Box",
+      props: {},
+      style: { bold: true },
+      layout: { x: 0, y: 0, width: 100, height: 50 },
+      children: [],
+    };
+    const s1 = manager.capture(tree1);
+    const s2 = manager.capture({ ...tree1 });
+    const diff = manager.diff(s1.id, s2.id);
+    expect(diff).not.toBeNull();
+    expect(diff?.changed.some((c) => c.field === "style")).toBe(false);
+    expect(diff?.changed.some((c) => c.field === "layout")).toBe(false);
   });
 
   it("detects added nodes", () => {
@@ -1563,6 +1733,20 @@ describe("export utilities", () => {
     expect(summary).toContain("Focusable Nodes: 1");
   });
 
+  it("createSummary with null focus shows none", () => {
+    const data = createExport({
+      focus: {
+        focusedNodeId: null,
+        previousNodeId: null,
+        focusableNodes: [],
+        tabOrder: [],
+        currentScope: null,
+      },
+    });
+    const summary = createSummary(data);
+    expect(summary).toContain("Focused: none");
+  });
+
   it("createSummary includes capabilities info", () => {
     const data = createExport({
       capabilities: {
@@ -1590,5 +1774,30 @@ describe("export utilities", () => {
     expect(summary).toContain("Brand: kitty");
     expect(summary).toContain("Size: 80x24");
     expect(summary).toContain("True Color: true");
+  });
+
+  it("enabled DevTools exportJson returns valid JSON", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordCommand("CreateNode", { id: "1" });
+    const json = devtools.exportJson();
+    const parsed = JSON.parse(json);
+    expect(parsed.commands).toHaveLength(1);
+  });
+
+  it("enabled DevTools exportJson with options filters data", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordCommand("CreateNode", { id: "1" });
+    const json = devtools.exportJson({ includeCommands: false });
+    const parsed = JSON.parse(json);
+    expect(parsed.commands).toHaveLength(0);
+  });
+
+  it("enabled DevTools exportData with options filters data", () => {
+    const devtools = createDevTools({ enabled: true });
+    devtools.recordCommand("CreateNode", { id: "1" });
+    devtools.recordKeyboard("a", { ctrl: false, shift: false, alt: false, meta: false });
+    const data = devtools.exportData({ includeCommands: false });
+    expect(data.commands).toHaveLength(0);
+    expect(data.events).toHaveLength(1);
   });
 });

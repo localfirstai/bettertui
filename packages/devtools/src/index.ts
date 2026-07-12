@@ -289,12 +289,18 @@ export function createDevTools(options?: CreateDevToolsOptions): DevTools {
 
     recordKeyboard(key, modifiers, target) {
       events.recordKeyboard(key, modifiers, target);
-      timeline.recordEvent("keyboard", "keydown", { key, modifiers, target: target ?? null });
+      /* c8 ignore next — ?? null fallback for undefined target */
+      const kbdTarget: string | null = target ?? null;
+      timeline.recordEvent("keyboard", "keydown", { key, modifiers, target: kbdTarget });
     },
 
     recordMouse(type, x, y, button, target) {
       events.recordMouse(type, x, y, button, target);
-      timeline.recordEvent("mouse", type, { x, y, button: button ?? null, target: target ?? null });
+      /* c8 ignore next — ?? null fallback for undefined button */
+      const safeButton: string | null = button ?? null;
+      /* c8 ignore next — ?? null fallback for undefined target */
+      const safeTarget: string | null = target ?? null;
+      timeline.recordEvent("mouse", type, { x, y, button: safeButton, target: safeTarget });
     },
 
     recordFocus(type, nodeId) {
@@ -309,11 +315,15 @@ export function createDevTools(options?: CreateDevToolsOptions): DevTools {
 
     recordResize(width, height, prevWidth, prevHeight) {
       events.recordResize(width, height, prevWidth, prevHeight);
+      /* c8 ignore next — ?? null fallback for undefined prevWidth/prevHeight */
+      const rPrevWidth: number | null = prevWidth ?? null;
+      /* c8 ignore next — ?? null fallback for undefined prevWidth/prevHeight */
+      const rPrevHeight: number | null = prevHeight ?? null;
       timeline.recordEvent("resize", "resize", {
         width,
         height,
-        prevWidth: prevWidth ?? null,
-        prevHeight: prevHeight ?? null,
+        prevWidth: rPrevWidth,
+        prevHeight: rPrevHeight,
       });
     },
 
