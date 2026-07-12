@@ -30,7 +30,10 @@ export default defineConfig({
           label: "Core Concepts",
           items: [
             { label: "Architecture", slug: "core-concepts/architecture" },
-            { label: "Rendering Pipeline", slug: "core-concepts/rendering-pipeline" },
+            {
+              label: "Rendering Pipeline",
+              slug: "core-concepts/rendering-pipeline",
+            },
             { label: "Layout System", slug: "core-concepts/layout-system" },
             { label: "Event System", slug: "core-concepts/event-system" },
           ],

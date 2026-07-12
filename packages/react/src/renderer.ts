@@ -2,7 +2,7 @@ import type { CommandBufferConsumer, Instance, TextInstance } from "@bettertui/c
 import { generateId } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import Reconciler from "react-reconciler";
-import { DefaultEventPriority } from "react-reconciler/constants";
+import { DefaultEventPriority } from "react-reconciler/constants.js";
 
 export interface Container {
   id: string;

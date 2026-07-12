@@ -14,6 +14,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
 | `@bettertui/icons` | [icons.md](packages/icons.md) | Implemented (empty registry) |
 | `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub |
+| `@bettertui/testing` | [testing.md](packages/testing.md) | Implemented |
 
 ## Rust crates
 
