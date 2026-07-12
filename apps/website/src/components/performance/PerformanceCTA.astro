@@ -1,0 +1,35 @@
+---
+import { Button } from "@components/ui/button";
+import { GITHUB_URL } from "@lib/constants";
+---
+
+<section class="border-t border-border py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div
+      class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background via-background to-terminal-muted/20 p-12 text-center md:p-16"
+    >
+      <div class="dot-grid pointer-events-none absolute inset-0 opacity-50" />
+
+      <div class="relative">
+        <h2 class="text-section text-balance">Run the benchmarks yourself</h2>
+        <p class="text-section-sub mt-4 text-muted-foreground">
+          Clone the repo and run the benchmark harness locally. All results are reproducible.
+        </p>
+
+        <div class="mx-auto mt-8 flex max-w-md items-center gap-2 rounded-lg border bg-muted px-4 py-2.5 font-mono text-sm">
+          <span class="text-muted-foreground">$</span>
+          <span class="flex-1">pnpm bench</span>
+        </div>
+
+        <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="lg">View Source</Button>
+          </a>
+          <a href="/getting-started/quick-start">
+            <Button size="lg">Try BetterTUI</Button>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

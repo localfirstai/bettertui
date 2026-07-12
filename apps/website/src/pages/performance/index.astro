@@ -1,0 +1,31 @@
+---
+import Footer from "../../components/Footer.astro";
+import Navbar from "../../components/Navbar.astro";
+import ComparisonTable from "../../components/performance/ComparisonTable.astro";
+import InteractiveCompare from "../../components/performance/InteractiveCompare.astro";
+import Methodology from "../../components/performance/Methodology.astro";
+import MetricBars from "../../components/performance/MetricBars.astro";
+import OverviewCards from "../../components/performance/OverviewCards.astro";
+import PerformanceCTA from "../../components/performance/PerformanceCTA.astro";
+import PerformanceHero from "../../components/performance/PerformanceHero.astro";
+import RenderPipeline from "../../components/performance/RenderPipeline.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Performance — BetterTUI vs OpenTUI Benchmarks"
+  description="Independent benchmark harness comparing BetterTUI against OpenTUI across 10 workloads and 16 metrics including layout, render, FPS, memory, and latency."
+>
+  <Navbar />
+  <main class="pt-16">
+    <PerformanceHero />
+    <OverviewCards />
+    <MetricBars />
+    <ComparisonTable />
+    <RenderPipeline />
+    <InteractiveCompare />
+    <Methodology />
+    <PerformanceCTA />
+  </main>
+  <Footer />
+</BaseLayout>

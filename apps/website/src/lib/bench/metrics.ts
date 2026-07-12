@@ -1,31 +1,4 @@
-// Metric collection for the OpenTUI vs BetterTUI benchmark harness.
-// Consumes published npm packages only. No workspace references.
-
-export interface BenchmarkMetrics {
-  framework: "opentui" | "bettertui";
-  app: string;
-  // Timing
-  startupMs: number; // module load -> first frame
-  layoutMs: number; // avg layout pass
-  renderMs: number; // avg render pass (buffer -> ANSI)
-  frameGenerateMs: number; // avg full frame generation
-  updateLatencyMs: number; // input -> committed update
-  inputLatencyMs: number;
-  scrollLatencyMs: number;
-  // Quality
-  fps: number; // measured frames/sec under continuous render
-  animationSmoothness: number; // 0..1 (1 = no dropped frames)
-  // Resource
-  memoryRssMb: number;
-  memoryHeapMb: number;
-  cpuPercent: number;
-  bundleKb: number; // installed package size
-  // Scale
-  largeTableMs: number;
-  largeTreeMs: number;
-  terminalThroughputCps: number; // cells/sec
-  continuousRenderCostMb: number;
-}
+import type { BenchmarkMetrics } from "./types";
 
 export class MetricCollector {
   private layoutSamples: number[] = [];
@@ -71,7 +44,6 @@ export class MetricCollector {
 }
 
 export function writeReport(results: BenchmarkMetrics[], path: string) {
-  // In a real run this writes JSON; here we keep it dependency-free.
   console.log(`[bench] ${results.length} result(s) -> ${path}`);
   for (const r of results) {
     console.log(

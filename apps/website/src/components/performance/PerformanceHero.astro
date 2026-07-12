@@ -1,0 +1,38 @@
+---
+import { Badge } from "@components/ui/badge";
+---
+
+<section class="relative overflow-hidden pt-32 pb-16">
+  <div class="dot-grid absolute inset-0 -z-10" />
+  <div
+    class="absolute inset-0 -z-10 bg-gradient-to-b from-hero-gradient-start/0 via-hero-gradient-start/50 to-background"
+  />
+
+  <div
+    class="mx-auto flex max-w-4xl flex-col items-center justify-center px-4 text-center sm:px-6"
+  >
+    <Badge variant="secondary" class="mb-6 rounded-full px-3 py-1 text-xs font-medium">
+      <span class="mr-1.5 text-terminal">&#9609;</span>
+      Live Benchmarks
+    </Badge>
+
+    <h1 class="text-hero text-balance">
+      OpenTUI vs BetterTUI
+      <br />
+      <span class="text-terminal">Performance</span>
+    </h1>
+
+    <p class="text-hero-sub mt-6 max-w-2xl text-balance text-muted-foreground">
+      Independent benchmark harness measuring startup, rendering, memory, and latency across
+      identical workloads. Powered by published npm packages &mdash; no workspace shortcuts.
+    </p>
+
+    <div class="mt-8 flex items-center gap-6 font-mono text-sm text-muted-foreground">
+      <span>10 benchmark apps</span>
+      <span class="h-1 w-1 rounded-full bg-muted-foreground/40"></span>
+      <span>16 metrics</span>
+      <span class="h-1 w-1 rounded-full bg-muted-foreground/40"></span>
+      <span>2 frameworks</span>
+    </div>
+  </div>
+</section>

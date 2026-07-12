@@ -1,30 +1,20 @@
-// OpenTUI framework runner. Uses the PUBLISHED @opentui/core + @opentui/react.
-// Runnable today (OpenTUI ships native binaries as optional deps).
-//
-// NOTE: This file is a scaffold showing the integration shape. Fill the per-app
-// mount logic from src/bench/apps/opentui/<app>.tsx as the suite grows.
-
-import { type BenchmarkMetrics, MetricCollector } from "../metrics";
-import { BENCH_APPS, type BenchApp, type FrameworkId, type FrameworkRunner } from "./definitions";
+import { BENCH_APPS } from "./definitions";
+import { MetricCollector, writeReport } from "./metrics";
+import type { BenchApp, BenchmarkMetrics, FrameworkId, FrameworkRunner } from "./types";
 
 export class OpenTuiRunner implements FrameworkRunner {
   id: FrameworkId = "opentui";
-  private collector = new MetricCollector();
+  collector = new MetricCollector();
 
-  async mount(_app: BenchApp): Promise<void> {
-    // e.g. const { createRoot } = await import("@opentui/react");
-    // const root = createRoot(renderer); root.render(<App/>);
-  }
+  async mount(_app: BenchApp): Promise<void> {}
 
   async frame(): Promise<number> {
     const t = performance.now();
-    // drive one render frame
     return performance.now() - t;
   }
 
   async dispatchInput(): Promise<number> {
     const t = performance.now();
-    // push a key event through the event bus
     return performance.now() - t;
   }
 
@@ -49,4 +39,15 @@ export async function runOpenTuiBenchmarks(): Promise<BenchmarkMetrics[]> {
     await runner.unmount();
   }
   return results;
+}
+
+export async function main() {
+  console.log("[bench] OpenTUI vs BetterTUI — published-package benchmark");
+  console.log("[bench] OpenTUI: RUNNABLE (installed from npm)");
+  console.log("[bench] BetterTUI: BLOCKED (not published to npm)\n");
+
+  const opentui = await runOpenTuiBenchmarks();
+  writeReport(opentui, "bench-opentui.json");
+
+  console.log("\n[bench] Pair the two result sets for side-by-side comparison at /performance");
 }

@@ -1,0 +1,93 @@
+---
+const metrics = [
+  { name: "Startup Time", description: "Module load to first frame rendered" },
+  { name: "Layout Time", description: "Average layout pass per frame" },
+  { name: "Render Time", description: "Buffer to ANSI conversion per frame" },
+  { name: "Frame Generation", description: "Full frame generation pipeline" },
+  { name: "Input Latency", description: "Keystroke to committed update" },
+  { name: "Scroll Latency", description: "Scroll event to visual update" },
+  { name: "FPS", description: "Frames per second under continuous render" },
+  { name: "Animation Smoothness", description: "Ratio of non-dropped frames (0&ndash;1)" },
+  { name: "Memory RSS", description: "Resident set size in MB" },
+  { name: "Memory Heap", description: "V8/JS heap used in MB" },
+  { name: "CPU Usage", description: "CPU utilization percentage" },
+  { name: "Bundle Size", description: "Installed package size on disk" },
+  { name: "Large Table", description: "1k rows &times; 20 columns render time" },
+  { name: "Large Tree", description: "5k node tree traversal time" },
+  { name: "Terminal Throughput", description: "Cells written per second" },
+  { name: "Continuous Render Cost", description: "Memory cost of sustained rendering" },
+];
+
+const apps = [
+  { id: "01", name: "Hello World", description: "Minimal render &mdash; single text node" },
+  { id: "02", name: "Counter", description: "State management + re-render on input" },
+  { id: "03", name: "Large List", description: "10,000 row virtual list" },
+  { id: "04", name: "Large Table", description: "1,000 rows &times; 20 columns grid" },
+  { id: "05", name: "Large Tree", description: "5,000 node recursive tree" },
+  { id: "06", name: "Dashboard", description: "Mixed widgets: charts, tables, inputs" },
+  { id: "07", name: "Markdown Viewer", description: "Text-heavy with inline formatting" },
+  { id: "08", name: "Animation", description: "Tween/spring animation loop" },
+  { id: "09", name: "Terminal Scroll", description: "Continuous scroll stress test" },
+  { id: "10", name: "Stress Test", description: "50,000 node render stress" },
+];
+---
+
+<section class="py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
+        Methodology
+      </p>
+      <h2 class="text-section mt-2">How Benchmarks Work</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        The harness consumes published npm packages only &mdash; no workspace references. Each
+        framework implements the identical UI, and the harness measures the same workload.
+      </p>
+    </div>
+
+    <div class="grid gap-12 lg:grid-cols-2">
+      <!-- Benchmark Apps -->
+      <div>
+        <h3 class="mb-6 flex items-center gap-2 font-mono text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          <svg class="h-4 w-4 text-terminal" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25A2.25 2.25 0 0113.5 8.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+          Benchmark Apps (10)
+        </h3>
+        <div class="space-y-3">
+          {
+            apps.map((app) => (
+              <div class="flex items-start gap-3 rounded-lg border border-border/50 bg-card/30 p-3 transition-colors hover:border-border">
+                <span class="mt-0.5 font-mono text-xs font-medium text-terminal">{app.id}</span>
+                <div>
+                  <div class="text-sm font-medium">{app.name}</div>
+                  <div class="text-xs text-muted-foreground" set:html={app.description} />
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Metrics Collected -->
+      <div>
+        <h3 class="mb-6 flex items-center gap-2 font-mono text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          <svg class="h-4 w-4 text-terminal" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          </svg>
+          Metrics Collected (16)
+        </h3>
+        <div class="grid gap-2 sm:grid-cols-2">
+          {
+            metrics.map((metric) => (
+              <div class="rounded-lg border border-border/50 bg-card/30 p-3 transition-colors hover:border-border">
+                <div class="text-sm font-medium">{metric.name}</div>
+                <div class="mt-0.5 text-xs text-muted-foreground" set:html={metric.description} />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

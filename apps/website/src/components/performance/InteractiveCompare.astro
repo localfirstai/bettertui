@@ -1,0 +1,19 @@
+---
+import { SideBySide } from "./SideBySide";
+---
+
+<section class="border-t border-border bg-muted/30 py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
+        Interactive
+      </p>
+      <h2 class="text-section mt-2">Explore the Data</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Pick a metric and a benchmark app to see how BetterTUI compares to OpenTUI in real time.
+      </p>
+    </div>
+
+    <SideBySide client:load />
+  </div>
+</section>

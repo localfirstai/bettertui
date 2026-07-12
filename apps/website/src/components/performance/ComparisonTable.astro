@@ -1,0 +1,132 @@
+---
+import { BENCH_APPS, computeImprovement, sampleReport } from "@lib/bench";
+
+const { opentui, bettertui } = sampleReport;
+
+function fmt(ms: number): string {
+  if (ms === 0) return "&mdash;";
+  if (ms < 1) return `${(ms * 1000).toFixed(0)}&micro;s`;
+  return `${ms.toFixed(2)}ms`;
+}
+
+function fmtMem(mb: number): string {
+  return `${mb.toFixed(1)}MB`;
+}
+
+function fmtFps(fps: number): string {
+  return `${Math.round(fps)}`;
+}
+---
+
+<section class="border-t border-border py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
+        Detailed Results
+      </p>
+      <h2 class="text-section mt-2">Per-App Breakdown</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Each benchmark app runs an identical workload in both frameworks. The improvement column
+        shows how much faster BetterTUI is compared to OpenTUI.
+      </p>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden overflow-hidden rounded-xl border border-border lg:block">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-border bg-muted/50">
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Benchmark</th>
+            <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Scale</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">OpenTUI Layout</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-terminal">BetterTUI Layout</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">OpenTUI Render</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-terminal">BetterTUI Render</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">OpenTUI FPS</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-terminal">BetterTUI FPS</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Memory</th>
+            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-terminal">Improvement</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          {
+            BENCH_APPS.map((app) => {
+              const ot = opentui.find((m) => m.app === app.id);
+              const bt = bettertui.find((m) => m.app === app.id);
+              if (!ot || !bt) return null;
+              const imp = computeImprovement(ot.frameGenerateMs, bt.frameGenerateMs, true);
+              return (
+                <tr class="transition-colors hover:bg-muted/30">
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-foreground">{app.label}</div>
+                    <div class="text-xs text-muted-foreground">{app.description}</div>
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono text-xs text-muted-foreground">
+                    {app.scale ? app.scale.toLocaleString() : "&mdash;"}
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono text-sm text-muted-foreground" set:html={fmt(ot.layoutMs)} />
+                  <td class="px-4 py-3 text-right font-mono text-sm font-medium text-terminal" set:html={fmt(bt.layoutMs)} />
+                  <td class="px-4 py-3 text-right font-mono text-sm text-muted-foreground" set:html={fmt(ot.renderMs)} />
+                  <td class="px-4 py-3 text-right font-mono text-sm font-medium text-terminal" set:html={fmt(bt.renderMs)} />
+                  <td class="px-4 py-3 text-right font-mono text-sm text-muted-foreground">{fmtFps(ot.fps)}</td>
+                  <td class="px-4 py-3 text-right font-mono text-sm font-medium text-terminal">{fmtFps(bt.fps)}</td>
+                  <td class="px-4 py-3 text-right font-mono text-sm text-muted-foreground">{fmtMem(ot.memoryRssMb)}</td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-terminal-muted/60 px-2.5 py-0.5 font-mono text-xs font-semibold text-terminal">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2 17L14 5M14 5H7M14 5v7" />
+                      </svg>
+                      {imp.percent.toFixed(0)}%
+                    </span>
+                  </td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="space-y-4 lg:hidden">
+      {
+        BENCH_APPS.map((app) => {
+          const ot = opentui.find((m) => m.app === app.id);
+          const bt = bettertui.find((m) => m.app === app.id);
+          if (!ot || !bt) return null;
+          const imp = computeImprovement(ot.frameGenerateMs, bt.frameGenerateMs, true);
+          return (
+            <article class="rounded-xl border border-border/60 bg-card/50 p-5">
+              <div class="mb-4 flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold">{app.label}</h3>
+                  <p class="text-xs text-muted-foreground">{app.description}</p>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full bg-terminal-muted/60 px-2.5 py-0.5 font-mono text-xs font-semibold text-terminal">
+                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2 17L14 5M14 5H7M14 5v7" />
+                  </svg>
+                  {imp.percent.toFixed(0)}%
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-md bg-muted/40 p-3">
+                  <div class="mb-1 text-xs text-muted-foreground">OpenTUI</div>
+                  <div class="font-mono text-muted-foreground" set:html={`Layout ${fmt(ot.layoutMs)}`} />
+                  <div class="font-mono text-muted-foreground" set:html={`Render ${fmt(ot.renderMs)}`} />
+                  <div class="font-mono text-muted-foreground">FPS {fmtFps(ot.fps)}</div>
+                </div>
+                <div class="rounded-md bg-terminal-muted/30 p-3">
+                  <div class="mb-1 text-xs font-medium text-terminal">BetterTUI</div>
+                  <div class="font-mono text-terminal" set:html={`Layout ${fmt(bt.layoutMs)}`} />
+                  <div class="font-mono text-terminal" set:html={`Render ${fmt(bt.renderMs)}`} />
+                  <div class="font-mono text-terminal">FPS {fmtFps(bt.fps)}</div>
+                </div>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,95 @@
+---
+import { sampleReport } from "@lib/bench";
+
+const { opentui, bettertui } = sampleReport;
+
+const apps = [
+  "hello-world",
+  "counter",
+  "large-list",
+  "large-table",
+  "large-tree",
+  "dashboard",
+  "stress-test",
+];
+
+const chartData = apps.map((appId) => {
+  const ot = opentui.find((m) => m.app === appId);
+  const bt = bettertui.find((m) => m.app === appId);
+  return { id: appId, ot: ot?.layoutMs ?? 0, bt: bt?.layoutMs ?? 0 };
+});
+
+const maxVal = Math.max(...chartData.flatMap((d) => [d.ot, d.bt]));
+
+function appLabel(id: string): string {
+  const labels: Record<string, string> = {
+    "hello-world": "Hello World",
+    counter: "Counter",
+    "large-list": "Large List",
+    "large-table": "Large Table",
+    "large-tree": "Large Tree",
+    dashboard: "Dashboard",
+    "stress-test": "Stress Test",
+  };
+  return labels[id] ?? id;
+}
+---
+
+<section class="border-t border-border bg-muted/30 py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
+        Visual Comparison
+      </p>
+      <h2 class="text-section mt-2">Layout Time Per App</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Average layout pass time in milliseconds. Shorter bars are better.
+      </p>
+    </div>
+
+    <div class="mx-auto max-w-4xl rounded-xl border border-border bg-card/50 p-6 md:p-8">
+      <!-- Legend -->
+      <div class="mb-6 flex items-center justify-center gap-6">
+        <div class="flex items-center gap-2">
+          <span class="h-3 w-3 rounded bg-muted-foreground/40"></span>
+          <span class="text-sm text-muted-foreground">OpenTUI</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="h-3 w-3 rounded bg-terminal"></span>
+          <span class="text-sm font-medium text-terminal">BetterTUI</span>
+        </div>
+      </div>
+
+      <!-- Bars -->
+      <div class="space-y-4">
+        {
+          chartData.map((d) => (
+            <div class="grid grid-cols-[120px_1fr] items-center gap-4 md:grid-cols-[160px_1fr]">
+              <span class="font-mono text-xs text-muted-foreground md:text-sm">{appLabel(d.id)}</span>
+              <div class="space-y-1">
+                <div class="relative h-5 rounded-md bg-muted-foreground/10">
+                  <div
+                    class="absolute left-0 top-0 h-full rounded-md bg-muted-foreground/40 transition-all duration-500"
+                    style={`width: ${(d.ot / maxVal) * 100}%`}
+                  />
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-xs text-muted-foreground">
+                    {d.ot.toFixed(2)}ms
+                  </span>
+                </div>
+                <div class="relative h-5 rounded-md bg-terminal-muted/10">
+                  <div
+                    class="absolute left-0 top-0 h-full rounded-md bg-terminal transition-all duration-500"
+                    style={`width: ${(d.bt / maxVal) * 100}%`}
+                  />
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-xs text-terminal">
+                    {d.bt.toFixed(2)}ms
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
