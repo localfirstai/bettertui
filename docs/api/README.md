@@ -28,7 +28,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 - All TS packages export from a single `src/index.ts`.
 - Values are exported as runtime bindings; types via `export type`.
-- ESM-only, built with `tsup` (`dts: true`).
+- ESM-only, built with `tsdown` (`dts: true`).
 
 ## Cross-cutting notes
 

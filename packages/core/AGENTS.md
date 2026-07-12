@@ -19,7 +19,7 @@
 
 ## Native Bridge (napi-rs)
 
-- **tsup must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `external: ["bettertui_bindings"]` in `tsup.config.ts`.
+- **tsdown must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_bindings"] }` in `tsdown.config.ts`.
 - **Runtime name collision:** Native bridge exports a `Runtime` class (napi Rust engine wrapper). Core also has a `Runtime` class (framework-agnostic runtime). In `packages/core/src/index.ts`, rename the native import: `import { Runtime as NativeRuntime } from "./native/runtime.js"` to avoid collision.
 - **Packages/core/src/index.ts must explicitly re-export native bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/native/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
 

@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsup src/index.tsx --format esm --watch",
-    "build": "tsup src/index.tsx --format esm",
+    "dev": "tsdown src/index.tsx --format esm --watch",
+    "build": "tsdown src/index.tsx --format esm",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -14,7 +14,7 @@
     "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.3.0",
+    "tsdown": "catalog:",
     "typescript": "catalog:"
   }
 }

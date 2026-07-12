@@ -64,7 +64,7 @@ bettertui/
 
 ## TypeScript Package Layout
 
-All TypeScript packages are ESM-only, built with `tsup` (`dts: true`), and export their public API from a single `src/index.ts`.
+All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and export their public API from a single `src/index.ts`.
 
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|

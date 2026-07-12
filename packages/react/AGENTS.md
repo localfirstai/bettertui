@@ -14,7 +14,7 @@
 
 ## Bundling
 
-- `react-reconciler` must be `external: ["react", "react-reconciler"]` in tsup config. It's a peer dep — bundling creates version conflicts.
+- `react-reconciler` must be `deps: { neverBundle: ["react", "react-reconciler"] }` in tsdown config. It's a peer dep — bundling creates version conflicts.
 - `@bettertui/react` re-exports types from `@bettertui/core` (Command, CommandBuffer, Instance, Runtime) for consumer convenience. These are value types consumers need when building custom reconcilers or runtime integrations.
 
 ## Hooks

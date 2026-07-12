@@ -145,7 +145,7 @@ cargo clippy --workspace -- -D warnings
 
 - **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap)
 - **Runtime:** Node.js
-- **Language:** TypeScript 5+
+- **Language:** TypeScript 7+
 - **Monorepo:** TurboRepo + pnpm
 - **React:** React 19 + custom reconciler
 - **Formatting/Linting:** Biome (TS/JS/JSON), rustfmt + clippy (Rust)

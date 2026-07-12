@@ -2,9 +2,9 @@
 
 ## TypeScript Packages
 
-- All packages use `tsup` for build, `biome check src/` for lint, `tsc --noEmit` for typecheck.
-- tsup config: ESM only, `dts: true`, `clean: true`, `sourcemap: true`.
-- Packages with React as a dep must set `external: ["react"]` in tsup config.
+- All packages use `tsdown` for build (JS + declarations), `biome check src/` for lint, `tsc --noEmit` for typecheck.
+- tsdown config: ESM only, `dts: true`, `clean: true`, `sourcemap: true`.
+- Packages with React as a dep must set `deps: { neverBundle: ["react"] }` in tsdown config.
 - Packages with `react-reconciler` as a dep must also set `external: ["react-reconciler"]`.
 
 ## Biome Formatting

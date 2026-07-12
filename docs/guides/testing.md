@@ -21,7 +21,7 @@ pnpm typecheck     # turbo run typecheck -> tsc --noEmit per package
 pnpm format:check  # biome format check
 ```
 
-All TypeScript packages are ESM + `dts` via `tsup`. Biome is the only TS formatter/linter (no Prettier/ESLint). VCS integration is on, so `.gitignore` is respected.
+All TypeScript packages are ESM + `dts` via `tsdown`. Biome is the only TS formatter/linter (no Prettier/ESLint). VCS integration is on, so `.gitignore` is respected.
 
 ## Pre-commit
 

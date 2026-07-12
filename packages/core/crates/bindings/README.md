@@ -112,7 +112,7 @@ build.rs   # napi_build::setup()
 cargo build -p bettertui-bindings
 
 # Or via the workspace
-pnpm build  # Triggers tsup which triggers napi-rs build
+pnpm build  # Triggers tsdown which triggers napi-rs build
 ```
 
 ## Notes

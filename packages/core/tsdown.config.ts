@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -6,5 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["bettertui_bindings"],
+  deps: {
+    neverBundle: ["bettertui_bindings"],
+  },
 });
