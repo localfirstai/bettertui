@@ -13,11 +13,11 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
 | `@bettertui/themes` | 🟡 Partial | `defaultTheme` + `createTheme`; no preset themes |
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
-| `@bettertui/react` (components) | 🟡 Thin wrappers | 69 component functions exported; emit element descriptors, not yet wired to live native render loop |
+| `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
 | Examples | ✅ Wired | 14 example apps implemented (`examples/fundamentals/*`, `examples/showcase/*`) |
-| Benchmarks | ✅ Implemented | `apps/performance` site (OpenTUI vs BetterTUI) + `packages/benchmark` |
+| Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
 | `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
 | `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |
 

@@ -29,7 +29,7 @@ flowchart TD
 
 ## Benchmarking
 
-There is **no** benchmark harness yet — `benchmarks/` is an empty placeholder. CI runs `cargo test`, clippy, rustfmt, and the Turborepo TS tasks, but not `cargo bench`.
+Benchmarks live in `@bettertui/benchmark` as Vitest `bench` files (`command-buffer.bench.ts`, `reconciler.bench.ts`, `runtime.bench.ts`, `theme.bench.ts`); run with `pnpm bench`. The Rust engine is measured with `cargo bench` (when benches are enabled). CI runs `cargo test`, clippy, rustfmt, and the Turborepo TS tasks.
 
 ## Numbers (engine targets)
 

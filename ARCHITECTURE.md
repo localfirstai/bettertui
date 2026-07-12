@@ -83,7 +83,7 @@ graph TD
 |---------|------|--------|
 | `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
-| `@bettertui/react` | React adapter (reconciler + hooks + 69 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
+| `@bettertui/react` | React adapter (reconciler + hooks + 53 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
 | `@bettertui/themes` | Theme defs + factory | ✅ |
 | `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |

@@ -8,7 +8,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 |---------|---------|--------|
 | `@bettertui/shared` | [shared.md](packages/shared.md) | Implemented (types only) |
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
-| `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks real; 69 components are thin wrappers) |
+| `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks+keymap real; 53 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
 | `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |

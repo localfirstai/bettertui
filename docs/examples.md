@@ -40,4 +40,4 @@ All 14 examples are wired to the real reconciler. The React component functions 
 
 ## Other apps
 
-`apps/website` is an Astro/Starlight docs + landing site (`@bettertui/website`). It does **not** depend on the engine packages — it is the documentation portal, not a TUI demo. `apps/performance` is a benchmark site comparing BetterTUI against OpenTUI.
+`apps/website` is an Astro/Starlight docs + landing site (`@bettertui/website`). It does **not** depend on the engine packages — it is the documentation portal, not a TUI demo. Benchmarking lives in `packages/benchmark` (Vitest `bench` harness).

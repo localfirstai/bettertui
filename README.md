@@ -76,7 +76,7 @@ bettertui/
 |---------|-------------|--------|
 | `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
-| `@bettertui/react` | React adapter (renderer, hooks, 69 components) | ✅ Reconciler + hooks real; components thin wrappers |
+| `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
 | `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
@@ -86,7 +86,7 @@ bettertui/
 
 ## React Components
 
-BetterTUI provides 69 React component functions (thin wrappers that emit element descriptors; not yet wired to a live native render loop):
+BetterTUI provides 53 React component functions (thin wrappers that emit element descriptors; not yet wired to a live native render loop):
 
 **Layout:** Box, Flex, Grid, Stack, Spacer, Separator
 **Text:** Text, Heading, Label, Code, Blockquote
@@ -113,6 +113,7 @@ BetterTUI provides 69 React component functions (thin wrappers that emit element
 - `useTimeline` — timeline-based animation sequencing
 - `useSelection` / `SelectionProvider` — text selection tracking
 - `useCapabilities` / `CapabilitiesProvider` — terminal capability detection
+- `KeymapProvider` / `useKeymap`, `useKeymapEvent`, `useActiveBindings`, `usePendingSequence`, `useCommand`, `useKeyIntercept`, `useKeymapMode` — full keymap engine (chords, modes, commands, intercepts)
 
 ## Getting Started
 
@@ -151,7 +152,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,204 passing lib tests**. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 69 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **14 runnable example apps** are available under `examples/`.
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,204 passing lib tests**. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **14 runnable example apps** are available under `examples/`.
 
 ## Documentation
 

@@ -69,7 +69,7 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 |---------|-----------|-----------|------|
 | `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
 | `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
-| `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 69 component exports) |
+| `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 53 component exports) |
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
@@ -80,16 +80,13 @@ graph TD
     shared[shared]
     core[core]
     react[react]
-    widgets[widgets]
     themes[themes]
     icons[icons]
     devtools[devtools]
     shared --> core
     shared --> react
     shared --> themes
-    shared --> widgets
     core --> react
-    core --> widgets
     icons -.leaf.-> icons
     devtools -.leaf.-> devtools
 ```
@@ -118,7 +115,7 @@ flowchart TD
     B --> C{build order by ^dep}
     C --> D[build @bettertui/shared]
     D --> E[build @bettertui/core]
-    E --> F[build @bettertui/react / themes / widgets]
+    E --> F[build @bettertui/react / themes]
     B -. optional .-> G[cargo build -p bettertui-bindings]
     G --> H[bettertui_bindings.node addon]
     F -->|requires| H

@@ -15,8 +15,8 @@ flowchart TD
 
 - **Reconciler** (`renderer.ts`): `createBetterTUIReconciler(buffer)`, `createContainer`, `updateContainer`. Host config in mutation mode over core `Instance`/`TextInstance`/`CommandBufferConsumer`.
 - **Runtime** (`runtime.tsx`): `render(element) -> { root, runtime, dispose }`; `RuntimeProvider` + `useRuntime`.
-- **Hooks** (`hooks/index.tsx`): `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`.
-- **Components**: `Box, Text, Flex, Spacer, Button, Input, Textarea, Tabs, Modal, Badge, Progress, Spinner, Tooltip, Separator, Heading, Label, Code, Grid, Stack` and 50 more — **69 exported component functions**, each a thin wrapper that emits an element descriptor via `createElement`.
+- **Hooks** (`hooks/index.tsx`): `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `useMouse`, `TerminalProvider`/`useTerminal`, `useResize`, `useFrame`, `useClipboard`, `useAnimation`, `useTimeline`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`, and the keymap suite (`KeymapProvider`/`useKeymap`, `useKeymapEvent`, `useActiveBindings`, `usePendingSequence`, `useCommand`, `useKeyIntercept`, `useKeymapMode`, re-exported `Keymap`).
+- **Components**: **53 exported component functions** — each a thin wrapper that emits an element descriptor via `createElement`. Full list in [`docs/api/packages/react.md`](api/packages/react.md).
 
 ## Lifecycle
 
@@ -39,4 +39,4 @@ sequenceDiagram
 
 ## Status
 
-Renderer + hooks + runtime are real and wired. 69 component functions are exported but are currently thin wrappers (emit element descriptors, not yet connected to a live native render loop). Dependencies: `core`, `shared`, `react-reconciler`; peer `react@^19`. Only `@bettertui/react` imports React.
+Renderer + hooks + runtime are real and wired. 53 component functions are exported but are currently thin wrappers (emit element descriptors, not yet connected to a live native render loop). Dependencies: `core`, `shared`, `react-reconciler`; peer `react@^19`. Only `@bettertui/react` imports React.

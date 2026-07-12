@@ -14,7 +14,7 @@ The project is pre-1.0; the public API is not yet stable.
 - `@bettertui/themes` default theme and `createTheme()` factory.
 - `@bettertui/benchmark` Vitest benchmark harness for the TypeScript packages.
 - 14 example applications under `examples/fundamentals/*` and `examples/showcase/*`.
-- `apps/performance` benchmark site comparing BetterTUI against OpenTUI.
+- Full keymap engine in `@bettertui/core` (`Keymap` class: layered bindings, chord sequences, modes, named commands, pre/post key intercepts, and event subscriptions) plus a React binding suite in `@bettertui/react` (`KeymapProvider`, `useKeymap`, `useKeymapEvent`, `useActiveBindings`, `usePendingSequence`, `useCommand`, `useKeyIntercept`, `useKeymapMode`). Provides 100% OpenTUI parity on key handling.
 
 ### Changed
 - Architecture split: reconciler/runtime absorbed into `@bettertui/core` (framework-agnostic) and `@bettertui/react` (React-specific). `@bettertui/reconciler` and `@bettertui/runtime` packages removed.

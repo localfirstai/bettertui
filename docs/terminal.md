@@ -12,9 +12,9 @@ A `TerminalRuntime` spawns a `PtyProcess` (via `portable-pty`). Child output is 
 
 See [Architecture: Terminal](architecture/Terminal.md), [PTY](architecture/PTY.md), and [Guides: Terminal & PTY](guides/terminal.md).
 
-## React component?
+## React components
 
-There is **no** React `Terminal` component yet. The capability exists at the engine/native layer but is not exposed as a TS widget.
+`@bettertui/react` exports `Terminal`, `TerminalViewport`, and `TerminalProcess` as thin wrappers that emit element descriptors. They are not yet wired to the live native PTY read path, but the engine-level capability (PTY + `AnsiParser`/`VtMachine`) is implemented.
 
 ## Status
 

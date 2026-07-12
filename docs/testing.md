@@ -20,21 +20,21 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 | Rust engine unit tests | 1,204 lib tests passing |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
-| `pnpm build` (turbo) | 17/17 packages |
-| `pnpm lint` (Biome) | 11/11 packages |
-| `pnpm typecheck` (tsc) | 11/11 packages |
-| `pnpm format:check` (Biome) | 10/10 packages |
-| `pnpm test` (Vitest) | 6 TS packages with `.test.ts`/`.test.tsx` |
+| `pnpm build` (turbo) | all buildable TS packages |
+| `pnpm lint` (Biome) | all linted TS packages |
+| `pnpm typecheck` (tsc) | all typechecked TS packages |
+| `pnpm format:check` (Biome) | all formatted TS packages |
+| `pnpm test` (Vitest) | 5 TS packages with `*.test.ts(x)` (`benchmark` adds `*.bench.ts`) |
 
 ## TypeScript test inventory
 
 | Package | Test files | Scope |
 |---------|-----------|-------|
-| `@bettertui/core` | 4 | `CommandBuffer`, `Runtime`, tree ops, native bridge |
+| `@bettertui/core` | 5 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
 | `@bettertui/shared` | 1 | Type definitions |
-| `@bettertui/themes` | 1 | `defaultTheme`, `createTheme()` |
+| `@bettertui/themes` | 2 | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | 1 | `createDevTools()` |
-| `@bettertui/react` | 7 | Public API, hooks, renderer, `renderToString`, runtime provider, easings |
+| `@bettertui/react` | 10 | Public API, hooks, renderer, `renderToString`, runtime provider, easings, providers, components |
 
 ## Notes
 

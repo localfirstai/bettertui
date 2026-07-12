@@ -39,7 +39,26 @@ flowchart TD
     B --> F[Command variants]
 ```
 
+## Keymap (layer-agnostic input binding)
+
+`Keymap` is a framework-agnostic input-binding engine. It lives in `core` (no React), so any adapter can use it. It wraps the native `NapiKeymap` and layers a command registry, key intercepts, and event listeners on top.
+
+| Export | Kind | Notes |
+|--------|------|-------|
+| `Keymap` | class | binding registry + command dispatch |
+| `createTestKeymap`, `createMockNativeKeymap` | fn | testing utilities (from `./testing`) |
+| `KeymapEvent`, `CommandHandler`, `CommandContext`, `InterceptHandler`, `InterceptContext`, `KeymapOptions`, `BindingInfo` | type | event/option shapes |
+
+Key surface (all delegated to the native keymap unless noted):
+
+- **Bindings:** `addBinding(layer, id, keys, command, description?, priority?)`, `addSimpleBinding(keys, command, description?)`, `removeLayer(name)`, `activeBindings()`, `allBindings()`.
+- **Commands:** `registerCommand(name, handler)`, `unregisterCommand(name)`, `runCommand(name, payload?)`.
+- **Chords/modes:** `handleKey(key)`, `hasPending()`, `pendingKeys()`, `clearPending()`, `setMode(mode)`, `currentMode()`, `clearMode()`.
+- **Intercepts:** `intercept("key" | "key:after", handler, priority?)` — pre/post key hooks returning a cleanup fn.
+- **Events:** `on("state" | "pendingSequence" | "dispatch", listener)` / `off(...)` — subscribe to keymap transitions.
+
 ## Notes
 
 - `core` is the heart that `react` and `native` build on. It must never import React.
+- `Keymap` is the recommended way to bind keys; `@bettertui/react` re-exports a React provider/hook suite on top of it (see `docs/api/packages/react.md`).
 - `TreeDiff` is exported but currently unused internally — treat as a planned auxiliary type.
