@@ -22,11 +22,15 @@
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
     "tsdown": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@vitest/coverage-v8": "catalog:"
   }
 }

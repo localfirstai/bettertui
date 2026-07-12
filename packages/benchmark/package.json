@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "bench": "vitest bench",
+    "bench:run": "vitest bench --run",
     "lint": "biome check src/",
     "format": "biome format --write src/",
     "format:check": "biome format src/",

@@ -26,6 +26,10 @@
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -37,11 +41,15 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.0.0",
     "@types/react-reconciler": "^0.31.0",
+    "jsdom": "^29.1.1",
     "react": "^19.0.0",
     "tsdown": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@vitest/coverage-v8": "catalog:"
   }
 }

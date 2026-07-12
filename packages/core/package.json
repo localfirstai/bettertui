@@ -22,13 +22,17 @@
     "format:check": "biome format src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^3.2.7",
+    "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

@@ -324,10 +324,10 @@ fn parse_node_kind(kind: &str) -> NodeKind {
         "flex" => NodeKind::Flex,
         "input" => NodeKind::Input,
         "list" => NodeKind::List,
-        "table" => NodeKind::Table,
+        "table" | "datatable" => NodeKind::Table,
         "tree" => NodeKind::Tree,
-        "scroll" => NodeKind::Scroll,
-        "tab" => NodeKind::Tab,
+        "scrollarea" | "scroll" => NodeKind::Scroll,
+        "tabs" | "tab" => NodeKind::Tab,
         "modal" => NodeKind::Modal,
         "spacer" => NodeKind::Spacer,
         "separator" => NodeKind::Separator,
@@ -1134,6 +1134,83 @@ fn resolve_command_ids(
         },
         Command::Invalidate { id } => Command::Invalidate { id: resolve(id) },
         other => other,
+    }
+}
+
+// ─── NapiKeymap ─────────────────────────────────────────────────────────────
+
+use bettertui_engine::keybinding::{KeyBinding, KeyParser, Keymap};
+
+#[napi]
+pub struct NapiKeymap {
+    keymap: Keymap,
+}
+
+impl Default for NapiKeymap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[napi]
+impl NapiKeymap {
+    #[napi(constructor)]
+    pub fn new() -> Self {
+        Self {
+            keymap: Keymap::new(),
+        }
+    }
+
+    /// Add a binding to a specific layer
+    #[napi]
+    pub fn add_binding(
+        &mut self,
+        layer: String,
+        id: String,
+        keys: String,
+        description: String,
+        priority: i32,
+    ) -> bool {
+        match KeyParser::parse_sequence(&keys) {
+            Ok(seq) => {
+                let binding = KeyBinding {
+                    id: id.clone(),
+                    command: id,
+                    sequence: seq,
+                    description: Some(description),
+                    condition: None,
+                    enabled: true,
+                };
+                self.keymap.add_binding_to_layer(&layer, binding, priority);
+                true
+            }
+            Err(_) => false,
+        }
+    }
+
+    /// Handle a key string (e.g. "ctrl+c") and return the command if matched
+    #[napi]
+    pub fn handle_key(&mut self, key_str: String) -> Option<String> {
+        match KeyParser::parse_combo(&key_str) {
+            Ok(combo) => {
+                // KeyCombo -> KeyEvent mock for the keymap
+                let event = bettertui_engine::events::types::KeyEvent {
+                    key: combo.key,
+                    modifiers: combo.modifiers,
+                    target: bettertui_engine::tree::NodeId::default(), // Dummy
+                    default_prevented: false,
+                    phase: bettertui_engine::events::types::EventPhase::Target,
+                };
+                self.keymap.handle_event(&event)
+            }
+            Err(_) => None,
+        }
+    }
+
+    /// Clear pending sequences
+    #[napi]
+    pub fn clear_pending(&mut self) {
+        self.keymap.clear_pending_sequence();
     }
 }
 

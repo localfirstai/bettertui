@@ -24,6 +24,35 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": []
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": []
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": ["coverage/**"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "bench": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": []
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
