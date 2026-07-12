@@ -73,7 +73,7 @@ export {
   createScheduler,
   detectCapabilities,
   getVersion,
-} from "./native/index";
+} from "./native";
 export { createRuntime } from "./native/runtime";
 export type {
   Runtime as NativeRuntime,

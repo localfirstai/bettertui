@@ -4,13 +4,8 @@
 // NOTE: This file is a scaffold showing the integration shape. Fill the per-app
 // mount logic from src/bench/apps/opentui/<app>.tsx as the suite grows.
 
-import { type BenchmarkMetrics, MetricCollector } from "../metrics.ts";
-import {
-  BENCH_APPS,
-  type BenchApp,
-  type FrameworkId,
-  type FrameworkRunner,
-} from "./definitions.ts";
+import { type BenchmarkMetrics, MetricCollector } from "../metrics";
+import { BENCH_APPS, type BenchApp, type FrameworkId, type FrameworkRunner } from "./definitions";
 
 export class OpenTuiRunner implements FrameworkRunner {
   id: FrameworkId = "opentui";

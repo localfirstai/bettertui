@@ -124,8 +124,8 @@ describe("tree operations", () => {
   it("commitUpdate merges payload into instance props", () => {
     const instance = createInstance("Box", { padding: 1 });
     commitUpdate(instance, { padding: 2, margin: 3 });
-    expect(instance.props.padding).toBe(2);
-    expect(instance.props.margin).toBe(3);
+    expect(instance.props["padding"]).toBe(2);
+    expect(instance.props["margin"]).toBe(3);
   });
 
   it("commitTextUpdate updates text", () => {

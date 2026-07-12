@@ -6,12 +6,6 @@ settings:
 
 catalogs:
   default:
-    '@types/react':
-      specifier: ^19.0.0
-      version: 19.2.17
-    react:
-      specifier: ^19.0.0
-      version: 19.2.7
     typescript:
       specifier: ^5.7.0
       version: 5.9.3
@@ -481,31 +475,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-
-  packages/testing:
-    dependencies:
-      '@bettertui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@bettertui/react':
-        specifier: workspace:*
-        version: link:../react
-      '@bettertui/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.17
-      react:
-        specifier: 'catalog:'
-        version: 19.2.7
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.0
-        version: 3.2.7(@types/debug@4.1.13)(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0)
 
   packages/themes:
     dependencies:

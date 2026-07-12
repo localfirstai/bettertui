@@ -106,8 +106,8 @@ export function createReconciler(buffer: CommandBuffer): {
 
   function wrappedCommitUpdate(instance: Instance, updatePayload: Record<string, unknown>): void {
     commitUpdate(instance, updatePayload);
-    if (updatePayload.style) {
-      emitSetStyle(instance.id, updatePayload.style as Style);
+    if (updatePayload["style"]) {
+      emitSetStyle(instance.id, updatePayload["style"] as Style);
     }
   }
 

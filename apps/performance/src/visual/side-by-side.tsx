@@ -2,7 +2,7 @@
 // Renders performance charts, timing, memory, FPS, latency, frame statistics,
 // and benchmark history. Deployed independently at performance.bettertui.com.
 
-import type { BenchmarkMetrics } from "../bench/metrics.ts";
+import type { BenchmarkMetrics } from "../bench/metrics";
 
 export interface VisualReport {
   opentui: BenchmarkMetrics[];

@@ -19,6 +19,9 @@
         "noUnusedImports": "error",
         "noUnusedVariables": "error"
       },
+      "complexity": {
+        "useLiteralKeys": "off"
+      },
       "suspicious": {
         "noExplicitAny": "error"
       },

@@ -1,5 +1,5 @@
 import type { KeyEvent as SharedKeyEvent, MouseEvent as SharedMouseEvent } from "@bettertui/shared";
-import type { NapiEventBus } from "./types.js";
+import type { NapiEventBus } from "./types";
 
 // Re-export shared event types for consumer convenience
 export type KeyEvent = SharedKeyEvent;

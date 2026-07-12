@@ -17,11 +17,6 @@ export interface Rect {
   height: number;
 }
 
-export interface Size {
-  width: number;
-  height: number;
-}
-
 // ─── Layout ───────────────────────────────────────────────
 
 export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";

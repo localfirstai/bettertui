@@ -17,7 +17,7 @@ export {
   useCapabilities,
   useTimeline,
   easings,
-} from "./hooks/index";
+} from "./hooks";
 
 export type {
   Theme,
@@ -29,7 +29,7 @@ export type {
   UseAnimationOptions,
   TimelineAnimation,
   Timeline,
-} from "./hooks/index";
+} from "./hooks";
 
 // Runtime (render + RuntimeProvider + useRuntime)
 export { render, RuntimeProvider, useRuntime } from "./runtime";

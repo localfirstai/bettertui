@@ -5,8 +5,8 @@
 // to apps/performance/package.json dependencies and implement mount() using
 // @bettertui/react's render() + hooks.
 
-import { type BenchmarkMetrics, MetricCollector } from "../metrics.ts";
-import type { BenchApp, FrameworkId, FrameworkRunner } from "./apps/definitions.ts";
+import { type BenchmarkMetrics, MetricCollector } from "../metrics";
+import type { BenchApp, FrameworkId, FrameworkRunner } from "./apps/definitions";
 
 export class BetterTuiRunner implements FrameworkRunner {
   id: FrameworkId = "bettertui";

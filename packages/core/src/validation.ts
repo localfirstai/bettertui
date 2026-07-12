@@ -209,7 +209,7 @@ export function warnIfInvalid(
   style?: Partial<Style>,
   componentName?: string,
 ): void {
-  if (process.env.NODE_ENV === "production") return;
+  if (process.env["NODE_ENV"] === "production") return;
 
   const result = validate(layout, style);
   if (!result.valid) {

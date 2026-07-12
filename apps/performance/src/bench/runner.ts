@@ -4,8 +4,8 @@
 // suite is BLOCKED until @bettertui/* is published to npm — see
 // apps/performance/README.md (PACKAGE BLOCKER).
 
-import { runOpenTuiBenchmarks } from "./frameworks.ts";
-import { writeReport } from "./metrics.ts";
+import { runOpenTuiBenchmarks } from "./frameworks";
+import { writeReport } from "./metrics";
 
 async function main() {
   console.log("[bench] OpenTUI vs BetterTUI — published-package benchmark");

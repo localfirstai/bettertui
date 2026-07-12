@@ -1,5 +1,5 @@
-import type { Command, CommandBuffer } from "../command-buffer.js";
-import type { NapiEngine, NapiEventBus, ProcessResult } from "./types.js";
+import type { Command, CommandBuffer } from "../command-buffer";
+import type { NapiEngine, NapiEventBus, ProcessResult } from "./types";
 
 export interface RenderResult {
   output_data: number[];
