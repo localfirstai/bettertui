@@ -1,7 +1,9 @@
 import type {
+  BindingInfo,
   NapiEngine,
   NapiEventBus,
   NapiFocusManager,
+  NapiKeymap,
   NapiScheduler,
   NapiTextEngine,
   ProcessResult,
@@ -10,9 +12,11 @@ import type {
 } from "./types";
 
 export type {
+  BindingInfo,
   NapiEngine,
   NapiEventBus,
   NapiFocusManager,
+  NapiKeymap,
   NapiTextEngine,
   NapiScheduler,
   ProcessResult,
@@ -118,4 +122,10 @@ export function getVersion(): string {
   const addon = loadNativeAddon();
   const getVersionFn = addon["getVersion"] as () => string;
   return getVersionFn();
+}
+
+export function createKeymap(): NapiKeymap {
+  const addon = loadNativeAddon();
+  const Keymap = addon["NapiKeymap"] as new () => NapiKeymap;
+  return new Keymap();
 }

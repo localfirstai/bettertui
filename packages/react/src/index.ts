@@ -18,6 +18,15 @@ export {
   useCapabilities,
   useTimeline,
   easings,
+  KeymapProvider,
+  useKeymap,
+  useKeymapEvent,
+  useActiveBindings,
+  usePendingSequence,
+  useCommand,
+  useKeyIntercept,
+  useKeymapMode,
+  Keymap,
 } from "./hooks";
 
 export type {
@@ -30,6 +39,10 @@ export type {
   UseAnimationOptions,
   TimelineAnimation,
   Timeline,
+  KeymapEvent,
+  KeymapOptions,
+  CommandHandler,
+  BindingInfo,
 } from "./hooks";
 
 // Runtime (render + RuntimeProvider + useRuntime)

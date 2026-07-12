@@ -1165,16 +1165,26 @@ fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
     if combo.modifiers.meta {
         parts.push("meta".to_string());
     }
-    let key_str = format!("{:?}", combo.key);
-    // Strip "Character(" and ")" wrapper
-    let key_display = if key_str.starts_with("Character(") {
-        let ch = key_str
-            .strip_prefix("Character(")
-            .and_then(|s| s.strip_suffix(')'))
-            .unwrap_or(&key_str);
-        ch.to_string()
-    } else {
-        key_str.to_lowercase()
+    use bettertui_engine::events::types::Key;
+    let key_display = match &combo.key {
+        Key::Character(ch) => ch.to_string(),
+        Key::Ctrl(ch) => format!("ctrl_{}", ch),
+        Key::Alt(ch) => format!("alt_{}", ch),
+        Key::Enter => "enter".to_string(),
+        Key::Escape => "escape".to_string(),
+        Key::Backspace => "backspace".to_string(),
+        Key::Delete => "delete".to_string(),
+        Key::Tab => "tab".to_string(),
+        Key::Space => "space".to_string(),
+        Key::ArrowUp => "up".to_string(),
+        Key::ArrowDown => "down".to_string(),
+        Key::ArrowLeft => "left".to_string(),
+        Key::ArrowRight => "right".to_string(),
+        Key::Home => "home".to_string(),
+        Key::End => "end".to_string(),
+        Key::PageUp => "page_up".to_string(),
+        Key::PageDown => "page_down".to_string(),
+        Key::F(n) => format!("f{}", n),
     };
     parts.push(key_display);
     if parts.len() == 1 {

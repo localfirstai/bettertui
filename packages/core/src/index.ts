@@ -44,6 +44,24 @@ export { createReconciler } from "./reconciler";
 // Framework-agnostic runtime
 export { Runtime } from "./runtime";
 
+// Keymap
+export { Keymap } from "./keymap";
+export type {
+  KeymapEvent,
+  CommandHandler,
+  CommandContext,
+  CommandEntry,
+  InterceptHandler,
+  InterceptContext,
+  KeyListener,
+  KeymapOptions,
+  ActiveKeyInfo,
+} from "./keymap";
+
+// Testing utilities
+export { createTestKeymap, createMockNativeKeymap } from "./testing";
+export type { TestBinding } from "./testing";
+
 // Validation utilities
 export {
   isValidColor,
@@ -56,9 +74,11 @@ export type { ValidationError, ValidationResult } from "./validation";
 
 // Native bridge (Rust napi-rs bindings)
 export type {
+  BindingInfo,
   NapiEngine,
   NapiEventBus,
   NapiFocusManager,
+  NapiKeymap,
   NapiTextEngine,
   NapiScheduler,
   ProcessResult,
@@ -69,6 +89,7 @@ export {
   createEngine,
   createEventBus,
   createFocusManager,
+  createKeymap,
   createTextEngine,
   createScheduler,
   detectCapabilities,

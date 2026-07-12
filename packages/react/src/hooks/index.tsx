@@ -805,3 +805,134 @@ export function CapabilitiesProvider({ children }: { children: ReactNode }) {
 export function useCapabilities() {
   return useContext(CapabilitiesContext);
 }
+
+// ─── Keymap ──────────────────────────────────────────────────────
+
+import { Keymap as CoreKeymap } from "@bettertui/core";
+import type {
+  BindingInfo,
+  CommandContext,
+  CommandHandler,
+  KeymapEvent,
+  KeymapOptions,
+} from "@bettertui/core";
+
+interface KeymapContextValue {
+  keymap: CoreKeymap;
+}
+
+const KeymapContext = createContext<KeymapContextValue | null>(null);
+
+export interface KeymapProviderProps {
+  children: ReactNode;
+  keymap?: CoreKeymap;
+  options?: KeymapOptions;
+}
+
+export function KeymapProvider({ children, keymap: existing, options }: KeymapProviderProps) {
+  const keymap = useMemo(() => existing ?? new CoreKeymap(undefined, options), [existing, options]);
+
+  useEffect(() => {
+    return () => {
+      keymap.clearPending();
+    };
+  }, [keymap]);
+
+  return <KeymapContext.Provider value={{ keymap }}>{children}</KeymapContext.Provider>;
+}
+
+export function useKeymap(): CoreKeymap {
+  const ctx = useContext(KeymapContext);
+  if (!ctx) {
+    throw new Error("useKeymap must be used within a KeymapProvider");
+  }
+  return ctx.keymap;
+}
+
+export function useKeymapEvent(handler: (event: KeymapEvent) => void, deps: unknown[] = []): void {
+  const keymap = useKeymap();
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    return keymap.on("state", (event: KeymapEvent) => {
+      handlerRef.current(event);
+    });
+  }, [keymap, ...deps]);
+}
+
+export function useActiveBindings(): BindingInfo[] {
+  const keymap = useKeymap();
+  const [bindings, setBindings] = useState<BindingInfo[]>(() => keymap.activeBindings());
+
+  useEffect(() => {
+    const update = () => setBindings(keymap.activeBindings());
+    return keymap.on("state", update);
+  }, [keymap]);
+
+  return bindings;
+}
+
+export function usePendingSequence(): { hasPending: boolean; keys: string[] } {
+  const keymap = useKeymap();
+  const [state, setState] = useState(() => ({
+    hasPending: keymap.hasPending(),
+    keys: keymap.pendingKeys(),
+  }));
+
+  useEffect(() => {
+    const update = () =>
+      setState({
+        hasPending: keymap.hasPending(),
+        keys: keymap.pendingKeys(),
+      });
+    return keymap.on("pendingSequence", update);
+  }, [keymap]);
+
+  return state;
+}
+
+export function useCommand(name: string, handler: CommandHandler): void {
+  const keymap = useKeymap();
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    const stable = (ctx: unknown) => handlerRef.current(ctx as CommandContext);
+    keymap.registerCommand(name, stable);
+    return () => {
+      keymap.unregisterCommand(name);
+    };
+  }, [keymap, name]);
+}
+
+export function useKeyIntercept(
+  type: "key" | "key:after",
+  handler: (key: string) => boolean,
+): void {
+  const keymap = useKeymap();
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    return keymap.intercept(type, (ctx) => {
+      if (handlerRef.current(ctx.key)) {
+        ctx.preventDefault();
+      }
+    });
+  }, [keymap, type]);
+}
+
+export function useKeymapMode(mode: string): void {
+  const keymap = useKeymap();
+
+  useEffect(() => {
+    keymap.setMode(mode);
+    return () => {
+      keymap.clearMode();
+    };
+  }, [keymap, mode]);
+}
+
+export { CoreKeymap as Keymap };
+export type { KeymapEvent, KeymapOptions, CommandHandler, BindingInfo };
