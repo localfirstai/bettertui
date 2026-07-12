@@ -32,6 +32,7 @@
 
 - `@bettertui/reconciler` — absorbed into `@bettertui/react` (internal host config)
 - `@bettertui/runtime` — split: `Runtime` class -> `@bettertui/core`, wrappers -> `@bettertui/react`
+- `@bettertui/performance` — moved to `apps/performance` (it's an app, not a library package)
 
 ## Placeholder Examples
 

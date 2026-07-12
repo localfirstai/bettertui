@@ -2,7 +2,7 @@
 //
 // Shape mirrors OpenTuiRunner. Once published (v1.0 work item #1), add:
 //   "@bettertui/core", "@bettertui/native", "@bettertui/react"
-// to packages/performance/package.json dependencies and implement mount() using
+// to apps/performance/package.json dependencies and implement mount() using
 // @bettertui/react's render() + hooks.
 
 import { type BenchmarkMetrics, MetricCollector } from "../metrics.ts";
@@ -15,7 +15,7 @@ export class BetterTuiRunner implements FrameworkRunner {
   async mount(_app: BenchApp): Promise<void> {
     throw new Error(
       "BetterTUI runner blocked: @bettertui/* is not published to npm. " +
-        "See packages/performance/README.md (PACKAGE BLOCKER).",
+        "See apps/performance/README.md (PACKAGE BLOCKER).",
     );
   }
 

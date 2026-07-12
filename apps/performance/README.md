@@ -34,7 +34,7 @@ Consequence for this harness:
 ## Layout
 
 ```
-packages/performance/
+apps/performance/
   package.json          # deps: @opentui/* only (BetterTUI blocked on publish)
   README.md             # this file
   tsconfig.json

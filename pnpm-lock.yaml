@@ -33,6 +33,25 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  apps/performance:
+    dependencies:
+      '@opentui/core':
+        specifier: 0.4.3
+        version: 0.4.3(typescript@5.9.3)(web-tree-sitter@0.25.10)
+      '@opentui/react':
+        specifier: 0.4.3
+        version: 0.4.3(react-devtools-core@7.0.1)(react@19.2.7)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.21.0)
+    devDependencies:
+      astro:
+        specifier: ^6.4.6
+        version: 6.4.8(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.62.2)(yaml@2.9.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   apps/website:
     dependencies:
       '@astrojs/mdx':
@@ -437,25 +456,6 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
-
-  packages/performance:
-    dependencies:
-      '@opentui/core':
-        specifier: 0.4.3
-        version: 0.4.3(typescript@5.9.3)(web-tree-sitter@0.25.10)
-      '@opentui/react':
-        specifier: 0.4.3
-        version: 0.4.3(react-devtools-core@7.0.1)(react@19.2.7)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.21.0)
-    devDependencies:
-      astro:
-        specifier: ^6.4.6
-        version: 6.4.8(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.62.2)(yaml@2.9.0)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.7
-      typescript:
-        specifier: ^5
         version: 5.9.3
 
   packages/react:

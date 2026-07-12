@@ -2,7 +2,7 @@
 //
 // Today this runs the OpenTUI suite (published, installable). The BetterTUI
 // suite is BLOCKED until @bettertui/* is published to npm — see
-// packages/performance/README.md (PACKAGE BLOCKER).
+// apps/performance/README.md (PACKAGE BLOCKER).
 
 import { runOpenTuiBenchmarks } from "./frameworks.ts";
 import { writeReport } from "./metrics.ts";
