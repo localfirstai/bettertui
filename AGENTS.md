@@ -38,7 +38,7 @@
 
 - Installed as a dev dependency. Initialized via `pnpm exec husky init`.
 - `prepare` script in root `package.json` runs `husky` to install git hooks.
-- Pre-commit hook runs `biome check --write --staged` then `cargo fmt --all` then `git update-index --again`.
+- Pre-commit hook runs `biome check --write --staged` then `pnpm run cargo:fmt` (which passes `--manifest-path packages/core/Cargo.toml`) then `git update-index --again`.
 - **Pre-commit requires node in PATH.** The shell doesn't have node unless configured. Prepend `$HOME/.nvm/versions/node/v24.15.0/bin` before git commands that trigger hooks, or commit will fail with `exec: node: not found`.
 
 ## GitHub Actions
@@ -59,6 +59,11 @@
 - **`@bettertui/widgets`** provides the Widget interface and version constant. Depends on `@bettertui/core`.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/testing`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
+
+## Rust Workspace
+
+- **There is no root `Cargo.toml`.** The Rust workspace root is `packages/core/Cargo.toml`. All cargo commands from the project root must pass `--manifest-path packages/core/Cargo.toml`. Root `package.json` scripts (`cargo:*`) include this flag automatically.
+- **Pre-commit runs `pnpm run cargo:fmt` (not bare `cargo fmt`)** because there's no root Cargo.toml. The script passes `--manifest-path packages/core/Cargo.toml`.
 
 ## Rust Engine Testing
 

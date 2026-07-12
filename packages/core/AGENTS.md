@@ -17,6 +17,13 @@
 - `packages/core/src/runtime.ts` was originally `packages/runtime/src/runtime.ts`. Git tracks this as a rename (93% similarity). The Runtime class is fully framework-agnostic — zero React imports.
 - `Runtime.subscribe()` returns an unsubscribe function. Always capture it for cleanup.
 
+## Native Bridge (napi-rs)
+
+- **tsup must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `external: ["bettertui_bindings"]` in `tsup.config.ts`.
+- **Runtime name collision:** Native bridge exports a `Runtime` class (napi Rust engine wrapper). Core also has a `Runtime` class (framework-agnostic runtime). In `packages/core/src/index.ts`, rename the native import: `import { Runtime as NativeRuntime } from "./native/runtime.js"` to avoid collision.
+- **Packages/core/src/index.ts must explicitly re-export native bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/native/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
+
 ## Git
 
-- When moving files between packages (e.g., reconciler → core), git detects renames if content >50% similar. The diff shows only the delta (import path changes), not add+delete.
+- When moving files between packages (e.g., reconciler → core, or native → core/src/native/), git detects renames if content >50% similar. The diff shows only the delta (import path changes), not add+delete.
+- **Misleading rename detection during refactors:** Deleting a root `Cargo.toml` and creating a new one at a different path is detected as ~93% similar by git, even if the member paths differ. Always verify content manually — don't trust rename percentages alone during workspace migrations.
