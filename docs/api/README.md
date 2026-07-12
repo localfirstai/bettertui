@@ -12,7 +12,6 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
 | `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |
-| `@bettertui/testing` | [testing.md](packages/testing.md) | Scaffolding |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
 | `@bettertui/widgets` | [widgets.md](packages/widgets.md) | Proposed (not a package yet) |
 | `@bettertui/icons` | [icons.md](packages/icons.md) | Proposed (not a package yet) |

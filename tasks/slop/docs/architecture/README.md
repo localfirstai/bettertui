@@ -123,4 +123,4 @@ bettertui-engine
 
 ## Next Steps
 
-See [ROADMAP.md](../../ROADMAP.md) for the current, code-accurate status. The engine and its napi-rs bindings lead development; the TypeScript framework bindings follow.
+See [ROADMAP.md](../../../../ROADMAP.md) for the current, code-accurate status. The engine and its napi-rs bindings lead development; the TypeScript framework bindings follow.

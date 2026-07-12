@@ -1,8 +1,8 @@
 use super::*;
 use crate::events::types::{KeyEvent, Modifiers};
 use crate::tree::node_id::NodeId;
-use crate::tree::render_node::RenderNode;
 use crate::tree::node_kind::NodeKind;
+use crate::tree::render_node::RenderNode;
 
 fn make_id() -> NodeId {
     let mut arena = crate::tree::arena::NodeArena::new();
@@ -158,49 +158,25 @@ fn parser_function_key() {
 
 #[test]
 fn parser_special_keys() {
-    assert_eq!(
-        KeyParser::parse_combo("escape").unwrap().key,
-        Key::Escape
-    );
+    assert_eq!(KeyParser::parse_combo("escape").unwrap().key, Key::Escape);
     assert_eq!(
         KeyParser::parse_combo("backspace").unwrap().key,
         Key::Backspace
     );
     assert_eq!(KeyParser::parse_combo("tab").unwrap().key, Key::Tab);
-    assert_eq!(
-        KeyParser::parse_combo("space").unwrap().key,
-        Key::Space
-    );
-    assert_eq!(
-        KeyParser::parse_combo("up").unwrap().key,
-        Key::ArrowUp
-    );
-    assert_eq!(
-        KeyParser::parse_combo("down").unwrap().key,
-        Key::ArrowDown
-    );
+    assert_eq!(KeyParser::parse_combo("space").unwrap().key, Key::Space);
+    assert_eq!(KeyParser::parse_combo("up").unwrap().key, Key::ArrowUp);
+    assert_eq!(KeyParser::parse_combo("down").unwrap().key, Key::ArrowDown);
 }
 
 #[test]
 fn parser_aliases() {
-    assert_eq!(
-        KeyParser::parse_combo("return").unwrap().key,
-        Key::Enter
-    );
+    assert_eq!(KeyParser::parse_combo("return").unwrap().key, Key::Enter);
     assert_eq!(KeyParser::parse_combo("esc").unwrap().key, Key::Escape);
-    assert_eq!(
-        KeyParser::parse_combo("bs").unwrap().key,
-        Key::Backspace
-    );
+    assert_eq!(KeyParser::parse_combo("bs").unwrap().key, Key::Backspace);
     assert_eq!(KeyParser::parse_combo("del").unwrap().key, Key::Delete);
-    assert_eq!(
-        KeyParser::parse_combo("pgup").unwrap().key,
-        Key::PageUp
-    );
-    assert_eq!(
-        KeyParser::parse_combo("pgdn").unwrap().key,
-        Key::PageDown
-    );
+    assert_eq!(KeyParser::parse_combo("pgup").unwrap().key, Key::PageUp);
+    assert_eq!(KeyParser::parse_combo("pgdn").unwrap().key, Key::PageDown);
 }
 
 #[test]
@@ -454,9 +430,7 @@ fn keymap_mode() {
     let mut keymap = Keymap::new();
 
     let mut normal = KeyLayer::new("normal", 10);
-    normal.add_binding(
-        KeyBinding::new("delete_line", "dd", "Delete line").in_mode("normal"),
-    );
+    normal.add_binding(KeyBinding::new("delete_line", "dd", "Delete line").in_mode("normal"));
     keymap.add_layer(normal);
 
     keymap.set_mode("normal");

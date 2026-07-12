@@ -1,7 +1,7 @@
 # Roadmap (Historical Design Plan)
 
 > **Status:** This is the original detailed phase design plan. It is preserved as a historical reference for the intended engineering breakdown.
-> **Canonical status:** See [ROADMAP.md](../../ROADMAP.md) at the repository root for the current, code-accurate status.
+> **Canonical status:** See [ROADMAP.md](../../../../ROADMAP.md) at the repository root for the current, code-accurate status.
 >
 > Phased, incremental, each phase building on the previous.
 

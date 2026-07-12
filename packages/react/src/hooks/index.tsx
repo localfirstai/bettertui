@@ -214,6 +214,30 @@ export function useTerminal() {
   return useContext(TerminalContext);
 }
 
+// Global resize listener
+export function useResize(handler: (width: number, height: number) => void) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    const nodeGlobal =
+      (typeof globalThis !== "undefined" && (globalThis as unknown as Record<string, unknown>)) ||
+      {};
+    const process = nodeGlobal.process;
+
+    if (!process || !process.stdout) return;
+
+    const onResize = () => {
+      handlerRef.current(process.stdout.columns || 80, process.stdout.rows || 24);
+    };
+
+    process.stdout.on("resize", onResize);
+    return () => {
+      process.stdout.off("resize", onResize);
+    };
+  }, []);
+}
+
 // Frame management
 export function useFrame() {
   const [frameRequested, setFrameRequested] = useState(false);

@@ -55,7 +55,6 @@ bettertui/
 │   ├── react/         # @bettertui/react   — React 19 adapter
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
 │   ├── devtools/      # @bettertui/devtools — devtools stub
-│   ├── testing/       # @bettertui/testing  — testing utilities (scaffolding)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -81,7 +80,6 @@ bettertui/
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
 | `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
-| `@bettertui/testing` | Testing utilities | 🟡 Scaffolding |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
 | `@bettertui/widgets` | Widget library (proposed) | 🔜 Not yet a package |
 | `@bettertui/icons` | Icon registry (proposed) | 🔜 Not yet a package |

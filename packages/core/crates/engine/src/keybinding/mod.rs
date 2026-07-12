@@ -99,9 +99,7 @@ impl KeyCombo {
 
 impl KeySequence {
     pub fn single(combo: KeyCombo) -> Self {
-        Self {
-            keys: vec![combo],
-        }
+        Self { keys: vec![combo] }
     }
 
     pub fn chord(combos: Vec<KeyCombo>) -> Self {
@@ -212,7 +210,9 @@ impl KeyParser {
             "page_up" | "pgup" => Ok(Key::PageUp),
             "page_down" | "pgdn" => Ok(Key::PageDown),
             s if s.starts_with('f') && s.len() <= 3 => {
-                let num: u8 = s[1..].parse().map_err(|_| ParseError::InvalidKey(s.to_string()))?;
+                let num: u8 = s[1..]
+                    .parse()
+                    .map_err(|_| ParseError::InvalidKey(s.to_string()))?;
                 Ok(Key::F(num))
             }
             s if s.len() == 1 => Ok(Key::Character(s.chars().next().unwrap())),
@@ -388,7 +388,11 @@ impl KeyLayer {
     }
 
     /// Find a binding that matches a key event
-    pub fn find_binding(&self, event: &KeyEvent, current_mode: Option<&str>) -> Option<&KeyBinding> {
+    pub fn find_binding(
+        &self,
+        event: &KeyEvent,
+        current_mode: Option<&str>,
+    ) -> Option<&KeyBinding> {
         if !self.enabled {
             return None;
         }
@@ -467,12 +471,7 @@ impl Keymap {
     }
 
     /// Add a binding to a specific layer (creates layer if it doesn't exist)
-    pub fn add_binding_to_layer(
-        &mut self,
-        layer_name: &str,
-        binding: KeyBinding,
-        priority: i32,
-    ) {
+    pub fn add_binding_to_layer(&mut self, layer_name: &str, binding: KeyBinding, priority: i32) {
         if let Some(layer) = self.get_layer_mut(layer_name) {
             layer.add_binding(binding);
         } else {

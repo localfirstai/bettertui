@@ -31,7 +31,7 @@ describe("createTheme edge cases", () => {
   it("overriding everything at once", () => {
     const newColors = Object.fromEntries(
       Object.entries(defaultTheme.colors).map(([k]) => [k, "#000000"]),
-    ) as typeof defaultTheme.colors;
+    ) as unknown as typeof defaultTheme.colors;
     const theme = createTheme({
       name: "dark-mode",
       colors: newColors,

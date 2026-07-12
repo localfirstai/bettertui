@@ -1,40 +1,22 @@
 # @bettertui/benchmark
 
-Performance benchmarks for BetterTUI TypeScript packages.
+Vitest benchmark harness for BetterTUI's TypeScript packages.
 
-## Usage
+## What's inside
+
+Benchmarks that measure the cost of core operations (command buffer, tree ops, rendering helpers) across `@bettertui/core`, `@bettertui/shared`, and `@bettertui/themes`.
+
+## Running
 
 ```bash
-# Run all benchmarks
-pnpm vitest bench --run
-
-# Run in watch mode
-pnpm vitest --watch=false
+pnpm bench         # vitest bench (watch)
+pnpm bench:run     # vitest bench --run (CI)
 ```
 
-## Adding Benchmarks
+Benchmarks are defined with Vitest's `bench` API; see `src/**/*.bench.ts`.
 
-Create files with `.bench.ts` suffix in the `src/` directory:
+## Status
 
-```typescript
-import { describe, it, bench } from "vitest";
+Implemented. This is a TS benchmark harness only — there is no `benchmarks/` Rust crate.
 
-describe("My Benchmark", () => {
-  bench("operation", () => {
-    // Code to benchmark
-  });
-});
-```
-
-## What We Benchmark
-
-- Command buffer operations
-- Tree manipulation (create, append, remove)
-- Reconciliation performance
-- Style computation
-- Layout constraint processing
-
-## Dependencies
-
-- `vitest` - Test and benchmark runner
-- `@bettertui/core` - Core package being benchmarked
+See [`docs/testing.md`](../../docs/testing.md).

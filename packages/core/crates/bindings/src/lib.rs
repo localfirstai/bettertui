@@ -1141,6 +1141,57 @@ fn resolve_command_ids(
 
 use bettertui_engine::keybinding::{KeyBinding, KeyParser, Keymap};
 
+#[napi(object)]
+pub struct BindingInfo {
+    pub id: String,
+    pub keys: String,
+    pub command: String,
+    pub description: Option<String>,
+    pub enabled: bool,
+    pub layer: String,
+}
+
+fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
+    let mut parts = Vec::new();
+    if combo.modifiers.ctrl {
+        parts.push("ctrl".to_string());
+    }
+    if combo.modifiers.shift {
+        parts.push("shift".to_string());
+    }
+    if combo.modifiers.alt {
+        parts.push("alt".to_string());
+    }
+    if combo.modifiers.meta {
+        parts.push("meta".to_string());
+    }
+    let key_str = format!("{:?}", combo.key);
+    // Strip "Character(" and ")" wrapper
+    let key_display = if key_str.starts_with("Character(") {
+        let ch = key_str
+            .strip_prefix("Character(")
+            .and_then(|s| s.strip_suffix(')'))
+            .unwrap_or(&key_str);
+        ch.to_string()
+    } else {
+        key_str.to_lowercase()
+    };
+    parts.push(key_display);
+    if parts.len() == 1 {
+        parts[0].clone()
+    } else {
+        parts.join("+")
+    }
+}
+
+fn format_key_sequence(seq: &bettertui_engine::keybinding::KeySequence) -> String {
+    seq.keys
+        .iter()
+        .map(format_key_combo)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 #[napi]
 pub struct NapiKeymap {
     keymap: Keymap,
@@ -1161,23 +1212,24 @@ impl NapiKeymap {
         }
     }
 
-    /// Add a binding to a specific layer
+    /// Add a binding to a specific layer with full command name support
     #[napi]
     pub fn add_binding(
         &mut self,
         layer: String,
         id: String,
         keys: String,
-        description: String,
+        command: String,
+        description: Option<String>,
         priority: i32,
     ) -> bool {
         match KeyParser::parse_sequence(&keys) {
             Ok(seq) => {
                 let binding = KeyBinding {
-                    id: id.clone(),
-                    command: id,
+                    id,
+                    command,
                     sequence: seq,
-                    description: Some(description),
+                    description,
                     condition: None,
                     enabled: true,
                 };
@@ -1188,16 +1240,51 @@ impl NapiKeymap {
         }
     }
 
+    /// Set the current mode for mode-conditional bindings
+    #[napi]
+    pub fn set_mode(&mut self, mode: String) {
+        self.keymap.set_mode(mode);
+    }
+
+    /// Get the current mode
+    #[napi]
+    pub fn current_mode(&self) -> Option<String> {
+        self.keymap.current_mode().map(String::from)
+    }
+
+    /// Clear the current mode
+    #[napi]
+    pub fn clear_mode(&mut self) {
+        self.keymap.clear_mode();
+    }
+
+    /// Remove a layer by name
+    #[napi]
+    pub fn remove_layer(&mut self, name: String) -> bool {
+        self.keymap.remove_layer(&name)
+    }
+
+    /// Set chord timeout in ms
+    #[napi]
+    pub fn set_chord_timeout(&mut self, ms: f64) {
+        self.keymap.set_chord_timeout(ms as u64);
+    }
+
+    /// Get chord timeout in ms
+    #[napi]
+    pub fn chord_timeout(&self) -> f64 {
+        self.keymap.chord_timeout_ms() as f64
+    }
+
     /// Handle a key string (e.g. "ctrl+c") and return the command if matched
     #[napi]
     pub fn handle_key(&mut self, key_str: String) -> Option<String> {
         match KeyParser::parse_combo(&key_str) {
             Ok(combo) => {
-                // KeyCombo -> KeyEvent mock for the keymap
                 let event = bettertui_engine::events::types::KeyEvent {
                     key: combo.key,
                     modifiers: combo.modifiers,
-                    target: bettertui_engine::tree::NodeId::default(), // Dummy
+                    target: bettertui_engine::tree::NodeId::default(),
                     default_prevented: false,
                     phase: bettertui_engine::events::types::EventPhase::Target,
                 };
@@ -1207,10 +1294,89 @@ impl NapiKeymap {
         }
     }
 
-    /// Clear pending sequences
+    /// Check if there's a pending chord sequence
+    #[napi]
+    pub fn has_pending(&self) -> bool {
+        self.keymap.has_pending_sequence()
+    }
+
+    /// Clear any pending chord sequence
     #[napi]
     pub fn clear_pending(&mut self) {
         self.keymap.clear_pending_sequence();
+    }
+
+    /// Get formatted pending keys (for UI display)
+    #[napi]
+    pub fn pending_keys(&self) -> Vec<String> {
+        self.keymap
+            .pending_keys()
+            .iter()
+            .map(format_key_combo)
+            .collect()
+    }
+
+    /// Get active bindings for cheat sheet / UI display
+    #[napi]
+    pub fn active_bindings(&self) -> Vec<BindingInfo> {
+        self.keymap
+            .active_bindings()
+            .into_iter()
+            .map(|(b, layer_name)| BindingInfo {
+                id: b.id.clone(),
+                keys: format_key_sequence(&b.sequence),
+                command: b.command.clone(),
+                description: b.description.clone(),
+                enabled: b.enabled,
+                layer: layer_name.to_string(),
+            })
+            .collect()
+    }
+
+    /// Get all bindings (including disabled)
+    #[napi]
+    pub fn all_bindings(&self) -> Vec<BindingInfo> {
+        self.keymap
+            .all_bindings()
+            .into_iter()
+            .map(|(b, layer_name)| BindingInfo {
+                id: b.id.clone(),
+                keys: format_key_sequence(&b.sequence),
+                command: b.command.clone(),
+                description: b.description.clone(),
+                enabled: b.enabled,
+                layer: layer_name.to_string(),
+            })
+            .collect()
+    }
+
+    /// Get command history
+    #[napi]
+    pub fn command_history(&self) -> Vec<String> {
+        self.keymap.command_history().to_vec()
+    }
+
+    /// Clear command history
+    #[napi]
+    pub fn clear_history(&mut self) {
+        self.keymap.clear_history();
+    }
+
+    /// Parse a key string into its normalized form
+    #[napi]
+    pub fn parse_key(&self, key_str: String) -> Option<String> {
+        KeyParser::parse_combo(&key_str)
+            .ok()
+            .map(|combo| format_key_combo(&combo))
+    }
+
+    /// Parse a key sequence string into normalized parts
+    #[napi]
+    pub fn parse_sequence(&self, key_str: String) -> Vec<String> {
+        KeyParser::parse_sequence(&key_str)
+            .ok()
+            .map(|seq| seq.keys.iter().map(format_key_combo).collect())
+            .unwrap_or_default()
     }
 }
 

@@ -45,7 +45,6 @@ bettertui/
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
 │   ├── icons/         # @bettertui/icons   — icon registry (NOT YET A PACKAGE; proposed)
 │   ├── devtools/      # @bettertui/devtools — devtools stub
-│   ├── testing/       # @bettertui/testing  — testing utilities (scaffolding)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -73,7 +72,6 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 69 component exports) |
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
-| `@bettertui/testing` | yes | `core`, `shared` | Testing utilities (scaffolding) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
 | `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/WidgetModel.md` note) |
 
@@ -186,3 +184,4 @@ graph TD
 - **Layer 2 (Core TypeScript).** Owns the command protocol, tree manipulation, runtime/frame loop, and the native bridge.
 - **Layer 3 (Rust engine).** Owns the arena, layout, rendering, events, input, animation, text, PTY, terminal emulation, capabilities.
 - **Layer 4 (Terminal).** Raw bytes in/out via crossterm and child processes via portable-pty.
+pty.

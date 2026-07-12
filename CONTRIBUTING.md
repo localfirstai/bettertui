@@ -59,6 +59,18 @@ cargo clippy --workspace -- -D warnings
 - `examples/` — example apps (mostly stubs; `counter` partially wired)
 - `docs/` — the documentation you are reading (canonical source of truth)
 
+## Test-Driven Development
+
+BetterTUI is built test-first. Tests describe behavior before or alongside implementation, and every change is gated by automated checks. There is **no `@bettertui/testing` package** and no snapshot/headless harness — tests use [Vitest](https://vitest.dev/) directly, and React output is verified through `renderToStringAsync` in `packages/react/src/testing.ts`.
+
+- **Write the test first.** For an engine change or a new API, add a failing test that pins the expected behavior.
+- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` within `bettertui-engine` (~1,204 lib tests).
+- **TypeScript:** co-locate tests as `src/**/*.test.ts` / `*.test.tsx` (see `vitest.shared.ts`); run them with `pnpm test`.
+- **Keep the suite green.** Run `pnpm lint && pnpm typecheck && pnpm build && pnpm test` and `cargo test -p bettertui-engine --lib` before opening a PR.
+- **No dead code or TODOs in committed source.** Track planned work in `tasks/`.
+
+For commands and the full testing workflow, see [docs/guides/testing.md](docs/guides/testing.md) and [docs/testing.md](docs/testing.md).
+
 ## Code Standards
 
 ### TypeScript

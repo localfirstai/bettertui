@@ -12,7 +12,6 @@ The project is pre-1.0; the public API is not yet stable.
 - React 19 adapter (`@bettertui/react`): `react-reconciler` host config, `render()`, `RuntimeProvider`/`useRuntime`, hooks (`Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `useMouse`, `TerminalProvider`/`useTerminal`, `useFrame`, `useClipboard`, `useAnimation`, `useTimeline`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`), and 69 component functions (thin wrappers emitting element descriptors).
 - Rust engine subsystems: arena node model, command protocol, renderer, frame buffer, dirty diff, Taffy layout, events, input (keyboard/mouse/paste), ANSI parser, animation engine (tween/spring/keyframe), scheduler, capability detection, terminal I/O + VT emulation, PTY runtime, compositor, rope-based text engine, widget framework.
 - `@bettertui/themes` default theme and `createTheme()` factory.
-- `@bettertui/testing` utilities (`MockCommandCollector`, `expectCommandBuffer`, `createPoint`, `createRect`, `createMockHandler`, `createTestTree`, `sleep`, `flushMicrotasks`, `renderToString`, `expectToMatchSnapshot`).
 - `@bettertui/benchmark` Vitest benchmark harness for the TypeScript packages.
 - 14 example applications under `examples/fundamentals/*` and `examples/showcase/*`.
 - `apps/performance` benchmark site comparing BetterTUI against OpenTUI.

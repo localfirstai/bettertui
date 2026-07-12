@@ -87,7 +87,6 @@ graph TD
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
 | `@bettertui/themes` | Theme defs + factory | ✅ |
 | `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |
-| `@bettertui/testing` | Testing utilities | 🟡 scaffolding |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ |
 
 ## Architecture principles

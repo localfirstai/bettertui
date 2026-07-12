@@ -299,7 +299,7 @@ describe("warnIfInvalid", () => {
 
   it("uses default component name when not provided", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    warnIfInvalid({ flexDirection: "diagonal" });
+    warnIfInvalid({ flexDirection: "diagonal" } as never);
     expect(warnSpy).toHaveBeenCalledWith("[Component] Invalid props:", expect.any(Array));
   });
 
@@ -312,7 +312,7 @@ describe("warnIfInvalid", () => {
   it("does not warn in production mode", () => {
     vi.stubEnv("NODE_ENV", "production");
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    warnIfInvalid({ flexDirection: "diagonal" });
+    warnIfInvalid({ flexDirection: "diagonal" } as never);
     expect(warnSpy).not.toHaveBeenCalled();
   });
 });

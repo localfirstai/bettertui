@@ -18,6 +18,7 @@ pub mod framebuffer;
 pub mod glyph;
 pub mod graphics;
 pub mod input;
+pub mod keybinding;
 pub mod keyboard;
 pub mod layout;
 pub mod mouse;

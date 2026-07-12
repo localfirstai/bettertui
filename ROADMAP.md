@@ -15,7 +15,6 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 69 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
-| `@bettertui/testing` | 🟡 Scaffolding | Utilities present (`MockCommandCollector`, `expectCommandBuffer`, etc.) |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
 | Examples | ✅ Wired | 14 example apps implemented (`examples/fundamentals/*`, `examples/showcase/*`) |
 | Benchmarks | ✅ Implemented | `apps/performance` site (OpenTUI vs BetterTUI) + `packages/benchmark` |

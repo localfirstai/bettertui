@@ -34,18 +34,35 @@ export interface SchedulerStats {
   isIdle: boolean;
 }
 
+export interface NapiRenderResult {
+  outputData: Uint8Array;
+  width: number;
+  height: number;
+  dirtyRegionCount: number;
+}
+
 export interface NapiEngine {
   processCommands(commandsJson: string): string;
-  render(): string;
+  render(): NapiRenderResult;
+  renderFull(): NapiRenderResult;
   resize(width: number, height: number): void;
   beginFrame(): void;
   commitFrame(): void;
   nodeCount(): number;
+  frameCount(): string;
   treeSummary(): string;
   printTree(): string;
-  validate(): string;
+  validate(): boolean;
   root(): string;
   generation(): string;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
+  shutdown(): void;
+  dimensions(): number[];
+  shouldRender(): string;
+  requestFrame(): void;
 }
 
 export interface NapiEventBus {
@@ -117,4 +134,40 @@ export interface NapiScheduler {
   fps(): string;
   frameBudgetMs(): string;
   isIdle(): boolean;
+}
+
+export interface BindingInfo {
+  id: string;
+  keys: string;
+  command: string;
+  description: string | null;
+  enabled: boolean;
+  layer: string;
+}
+
+export interface NapiKeymap {
+  addBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description: string | null,
+    priority: number,
+  ): boolean;
+  setMode(mode: string): void;
+  currentMode(): string | null;
+  clearMode(): void;
+  removeLayer(name: string): boolean;
+  setChordTimeout(ms: number): void;
+  chordTimeout(): number;
+  handleKey(keyStr: string): string | null;
+  hasPending(): boolean;
+  clearPending(): void;
+  pendingKeys(): string[];
+  activeBindings(): BindingInfo[];
+  allBindings(): BindingInfo[];
+  commandHistory(): string[];
+  clearHistory(): void;
+  parseKey(keyStr: string): string | null;
+  parseSequence(keyStr: string): string[];
 }
