@@ -23,12 +23,24 @@ keyboard input is handled by an internal `KeyInput` manager.
 ```bash
 # from the repo root
 pnpm install
+```
 
-# build the bundled artifacts
-pnpm --filter @bettertui/examples build
+### Zero-build usage
 
-# generate per-example docs
-node scripts/generate-docs.mjs
+Every example runs directly from source — no build step required:
+
+```bash
+# interactive launcher (no build step)
+pnpm --filter @bettertui/examples dev
+
+# run one example directly
+pnpm --filter @bettertui/examples dev hello-world
+pnpm --filter @bettertui/examples dev --list
+
+# or from any directory
+tsx examples/src/index.tsx              # launcher
+tsx examples/src/index.tsx hello-world  # single example
+tsx examples/src/index.tsx --list       # catalogue
 ```
 
 ## Run modes
@@ -38,10 +50,13 @@ node scripts/generate-docs.mjs
 Every example runs directly from source via its `import.meta.main` guard:
 
 ```bash
-# from the repo root
-bun examples/src/examples/core/hello-world.tsx
-bun examples/src/examples/containers/scroll-area-basics.tsx
-bun examples/src/examples/layout/flex-layout.tsx
+# from examples/
+pnpm exec tsx src/examples/core/hello-world.tsx
+pnpm exec tsx src/examples/containers/scroll-area-basics.tsx
+pnpm exec tsx src/examples/layout/flex-layout.tsx
+
+# or from repo root
+tsx examples/src/examples/core/hello-world.tsx
 ```
 
 This mirrors OpenTUI's per-file execution capability. No build step required.
@@ -51,8 +66,6 @@ Press `q` or `Escape` to quit.
 
 ```bash
 pnpm --filter @bettertui/examples dev
-# or
-node dist/index.mjs
 ```
 
 Opens the **ExampleSelector** — a category-grouped, scrollable, filterable menu:
@@ -68,9 +81,8 @@ Opens the **ExampleSelector** — a category-grouped, scrollable, filterable men
 ### 3. Run one via launcher CLI
 
 ```bash
-node dist/index.mjs hello-world       # run directly
-node dist/index.mjs --list            # compact catalogue
-node dist/index.mjs                   # print usage if non-TTY
+pnpm --filter @bettertui/examples dev hello-world   # run directly
+pnpm --filter @bettertui/examples dev --list         # compact catalogue
 ```
 
 ### 4. Bundled standalone (single .mjs)
@@ -78,6 +90,9 @@ node dist/index.mjs                   # print usage if non-TTY
 Each example also ships as its own runnable `.mjs` (requires a build step):
 
 ```bash
+# build first
+pnpm --filter @bettertui/examples build
+
 node dist/examples/core/hello-world.mjs
 node dist/examples/layout/flex-layout.mjs
 ```

@@ -1,5 +1,4 @@
-// Example navigator. OpenTUI gives every example package a dev script; BetterTUI
-// centralises discovery here. Usage:
+// Example navigator. Usage:
 //
 //   node scripts/navigate.mjs            # list all
 //   node scripts/navigate.mjs <slug>     # show run command
@@ -39,7 +38,7 @@ const [cmd, value] = process.argv.slice(2);
 if (cmd === "--search" && value) {
   search(value);
 } else if (cmd && exampleBySlug[cmd]) {
-  console.log(`Run: node dist/index.mjs ${cmd}`);
+  console.log(`Run: tsx src/index.tsx ${cmd}`);
 } else {
   console.log(`BetterTUI Examples (${examples.length})`);
   list();

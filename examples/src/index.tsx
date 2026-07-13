@@ -5,9 +5,9 @@
 // (the public useKeyboard hook only fires on DOM events, never in a TTY).
 //
 // CLI:
-//   node dist/index.mjs            interactive browser
-//   node dist/index.mjs --list     compact catalogue
-//   node dist/index.mjs <slug>     run one example directly
+//   tsx src/index.tsx              interactive browser
+//   tsx src/index.tsx --list       compact catalogue
+//   tsx src/index.tsx <slug>       run one example directly
 
 import { render } from "@bettertui/react";
 import { Box, Flex, Heading, Input, List, Provider, Separator, Text } from "@bettertui/react";
@@ -378,10 +378,10 @@ function printMenu(): void {
     if (!inCat || inCat.length === 0) continue;
     console.log(`${CATEGORY_LABELS[category]}`);
     for (const e of inCat) {
-      console.log(`  node dist/index.mjs ${e.slug}`);
+      console.log(`  tsx src/index.tsx ${e.slug}`);
     }
   }
-  console.log("\nOr: node dist/index.mjs --list   (compact catalogue)");
+  console.log("\nOr: tsx src/index.tsx --list   (compact catalogue)");
 }
 
 const arg = process.argv[2];

@@ -31,6 +31,69 @@ function writeStdout(data: Uint8Array): void {
   nodeGlobal.process?.stdout?.write?.(buf);
 }
 
+// ─── Terminal Lifecycle ──────────────────────────────────────────────────────
+// OpenTUI's CliRenderer handles terminal setup (alternate screen, raw mode) in
+// its native Zig layer. Here we emit the same ANSI sequences from TypeScript so
+// the Rust-native render path produces a visible TUI.
+
+const CSI = "\x1b[";
+const ALT_SCREEN_ENTER = `${CSI}?1049h`;
+const ALT_SCREEN_LEAVE = `${CSI}?1049l`;
+const HIDE_CURSOR = `${CSI}?25l`;
+const SHOW_CURSOR = `${CSI}?25h`;
+const CLEAR_SCREEN = `${CSI}2J`;
+const CURSOR_HOME = `${CSI}H`;
+
+function encode(s: string): Uint8Array {
+  return new TextEncoder().encode(s);
+}
+
+let terminalActive = false;
+let stdinRawMode = false;
+
+function setupTerminal(): void {
+  if (terminalActive) return;
+  terminalActive = true;
+  writeStdout(encode(HIDE_CURSOR + ALT_SCREEN_ENTER + CLEAR_SCREEN + CURSOR_HOME));
+  // Enable raw mode on stdin so keyboard input works in TUI context.
+  try {
+    const proc = (
+      nodeGlobal as unknown as {
+        process?: { stdin?: { setRawMode?: (m: boolean) => void; isTTY?: boolean } };
+      }
+    ).process;
+    if (proc?.stdin?.setRawMode && proc.stdin.isTTY) {
+      proc.stdin.setRawMode(true);
+      stdinRawMode = true;
+    }
+  } catch {
+    // Not a TTY; raw mode unavailable.
+  }
+}
+
+function teardownTerminal(): void {
+  if (!terminalActive) return;
+  terminalActive = false;
+  writeStdout(encode(SHOW_CURSOR + ALT_SCREEN_LEAVE));
+  try {
+    if (stdinRawMode) {
+      const proc = (
+        nodeGlobal as unknown as { process?: { stdin?: { setRawMode?: (m: boolean) => void } } }
+      ).process;
+      proc?.stdin?.setRawMode?.(false);
+      stdinRawMode = false;
+    }
+  } catch {
+    // Best-effort.
+  }
+}
+
+// Best-effort cleanup on process exit (covers SIGINT default handler, SIGTERM,
+// process.exit(), and uncaught exceptions that trigger exit).
+if (typeof process !== "undefined" && isNode) {
+  process.on("exit", teardownTerminal);
+}
+
 interface NativeSession {
   reconciler: ReconcilerType;
   root: OpaqueRoot;
@@ -149,6 +212,7 @@ export function render(element: ReactNode): RenderHandle {
     const { width, height } = getTerminalSize();
     const session = getOrCreateNativeSession(width, height);
     if (session) {
+      setupTerminal();
       updateContainer(session.reconciler, element, session.root);
       const runtime = new Runtime();
       return {
@@ -160,6 +224,7 @@ export function render(element: ReactNode): RenderHandle {
             flushAndRender(nativeSession);
             nativeSession = null;
           }
+          teardownTerminal();
         },
       };
     }
