@@ -154,9 +154,15 @@ mod tests {
     #[test]
     fn compositor_renderer_render() {
         let mut renderer = CompositorRenderer::new(10, 10);
-        renderer.compositor_mut().add_layer(LayerType::Background);
+        let layer_id = renderer.compositor_mut().add_layer(LayerType::Background);
+        if let Some(layer) = renderer.compositor_mut().get_layer_mut(layer_id) {
+            layer.set_char(0, 0, 'X');
+        }
         let output = renderer.render();
-        assert!(!output.is_empty());
+        assert!(
+            !output.is_empty(),
+            "layer with content should produce output"
+        );
     }
 
     #[test]

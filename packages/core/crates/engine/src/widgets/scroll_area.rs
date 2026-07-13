@@ -64,49 +64,60 @@ impl Widget for ScrollAreaWidget {
     fn handle_event(&self, id: WidgetId, ctx: &mut WidgetContext, event: &Event) -> EventResult {
         match event {
             Event::Key(key_event) => {
-                if let Some(node) = ctx.arena.get_mut(id.node_id()) {
+                let mut changed = false;
+                let result = if let Some(node) = ctx.arena.get_mut(id.node_id()) {
                     match key_event.key {
                         Key::ArrowUp => {
                             node.state.scroll_y = (node.state.scroll_y - 1).max(0);
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         Key::ArrowDown => {
                             node.state.scroll_y = node.state.scroll_y.saturating_add(1);
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         Key::PageUp => {
                             node.state.scroll_y = node.state.scroll_y.saturating_sub(10);
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         Key::PageDown => {
                             node.state.scroll_y = node.state.scroll_y.saturating_add(10);
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         Key::Home => {
                             node.state.scroll_y = 0;
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         Key::End => {
                             node.state.scroll_y = i32::MAX;
                             node.state.mark_render_dirty();
                             ctx.request_frame();
+                            changed = true;
                             EventResult::Consumed
                         }
                         _ => EventResult::Ignored,
                     }
                 } else {
                     EventResult::Ignored
+                };
+                if changed {
+                    ctx.arena.mark_changed();
                 }
+                result
             }
             _ => EventResult::Ignored,
         }

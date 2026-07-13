@@ -15,7 +15,10 @@ use super::{node_id::NodeId, node_kind::NodeKind, render_node::RenderNode, tree_
 pub struct NodeArena {
     nodes: SlotMap<NodeId, RenderNode>,
     root: NodeId,
+    /// Incremented on every structural change (insert, remove, tree ops)
     generation: u64,
+    /// Incremented on every change including property mutations via CommandProcessor
+    change_count: u64,
 }
 
 impl Default for NodeArena {
@@ -36,7 +39,18 @@ impl NodeArena {
             nodes,
             root,
             generation: 0,
+            change_count: 0,
         }
+    }
+
+    /// Mark arena as changed (for property mutations from CommandProcessor).
+    pub fn mark_changed(&mut self) {
+        self.change_count += 1;
+    }
+
+    /// Get the total number of changes since creation.
+    pub fn change_count(&self) -> u64 {
+        self.change_count
     }
 
     /// Insert a node into the arena. Returns its NodeId.
@@ -44,6 +58,7 @@ impl NodeArena {
         let id = self.nodes.insert(node);
         self.nodes[id].id = id;
         self.generation += 1;
+        self.mark_changed();
         id
     }
 
@@ -63,6 +78,7 @@ impl NodeArena {
             return None;
         }
         self.generation += 1;
+        self.mark_changed();
         self.nodes.remove(id)
     }
 
@@ -90,6 +106,7 @@ impl NodeArena {
         });
         self.nodes[self.root].id = self.root;
         self.generation += 1;
+        self.mark_changed();
     }
 
     /// Get the root node ID.
@@ -224,6 +241,7 @@ impl NodeArena {
         self.nodes[child].parent = Some(parent);
         self.nodes[parent].children.push(child);
         self.generation += 1;
+        self.mark_changed();
         Ok(())
     }
 
@@ -271,6 +289,7 @@ impl NodeArena {
 
         self.nodes[child].parent = Some(parent);
         self.generation += 1;
+        self.mark_changed();
         Ok(())
     }
 
@@ -338,6 +357,7 @@ impl NodeArena {
         self.nodes[new].parent = Some(parent);
         self.nodes.remove(old);
         self.generation += 1;
+        self.mark_changed();
         Ok(())
     }
 
@@ -354,6 +374,7 @@ impl NodeArena {
         }
         self.remove_subtree_recursive(id);
         self.generation += 1;
+        self.mark_changed();
     }
 
     fn remove_subtree_recursive(&mut self, id: NodeId) {
@@ -390,6 +411,7 @@ impl NodeArena {
         }
 
         self.generation += 1;
+        self.mark_changed();
     }
 
     /// Validate tree invariants. Returns Ok(()) if valid.

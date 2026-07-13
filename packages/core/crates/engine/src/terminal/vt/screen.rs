@@ -219,7 +219,7 @@ impl ScreenBuffer {
         for y in 0..count {
             let mut line = Vec::with_capacity(cols as usize);
             for x in 0..cols {
-                let cell = *self.buffer.get(x, y);
+                let cell = self.buffer.get(x, y);
                 line.push(cell);
             }
             self.scrollback.push_line(line);
@@ -228,7 +228,7 @@ impl ScreenBuffer {
         // Shift rows up
         for y in count..rows {
             for x in 0..cols {
-                let src = *self.buffer.get(x, y);
+                let src = self.buffer.get(x, y);
                 self.buffer.set(x, y - count, src);
             }
         }
@@ -249,7 +249,7 @@ impl ScreenBuffer {
         // Shift rows down
         for y in (count..rows).rev() {
             for x in 0..cols {
-                let src = *self.buffer.get(x, y - count);
+                let src = self.buffer.get(x, y - count);
                 self.buffer.set(x, y, src);
             }
         }
@@ -274,7 +274,7 @@ impl ScreenBuffer {
         // Shift rows down from bottom
         for y in ((row + count)..rows).rev() {
             for x in 0..cols {
-                let src = *self.buffer.get(x, y - count);
+                let src = self.buffer.get(x, y - count);
                 self.buffer.set(x, y, src);
             }
         }
@@ -299,7 +299,7 @@ impl ScreenBuffer {
         // Shift rows up
         for y in (row + count)..rows {
             for x in 0..cols {
-                let src = *self.buffer.get(x, y);
+                let src = self.buffer.get(x, y);
                 self.buffer.set(x, y - count, src);
             }
         }
@@ -322,7 +322,7 @@ impl ScreenBuffer {
 
         // Shift chars right
         for x in ((col + count)..cols).rev() {
-            let src = *self.buffer.get(x - count, row);
+            let src = self.buffer.get(x - count, row);
             self.buffer.set(x, row, src);
         }
 
@@ -342,7 +342,7 @@ impl ScreenBuffer {
 
         // Shift chars left
         for x in (col + count)..cols {
-            let src = *self.buffer.get(x, row);
+            let src = self.buffer.get(x, row);
             self.buffer.set(x - count, row, src);
         }
 

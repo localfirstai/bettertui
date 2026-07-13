@@ -67,7 +67,7 @@ impl Layer {
 
     pub fn get_cell(&self, x: u16, y: u16) -> Option<Cell> {
         if self.buffer.in_bounds(x, y) {
-            Some(*self.buffer.get(x, y))
+            Some(self.buffer.get(x, y))
         } else {
             None
         }
@@ -133,7 +133,7 @@ impl Layer {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.buffer.cells().iter().all(|c| c.is_empty())
+        self.buffer.is_empty()
     }
 }
 

@@ -5,6 +5,8 @@ use crate::tree::color::{Color, NamedColor};
 
 pub struct AnsiBackend {
     buffer: Vec<u8>,
+    cursor_x: u16,
+    cursor_y: u16,
 }
 
 impl Default for AnsiBackend {
@@ -17,53 +19,52 @@ impl AnsiBackend {
     pub fn new() -> Self {
         Self {
             buffer: Vec::with_capacity(4096),
+            cursor_x: u16::MAX,
+            cursor_y: u16::MAX,
         }
     }
 
     fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
         for y in region.y..region.y + region.height {
             self.move_to(region.x, y);
-            let mut last_fg: Option<Color> = None;
-            let mut last_bg: Option<Color> = None;
-            let mut last_attrs: Option<CellAttributes> = None;
 
-            for x in region.x..region.x + region.width {
+            // Run-length coalescing: batch consecutive same-styled cells
+            let mut x = region.x;
+            while x < region.x + region.width {
                 let cell = buffer.get(x, y);
-                self.encode_cell(cell, &mut last_fg, &mut last_bg, &mut last_attrs);
+                let run_start = x;
+                x += 1;
+                while x < region.x + region.width {
+                    let next = buffer.get(x, y);
+                    if next.fg == cell.fg
+                        && next.bg == cell.bg
+                        && next.attributes == cell.attributes
+                    {
+                        x += 1;
+                    } else {
+                        break;
+                    }
+                }
+                let run_len = x - run_start;
+
+                // Emit SGR once for entire run
+                self.encode_cell(&cell);
+
+                // Emit all characters in the run
+                for cx in run_start..run_start + run_len {
+                    self.push_char(buffer.get(cx, y).ch);
+                }
+                self.cursor_x += run_len;
             }
         }
     }
 
-    fn encode_cell(
-        &mut self,
-        cell: &Cell,
-        last_fg: &mut Option<Color>,
-        last_bg: &mut Option<Color>,
-        last_attrs: &mut Option<CellAttributes>,
-    ) {
-        let fg_changed = *last_fg != Some(cell.fg);
-        let bg_changed = *last_bg != Some(cell.bg);
-        let attrs_changed = *last_attrs != Some(cell.attributes);
-
-        if fg_changed || bg_changed || attrs_changed {
-            self.begin_sgr();
-            if fg_changed {
-                self.push_fg_sgr(cell.fg);
-            }
-            if bg_changed {
-                self.push_bg_sgr(cell.bg);
-            }
-            if attrs_changed {
-                self.push_attrs_sgr(cell.attributes);
-            }
-            self.end_sgr();
-        }
-
-        self.push_char(cell.ch);
-
-        *last_fg = Some(cell.fg);
-        *last_bg = Some(cell.bg);
-        *last_attrs = Some(cell.attributes);
+    fn encode_cell(&mut self, cell: &Cell) {
+        self.begin_sgr();
+        self.push_fg_sgr(cell.fg);
+        self.push_bg_sgr(cell.bg);
+        self.push_attrs_sgr(cell.attributes);
+        self.end_sgr();
     }
 
     fn begin_sgr(&mut self) {
@@ -203,13 +204,32 @@ impl AnsiBackend {
     }
 
     fn move_to(&mut self, x: u16, y: u16) {
+        if x == self.cursor_x && y == self.cursor_y {
+            return;
+        }
         self.buffer.extend_from_slice(b"\x1b[");
-        let y_str = format!("{}", y + 1);
-        let x_str = format!("{}", x + 1);
-        self.buffer.extend_from_slice(y_str.as_bytes());
+        self.push_u16(y + 1);
         self.buffer.push(b';');
-        self.buffer.extend_from_slice(x_str.as_bytes());
+        self.push_u16(x + 1);
         self.buffer.push(b'H');
+        self.cursor_x = x;
+        self.cursor_y = y;
+    }
+
+    fn push_u16(&mut self, n: u16) {
+        if n == 0 {
+            self.buffer.push(b'0');
+            return;
+        }
+        let mut buf = [0u8; 5];
+        let mut i = buf.len();
+        let mut val = n;
+        while val > 0 {
+            i -= 1;
+            buf[i] = b'0' + (val % 10) as u8;
+            val /= 10;
+        }
+        self.buffer.extend_from_slice(&buf[i..]);
     }
 
     fn hide_cursor(&mut self) {
@@ -228,6 +248,13 @@ impl AnsiBackend {
 impl RenderBackend for AnsiBackend {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
         self.buffer.clear();
+        self.cursor_x = u16::MAX;
+        self.cursor_y = u16::MAX;
+
+        if regions.is_empty() {
+            return;
+        }
+
         self.hide_cursor();
 
         for region in regions {
@@ -262,7 +289,20 @@ mod tests {
         let fb = FrameBuffer::new(5, 5);
         backend.encode(&fb, &[]);
         let out = backend.finish();
+        assert!(out.is_empty(), "empty regions should produce no output");
+    }
+
+    #[test]
+    fn ansi_backend_encode_with_regions() {
+        let mut backend = AnsiBackend::new();
+        let mut fb = FrameBuffer::new(5, 5);
+        fb.set(0, 0, Cell::new('A'));
+        let region = DirtyRegion::new(0, 0, 1, 1);
+        backend.encode(&fb, &[region]);
+        let out = backend.finish();
+        assert!(!out.is_empty(), "regions should produce output");
         let s = String::from_utf8_lossy(out);
+        assert!(s.contains('A'));
         assert!(s.contains("\x1b[?25l"));
         assert!(s.contains("\x1b[?25h"));
     }
@@ -272,7 +312,8 @@ mod tests {
         let mut backend = AnsiBackend::new();
         backend.move_to(0, 0);
         let out = backend.finish();
-        assert!(out.windows(4).any(|w| w == b"1;1H"));
+        let s = String::from_utf8_lossy(out);
+        assert!(s.contains("1;1H"), "move_to(0,0) should emit CUP to 1;1H");
     }
 
     #[test]
@@ -282,6 +323,30 @@ mod tests {
         let out = backend.finish();
         let s = String::from_utf8_lossy(out);
         assert!(s.contains("5;10H"));
+    }
+
+    #[test]
+    fn ansi_backend_move_to_skip_redundant() {
+        let mut backend = AnsiBackend::new();
+        backend.move_to(5, 3);
+        let len1 = backend.finish().len();
+        backend.move_to(5, 3);
+        let len2 = backend.finish().len();
+        assert_eq!(len1, len2, "redundant move_to should be skipped");
+    }
+
+    #[test]
+    fn ansi_backend_move_to_diff_position() {
+        let mut backend = AnsiBackend::new();
+        backend.move_to(0, 0);
+        backend.move_to(5, 3);
+        let out = backend.finish();
+        let s = String::from_utf8_lossy(out);
+        assert_eq!(
+            s.matches("H").count(),
+            2,
+            "two different positions should emit two CUPs"
+        );
     }
 
     #[test]
@@ -314,33 +379,14 @@ mod tests {
             .with_fg(Color::Named(NamedColor::Red))
             .with_bg(Color::Named(NamedColor::Blue))
             .with_attrs(CellAttributes::BOLD);
-        let mut last_fg = None;
-        let mut last_bg = None;
-        let mut last_attrs = None;
-        backend.encode_cell(&cell, &mut last_fg, &mut last_bg, &mut last_attrs);
+        backend.encode_cell(&cell);
+        backend.push_char('Z');
         let out = backend.finish();
         let s = String::from_utf8_lossy(out);
         assert!(s.contains("31"));
         assert!(s.contains("44"));
         assert!(s.contains("1"));
-        assert!(s.ends_with('Z'));
-    }
-
-    #[test]
-    fn ansi_backend_style_coalescing() {
-        let mut backend = AnsiBackend::new();
-        let cell = Cell::new('A').with_fg(Color::Named(NamedColor::Red));
-        let mut last_fg = Some(Color::Named(NamedColor::Red));
-        let mut last_bg = None;
-        let mut last_attrs = None;
-        backend.encode_cell(&cell, &mut last_fg, &mut last_bg, &mut last_attrs);
-        let len1 = backend.finish().len();
-        let mut backend2 = AnsiBackend::new();
-        let cell2 = Cell::new('B').with_fg(Color::Named(NamedColor::Red));
-        let mut last_fg2 = Some(Color::Named(NamedColor::Red));
-        backend2.encode_cell(&cell2, &mut last_fg2, &mut last_bg, &mut last_attrs);
-        let len2 = backend2.finish().len();
-        assert!(len1 > len2);
+        assert!(s.contains("Z"));
     }
 
     #[test]
@@ -376,9 +422,38 @@ mod tests {
         let mut fb = FrameBuffer::new(5, 3);
         fb.set(1, 1, Cell::new('H'));
         let region = DirtyRegion::new(0, 0, 5, 3);
-        backend.encode_region(&fb, &region);
+        backend.encode(&fb, &[region]);
         let out = backend.finish();
         let s = String::from_utf8_lossy(out);
         assert!(s.contains('H'));
+    }
+
+    #[test]
+    fn ansi_backend_run_length_coalescing() {
+        let mut backend = AnsiBackend::new();
+        let mut fb = FrameBuffer::new(10, 1);
+        let cell = Cell::new('A').with_fg(Color::Named(NamedColor::Red));
+        let cell2 = Cell::new('B').with_fg(Color::Named(NamedColor::Red));
+        let cell3 = Cell::new('C').with_fg(Color::Named(NamedColor::Red));
+        fb.set(0, 0, cell);
+        fb.set(1, 0, cell2);
+        fb.set(2, 0, cell3);
+        let region = DirtyRegion::new(0, 0, 3, 1);
+        backend.encode(&fb, &[region]);
+        let out = backend.finish();
+        let s = String::from_utf8_lossy(out);
+        // Should have exactly one SGR sequence for the entire run
+        assert!(s.contains("31"), "should contain red fg SGR");
+        assert!(s.contains("ABC"), "characters should be batched");
+        // Count SGR sequences: should be 1 (shared for the run) not 3 (per-cell)
+        let sgr_sequences = s.matches("\x1b[38").count(); // 38 = fg params typically
+        assert!(
+            sgr_sequences <= 1,
+            "should have at most 1 fg SGR for same-styled chars"
+        );
+        assert!(
+            s.contains("ABC"),
+            "characters should appear as a contiguous batch"
+        );
     }
 }

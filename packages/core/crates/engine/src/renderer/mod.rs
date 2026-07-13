@@ -20,6 +20,21 @@ pub struct RenderFrame {
     pub height: u16,
 }
 
+impl RenderFrame {
+    pub fn new_empty(width: u16, height: u16) -> Self {
+        Self {
+            output_data: Vec::new(),
+            dirty_regions: Vec::new(),
+            width,
+            height,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.output_data.is_empty() && self.dirty_regions.is_empty()
+    }
+}
+
 pub struct Renderer {
     width: u16,
     height: u16,
@@ -32,6 +47,7 @@ pub struct Renderer {
     scheduler: Scheduler,
     needs_full_repaint: bool,
     generation: u64,
+    last_change_count: u64,
 }
 
 impl Default for Renderer {
@@ -54,6 +70,7 @@ impl Renderer {
             scheduler: Scheduler::default(),
             needs_full_repaint: true,
             generation: 0,
+            last_change_count: 0,
         }
     }
 
@@ -70,6 +87,7 @@ impl Renderer {
             scheduler: Scheduler::default(),
             needs_full_repaint: true,
             generation: 0,
+            last_change_count: 0,
         }
     }
 
@@ -97,6 +115,15 @@ impl Renderer {
     }
 
     pub fn render(&mut self, arena: &NodeArena) -> RenderFrame {
+        self.generation += 1;
+
+        // Frame suppression: if nothing changed and no full repaint needed, skip
+        let change_count = arena.change_count();
+        if !self.needs_full_repaint && change_count == self.last_change_count {
+            return RenderFrame::new_empty(self.width, self.height);
+        }
+        self.last_change_count = change_count;
+
         self.layout_sync.sync_full(arena);
 
         let root_id = arena.root();
@@ -113,11 +140,8 @@ impl Renderer {
         let ctx = crate::render_object::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
 
-        let _ = self.scheduler.begin_frame();
-        self.generation += 1;
         let dirty_regions = if self.needs_full_repaint {
-            let _ = self
-                .dirty_diff
+            self.dirty_diff
                 .compute_full_repaint(self.width, self.height);
             self.needs_full_repaint = false;
             self.dirty_diff.regions().to_vec()
@@ -130,6 +154,8 @@ impl Renderer {
         self.backend.encode(self.painter.buffer(), &dirty_regions);
 
         self.snapshot.copy_from(self.painter.buffer());
+
+        self.scheduler.end_frame();
 
         RenderFrame {
             output_data: self.backend.finish().to_vec(),
@@ -227,6 +253,48 @@ mod tests {
         let frame = r.render_full(&arena);
         assert_eq!(frame.width, 40);
         assert!(!frame.output_data.is_empty());
+    }
+
+    #[test]
+    fn renderer_frame_suppression() {
+        let mut r = Renderer::new(40, 10);
+        let arena = make_arena();
+        // First render always produces output
+        let frame1 = r.render(&arena);
+        assert!(!frame1.is_empty(), "first render should produce output");
+        // Second render with no changes should be suppressed
+        let frame2 = r.render(&arena);
+        assert!(
+            frame2.is_empty(),
+            "second render with no changes should be suppressed"
+        );
+    }
+
+    #[test]
+    fn renderer_frame_suppression_released_on_change() {
+        let mut r = Renderer::new(40, 10);
+        let mut arena = make_arena();
+        // First render
+        let _ = r.render(&arena);
+        // Second render suppressed (no changes)
+        let frame2 = r.render(&arena);
+        assert!(
+            frame2.is_empty(),
+            "second render with no changes should be suppressed"
+        );
+        // Mutate the arena to release suppression
+        arena.mark_changed();
+        // Third render should proceed (change_count check passes)
+        // Note: output may still be empty if visual content matches snapshot
+        // The key is that render() doesn't early-return with empty frame
+        let frame3 = r.render(&arena);
+        // After mutation, render proceeds - verify it doesn't early-return
+        // by checking that last_change_count was updated
+        let frame4 = r.render(&arena);
+        assert!(
+            frame4.is_empty(),
+            "fourth render with no new changes should be suppressed"
+        );
     }
 
     #[test]

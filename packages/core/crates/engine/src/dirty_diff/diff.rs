@@ -92,9 +92,11 @@ impl DirtyDiff {
         }
         self.last_generation = generation;
 
-        let dirty_cells = Self::find_dirty_cells(current, previous);
-        self.regions =
-            Self::merge_cells_to_regions(&dirty_cells, current.width(), current.height());
+        self.regions.clear();
+        let w = current.width().min(previous.width());
+        let h = current.height().min(previous.height());
+        Self::compute_dirty_regions(current, previous, w, h, &mut self.regions);
+        Self::merge_adjacent_regions(&mut self.regions);
         &self.regions
     }
 
@@ -118,77 +120,64 @@ impl DirtyDiff {
         self.regions.iter().map(|r| r.area()).sum()
     }
 
-    fn find_dirty_cells(current: &FrameBuffer, previous: &FrameBuffer) -> Vec<(u16, u16)> {
-        let mut dirty = Vec::new();
-        let w = current.width().min(previous.width());
-        let h = current.height().min(previous.height());
+    fn compute_dirty_regions(
+        current: &FrameBuffer,
+        previous: &FrameBuffer,
+        w: u16,
+        h: u16,
+        regions: &mut Vec<DirtyRegion>,
+    ) {
         for y in 0..h {
-            for x in 0..w {
+            let mut x = 0;
+            while x < w {
                 if current.get(x, y) != previous.get(x, y) {
-                    dirty.push((x, y));
-                }
-            }
-        }
-        dirty
-    }
+                    let start_x = x;
+                    while x + 1 < w && current.get(x + 1, y) != previous.get(x + 1, y) {
+                        x += 1;
+                    }
+                    let span_width = x - start_x + 1;
 
-    fn merge_cells_to_regions(cells: &[(u16, u16)], width: u16, height: u16) -> Vec<DirtyRegion> {
-        if cells.is_empty() {
-            return Vec::new();
-        }
-
-        let max_height = height as usize;
-        let mut grid = vec![false; (width as usize) * max_height];
-        for &(x, y) in cells {
-            if (y as usize) < max_height {
-                grid[(y as usize) * (width as usize) + (x as usize)] = true;
-            }
-        }
-
-        let mut regions = Vec::new();
-        let mut visited = vec![false; grid.len()];
-
-        for &(x, y) in cells {
-            let idx = (y as usize) * (width as usize) + (x as usize);
-            if visited[idx] {
-                continue;
-            }
-
-            let mut max_x = x;
-
-            while max_x + 1 < width
-                && grid[(y as usize) * (width as usize) + ((max_x + 1) as usize)]
-            {
-                max_x += 1;
-            }
-
-            let mut row = y;
-            let max_height_u16 = max_height as u16;
-            while row + 1 < max_height_u16 {
-                let mut can_extend = true;
-                for cx in x..=max_x {
-                    if !grid[((row + 1) as usize) * (width as usize) + (cx as usize)] {
-                        can_extend = false;
-                        break;
+                    let mut merged = false;
+                    for r in regions.iter_mut().rev() {
+                        if r.y + r.height == y
+                            && start_x >= r.x
+                            && start_x + span_width <= r.x + r.width
+                        {
+                            r.height += 1;
+                            merged = true;
+                            break;
+                        }
+                    }
+                    if !merged {
+                        regions.push(DirtyRegion::new(start_x, y, span_width, 1));
                     }
                 }
-                if !can_extend {
-                    break;
-                }
-                row += 1;
+                x += 1;
             }
-            let max_y = row;
+        }
+    }
 
-            for cy in y..=max_y {
-                for cx in x..=max_x {
-                    visited[(cy as usize) * (width as usize) + (cx as usize)] = true;
-                }
-            }
-
-            regions.push(DirtyRegion::new(x, y, max_x - x + 1, max_y - y + 1));
+    fn merge_adjacent_regions(regions: &mut Vec<DirtyRegion>) {
+        if regions.len() < 2 {
+            return;
         }
 
-        regions
+        let mut changed = true;
+        while changed {
+            changed = false;
+            let mut j = 0;
+            while j + 1 < regions.len() {
+                let (left, right) = (regions[j], regions[j + 1]);
+                if left.can_merge_horizontal(&right) || left.can_merge_vertical(&right) {
+                    let merged = left.merge(&right);
+                    regions[j] = merged;
+                    regions.swap_remove(j + 1);
+                    changed = true;
+                } else {
+                    j += 1;
+                }
+            }
+        }
     }
 }
 
@@ -323,5 +312,118 @@ mod tests {
         let mut diff = DirtyDiff::new();
         diff.compute_full_repaint(80, 24);
         assert_eq!(diff.total_area(), 80 * 24);
+    }
+
+    fn make_diff_with_cells(cells: &[(u16, u16)]) -> Vec<DirtyRegion> {
+        let mut fb = FrameBuffer::new(20, 20);
+        let empty = FrameBuffer::new(20, 20);
+        for &(x, y) in cells {
+            fb.set(x, y, Cell::new('X'));
+        }
+        let mut diff = DirtyDiff::new();
+        diff.compute(&fb, &empty, 1).to_vec()
+    }
+
+    #[test]
+    fn merge_cells_horizontal_span() {
+        let regions = make_diff_with_cells(&[(0, 0), (1, 0), (2, 0)]);
+        assert_eq!(
+            regions.len(),
+            1,
+            "horizontal span should merge into one region"
+        );
+        assert_eq!(regions[0].x, 0);
+        assert_eq!(regions[0].width, 3);
+        assert_eq!(regions[0].height, 1);
+    }
+
+    #[test]
+    fn merge_cells_vertical_stack() {
+        let regions = make_diff_with_cells(&[(0, 0), (0, 1), (0, 2)]);
+        assert_eq!(regions.len(), 1, "vertical stack should merge into one");
+        assert_eq!(regions[0].y, 0);
+        assert_eq!(regions[0].height, 3);
+    }
+
+    #[test]
+    fn merge_cells_separate_regions() {
+        let regions = make_diff_with_cells(&[(0, 0), (5, 0), (0, 5), (5, 5)]);
+        assert_eq!(regions.len(), 4, "isolated cells should produce 4 regions");
+    }
+
+    #[test]
+    fn merge_cells_rectangle() {
+        let mut cells = Vec::new();
+        for y in 0..3 {
+            for x in 0..5 {
+                cells.push((x, y));
+            }
+        }
+        let regions = make_diff_with_cells(&cells);
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].width, 5);
+        assert_eq!(regions[0].height, 3);
+    }
+
+    #[test]
+    fn merge_cells_non_contiguous_vertical() {
+        let regions = make_diff_with_cells(&[(0, 0), (0, 1), (0, 3), (0, 4)]);
+        assert!(
+            regions.len() >= 2,
+            "gap in vertical should create >= 2 regions"
+        );
+    }
+
+    #[test]
+    fn merge_cells_no_changes() {
+        let fb = FrameBuffer::new(10, 10);
+        let empty = FrameBuffer::new(10, 10);
+        let mut diff = DirtyDiff::new();
+        let regions = diff.compute(&fb, &empty, 1);
+        assert!(regions.is_empty());
+    }
+
+    #[test]
+    fn merge_adjacent_horizontal_regions() {
+        let mut regions = vec![DirtyRegion::new(0, 0, 5, 1), DirtyRegion::new(5, 0, 5, 1)];
+        DirtyDiff::merge_adjacent_regions(&mut regions);
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].width, 10);
+    }
+
+    #[test]
+    fn merge_adjacent_vertical_regions() {
+        let mut regions = vec![DirtyRegion::new(0, 0, 5, 3), DirtyRegion::new(0, 3, 5, 3)];
+        DirtyDiff::merge_adjacent_regions(&mut regions);
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].height, 6);
+    }
+
+    #[test]
+    fn merge_non_adjacent_regions_unchanged() {
+        let mut regions = vec![DirtyRegion::new(0, 0, 3, 3), DirtyRegion::new(10, 10, 3, 3)];
+        DirtyDiff::merge_adjacent_regions(&mut regions);
+        assert_eq!(
+            regions.len(),
+            2,
+            "non-adjacent regions should stay separate"
+        );
+    }
+
+    #[test]
+    fn compute_returns_merged_regions() {
+        let mut current = FrameBuffer::new(20, 10);
+        let mut previous = FrameBuffer::new(20, 10);
+        current.swap();
+        previous.swap();
+        current.set(0, 0, Cell::new('X'));
+        current.set(1, 0, Cell::new('Y'));
+        current.set(0, 1, Cell::new('Z'));
+        current.set(1, 1, Cell::new('W'));
+        let mut diff = DirtyDiff::new();
+        let regions = diff.compute(&current, &previous, 1);
+        assert_eq!(regions.len(), 1, "2x2 block should be one region");
+        assert_eq!(regions[0].width, 2);
+        assert_eq!(regions[0].height, 2);
     }
 }

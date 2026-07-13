@@ -39,7 +39,7 @@ impl AnsiEncoder {
 
             for x in region.x..region.x + region.width {
                 let cell = buffer.get(x, y);
-                self.encode_cell(cell, &mut last_fg, &mut last_bg, &mut last_attrs);
+                self.encode_cell(&cell, &mut last_fg, &mut last_bg, &mut last_attrs);
             }
         }
     }

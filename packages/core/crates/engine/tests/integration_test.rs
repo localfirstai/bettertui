@@ -8,6 +8,8 @@ use bettertui_engine::renderer::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::arena::NodeArena;
+use bettertui_engine::tree::color::{Color, NamedColor};
+use bettertui_engine::tree::visual::Display;
 
 fn make_single_node_arena() -> NodeArena {
     let mut arena = NodeArena::new();
@@ -70,7 +72,11 @@ fn integration_double_render_reduces_dirty() {
     let frame1 = renderer.render_full(&arena);
     let frame2 = renderer.render(&arena);
     assert!(!frame1.output_data.is_empty());
-    assert!(!frame2.output_data.is_empty());
+    // Second render with no changes should be suppressed
+    assert!(
+        frame2.output_data.is_empty(),
+        "second render with no changes should be suppressed"
+    );
 }
 
 #[test]
@@ -230,4 +236,326 @@ fn integration_cell_attributes_bitflags() {
     assert!(attrs.contains(CellAttributes::BOLD));
     assert!(attrs.contains(CellAttributes::ITALIC));
     assert!(!attrs.contains(CellAttributes::UNDERLINE));
+}
+
+// ─── Phase 2 — Behavior Verification ───────────────────────────────────────
+
+#[test]
+fn p2_single_node_text_update_detection() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(10, 5);
+    let mut curr = FrameBuffer::new(10, 5);
+    prev.swap();
+    curr.swap();
+    curr.set(3, 2, Cell::new('X'));
+    let regions = diff.compute(&curr, &prev, 1);
+    assert!(
+        !regions.is_empty(),
+        "single cell change must produce dirty regions"
+    );
+    assert!(regions[0].contains(3, 2), "region must cover changed cell");
+}
+
+#[test]
+fn p2_text_change_region_covers_text_extent() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(20, 5);
+    let mut curr = FrameBuffer::new(20, 5);
+    prev.swap();
+    curr.swap();
+    curr.write_str(2, 1, "Hello", Color::Default, Color::Default);
+    let regions = diff.compute(&curr, &prev, 1);
+    assert!(!regions.is_empty());
+    assert!(regions[0].contains(2, 1), "must cover first char");
+    assert!(regions[0].contains(6, 1), "must cover last char");
+}
+
+#[test]
+fn p2_style_change_triggers_repaint() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(10, 5);
+    let mut curr = FrameBuffer::new(10, 5);
+    prev.swap();
+    curr.swap();
+    curr.set(0, 0, Cell::new(' ').with_bg(Color::Named(NamedColor::Red)));
+    let regions = diff.compute(&curr, &prev, 1);
+    assert!(!regions.is_empty(), "bg color change must be dirty");
+}
+
+#[test]
+fn p2_identical_frames_produce_empty_regions() {
+    let mut diff = DirtyDiff::new();
+    let mut buf = FrameBuffer::new(10, 10);
+    buf.swap();
+    buf.set(5, 5, Cell::new('A'));
+    let regions = diff.compute(&buf, &buf, 1);
+    assert!(regions.is_empty(), "same buffer diff must be empty");
+}
+
+#[test]
+fn p2_full_repaint_covers_entire_area() {
+    let mut diff = DirtyDiff::new();
+    let regions = diff.compute_full_repaint(80, 24).to_vec();
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0], DirtyRegion::new(0, 0, 80, 24));
+    assert_eq!(diff.total_area(), 80 * 24);
+}
+
+#[test]
+fn p2_repeated_identical_render_no_extra_dirty() {
+    let mut renderer = Renderer::new(40, 10);
+    let arena = make_parent_child_arena();
+    let _ = renderer.render_full(&arena);
+    let frame2 = renderer.render(&arena);
+    let frame3 = renderer.render(&arena);
+    assert!(
+        frame2.dirty_regions.is_empty(),
+        "second identical render should have empty dirty"
+    );
+    assert!(
+        frame3.dirty_regions.is_empty(),
+        "third identical render should have empty dirty"
+    );
+}
+
+#[test]
+fn p2_single_node_update_after_identical_render() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(10, 5);
+    let mut curr = FrameBuffer::new(10, 5);
+    prev.swap();
+    curr.swap();
+
+    let _ = diff.compute(&curr, &prev, 1);
+    let r1 = diff.compute(&curr, &prev, 1);
+    assert!(r1.is_empty(), "cached same gen: no change");
+
+    curr.set(0, 0, Cell::new('Y'));
+    let r2 = diff.compute(&curr, &prev, 2);
+    assert!(!r2.is_empty(), "new gen after mutation must detect change");
+}
+
+#[test]
+fn p2_large_subtree_update_dirty_region_contains_all() {
+    let mut fb = FrameBuffer::new(50, 30);
+    fb.swap();
+    fb.fill_rect(5, 5, 30, 15, Cell::new('X'));
+
+    let empty = FrameBuffer::new(50, 30);
+    let mut diff = DirtyDiff::new();
+    let regions = diff.compute(&fb, &empty, 1);
+    assert!(!regions.is_empty());
+    assert!(regions[0].x <= 5, "left edge must cover change start");
+    assert!(regions[0].y <= 5, "top edge must cover change start");
+}
+
+#[test]
+fn p2_dirty_region_does_not_overflow_bounds() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(5, 5);
+    let mut curr = FrameBuffer::new(5, 5);
+    prev.swap();
+    curr.swap();
+    curr.set(4, 4, Cell::new('Z'));
+    let regions = diff.compute(&curr, &prev, 1);
+    if let Some(r) = regions.first() {
+        assert!(r.right() <= 5, "region must not exceed fb width");
+        assert!(r.bottom() <= 5, "region must not exceed fb height");
+    }
+}
+
+#[test]
+fn p2_multiple_cells_same_row_merged_into_single_region() {
+    let mut prev = FrameBuffer::new(20, 10);
+    let mut curr = FrameBuffer::new(20, 10);
+    prev.swap();
+    curr.swap();
+    curr.set(2, 0, Cell::new('A'));
+    curr.set(3, 0, Cell::new('B'));
+    curr.set(4, 0, Cell::new('C'));
+    let mut diff = DirtyDiff::new();
+    let regions = diff.compute(&curr, &prev, 1);
+    assert_eq!(regions.len(), 1, "adjacent cells on same row should merge");
+    assert!(
+        regions[0].width >= 3,
+        "merged region must span all changed cells"
+    );
+}
+
+#[test]
+fn p2_full_paint_replaces_all_cells() {
+    let mut painter = Painter::new(10, 5);
+    let mut tree = RenderTree::new();
+    let mut obj = RenderObject::new(NodeId::default());
+    obj.style.bg = Some(Color::Named(NamedColor::Green));
+    obj.bounds.width = 10;
+    obj.bounds.height = 5;
+    obj.flags = PaintFlags::BACKGROUND;
+    tree.push(obj);
+
+    let ctx = PaintContext::new(10, 5);
+    painter.paint(&tree, &ctx);
+
+    for y in 0..5 {
+        for x in 0..10 {
+            let cell = painter.buffer().get(x, y);
+            assert_eq!(cell.bg, Color::Named(NamedColor::Green));
+        }
+    }
+}
+
+#[test]
+fn p2_opacity_zero_hides_content() {
+    let mut arena = NodeArena::new();
+    let child = arena.insert({
+        let mut n = bettertui_engine::tree::RenderNode::text("visible");
+        n.style.fg = Some(Color::Named(NamedColor::Red));
+        n
+    });
+    arena.append_child(arena.root(), child).unwrap();
+
+    let mut renderer = Renderer::new(40, 10);
+    let frame = renderer.render_full(&arena);
+    assert!(
+        !frame.output_data.is_empty(),
+        "visible node must produce output"
+    );
+
+    let mut arena2 = NodeArena::new();
+    let hidden = arena2.insert({
+        let mut n = bettertui_engine::tree::RenderNode::text("hidden");
+        n.style.fg = Some(Color::Named(NamedColor::Red));
+        n
+    });
+    arena2.get_mut(arena2.root()).unwrap().visibility.display = Display::None;
+    arena2.append_child(arena2.root(), hidden).unwrap();
+
+    let mut renderer2 = Renderer::new(40, 10);
+    let frame2 = renderer2.render_full(&arena2);
+    let output_str = String::from_utf8_lossy(&frame2.output_data);
+    assert!(
+        !output_str.contains("hidden"),
+        "hidden node text must not appear in output"
+    );
+}
+
+#[test]
+fn p2_dirty_diff_after_content_change() {
+    let mut diff = DirtyDiff::new();
+    let mut prev = FrameBuffer::new(10, 5);
+    let mut curr = FrameBuffer::new(10, 5);
+    prev.swap();
+    curr.swap();
+    curr.set(2, 2, Cell::new('A'));
+    let r1 = diff.compute(&curr, &prev, 1);
+    assert!(!r1.is_empty(), "first change must produce dirty regions");
+    let r2 = diff.compute(&curr, &curr, 2);
+    assert!(r2.is_empty(), "no change with new gen must be empty");
+    curr.set(2, 2, Cell::new('B'));
+    let r3 = diff.compute(&curr, &prev, 3);
+    assert!(
+        !r3.is_empty(),
+        "different content must produce dirty regions"
+    );
+}
+
+#[test]
+fn p2_clip_bounds_intersect_correctly() {
+    use bettertui_engine::render_object::ClipBounds;
+    let outer = ClipBounds::new(0, 0, 80, 24);
+    let inner = ClipBounds::new(10, 5, 20, 10);
+    let clipped = outer.intersect(&inner).unwrap();
+    assert_eq!(clipped.x, 10);
+    assert_eq!(clipped.y, 5);
+    assert_eq!(clipped.width, 20);
+    assert_eq!(clipped.height, 10);
+    let outside = ClipBounds::new(100, 100, 10, 10);
+    assert!(
+        outer.intersect(&outside).is_none(),
+        "non-overlapping clips must produce None"
+    );
+}
+
+#[test]
+fn p2_dirty_region_merge_adjacent_horizontal() {
+    let a = DirtyRegion::new(0, 0, 5, 1);
+    let b = DirtyRegion::new(5, 0, 5, 1);
+    assert!(a.can_merge_horizontal(&b));
+    let merged = a.merge(&b);
+    assert_eq!(merged.x, 0);
+    assert_eq!(merged.width, 10);
+    assert_eq!(merged.height, 1);
+}
+
+#[test]
+fn p2_dirty_region_merge_adjacent_vertical() {
+    let a = DirtyRegion::new(0, 0, 5, 3);
+    let b = DirtyRegion::new(0, 3, 5, 3);
+    assert!(a.can_merge_vertical(&b));
+    let merged = a.merge(&b);
+    assert_eq!(merged.y, 0);
+    assert_eq!(merged.height, 6);
+    assert_eq!(merged.width, 5);
+}
+
+#[test]
+fn p2_dirty_region_no_merge_non_adjacent() {
+    let a = DirtyRegion::new(0, 0, 5, 5);
+    let b = DirtyRegion::new(10, 0, 5, 5);
+    assert!(
+        !a.can_merge_horizontal(&b),
+        "non-adjacent horizontal should not merge"
+    );
+    assert!(
+        !a.can_merge_vertical(&b),
+        "non-adjacent vertical should not merge"
+    );
+}
+
+#[test]
+fn p2_empty_frame_produces_no_dirty() {
+    let mut renderer = Renderer::new(10, 5);
+    let arena = NodeArena::new();
+    let frame = renderer.render_full(&arena);
+    assert!(
+        !frame.output_data.is_empty(),
+        "first render full repaint must produce output"
+    );
+    let frame2 = renderer.render(&arena);
+    assert!(
+        frame2.dirty_regions.is_empty(),
+        "identical frame should have no dirty regions"
+    );
+}
+
+#[test]
+fn p2_different_sized_buffers_diff_gracefully() {
+    let mut diff = DirtyDiff::new();
+    let mut small = FrameBuffer::new(5, 3);
+    let mut large = FrameBuffer::new(10, 8);
+    small.swap();
+    large.swap();
+    large.set(0, 0, Cell::new('X'));
+    let regions = diff.compute(&large, &small, 1);
+    assert!(
+        !regions.is_empty(),
+        "different sized buffers with change must produce diff"
+    );
+}
+
+#[test]
+fn p2_region_area_calculation() {
+    let r = DirtyRegion::new(0, 0, 80, 24);
+    assert_eq!(r.area(), 1920);
+    let r2 = DirtyRegion::new(5, 5, 10, 10);
+    assert_eq!(r2.area(), 100);
+}
+
+#[test]
+fn p2_region_contains_edge() {
+    let r = DirtyRegion::new(5, 5, 10, 10);
+    assert!(r.contains(5, 5));
+    assert!(r.contains(14, 14));
+    assert!(!r.contains(15, 15));
+    assert!(!r.contains(4, 5));
 }

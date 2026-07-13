@@ -1,11 +1,48 @@
-use super::cell::Cell;
+use super::cell::{Cell, CellAttributes};
+use crate::tree::color::Color;
+
+/// SoA (Struct of Arrays) storage for terminal cells.
+///
+/// Compared to AoS (Array of Structs), SoA allows:
+/// - Cache-friendly access when iterating a single field (e.g., just chars)
+/// - SIMD-friendly comparison (can compare 16 chars at once)
+/// - Independent field updates without copying the entire Cell struct
+/// - Future packed representations (e.g., 4-bit alpha, 8-bit palette index)
+#[derive(Debug, Clone)]
+struct CellArrays {
+    chars: Vec<char>,
+    fg: Vec<Color>,
+    bg: Vec<Color>,
+    underline_color: Vec<Color>,
+    attrs: Vec<CellAttributes>,
+}
+
+impl CellArrays {
+    fn new(size: usize) -> Self {
+        Self {
+            chars: vec![' '; size],
+            fg: vec![Color::Default; size],
+            bg: vec![Color::Default; size],
+            underline_color: vec![Color::Default; size],
+            attrs: vec![CellAttributes::empty(); size],
+        }
+    }
+
+    fn resize(&mut self, size: usize) {
+        self.chars.resize(size, ' ');
+        self.fg.resize(size, Color::Default);
+        self.bg.resize(size, Color::Default);
+        self.underline_color.resize(size, Color::Default);
+        self.attrs.resize(size, CellAttributes::empty());
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct FrameBuffer {
     width: u16,
     height: u16,
-    cells: Vec<Cell>,
-    back: Vec<Cell>,
+    cells: CellArrays,
+    back: CellArrays,
 }
 
 impl Default for FrameBuffer {
@@ -20,8 +57,8 @@ impl FrameBuffer {
         Self {
             width,
             height,
-            cells: vec![Cell::default(); size],
-            back: vec![Cell::default(); size],
+            cells: CellArrays::new(size),
+            back: CellArrays::new(size),
         }
     }
 
@@ -37,14 +74,38 @@ impl FrameBuffer {
         let size = (width as usize) * (height as usize);
         self.width = width;
         self.height = height;
-        self.cells.resize(size, Cell::default());
-        self.back.resize(size, Cell::default());
+        self.cells.resize(size);
+        self.back.resize(size);
         self.clear();
     }
 
     pub fn clear(&mut self) {
-        for cell in &mut self.cells {
-            cell.clear();
+        self.cells.chars.fill(' ');
+        self.cells.fg.fill(Color::Default);
+        self.cells.bg.fill(Color::Default);
+        self.cells.underline_color.fill(Color::Default);
+        self.cells.attrs.fill(CellAttributes::empty());
+    }
+
+    /// Clear a rectangular region without affecting cells outside the rect.
+    pub fn clear_rect(&mut self, x: u16, y: u16, width: u16, height: u16) {
+        for dy in 0..height {
+            let row = y + dy;
+            if row >= self.height {
+                break;
+            }
+            for dx in 0..width {
+                let col = x + dx;
+                if col >= self.width {
+                    break;
+                }
+                let idx = self.index(col, row);
+                self.cells.chars[idx] = ' ';
+                self.cells.fg[idx] = Color::Default;
+                self.cells.bg[idx] = Color::Default;
+                self.cells.underline_color[idx] = Color::Default;
+                self.cells.attrs[idx] = CellAttributes::empty();
+            }
         }
     }
 
@@ -56,25 +117,29 @@ impl FrameBuffer {
         x < self.width && y < self.height
     }
 
-    pub fn get(&self, x: u16, y: u16) -> &Cell {
+    pub fn get(&self, x: u16, y: u16) -> Cell {
         if self.in_bounds(x, y) {
-            &self.cells[self.index(x, y)]
+            let idx = self.index(x, y);
+            Cell {
+                ch: self.cells.chars[idx],
+                fg: self.cells.fg[idx],
+                bg: self.cells.bg[idx],
+                underline_color: self.cells.underline_color[idx],
+                attributes: self.cells.attrs[idx],
+            }
         } else {
-            static EMPTY: Cell = Cell {
-                ch: ' ',
-                fg: crate::tree::color::Color::Default,
-                bg: crate::tree::color::Color::Default,
-                underline_color: crate::tree::color::Color::Default,
-                attributes: super::cell::CellAttributes::empty(),
-            };
-            &EMPTY
+            Cell::default()
         }
     }
 
     pub fn set(&mut self, x: u16, y: u16, cell: Cell) {
         if self.in_bounds(x, y) {
             let idx = self.index(x, y);
-            self.cells[idx] = cell;
+            self.cells.chars[idx] = cell.ch;
+            self.cells.fg[idx] = cell.fg;
+            self.cells.bg[idx] = cell.bg;
+            self.cells.underline_color[idx] = cell.underline_color;
+            self.cells.attrs[idx] = cell.attributes;
         }
     }
 
@@ -94,14 +159,7 @@ impl FrameBuffer {
         }
     }
 
-    pub fn write_str(
-        &mut self,
-        x: u16,
-        y: u16,
-        s: &str,
-        fg: crate::tree::color::Color,
-        bg: crate::tree::color::Color,
-    ) {
+    pub fn write_str(&mut self, x: u16, y: u16, s: &str, fg: Color, bg: Color) {
         for (i, ch) in s.chars().enumerate() {
             let col = x + i as u16;
             if col >= self.width {
@@ -119,7 +177,12 @@ impl FrameBuffer {
         let len = (self.width as usize) * (self.height as usize);
         let other_len = (other.width as usize) * (other.height as usize);
         let copy_len = len.min(other_len);
-        self.cells[..copy_len].copy_from_slice(&other.cells[..copy_len]);
+        self.cells.chars[..copy_len].copy_from_slice(&other.cells.chars[..copy_len]);
+        self.cells.fg[..copy_len].copy_from_slice(&other.cells.fg[..copy_len]);
+        self.cells.bg[..copy_len].copy_from_slice(&other.cells.bg[..copy_len]);
+        self.cells.underline_color[..copy_len]
+            .copy_from_slice(&other.cells.underline_color[..copy_len]);
+        self.cells.attrs[..copy_len].copy_from_slice(&other.cells.attrs[..copy_len]);
     }
 
     pub fn diff(&self) -> Vec<(u16, u16)> {
@@ -127,7 +190,12 @@ impl FrameBuffer {
         for y in 0..self.height {
             for x in 0..self.width {
                 let idx = self.index(x, y);
-                if self.cells[idx] != self.back[idx] {
+                if self.cells.chars[idx] != self.back.chars[idx]
+                    || self.cells.fg[idx] != self.back.fg[idx]
+                    || self.cells.bg[idx] != self.back.bg[idx]
+                    || self.cells.underline_color[idx] != self.back.underline_color[idx]
+                    || self.cells.attrs[idx] != self.back.attrs[idx]
+                {
                     dirty.push((x, y));
                 }
             }
@@ -135,8 +203,23 @@ impl FrameBuffer {
         dirty
     }
 
-    pub fn cells(&self) -> &[Cell] {
-        &self.cells
+    pub fn cells(&self) -> Vec<Cell> {
+        let len = (self.width as usize) * (self.height as usize);
+        let mut result = Vec::with_capacity(len);
+        for i in 0..len {
+            result.push(Cell {
+                ch: self.cells.chars[i],
+                fg: self.cells.fg[i],
+                bg: self.cells.bg[i],
+                underline_color: self.cells.underline_color[i],
+                attributes: self.cells.attrs[i],
+            });
+        }
+        result
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cells.chars.iter().all(|&c| c == ' ')
     }
 }
 

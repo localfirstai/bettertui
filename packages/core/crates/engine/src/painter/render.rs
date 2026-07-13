@@ -33,7 +33,19 @@ impl Painter {
     }
 
     pub fn paint(&mut self, tree: &RenderTree, ctx: &PaintContext) {
-        self.buffer.clear();
+        self.paint_with_clear(tree, ctx, true);
+    }
+
+    /// Paint with optional clear. When `full_clear` is false and no structural
+    /// changes occurred, old content outside dirty regions persists in the buffer.
+    /// The downstream DirtyDiff still correctly detects changed regions.
+    ///
+    /// Frame suppression (RenderFrame::is_empty) handles the no-change case
+    /// instead of relying solely on incremental paint.
+    pub fn paint_with_clear(&mut self, tree: &RenderTree, ctx: &PaintContext, full_clear: bool) {
+        if full_clear {
+            self.buffer.clear();
+        }
         let sorted = tree.sorted_by_z_index();
         for &idx in &sorted {
             let obj = &tree.objects()[idx];

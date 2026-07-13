@@ -102,60 +102,70 @@ impl CommandProcessor {
                 let node = self.get_node_mut(id)?;
                 node.style = style;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetForeground { id, color } => {
                 let node = self.get_node_mut(id)?;
                 node.style.fg = Some(color);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetBackground { id, color } => {
                 let node = self.get_node_mut(id)?;
                 node.style.bg = Some(color);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetBold { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.bold = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetItalic { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.italic = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetUnderline { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.underline = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetStrikethrough { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.strikethrough = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetDim { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.dim = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetInverse { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.inverse = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetHidden { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.style.hidden = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -164,114 +174,133 @@ impl CommandProcessor {
                 let node = self.get_node_mut(id)?;
                 node.layout = layout;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetFlexDirection { id, direction } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.direction = direction;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetJustifyContent { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.justify = value;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetAlignItems { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.align = value;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetAlignSelf { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.align_self = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetWidth { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.width = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetHeight { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.height = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetMinWidth { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.min_width = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetMinHeight { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.min_height = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetMaxWidth { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.max_width = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetMaxHeight { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.max_height = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetPadding { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.padding = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetMargin { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.margin = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetGap { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.gap = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetFlexGrow { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.flex_grow = value;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetFlexShrink { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.flex_shrink = value;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetFlexBasis { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.flex_basis = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetPosition { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.position = value;
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetInset { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.inset = Some(value);
                 node.state.mark_layout_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -279,18 +308,21 @@ impl CommandProcessor {
             Command::SetText { id, text } => {
                 let node = self.get_node_mut(id)?;
                 node.set_text(text);
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetAttribute { id, key, value } => {
                 let node = self.get_node_mut(id)?;
                 node.attributes.insert(key, value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::RemoveAttribute { id, key } => {
                 let node = self.get_node_mut(id)?;
                 node.attributes.remove(&key);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -299,18 +331,21 @@ impl CommandProcessor {
                 let node = self.get_node_mut(id)?;
                 node.visibility.display = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetOpacity { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.visibility.opacity = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetClip { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.visibility.clip = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -319,18 +354,21 @@ impl CommandProcessor {
                 let node = self.get_node_mut(id)?;
                 node.transform.translate_x = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetTranslateY { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.transform.translate_y = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetZIndex { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.transform.z_index = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -339,6 +377,7 @@ impl CommandProcessor {
                 let node = self.get_node_mut(id)?;
                 node.overflow = value;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -346,17 +385,20 @@ impl CommandProcessor {
             Command::FocusNode { id } => {
                 let node = self.get_node_mut(id)?;
                 node.focus();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::BlurNode { id } => {
                 let node = self.get_node_mut(id)?;
                 node.blur();
+                self.arena.mark_changed();
                 Ok(())
             }
             Command::SetTabIndex { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.focus.tab_index = Some(value);
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
@@ -365,20 +407,16 @@ impl CommandProcessor {
                 self.frame_id = frame_id;
                 Ok(())
             }
-            Command::CommitFrame { frame_id: _ } => {
-                // Frame commit - in a full implementation, this would
-                // trigger layout calculation and rendering
-                Ok(())
-            }
+            Command::CommitFrame { frame_id: _ } => Ok(()),
             Command::Invalidate { id } => {
                 let node = self.get_node_mut(id)?;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
                 Ok(())
             }
 
             // ─── Lifecycle Commands ───────────────────────────────
             Command::Shutdown => {
-                // Shutdown - clear the arena
                 self.arena.clear();
                 Ok(())
             }

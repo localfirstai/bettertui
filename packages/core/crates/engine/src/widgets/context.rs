@@ -30,18 +30,21 @@ impl<'a> WidgetContext<'a> {
     pub fn set_text(&mut self, id: NodeId, text: impl Into<Box<str>>) {
         if let Some(node) = self.arena.get_mut(id) {
             node.set_text(text);
+            self.arena.mark_changed();
         }
     }
 
     pub fn set_style(&mut self, id: NodeId, style: Style) {
         if let Some(node) = self.arena.get_mut(id) {
             node.set_style(style);
+            self.arena.mark_changed();
         }
     }
 
     pub fn set_layout(&mut self, id: NodeId, layout: LayoutProps) {
         if let Some(node) = self.arena.get_mut(id) {
             node.set_layout(layout);
+            self.arena.mark_changed();
         }
     }
 
@@ -49,12 +52,14 @@ impl<'a> WidgetContext<'a> {
         if let Some(node) = self.arena.get_mut(id) {
             node.visibility = visibility;
             node.state.mark_render_dirty();
+            self.arena.mark_changed();
         }
     }
 
     pub fn set_focusable(&mut self, id: NodeId, focusable: bool) {
         if let Some(node) = self.arena.get_mut(id) {
             node.set_focusable(focusable);
+            self.arena.mark_changed();
         }
     }
 
