@@ -8,7 +8,7 @@ use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::layout::build_render_tree_with_viewport;
 use crate::layout::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
 use crate::scheduler::{FrameStatus, Scheduler};
-use crate::text::{LayoutConfig, TextAlign, layout_text};
+use crate::text::{TextAlign, ViewportConfig, layout_text};
 use crate::tree::NodeArena;
 use crate::tree::{Color, NamedColor, NodeId, Overflow, Rect, ResolvedStyle};
 
@@ -564,14 +564,14 @@ impl Painter {
             return;
         }
 
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             wrap: obj.text_wrap,
             align: obj.text_align,
             max_width: content.width,
             max_height: content.height,
             pad_left: content.x,
             pad_top: content.y,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
 
         let layout = layout_text(text, &config);

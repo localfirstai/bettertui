@@ -1,13 +1,13 @@
-//! Editor component providing a complete text editing experience.
+//! EditBuffer component providing a complete text editing experience.
 //!
 //! Wraps TextEngine with editor-specific features: cursor management,
 //! selection, undo/redo, line numbers, and input handling.
 
 use super::{SelectionRange, TextEngine};
 
-/// Editor configuration.
+/// EditBuffer configuration.
 #[derive(Debug, Clone)]
-pub struct EditorConfig {
+pub struct EditBufferConfig {
     /// Whether line numbers are displayed.
     pub line_numbers: bool,
     /// Whether word wrap is enabled.
@@ -22,7 +22,7 @@ pub struct EditorConfig {
     pub max_undo: usize,
 }
 
-impl Default for EditorConfig {
+impl Default for EditBufferConfig {
     fn default() -> Self {
         Self {
             line_numbers: true,
@@ -48,11 +48,11 @@ pub enum CursorStyle {
 }
 
 /// A complete text editor component.
-pub struct Editor {
+pub struct EditBuffer {
     /// The underlying text engine.
     engine: TextEngine,
-    /// Editor configuration.
-    config: EditorConfig,
+    /// EditBuffer configuration.
+    config: EditBufferConfig,
     /// Cursor style.
     cursor_style: CursorStyle,
     /// Whether the editor has been modified since last save.
@@ -63,18 +63,18 @@ pub struct Editor {
     visible_height: usize,
 }
 
-impl Default for Editor {
+impl Default for EditBuffer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Editor {
+impl EditBuffer {
     /// Creates a new empty editor.
     pub fn new() -> Self {
         Self {
             engine: TextEngine::new(),
-            config: EditorConfig::default(),
+            config: EditBufferConfig::default(),
             cursor_style: CursorStyle::default(),
             dirty: false,
             scroll_top: 0,
@@ -83,7 +83,7 @@ impl Editor {
     }
 
     /// Creates an editor with custom configuration.
-    pub fn with_config(config: EditorConfig) -> Self {
+    pub fn with_config(config: EditBufferConfig) -> Self {
         Self {
             engine: TextEngine::new(),
             config,
@@ -100,12 +100,12 @@ impl Editor {
     }
 
     /// Returns the editor configuration.
-    pub fn config(&self) -> &EditorConfig {
+    pub fn config(&self) -> &EditBufferConfig {
         &self.config
     }
 
     /// Returns a mutable reference to the editor configuration.
-    pub fn config_mut(&mut self) -> &mut EditorConfig {
+    pub fn config_mut(&mut self) -> &mut EditBufferConfig {
         &mut self.config
     }
 
@@ -286,14 +286,14 @@ mod tests {
 
     #[test]
     fn insert_and_get() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_str("hello");
         assert_eq!(editor.content(), "hello");
     }
 
     #[test]
     fn read_only() {
-        let mut editor = Editor::with_config(EditorConfig {
+        let mut editor = EditBuffer::with_config(EditBufferConfig {
             read_only: true,
             ..Default::default()
         });
@@ -303,7 +303,7 @@ mod tests {
 
     #[test]
     fn dirty_tracking() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         assert!(!editor.is_dirty());
         editor.insert_char('a');
         assert!(editor.is_dirty());
@@ -313,7 +313,7 @@ mod tests {
 
     #[test]
     fn undo_redo() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_str("hello");
         assert!(editor.undo());
         assert_eq!(editor.content(), "");
@@ -323,14 +323,14 @@ mod tests {
 
     #[test]
     fn tab_insertion() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_tab();
         assert_eq!(editor.content(), "    ");
     }
 
     #[test]
     fn tab_as_character() {
-        let mut editor = Editor::with_config(EditorConfig {
+        let mut editor = EditBuffer::with_config(EditBufferConfig {
             spaces_for_tabs: false,
             ..Default::default()
         });
@@ -340,7 +340,7 @@ mod tests {
 
     #[test]
     fn delete_backward() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_str("abc");
         editor.delete_backward();
         assert_eq!(editor.content(), "ab");
@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn delete_forward() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_str("abc");
         editor.engine_mut().cursor_mut().move_to_start();
         editor.delete_forward();
@@ -357,7 +357,7 @@ mod tests {
 
     #[test]
     fn line_count() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         assert_eq!(editor.line_count(), 1);
         editor.insert_str("line1\nline2\nline3");
         assert_eq!(editor.line_count(), 3);
@@ -365,7 +365,7 @@ mod tests {
 
     #[test]
     fn cursor_visibility() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.set_visible_height(5);
         assert_eq!(editor.visible_height(), 5);
         editor.ensure_cursor_visible();
@@ -374,7 +374,7 @@ mod tests {
 
     #[test]
     fn set_content() {
-        let mut editor = Editor::new();
+        let mut editor = EditBuffer::new();
         editor.insert_str("old");
         editor.set_content("new");
         assert_eq!(editor.content(), "new");

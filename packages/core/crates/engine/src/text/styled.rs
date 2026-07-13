@@ -1,6 +1,6 @@
 use crate::tree::Style;
 
-use super::measurement;
+use super::unicode;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StyledSpan {
@@ -24,16 +24,16 @@ impl StyledSpan {
     }
 
     pub fn display_width(&self) -> usize {
-        measurement::display_width(&self.text)
+        unicode::display_width(&self.text)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct StyledString {
+pub struct StyledText {
     pub spans: Vec<StyledSpan>,
 }
 
-impl StyledString {
+impl StyledText {
     pub fn new() -> Self {
         Self { spans: Vec::new() }
     }
@@ -106,9 +106,9 @@ impl StyledString {
         self.spans = merged;
     }
 
-    pub fn split_at(&self, byte_offset: usize) -> (StyledString, StyledString) {
-        let mut left = StyledString::new();
-        let mut right = StyledString::new();
+    pub fn split_at(&self, byte_offset: usize) -> (StyledText, StyledText) {
+        let mut left = StyledText::new();
+        let mut right = StyledText::new();
         let mut pos = 0;
         for span in &self.spans {
             let span_end = pos + span.text.len();
@@ -130,14 +130,14 @@ impl StyledString {
         (left, right)
     }
 
-    pub fn subspan(&self, start: usize, end: usize) -> StyledString {
+    pub fn subspan(&self, start: usize, end: usize) -> StyledText {
         let (_, after_left) = self.split_at(start);
         let (result, _) = after_left.split_at(end - start);
         result
     }
 
-    pub fn truncate_to_width(&self, max_width: usize) -> StyledString {
-        let mut result = StyledString::new();
+    pub fn truncate_to_width(&self, max_width: usize) -> StyledText {
+        let mut result = StyledText::new();
         let mut col = 0;
         for span in &self.spans {
             if col >= max_width {
@@ -149,7 +149,7 @@ impl StyledString {
                 result.push(span.clone());
                 col += span_w;
             } else {
-                let truncated = measurement::truncate_to_width(&span.text, remaining);
+                let truncated = unicode::truncate_to_width(&span.text, remaining);
                 if !truncated.is_empty() {
                     result.push(StyledSpan::styled(truncated.to_string(), span.style));
                 }
@@ -160,17 +160,17 @@ impl StyledString {
     }
 }
 
-impl From<&str> for StyledString {
+impl From<&str> for StyledText {
     fn from(s: &str) -> Self {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text(s);
         ss
     }
 }
 
-impl From<String> for StyledString {
+impl From<String> for StyledText {
     fn from(s: String) -> Self {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text(s);
         ss
     }
@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     fn styled_string_push_merges_adjacent() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text("hello ");
         ss.push_text("world");
         assert_eq!(ss.spans.len(), 1);
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn styled_string_push_no_merge_different_style() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_styled(
             "bold",
             Style {
@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn styled_string_plain_text() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_styled(
             "hello",
             Style {
@@ -237,7 +237,7 @@ mod tests {
 
     #[test]
     fn styled_string_display_width() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text("hello");
         ss.push_text(" \u{4e2d}\u{6587}");
         assert_eq!(ss.display_width(), 10);
@@ -245,13 +245,13 @@ mod tests {
 
     #[test]
     fn styled_string_is_empty() {
-        let ss = StyledString::new();
+        let ss = StyledText::new();
         assert!(ss.is_empty());
     }
 
     #[test]
     fn styled_string_merge_adjacent() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         let style = Style {
             bold: Some(true),
             ..Style::default()
@@ -271,7 +271,7 @@ mod tests {
 
     #[test]
     fn styled_string_split_at() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_styled(
             "hello",
             Style {
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn styled_string_subspan() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text("hello world");
         let sub = ss.subspan(0, 5);
         assert_eq!(sub.plain_text(), "hello");
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn styled_string_truncate_to_width() {
-        let mut ss = StyledString::new();
+        let mut ss = StyledText::new();
         ss.push_text("hello world");
         let truncated = ss.truncate_to_width(5);
         assert_eq!(truncated.plain_text(), "hello");
@@ -303,19 +303,19 @@ mod tests {
 
     #[test]
     fn styled_string_from_str() {
-        let ss: StyledString = "hello".into();
+        let ss: StyledText = "hello".into();
         assert_eq!(ss.plain_text(), "hello");
     }
 
     #[test]
     fn styled_string_from_string() {
-        let ss: StyledString = String::from("hello").into();
+        let ss: StyledText = String::from("hello").into();
         assert_eq!(ss.plain_text(), "hello");
     }
 
     #[test]
     fn styled_string_with_capacity() {
-        let ss = StyledString::with_capacity(10);
+        let ss = StyledText::with_capacity(10);
         assert!(ss.is_empty());
     }
 }

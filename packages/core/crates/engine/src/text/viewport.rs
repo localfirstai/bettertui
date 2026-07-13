@@ -1,4 +1,4 @@
-use super::measurement;
+use super::unicode;
 use super::wrap::{WrapMode, WrappedLine, wrap_text};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -11,7 +11,7 @@ pub enum TextAlign {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LayoutLine {
+pub struct ViewportLine {
     pub text: String,
     pub x: u16,
     pub y: u16,
@@ -19,14 +19,14 @@ pub struct LayoutLine {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TextLayout {
-    pub lines: Vec<LayoutLine>,
+pub struct TextViewport {
+    pub lines: Vec<ViewportLine>,
     pub total_height: u16,
     pub max_line_width: u16,
 }
 
 #[derive(Debug, Clone)]
-pub struct LayoutConfig {
+pub struct ViewportConfig {
     pub align: TextAlign,
     pub wrap: bool,
     pub max_width: u16,
@@ -36,7 +36,7 @@ pub struct LayoutConfig {
     pub ellipsis: bool,
 }
 
-impl Default for LayoutConfig {
+impl Default for ViewportConfig {
     fn default() -> Self {
         Self {
             align: TextAlign::Left,
@@ -50,7 +50,7 @@ impl Default for LayoutConfig {
     }
 }
 
-pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
+pub fn layout_text(text: &str, config: &ViewportConfig) -> TextViewport {
     let wrapped = if config.wrap {
         wrap_text(text, config.max_width, WrapMode::WordOrChar)
     } else if text.contains('\n') {
@@ -59,7 +59,7 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
             lines.push(WrappedLine {
                 byte_offset: 0,
                 byte_len: hard_line.len(),
-                visual_width: measurement::display_width(hard_line) as u16,
+                visual_width: unicode::display_width(hard_line) as u16,
             });
         }
         lines
@@ -67,7 +67,7 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
         vec![WrappedLine {
             byte_offset: 0,
             byte_len: text.len(),
-            visual_width: measurement::display_width(text) as u16,
+            visual_width: unicode::display_width(text) as u16,
         }]
     };
 
@@ -93,7 +93,7 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
             wl.visual_width.min(config.max_width)
         };
         let line_text = if config.ellipsis && wl.visual_width > config.max_width {
-            measurement::truncate_with_ellipsis(fragment, config.max_width as usize)
+            unicode::truncate_with_ellipsis(fragment, config.max_width as usize)
         } else {
             fragment.to_string()
         };
@@ -112,9 +112,9 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
         let display_w = if config.ellipsis && wl.visual_width > config.max_width {
             config.max_width
         } else {
-            measurement::display_width(&line_text) as u16
+            unicode::display_width(&line_text) as u16
         };
-        lines.push(LayoutLine {
+        lines.push(ViewportLine {
             text: line_text,
             x: x_offset,
             y: config.pad_top + total_height,
@@ -124,7 +124,7 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
         total_height += 1;
     }
 
-    TextLayout {
+    TextViewport {
         lines,
         total_height,
         max_line_width,
@@ -132,7 +132,7 @@ pub fn layout_text(text: &str, config: &LayoutConfig) -> TextLayout {
 }
 
 #[allow(dead_code)]
-pub fn layout_styled(spans: &[(String, u16)], config: &LayoutConfig) -> TextLayout {
+pub fn layout_styled(spans: &[(String, u16)], config: &ViewportConfig) -> TextViewport {
     let mut combined = String::new();
     for (text, _) in spans {
         combined.push_str(text);
@@ -146,10 +146,10 @@ mod tests {
 
     #[test]
     fn layout_left_aligned() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             align: TextAlign::Left,
             max_width: 80,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello world", &config);
         assert_eq!(layout.lines.len(), 1);
@@ -159,10 +159,10 @@ mod tests {
 
     #[test]
     fn layout_center_aligned() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             align: TextAlign::Center,
             max_width: 20,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello", &config);
         assert_eq!(layout.lines[0].x, 7);
@@ -170,10 +170,10 @@ mod tests {
 
     #[test]
     fn layout_right_aligned() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             align: TextAlign::Right,
             max_width: 20,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello", &config);
         assert_eq!(layout.lines[0].x, 15);
@@ -181,10 +181,10 @@ mod tests {
 
     #[test]
     fn layout_with_wrap() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             wrap: true,
             max_width: 10,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello world foo bar", &config);
         assert!(layout.lines.len() > 1);
@@ -192,10 +192,10 @@ mod tests {
 
     #[test]
     fn layout_with_ellipsis() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             ellipsis: true,
             max_width: 5,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello world", &config);
         assert_eq!(layout.lines.len(), 1);
@@ -204,11 +204,11 @@ mod tests {
 
     #[test]
     fn layout_max_height() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             wrap: true,
             max_width: 5,
             max_height: 2,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("abcdefghijklmnop", &config);
         assert!(layout.lines.len() <= 2);
@@ -216,11 +216,11 @@ mod tests {
 
     #[test]
     fn layout_padding() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             pad_left: 2,
             pad_top: 1,
             max_width: 80,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello\nworld", &config);
         assert_eq!(layout.lines[0].x, 2);
@@ -230,9 +230,9 @@ mod tests {
 
     #[test]
     fn layout_newlines_no_wrap() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             max_width: 80,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello\nworld", &config);
         assert_eq!(layout.lines.len(), 2);
@@ -240,28 +240,28 @@ mod tests {
 
     #[test]
     fn layout_empty() {
-        let config = LayoutConfig::default();
+        let config = ViewportConfig::default();
         let layout = layout_text("", &config);
         assert_eq!(layout.lines.len(), 0, "got {layout:#?}");
     }
 
     #[test]
     fn layout_max_width_respected() {
-        let config = LayoutConfig {
+        let config = ViewportConfig {
             wrap: true,
             max_width: 8,
-            ..LayoutConfig::default()
+            ..ViewportConfig::default()
         };
         let layout = layout_text("hello world foo bar baz qux", &config);
         for line in &layout.lines {
-            assert!(measurement::display_width(&line.text) <= 8);
+            assert!(unicode::display_width(&line.text) <= 8);
         }
     }
 
     #[test]
     fn layout_styled_combines_text() {
         let spans = vec![("hello ".to_string(), 6), ("world".to_string(), 5)];
-        let config = LayoutConfig::default();
+        let config = ViewportConfig::default();
         let layout = layout_styled(&spans, &config);
         assert_eq!(layout.lines.len(), 1);
         assert_eq!(layout.lines[0].text, "hello world");

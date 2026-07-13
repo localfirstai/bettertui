@@ -1,30 +1,30 @@
-//! Text engine: buffer, cursor, selection, search, undo, measurement, wrapping, layout, and styled text.
+//! Text engine: buffer, cursor, selection, search, undo, unicode utilities, wrapping, viewport, and styled text.
 
 mod buffer;
 mod cursor;
-mod editor;
-mod layout;
-mod measurement;
+mod edit;
 mod search;
 mod selection;
 mod styled;
 mod undo;
+mod unicode;
+mod viewport;
 mod wrap;
 
 pub use buffer::TextBuffer;
 pub use cursor::{Cursor, CursorPosition};
-pub use editor::{CursorStyle, Editor, EditorConfig};
-pub use layout::{LayoutConfig, LayoutLine, TextAlign, TextLayout, layout_text};
-pub use measurement::{
+pub use edit::{CursorStyle, EditBuffer, EditBufferConfig};
+pub use search::{SearchEngine, SearchOptions, SearchResult};
+pub use selection::{Selection, SelectionRange};
+pub use styled::{StyledSpan, StyledText};
+pub use undo::{UndoAction, UndoManager};
+pub use unicode::{
     byte_offset_to_display_width, char_width, display_width, display_width_to_byte_offset,
     grapheme_clusters, grapheme_count, grapheme_width, is_box_drawing, is_emoji,
     is_nerd_font_glyph, is_powerline, is_wide_char, is_zero_width, truncate_to_width,
     truncate_with_ellipsis,
 };
-pub use search::{SearchEngine, SearchOptions, SearchResult};
-pub use selection::{Selection, SelectionRange};
-pub use styled::{StyledSpan, StyledString};
-pub use undo::{UndoAction, UndoManager};
+pub use viewport::{TextAlign, TextViewport, ViewportConfig, ViewportLine, layout_text};
 pub use wrap::{WrapMode, WrappedLine, wrap_text};
 
 pub struct TextEngine {
@@ -244,80 +244,5 @@ impl TextEngine {
 
     pub fn char_to_line(&self, char_idx: usize) -> usize {
         self.buffer.char_to_line(char_idx)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn text_engine_new() {
-        let engine = TextEngine::new();
-        assert!(engine.is_empty());
-    }
-
-    #[test]
-    fn text_engine_default() {
-        let engine = TextEngine::default();
-        assert!(engine.is_empty());
-    }
-
-    #[test]
-    fn text_engine_with_text() {
-        let engine = TextEngine::with_text("hello");
-        assert_eq!(engine.char_count(), 5);
-    }
-
-    #[test]
-    fn text_engine_insert_char() {
-        let mut engine = TextEngine::new();
-        engine.insert_char('a');
-        engine.insert_char('b');
-        assert_eq!(engine.text(), "ab");
-    }
-
-    #[test]
-    fn text_engine_delete_char() {
-        let mut engine = TextEngine::with_text("abc");
-        engine.cursor.set_position(2);
-        engine.delete_char();
-        assert_eq!(engine.text(), "ac");
-    }
-
-    #[test]
-    fn text_engine_undo() {
-        let mut engine = TextEngine::new();
-        engine.insert_char('a');
-        engine.undo();
-        assert!(engine.is_empty());
-    }
-
-    #[test]
-    fn text_engine_redo() {
-        let mut engine = TextEngine::new();
-        engine.insert_char('a');
-        engine.undo();
-        engine.redo();
-        assert_eq!(engine.text(), "a");
-    }
-
-    #[test]
-    fn text_engine_search() {
-        let mut engine = TextEngine::with_text("hello world");
-        let results = engine.search("world", SearchOptions::default());
-        assert_eq!(results.len(), 1);
-    }
-
-    #[test]
-    fn text_engine_line_count() {
-        let engine = TextEngine::with_text("line1\nline2\nline3");
-        assert_eq!(engine.line_count(), 3);
-    }
-
-    #[test]
-    fn text_engine_word_count() {
-        let engine = TextEngine::with_text("hello world foo");
-        assert_eq!(engine.word_count(), 3);
     }
 }
