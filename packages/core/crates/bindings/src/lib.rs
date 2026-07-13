@@ -4,11 +4,15 @@ use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
 use bettertui_engine::events::EventBus;
 use bettertui_engine::focus::FocusManager;
+use bettertui_engine::layout::types::{
+    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
+    Sizing,
+};
 use bettertui_engine::post_process::RenderPass;
 use bettertui_engine::renderer::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::text::TextEngine;
-use bettertui_engine::tree::{Color, LayoutProps, NodeKind, Style};
+use bettertui_engine::tree::{Color, NodeKind, Style};
 use napi_derive::napi;
 use std::collections::HashMap;
 
@@ -29,58 +33,211 @@ fn u64_to_node_id(val: u64) -> bettertui_engine::tree::NodeId {
 #[derive(serde::Deserialize)]
 #[serde(tag = "type")]
 enum CommandJson {
-    CreateNode { id: u64, kind: String },
-    RemoveNode { id: u64 },
-    AppendChild { parent: u64, child: u64 },
-    InsertBefore { reference: u64, child: u64 },
-    MoveNode { node: u64, new_parent: u64 },
-    ReplaceNode { old: u64, new: u64 },
-    DetachNode { id: u64 },
-    SetText { id: u64, text: String },
-    SetStyle { id: u64, style: StyleJson },
-    SetForeground { id: u64, color: ColorJson },
-    SetBackground { id: u64, color: ColorJson },
-    SetBold { id: u64, value: bool },
-    SetItalic { id: u64, value: bool },
-    SetUnderline { id: u64, value: bool },
-    SetStrikethrough { id: u64, value: bool },
-    SetDim { id: u64, value: bool },
-    SetInverse { id: u64, value: bool },
-    SetHidden { id: u64, value: bool },
-    SetLayout { id: u64, layout: LayoutJson },
-    SetFlexDirection { id: u64, direction: String },
-    SetJustifyContent { id: u64, value: String },
-    SetAlignItems { id: u64, value: String },
-    SetAlignSelf { id: u64, value: String },
-    SetWidth { id: u64, value: SizingJson },
-    SetHeight { id: u64, value: SizingJson },
-    SetMinWidth { id: u64, value: SizingJson },
-    SetMinHeight { id: u64, value: SizingJson },
-    SetMaxWidth { id: u64, value: SizingJson },
-    SetMaxHeight { id: u64, value: SizingJson },
-    SetFlexBasis { id: u64, value: SizingJson },
-    SetPadding { id: u64, value: RectValuesJson },
-    SetMargin { id: u64, value: RectValuesJson },
-    SetGap { id: u64, value: GapJson },
-    SetFlexGrow { id: u64, value: f32 },
-    SetFlexShrink { id: u64, value: f32 },
-    SetPosition { id: u64, value: String },
-    SetInset { id: u64, value: RectValuesJson },
-    SetDisplay { id: u64, value: String },
-    SetOpacity { id: u64, value: f32 },
-    SetClip { id: u64, value: bool },
-    SetZIndex { id: u64, value: i32 },
-    SetOverflow { id: u64, value: String },
-    SetAttribute { id: u64, key: String, value: String },
-    RemoveAttribute { id: u64, key: String },
-    SetTranslateX { id: u64, value: i32 },
-    SetTranslateY { id: u64, value: i32 },
-    SetTabIndex { id: u64, value: i32 },
-    FocusNode { id: u64 },
-    BlurNode { id: u64 },
-    BeginFrame { frame_id: u64 },
-    CommitFrame { frame_id: u64 },
-    Invalidate { id: u64 },
+    CreateNode {
+        id: u64,
+        kind: String,
+    },
+    RemoveNode {
+        id: u64,
+    },
+    AppendChild {
+        parent: u64,
+        child: u64,
+    },
+    InsertBefore {
+        reference: u64,
+        child: u64,
+    },
+    MoveNode {
+        node: u64,
+        #[serde(rename = "newParent")]
+        new_parent: u64,
+    },
+    ReplaceNode {
+        old: u64,
+        new: u64,
+    },
+    DetachNode {
+        id: u64,
+    },
+    SetText {
+        id: u64,
+        text: String,
+    },
+    SetStyle {
+        id: u64,
+        style: StyleJson,
+    },
+    SetForeground {
+        id: u64,
+        color: ColorJson,
+    },
+    SetBackground {
+        id: u64,
+        color: ColorJson,
+    },
+    SetBold {
+        id: u64,
+        value: bool,
+    },
+    SetItalic {
+        id: u64,
+        value: bool,
+    },
+    SetUnderline {
+        id: u64,
+        value: bool,
+    },
+    SetStrikethrough {
+        id: u64,
+        value: bool,
+    },
+    SetDim {
+        id: u64,
+        value: bool,
+    },
+    SetInverse {
+        id: u64,
+        value: bool,
+    },
+    SetHidden {
+        id: u64,
+        value: bool,
+    },
+    SetLayout {
+        id: u64,
+        layout: LayoutJson,
+    },
+    SetFlexDirection {
+        id: u64,
+        direction: String,
+    },
+    SetJustifyContent {
+        id: u64,
+        value: String,
+    },
+    SetAlignItems {
+        id: u64,
+        value: String,
+    },
+    SetAlignSelf {
+        id: u64,
+        value: String,
+    },
+    SetWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMinWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMinHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMaxWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMaxHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetFlexBasis {
+        id: u64,
+        value: SizingJson,
+    },
+    SetPadding {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetMargin {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetGap {
+        id: u64,
+        value: GapJson,
+    },
+    SetFlexGrow {
+        id: u64,
+        value: f32,
+    },
+    SetFlexShrink {
+        id: u64,
+        value: f32,
+    },
+    SetPosition {
+        id: u64,
+        value: String,
+    },
+    SetInset {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetDisplay {
+        id: u64,
+        value: String,
+    },
+    SetOpacity {
+        id: u64,
+        value: f32,
+    },
+    SetClip {
+        id: u64,
+        value: bool,
+    },
+    SetZIndex {
+        id: u64,
+        value: i32,
+    },
+    SetOverflow {
+        id: u64,
+        value: String,
+    },
+    SetAttribute {
+        id: u64,
+        key: String,
+        value: String,
+    },
+    RemoveAttribute {
+        id: u64,
+        key: String,
+    },
+    SetTranslateX {
+        id: u64,
+        value: i32,
+    },
+    SetTranslateY {
+        id: u64,
+        value: i32,
+    },
+    SetTabIndex {
+        id: u64,
+        value: i32,
+    },
+    FocusNode {
+        id: u64,
+    },
+    BlurNode {
+        id: u64,
+    },
+    BeginFrame {
+        #[serde(rename = "frameId")]
+        frame_id: u64,
+    },
+    CommitFrame {
+        #[serde(rename = "frameId")]
+        frame_id: u64,
+    },
+    Invalidate {
+        id: u64,
+    },
     Shutdown,
 }
 
@@ -180,39 +337,31 @@ impl From<LayoutJson> for LayoutProps {
         let mut props = LayoutProps::default();
         if let Some(dir) = l.direction {
             props.direction = match dir.as_str() {
-                "row" | "Row" => bettertui_engine::tree::FlexDirection::Row,
-                "column" | "Column" => bettertui_engine::tree::FlexDirection::Column,
-                "row_reverse" | "RowReverse" => bettertui_engine::tree::FlexDirection::RowReverse,
-                "column_reverse" | "ColumnReverse" => {
-                    bettertui_engine::tree::FlexDirection::ColumnReverse
-                }
-                _ => bettertui_engine::tree::FlexDirection::Column,
+                "row" | "Row" => FlexDirection::Row,
+                "column" | "Column" => FlexDirection::Column,
+                "row_reverse" | "RowReverse" => FlexDirection::RowReverse,
+                "column_reverse" | "ColumnReverse" => FlexDirection::ColumnReverse,
+                _ => FlexDirection::Column,
             };
         }
         if let Some(j) = l.justify {
             props.justify = match j.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::JustifyContent::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::JustifyContent::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::JustifyContent::FlexEnd,
-                "space_between" | "SpaceBetween" => {
-                    bettertui_engine::tree::JustifyContent::SpaceBetween
-                }
-                "space_around" | "SpaceAround" => {
-                    bettertui_engine::tree::JustifyContent::SpaceAround
-                }
-                "space_evenly" | "SpaceEvenly" => {
-                    bettertui_engine::tree::JustifyContent::SpaceEvenly
-                }
-                _ => bettertui_engine::tree::JustifyContent::FlexStart,
+                "flex_start" | "FlexStart" => JustifyContent::FlexStart,
+                "center" | "Center" => JustifyContent::Center,
+                "flex_end" | "FlexEnd" => JustifyContent::FlexEnd,
+                "space_between" | "SpaceBetween" => JustifyContent::SpaceBetween,
+                "space_around" | "SpaceAround" => JustifyContent::SpaceAround,
+                "space_evenly" | "SpaceEvenly" => JustifyContent::SpaceEvenly,
+                _ => JustifyContent::FlexStart,
             };
         }
         if let Some(a) = l.align {
             props.align = match a.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::AlignItems::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::AlignItems::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::AlignItems::FlexEnd,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignItems::Stretch,
-                _ => bettertui_engine::tree::AlignItems::Stretch,
+                "flex_start" | "FlexStart" => AlignItems::FlexStart,
+                "center" | "Center" => AlignItems::Center,
+                "flex_end" | "FlexEnd" => AlignItems::FlexEnd,
+                "stretch" | "Stretch" => AlignItems::Stretch,
+                _ => AlignItems::Stretch,
             };
         }
         if let Some(p) = l.padding {
@@ -252,9 +401,9 @@ struct RectValuesJson {
     all: Option<f32>,
 }
 
-impl From<RectValuesJson> for bettertui_engine::tree::RectValues {
+impl From<RectValuesJson> for RectValues {
     fn from(r: RectValuesJson) -> Self {
-        let mut rv = bettertui_engine::tree::RectValues::default();
+        let mut rv = RectValues::default();
         if let Some(all) = r.all {
             rv.top = Some(all);
             rv.right = Some(all);
@@ -293,9 +442,9 @@ struct GapJson {
     height: Option<f32>,
 }
 
-impl From<GapJson> for bettertui_engine::tree::Gap {
+impl From<GapJson> for Gap {
     fn from(g: GapJson) -> Self {
-        bettertui_engine::tree::Gap {
+        Gap {
             row: g.width.unwrap_or(0.0),
             column: g.height.unwrap_or(0.0),
         }
@@ -310,12 +459,12 @@ enum SizingJson {
     Auto,
 }
 
-impl From<SizingJson> for bettertui_engine::tree::Sizing {
+impl From<SizingJson> for Sizing {
     fn from(s: SizingJson) -> Self {
         match s {
-            SizingJson::Points(v) => bettertui_engine::tree::Sizing::Points(v),
-            SizingJson::Percent(v) => bettertui_engine::tree::Sizing::Percent(v),
-            SizingJson::Auto => bettertui_engine::tree::Sizing::Auto,
+            SizingJson::Points(v) => Sizing::Points(v),
+            SizingJson::Percent(v) => Sizing::Percent(v),
+            SizingJson::Auto => Sizing::Auto,
         }
     }
 }
@@ -444,13 +593,11 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }),
         CommandJson::SetFlexDirection { id, direction } => {
             let dir = match direction.as_str() {
-                "row" | "Row" => bettertui_engine::tree::FlexDirection::Row,
-                "column" | "Column" => bettertui_engine::tree::FlexDirection::Column,
-                "row_reverse" | "RowReverse" => bettertui_engine::tree::FlexDirection::RowReverse,
-                "column_reverse" | "ColumnReverse" => {
-                    bettertui_engine::tree::FlexDirection::ColumnReverse
-                }
-                _ => bettertui_engine::tree::FlexDirection::Column,
+                "row" | "Row" => FlexDirection::Row,
+                "column" | "Column" => FlexDirection::Column,
+                "row_reverse" | "RowReverse" => FlexDirection::RowReverse,
+                "column_reverse" | "ColumnReverse" => FlexDirection::ColumnReverse,
+                _ => FlexDirection::Column,
             };
             Some(Command::SetFlexDirection {
                 id: u64_to_node_id(id),
@@ -459,19 +606,13 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetJustifyContent { id, value } => {
             let v = match value.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::JustifyContent::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::JustifyContent::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::JustifyContent::FlexEnd,
-                "space_between" | "SpaceBetween" => {
-                    bettertui_engine::tree::JustifyContent::SpaceBetween
-                }
-                "space_around" | "SpaceAround" => {
-                    bettertui_engine::tree::JustifyContent::SpaceAround
-                }
-                "space_evenly" | "SpaceEvenly" => {
-                    bettertui_engine::tree::JustifyContent::SpaceEvenly
-                }
-                _ => bettertui_engine::tree::JustifyContent::FlexStart,
+                "flex_start" | "FlexStart" => JustifyContent::FlexStart,
+                "center" | "Center" => JustifyContent::Center,
+                "flex_end" | "FlexEnd" => JustifyContent::FlexEnd,
+                "space_between" | "SpaceBetween" => JustifyContent::SpaceBetween,
+                "space_around" | "SpaceAround" => JustifyContent::SpaceAround,
+                "space_evenly" | "SpaceEvenly" => JustifyContent::SpaceEvenly,
+                _ => JustifyContent::FlexStart,
             };
             Some(Command::SetJustifyContent {
                 id: u64_to_node_id(id),
@@ -480,16 +621,12 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetAlignItems { id, value } => {
             let v = match value.as_str() {
-                "start" | "Start" | "flex_start" | "FlexStart" => {
-                    bettertui_engine::tree::AlignItems::FlexStart
-                }
-                "end" | "End" | "flex_end" | "FlexEnd" => {
-                    bettertui_engine::tree::AlignItems::FlexEnd
-                }
-                "center" | "Center" => bettertui_engine::tree::AlignItems::Center,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignItems::Stretch,
-                "baseline" | "Baseline" => bettertui_engine::tree::AlignItems::Baseline,
-                _ => bettertui_engine::tree::AlignItems::Stretch,
+                "start" | "Start" | "flex_start" | "FlexStart" => AlignItems::FlexStart,
+                "end" | "End" | "flex_end" | "FlexEnd" => AlignItems::FlexEnd,
+                "center" | "Center" => AlignItems::Center,
+                "stretch" | "Stretch" => AlignItems::Stretch,
+                "baseline" | "Baseline" => AlignItems::Baseline,
+                _ => AlignItems::Stretch,
             };
             Some(Command::SetAlignItems {
                 id: u64_to_node_id(id),
@@ -498,16 +635,12 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetAlignSelf { id, value } => {
             let v = match value.as_str() {
-                "start" | "Start" | "flex_start" | "FlexStart" => {
-                    bettertui_engine::tree::AlignSelf::FlexStart
-                }
-                "end" | "End" | "flex_end" | "FlexEnd" => {
-                    bettertui_engine::tree::AlignSelf::FlexEnd
-                }
-                "center" | "Center" => bettertui_engine::tree::AlignSelf::Center,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignSelf::Stretch,
-                "baseline" | "Baseline" => bettertui_engine::tree::AlignSelf::Baseline,
-                _ => bettertui_engine::tree::AlignSelf::Stretch,
+                "start" | "Start" | "flex_start" | "FlexStart" => AlignSelf::FlexStart,
+                "end" | "End" | "flex_end" | "FlexEnd" => AlignSelf::FlexEnd,
+                "center" | "Center" => AlignSelf::Center,
+                "stretch" | "Stretch" => AlignSelf::Stretch,
+                "baseline" | "Baseline" => AlignSelf::Baseline,
+                _ => AlignSelf::Stretch,
             };
             Some(Command::SetAlignSelf {
                 id: u64_to_node_id(id),
@@ -564,9 +697,9 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }),
         CommandJson::SetPosition { id, value } => {
             let v = match value.as_str() {
-                "relative" | "Relative" => bettertui_engine::tree::Position::Relative,
-                "absolute" | "Absolute" => bettertui_engine::tree::Position::Absolute,
-                _ => bettertui_engine::tree::Position::Relative,
+                "relative" | "Relative" => Position::Relative,
+                "absolute" | "Absolute" => Position::Absolute,
+                _ => Position::Relative,
             };
             Some(Command::SetPosition {
                 id: u64_to_node_id(id),
