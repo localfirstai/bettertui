@@ -1,12 +1,12 @@
 use crate::input::FocusManager;
 use crate::layout::types::LayoutProps;
 use crate::scheduler::Scheduler;
-use crate::tree::arena::NodeArena;
-use crate::tree::node_id::NodeId;
-use crate::tree::node_kind::NodeKind;
-use crate::tree::render_node::RenderNode;
-use crate::tree::style::Style;
-use crate::tree::visual::Visibility;
+use crate::tree::NodeArena;
+use crate::tree::NodeId;
+use crate::tree::NodeKind;
+use crate::tree::RenderNode;
+use crate::tree::Style;
+use crate::tree::Visibility;
 
 use super::theme::Theme;
 
@@ -129,7 +129,7 @@ impl<'a> WidgetContext<'a> {
 mod tests {
     use super::*;
     use crate::layout::types::Sizing;
-    use crate::tree::color::{Color, NamedColor};
+    use crate::tree::{Color, NamedColor};
 
     fn make_context() -> (NodeArena, FocusManager, Scheduler, Theme) {
         (

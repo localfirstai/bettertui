@@ -25,7 +25,7 @@ pub use tree::WidgetTree;
 
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct WidgetId(pub NodeId);
@@ -148,7 +148,7 @@ mod tests {
     use super::*;
     use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
+    use crate::tree::NodeArena;
 
     struct TestWidget;
 
@@ -160,7 +160,7 @@ mod tests {
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
                 crate::layout::types::LayoutProps::default(),
-                crate::tree::style::Style::default(),
+                crate::tree::Style::default(),
             );
             WidgetId(id)
         }
@@ -178,7 +178,7 @@ mod tests {
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
                 crate::layout::types::LayoutProps::default(),
-                crate::tree::style::Style::default(),
+                crate::tree::Style::default(),
             );
             WidgetId(id)
         }

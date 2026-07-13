@@ -10,7 +10,7 @@ pub use manager::FocusManager;
 pub use scope::FocusScope;
 pub use traversal::{FocusDirection, FocusTraversal};
 
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FocusId(pub NodeId);

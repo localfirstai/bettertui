@@ -1,4 +1,4 @@
-use crate::tree::style::Style;
+use crate::tree::Style;
 
 /// A single highlighted segment of code with its visual style.
 #[derive(Debug, Clone)]

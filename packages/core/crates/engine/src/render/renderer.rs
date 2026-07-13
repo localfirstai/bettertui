@@ -11,7 +11,7 @@ use crate::render::object::RenderTree;
 use crate::render::painter::Painter;
 use crate::render::{PassResult, RenderPassContext, RenderPipeline};
 use crate::scheduler::{FrameStatus, Scheduler};
-use crate::tree::arena::NodeArena;
+use crate::tree::NodeArena;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderFrame {
@@ -238,7 +238,7 @@ mod tests {
     use crate::render::ansi::AnsiBackend;
     use crate::render::effects::ColorMatrixPass;
     use crate::render::effects::INVERT_MATRIX;
-    use crate::tree::color::Color;
+    use crate::tree::Color;
 
     fn make_arena() -> NodeArena {
         let mut arena = NodeArena::new();

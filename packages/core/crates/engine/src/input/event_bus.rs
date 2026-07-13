@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 use super::event_dispatch::EventDispatcher;
 use super::event_types::{Event, EventResult, MouseButton, MouseEvent};
-use crate::tree::arena::NodeArena;
-use crate::tree::visual::Point;
+use crate::tree::NodeArena;
+use crate::tree::Point;
 
 pub struct EventBus {
     queue: VecDeque<Event>,
@@ -61,7 +61,7 @@ impl EventBus {
         &mut self,
         key: super::event_types::Key,
         modifiers: super::event_types::Modifiers,
-        target: crate::tree::node_id::NodeId,
+        target: crate::tree::NodeId,
     ) {
         let mut event = Event::Key(super::event_types::KeyEvent::new(key, target));
         if let Event::Key(ref mut ke) = event {
@@ -74,7 +74,7 @@ impl EventBus {
         &mut self,
         button: MouseButton,
         position: Point,
-        target: crate::tree::node_id::NodeId,
+        target: crate::tree::NodeId,
     ) {
         self.push(Event::Mouse(MouseEvent::new(button, position, target)));
     }
@@ -82,7 +82,7 @@ impl EventBus {
     pub fn push_paste(
         &mut self,
         text: impl Into<std::sync::Arc<str>>,
-        target: crate::tree::node_id::NodeId,
+        target: crate::tree::NodeId,
     ) {
         let text: std::sync::Arc<str> = text.into();
         let text_box: Box<str> = Box::from(text.as_ref());
@@ -150,10 +150,10 @@ impl EventBus {
 mod tests {
     use super::*;
     use crate::input::{Key, KeyEvent, LifecycleEvent, Modifiers};
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_id::NodeId;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeId;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     fn make_target(arena: &mut NodeArena) -> NodeId {
         let id = arena.insert(RenderNode::new(NodeKind::Box));

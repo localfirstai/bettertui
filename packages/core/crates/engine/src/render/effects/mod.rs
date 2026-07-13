@@ -24,7 +24,7 @@ pub use scanlines::{ScanlineMode, ScanlinesPass};
 pub use vignette::VignettePass;
 
 use crate::framebuffer::Cell;
-use crate::tree::color::Color;
+use crate::tree::Color;
 
 /// Convert a Color to (r, g, b, a) normalized to [0.0, 1.0].
 fn color_to_float(color: &Color) -> (f32, f32, f32, f32) {

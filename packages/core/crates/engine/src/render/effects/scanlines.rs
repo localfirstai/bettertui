@@ -4,7 +4,7 @@ use super::color_to_float;
 #[cfg(test)]
 use crate::framebuffer::Cell;
 use crate::render::{PassPriority, PassResult, RenderPass, RenderPassContext};
-use crate::tree::color::Color;
+use crate::tree::Color;
 
 /// Scanlines effect: darkens every nth row to simulate CRT scanlines.
 ///

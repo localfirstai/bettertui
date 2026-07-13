@@ -1,4 +1,4 @@
-use crate::tree::style::Style;
+use crate::tree::Style;
 
 use super::measurement;
 
@@ -179,7 +179,7 @@ impl From<String> for StyledString {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tree::color::{Color, NamedColor};
+    use crate::tree::{Color, NamedColor};
 
     #[test]
     fn styled_span_new() {

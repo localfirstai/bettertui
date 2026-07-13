@@ -1,6 +1,6 @@
 use super::events::{FocusEvent, FocusEventType};
 use super::{FocusId, FocusScope, FocusState};
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]

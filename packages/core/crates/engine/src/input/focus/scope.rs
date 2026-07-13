@@ -1,4 +1,4 @@
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FocusScopeType {

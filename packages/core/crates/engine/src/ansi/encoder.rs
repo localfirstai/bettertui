@@ -1,6 +1,6 @@
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::tree::color::{Color, NamedColor};
+use crate::tree::{Color, NamedColor};
 
 pub struct AnsiEncoder {
     buffer: Vec<u8>,
@@ -328,7 +328,7 @@ mod tests {
 
     #[test]
     fn encoder_full_cell() {
-        use crate::tree::color::NamedColor;
+        use crate::tree::NamedColor;
         let mut enc = AnsiEncoder::new();
         let cell = Cell::new('Z')
             .with_fg(Color::Named(NamedColor::Red))

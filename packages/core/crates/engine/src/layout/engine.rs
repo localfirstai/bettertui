@@ -5,9 +5,9 @@ use crate::layout::types::{
     AlignItems, AlignSelf, FlexDirection, FlexWrap, JustifyContent, LayoutProps, Position,
     RectValues, Sizing,
 };
+use crate::tree::NodeArena;
 use crate::tree::NodeId;
 use crate::tree::Rect;
-use crate::tree::arena::NodeArena;
 
 #[derive(Debug)]
 pub enum LayoutError {
@@ -470,9 +470,9 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     fn make_ids(count: usize) -> Vec<NodeId> {
         let mut arena = NodeArena::new();
@@ -714,9 +714,9 @@ impl LayoutTreeSync {
 mod sync_tests {
     use super::*;
     use crate::layout::types::Sizing;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     #[test]
     fn sync_full_basic() {

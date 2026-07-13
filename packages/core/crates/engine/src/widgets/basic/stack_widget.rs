@@ -1,7 +1,7 @@
 use crate::input::Event;
 use crate::input::EventResult;
 use crate::layout::types::{LayoutProps, Position};
-use crate::tree::style::Style;
+use crate::tree::Style;
 
 use crate::widgets::{Widget, WidgetContext, WidgetId};
 
@@ -40,11 +40,11 @@ impl Widget for StackWidget {
         let mut layout = self.layout;
         layout.position = Position::Relative;
 
-        let node = crate::tree::render_node::RenderNode {
-            kind: crate::tree::node_kind::NodeKind::Box,
+        let node = crate::tree::RenderNode {
+            kind: crate::tree::NodeKind::Box,
             style: self.style,
             layout,
-            ..crate::tree::render_node::RenderNode::default()
+            ..crate::tree::RenderNode::default()
         };
         let id = ctx.insert_node(node);
         WidgetId(id)
@@ -83,8 +83,8 @@ mod tests {
     use super::*;
     use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {

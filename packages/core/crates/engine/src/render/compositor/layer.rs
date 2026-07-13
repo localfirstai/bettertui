@@ -1,5 +1,5 @@
 use crate::framebuffer::{Cell, FrameBuffer};
-use crate::tree::color::Color;
+use crate::tree::Color;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LayerId(pub usize);
@@ -199,7 +199,7 @@ mod tests {
             5,
             5,
             'X',
-            Color::Named(crate::tree::color::NamedColor::Red),
+            Color::Named(crate::tree::NamedColor::Red),
             Color::Default,
         );
         let cell = layer.get_cell(5, 5);

@@ -6,9 +6,9 @@ use crate::layout::paint::{ClipBounds, PaintBounds, PaintFlags, Viewport};
 use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::render::RenderObject;
 use crate::render::RenderTree;
+use crate::tree::NodeArena;
 use crate::tree::NodeId;
-use crate::tree::arena::NodeArena;
-use crate::tree::visual::{Display, Overflow};
+use crate::tree::{Display, Overflow};
 
 /// Minimum children to trigger binary search culling for scroll containers.
 const BINARY_SEARCH_MIN_CHILDREN: usize = 32;
@@ -31,7 +31,7 @@ pub fn build_render_tree_with_viewport(
         arena,
         layout_results,
         root,
-        &crate::tree::style::Style::default(),
+        &crate::tree::Style::default(),
         0,
         0,
         1.0,
@@ -48,7 +48,7 @@ fn build_node(
     arena: &NodeArena,
     layout_results: &HashMap<NodeId, LayoutResult>,
     id: NodeId,
-    parent_style: &crate::tree::style::Style,
+    parent_style: &crate::tree::Style,
     clip_x: u16,
     clip_y: u16,
     parent_opacity: f32,
@@ -222,7 +222,7 @@ fn build_node(
     }
 }
 
-fn flags_need_clip(node: &crate::tree::render_node::RenderNode) -> bool {
+fn flags_need_clip(node: &crate::tree::RenderNode) -> bool {
     node.overflow == Overflow::Hidden || node.overflow == Overflow::Scroll || node.visibility.clip
 }
 
@@ -237,11 +237,11 @@ fn determine_primary_axis(layout: &LayoutProps) -> PrimaryAxis {
 mod tests {
     use super::*;
     use crate::layout::LayoutEngine;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::interaction::NodeState;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
-    use crate::tree::visual::Overflow;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::NodeState;
+    use crate::tree::Overflow;
+    use crate::tree::RenderNode;
     use std::time::Instant;
 
     fn build_tree_with_layout() -> (RenderTree, NodeArena) {
@@ -745,9 +745,7 @@ mod tests {
                 n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
                 n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
                 if i % 2 == 0 {
-                    n.style.bg = Some(crate::tree::color::Color::Named(
-                        crate::tree::color::NamedColor::Blue,
-                    ));
+                    n.style.bg = Some(crate::tree::Color::Named(crate::tree::NamedColor::Blue));
                 }
                 n
             });
@@ -868,9 +866,7 @@ mod tests {
         let child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Text);
             n.text = Some("hi".into());
-            n.style.bg = Some(crate::tree::color::Color::Named(
-                crate::tree::color::NamedColor::Blue,
-            ));
+            n.style.bg = Some(crate::tree::Color::Named(crate::tree::NamedColor::Blue));
             n
         });
         arena.append_child(arena.root(), child).unwrap();

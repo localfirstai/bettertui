@@ -1,5 +1,5 @@
-use crate::tree::color::Color;
-use crate::tree::style::Style;
+use crate::tree::Color;
+use crate::tree::Style;
 use std::collections::HashMap;
 
 /// A single scope-to-style mapping, matching OpenTUI's `ThemeTokenStyle`.

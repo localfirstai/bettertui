@@ -4,7 +4,7 @@
 use super::{color_to_float, float_to_color, transform_cell_color};
 use crate::framebuffer::FrameBuffer;
 use crate::render::{PassPriority, PassResult, RenderPass, RenderPassContext};
-use crate::tree::color::Color;
+use crate::tree::Color;
 
 #[cfg(test)]
 use crate::framebuffer::Cell;

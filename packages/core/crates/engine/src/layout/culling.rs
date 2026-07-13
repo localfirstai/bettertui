@@ -200,12 +200,10 @@ mod tests {
         step: u16,
         size: u16,
     ) -> Vec<PositionedChild> {
-        let mut arena = crate::tree::arena::NodeArena::new();
+        let mut arena = crate::tree::NodeArena::new();
         (0..count)
             .map(|i| {
-                let id = arena.insert(crate::tree::render_node::RenderNode::new(
-                    crate::tree::node_kind::NodeKind::Box,
-                ));
+                let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
                 PositionedChild {
                     id,
                     start: start + i as u16 * step,
@@ -259,10 +257,8 @@ mod tests {
 
     #[test]
     fn spanning_object_caught() {
-        let mut arena = crate::tree::arena::NodeArena::new();
-        let tall_id = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ));
+        let mut arena = crate::tree::NodeArena::new();
+        let tall_id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
         let children = vec![PositionedChild {
             id: tall_id,
             start: 0,

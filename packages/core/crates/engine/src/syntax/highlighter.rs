@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use tree_sitter::StreamingIterator;
 use tree_sitter::{Language, Parser, Query, QueryCursor};
 
-use crate::tree::style::Style;
+use crate::tree::Style;
 
 use super::segment::{HighlightedLine, StyledSegment};
 use super::theme::SyntaxTheme;
@@ -180,7 +180,7 @@ impl SyntaxHighlighter {
 
     fn default_text_style() -> Style {
         Style {
-            fg: Some(crate::tree::color::Color::rgb(230, 237, 243)),
+            fg: Some(crate::tree::Color::rgb(230, 237, 243)),
             ..Style::default()
         }
     }

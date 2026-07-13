@@ -1,5 +1,5 @@
 use super::FocusManager;
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FocusDirection {

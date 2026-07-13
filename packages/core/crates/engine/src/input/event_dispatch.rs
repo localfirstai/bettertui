@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use super::event_types::{Event, EventPhase, EventResult};
-use crate::tree::arena::NodeArena;
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeArena;
+use crate::tree::NodeId;
 
 type EventHandlerFn = dyn FnMut(&mut Event) -> EventResult + Send;
 type EventHandler = Box<EventHandlerFn>;
@@ -116,9 +116,9 @@ impl EventDispatcher {
 mod tests {
     use super::*;
     use crate::input::{Key, KeyEvent};
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
 

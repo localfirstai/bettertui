@@ -4,7 +4,7 @@ use crate::ansi::parser::{
 };
 use crate::framebuffer::CellAttributes;
 use crate::input::{KeyAction, KeyModifiers, KeyboardInput};
-use crate::tree::color::{Color, NamedColor};
+use crate::tree::{Color, NamedColor};
 
 use super::cursor::Cursor;
 use super::modes::PrivateMode;

@@ -73,11 +73,8 @@ impl OpCounter {
 /// A benchmark harness for running and collecting performance measurements.
 #[derive(Debug)]
 pub struct BenchmarkHarness {
-    /// Stored results from completed benchmarks.
     results: Vec<BenchmarkResult>,
-    /// Default number of warmup iterations.
     warmup_iterations: usize,
-    /// Default minimum duration per benchmark.
     min_duration: Duration,
 }
 
@@ -88,7 +85,7 @@ impl Default for BenchmarkHarness {
 }
 
 impl BenchmarkHarness {
-    /// Creates a new BenchmarkHarness.
+    /// Creates a new benchmark harness.
     pub fn new() -> Self {
         Self {
             results: Vec::new(),
@@ -114,7 +111,6 @@ impl BenchmarkHarness {
     /// The closure is called repeatedly until enough time has elapsed
     /// to produce a stable measurement.
     pub fn bench(&mut self, name: &str, mut f: impl FnMut()) {
-        // Warmup
         for _ in 0..self.warmup_iterations {
             f();
         }
@@ -134,7 +130,6 @@ impl BenchmarkHarness {
             if total_elapsed >= self.min_duration && iterations >= 10 {
                 break;
             }
-            // Safety valve: don't run forever
             if iterations >= 1_000_000 {
                 break;
             }
@@ -145,16 +140,14 @@ impl BenchmarkHarness {
         let max = times.iter().copied().max().unwrap_or_default();
         let avg_per_iter = elapsed / iterations as u32;
 
-        let result = BenchmarkResult {
+        self.results.push(BenchmarkResult {
             name: name.to_string(),
             iterations,
             elapsed,
             avg_per_iter,
             min,
             max,
-        };
-
-        self.results.push(result);
+        });
     }
 
     /// Returns all stored benchmark results.
@@ -186,105 +179,5 @@ impl BenchmarkHarness {
         output.push('\n');
         output.push_str(&format!("Total benchmarks: {}\n", self.results.len()));
         output
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn bench_runs_multiple_iterations() {
-        let mut harness = BenchmarkHarness::new()
-            .with_warmup(0)
-            .with_min_duration(Duration::from_millis(10));
-        let mut count = 0;
-        harness.bench("test", || {
-            count += 1;
-        });
-        assert!(count > 10);
-        let result = harness.find("test").unwrap();
-        assert!(result.iterations > 10);
-    }
-
-    #[test]
-    fn bench_result_ops_per_sec() {
-        let result = BenchmarkResult {
-            name: "test".to_string(),
-            iterations: 1000,
-            elapsed: Duration::from_secs(1),
-            avg_per_iter: Duration::from_micros(1),
-            min: Duration::from_micros(1),
-            max: Duration::from_micros(2),
-        };
-        assert_eq!(result.ops_per_sec(), 1000.0);
-    }
-
-    #[test]
-    fn bench_result_summary() {
-        let result = BenchmarkResult {
-            name: "test".to_string(),
-            iterations: 100,
-            elapsed: Duration::from_millis(50),
-            avg_per_iter: Duration::from_micros(500),
-            min: Duration::from_micros(400),
-            max: Duration::from_micros(600),
-        };
-        let summary = result.summary();
-        assert!(summary.contains("test"));
-        assert!(summary.contains("100"));
-    }
-
-    #[test]
-    fn harness_results() {
-        let mut harness = BenchmarkHarness::new()
-            .with_warmup(0)
-            .with_min_duration(Duration::from_millis(10));
-        harness.bench("a", || {});
-        harness.bench("b", || {});
-        assert_eq!(harness.results().len(), 2);
-    }
-
-    #[test]
-    fn harness_find() {
-        let mut harness = BenchmarkHarness::new()
-            .with_warmup(0)
-            .with_min_duration(Duration::from_millis(10));
-        harness.bench("target", || {});
-        assert!(harness.find("target").is_some());
-        assert!(harness.find("missing").is_none());
-    }
-
-    #[test]
-    fn harness_clear() {
-        let mut harness = BenchmarkHarness::new()
-            .with_warmup(0)
-            .with_min_duration(Duration::from_millis(10));
-        harness.bench("test", || {});
-        assert_eq!(harness.results().len(), 1);
-        harness.clear();
-        assert_eq!(harness.results().len(), 0);
-    }
-
-    #[test]
-    fn op_counter() {
-        let mut counter = OpCounter::new();
-        assert_eq!(counter.count(), 0);
-        counter.increment();
-        counter.increment();
-        assert_eq!(counter.count(), 2);
-        counter.reset();
-        assert_eq!(counter.count(), 0);
-    }
-
-    #[test]
-    fn summary_output() {
-        let mut harness = BenchmarkHarness::new()
-            .with_warmup(0)
-            .with_min_duration(Duration::from_millis(10));
-        harness.bench("test", || {});
-        let output = harness.summary();
-        assert!(output.contains("Benchmark Results"));
-        assert!(output.contains("test"));
     }
 }

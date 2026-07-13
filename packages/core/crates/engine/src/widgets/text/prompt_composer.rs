@@ -1,7 +1,7 @@
 use crate::input::{Event, EventResult, Key};
 use crate::layout::types::LayoutProps;
-use crate::tree::color::Color;
-use crate::tree::style::Style;
+use crate::tree::Color;
+use crate::tree::Style;
 use crate::widgets::Widget;
 use crate::widgets::WidgetId;
 use crate::widgets::context::WidgetContext;
@@ -309,7 +309,7 @@ mod tests {
     use super::*;
     use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
+    use crate::tree::NodeArena;
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {

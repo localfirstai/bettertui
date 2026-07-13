@@ -2,8 +2,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::layout::paint::{ClipBounds, PaintBounds, PaintFlags};
-use crate::tree::style::ResolvedStyle;
-use crate::tree::visual::Overflow;
+use crate::tree::Overflow;
+use crate::tree::ResolvedStyle;
 use crate::tree::{NodeId, Rect};
 
 #[derive(Debug, Clone)]
@@ -76,13 +76,11 @@ impl RenderObject {
 mod tests {
     use super::*;
     use crate::tree::NodeId;
-    use crate::tree::color::{Color, NamedColor};
+    use crate::tree::{Color, NamedColor};
 
     fn make_id() -> NodeId {
-        let mut arena = crate::tree::arena::NodeArena::new();
-        arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ))
+        let mut arena = crate::tree::NodeArena::new();
+        arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box))
     }
 
     #[test]
@@ -232,9 +230,9 @@ impl RenderTree {
 #[cfg(test)]
 mod tree_tests {
     use super::*;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     fn make_ids(count: usize) -> Vec<NodeId> {
         let mut arena = NodeArena::new();

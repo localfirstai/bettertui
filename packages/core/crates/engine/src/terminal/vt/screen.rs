@@ -1,5 +1,5 @@
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::tree::color::Color;
+use crate::tree::Color;
 
 const DEFAULT_SCROLLBACK_LINES: usize = 10000;
 

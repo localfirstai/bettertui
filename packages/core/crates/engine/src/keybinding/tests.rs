@@ -1,11 +1,11 @@
 use super::*;
 use crate::input::{KeyEvent, Modifiers};
-use crate::tree::node_id::NodeId;
-use crate::tree::node_kind::NodeKind;
-use crate::tree::render_node::RenderNode;
+use crate::tree::NodeId;
+use crate::tree::NodeKind;
+use crate::tree::RenderNode;
 
 fn make_id() -> NodeId {
-    let mut arena = crate::tree::arena::NodeArena::new();
+    let mut arena = crate::tree::NodeArena::new();
     arena.insert(RenderNode::new(NodeKind::Box))
 }
 

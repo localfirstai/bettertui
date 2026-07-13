@@ -5,10 +5,10 @@ use bettertui_engine::layout::LayoutTreeSync;
 use bettertui_engine::layout::paint::{PaintContext, PaintFlags};
 use bettertui_engine::render::{Painter, RenderObject, RenderTree, Renderer};
 use bettertui_engine::scheduler::Scheduler;
+use bettertui_engine::tree::Display;
+use bettertui_engine::tree::NodeArena;
 use bettertui_engine::tree::NodeId;
-use bettertui_engine::tree::arena::NodeArena;
-use bettertui_engine::tree::color::{Color, NamedColor};
-use bettertui_engine::tree::visual::Display;
+use bettertui_engine::tree::{Color, NamedColor};
 
 fn make_single_node_arena() -> NodeArena {
     let mut arena = NodeArena::new();
@@ -118,8 +118,8 @@ fn integration_ansi_encoder_full_frame() {
         0,
         0,
         "Hello World",
-        bettertui_engine::tree::color::Color::Default,
-        bettertui_engine::tree::color::Color::Default,
+        bettertui_engine::tree::Color::Default,
+        bettertui_engine::tree::Color::Default,
     );
     let full_region = DirtyRegion::new(0, 0, 20, 5);
     encoder.encode(&buf, &[full_region]);
@@ -191,8 +191,8 @@ fn integration_anime_sgr_chaining() {
         0,
         0,
         "AB",
-        bettertui_engine::tree::color::Color::Default,
-        bettertui_engine::tree::color::Color::Default,
+        bettertui_engine::tree::Color::Default,
+        bettertui_engine::tree::Color::Default,
     );
     let region = DirtyRegion::new(0, 0, 10, 1);
     encoder.encode(&buf, &[region]);

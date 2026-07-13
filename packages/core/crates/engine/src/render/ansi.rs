@@ -1,7 +1,7 @@
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::render::backend::RenderBackend;
-use crate::tree::color::{Color, NamedColor};
+use crate::tree::{Color, NamedColor};
 
 pub struct AnsiBackend {
     buffer: Vec<u8>,
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn ansi_backend_full_cell() {
-        use crate::tree::color::NamedColor;
+        use crate::tree::NamedColor;
         let mut backend = AnsiBackend::new();
         let cell = Cell::new('Z')
             .with_fg(Color::Named(NamedColor::Red))

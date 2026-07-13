@@ -2,8 +2,8 @@ use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::layout::paint::{PaintBounds, PaintContext, PaintFlags};
 use crate::render::{RenderObject, RenderTree};
 use crate::text::{LayoutConfig, layout_text};
-use crate::tree::color::Color;
-use crate::tree::style::ResolvedStyle;
+use crate::tree::Color;
+use crate::tree::ResolvedStyle;
 
 pub struct Painter {
     buffer: FrameBuffer,
@@ -195,11 +195,11 @@ mod tests {
     use crate::layout::LayoutEngine;
     use crate::layout::build_render_tree;
     use crate::layout::types::Sizing;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::color::NamedColor;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
-    use crate::tree::visual::Display;
+    use crate::tree::Display;
+    use crate::tree::NamedColor;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     fn make_painter_with_tree() -> (Painter, RenderTree) {
         let mut arena = NodeArena::new();

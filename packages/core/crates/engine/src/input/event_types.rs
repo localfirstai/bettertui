@@ -1,5 +1,5 @@
-use crate::tree::node_id::NodeId;
-use crate::tree::visual::Point;
+use crate::tree::NodeId;
+use crate::tree::Point;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EventPhase {
@@ -267,10 +267,8 @@ mod tests {
     use super::*;
 
     fn make_id() -> NodeId {
-        let mut arena = crate::tree::arena::NodeArena::new();
-        arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ))
+        let mut arena = crate::tree::NodeArena::new();
+        arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box))
     }
 
     #[test]

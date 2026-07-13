@@ -150,7 +150,7 @@ impl RenderPipeline {
 mod tests {
     use super::*;
     use crate::framebuffer::Cell;
-    use crate::tree::color::Color;
+    use crate::tree::Color;
 
     struct TestPass {
         name: &'static str,
