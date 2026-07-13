@@ -4,7 +4,7 @@ use crate::layout::types::LayoutProps;
 use crate::tree::color::{Color, NamedColor};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Badge widget for status indicators.
 ///

@@ -3,7 +3,7 @@ use crate::input::EventResult;
 use crate::layout::types::{LayoutProps, Position};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Stack layout widget for z-indexed layering.
 ///

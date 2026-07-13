@@ -1,56 +1,29 @@
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::layout::types::LayoutProps;
 use crate::text::TextAlign;
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
-/// Label widget for form labels.
-///
-/// Renders text with optional association to a form control.
-pub struct LabelWidget {
+pub struct TextWidget {
     pub content: Box<str>,
-    pub html_for: Option<WidgetId>,
     pub style: Style,
-    pub layout: LayoutProps,
     pub wrap: bool,
     pub align: TextAlign,
 }
 
-impl Default for LabelWidget {
-    fn default() -> Self {
+impl TextWidget {
+    pub fn new(content: impl Into<Box<str>>) -> Self {
         Self {
-            content: Box::from(""),
-            html_for: None,
+            content: content.into(),
             style: Style::default(),
-            layout: LayoutProps::default(),
             wrap: false,
             align: TextAlign::Left,
         }
     }
-}
-
-impl LabelWidget {
-    pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_for(mut self, target: WidgetId) -> Self {
-        self.html_for = Some(target);
-        self
-    }
 
     pub fn with_style(mut self, style: Style) -> Self {
         self.style = style;
-        self
-    }
-
-    pub fn with_layout(mut self, layout: LayoutProps) -> Self {
-        self.layout = layout;
         self
     }
 
@@ -63,11 +36,44 @@ impl LabelWidget {
         self.align = align;
         self
     }
+
+    pub fn bold(content: impl Into<Box<str>>) -> Self {
+        Self {
+            content: content.into(),
+            style: Style {
+                bold: Some(true),
+                ..Style::default()
+            },
+            ..Self::default()
+        }
+    }
+
+    pub fn colored(content: impl Into<Box<str>>, fg: crate::tree::color::Color) -> Self {
+        Self {
+            content: content.into(),
+            style: Style {
+                fg: Some(fg),
+                ..Style::default()
+            },
+            ..Self::default()
+        }
+    }
 }
 
-impl Widget for LabelWidget {
+impl Default for TextWidget {
+    fn default() -> Self {
+        Self {
+            content: Box::from(""),
+            style: Style::default(),
+            wrap: false,
+            align: TextAlign::Left,
+        }
+    }
+}
+
+impl Widget for TextWidget {
     fn kind(&self) -> &'static str {
-        "Label"
+        "Text"
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
@@ -75,7 +81,6 @@ impl Widget for LabelWidget {
             kind: crate::tree::node_kind::NodeKind::Text,
             text: Some(self.content.clone()),
             style: self.style,
-            layout: self.layout,
             text_align: self.align,
             text_wrap: self.wrap,
             ..crate::tree::render_node::RenderNode::default()
@@ -95,7 +100,7 @@ mod tests {
     use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
+    use crate::tree::color::{Color, NamedColor};
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
@@ -108,13 +113,13 @@ mod tests {
     }
 
     #[test]
-    fn label_widget_kind() {
-        let w = LabelWidget::new("Name");
-        assert_eq!(w.kind(), "Label");
+    fn text_widget_kind() {
+        let w = TextWidget::new("hello");
+        assert_eq!(w.kind(), "Text");
     }
 
     #[test]
-    fn label_widget_create() {
+    fn text_widget_create() {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -124,27 +129,33 @@ mod tests {
             theme: &theme,
         };
 
-        let w = LabelWidget::new("Email");
+        let w = TextWidget::new("Hello World");
         let id = w.create(&mut ctx);
         let node = ctx.arena.get(id.node_id()).unwrap();
-        assert_eq!(node.kind, NodeKind::Text);
-        assert_eq!(node.text.as_deref(), Some("Email"));
+        assert_eq!(node.kind, crate::tree::node_kind::NodeKind::Text);
+        assert_eq!(node.text.as_deref(), Some("Hello World"));
     }
 
     #[test]
-    fn label_widget_with_for() {
-        let target = WidgetId(crate::tree::node_id::NodeId::default());
-        let w = LabelWidget::new("Name").with_for(target);
-        assert_eq!(w.html_for, Some(target));
+    fn text_widget_bold() {
+        let w = TextWidget::bold("Bold");
+        assert!(w.style.bold.unwrap());
+        assert_eq!(w.content.as_ref(), "Bold");
     }
 
     #[test]
-    fn label_widget_with_style() {
+    fn text_widget_colored() {
+        let w = TextWidget::colored("Red", Color::Named(NamedColor::Red));
+        assert_eq!(w.style.fg, Some(Color::Named(NamedColor::Red)));
+    }
+
+    #[test]
+    fn text_widget_with_style() {
         let style = Style {
-            bold: Some(true),
+            italic: Some(true),
             ..Style::default()
         };
-        let w = LabelWidget::new("Label").with_style(style);
-        assert!(w.style.bold.unwrap());
+        let w = TextWidget::new("Italic").with_style(style);
+        assert!(w.style.italic.unwrap());
     }
 }

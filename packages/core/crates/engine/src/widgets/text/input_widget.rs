@@ -7,8 +7,8 @@ use crate::tree::color::{Color, NamedColor};
 use crate::tree::node_id::NodeId;
 use crate::tree::style::Style;
 
-use super::callback_types::{ChangeCallback, SubmitCallback};
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::callback_types::{ChangeCallback, SubmitCallback};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Single-line text input widget.
 ///

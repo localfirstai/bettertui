@@ -1,47 +1,42 @@
 use crate::input::Event;
 use crate::input::EventResult;
 use crate::layout::types::LayoutProps;
-use crate::tree::color::{Color, NamedColor};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
-/// Progress indicator widget.
+/// Loading spinner widget.
 ///
-/// Renders a progress bar showing completion status.
-pub struct ProgressWidget {
-    pub value: f32,
-    pub max: f32,
+/// Renders an animated spinner to indicate loading state.
+#[derive(Default)]
+pub struct SpinnerWidget {
+    pub label: Option<Box<str>>,
+    pub spinner_type: SpinnerType,
     pub style: Style,
     pub layout: LayoutProps,
 }
 
-impl Default for ProgressWidget {
-    fn default() -> Self {
-        Self {
-            value: 0.0,
-            max: 100.0,
-            style: Style {
-                fg: Some(Color::Named(NamedColor::Green)),
-                ..Style::default()
-            },
-            layout: LayoutProps::default(),
-        }
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SpinnerType {
+    #[default]
+    Dots,
+    Line,
+    Braille,
+    Arc,
 }
 
-impl ProgressWidget {
+impl SpinnerWidget {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn with_value(mut self, value: f32) -> Self {
-        self.value = value;
+    pub fn with_label(mut self, label: impl Into<Box<str>>) -> Self {
+        self.label = Some(label.into());
         self
     }
 
-    pub fn with_max(mut self, max: f32) -> Self {
-        self.max = max;
+    pub fn with_type(mut self, spinner_type: SpinnerType) -> Self {
+        self.spinner_type = spinner_type;
         self
     }
 
@@ -54,24 +49,19 @@ impl ProgressWidget {
         self.layout = layout;
         self
     }
-
-    pub fn percentage(&self) -> f32 {
-        if self.max == 0.0 {
-            0.0
-        } else {
-            (self.value / self.max * 100.0).min(100.0)
-        }
-    }
 }
 
-impl Widget for ProgressWidget {
+impl Widget for SpinnerWidget {
     fn kind(&self) -> &'static str {
-        "Progress"
+        "Spinner"
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let percentage = self.percentage();
-        let display_text = format!("{:.0}%", percentage);
+        let display_text = self
+            .label
+            .as_ref()
+            .map(|l| format!("⠋ {}", l))
+            .unwrap_or_else(|| "⠋".to_string());
 
         let node = crate::tree::render_node::RenderNode {
             kind: crate::tree::node_kind::NodeKind::Box,
@@ -108,13 +98,13 @@ mod tests {
     }
 
     #[test]
-    fn progress_widget_kind() {
-        let w = ProgressWidget::new();
-        assert_eq!(w.kind(), "Progress");
+    fn spinner_widget_kind() {
+        let w = SpinnerWidget::new();
+        assert_eq!(w.kind(), "Spinner");
     }
 
     #[test]
-    fn progress_widget_create() {
+    fn spinner_widget_create() {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -124,27 +114,16 @@ mod tests {
             theme: &theme,
         };
 
-        let w = ProgressWidget::new().with_value(50.0);
+        let w = SpinnerWidget::new().with_label("Loading...");
         let id = w.create(&mut ctx);
         let node = ctx.arena.get(id.node_id()).unwrap();
         assert_eq!(node.kind, NodeKind::Box);
+        assert_eq!(node.text.as_deref(), Some("⠋ Loading..."));
     }
 
     #[test]
-    fn progress_widget_percentage() {
-        let w = ProgressWidget::new().with_value(50.0).with_max(100.0);
-        assert_eq!(w.percentage(), 50.0);
-    }
-
-    #[test]
-    fn progress_widget_percentage_capped() {
-        let w = ProgressWidget::new().with_value(150.0).with_max(100.0);
-        assert_eq!(w.percentage(), 100.0);
-    }
-
-    #[test]
-    fn progress_widget_zero_max() {
-        let w = ProgressWidget::new().with_value(0.0).with_max(0.0);
-        assert_eq!(w.percentage(), 0.0);
+    fn spinner_widget_with_type() {
+        let w = SpinnerWidget::new().with_type(SpinnerType::Arc);
+        assert_eq!(w.spinner_type, SpinnerType::Arc);
     }
 }

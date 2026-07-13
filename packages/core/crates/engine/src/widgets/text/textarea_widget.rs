@@ -7,8 +7,8 @@ use crate::tree::color::{Color, NamedColor};
 use crate::tree::node_id::NodeId;
 use crate::tree::style::Style;
 
-use super::callback_types::ChangeCallback;
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::callback_types::ChangeCallback;
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Multi-line text input widget.
 ///

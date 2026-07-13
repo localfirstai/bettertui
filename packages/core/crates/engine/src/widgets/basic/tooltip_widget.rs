@@ -3,40 +3,39 @@ use crate::input::EventResult;
 use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
-/// Loading spinner widget.
+/// Tooltip widget for hover information.
 ///
-/// Renders an animated spinner to indicate loading state.
-#[derive(Default)]
-pub struct SpinnerWidget {
-    pub label: Option<Box<str>>,
-    pub spinner_type: SpinnerType,
+/// Renders a small popup with informational text.
+pub struct TooltipWidget {
+    pub content: Box<str>,
+    pub delay: u32,
     pub style: Style,
     pub layout: LayoutProps,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum SpinnerType {
-    #[default]
-    Dots,
-    Line,
-    Braille,
-    Arc,
+impl Default for TooltipWidget {
+    fn default() -> Self {
+        Self {
+            content: Box::from(""),
+            delay: 500,
+            style: Style::default(),
+            layout: LayoutProps::default(),
+        }
+    }
 }
 
-impl SpinnerWidget {
-    pub fn new() -> Self {
-        Self::default()
+impl TooltipWidget {
+    pub fn new(content: impl Into<Box<str>>) -> Self {
+        Self {
+            content: content.into(),
+            ..Default::default()
+        }
     }
 
-    pub fn with_label(mut self, label: impl Into<Box<str>>) -> Self {
-        self.label = Some(label.into());
-        self
-    }
-
-    pub fn with_type(mut self, spinner_type: SpinnerType) -> Self {
-        self.spinner_type = spinner_type;
+    pub fn with_delay(mut self, delay: u32) -> Self {
+        self.delay = delay;
         self
     }
 
@@ -51,21 +50,15 @@ impl SpinnerWidget {
     }
 }
 
-impl Widget for SpinnerWidget {
+impl Widget for TooltipWidget {
     fn kind(&self) -> &'static str {
-        "Spinner"
+        "Tooltip"
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let display_text = self
-            .label
-            .as_ref()
-            .map(|l| format!("⠋ {}", l))
-            .unwrap_or_else(|| "⠋".to_string());
-
         let node = crate::tree::render_node::RenderNode {
             kind: crate::tree::node_kind::NodeKind::Box,
-            text: Some(Box::from(display_text)),
+            text: Some(self.content.clone()),
             style: self.style,
             layout: self.layout,
             ..crate::tree::render_node::RenderNode::default()
@@ -98,13 +91,13 @@ mod tests {
     }
 
     #[test]
-    fn spinner_widget_kind() {
-        let w = SpinnerWidget::new();
-        assert_eq!(w.kind(), "Spinner");
+    fn tooltip_widget_kind() {
+        let w = TooltipWidget::new("Help text");
+        assert_eq!(w.kind(), "Tooltip");
     }
 
     #[test]
-    fn spinner_widget_create() {
+    fn tooltip_widget_create() {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -114,16 +107,16 @@ mod tests {
             theme: &theme,
         };
 
-        let w = SpinnerWidget::new().with_label("Loading...");
+        let w = TooltipWidget::new("Tooltip content");
         let id = w.create(&mut ctx);
         let node = ctx.arena.get(id.node_id()).unwrap();
         assert_eq!(node.kind, NodeKind::Box);
-        assert_eq!(node.text.as_deref(), Some("⠋ Loading..."));
+        assert_eq!(node.text.as_deref(), Some("Tooltip content"));
     }
 
     #[test]
-    fn spinner_widget_with_type() {
-        let w = SpinnerWidget::new().with_type(SpinnerType::Arc);
-        assert_eq!(w.spinner_type, SpinnerType::Arc);
+    fn tooltip_widget_with_delay() {
+        let w = TooltipWidget::new("Tip").with_delay(1000);
+        assert_eq!(w.delay, 1000);
     }
 }

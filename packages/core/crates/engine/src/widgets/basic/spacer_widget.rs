@@ -2,7 +2,7 @@ use crate::input::Event;
 use crate::input::EventResult;
 use crate::layout::types::{LayoutProps, Sizing};
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 pub struct SpacerWidget {
     pub layout: LayoutProps,

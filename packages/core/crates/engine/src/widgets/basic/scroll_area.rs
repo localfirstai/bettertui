@@ -5,7 +5,7 @@ use crate::tree::render_node::RenderNode;
 use crate::tree::style::Style;
 use crate::tree::visual::Overflow;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 pub struct ScrollAreaWidget {
     pub layout: LayoutProps,

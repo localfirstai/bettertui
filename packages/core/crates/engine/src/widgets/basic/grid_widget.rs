@@ -3,7 +3,7 @@ use crate::input::EventResult;
 use crate::layout::types::{FlexDirection, Gap, LayoutProps};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Grid layout widget for terminal grids.
 ///

@@ -1,48 +1,51 @@
 use crate::input::Event;
 use crate::input::EventResult;
 use crate::layout::types::LayoutProps;
+use crate::text::TextAlign;
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
-/// Visual divider line widget.
+/// Label widget for form labels.
 ///
-/// Renders a horizontal or vertical line to separate content areas.
-#[derive(Default)]
-pub struct SeparatorWidget {
-    pub orientation: SeparatorOrientation,
-    pub layout: LayoutProps,
+/// Renders text with optional association to a form control.
+pub struct LabelWidget {
+    pub content: Box<str>,
+    pub html_for: Option<WidgetId>,
     pub style: Style,
+    pub layout: LayoutProps,
+    pub wrap: bool,
+    pub align: TextAlign,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum SeparatorOrientation {
-    #[default]
-    Horizontal,
-    Vertical,
-}
-
-impl SeparatorWidget {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn horizontal() -> Self {
+impl Default for LabelWidget {
+    fn default() -> Self {
         Self {
-            orientation: SeparatorOrientation::Horizontal,
+            content: Box::from(""),
+            html_for: None,
+            style: Style::default(),
+            layout: LayoutProps::default(),
+            wrap: false,
+            align: TextAlign::Left,
+        }
+    }
+}
+
+impl LabelWidget {
+    pub fn new(content: impl Into<Box<str>>) -> Self {
+        Self {
+            content: content.into(),
             ..Default::default()
         }
     }
 
-    pub fn vertical() -> Self {
-        Self {
-            orientation: SeparatorOrientation::Vertical,
-            ..Default::default()
-        }
+    pub fn with_for(mut self, target: WidgetId) -> Self {
+        self.html_for = Some(target);
+        self
     }
 
-    pub fn with_orientation(mut self, orientation: SeparatorOrientation) -> Self {
-        self.orientation = orientation;
+    pub fn with_style(mut self, style: Style) -> Self {
+        self.style = style;
         self
     }
 
@@ -51,22 +54,30 @@ impl SeparatorWidget {
         self
     }
 
-    pub fn with_style(mut self, style: Style) -> Self {
-        self.style = style;
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn with_align(mut self, align: TextAlign) -> Self {
+        self.align = align;
         self
     }
 }
 
-impl Widget for SeparatorWidget {
+impl Widget for LabelWidget {
     fn kind(&self) -> &'static str {
-        "Separator"
+        "Label"
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
         let node = crate::tree::render_node::RenderNode {
-            kind: crate::tree::node_kind::NodeKind::Separator,
+            kind: crate::tree::node_kind::NodeKind::Text,
+            text: Some(self.content.clone()),
             style: self.style,
             layout: self.layout,
+            text_align: self.align,
+            text_wrap: self.wrap,
             ..crate::tree::render_node::RenderNode::default()
         };
         let id = ctx.insert_node(node);
@@ -97,13 +108,13 @@ mod tests {
     }
 
     #[test]
-    fn separator_widget_kind() {
-        let w = SeparatorWidget::new();
-        assert_eq!(w.kind(), "Separator");
+    fn label_widget_kind() {
+        let w = LabelWidget::new("Name");
+        assert_eq!(w.kind(), "Label");
     }
 
     #[test]
-    fn separator_widget_create() {
+    fn label_widget_create() {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -113,25 +124,27 @@ mod tests {
             theme: &theme,
         };
 
-        let w = SeparatorWidget::horizontal();
+        let w = LabelWidget::new("Email");
         let id = w.create(&mut ctx);
         let node = ctx.arena.get(id.node_id()).unwrap();
-        assert_eq!(node.kind, NodeKind::Separator);
+        assert_eq!(node.kind, NodeKind::Text);
+        assert_eq!(node.text.as_deref(), Some("Email"));
     }
 
     #[test]
-    fn separator_widget_vertical() {
-        let w = SeparatorWidget::vertical();
-        assert_eq!(w.orientation, SeparatorOrientation::Vertical);
+    fn label_widget_with_for() {
+        let target = WidgetId(crate::tree::node_id::NodeId::default());
+        let w = LabelWidget::new("Name").with_for(target);
+        assert_eq!(w.html_for, Some(target));
     }
 
     #[test]
-    fn separator_widget_with_style() {
+    fn label_widget_with_style() {
         let style = Style {
             bold: Some(true),
             ..Style::default()
         };
-        let w = SeparatorWidget::new().with_style(style);
+        let w = LabelWidget::new("Label").with_style(style);
         assert!(w.style.bold.unwrap());
     }
 }

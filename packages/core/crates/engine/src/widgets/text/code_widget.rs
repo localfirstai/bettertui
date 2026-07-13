@@ -5,7 +5,7 @@ use crate::syntax::global_highlighter;
 use crate::tree::color::Color;
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Code widget for displaying highlighted code blocks.
 ///

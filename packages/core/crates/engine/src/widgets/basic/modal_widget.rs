@@ -2,7 +2,7 @@ use crate::input::{Event, EventResult, Key};
 use crate::layout::types::{LayoutProps, Position};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Modal widget for dialog overlays.
 ///

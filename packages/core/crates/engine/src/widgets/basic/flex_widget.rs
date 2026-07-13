@@ -3,7 +3,7 @@ use crate::input::EventResult;
 use crate::layout::types::{AlignItems, FlexDirection, Gap, JustifyContent, LayoutProps};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 pub struct FlexWidget {
     pub direction: FlexDirection,

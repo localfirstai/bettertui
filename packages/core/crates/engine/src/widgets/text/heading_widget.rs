@@ -3,7 +3,7 @@ use crate::input::EventResult;
 use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Heading widget for section titles (h1-h6).
 ///

@@ -1,17 +1,18 @@
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::layout::types::LayoutProps;
+use crate::layout::types::{LayoutProps, RectValues};
 use crate::tree::style::Style;
 
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 #[derive(Default)]
-pub struct BoxWidget {
+pub struct ContainerWidget {
     pub layout: LayoutProps,
     pub style: Style,
+    pub title: Option<Box<str>>,
 }
 
-impl BoxWidget {
+impl ContainerWidget {
     pub fn new() -> Self {
         Self::default()
     }
@@ -25,11 +26,21 @@ impl BoxWidget {
         self.style = style;
         self
     }
+
+    pub fn with_title(mut self, title: impl Into<Box<str>>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    pub fn with_padding(mut self, padding: f32) -> Self {
+        self.layout.padding = Some(RectValues::uniform(padding));
+        self
+    }
 }
 
-impl Widget for BoxWidget {
+impl Widget for ContainerWidget {
     fn kind(&self) -> &'static str {
-        "Box"
+        "Container"
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
@@ -49,6 +60,7 @@ mod tests {
     use crate::layout::types::Sizing;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
+    use crate::tree::node_kind::NodeKind;
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
@@ -61,13 +73,13 @@ mod tests {
     }
 
     #[test]
-    fn box_widget_kind() {
-        let w = BoxWidget::new();
-        assert_eq!(w.kind(), "Box");
+    fn container_kind() {
+        let w = ContainerWidget::new();
+        assert_eq!(w.kind(), "Container");
     }
 
     #[test]
-    fn box_widget_create() {
+    fn container_create() {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -77,29 +89,38 @@ mod tests {
             theme: &theme,
         };
 
-        let w = BoxWidget::new();
+        let w = ContainerWidget::new()
+            .with_title("My Container")
+            .with_padding(2.0);
         let id = w.create(&mut ctx);
         let node = ctx.arena.get(id.node_id()).unwrap();
-        assert_eq!(node.kind, crate::tree::node_kind::NodeKind::Box);
+        assert_eq!(node.kind, NodeKind::Box);
+        assert_eq!(w.title.as_deref(), Some("My Container"));
     }
 
     #[test]
-    fn box_widget_with_layout() {
+    fn container_with_layout() {
         let layout = LayoutProps {
-            width: Some(Sizing::Points(20.0)),
+            width: Some(Sizing::Points(50.0)),
             ..Default::default()
         };
-        let w = BoxWidget::new().with_layout(layout);
-        assert_eq!(w.layout.width, Some(Sizing::Points(20.0)));
+        let w = ContainerWidget::new().with_layout(layout);
+        assert_eq!(w.layout.width, Some(Sizing::Points(50.0)));
     }
 
     #[test]
-    fn box_widget_with_style() {
+    fn container_with_style() {
         let style = Style {
             bold: Some(true),
             ..Style::default()
         };
-        let w = BoxWidget::new().with_style(style);
+        let w = ContainerWidget::new().with_style(style);
         assert!(w.style.bold.unwrap());
+    }
+
+    #[test]
+    fn container_with_padding() {
+        let w = ContainerWidget::new().with_padding(3.0);
+        assert_eq!(w.layout.padding, Some(RectValues::uniform(3.0)));
     }
 }

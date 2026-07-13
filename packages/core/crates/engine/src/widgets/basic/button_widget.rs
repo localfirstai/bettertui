@@ -4,8 +4,8 @@ use crate::layout::types::LayoutProps;
 use crate::tree::color::{Color, NamedColor};
 use crate::tree::style::Style;
 
-use super::callback_types::AsyncCallback;
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::callback_types::AsyncCallback;
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Button widget for clickable actions.
 ///

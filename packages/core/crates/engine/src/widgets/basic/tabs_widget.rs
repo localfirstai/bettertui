@@ -2,8 +2,8 @@ use crate::input::{Event, EventResult, Key};
 use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
-use super::callback_types::IndexChangeCallback;
-use super::{Widget, WidgetContext, WidgetId};
+use crate::widgets::callback_types::IndexChangeCallback;
+use crate::widgets::{Widget, WidgetContext, WidgetId};
 
 /// Tabs widget for tabbed navigation.
 ///
