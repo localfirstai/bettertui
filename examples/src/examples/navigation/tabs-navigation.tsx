@@ -16,7 +16,7 @@ import {
   render,
 } from "@bettertui/react";
 import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
+import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
 import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
@@ -29,6 +29,7 @@ export const meta: ExampleMeta = {
   next: ["list-view", "data-table-basics"],
 };
 
+let storedKeyInput: KeyInput | null = null;
 const tabs = [
   { label: "Overview", id: "overview" },
   { label: "Settings", id: "settings" },
@@ -76,11 +77,16 @@ function TabsAndAccordion() {
 }
 
 function renderApp() {
-  render(<TabsAndAccordion />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <TabsAndAccordion />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 

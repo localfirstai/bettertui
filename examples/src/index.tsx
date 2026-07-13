@@ -37,7 +37,7 @@ function buildMenuItems(filtered: ExampleMeta[], filterText: string): MenuItem[]
     return [
       {
         kind: "message",
-        label: "No matching examples — press Escape to clear the filter.",
+        label: "No matching examples — press Backspace to delete filter characters.",
       },
     ];
   }

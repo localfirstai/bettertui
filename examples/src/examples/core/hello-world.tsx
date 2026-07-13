@@ -47,8 +47,11 @@ export function run(keyInput: KeyInput): void {
 }
 
 export function destroy(keyInput: KeyInput): void {
-  keyInput.off(() => {});
-  keyInput.stop();
+  // Handlers registered via useExampleKey are cleaned up automatically when
+  // the component unmounts (useEffect cleanup). Nothing to do here.
+  // Do NOT call keyInput.stop() — the caller (launcher or standalone) owns
+  // the keyInput lifecycle and will stop it after destroy() returns.
+  void keyInput;
 }
 
 export const Example = HelloWorld;

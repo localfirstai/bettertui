@@ -8,7 +8,7 @@
 import { CommandBuffer, createReconciler } from "@bettertui/core";
 import { Box, Flex, Heading, Provider, Separator, Text, render } from "@bettertui/react";
 import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
+import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
 import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
@@ -21,8 +21,12 @@ export const meta: ExampleMeta = {
   next: ["hello-world", "flex-layout"],
 };
 
+let storedKeyInput: KeyInput | null = null;
 const buffer = new CommandBuffer();
-const reconciler = createReconciler(buffer);
+// The reconciler is created to demonstrate the low-level API, but this example
+// uses the standard render() path for simplicity. See createReconciler docs
+// for direct usage patterns.
+const _reconciler = createReconciler(buffer);
 
 function EngineView() {
   useExampleKey((event) => {
@@ -51,13 +55,16 @@ function EngineView() {
 }
 
 function renderApp() {
-  const element = <EngineView />;
-  reconciler.createInstance("Provider", { children: element });
-  render(element);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <EngineView />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 
