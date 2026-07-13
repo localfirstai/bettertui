@@ -20,7 +20,7 @@ import {
   render,
 } from "@bettertui/react";
 import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
+import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
 import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
@@ -32,6 +32,8 @@ export const meta: ExampleMeta = {
   tags: ["setInterval", "DataTable", "Progress", "live data"],
   next: ["data-table-basics", "performance-stress-test"],
 };
+
+let storedKeyInput: KeyInput | null = null;
 
 const state = {
   tick: 0,
@@ -142,13 +144,18 @@ function LiveMetrics() {
 }
 
 function renderApp() {
-  render(<LiveMetrics />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <LiveMetrics />
+    </KeyInputProvider>,
+  );
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   timer = setInterval(tick, 1000);
   renderApp();
 }

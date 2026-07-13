@@ -15,7 +15,7 @@ import {
   render,
 } from "@bettertui/react";
 import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
+import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
 import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
@@ -31,6 +31,7 @@ export const meta: ExampleMeta = {
 const lines = Array.from({ length: 40 }, (_, i) => `Line ${i + 1} — scrollable content`);
 
 let scrollTop = 0;
+let storedKeyInput: KeyInput | null = null;
 
 function ScrollDemo() {
   useExampleKey((event) => {
@@ -72,11 +73,16 @@ function ScrollDemo() {
 }
 
 function renderApp() {
-  render(<ScrollDemo />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <ScrollDemo />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 

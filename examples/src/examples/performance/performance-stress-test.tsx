@@ -20,7 +20,7 @@ import {
 } from "@bettertui/react";
 import type { TreeNode } from "@bettertui/react";
 import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
+import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
 import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
@@ -32,6 +32,8 @@ export const meta: ExampleMeta = {
   tags: ["performance", "setInterval", "DataTable", "Tree", "metrics"],
   next: ["live-metrics", "data-table-basics"],
 };
+
+let storedKeyInput: KeyInput | null = null;
 
 const TESTS = ["Idle", "Large Table", "Large Tree", "Rapid Updates"];
 
@@ -197,11 +199,16 @@ function Stress() {
 }
 
 function renderApp() {
-  render(<Stress />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <Stress />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 
