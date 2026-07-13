@@ -8,7 +8,7 @@ Framework-agnostic runtime, command protocol, tree operations, and the internal 
 - `Runtime` — frame loop and commit orchestration.
 - Tree operations — `createInstance`, `createTextInstance`, `appendChild`, `insertBefore`, `removeChild`, `commitUpdate`, `commitTextUpdate`, and friends used by reconcilers.
 - `createReconciler()` — framework-agnostic `react-reconciler`-style host config (no React import).
-- Native bridge (`src/native/*`) — loads the `bettertui_bindings` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `createRuntime`, `createEventLoop`, `detectCapabilities`, `getVersion`).
+- Engine module (`src/engine/`) — loads the `bettertui_bindings` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `createRuntime`, `createEventLoop`, `detectCapabilities`, `getVersion`).
 
 ## Building
 

@@ -1,6 +1,6 @@
+import type { BindingInfo, NapiKeymap } from "./engine/types";
 import { Keymap } from "./keymap";
 import type { KeymapOptions } from "./keymap";
-import type { BindingInfo, NapiKeymap } from "./native/types";
 
 // ─── Mock Native Keymap for Testing ──
 

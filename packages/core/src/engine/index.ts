@@ -28,9 +28,7 @@ export { createRuntime } from "./runtime";
 export type { Runtime, RuntimeOptions } from "./runtime";
 
 export { createEventLoop } from "./events";
-export type { EventLoop, EventCallback } from "./events";
-
-export type { KeyEvent, MouseEvent } from "./events";
+export type { EventLoop, EventCallback, KeyEvent, MouseEvent } from "./events";
 
 let nativeAddon: Record<string, unknown> | null = null;
 let nativePath: string | null = null;
@@ -113,10 +111,15 @@ function resolveNativePath(): string | null {
 
   try {
     const path = require("node:path");
-    const possibleLocations = [
-      require.resolve(path.join(packageName, "index.js")),
-      require.resolve(packageName),
-    ];
+    const possibleLocations: string[] = [];
+
+    try {
+      possibleLocations.push(require.resolve(path.join(packageName, "index.js")));
+    } catch {}
+
+    try {
+      possibleLocations.push(require.resolve(packageName));
+    } catch {}
 
     for (const indexPath of possibleLocations) {
       const dir = path.dirname(indexPath);
@@ -128,9 +131,7 @@ function resolveNativePath(): string | null {
         return path.join(dir, nodeFiles[0]);
       }
     }
-  } catch {
-    // Package not installed or not resolvable
-  }
+  } catch {}
 
   return null;
 }
@@ -177,9 +178,7 @@ function loadNativeAddon(): Record<string, unknown> {
         nativeAddon = result;
         return nativeAddon;
       }
-    } catch {
-      // Try next candidate
-    }
+    } catch {}
   }
 
   const platformKey = getPlatformKey();

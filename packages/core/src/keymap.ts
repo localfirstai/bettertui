@@ -1,5 +1,5 @@
-import { createKeymap as createNativeKeymap } from "./native";
-import type { BindingInfo, NapiKeymap } from "./native/types";
+import { createKeymap as createNativeKeymap } from "./engine";
+import type { BindingInfo, NapiKeymap } from "./engine/types";
 
 // ─── Types ──────────────────────────────────────────────────────
 

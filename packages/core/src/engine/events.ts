@@ -1,7 +1,6 @@
 import type { KeyEvent as SharedKeyEvent, MouseEvent as SharedMouseEvent } from "@bettertui/shared";
 import type { NapiEventBus } from "./types";
 
-// Re-export shared event types for consumer convenience
 export type KeyEvent = SharedKeyEvent;
 export type MouseEvent = SharedMouseEvent;
 
@@ -34,9 +33,7 @@ export function createEventLoop(eventBus: NapiEventBus): EventLoop {
               cb(event);
             }
           }
-        } catch {
-          // Malformed event data, skip
-        }
+        } catch {}
       }
     }, 16);
   }
