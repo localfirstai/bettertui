@@ -16,6 +16,8 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsdown",
+    "build:native": "node scripts/build-native.ts",
+    "build:native:all": "node scripts/build-native.ts --all",
     "dev": "tsdown --watch",
     "lint": "biome check src/",
     "format": "biome format --write src/",
@@ -26,10 +28,21 @@
     "test:integration": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
+    "publish": "node scripts/publish.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@bettertui/shared": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@bettertui/core-darwin-x64": "0.0.0",
+    "@bettertui/core-darwin-arm64": "0.0.0",
+    "@bettertui/core-linux-x64-gnu": "0.0.0",
+    "@bettertui/core-linux-arm64-gnu": "0.0.0",
+    "@bettertui/core-linux-x64-musl": "0.0.0",
+    "@bettertui/core-linux-arm64-musl": "0.0.0",
+    "@bettertui/core-win32-x64": "0.0.0",
+    "@bettertui/core-win32-arm64": "0.0.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "catalog:",
