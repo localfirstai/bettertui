@@ -2,6 +2,7 @@
   "name": "@bettertui/examples",
   "version": "0.0.0",
   "private": true,
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "description": "BetterTUI examples and standalone example executable",
   "type": "module",
   "module": "src/index.tsx",

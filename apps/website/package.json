@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
   "engines": {
     "node": ">=24.15.0"
