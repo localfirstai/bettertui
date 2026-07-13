@@ -1,6 +1,6 @@
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::events::types::{Event, EventResult, Key};
+use crate::input::{Event, EventResult, Key};
 use crate::layout::types::{LayoutProps, Sizing};
 use crate::text::display_width;
 use crate::tree::color::{Color, NamedColor};
@@ -399,8 +399,8 @@ fn cursor_to_point(value: &str, byte_offset: usize) -> crate::tree::visual::Poin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::types::KeyEvent;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
+    use crate::input::KeyEvent;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;

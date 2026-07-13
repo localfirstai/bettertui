@@ -1,5 +1,5 @@
-use crate::events::types::Event;
-use crate::focus::FocusManager;
+use crate::input::Event;
+use crate::input::FocusManager;
 use crate::scheduler::Scheduler;
 use crate::tree::arena::NodeArena;
 use crate::widgets::WidgetId;

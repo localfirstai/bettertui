@@ -1,4 +1,4 @@
-use crate::events::types::{Event, EventResult, Key};
+use crate::input::{Event, EventResult, Key};
 use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
@@ -159,7 +159,7 @@ impl Widget for TabsWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;

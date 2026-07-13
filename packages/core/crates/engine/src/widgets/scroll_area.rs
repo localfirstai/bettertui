@@ -1,4 +1,4 @@
-use crate::events::types::{Event, EventResult, Key};
+use crate::input::{Event, EventResult, Key};
 use crate::layout::types::LayoutProps;
 use crate::tree::node_kind::NodeKind;
 use crate::tree::render_node::RenderNode;
@@ -127,7 +127,7 @@ impl Widget for ScrollAreaWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::widgets::theme::Theme;
@@ -179,10 +179,7 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            Key::ArrowDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(crate::input::KeyEvent::new(Key::ArrowDown, id.node_id()));
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
@@ -204,10 +201,7 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            Key::ArrowUp,
-            id.node_id(),
-        ));
+        let event = Event::Key(crate::input::KeyEvent::new(Key::ArrowUp, id.node_id()));
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
@@ -229,10 +223,7 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            Key::PageDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(crate::input::KeyEvent::new(Key::PageDown, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
 
         let node = ctx.arena.get(id.node_id()).unwrap();
@@ -253,14 +244,11 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            Key::ArrowDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(crate::input::KeyEvent::new(Key::ArrowDown, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
         w.handle_event(id, &mut ctx, &event);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(Key::Home, id.node_id()));
+        let event = Event::Key(crate::input::KeyEvent::new(Key::Home, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
 
         let node = ctx.arena.get(id.node_id()).unwrap();

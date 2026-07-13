@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::types::{Event, EventPhase, EventResult};
+use super::event_types::{Event, EventPhase, EventResult};
 use crate::tree::arena::NodeArena;
 use crate::tree::node_id::NodeId;
 
@@ -115,7 +115,7 @@ impl EventDispatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::types::{Key, KeyEvent};
+    use crate::input::{Key, KeyEvent};
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;
     use crate::tree::render_node::RenderNode;

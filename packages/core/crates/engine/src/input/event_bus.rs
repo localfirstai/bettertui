@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use super::dispatch::EventDispatcher;
-use super::types::{Event, EventResult, MouseButton, MouseEvent};
+use super::event_dispatch::EventDispatcher;
+use super::event_types::{Event, EventResult, MouseButton, MouseEvent};
 use crate::tree::arena::NodeArena;
 use crate::tree::visual::Point;
 
@@ -59,11 +59,11 @@ impl EventBus {
 
     pub fn push_key(
         &mut self,
-        key: super::types::Key,
-        modifiers: super::types::Modifiers,
+        key: super::event_types::Key,
+        modifiers: super::event_types::Modifiers,
         target: crate::tree::node_id::NodeId,
     ) {
-        let mut event = Event::Key(super::types::KeyEvent::new(key, target));
+        let mut event = Event::Key(super::event_types::KeyEvent::new(key, target));
         if let Event::Key(ref mut ke) = event {
             ke.modifiers = modifiers;
         }
@@ -86,13 +86,13 @@ impl EventBus {
     ) {
         let text: std::sync::Arc<str> = text.into();
         let text_box: Box<str> = Box::from(text.as_ref());
-        self.push(Event::Paste(super::types::PasteEvent::new(
+        self.push(Event::Paste(super::event_types::PasteEvent::new(
             text_box, target,
         )));
     }
 
     pub fn push_resize(&mut self, width: u16, height: u16, prev_width: u16, prev_height: u16) {
-        self.push(Event::Resize(super::types::ResizeEvent::new(
+        self.push(Event::Resize(super::event_types::ResizeEvent::new(
             width,
             height,
             prev_width,
@@ -100,7 +100,7 @@ impl EventBus {
         )));
     }
 
-    pub fn push_lifecycle(&mut self, event: super::types::LifecycleEvent) {
+    pub fn push_lifecycle(&mut self, event: super::event_types::LifecycleEvent) {
         self.push(Event::Lifecycle(event));
     }
 
@@ -149,7 +149,7 @@ impl EventBus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::types::{Key, KeyEvent, Modifiers};
+    use crate::input::{Key, KeyEvent, LifecycleEvent, Modifiers};
     use crate::tree::arena::NodeArena;
     use crate::tree::node_id::NodeId;
     use crate::tree::node_kind::NodeKind;
@@ -212,7 +212,7 @@ mod tests {
     #[test]
     fn bus_push_lifecycle() {
         let mut bus = EventBus::new();
-        bus.push_lifecycle(super::super::types::LifecycleEvent::Mount);
+        bus.push_lifecycle(LifecycleEvent::Mount);
         assert_eq!(bus.len(), 1);
     }
 

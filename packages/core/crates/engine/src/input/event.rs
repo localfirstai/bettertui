@@ -109,14 +109,14 @@ mod tests {
 
     #[test]
     fn input_event_keyboard() {
-        let input = KeyboardInput::new('a', super::super::KeyModifiers::empty());
+        let input = KeyboardInput::new('a', super::super::keyboard::KeyModifiers::empty());
         let event = InputEvent::keyboard(input);
         assert!(event.is_keyboard());
     }
 
     #[test]
     fn input_event_mouse() {
-        let input = MouseInput::new(0, 0, super::super::MouseButton::empty());
+        let input = MouseInput::new(0, 0, super::super::mouse::MouseButton::empty());
         let event = InputEvent::mouse(input);
         assert!(event.is_mouse());
     }

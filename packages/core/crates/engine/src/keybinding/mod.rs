@@ -29,7 +29,7 @@
 //! keymap.add_layer(layer);
 //! ```
 
-use crate::events::types::{Key, KeyEvent, Modifiers};
+use crate::input::{Key, KeyEvent, Modifiers};
 
 #[cfg(test)]
 mod tests;

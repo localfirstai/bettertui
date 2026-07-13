@@ -1,5 +1,5 @@
-use crate::events::Event;
-use crate::events::types::EventResult;
+use crate::input::Event;
+use crate::input::EventResult;
 use crate::text::TextAlign;
 use crate::tree::style::Style;
 
@@ -97,7 +97,7 @@ impl Widget for TextWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::tree::color::{Color, NamedColor};

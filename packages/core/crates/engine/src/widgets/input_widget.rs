@@ -1,6 +1,6 @@
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::events::types::{Event, EventResult, Key};
+use crate::input::{Event, EventResult, Key};
 use crate::layout::types::LayoutProps;
 use crate::text::{display_width, grapheme_count};
 use crate::tree::color::{Color, NamedColor};
@@ -312,8 +312,8 @@ impl Widget for InputWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::types::KeyEvent;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
+    use crate::input::KeyEvent;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;

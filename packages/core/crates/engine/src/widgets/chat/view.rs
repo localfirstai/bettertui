@@ -1,5 +1,5 @@
 use super::types::{Message, Role};
-use crate::events::types::{Event, EventResult};
+use crate::input::{Event, EventResult};
 use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::tree::color::Color;
 use crate::tree::style::Style;
@@ -124,8 +124,8 @@ impl Widget for ChatView {
     fn handle_event(&self, _id: WidgetId, _ctx: &mut WidgetContext, event: &Event) -> EventResult {
         match event {
             Event::Key(key_event) => match key_event.key {
-                crate::events::types::Key::ArrowUp => EventResult::Consumed,
-                crate::events::types::Key::ArrowDown => EventResult::Consumed,
+                crate::input::Key::ArrowUp => EventResult::Consumed,
+                crate::input::Key::ArrowDown => EventResult::Consumed,
                 _ => EventResult::Ignored,
             },
             _ => EventResult::Ignored,
@@ -136,7 +136,7 @@ impl Widget for ChatView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::widgets::theme::Theme;

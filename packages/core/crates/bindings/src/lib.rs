@@ -2,14 +2,14 @@
 
 use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
-use bettertui_engine::events::EventBus;
-use bettertui_engine::focus::FocusManager;
+use bettertui_engine::input::EventBus;
+use bettertui_engine::input::FocusManager;
 use bettertui_engine::layout::types::{
     AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
     Sizing,
 };
-use bettertui_engine::post_process::RenderPass;
-use bettertui_engine::renderer::Renderer;
+use bettertui_engine::render::RenderPass;
+use bettertui_engine::render::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::text::TextEngine;
 use bettertui_engine::tree::{Color, NodeKind, Style};
@@ -1101,7 +1101,7 @@ impl NapiEngine {
         }
         let mut m = [0.0f32; 16];
         m.copy_from_slice(&values);
-        let mut pass = bettertui_engine::post_process::effects::ColorMatrixPass::new(m);
+        let mut pass = bettertui_engine::render::effects::ColorMatrixPass::new(m);
         if !enabled.unwrap_or(true) {
             pass.set_enabled(false);
         }
@@ -1111,7 +1111,7 @@ impl NapiEngine {
     /// Add a CRT effect pass.
     #[napi]
     pub fn add_crt_pass(&mut self, glow: Option<f64>, curvature: Option<f64>) {
-        let mut pass = bettertui_engine::post_process::effects::CrtPass::new();
+        let mut pass = bettertui_engine::render::effects::CrtPass::new();
         if let Some(g) = glow {
             pass = pass.with_glow(g as f32);
         }
@@ -1124,15 +1124,15 @@ impl NapiEngine {
     /// Add a scanlines effect pass.
     #[napi]
     pub fn add_scanlines_pass(&mut self, intensity: Option<f64>, odd_rows: Option<bool>) {
-        let mut pass = bettertui_engine::post_process::effects::ScanlinesPass::new();
+        let mut pass = bettertui_engine::render::effects::ScanlinesPass::new();
         if let Some(i) = intensity {
             pass = pass.with_intensity(i as f32);
         }
         if let Some(odd) = odd_rows {
             pass = pass.with_mode(if odd {
-                bettertui_engine::post_process::effects::ScanlineMode::OddRows
+                bettertui_engine::render::effects::ScanlineMode::OddRows
             } else {
-                bettertui_engine::post_process::effects::ScanlineMode::EvenRows
+                bettertui_engine::render::effects::ScanlineMode::EvenRows
             });
         }
         self.renderer.pipeline_mut().add_pass(Box::new(pass));
@@ -1146,7 +1146,7 @@ impl NapiEngine {
         radius: Option<f64>,
         falloff: Option<f64>,
     ) {
-        let mut pass = bettertui_engine::post_process::effects::VignettePass::new();
+        let mut pass = bettertui_engine::render::effects::VignettePass::new();
         if let Some(s) = strength {
             pass = pass.with_strength(s as f32);
         }
@@ -1162,7 +1162,7 @@ impl NapiEngine {
     /// Add a noise effect pass.
     #[napi]
     pub fn add_noise_pass(&mut self, intensity: Option<f64>, seed: Option<u32>) {
-        let mut pass = bettertui_engine::post_process::effects::NoisePass::new();
+        let mut pass = bettertui_engine::render::effects::NoisePass::new();
         if let Some(i) = intensity {
             pass = pass.with_intensity(i as f32);
         }
@@ -1175,7 +1175,7 @@ impl NapiEngine {
     /// Add a chromatic aberration effect pass.
     #[napi]
     pub fn add_chromatic_aberration_pass(&mut self, strength: Option<f64>) {
-        let mut pass = bettertui_engine::post_process::effects::ChromaticAberrationPass::new();
+        let mut pass = bettertui_engine::render::effects::ChromaticAberrationPass::new();
         if let Some(s) = strength {
             pass = pass.with_strength(s as f32);
         }
@@ -1190,7 +1190,7 @@ impl NapiEngine {
         strength: Option<f64>,
         radius: Option<u32>,
     ) {
-        let mut pass = bettertui_engine::post_process::effects::BloomPass::new();
+        let mut pass = bettertui_engine::render::effects::BloomPass::new();
         if let Some(t) = threshold {
             pass = pass.with_threshold(t as f32);
         }
@@ -1460,7 +1460,7 @@ fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
     if combo.modifiers.meta {
         parts.push("meta".to_string());
     }
-    use bettertui_engine::events::types::Key;
+    use bettertui_engine::input::Key;
     let key_display = match &combo.key {
         Key::Character(ch) => ch.to_string(),
         Key::Ctrl(ch) => format!("ctrl_{}", ch),
@@ -1586,12 +1586,12 @@ impl NapiKeymap {
     pub fn handle_key(&mut self, key_str: String) -> Option<String> {
         match KeyParser::parse_combo(&key_str) {
             Ok(combo) => {
-                let event = bettertui_engine::events::types::KeyEvent {
+                let event = bettertui_engine::input::KeyEvent {
                     key: combo.key,
                     modifiers: combo.modifiers,
                     target: bettertui_engine::tree::NodeId::default(),
                     default_prevented: false,
-                    phase: bettertui_engine::events::types::EventPhase::Target,
+                    phase: bettertui_engine::input::EventPhase::Target,
                 };
                 self.keymap.handle_event(&event)
             }
@@ -1713,14 +1713,14 @@ impl NapiEventBus {
     #[napi(constructor)]
     pub fn new() -> Self {
         Self {
-            bus: bettertui_engine::events::EventBus::new(),
+            bus: bettertui_engine::input::EventBus::new(),
         }
     }
 
     /// Push a key event.
     #[napi]
     pub fn push_key(&mut self, key: String, ctrl: bool, shift: bool, alt: bool, target_id: u32) {
-        use bettertui_engine::events::types::{Key, Modifiers};
+        use bettertui_engine::input::{Key, Modifiers};
         let target = u64_to_node_id(target_id as u64);
         let key = match key.as_str() {
             "enter" => Key::Enter,
@@ -1764,7 +1764,7 @@ impl NapiEventBus {
     /// Push a mouse event.
     #[napi]
     pub fn push_mouse(&mut self, button: String, x: u32, y: u32, target_id: u32) {
-        use bettertui_engine::events::types::MouseButton;
+        use bettertui_engine::input::MouseButton;
         use bettertui_engine::tree::visual::Point;
         let target = u64_to_node_id(target_id as u64);
         let btn = match button.as_str() {
@@ -1782,7 +1782,7 @@ impl NapiEventBus {
     /// Push a mouse motion event.
     #[napi]
     pub fn push_mouse_motion(&mut self, x: u32, y: u32, target_id: u32) {
-        use bettertui_engine::events::types::MouseButton;
+        use bettertui_engine::input::MouseButton;
         use bettertui_engine::tree::visual::Point;
         let target = u64_to_node_id(target_id as u64);
         self.bus
@@ -1832,7 +1832,7 @@ impl NapiEventBus {
         let event_jsons: Vec<serde_json::Value> = events
             .iter()
             .map(|e| match e {
-                bettertui_engine::events::Event::Key(ke) => {
+                bettertui_engine::input::Event::Key(ke) => {
                     let key_str = format!("{:?}", ke.key);
                     serde_json::json!({
                         "type": "key",
@@ -1843,7 +1843,7 @@ impl NapiEventBus {
                         "target": node_id_to_u64(ke.target),
                     })
                 }
-                bettertui_engine::events::Event::Mouse(me) => {
+                bettertui_engine::input::Event::Mouse(me) => {
                     serde_json::json!({
                         "type": "mouse",
                         "button": format!("{:?}", me.button).to_lowercase(),
@@ -1852,7 +1852,7 @@ impl NapiEventBus {
                         "target": node_id_to_u64(me.target),
                     })
                 }
-                bettertui_engine::events::Event::Resize(re) => {
+                bettertui_engine::input::Event::Resize(re) => {
                     serde_json::json!({
                         "type": "resize",
                         "width": re.width,
@@ -1934,17 +1934,17 @@ impl NapiFocusManager {
     #[napi]
     pub fn traverse(&mut self, direction: String) -> u32 {
         let dir = match direction.to_lowercase().as_str() {
-            "forward" | "next" => bettertui_engine::focus::FocusDirection::Forward,
-            "backward" | "previous" | "prev" => bettertui_engine::focus::FocusDirection::Backward,
-            "first" => bettertui_engine::focus::FocusDirection::First,
-            "last" => bettertui_engine::focus::FocusDirection::Last,
-            "up" => bettertui_engine::focus::FocusDirection::Up,
-            "down" => bettertui_engine::focus::FocusDirection::Down,
-            "left" => bettertui_engine::focus::FocusDirection::Left,
-            "right" => bettertui_engine::focus::FocusDirection::Right,
-            _ => bettertui_engine::focus::FocusDirection::Forward,
+            "forward" | "next" => bettertui_engine::input::FocusDirection::Forward,
+            "backward" | "previous" | "prev" => bettertui_engine::input::FocusDirection::Backward,
+            "first" => bettertui_engine::input::FocusDirection::First,
+            "last" => bettertui_engine::input::FocusDirection::Last,
+            "up" => bettertui_engine::input::FocusDirection::Up,
+            "down" => bettertui_engine::input::FocusDirection::Down,
+            "left" => bettertui_engine::input::FocusDirection::Left,
+            "right" => bettertui_engine::input::FocusDirection::Right,
+            _ => bettertui_engine::input::FocusDirection::Forward,
         };
-        let next = bettertui_engine::focus::FocusTraversal::traverse(&self.manager, dir);
+        let next = bettertui_engine::input::FocusTraversal::traverse(&self.manager, dir);
         if let Some(id) = next {
             self.manager.focus(id);
             node_id_to_u64(id) as u32

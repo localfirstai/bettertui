@@ -1,5 +1,5 @@
-use crate::events::Event;
-use crate::events::types::EventResult;
+use crate::input::Event;
+use crate::input::EventResult;
 use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
@@ -45,7 +45,7 @@ impl Widget for BoxWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::layout::types::Sizing;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;

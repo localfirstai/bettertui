@@ -65,8 +65,8 @@ pub use theme::{SpacingToken, Theme, ThemeToken};
 pub use tooltip_widget::TooltipWidget;
 pub use tree::WidgetTree;
 
-use crate::events::Event;
-use crate::events::types::EventResult;
+use crate::input::Event;
+use crate::input::EventResult;
 use crate::tree::node_id::NodeId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -188,7 +188,7 @@ impl WidgetHost {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
 
@@ -307,8 +307,8 @@ mod tests {
         };
         let wid = host.mount(Box::new(widget), &mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            crate::events::types::Key::Enter,
+        let event = Event::Key(crate::input::KeyEvent::new(
+            crate::input::Key::Enter,
             wid.node_id(),
         ));
         let result = host.handle_event(wid, &mut ctx, &event);

@@ -1,5 +1,5 @@
-use crate::events::Event;
-use crate::events::types::EventResult;
+use crate::input::Event;
+use crate::input::EventResult;
 use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::syntax::global_highlighter;
 use crate::tree::color::Color;
@@ -192,7 +192,7 @@ impl Widget for CodeWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;

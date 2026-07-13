@@ -336,7 +336,7 @@ fn merge_with_base(segment_style: Option<&Style>, base: &Style) -> Style {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::widgets::context::WidgetContext;

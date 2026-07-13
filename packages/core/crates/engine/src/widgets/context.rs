@@ -1,4 +1,4 @@
-use crate::focus::FocusManager;
+use crate::input::FocusManager;
 use crate::layout::types::LayoutProps;
 use crate::scheduler::Scheduler;
 use crate::tree::arena::NodeArena;
