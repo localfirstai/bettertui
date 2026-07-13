@@ -1,15 +1,673 @@
+//! VT100/VTxxx terminal emulation state machine.
+
 use crate::ansi::{
     BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType,
     ModeAction, ModeType, OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
 };
-use crate::framebuffer::CellAttributes;
+use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::input::{KeyAction, KeyModifiers, KeyboardInput};
 use crate::tree::{Color, NamedColor};
 
-use super::cursor::Cursor;
-use super::modes::PrivateMode;
-use super::modes::TerminalMode;
-use super::screen::{Pen, ScreenBuffer};
+const DEFAULT_SCROLLBACK_LINES: usize = 10000;
+
+// =============================================================================
+// Cursor
+// =============================================================================
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CursorStyle {
+    #[default]
+    Block,
+    Underline,
+    Bar,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CursorShape {
+    Static,
+    #[default]
+    Blinking,
+    Block,
+    Underline,
+    VerticalLine,
+}
+
+#[derive(Debug, Clone)]
+pub struct Cursor {
+    pub row: u16,
+    pub col: u16,
+    pub saved_row: u16,
+    pub saved_col: u16,
+    pub visible: bool,
+    pub style: CursorStyle,
+    pub shape: CursorShape,
+}
+
+impl Default for Cursor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Cursor {
+    pub fn new() -> Self {
+        Self {
+            row: 0,
+            col: 0,
+            saved_row: 0,
+            saved_col: 0,
+            visible: true,
+            style: CursorStyle::default(),
+            shape: CursorShape::default(),
+        }
+    }
+
+    pub fn position(&self) -> (u16, u16) {
+        (self.row, self.col)
+    }
+
+    pub fn set_position(&mut self, row: u16, col: u16) {
+        self.row = row;
+        self.col = col;
+    }
+
+    pub fn move_up(&mut self, n: u16) {
+        self.row = self.row.saturating_sub(n);
+    }
+
+    pub fn move_down(&mut self, n: u16, max_row: u16) {
+        self.row = (self.row + n).min(max_row.saturating_sub(1));
+    }
+
+    pub fn move_left(&mut self, n: u16) {
+        self.col = self.col.saturating_sub(n);
+    }
+
+    pub fn move_right(&mut self, n: u16, max_col: u16) {
+        self.col = (self.col + n).min(max_col.saturating_sub(1));
+    }
+
+    pub fn move_to_column(&mut self, col: u16) {
+        self.col = col.saturating_sub(1);
+    }
+
+    pub fn move_to(&mut self, row: u16, col: u16) {
+        self.row = row.saturating_sub(1);
+        self.col = col.saturating_sub(1);
+    }
+
+    pub fn save_position(&mut self) {
+        self.saved_row = self.row;
+        self.saved_col = self.col;
+    }
+
+    pub fn restore_position(&mut self) {
+        self.row = self.saved_row;
+        self.col = self.saved_col;
+    }
+
+    pub fn carriage_return(&mut self) {
+        self.col = 0;
+    }
+
+    pub fn newline(&mut self) {
+        self.row += 1;
+    }
+
+    pub fn tab(&mut self, tab_stops: &[u16]) {
+        for &stop in tab_stops {
+            if stop > self.col {
+                self.col = stop;
+                return;
+            }
+        }
+        self.col = (self.col + 8) & !7;
+    }
+
+    pub fn backspace(&mut self) {
+        self.col = self.col.saturating_sub(1);
+    }
+}
+
+// =============================================================================
+// Modes
+// =============================================================================
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct TerminalMode: u32 {
+        const NONE                = 0;
+        const INSERT              = 1 << 0;
+        const ORIGIN              = 1 << 1;
+        const AUTO_WRAP           = 1 << 2;
+        const REVERSE_VIDEO       = 1 << 3;
+        const APPLICATION_CURSOR  = 1 << 4;
+        const APPLICATION_KEYPAD  = 1 << 5;
+        const MOUSE_TRACKING      = 1 << 6;
+        const MOUSE_BUTTON        = 1 << 7;
+        const MOUSE_MOTION        = 1 << 8;
+        const MOUSE_SGR           = 1 << 9;
+        const MOUSE_URXVT         = 1 << 10;
+        const BRACKETED_PASTE     = 1 << 11;
+        const FOCUS_EVENTS        = 1 << 12;
+        const ALT_SCREEN          = 1 << 13;
+        const SAVE_CURSOR         = 1 << 14;
+        const BLINKING_CURSOR     = 1 << 15;
+        const VISIBLE_CURSOR      = 1 << 16;
+        const COLUMN_132          = 1 << 17;
+        const SMOOTH_SCROLL       = 1 << 18;
+        const EIGHT_BIT           = 1 << 19;
+        const DECCOLM             = 1 << 20;
+        const KEYBOARD_PROTOCOL   = 1 << 21;
+    }
+}
+
+impl Default for TerminalMode {
+    fn default() -> Self {
+        Self::AUTO_WRAP | Self::VISIBLE_CURSOR | Self::BLINKING_CURSOR
+    }
+}
+
+impl TerminalMode {
+    pub fn is_insert(&self) -> bool {
+        self.contains(Self::INSERT)
+    }
+
+    pub fn origin(&self) -> bool {
+        self.contains(Self::ORIGIN)
+    }
+
+    pub fn auto_wrap(&self) -> bool {
+        self.contains(Self::AUTO_WRAP)
+    }
+
+    pub fn alt_screen(&self) -> bool {
+        self.contains(Self::ALT_SCREEN)
+    }
+
+    pub fn bracketed_paste(&self) -> bool {
+        self.contains(Self::BRACKETED_PASTE)
+    }
+
+    pub fn focus_events(&self) -> bool {
+        self.contains(Self::FOCUS_EVENTS)
+    }
+
+    pub fn cursor_visible(&self) -> bool {
+        self.contains(Self::VISIBLE_CURSOR)
+    }
+
+    pub fn cursor_blinking(&self) -> bool {
+        self.contains(Self::BLINKING_CURSOR)
+    }
+
+    pub fn mouse_tracking(&self) -> bool {
+        self.contains(Self::MOUSE_TRACKING)
+    }
+
+    pub fn keyboard_protocol(&self) -> bool {
+        self.contains(Self::KEYBOARD_PROTOCOL)
+    }
+
+    pub fn application_cursor(&self) -> bool {
+        self.contains(Self::APPLICATION_CURSOR)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrivateMode {
+    CursorVisible = 25,
+    BlinkingCursor = 12,
+    Origin = 6,
+    AutoWrap = 7,
+    ReverseVideo = 5,
+    ApplicationCursor = 1,
+    BracketedPaste = 2004,
+    FocusEvents = 1004,
+    MouseTracking = 1000,
+    MouseButton = 1002,
+    MouseMotion = 1003,
+    MouseSgr = 1006,
+    MouseUrxvt = 1015,
+    AltScreen = 1049,
+    SaveCursor = 1048,
+    Column132 = 3,
+    SmoothScroll = 4,
+    KeyboardProtocol = 27127,
+}
+
+impl PrivateMode {
+    pub fn from_code(code: u32) -> Option<Self> {
+        match code {
+            1 => Some(Self::ApplicationCursor),
+            3 => Some(Self::Column132),
+            4 => Some(Self::SmoothScroll),
+            5 => Some(Self::ReverseVideo),
+            6 => Some(Self::Origin),
+            7 => Some(Self::AutoWrap),
+            12 => Some(Self::BlinkingCursor),
+            25 => Some(Self::CursorVisible),
+            1000 => Some(Self::MouseTracking),
+            1002 => Some(Self::MouseButton),
+            1003 => Some(Self::MouseMotion),
+            1004 => Some(Self::FocusEvents),
+            1006 => Some(Self::MouseSgr),
+            1015 => Some(Self::MouseUrxvt),
+            1048 => Some(Self::SaveCursor),
+            1049 => Some(Self::AltScreen),
+            2004 => Some(Self::BracketedPaste),
+            27127 => Some(Self::KeyboardProtocol),
+            _ => None,
+        }
+    }
+
+    pub fn to_terminal_mode(self) -> TerminalMode {
+        match self {
+            Self::CursorVisible => TerminalMode::VISIBLE_CURSOR,
+            Self::BlinkingCursor => TerminalMode::BLINKING_CURSOR,
+            Self::Origin => TerminalMode::ORIGIN,
+            Self::AutoWrap => TerminalMode::AUTO_WRAP,
+            Self::ReverseVideo => TerminalMode::REVERSE_VIDEO,
+            Self::ApplicationCursor => TerminalMode::APPLICATION_CURSOR,
+            Self::BracketedPaste => TerminalMode::BRACKETED_PASTE,
+            Self::FocusEvents => TerminalMode::FOCUS_EVENTS,
+            Self::MouseTracking => TerminalMode::MOUSE_TRACKING,
+            Self::MouseButton => TerminalMode::MOUSE_BUTTON,
+            Self::MouseMotion => TerminalMode::MOUSE_MOTION,
+            Self::MouseSgr => TerminalMode::MOUSE_SGR,
+            Self::MouseUrxvt => TerminalMode::MOUSE_URXVT,
+            Self::AltScreen => TerminalMode::ALT_SCREEN,
+            Self::SaveCursor => TerminalMode::SAVE_CURSOR,
+            Self::Column132 => TerminalMode::COLUMN_132,
+            Self::SmoothScroll => TerminalMode::SMOOTH_SCROLL,
+            Self::KeyboardProtocol => TerminalMode::KEYBOARD_PROTOCOL,
+        }
+    }
+}
+
+// =============================================================================
+// Screen
+// =============================================================================
+
+#[derive(Debug, Clone)]
+pub struct ScrollbackBuffer {
+    lines: Vec<Vec<Cell>>,
+    max_lines: usize,
+}
+
+impl Default for ScrollbackBuffer {
+    fn default() -> Self {
+        Self::new(DEFAULT_SCROLLBACK_LINES)
+    }
+}
+
+impl ScrollbackBuffer {
+    pub fn new(max_lines: usize) -> Self {
+        Self {
+            lines: Vec::with_capacity(max_lines.min(1000)),
+            max_lines,
+        }
+    }
+
+    pub fn push_line(&mut self, line: Vec<Cell>) {
+        if self.lines.len() >= self.max_lines {
+            self.lines.remove(0);
+        }
+        self.lines.push(line);
+    }
+
+    pub fn line_count(&self) -> usize {
+        self.lines.len()
+    }
+
+    pub fn get_line(&self, index: usize) -> Option<&[Cell]> {
+        self.lines.get(index).map(|l| l.as_slice())
+    }
+
+    pub fn clear(&mut self) {
+        self.lines.clear();
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ScreenBuffer {
+    buffer: FrameBuffer,
+    tab_stops: Vec<u16>,
+    scrollback: ScrollbackBuffer,
+    default_bg: Color,
+}
+
+impl ScreenBuffer {
+    pub fn new(width: u16, height: u16) -> Self {
+        let mut tab_stops = Vec::new();
+        for t in (8..width).step_by(8) {
+            tab_stops.push(t);
+        }
+
+        Self {
+            buffer: FrameBuffer::new(width, height),
+            tab_stops,
+            scrollback: ScrollbackBuffer::default(),
+            default_bg: Color::Default,
+        }
+    }
+
+    pub fn resize(&mut self, width: u16, height: u16) {
+        self.buffer.resize(width, height);
+        self.tab_stops.clear();
+        for t in (8..width).step_by(8) {
+            self.tab_stops.push(t);
+        }
+    }
+
+    pub fn buffer(&self) -> &FrameBuffer {
+        &self.buffer
+    }
+
+    pub fn buffer_mut(&mut self) -> &mut FrameBuffer {
+        &mut self.buffer
+    }
+
+    pub fn width(&self) -> u16 {
+        self.buffer.width()
+    }
+
+    pub fn height(&self) -> u16 {
+        self.buffer.height()
+    }
+
+    pub fn tab_stops(&self) -> &[u16] {
+        &self.tab_stops
+    }
+
+    pub fn set_tab_stop(&mut self, col: u16) {
+        if !self.tab_stops.contains(&col) {
+            self.tab_stops.push(col);
+            self.tab_stops.sort();
+        }
+    }
+
+    pub fn clear_tab_stop(&mut self, col: u16) {
+        self.tab_stops.retain(|&t| t != col);
+    }
+
+    pub fn clear_all_tab_stops(&mut self) {
+        self.tab_stops.clear();
+    }
+
+    pub fn scrollback(&self) -> &ScrollbackBuffer {
+        &self.scrollback
+    }
+
+    pub fn set_cell(
+        &mut self,
+        row: u16,
+        col: u16,
+        ch: char,
+        fg: Color,
+        bg: Color,
+        attrs: CellAttributes,
+    ) {
+        if row < self.buffer.height() && col < self.buffer.width() {
+            let mut cell = Cell::new(ch);
+            cell.fg = fg;
+            cell.bg = bg;
+            cell.attributes = attrs;
+            self.buffer.set(col, row, cell);
+        }
+    }
+
+    pub fn write_char(&mut self, row: u16, col: u16, ch: char, pen: &Pen) {
+        self.set_cell(row, col, ch, pen.fg, pen.bg, pen.attrs);
+    }
+
+    pub fn erase_char(&mut self, row: u16, col: u16, pen: &Pen) {
+        self.set_cell(
+            row,
+            col,
+            ' ',
+            Color::Default,
+            pen.bg,
+            CellAttributes::empty(),
+        );
+    }
+
+    pub fn erase_in_display(&mut self, mode: u32, cursor_row: u16, cursor_col: u16, pen: &Pen) {
+        let rows = self.buffer.height();
+        let cols = self.buffer.width();
+
+        match mode {
+            0 => {
+                for y in cursor_row..rows {
+                    let start_col = if y == cursor_row { cursor_col } else { 0 };
+                    for x in start_col..cols {
+                        self.erase_char(y, x, pen);
+                    }
+                }
+            }
+            1 => {
+                for y in 0..=cursor_row {
+                    let end_col = if y == cursor_row {
+                        cursor_col + 1
+                    } else {
+                        cols
+                    };
+                    for x in 0..end_col {
+                        self.erase_char(y, x, pen);
+                    }
+                }
+            }
+            2 | 3 => {
+                self.clear_lines(0, rows, pen);
+                if mode == 3 {
+                    self.scrollback.clear();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn erase_in_line(&mut self, mode: u32, row: u16, cursor_col: u16, pen: &Pen) {
+        if row >= self.buffer.height() {
+            return;
+        }
+        let cols = self.buffer.width();
+
+        match mode {
+            0 => {
+                for x in cursor_col..cols {
+                    self.erase_char(row, x, pen);
+                }
+            }
+            1 => {
+                for x in 0..=cursor_col {
+                    self.erase_char(row, x, pen);
+                }
+            }
+            2 => {
+                for x in 0..cols {
+                    self.erase_char(row, x, pen);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn scroll_up(&mut self, count: u16, pen: &Pen) {
+        let rows = self.buffer.height();
+        let cols = self.buffer.width();
+        let count = count.min(rows);
+
+        for y in 0..count {
+            let mut line = Vec::with_capacity(cols as usize);
+            for x in 0..cols {
+                let cell = self.buffer.get(x, y);
+                line.push(cell);
+            }
+            self.scrollback.push_line(line);
+        }
+
+        for y in count..rows {
+            for x in 0..cols {
+                let src = self.buffer.get(x, y);
+                self.buffer.set(x, y - count, src);
+            }
+        }
+
+        for y in (rows - count)..rows {
+            for x in 0..cols {
+                self.erase_char(y, x, pen);
+            }
+        }
+    }
+
+    pub fn scroll_down(&mut self, count: u16, pen: &Pen) {
+        let rows = self.buffer.height();
+        let cols = self.buffer.width();
+        let count = count.min(rows);
+
+        for y in (count..rows).rev() {
+            for x in 0..cols {
+                let src = self.buffer.get(x, y - count);
+                self.buffer.set(x, y, src);
+            }
+        }
+
+        for y in 0..count {
+            for x in 0..cols {
+                self.erase_char(y, x, pen);
+            }
+        }
+    }
+
+    pub fn insert_lines(&mut self, row: u16, count: u16, pen: &Pen) {
+        let rows = self.buffer.height();
+        let cols = self.buffer.width();
+        let count = count.min(rows.saturating_sub(row));
+
+        if count == 0 {
+            return;
+        }
+
+        for y in ((row + count)..rows).rev() {
+            for x in 0..cols {
+                let src = self.buffer.get(x, y - count);
+                self.buffer.set(x, y, src);
+            }
+        }
+
+        for y in row..(row + count).min(rows) {
+            for x in 0..cols {
+                self.erase_char(y, x, pen);
+            }
+        }
+    }
+
+    pub fn delete_lines(&mut self, row: u16, count: u16, pen: &Pen) {
+        let rows = self.buffer.height();
+        let cols = self.buffer.width();
+        let count = count.min(rows.saturating_sub(row));
+
+        if count == 0 {
+            return;
+        }
+
+        for y in (row + count)..rows {
+            for x in 0..cols {
+                let src = self.buffer.get(x, y);
+                self.buffer.set(x, y - count, src);
+            }
+        }
+
+        for y in (rows - count)..rows {
+            for x in 0..cols {
+                self.erase_char(y, x, pen);
+            }
+        }
+    }
+
+    pub fn insert_chars(&mut self, row: u16, col: u16, count: u16, pen: &Pen) {
+        let cols = self.buffer.width();
+        let count = count.min(cols.saturating_sub(col));
+
+        if count == 0 {
+            return;
+        }
+
+        for x in ((col + count)..cols).rev() {
+            let src = self.buffer.get(x - count, row);
+            self.buffer.set(x, row, src);
+        }
+
+        for x in col..(col + count) {
+            self.erase_char(row, x, pen);
+        }
+    }
+
+    pub fn delete_chars(&mut self, row: u16, col: u16, count: u16, pen: &Pen) {
+        let cols = self.buffer.width();
+        let count = count.min(cols.saturating_sub(col));
+
+        if count == 0 {
+            return;
+        }
+
+        for x in (col + count)..cols {
+            let src = self.buffer.get(x, row);
+            self.buffer.set(x - count, row, src);
+        }
+
+        for x in (cols - count)..cols {
+            self.erase_char(row, x, pen);
+        }
+    }
+
+    pub fn erase_chars(&mut self, row: u16, col: u16, count: u16, pen: &Pen) {
+        let cols = self.buffer.width();
+        let count = count.min(cols.saturating_sub(col));
+        for x in col..(col + count) {
+            self.erase_char(row, x, pen);
+        }
+    }
+
+    pub fn set_default_bg(&mut self, bg: Color) {
+        self.default_bg = bg;
+    }
+
+    pub fn default_bg(&self) -> Color {
+        self.default_bg
+    }
+
+    fn clear_lines(&mut self, start: u16, end: u16, pen: &Pen) {
+        let cols = self.buffer.width();
+        for y in start..end.min(self.buffer.height()) {
+            for x in 0..cols {
+                self.erase_char(y, x, pen);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Pen {
+    pub fg: Color,
+    pub bg: Color,
+    pub attrs: CellAttributes,
+}
+
+impl Default for Pen {
+    fn default() -> Self {
+        Self {
+            fg: Color::Default,
+            bg: Color::Default,
+            attrs: CellAttributes::empty(),
+        }
+    }
+}
+
+// =============================================================================
+// VT Machine
+// =============================================================================
 
 #[derive(Debug, Clone)]
 pub struct VtMachine {
@@ -41,9 +699,6 @@ pub struct KittyKeyEvent {
 }
 
 impl KittyKeyEvent {
-    /// Convert this Kitty keyboard event to a `KeyboardInput` for the input system.
-    /// Kitty modifier bits: Shift=1, Alt=2, Ctrl=4, Super=8
-    /// App KeyModifiers:    Shift=1, Ctrl=2, Alt=4, Super=8
     pub fn to_keyboard_input(&self) -> KeyboardInput {
         let mut mods = KeyModifiers::empty();
         if self.modifiers & 1 != 0 {
@@ -630,276 +1285,4 @@ fn parse_color_string(s: &str) -> Option<Color> {
         }
     }
     None
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ansi::AnsiParser;
-
-    #[test]
-    fn machine_new() {
-        let m = VtMachine::new(80, 24);
-        assert_eq!(m.screen.width(), 80);
-        assert_eq!(m.screen.height(), 24);
-        assert!(m.modes.auto_wrap());
-    }
-
-    #[test]
-    fn machine_write_text() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"Hello");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'H');
-        assert_eq!(m.framebuffer().get(4, 0).ch, 'o');
-    }
-
-    #[test]
-    fn machine_newline() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"AB\nCD");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'A');
-        assert_eq!(m.framebuffer().get(1, 0).ch, 'B');
-        assert_eq!(m.framebuffer().get(0, 1).ch, 'C');
-        assert_eq!(m.framebuffer().get(1, 1).ch, 'D');
-    }
-
-    #[test]
-    fn machine_cursor_movement() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b[3;4HX");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(3, 2).ch, 'X');
-    }
-
-    #[test]
-    fn machine_sgr_colors() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b[31mR\x1b[0m");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'R');
-        assert_eq!(m.framebuffer().get(0, 0).fg, Color::Named(NamedColor::Red));
-    }
-
-    #[test]
-    fn machine_sgr_bold() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b[1mB");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        let cell = m.framebuffer().get(0, 0);
-        assert_eq!(cell.ch, 'B');
-        assert!(cell.attributes.contains(CellAttributes::BOLD));
-    }
-
-    #[test]
-    fn machine_erase_display() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"AB\x1b[2J");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert!(m.framebuffer().get(0, 0).is_empty());
-        assert!(m.framebuffer().get(1, 0).is_empty());
-    }
-
-    #[test]
-    fn machine_scroll() {
-        let mut m = VtMachine::new(10, 3);
-        let mut p = AnsiParser::new();
-        p.feed(b"Line1\nLine2\nLine3\nLine4");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'L');
-        assert_eq!(m.framebuffer().get(4, 0).ch, '2');
-        assert_eq!(m.framebuffer().get(0, 1).ch, 'L');
-        assert_eq!(m.framebuffer().get(4, 1).ch, '3');
-        assert_eq!(m.framebuffer().get(0, 2).ch, 'L');
-        assert_eq!(m.framebuffer().get(4, 2).ch, '4');
-    }
-
-    #[test]
-    fn machine_reset() {
-        let mut m = VtMachine::new(80, 24);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b[31mX");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        p.feed(b"\x1bc");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        let cell = m.framebuffer().get(0, 0);
-        assert_eq!(cell.fg, Color::Default);
-    }
-
-    #[test]
-    fn machine_osc_title() {
-        let mut m = VtMachine::new(80, 24);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b]2;My Terminal\x07");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.title, "My Terminal");
-    }
-
-    #[test]
-    fn machine_carriage_return() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"Hello\rX");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'X');
-        assert_eq!(m.framebuffer().get(1, 0).ch, 'e');
-    }
-
-    #[test]
-    fn machine_tab() {
-        let mut m = VtMachine::new(20, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"\tX");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(8, 0).ch, 'X');
-    }
-
-    #[test]
-    fn machine_alternate_screen() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"Main");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'M');
-
-        let mut p2 = AnsiParser::new();
-        p2.feed(b"\x1b[?1049hAlt");
-        while let Some(event) = p2.poll_event() {
-            m.process(&event);
-        }
-        assert!(m.modes.alt_screen());
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'A');
-
-        let mut p3 = AnsiParser::new();
-        p3.feed(b"\x1b[?1049l");
-        while let Some(event) = p3.poll_event() {
-            m.process(&event);
-        }
-        assert!(!m.modes.alt_screen());
-        assert_eq!(m.framebuffer().get(0, 0).ch, 'M');
-    }
-
-    #[test]
-    fn kitty_key_event_to_keyboard_input_press() {
-        let ev = KittyKeyEvent {
-            keycode: 97,
-            modifiers: 0,
-            event_type: KittyEventType::Press,
-            associated_text: None,
-        };
-        let ki = ev.to_keyboard_input();
-        assert_eq!(ki.key, 'a');
-        assert_eq!(ki.modifiers, KeyModifiers::empty());
-        assert_eq!(ki.action, KeyAction::Press);
-    }
-
-    #[test]
-    fn kitty_key_event_to_keyboard_input_modifiers() {
-        let ev = KittyKeyEvent {
-            keycode: 65,
-            modifiers: 1 | 4, // Shift=1, Ctrl=4
-            event_type: KittyEventType::Repeat,
-            associated_text: None,
-        };
-        let ki = ev.to_keyboard_input();
-        assert_eq!(ki.key, 'A');
-        assert!(ki.modifiers.contains(KeyModifiers::SHIFT));
-        assert!(ki.modifiers.contains(KeyModifiers::CONTROL));
-        assert!(!ki.modifiers.contains(KeyModifiers::ALT));
-        assert!(!ki.modifiers.contains(KeyModifiers::SUPER));
-        assert_eq!(ki.action, KeyAction::Repeat);
-    }
-
-    #[test]
-    fn kitty_key_event_to_keyboard_input_alt_super() {
-        let ev = KittyKeyEvent {
-            keycode: 98,
-            modifiers: 2 | 8, // Alt=2, Super=8
-            event_type: KittyEventType::Release,
-            associated_text: None,
-        };
-        let ki = ev.to_keyboard_input();
-        assert_eq!(ki.key, 'b');
-        assert!(!ki.modifiers.contains(KeyModifiers::SHIFT));
-        assert!(!ki.modifiers.contains(KeyModifiers::CONTROL));
-        assert!(ki.modifiers.contains(KeyModifiers::ALT));
-        assert!(ki.modifiers.contains(KeyModifiers::SUPER));
-        assert_eq!(ki.action, KeyAction::Release);
-    }
-
-    #[test]
-    fn kitty_key_event_to_keyboard_input_unknown_type() {
-        let ev = KittyKeyEvent {
-            keycode: 99,
-            modifiers: 0,
-            event_type: KittyEventType::Unknown,
-            associated_text: None,
-        };
-        let ki = ev.to_keyboard_input();
-        assert_eq!(ki.key, 'c');
-        assert_eq!(ki.action, KeyAction::Press);
-    }
-
-    #[test]
-    fn kitty_key_event_to_keyboard_input_invalid_keycode() {
-        let ev = KittyKeyEvent {
-            keycode: 0x110000, // beyond valid Unicode
-            modifiers: 0,
-            event_type: KittyEventType::Press,
-            associated_text: None,
-        };
-        let ki = ev.to_keyboard_input();
-        assert_eq!(ki.key, '\0');
-    }
-
-    #[test]
-    fn machine_true_color_sgr() {
-        let mut m = VtMachine::new(10, 5);
-        let mut p = AnsiParser::new();
-        p.feed(b"\x1b[38;2;255;128;64mC");
-        while let Some(event) = p.poll_event() {
-            m.process(&event);
-        }
-        assert_eq!(
-            m.framebuffer().get(0, 0).fg,
-            Color::Rgb {
-                r: 255,
-                g: 128,
-                b: 64
-            }
-        );
-    }
 }

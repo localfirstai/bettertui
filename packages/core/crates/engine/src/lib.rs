@@ -12,7 +12,6 @@ pub mod framebuffer;
 pub mod glyph;
 pub mod graphics;
 pub mod layout;
-pub mod neovim;
 pub mod nerdfont;
 pub mod plugin;
 pub mod protocol;

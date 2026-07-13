@@ -1,14 +1,29 @@
 //! Terminal interaction: crossterm-based terminal event handling, queries, and VT emulation.
 
-pub mod capabilities;
+mod capabilities;
+pub mod neovim;
 pub mod process;
+
+pub use capabilities::{
+    CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix,
+    GraphicsCapabilities, InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities,
+    TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics,
+};
+pub use process::{
+    ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult,
+    TerminalError, TerminalRuntime, TerminalState, TerminalViewport,
+};
 pub mod query;
 pub mod screen;
 pub mod scrollback;
-pub mod vt;
+mod vt;
 
 pub use screen::*;
 pub use scrollback::*;
+pub use vt::{
+    Cursor, CursorShape, CursorStyle, KittyKeyEvent, Pen, PrivateMode, ResponseKind, ScreenBuffer,
+    ScrollbackBuffer, TerminalMode, TerminalResponse, VtMachine,
+};
 
 use std::io::{self, Write, stdout};
 

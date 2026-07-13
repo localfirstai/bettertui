@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::pty::PtySize;
-use crate::terminal::process::{ProcessConfig, TerminalError, TerminalRuntime, TerminalState};
+use crate::terminal::{ProcessConfig, TerminalError, TerminalRuntime, TerminalState};
 
 // ============================================================================
 // Error Types
