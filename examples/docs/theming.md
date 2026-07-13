@@ -39,6 +39,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `text-styles` — Text & Styles
 - `animation-basics` — Animation & Motion
-- `responsive-layout` — Responsive Layout
+- `tree-view` — Tree View
+- `tabs-navigation` — Tabs & Accordion

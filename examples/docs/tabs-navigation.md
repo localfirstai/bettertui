@@ -39,6 +39,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `list-view` — List View
-- `overlay-showcase` — Overlays & Menus
-- `status-bar-basics` — Status Bar & Toast
+- `tree-view` — Tree View
+- `theming` — Theming
+- `scroll-area-basics` — Scroll Area

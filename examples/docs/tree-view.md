@@ -39,6 +39,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `data-table-basics` — Data Tables
-- `list-view` — List View
-- `advanced-data-table` — Advanced Data Table
+- `live-metrics` — Live Metrics
+- `tabs-navigation` — Tabs & Accordion
+- `performance-stress-test` — Performance Stress Test

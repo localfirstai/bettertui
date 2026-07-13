@@ -40,6 +40,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `data-table-basics` — Data Tables
-- `dashboard-app` — Dashboard App
 - `performance-stress-test` — Performance Stress Test
+- `tree-view` — Tree View
+- `tabs-navigation` — Tabs & Accordion

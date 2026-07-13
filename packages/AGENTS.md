@@ -23,14 +23,14 @@
 - `@bettertui/react` depends on `@bettertui/core`, `@bettertui/shared`, and `react-reconciler`. Peers `react@^19.0.0`.
 - `@bettertui/core` depends on `@bettertui/shared`. No React dependency. Framework-agnostic.
 - `@bettertui/themes` depends on `@bettertui/shared`. No React dependency.
-- `@bettertui/devtools` and `@bettertui/icons` have no dependencies.
+- `@bettertui/devtools` has no dependencies.
+- `@bettertui/icons` is a proposed package and does not exist yet.
 - All example projects depend on `@bettertui/react` and `@bettertui/core`.
 
 ## Removed Packages
 
 - `@bettertui/reconciler` — absorbed into `@bettertui/react` (internal host config)
 - `@bettertui/runtime` — split: `Runtime` class -> `@bettertui/core`, wrappers -> `@bettertui/react`
-- `@bettertui/performance` — moved to `apps/performance` (it's an app, not a library package)
 
 ## Placeholder Examples
 

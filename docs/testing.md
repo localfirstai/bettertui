@@ -17,7 +17,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Gate | Result |
 |------|--------|
-| Rust engine unit tests | 1,204 lib tests passing |
+| Rust engine unit tests | 1,332 lib tests passing (verified via `cargo test --lib`) |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | `pnpm build` (turbo) | all buildable TS packages |
@@ -30,7 +30,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Package | Test files | Scope |
 |---------|-----------|-------|
-| `@bettertui/core` | 5 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
+| `@bettertui/core` | 6 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
 | `@bettertui/shared` | 1 | Type definitions |
 | `@bettertui/themes` | 2 | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | 1 | `createDevTools()` |

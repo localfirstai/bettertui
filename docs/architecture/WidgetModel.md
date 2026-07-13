@@ -41,4 +41,4 @@ Structs that need Default must derive it (per project rules — e.g. `BoxWidget`
 
 ## Status
 
-The Rust widget framework is substantial and tested. The TypeScript `@bettertui/widgets` package, however, is currently a **stub** — it only exposes a `Widget` interface and `WIDGET_VERSION = "0.0.0"`. There is no TS-side widget implementation yet.
+The Rust widget framework is substantial and tested. The TypeScript `@bettertui/widgets` package, however, is **proposed but does not exist yet** — there is no `packages/widgets` directory. There is no TS-side widget implementation yet.

@@ -12,13 +12,13 @@ graph TD
     C -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
     E --> F[bettertui-engine]
     F -->|crossterm + portable-pty| G[(Terminal / PTY)]
-    C --> H[@bettertui/widgets]
     C --> I[@bettertui/themes]
     C --> J[@bettertui/shared]
     B --> J
     I --> J
-    H --> C
 ```
+
+> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module). Do not import from `@bettertui/widgets`.
 
 ## Document Index
 
@@ -41,6 +41,14 @@ graph TD
 | [TextEditing.md](TextEditing.md) | Rope-based editor (`text` module, exposed as `textEngine`) |
 | [Scheduler.md](Scheduler.md) | Frame timing and priority scheduling (`scheduler` module) |
 
+## Engineering notes
+
+| Document | What it describes |
+|----------|-------------------|
+| [DirtyDiffAudit.md](DirtyDiffAudit.md) | Engineering audit of the dirty-region diffing system |
+| [ViewportCullingComparison.md](ViewportCullingComparison.md) | OpenTUI vs BetterTUI viewport-culling comparison |
+| [VisibilityPropagation.md](VisibilityPropagation.md) | Visibility propagation design |
+
 ## Principles (non-negotiable)
 
 - **BetterTUI is a framework.** Never an application, IDE, AI framework, or editor.
@@ -50,6 +58,6 @@ graph TD
 
 ## Status Reality Check
 
-The Rust engine (`bettertui-engine`, **1,204 passing lib tests**) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
+The Rust engine (`bettertui-engine`, **1,332 passing lib tests**, verified via `cargo test --lib`) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
 
-The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` and `@bettertui/icons` are minimal; `@bettertui/devtools` is a stub. 14 example apps demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.
+The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` is minimal; `@bettertui/devtools` is a stub. 8 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.

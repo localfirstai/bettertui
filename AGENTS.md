@@ -56,7 +56,7 @@
 - **`@bettertui/reconciler` and `@bettertui/runtime` removed:** Absorbed into `@bettertui/react` (React-specific parts) and `@bettertui/core` (framework-agnostic parts). Do not reference these packages.
 - **`@bettertui/core` owns both TypeScript runtime and Rust engine:** The native bridge (internal to core as `src/native/*`) imports `Command` and `CommandBuffer` from core. The Rust crates live in `packages/core/crates/`.
 - **`@bettertui/shared` is the type foundation:** Pure type definitions, zero runtime dependencies. Both core and react re-export shared types.
-- **`@bettertui/widgets`** provides the Widget interface and version constant. Depends on `@bettertui/core`.
+- **`@bettertui/widgets`** is a *proposed* TypeScript package — it does not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module). Do not import from `@bettertui/widgets`.
 - **No `@bettertui/testing` package:** Testing is done with per-package Vitest suites (e.g. `*.test.ts` next to source). There is no separate testing package or headless harness — React output is asserted via `renderToStringAsync` in `packages/react/src/testing.ts`. Do not create `@bettertui/testing`.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
@@ -72,5 +72,5 @@
 - Run clippy: `cargo clippy -p bettertui-engine --lib --manifest-path packages/core/Cargo.toml -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
-- Widget framework has ~100 tests (total engine: ~1071).
+- Widget framework has ~200 tests in the Rust engine (total engine: 1,332 lib tests, verified via `cargo test --lib`).
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.

@@ -41,5 +41,5 @@ pnpm --filter @bettertui/examples dev
 ## Next examples
 
 - `theming` — Theming
-- `text-styles` — Text & Styles
 - `live-metrics` — Live Metrics
+- `tabs-navigation` — Tabs & Accordion

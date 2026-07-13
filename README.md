@@ -57,12 +57,11 @@ bettertui/
 │   ├── devtools/      # @bettertui/devtools — devtools stub
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
-│   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
-│   └── performance/   # @bettertui/performance — OpenTUI vs BetterTUI benchmark site
-├── examples/          # 14 example apps (fundamentals/ + showcase/)
+│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
+├── examples/          # @bettertui/examples — single package with runnable TSX demos
 ├── docs/              # this documentation
-├── tasks/             # PRDs, reports, archived slop
-├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
+├── tasks/             # PRDs, reports, archived history (read-only)
+├── scripts/           # repo-level automation (doc checks, example smoke tests)
 ├── packages/core/Cargo.toml         # Rust workspace
 ├── package.json       # root TS manifest + pnpm scripts
 ├── pnpm-workspace.yaml
@@ -81,8 +80,8 @@ bettertui/
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
 | `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
-| `@bettertui/widgets` | Widget library (proposed) | 🔜 Not yet a package |
-| `@bettertui/icons` | Icon registry (proposed) | 🔜 Not yet a package |
+| `@bettertui/widgets` | Widget library (proposed on TypeScript side) | 🔜 Not a package yet (Rust widgets exist) |
+| `@bettertui/icons` | Icon registry (proposed) | 🔜 Not a package yet |
 
 ## React Components
 
@@ -144,7 +143,7 @@ cargo clippy --workspace -- -D warnings
 
 - **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap)
 - **Runtime:** Node.js
-- **Language:** TypeScript 7+
+- **Language:** TypeScript (ES2022+)
 - **Monorepo:** TurboRepo + pnpm
 - **React:** React 19 + custom reconciler
 - **Formatting/Linting:** Biome (TS/JS/JSON), rustfmt + clippy (Rust)
@@ -152,7 +151,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,204 passing lib tests**. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **14 runnable example apps** are available under `examples/`.
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,332 passing lib tests** (verified with `cargo test --lib`). The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **8 runnable example apps** are available under `examples/` (`@bettertui/examples`).
 
 ## Documentation
 

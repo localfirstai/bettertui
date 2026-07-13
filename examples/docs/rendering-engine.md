@@ -40,6 +40,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `hello-world` — Hello World
-- `layout-basics` — Layout Basics
-- `widget-gallery` — Widget Gallery
+- `tree-view` — Tree View
+- `tabs-navigation` — Tabs & Accordion
+- `theming` — Theming

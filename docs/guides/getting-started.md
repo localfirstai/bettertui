@@ -29,21 +29,21 @@ The Rust workspace is independent of pnpm; the TS `build` task does not compile 
 | `pnpm typecheck` | `turbo run typecheck` |
 | `pnpm format:check` | Biome format check |
 | `pnpm check` | lint + format:check + typecheck + `cargo:check` |
-| `cargo test --workspace` | all Rust tests (engine has 1,204 lib tests) |
+| `cargo test --lib` | engine lib tests (1,332 passing, verified) |
 | `cargo clippy --workspace -- -D warnings` | lint, warnings are errors |
 | `cargo fmt --all` | rustfmt |
 
 ## Running the examples
 
-All 14 examples under `examples/` have real implementations in `src/index.tsx` (built on `@bettertui/core` + `@bettertui/react`). To run one:
+Examples live in the `@bettertui/examples` package (`examples/`). Each example is a `src/<slug>.tsx` file launched through an example browser:
 
 ```bash
-cd examples/counter
-pnpm exec tsdown src/index.tsx --format esm
-node dist/index.mjs
+pnpm --filter @bettertui/examples build
+node dist/index.mjs rendering-engine   # run a single example by slug
+node dist/index.mjs --list             # list all examples
 ```
 
-The example suite covers fundamentals (`counter`, `hello-world`, `layouts`, `forms`, `tables`, `tree`, `terminal`) and showcases (`dashboard`, `widget-gallery`, `markdown-viewer`, `system-monitor`, `capability-inspector`, `performance-lab`, `terminal-showcase`).
+The 8 examples (`rendering-engine`, `animation-basics`, `live-metrics`, `performance-stress-test`, `scroll-area-basics`, `tabs-navigation`, `theming`, `tree-view`) are built on `@bettertui/core` + `@bettertui/react`.
 
 > The React component functions are thin wrappers that emit element descriptors; the live native render loop is not yet connected, so running an example exercises the API surface and reconciler rather than painting pixels to the terminal.
 

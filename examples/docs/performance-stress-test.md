@@ -42,5 +42,5 @@ pnpm --filter @bettertui/examples dev
 ## Next examples
 
 - `live-metrics` — Live Metrics
-- `dashboard-app` — Dashboard App
-- `advanced-data-table` — Advanced Data Table
+- `tree-view` — Tree View
+- `rendering-engine` — Rendering & Engine

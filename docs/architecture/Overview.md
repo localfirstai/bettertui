@@ -47,12 +47,11 @@ bettertui/
 │   ├── devtools/      # @bettertui/devtools — devtools stub
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
-│   ├── website/       # @bettertui/website — Astro/Starlight docs + landing site
-│   └── performance/   # @bettertui/performance — OpenTUI vs BetterTUI benchmark site
-├── examples/          # 14 example apps (fundamentals/ + showcase/)
+│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
+├── examples/          # @bettertui/examples — single package with runnable TSX demos
 ├── docs/              # this documentation
-├── scripts/           # empty placeholder (scripts live in package.json/turbo.json)
-├── tasks/             # PRDs, reports, archived slop
+├── scripts/           # repo-level automation (doc checks, example smoke tests)
+├── tasks/             # PRDs, reports, archived history (read-only)
 ├── Cargo.lock
 ├── package.json       # root TS manifest + pnpm scripts
 ├── pnpm-workspace.yaml
@@ -145,9 +144,9 @@ graph TD
     Core --> Shared
     React --> Shared
     Themes --> Shared
-    Widgets --> Core
-    Widgets --> Shared
 ```
+
+> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet.
 
 Rules enforced by code, not just policy:
 - `bettertui-engine` must never import any JS framework.

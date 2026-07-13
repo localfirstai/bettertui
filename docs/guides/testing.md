@@ -7,7 +7,7 @@ There is **no `@bettertui/testing` package** and no snapshot/headless harness. T
 ## Test-driven development
 
 - **Write the test first.** For an engine change or a new API surface, add a failing test that pins the expected behavior.
-- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` (or `tests.rs`); `bettertui-engine` carries ~1,204 lib tests.
+- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` (or `tests.rs`); `bettertui-engine` carries 1,332 lib tests (verified via `cargo test --lib`).
 - **TypeScript:** co-locate tests beside source as `src/**/*.test.ts` / `*.test.tsx`. The glob is configured in the shared Vitest config.
 - **Keep the suite green.** `pnpm test` and `cargo test -p bettertui-engine --lib` must pass before a change is committed.
 - **No TODO-driven dead code.** Track planned work in `tasks/`, not in the test or source tree.
@@ -67,7 +67,7 @@ pnpm format:check  # biome format check
 ## Rust
 
 ```bash
-cargo test --workspace                 # all tests (engine 1,204 lib tests passing)
+cargo test --workspace                 # all tests (engine 1,332 lib tests passing)
 cargo test -p bettertui-engine --lib   # engine unit tests only (excludes tests/ dir)
 cargo clippy --workspace -- -D warnings
 cargo fmt --all
@@ -111,13 +111,13 @@ The shared config excludes test files, `*.bench.ts`, `*.d.ts`, and `__tests__/` 
 
 | Layer | Status |
 |-------|--------|
-| Rust engine unit tests | 1,204 lib tests passing |
+| Rust engine unit tests | 1,332 lib tests passing (verified via `cargo test --lib`) |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
-| `pnpm build` (turbo) | 17/17 packages |
-| `pnpm lint` (Biome) | 11/11 packages |
-| `pnpm typecheck` (tsc) | 11/11 packages |
-| `pnpm format:check` (Biome) | 10/10 packages |
-| `pnpm test` (Vitest) | 6 TS packages covered |
+| `pnpm build` (turbo) | all TS packages + website build |
+| `pnpm lint` (Biome) | all TS packages |
+| `pnpm typecheck` (tsc) | all TS packages |
+| `pnpm format:check` (Biome) | all TS packages |
+| `pnpm test` (Vitest) | 5 TS packages covered by `*.test.ts(x)`; `benchmark` covered by `*.bench.ts` |
 
 There is no `@bettertui/testing` package and no separate snapshot/headless harness.

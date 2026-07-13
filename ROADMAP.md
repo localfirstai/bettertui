@@ -6,7 +6,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 
 | Layer | State | Notes |
 |-------|-------|-------|
-| Rust engine (`bettertui-engine`) | ✅ Implemented | 1,204 passing lib tests; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
+| Rust engine (`bettertui-engine`) | ✅ Implemented | 1,332 passing lib tests (verified via `cargo test --lib`); rendering, layout, input, events, animation, text, PTY, VT, capabilities |
 | napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
 | `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
@@ -16,7 +16,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
-| Examples | ✅ Wired | 14 example apps implemented (`examples/fundamentals/*`, `examples/showcase/*`) |
+| Examples | ✅ Wired | 8 example apps in `@bettertui/examples` (`examples/src/*.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
 | `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
 | `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |

@@ -38,6 +38,6 @@ pnpm --filter @bettertui/examples dev
 
 ## Next examples
 
-- `list-view` — List View
 - `tree-view` — Tree View
-- `advanced-data-table` — Advanced Data Table
+- `tabs-navigation` — Tabs & Accordion
+- `live-metrics` — Live Metrics
