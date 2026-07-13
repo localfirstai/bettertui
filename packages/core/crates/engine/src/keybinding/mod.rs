@@ -16,7 +16,7 @@
 //!
 //! ```rust
 //! use bettertui_engine::keybinding::{Keymap, KeyBinding, KeyLayer};
-//! use bettertui_engine::events::types::Key;
+//! use bettertui_engine::input::Key;
 //!
 //! let mut keymap = Keymap::new();
 //!
