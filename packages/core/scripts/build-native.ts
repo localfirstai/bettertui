@@ -210,6 +210,8 @@ for (const variant of variantsToBuild) {
   // Find the compiled binary
   const targetDir = join(rootDir, "target", variant.rustTarget, profile);
   const possibleNames = [
+    "bettertui_bindings.node",
+    "libbettertui_bindings.node",
     "libbettertui_bindings.dylib",
     "libbettertui_bindings.so",
     "bettertui_bindings.dll",
@@ -244,17 +246,17 @@ for (const variant of variantsToBuild) {
   copyFileSync(sourceBinary, destBinary);
   console.log(`  Copied binary to: ${destBinary}`);
 
-  // Create index.js - exports the path to the native binary
-  const indexJsContent = `import { fileURLToPath } from "node:url"
-
-export default fileURLToPath(new URL("./${variant.binaryName}", import.meta.url))
+  // Create index.js - CommonJS exports the path to the native binary
+  const indexJsContent = `"use strict";
+const path = require("node:path");
+module.exports = path.join(__dirname || ".", "${variant.binaryName}");
 `;
   writeFileSync(join(nativeDir, "index.js"), indexJsContent);
 
   // Create index.d.ts - TypeScript declaration
-  writeFileSync(join(nativeDir, "index.d.ts"), "declare const path: string\nexport default path\n");
+  writeFileSync(join(nativeDir, "index.d.ts"), "export = path;\ndeclare const path: string;\n");
 
-  // Create package.json for the native package
+  // Create package.json for the native package (CommonJS for sync require support)
   writeFileSync(
     join(nativeDir, "package.json"),
     JSON.stringify(
@@ -262,9 +264,7 @@ export default fileURLToPath(new URL("./${variant.binaryName}", import.meta.url)
         name: nativePackageName,
         version: packageJson.version,
         description: `Prebuilt ${variant.platform}-${variant.arch}${variant.abi ? `-${variant.abi}` : ""} binary for ${packageJson.name}`,
-        type: "module",
         main: "index.js",
-        module: "index.js",
         types: "index.d.ts",
         license: packageJson.license,
         author: packageJson.author,
@@ -274,7 +274,7 @@ export default fileURLToPath(new URL("./${variant.binaryName}", import.meta.url)
         keywords: [...(packageJson.keywords ?? []), "prebuild", "prebuilt", "native"],
         exports: {
           ".": {
-            import: "./index.js",
+            require: "./index.js",
             types: "./index.d.ts",
           },
         },

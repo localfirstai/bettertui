@@ -30,55 +30,162 @@ export type { Runtime, RuntimeOptions } from "./runtime";
 export { createEventLoop } from "./events";
 export type { EventLoop, EventCallback } from "./events";
 
-// Re-export shared event types for consumer convenience
 export type { KeyEvent, MouseEvent } from "./events";
 
 let nativeAddon: Record<string, unknown> | null = null;
+let nativePath: string | null = null;
 
-function findDevArtifact(): unknown {
+const PLATFORM_PACKAGES: Record<string, string> = {
+  "darwin-x64": "@bettertui/core-darwin-x64",
+  "darwin-arm64": "@bettertui/core-darwin-arm64",
+  "linux-x64-gnu": "@bettertui/core-linux-x64-gnu",
+  "linux-arm64-gnu": "@bettertui/core-linux-arm64-gnu",
+  "linux-x64-musl": "@bettertui/core-linux-x64-musl",
+  "linux-arm64-musl": "@bettertui/core-linux-arm64-musl",
+  "win32-x64": "@bettertui/core-win32-x64",
+  "win32-arm64": "@bettertui/core-win32-arm64",
+};
+
+function detectLibc(): string {
+  const libcEnv = process.env["BETTERTUI_LIBC"];
+  if (libcEnv === "musl" || libcEnv === "gnu") return libcEnv;
+
+  try {
+    const report = process.report?.getReport?.() as {
+      header?: { glibcVersionRuntime?: string };
+    } | null;
+    if (report?.header?.glibcVersionRuntime) {
+      return "gnu";
+    }
+    return "musl";
+  } catch {
+    return "gnu";
+  }
+}
+
+function getPlatformKey(): string {
+  const platform = process.platform;
+  const arch = process.arch;
+
+  if (platform === "linux") {
+    const abi = detectLibc();
+    return `${platform}-${arch}-${abi}`;
+  }
+  return `${platform}-${arch}`;
+}
+
+function findDevArtifact(): string | null {
   const path = require("node:path");
   const fs = require("node:fs") as typeof import("node:fs");
   const profiles = ["debug", "release"];
   const roots: string[] = [];
   const cwd = process.cwd();
+
   roots.push(
     cwd,
     path.join(cwd, "packages/core"),
+    path.join(cwd, "../packages/core"),
     path.join(cwd, "../core"),
     path.join(cwd, "../../packages/core"),
+    path.join(cwd, "../../packages"),
     path.join(cwd, ".."),
     path.join(cwd, "../.."),
   );
+
   for (const root of roots) {
     for (const profile of profiles) {
       const file = path.resolve(root, "target", profile, "bettertui_bindings.node");
       if (fs.existsSync(file)) {
-        try {
-          return require(file);
-        } catch {
-          // require failed (e.g. wrong arch); keep searching
-        }
+        return file;
       }
     }
   }
-  throw new Error("dev artifact not found");
+  return null;
+}
+
+function resolveNativePath(): string | null {
+  const platformKey = getPlatformKey();
+  const packageName = PLATFORM_PACKAGES[platformKey];
+
+  if (!packageName) {
+    return null;
+  }
+
+  try {
+    const path = require("node:path");
+    const possibleLocations = [
+      require.resolve(path.join(packageName, "index.js")),
+      require.resolve(packageName),
+    ];
+
+    for (const indexPath of possibleLocations) {
+      const dir = path.dirname(indexPath);
+      const nodeFiles = require("node:fs")
+        .readdirSync(dir)
+        .filter((f: string) => f.endsWith(".node"));
+
+      if (nodeFiles.length > 0) {
+        return path.join(dir, nodeFiles[0]);
+      }
+    }
+  } catch {
+    // Package not installed or not resolvable
+  }
+
+  return null;
 }
 
 function loadNativeAddon(): Record<string, unknown> {
   if (nativeAddon) return nativeAddon;
 
-  const candidates: Array<() => unknown> = [() => require("bettertui_bindings"), findDevArtifact];
+  const candidates: Array<() => Record<string, unknown> | null> = [
+    () => {
+      if (nativePath) {
+        return require(nativePath) as Record<string, unknown>;
+      }
+      return null;
+    },
+    () => {
+      const resolvedPath = resolveNativePath();
+      if (resolvedPath) {
+        nativePath = resolvedPath;
+        return require(resolvedPath) as Record<string, unknown>;
+      }
+      return null;
+    },
+    () => {
+      const devPath = findDevArtifact();
+      if (devPath) {
+        nativePath = devPath;
+        return require(devPath) as Record<string, unknown>;
+      }
+      return null;
+    },
+    () => {
+      try {
+        return require("bettertui_bindings") as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    },
+  ];
 
   for (const attempt of candidates) {
     try {
-      nativeAddon = attempt() as Record<string, unknown>;
-      return nativeAddon;
+      const result = attempt();
+      if (result) {
+        nativeAddon = result;
+        return nativeAddon;
+      }
     } catch {
-      // try next candidate
+      // Try next candidate
     }
   }
+
+  const platformKey = getPlatformKey();
+  const supported = Object.keys(PLATFORM_PACKAGES).join(", ");
   throw new Error(
-    "Failed to load native bindings. Run `cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml` first, or install the `bettertui_bindings` package.",
+    `Failed to load native bindings for ${platformKey}. Make sure you have the correct platform package installed (${PLATFORM_PACKAGES[platformKey] ?? "unknown"}), or run \`pnpm build:native\` for local development. Supported platforms: ${supported}`,
   );
 }
 
@@ -150,4 +257,13 @@ export function highlightCode(code: string, language: string): HighlightSegment[
   } catch {
     return [];
   }
+}
+
+export function getNativePackageName(): string {
+  const platformKey = getPlatformKey();
+  const packageName = PLATFORM_PACKAGES[platformKey];
+  if (!packageName) {
+    throw new Error(`Unsupported platform: ${platformKey}`);
+  }
+  return packageName;
 }
