@@ -4,6 +4,7 @@ use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
 use bettertui_engine::events::EventBus;
 use bettertui_engine::focus::FocusManager;
+use bettertui_engine::post_process::RenderPass;
 use bettertui_engine::renderer::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::text::TextEngine;
@@ -937,6 +938,165 @@ impl NapiEngine {
     pub fn dimensions(&self) -> Vec<u32> {
         let (w, h) = self.renderer.dimensions();
         vec![w as u32, h as u32]
+    }
+
+    // ─── Post-Processing Pipeline ────────────────────────────────────
+
+    /// Enable or disable the entire post-processing pipeline.
+    #[napi]
+    pub fn set_post_processing_enabled(&mut self, enabled: bool) {
+        self.renderer.pipeline_mut().set_enabled(enabled);
+    }
+
+    /// Check if post-processing is enabled.
+    #[napi]
+    pub fn is_post_processing_enabled(&self) -> bool {
+        self.renderer.pipeline().enabled()
+    }
+
+    /// Add a color matrix pass.
+    /// matrix: 16 comma-separated f32 values (row-major 4x4 RGBA matrix)
+    /// enabled: whether the pass starts enabled
+    #[napi]
+    pub fn add_color_matrix_pass(&mut self, matrix_str: String, enabled: Option<bool>) {
+        let values: Vec<f32> = matrix_str
+            .split(',')
+            .filter_map(|s| s.trim().parse().ok())
+            .collect();
+        if values.len() != 16 {
+            return;
+        }
+        let mut m = [0.0f32; 16];
+        m.copy_from_slice(&values);
+        let mut pass = bettertui_engine::post_process::effects::ColorMatrixPass::new(m);
+        if !enabled.unwrap_or(true) {
+            pass.set_enabled(false);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a CRT effect pass.
+    #[napi]
+    pub fn add_crt_pass(&mut self, glow: Option<f64>, curvature: Option<f64>) {
+        let mut pass = bettertui_engine::post_process::effects::CrtPass::new();
+        if let Some(g) = glow {
+            pass = pass.with_glow(g as f32);
+        }
+        if let Some(c) = curvature {
+            pass = pass.with_curvature(c as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a scanlines effect pass.
+    #[napi]
+    pub fn add_scanlines_pass(&mut self, intensity: Option<f64>, odd_rows: Option<bool>) {
+        let mut pass = bettertui_engine::post_process::effects::ScanlinesPass::new();
+        if let Some(i) = intensity {
+            pass = pass.with_intensity(i as f32);
+        }
+        if let Some(odd) = odd_rows {
+            pass = pass.with_mode(if odd {
+                bettertui_engine::post_process::effects::ScanlineMode::OddRows
+            } else {
+                bettertui_engine::post_process::effects::ScanlineMode::EvenRows
+            });
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a vignette effect pass.
+    #[napi]
+    pub fn add_vignette_pass(
+        &mut self,
+        strength: Option<f64>,
+        radius: Option<f64>,
+        falloff: Option<f64>,
+    ) {
+        let mut pass = bettertui_engine::post_process::effects::VignettePass::new();
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        if let Some(r) = radius {
+            pass = pass.with_radius(r as f32);
+        }
+        if let Some(f) = falloff {
+            pass = pass.with_falloff(f as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a noise effect pass.
+    #[napi]
+    pub fn add_noise_pass(&mut self, intensity: Option<f64>, seed: Option<u32>) {
+        let mut pass = bettertui_engine::post_process::effects::NoisePass::new();
+        if let Some(i) = intensity {
+            pass = pass.with_intensity(i as f32);
+        }
+        if let Some(s) = seed {
+            pass = pass.with_seed(s);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a chromatic aberration effect pass.
+    #[napi]
+    pub fn add_chromatic_aberration_pass(&mut self, strength: Option<f64>) {
+        let mut pass = bettertui_engine::post_process::effects::ChromaticAberrationPass::new();
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a bloom effect pass.
+    #[napi]
+    pub fn add_bloom_pass(
+        &mut self,
+        threshold: Option<f64>,
+        strength: Option<f64>,
+        radius: Option<u32>,
+    ) {
+        let mut pass = bettertui_engine::post_process::effects::BloomPass::new();
+        if let Some(t) = threshold {
+            pass = pass.with_threshold(t as f32);
+        }
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        if let Some(r) = radius {
+            pass = pass.with_radius(r as u16);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Remove a render pass by name.
+    #[napi]
+    pub fn remove_render_pass(&mut self, name: String) {
+        self.renderer.pipeline_mut().remove_pass(&name);
+    }
+
+    /// Enable or disable a render pass by name.
+    #[napi]
+    pub fn set_pass_enabled(&mut self, name: String, enabled: bool) {
+        if let Some(pass) = self.renderer.pipeline_mut().get_pass_mut(&name) {
+            pass.set_enabled(enabled);
+        }
+    }
+
+    /// Check if a render pass is enabled.
+    #[napi]
+    pub fn is_pass_enabled(&self, name: String) -> Option<bool> {
+        self.renderer
+            .pipeline()
+            .get_pass(&name)
+            .map(|p| p.enabled())
+    }
+
+    /// Get the number of active render passes.
+    #[napi]
+    pub fn pass_count(&self) -> u32 {
+        self.renderer.pipeline().len() as u32
     }
 }
 

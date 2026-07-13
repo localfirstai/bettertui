@@ -98,7 +98,7 @@ stateDiagram-v2
 
 ## Integration with Framework Adapters
 
-A framework adapter never touches `NodeArena` directly. It emits `Command`s (see [Protocol.md](Protocol.md)) which are applied to the arena by the command processor. This is what keeps the engine framework-agnostic.
+A framework adapter never touches `NodeArena` directly. It emits `Command`s (see [protocol.md](protocol.md)) which are applied to the arena by the command processor. This is what keeps the engine framework-agnostic.
 
 ```mermaid
 sequenceDiagram

@@ -55,7 +55,7 @@ flowchart TD
 - `Modifiers { ctrl, shift, alt, meta }`
 - `MouseButton` (Left/Right/Middle/ScrollUp/Down/ScrollLeft/ScrollRight/None)
 
-The real keyboard/mouse *parsing* lives in `input/keyboard.rs` and `input/mouse.rs` (the top-level `keyboard/` and `mouse/` modules are thin stubs).
+The real keyboard/mouse *parsing* lives in `input/keyboard.rs` and `input/mouse.rs`; the top-level `keyboard/` and `mouse/` modules provide keybinding handling and hit-testing on top of that parsed input.
 
 ## Resize
 

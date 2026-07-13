@@ -1,6 +1,6 @@
 # Text Editing
 
-BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `textEngine` (no arena dependency). Code: `packages/core/crates/engine/src/text/` (the top-level `editor/` module is a stub).
+BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `textEngine` (no arena dependency). Core text primitives live in `packages/core/crates/engine/src/text/`; the top-level `editor/` module wraps the text engine with cursor, selection, undo/redo, and line numbers.
 
 ## Engine
 

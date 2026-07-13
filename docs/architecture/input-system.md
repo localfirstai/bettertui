@@ -1,6 +1,6 @@
 # Input System
 
-The input system turns raw terminal bytes into structured events. Parsing code: `packages/core/crates/engine/src/input/` and `packages/core/crates/engine/src/ansi/` (the `keyboard/` and `mouse/` top-level modules are stubs; real logic is in `input/`).
+The input system turns raw terminal bytes into structured events. Raw-byte parsing lives in `packages/core/crates/engine/src/input/` and `packages/core/crates/engine/src/ansi/`; the top-level `keyboard/` and `mouse/` modules provide keybinding handling and hit-testing on top of that parsed input.
 
 ## Flow
 

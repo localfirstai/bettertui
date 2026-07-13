@@ -28,6 +28,7 @@ pub mod painter;
 pub mod palette;
 pub mod pane;
 pub mod plugin;
+pub mod post_process;
 pub mod protocol;
 pub mod pty;
 pub mod render_object;

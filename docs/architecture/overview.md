@@ -72,7 +72,7 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
-| `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/WidgetModel.md` note) |
+| `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/widget-model.md` note) |
 
 ```mermaid
 graph TD

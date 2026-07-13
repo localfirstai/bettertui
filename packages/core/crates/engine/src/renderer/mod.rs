@@ -6,6 +6,7 @@ use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::FrameBuffer;
 use crate::layout::LayoutTreeSync;
 use crate::painter::Painter;
+use crate::post_process::{PassResult, RenderPassContext, RenderPipeline};
 use crate::render_object::{RenderTree, Viewport, build_render_tree_with_viewport};
 use crate::renderer::backend::RenderBackend;
 use crate::renderer::backend::ansi::AnsiBackend;
@@ -45,6 +46,7 @@ pub struct Renderer {
     dirty_diff: DirtyDiff,
     backend: Box<dyn RenderBackend>,
     scheduler: Scheduler,
+    pipeline: RenderPipeline,
     needs_full_repaint: bool,
     generation: u64,
     last_change_count: u64,
@@ -68,6 +70,7 @@ impl Renderer {
             dirty_diff: DirtyDiff::new(),
             backend: Box::new(AnsiBackend::new()),
             scheduler: Scheduler::default(),
+            pipeline: RenderPipeline::new(),
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
@@ -85,6 +88,7 @@ impl Renderer {
             dirty_diff: DirtyDiff::new(),
             backend,
             scheduler: Scheduler::default(),
+            pipeline: RenderPipeline::new(),
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
@@ -142,7 +146,22 @@ impl Renderer {
         let ctx = crate::render_object::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
 
-        let dirty_regions = if self.needs_full_repaint {
+        // Post-processing: execute render passes on the painter's framebuffer
+        let pp_ctx = RenderPassContext {
+            width: self.width,
+            height: self.height,
+            delta_time: (1.0 / 60.0),
+            frame_count: self.generation,
+            generation: self.generation,
+        };
+        let pp_result = self.pipeline.execute(self.painter.buffer_mut(), &pp_ctx);
+
+        let dirty_regions = if pp_result == PassResult::Modified {
+            // Post-processing modified the buffer — re-diff from snapshot
+            self.dirty_diff
+                .compute(self.painter.buffer(), &self.snapshot, self.generation);
+            self.dirty_diff.regions().to_vec()
+        } else if self.needs_full_repaint {
             self.dirty_diff
                 .compute_full_repaint(self.width, self.height);
             self.needs_full_repaint = false;
@@ -202,12 +221,24 @@ impl Renderer {
     pub fn dimensions(&self) -> (u16, u16) {
         (self.width, self.height)
     }
+
+    pub fn pipeline(&self) -> &RenderPipeline {
+        &self.pipeline
+    }
+
+    pub fn pipeline_mut(&mut self) -> &mut RenderPipeline {
+        &mut self.pipeline
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::framebuffer::Cell;
+    use crate::post_process::effects::ColorMatrixPass;
+    use crate::post_process::effects::INVERT_MATRIX;
     use crate::renderer::backend::ansi::AnsiBackend;
+    use crate::tree::color::Color;
 
     fn make_arena() -> NodeArena {
         let mut arena = NodeArena::new();
@@ -423,6 +454,111 @@ mod tests {
             "nested scroll should cull (len={})",
             tree.len()
         );
+    }
+
+    // ─── Post-Processing Pipeline Integration Tests ─────────────────────
+
+    fn make_arena_with_text() -> NodeArena {
+        let mut arena = NodeArena::new();
+        let child = arena.insert({
+            let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Text);
+            n.text = Some("Hello".into());
+            n.style.fg = Some(Color::Rgb {
+                r: 128,
+                g: 128,
+                b: 128,
+            });
+            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
+            n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+            n
+        });
+        arena.append_child(arena.root(), child).unwrap();
+        {
+            let root = arena.get_mut(arena.root()).unwrap();
+            root.layout.width = Some(crate::tree::Sizing::Points(40.0));
+            root.layout.height = Some(crate::tree::Sizing::Points(10.0));
+        }
+        arena
+    }
+
+    #[test]
+    fn renderer_pipeline_passthrough_empty() {
+        let mut r = Renderer::new(40, 10);
+        let mut arena = make_arena();
+        let frame = r.render(&mut arena);
+        assert!(!frame.is_empty());
+    }
+
+    #[test]
+    fn renderer_pipeline_modifies_output() {
+        let mut r = Renderer::new(40, 10);
+        r.pipeline_mut()
+            .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+        let mut arena = make_arena_with_text();
+        let frame = r.render(&mut arena);
+        assert!(!frame.is_empty());
+        let cell = r.framebuffer().get(0, 0);
+        assert_eq!(cell.ch, 'H');
+        // 128 inverts to 126 via float math: (-128/255 + 1) * 255 = 126.999... → 126
+        assert_eq!(
+            cell.fg,
+            Color::Rgb {
+                r: 126,
+                g: 126,
+                b: 126
+            }
+        );
+    }
+
+    #[test]
+    fn renderer_pipeline_passthrough_no_modify() {
+        let mut r = Renderer::new(40, 10);
+        // No passes added — pipeline is empty
+        let mut arena = make_arena_with_text();
+        let frame = r.render(&mut arena);
+        assert!(!frame.is_empty());
+        let cell = r.framebuffer().get(0, 0);
+        assert_eq!(
+            cell.fg,
+            Color::Rgb {
+                r: 128,
+                g: 128,
+                b: 128
+            }
+        );
+    }
+
+    #[test]
+    fn renderer_pipeline_disabled_no_modify() {
+        let mut r = Renderer::new(40, 10);
+        r.pipeline_mut()
+            .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+        r.pipeline_mut().set_enabled(false);
+        let mut arena = make_arena_with_text();
+        let frame = r.render(&mut arena);
+        assert!(!frame.output_data.is_empty());
+        // Buffer unchanged
+        let cell = r.framebuffer().get(0, 0);
+        assert_eq!(
+            cell.fg,
+            Color::Rgb {
+                r: 128,
+                g: 128,
+                b: 128
+            }
+        );
+    }
+
+    #[test]
+    fn renderer_pipeline_get_pass_mut() {
+        let mut r = Renderer::new(40, 10);
+        r.pipeline_mut()
+            .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+        {
+            let pass = r.pipeline_mut().get_pass_mut("color_matrix").unwrap();
+            pass.set_enabled(false);
+        }
+        assert!(!r.pipeline().get_pass("color_matrix").unwrap().enabled());
     }
 
     #[test]
