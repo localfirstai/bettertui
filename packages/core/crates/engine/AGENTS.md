@@ -91,3 +91,45 @@
 - **BoxWidget and ContainerWidget need #[derive(Default)].** Clippy `derivable_impls` fires if manual impl is identical to derived.
 - **TextEngine doesn't derive Debug.** Types containing it (like Editor) need manual Debug impl or `#[derive(Default)]` won't work with `#[derive(Debug)]`.
 - **NodeKind has no Inline or Image variants.** Variants are: Text, Box, Flex, Input, List, Table, Tree, Scroll, Tab, Modal, Spacer, Separator, Custom(u16).
+
+## Testing Philosophy — TDD with 100% Coverage
+
+BetterTUI enforces **test-driven development** with a goal of **100% test coverage** for all Rust engine code. Every implementation must be accompanied by proper tests before it is considered complete.
+
+### Testing Stack
+
+| Layer | Tool | Purpose |
+|-------|------|---------|
+| Unit tests | `cargo test` | Test individual functions and modules in isolation |
+| Snapshot tests | `insta` | Capture and review complex output (FrameBuffer, Cell, Color, etc.) |
+| E2E with PTY | `portable-pty` | Spawn real processes in a pseudo-terminal for true terminal integration tests |
+| ANSI parsing | `vt100` | Parse raw ANSI output into a virtual `Screen` for readable assertions |
+
+### E2E Testing Pattern (portable-pty + vt100)
+
+```
+Rust Engine → ANSI output → portable-pty → vt100 Parser → virtual Screen → assertions
+```
+
+Example flow:
+```rust
+let mut process = PtyProcess::spawn(config)?;
+let output = read_pty_output(&mut process, timeout);
+process.kill()?;
+
+let mut parser = vt100::Parser::new(24, 80, 0);
+parser.process(&output);
+
+let screen = parser.screen();
+assert!(screen.contents().contains("expected text"));
+assert_eq!(screen.cell(0, 0).unwrap().fgcolor(), expected_color);
+```
+
+### TDD Rules
+
+- **Test-first**: Write the test before the implementation. Red → Green → Refactor.
+- **Every feature must have tests**: No exception. A feature without tests is incomplete.
+- **E2E tests for all terminal interactions**: Any code path that produces ANSI output, handles input, or manages terminal state must have a PTY + vt100 e2e test.
+- **Snapshots for complex data structures**: Use `insta::assert_debug_snapshot!` for FrameBuffer, Cell, Color, and any other structured data that is expensive to assert field-by-field.
+- **No binary targets for testing**: E2E tests use `portable-pty` directly to spawn processes — do NOT add `trycmd` or binary-only testing harnesses.
+- **Coverage gate**: All new code must maintain or improve line coverage. Do not merge code that drops coverage.
