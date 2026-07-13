@@ -1,5 +1,5 @@
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::tree::NodeKind;
 use crate::tree::Overflow;
 use crate::tree::RenderNode;

@@ -162,7 +162,7 @@ impl Engine {
     }
 
     /// Sets the layout on a node.
-    pub fn set_layout(&mut self, id: NodeId, layout: crate::layout::types::LayoutProps) {
+    pub fn set_layout(&mut self, id: NodeId, layout: crate::layout::LayoutProps) {
         let _ = self
             .processor
             .process_single(Command::SetLayout { id, layout });

@@ -1,6 +1,6 @@
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::layout::types::{LayoutProps, Sizing};
+use crate::layout::{LayoutProps, Sizing};
 
 use crate::widgets::{Widget, WidgetContext, WidgetId};
 

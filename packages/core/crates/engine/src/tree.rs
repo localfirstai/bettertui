@@ -34,7 +34,7 @@ use bitflags::bitflags;
 use slotmap::{DefaultKey, SlotMap};
 use smallvec::SmallVec;
 
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 
 // === node_id.rs ===
 

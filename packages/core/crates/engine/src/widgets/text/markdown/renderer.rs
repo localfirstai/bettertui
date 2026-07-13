@@ -1,4 +1,4 @@
-use crate::layout::types::{FlexDirection, LayoutProps};
+use crate::layout::{FlexDirection, LayoutProps};
 use crate::syntax::global_highlighter;
 use crate::tree::Color;
 use crate::tree::NodeId;

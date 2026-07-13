@@ -1,6 +1,6 @@
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::layout::types::{FlexDirection, Gap, LayoutProps};
+use crate::layout::{FlexDirection, Gap, LayoutProps};
 use crate::tree::Style;
 
 use crate::widgets::{Widget, WidgetContext, WidgetId};

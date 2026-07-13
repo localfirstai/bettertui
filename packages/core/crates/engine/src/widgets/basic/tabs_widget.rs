@@ -1,5 +1,5 @@
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::tree::Style;
 
 use crate::widgets::callback_types::IndexChangeCallback;

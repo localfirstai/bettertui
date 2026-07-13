@@ -1,6 +1,6 @@
 use super::types::{ChatState, ChatStatus};
 use crate::input::{Event, EventResult};
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::tree::Color;
 use crate::tree::Style;
 use crate::widgets::Widget;

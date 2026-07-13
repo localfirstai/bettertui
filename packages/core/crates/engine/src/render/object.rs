@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use crate::layout::paint::{ClipBounds, PaintBounds, PaintFlags};
+use crate::layout::{ClipBounds, PaintBounds, PaintFlags};
 use crate::tree::Overflow;
 use crate::tree::ResolvedStyle;
 use crate::tree::{NodeId, Rect};

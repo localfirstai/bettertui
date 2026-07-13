@@ -1,5 +1,5 @@
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::layout::paint::{PaintBounds, PaintContext, PaintFlags};
+use crate::layout::{PaintBounds, PaintContext, PaintFlags};
 use crate::render::{RenderObject, RenderTree};
 use crate::text::{LayoutConfig, layout_text};
 use crate::tree::Color;
@@ -193,8 +193,8 @@ fn style_to_attrs(style: &ResolvedStyle) -> CellAttributes {
 mod tests {
     use super::*;
     use crate::layout::LayoutEngine;
+    use crate::layout::Sizing;
     use crate::layout::build_render_tree;
-    use crate::layout::types::Sizing;
     use crate::tree::Display;
     use crate::tree::NamedColor;
     use crate::tree::NodeArena;

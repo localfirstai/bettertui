@@ -1,4 +1,4 @@
-use crate::ansi::parser::{
+use crate::ansi::{
     BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType,
     ModeAction, ModeType, OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
 };
@@ -635,7 +635,7 @@ fn parse_color_string(s: &str) -> Option<Color> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ansi::parser::AnsiParser;
+    use crate::ansi::AnsiParser;
 
     #[test]
     fn machine_new() {

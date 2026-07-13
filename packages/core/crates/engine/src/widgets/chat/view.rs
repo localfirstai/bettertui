@@ -1,6 +1,6 @@
 use super::types::{Message, Role};
 use crate::input::{Event, EventResult};
-use crate::layout::types::{FlexDirection, LayoutProps};
+use crate::layout::{FlexDirection, LayoutProps};
 use crate::tree::Color;
 use crate::tree::Style;
 use crate::widgets::Widget;

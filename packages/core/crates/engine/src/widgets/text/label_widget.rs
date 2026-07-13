@@ -1,6 +1,6 @@
 use crate::input::Event;
 use crate::input::EventResult;
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::text::TextAlign;
 use crate::tree::Style;
 

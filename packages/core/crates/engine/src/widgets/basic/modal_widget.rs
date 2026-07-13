@@ -1,5 +1,5 @@
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::{LayoutProps, Position};
+use crate::layout::{LayoutProps, Position};
 use crate::tree::Style;
 
 use crate::widgets::{Widget, WidgetContext, WidgetId};

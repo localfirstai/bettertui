@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::{LayoutProps, Sizing};
+use crate::layout::{LayoutProps, Sizing};
 use crate::text::display_width;
 use crate::tree::NodeId;
 use crate::tree::Style;

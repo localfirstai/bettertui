@@ -1,5 +1,5 @@
 use crate::input::FocusManager;
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::scheduler::Scheduler;
 use crate::tree::NodeArena;
 use crate::tree::NodeId;
@@ -128,7 +128,7 @@ impl<'a> WidgetContext<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::types::Sizing;
+    use crate::layout::Sizing;
     use crate::tree::{Color, NamedColor};
 
     fn make_context() -> (NodeArena, FocusManager, Scheduler, Theme) {
