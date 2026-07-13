@@ -1,5 +1,5 @@
-use super::PassResult;
 use crate::framebuffer::FrameBuffer;
+use crate::render::PassResult;
 
 /// Priority level for render pass ordering.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

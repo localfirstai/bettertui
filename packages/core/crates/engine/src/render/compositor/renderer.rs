@@ -1,7 +1,7 @@
 use super::Compositor;
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::FrameBuffer;
-use crate::renderer::backend::RenderBackend;
+use crate::render::backend::RenderBackend;
 
 pub struct CompositorRenderer {
     compositor: Compositor,
@@ -19,7 +19,7 @@ impl CompositorRenderer {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             compositor: Compositor::new(width, height),
-            backend: Box::new(crate::renderer::backend::ansi::AnsiBackend::new()),
+            backend: Box::new(crate::render::ansi::AnsiBackend::new()),
             previous_buffer: Some(FrameBuffer::new(width, height)),
         }
     }
@@ -130,7 +130,7 @@ impl CompositorRenderer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::compositor::LayerType;
+    use crate::render::compositor::LayerType;
 
     #[test]
     fn compositor_renderer_new() {

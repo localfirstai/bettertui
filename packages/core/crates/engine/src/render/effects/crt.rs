@@ -1,6 +1,6 @@
 use super::color_to_float;
 use crate::framebuffer::FrameBuffer;
-use crate::post_process::{PassPriority, PassResult, RenderPass, RenderPassContext};
+use crate::render::{PassPriority, PassResult, RenderPass, RenderPassContext};
 use crate::tree::color::Color;
 
 #[cfg(test)]

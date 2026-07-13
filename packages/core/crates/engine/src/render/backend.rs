@@ -6,5 +6,3 @@ pub trait RenderBackend {
     fn finish(&self) -> &[u8];
     fn reset(&mut self);
 }
-
-pub mod ansi;

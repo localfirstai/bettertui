@@ -1,6 +1,6 @@
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::renderer::backend::RenderBackend;
+use crate::render::backend::RenderBackend;
 use crate::tree::color::{Color, NamedColor};
 
 pub struct AnsiBackend {

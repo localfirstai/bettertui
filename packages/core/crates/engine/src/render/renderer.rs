@@ -1,17 +1,15 @@
 //! Rendering pipeline: Renderer, RenderFrame, and the RenderBackend trait for ANSI output.
 
-pub mod backend;
-
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::FrameBuffer;
 use crate::layout::LayoutTreeSync;
 use crate::layout::build_render_tree_with_viewport;
 use crate::layout::paint::Viewport;
-use crate::painter::Painter;
-use crate::post_process::{PassResult, RenderPassContext, RenderPipeline};
-use crate::render_object::RenderTree;
-use crate::renderer::backend::RenderBackend;
-use crate::renderer::backend::ansi::AnsiBackend;
+use crate::render::ansi::AnsiBackend;
+use crate::render::backend::RenderBackend;
+use crate::render::object::RenderTree;
+use crate::render::painter::Painter;
+use crate::render::{PassResult, RenderPassContext, RenderPipeline};
 use crate::scheduler::{FrameStatus, Scheduler};
 use crate::tree::arena::NodeArena;
 
@@ -237,9 +235,9 @@ impl Renderer {
 mod tests {
     use super::*;
 
-    use crate::post_process::effects::ColorMatrixPass;
-    use crate::post_process::effects::INVERT_MATRIX;
-    use crate::renderer::backend::ansi::AnsiBackend;
+    use crate::render::ansi::AnsiBackend;
+    use crate::render::effects::ColorMatrixPass;
+    use crate::render::effects::INVERT_MATRIX;
     use crate::tree::color::Color;
 
     fn make_arena() -> NodeArena {

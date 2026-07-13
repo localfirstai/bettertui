@@ -1,6 +1,6 @@
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::layout::paint::{PaintBounds, PaintContext, PaintFlags};
-use crate::render_object::{RenderObject, RenderTree};
+use crate::render::{RenderObject, RenderTree};
 use crate::text::{LayoutConfig, layout_text};
 use crate::tree::color::Color;
 use crate::tree::style::ResolvedStyle;

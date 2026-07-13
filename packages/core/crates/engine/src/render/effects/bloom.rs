@@ -3,7 +3,7 @@ use crate::framebuffer::FrameBuffer;
 use super::{color_to_float, float_to_color};
 #[cfg(test)]
 use crate::framebuffer::Cell;
-use crate::post_process::{PassPriority, PassResult, RenderPass, RenderPassContext};
+use crate::render::{PassPriority, PassResult, RenderPass, RenderPassContext};
 use crate::tree::color::Color;
 
 /// Bloom effect: spreads bright areas into neighboring cells.
