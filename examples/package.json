@@ -1,0 +1,25 @@
+{
+  "name": "@bettertui/examples",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsdown src/index.tsx --format esm --watch",
+    "build": "tsdown src/index.tsx --format esm",
+    "start": "node dist/index.mjs",
+    "example": "node scripts/run-example.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bettertui/core": "workspace:*",
+    "@bettertui/react": "workspace:*",
+    "@bettertui/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
