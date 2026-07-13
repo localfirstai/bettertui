@@ -78,7 +78,7 @@ mod tests {
     use crate::tree::NodeId;
     use crate::tree::color::{Color, NamedColor};
 
-    fn make_id(_n: u32) -> NodeId {
+    fn make_id() -> NodeId {
         let mut arena = crate::tree::arena::NodeArena::new();
         arena.insert(crate::tree::render_node::RenderNode::new(
             crate::tree::node_kind::NodeKind::Box,
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn render_object_new() {
-        let id = make_id(0);
+        let id = make_id();
         let obj = RenderObject::new(id);
         assert_eq!(obj.id, id);
         assert_eq!(obj.opacity, 1.0);
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn render_object_has_background() {
-        let mut obj = RenderObject::new(make_id(0));
+        let mut obj = RenderObject::new(make_id());
         assert!(!obj.has_background());
         obj.style.bg = Some(Color::Named(NamedColor::Blue));
         assert!(obj.has_background());
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn render_object_has_text() {
-        let mut obj = RenderObject::new(make_id(0));
+        let mut obj = RenderObject::new(make_id());
         assert!(!obj.has_text());
         obj.text = Some("hello".into());
         assert!(obj.has_text());
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn render_object_is_visible() {
-        let mut obj = RenderObject::new(make_id(0));
+        let mut obj = RenderObject::new(make_id());
         assert!(obj.is_visible());
         obj.opacity = 0.0;
         assert!(!obj.is_visible());
@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn render_object_content_rect() {
-        let mut obj = RenderObject::new(make_id(0));
+        let mut obj = RenderObject::new(make_id());
         obj.bounds.width = 20;
         obj.bounds.height = 10;
         obj.bounds.padding_left = 2;
