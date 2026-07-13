@@ -40,8 +40,8 @@ fn make_nested_arena() -> NodeArena {
 #[test]
 fn integration_full_pipeline_single_node() {
     let mut renderer = Renderer::new(80, 24);
-    let arena = make_single_node_arena();
-    let frame = renderer.render_full(&arena);
+    let mut arena = make_single_node_arena();
+    let frame = renderer.render_full(&mut arena);
     assert_eq!(frame.width, 80);
     assert_eq!(frame.height, 24);
     assert!(!frame.output_data.is_empty());
@@ -51,8 +51,8 @@ fn integration_full_pipeline_single_node() {
 #[test]
 fn integration_full_pipeline_parent_child() {
     let mut renderer = Renderer::new(80, 24);
-    let arena = make_parent_child_arena();
-    let frame = renderer.render_full(&arena);
+    let mut arena = make_parent_child_arena();
+    let frame = renderer.render_full(&mut arena);
     assert!(!frame.output_data.is_empty());
     assert!(!frame.dirty_regions.is_empty());
 }
@@ -60,17 +60,17 @@ fn integration_full_pipeline_parent_child() {
 #[test]
 fn integration_full_pipeline_nested() {
     let mut renderer = Renderer::new(80, 24);
-    let arena = make_nested_arena();
-    let frame = renderer.render_full(&arena);
+    let mut arena = make_nested_arena();
+    let frame = renderer.render_full(&mut arena);
     assert!(!frame.output_data.is_empty());
 }
 
 #[test]
 fn integration_double_render_reduces_dirty() {
     let mut renderer = Renderer::new(80, 24);
-    let arena = make_parent_child_arena();
-    let frame1 = renderer.render_full(&arena);
-    let frame2 = renderer.render(&arena);
+    let mut arena = make_parent_child_arena();
+    let frame1 = renderer.render_full(&mut arena);
+    let frame2 = renderer.render(&mut arena);
     assert!(!frame1.output_data.is_empty());
     // Second render with no changes should be suppressed
     assert!(
@@ -175,11 +175,11 @@ fn integration_layout_sync_compute() {
 #[test]
 fn integration_renderer_resize_invalidates() {
     let mut renderer = Renderer::new(80, 24);
-    let arena = make_single_node_arena();
-    renderer.render_full(&arena);
+    let mut arena = make_single_node_arena();
+    renderer.render_full(&mut arena);
     renderer.resize(100, 30);
     assert_eq!(renderer.dimensions(), (100, 30));
-    let frame = renderer.render_full(&arena);
+    let frame = renderer.render_full(&mut arena);
     assert_eq!(frame.width, 100);
     assert_eq!(frame.height, 30);
 }
@@ -304,10 +304,10 @@ fn p2_full_repaint_covers_entire_area() {
 #[test]
 fn p2_repeated_identical_render_no_extra_dirty() {
     let mut renderer = Renderer::new(40, 10);
-    let arena = make_parent_child_arena();
-    let _ = renderer.render_full(&arena);
-    let frame2 = renderer.render(&arena);
-    let frame3 = renderer.render(&arena);
+    let mut arena = make_parent_child_arena();
+    let _ = renderer.render_full(&mut arena);
+    let frame2 = renderer.render(&mut arena);
+    let frame3 = renderer.render(&mut arena);
     assert!(
         frame2.dirty_regions.is_empty(),
         "second identical render should have empty dirty"
@@ -415,7 +415,7 @@ fn p2_opacity_zero_hides_content() {
     arena.append_child(arena.root(), child).unwrap();
 
     let mut renderer = Renderer::new(40, 10);
-    let frame = renderer.render_full(&arena);
+    let frame = renderer.render_full(&mut arena);
     assert!(
         !frame.output_data.is_empty(),
         "visible node must produce output"
@@ -431,7 +431,7 @@ fn p2_opacity_zero_hides_content() {
     arena2.append_child(arena2.root(), hidden).unwrap();
 
     let mut renderer2 = Renderer::new(40, 10);
-    let frame2 = renderer2.render_full(&arena2);
+    let frame2 = renderer2.render_full(&mut arena2);
     let output_str = String::from_utf8_lossy(&frame2.output_data);
     assert!(
         !output_str.contains("hidden"),
@@ -515,13 +515,13 @@ fn p2_dirty_region_no_merge_non_adjacent() {
 #[test]
 fn p2_empty_frame_produces_no_dirty() {
     let mut renderer = Renderer::new(10, 5);
-    let arena = NodeArena::new();
-    let frame = renderer.render_full(&arena);
+    let mut arena = NodeArena::new();
+    let frame = renderer.render_full(&mut arena);
     assert!(
         !frame.output_data.is_empty(),
         "first render full repaint must produce output"
     );
-    let frame2 = renderer.render(&arena);
+    let frame2 = renderer.render(&mut arena);
     assert!(
         frame2.dirty_regions.is_empty(),
         "identical frame should have no dirty regions"

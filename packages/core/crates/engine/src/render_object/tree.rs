@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 use super::object::RenderObject;
@@ -8,6 +9,7 @@ pub struct RenderTree {
     objects: Vec<RenderObject>,
     index: HashMap<NodeId, usize>,
     root: Option<NodeId>,
+    sorted_cache: RefCell<Option<Vec<usize>>>,
 }
 
 impl Default for RenderTree {
@@ -22,6 +24,7 @@ impl RenderTree {
             objects: Vec::new(),
             index: HashMap::new(),
             root: None,
+            sorted_cache: RefCell::new(None),
         }
     }
 
@@ -32,6 +35,7 @@ impl RenderTree {
         }
         self.index.insert(obj.id, idx);
         self.objects.push(obj);
+        *self.sorted_cache.borrow_mut() = None;
     }
 
     pub fn get(&self, id: NodeId) -> Option<&RenderObject> {
@@ -74,8 +78,13 @@ impl RenderTree {
     }
 
     pub fn sorted_by_z_index(&self) -> Vec<usize> {
+        let mut cache = self.sorted_cache.borrow_mut();
+        if let Some(ref cached) = *cache {
+            return cached.clone();
+        }
         let mut indices: Vec<usize> = (0..self.objects.len()).collect();
         indices.sort_by_key(|&i| self.objects[i].z_index);
+        *cache = Some(indices.clone());
         indices
     }
 
@@ -83,6 +92,7 @@ impl RenderTree {
         self.objects.clear();
         self.index.clear();
         self.root = None;
+        *self.sorted_cache.borrow_mut() = None;
     }
 }
 
@@ -150,6 +160,9 @@ mod tests {
         assert_eq!(sorted[0], 1);
         assert_eq!(sorted[1], 2);
         assert_eq!(sorted[2], 0);
+        // Second call should return cached result
+        let sorted2 = tree.sorted_by_z_index();
+        assert_eq!(sorted2, sorted);
     }
 
     #[test]

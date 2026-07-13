@@ -892,7 +892,7 @@ impl NapiEngine {
     /// Render the current tree. Returns ANSI output as a buffer.
     #[napi]
     pub fn render(&mut self) -> RenderResult {
-        let arena = self.engine.arena();
+        let arena = self.engine.arena_mut();
         let frame = self.renderer.render(arena);
         RenderResult {
             output_data: frame.output_data,
@@ -905,7 +905,7 @@ impl NapiEngine {
     /// Render with full repaint.
     #[napi]
     pub fn render_full(&mut self) -> RenderResult {
-        let arena = self.engine.arena();
+        let arena = self.engine.arena_mut();
         let frame = self.renderer.render_full(arena);
         RenderResult {
             output_data: frame.output_data,

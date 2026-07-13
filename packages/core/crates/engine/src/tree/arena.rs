@@ -97,6 +97,14 @@ impl NodeArena {
         self.nodes.is_empty()
     }
 
+    /// Clear dirty flags on all nodes.
+    /// Call this after render() completes to reset per-node dirty tracking.
+    pub fn clear_dirty_flags(&mut self) {
+        for (_, node) in &mut self.nodes {
+            node.state.clear_dirty();
+        }
+    }
+
     /// Remove all nodes from the arena, keeping only root.
     pub fn clear(&mut self) {
         self.nodes.clear();

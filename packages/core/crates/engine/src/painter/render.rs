@@ -47,8 +47,8 @@ impl Painter {
             self.buffer.clear();
         }
         let sorted = tree.sorted_by_z_index();
-        for &idx in &sorted {
-            let obj = &tree.objects()[idx];
+        for idx in &sorted {
+            let obj = &tree.objects()[*idx];
             self.paint_object(obj, ctx);
         }
     }

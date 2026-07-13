@@ -28,7 +28,7 @@ impl LayoutTreeSync {
         for (id, node) in arena.iter() {
             if !self.layout.has_node(id) {
                 self.layout.register_container(id, &node.layout);
-            } else {
+            } else if node.state.layout_dirty {
                 self.layout.update_style(id, &node.layout);
             }
         }
@@ -38,7 +38,7 @@ impl LayoutTreeSync {
         if let Some(node) = arena.get(id) {
             if !self.layout.has_node(id) {
                 self.layout.register_container(id, &node.layout);
-            } else {
+            } else if node.state.layout_dirty {
                 self.layout.update_style(id, &node.layout);
             }
         }

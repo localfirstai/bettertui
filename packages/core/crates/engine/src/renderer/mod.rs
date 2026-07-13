@@ -6,7 +6,7 @@ use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::FrameBuffer;
 use crate::layout::LayoutTreeSync;
 use crate::painter::Painter;
-use crate::render_object::{RenderTree, build_render_tree};
+use crate::render_object::{RenderTree, Viewport, build_render_tree_with_viewport};
 use crate::renderer::backend::RenderBackend;
 use crate::renderer::backend::ansi::AnsiBackend;
 use crate::scheduler::{FrameStatus, Scheduler};
@@ -114,7 +114,7 @@ impl Renderer {
         self.scheduler.status()
     }
 
-    pub fn render(&mut self, arena: &NodeArena) -> RenderFrame {
+    pub fn render(&mut self, arena: &mut NodeArena) -> RenderFrame {
         self.generation += 1;
 
         // Frame suppression: if nothing changed and no full repaint needed, skip
@@ -135,7 +135,9 @@ impl Renderer {
         }
         let _ = self.layout_sync.compute(root_id, self.width, self.height);
 
-        self.render_tree = build_render_tree(arena, self.layout_sync.results());
+        let vp = Viewport::new(0, 0, self.width, self.height);
+        self.render_tree =
+            build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp));
 
         let ctx = crate::render_object::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
@@ -157,6 +159,9 @@ impl Renderer {
 
         self.scheduler.end_frame();
 
+        // Clear dirty flags so next frame only updates changed nodes
+        arena.clear_dirty_flags();
+
         RenderFrame {
             output_data: self.backend.finish().to_vec(),
             dirty_regions,
@@ -165,7 +170,7 @@ impl Renderer {
         }
     }
 
-    pub fn render_full(&mut self, arena: &NodeArena) -> RenderFrame {
+    pub fn render_full(&mut self, arena: &mut NodeArena) -> RenderFrame {
         self.needs_full_repaint = true;
         self.render(arena)
     }
@@ -239,8 +244,8 @@ mod tests {
     #[test]
     fn renderer_render_empty_tree() {
         let mut r = Renderer::new(40, 10);
-        let arena = make_arena();
-        let frame = r.render(&arena);
+        let mut arena = make_arena();
+        let frame = r.render(&mut arena);
         assert_eq!(frame.width, 40);
         assert_eq!(frame.height, 10);
         assert!(!frame.output_data.is_empty());
@@ -249,8 +254,8 @@ mod tests {
     #[test]
     fn renderer_render_full() {
         let mut r = Renderer::new(40, 10);
-        let arena = make_arena();
-        let frame = r.render_full(&arena);
+        let mut arena = make_arena();
+        let frame = r.render_full(&mut arena);
         assert_eq!(frame.width, 40);
         assert!(!frame.output_data.is_empty());
     }
@@ -258,12 +263,12 @@ mod tests {
     #[test]
     fn renderer_frame_suppression() {
         let mut r = Renderer::new(40, 10);
-        let arena = make_arena();
+        let mut arena = make_arena();
         // First render always produces output
-        let frame1 = r.render(&arena);
+        let frame1 = r.render(&mut arena);
         assert!(!frame1.is_empty(), "first render should produce output");
         // Second render with no changes should be suppressed
-        let frame2 = r.render(&arena);
+        let frame2 = r.render(&mut arena);
         assert!(
             frame2.is_empty(),
             "second render with no changes should be suppressed"
@@ -275,9 +280,9 @@ mod tests {
         let mut r = Renderer::new(40, 10);
         let mut arena = make_arena();
         // First render
-        let _ = r.render(&arena);
+        let _ = r.render(&mut arena);
         // Second render suppressed (no changes)
-        let frame2 = r.render(&arena);
+        let frame2 = r.render(&mut arena);
         assert!(
             frame2.is_empty(),
             "second render with no changes should be suppressed"
@@ -287,10 +292,10 @@ mod tests {
         // Third render should proceed (change_count check passes)
         // Note: output may still be empty if visual content matches snapshot
         // The key is that render() doesn't early-return with empty frame
-        let frame3 = r.render(&arena);
+        let _frame3 = r.render(&mut arena);
         // After mutation, render proceeds - verify it doesn't early-return
         // by checking that last_change_count was updated
-        let frame4 = r.render(&arena);
+        let frame4 = r.render(&mut arena);
         assert!(
             frame4.is_empty(),
             "fourth render with no new changes should be suppressed"
@@ -323,5 +328,123 @@ mod tests {
         let backend = Box::new(AnsiBackend::new());
         r.set_backend(backend);
         assert_eq!(r.dimensions(), (80, 24));
+    }
+
+    #[test]
+    fn renderer_viewport_culling_pipeline() {
+        let mut r = Renderer::new(80, 24);
+        let mut arena = make_arena();
+        let root = arena.root();
+
+        // Add 50 children stacked vertically at y=0..50 (only first 24 in viewport)
+        for _i in 0..50 {
+            let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Box);
+            n.layout.width = Some(crate::tree::Sizing::Points(80.0));
+            n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+            let id = arena.insert(n);
+            arena.append_child(root, id).unwrap();
+        }
+
+        // First render — full tree visible
+        let frame1 = r.render(&mut arena);
+        assert!(!frame1.is_empty(), "first render should produce output");
+
+        // Mark arena changed but don't actually change anything structural
+        arena.mark_changed();
+        let frame2 = r.render(&mut arena);
+        // Content visually unchanged, so dirty regions should be empty
+        // (renderer proceeds without early-return, but diff detects no changes)
+        assert!(
+            frame2.dirty_regions.is_empty(),
+            "unchanged content should have no dirty regions"
+        );
+
+        // Render again — verify frame suppression
+        let frame3 = r.render(&mut arena);
+        assert!(frame3.is_empty(), "no-change render should be suppressed");
+    }
+
+    #[test]
+    fn renderer_stress_large_tree_partial_visible() {
+        let mut r = Renderer::new(80, 24);
+        let mut arena = make_arena();
+        let root = arena.root();
+
+        // Build 200 nodes
+        for _i in 0..200 {
+            let n = crate::tree::RenderNode::new(crate::tree::NodeKind::Box);
+            let id = arena.insert(n);
+            arena.append_child(root, id).unwrap();
+        }
+
+        let frame = r.render(&mut arena);
+        assert!(!frame.is_empty());
+        let tree = r.render_tree();
+        assert!(
+            tree.len() < 200,
+            "stress: large tree should be pruned, len={}",
+            tree.len()
+        );
+    }
+
+    #[test]
+    fn renderer_stress_nested_scroll() {
+        let mut r = Renderer::new(80, 24);
+        let mut arena = make_arena();
+        let root = arena.root();
+
+        // Create scroll container with 1000 children
+        let scroll_parent = arena.insert({
+            let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Scroll);
+            n.layout.width = Some(crate::tree::Sizing::Points(80.0));
+            n.layout.height = Some(crate::tree::Sizing::Points(20.0));
+            n
+        });
+        arena.append_child(root, scroll_parent).unwrap();
+
+        for _ in 0..1000 {
+            let child = arena.insert({
+                let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Text);
+                n.layout.width = Some(crate::tree::Sizing::Points(80.0));
+                n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+                n.text = Some("x".into());
+                n
+            });
+            arena.append_child(scroll_parent, child).unwrap();
+        }
+
+        let frame = r.render(&mut arena);
+        assert!(!frame.is_empty());
+        let tree = r.render_tree();
+        // With 80x24 viewport and 80x20 scroll container + 1000 children at 1px each,
+        // culling should reduce tree. Exact count depends on layout direction.
+        assert!(
+            !tree.is_empty() && tree.len() < 1000,
+            "nested scroll should cull (len={})",
+            tree.len()
+        );
+    }
+
+    #[test]
+    fn renderer_multiple_passes_no_overflow() {
+        let mut r = Renderer::new(80, 24);
+        let mut arena = make_arena();
+        let root = arena.root();
+
+        for _ in 0..10 {
+            let n = crate::tree::RenderNode::new(crate::tree::NodeKind::Box);
+            let id = arena.insert(n);
+            arena.append_child(root, id).unwrap();
+        }
+
+        // Render multiple times — should not crash or leak
+        for i in 0..5 {
+            arena.mark_changed();
+            let frame = r.render(&mut arena);
+            // First pass produces output, subsequent passes may suppress
+            if i == 0 {
+                assert!(!frame.is_empty());
+            }
+        }
     }
 }

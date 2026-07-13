@@ -226,7 +226,7 @@ mod tests {
     fn max_history() {
         let mut reg = CommandRegistry::new().with_max_history(3);
         for i in 0..5 {
-            reg.execute(CommandEntry::new("cmd", &i.to_string(), false));
+            reg.execute(CommandEntry::new("cmd", i.to_string(), false));
         }
         assert_eq!(reg.history_len(), 3);
     }
@@ -235,7 +235,7 @@ mod tests {
     fn max_undo() {
         let mut reg = CommandRegistry::new().with_max_undo(2);
         for i in 0..5 {
-            reg.execute(CommandEntry::new("cmd", &i.to_string(), true));
+            reg.execute(CommandEntry::new("cmd", i.to_string(), true));
         }
         assert_eq!(reg.undo_depth(), 2);
     }

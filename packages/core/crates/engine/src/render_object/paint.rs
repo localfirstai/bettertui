@@ -79,6 +79,74 @@ impl PaintBounds {
     }
 }
 
+/// Viewport defines the visible region of the terminal.
+/// Used for culling: nodes outside the viewport are skipped during render tree building.
+/// Unlike ClipBounds (which clips rendering), Viewport is a culling-only concept.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Viewport {
+    pub x: u16,
+    pub y: u16,
+    pub width: u16,
+    pub height: u16,
+}
+
+impl Viewport {
+    pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
+    pub fn right(&self) -> u16 {
+        self.x.saturating_add(self.width)
+    }
+
+    pub fn bottom(&self) -> u16 {
+        self.y.saturating_add(self.height)
+    }
+
+    pub fn contains_rect(&self, px: u16, py: u16, pw: u16, ph: u16) -> bool {
+        let r = px.saturating_add(pw);
+        let b = py.saturating_add(ph);
+        r > self.x && px < self.right() && b > self.y && py < self.bottom()
+    }
+
+    pub fn intersect(&self, other: &Viewport) -> Option<Viewport> {
+        let x = self.x.max(other.x);
+        let y = self.y.max(other.y);
+        let r = self.right().min(other.right());
+        let b = self.bottom().min(other.bottom());
+        if r > x && b > y {
+            Some(Viewport::new(x, y, r - x, b - y))
+        } else {
+            None
+        }
+    }
+
+    pub fn offset(&self, dx: i32, dy: i32) -> Viewport {
+        Viewport::new(
+            (self.x as i32 + dx).max(0) as u16,
+            (self.y as i32 + dy).max(0) as u16,
+            self.width,
+            self.height,
+        )
+    }
+
+    /// Expand viewport by `padding` pixels on all sides.
+    /// Prevents objects from popping in/out at viewport edges during scroll.
+    pub fn with_padding(&self, padding: u16) -> Viewport {
+        Viewport::new(
+            self.x.saturating_sub(padding),
+            self.y.saturating_sub(padding),
+            self.width.saturating_add(padding * 2),
+            self.height.saturating_add(padding * 2),
+        )
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ClipBounds {
     pub x: u16,
@@ -208,6 +276,103 @@ impl PaintContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn viewport_new() {
+        let v = Viewport::new(0, 0, 80, 24);
+        assert_eq!(v.width, 80);
+        assert_eq!(v.height, 24);
+    }
+
+    #[test]
+    fn viewport_contains_rect_inside() {
+        let v = Viewport::new(0, 0, 80, 24);
+        assert!(v.contains_rect(5, 5, 10, 10));
+    }
+
+    #[test]
+    fn viewport_contains_rect_outside() {
+        let v = Viewport::new(0, 0, 80, 24);
+        assert!(!v.contains_rect(100, 100, 10, 10));
+    }
+
+    #[test]
+    fn viewport_contains_rect_partial() {
+        let v = Viewport::new(10, 10, 20, 20);
+        assert!(v.contains_rect(5, 5, 20, 20));
+        assert!(!v.contains_rect(5, 5, 5, 5));
+    }
+
+    #[test]
+    fn viewport_intersect_overlap() {
+        let a = Viewport::new(0, 0, 10, 10);
+        let b = Viewport::new(5, 5, 10, 10);
+        let c = a.intersect(&b).unwrap();
+        assert_eq!(c.x, 5);
+        assert_eq!(c.y, 5);
+        assert_eq!(c.width, 5);
+        assert_eq!(c.height, 5);
+    }
+
+    #[test]
+    fn viewport_intersect_no_overlap() {
+        let a = Viewport::new(0, 0, 5, 5);
+        let b = Viewport::new(10, 10, 5, 5);
+        assert!(a.intersect(&b).is_none());
+    }
+
+    #[test]
+    fn viewport_intersect_contained() {
+        let outer = Viewport::new(0, 0, 80, 24);
+        let inner = Viewport::new(10, 10, 20, 10);
+        let c = outer.intersect(&inner).unwrap();
+        assert_eq!(c, inner);
+    }
+
+    #[test]
+    fn viewport_offset_positive() {
+        let v = Viewport::new(0, 0, 80, 24);
+        let o = v.offset(10, 5);
+        assert_eq!(o.x, 10);
+        assert_eq!(o.y, 5);
+        assert_eq!(o.width, 80);
+        assert_eq!(o.height, 24);
+    }
+
+    #[test]
+    fn viewport_with_padding() {
+        let v = Viewport::new(10, 20, 80, 24);
+        let p = v.with_padding(5);
+        assert_eq!(p.x, 5);
+        assert_eq!(p.y, 15);
+        assert_eq!(p.width, 90);
+        assert_eq!(p.height, 34);
+    }
+
+    #[test]
+    fn viewport_with_padding_zero() {
+        let v = Viewport::new(0, 0, 80, 24);
+        let p = v.with_padding(0);
+        assert_eq!(p, v);
+    }
+
+    #[test]
+    fn viewport_with_padding_saturate() {
+        let v = Viewport::new(2, 3, 5, 5);
+        let p = v.with_padding(10);
+        assert_eq!(p.x, 0);
+        assert_eq!(p.y, 0);
+        assert_eq!(p.width, 25);
+        assert_eq!(p.height, 25);
+    }
+
+    #[test]
+    fn viewport_offset_clamp_zero() {
+        let v = Viewport::new(5, 5, 80, 24);
+        let o = v.offset(-10, -10);
+        assert_eq!(o.x, 0);
+        assert_eq!(o.y, 0);
+    }
 
     #[test]
     fn paint_bounds_default() {
