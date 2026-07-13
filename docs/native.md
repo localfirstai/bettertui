@@ -1,6 +1,6 @@
 # Native Bridge
 
-The native bridge (part of `@bettertui/core`, at `packages/core/src/native/`) is the TypeScript side of the napi-rs FFI boundary. It loads the `bettertui_bindings` addon and exposes factories, a runtime, and an event loop.
+The native bridge (part of `@bettertui/core`, at `packages/core/src/engine/`) is the TypeScript side of the napi-rs FFI boundary. It loads the `bettertui_bindings` addon and exposes factories, a runtime, and an event loop.
 
 ## Loading
 
@@ -28,4 +28,4 @@ See the [API doc](api/packages/native.md) for full types.
 
 ## Status
 
-Implemented at `packages/core/src/native/`. Depends on an unbuilt native addon at runtime.
+Implemented at `packages/core/src/engine/`. Depends on an unbuilt native addon at runtime.

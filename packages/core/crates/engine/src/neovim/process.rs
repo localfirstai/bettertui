@@ -1,7 +1,7 @@
 use super::config::NeovimConfig;
 use super::state::NeovimState;
 use crate::pty::PtySize;
-use crate::terminal_process::{TerminalError, TerminalRuntime};
+use crate::terminal::process::{TerminalError, TerminalRuntime};
 
 #[derive(Debug)]
 pub enum NeovimError {

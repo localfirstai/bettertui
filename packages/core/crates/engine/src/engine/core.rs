@@ -136,7 +136,7 @@ impl Engine {
     }
 
     /// Set layout on a node.
-    pub fn set_layout(&mut self, id: NodeId, layout: crate::tree::LayoutProps) {
+    pub fn set_layout(&mut self, id: NodeId, layout: crate::layout::types::LayoutProps) {
         let _ = self
             .processor
             .process_single(Command::SetLayout { id, layout });
@@ -247,7 +247,7 @@ mod tests {
         let mut engine = Engine::new();
         let root = engine.arena().root();
 
-        let layout = crate::tree::LayoutProps {
+        let layout = crate::layout::types::LayoutProps {
             flex_grow: 1.0,
             ..Default::default()
         };

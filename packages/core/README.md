@@ -8,7 +8,7 @@ Framework-agnostic runtime, command protocol, tree operations, and the internal 
 - `Runtime` — frame loop and commit orchestration.
 - Tree operations — `createInstance`, `createTextInstance`, `appendChild`, `insertBefore`, `removeChild`, `commitUpdate`, `commitTextUpdate`, and friends used by reconcilers.
 - `createReconciler()` — framework-agnostic `react-reconciler`-style host config (no React import).
-- Native bridge (`src/native/*`) — loads the `bettertui_bindings` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `createRuntime`, `createEventLoop`, `detectCapabilities`, `getVersion`).
+- Engine module (`src/engine/`) — loads the `bettertui_bindings` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `createRuntime`, `createEventLoop`, `detectCapabilities`, `getVersion`).
 
 ## Building
 
@@ -32,4 +32,4 @@ The package carries the largest TypeScript test suite in the repo (command buffe
 
 Implemented. The native bridge (merged from the former `@bettertui/native`) requires the Rust addon to be built before any native call executes.
 
-See [`docs/api/packages/core.md`](../../docs/api/packages/core.md) and [`docs/architecture/Overview.md`](../../docs/architecture/Overview.md).
+See [`docs/api/packages/core.md`](../../docs/api/packages/core.md) and [`docs/architecture/overview.md`](../../docs/architecture/overview.md).

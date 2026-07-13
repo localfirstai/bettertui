@@ -72,7 +72,7 @@ export {
 } from "./validation";
 export type { ValidationError, ValidationResult } from "./validation";
 
-// Native bridge (Rust napi-rs bindings)
+// Engine (Rust napi-rs bindings)
 export type {
   BindingInfo,
   NapiEngine,
@@ -84,7 +84,7 @@ export type {
   ProcessResult,
   TerminalCapabilities,
   SchedulerStats,
-} from "./native/types";
+} from "./engine/types";
 export {
   createEngine,
   createEventBus,
@@ -95,12 +95,12 @@ export {
   detectCapabilities,
   getVersion,
   highlightCode,
-} from "./native";
-export type { HighlightSegment } from "./native";
-export { createRuntime } from "./native/runtime";
+} from "./engine";
+export type { HighlightSegment } from "./engine";
+export { createRuntime } from "./engine/runtime";
 export type {
   Runtime as NativeRuntime,
   RuntimeOptions as NativeRuntimeOptions,
-} from "./native/runtime";
-export { createEventLoop } from "./native/events";
-export type { EventLoop, EventCallback } from "./native/events";
+} from "./engine/runtime";
+export { createEventLoop } from "./engine/events";
+export type { EventLoop, EventCallback } from "./engine/events";

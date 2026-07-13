@@ -1,4 +1,5 @@
 use super::cell::{Cell, CellAttributes};
+use crate::text::grapheme_clusters;
 use crate::tree::color::Color;
 
 /// SoA (Struct of Arrays) storage for terminal cells.
@@ -160,12 +161,19 @@ impl FrameBuffer {
     }
 
     pub fn write_str(&mut self, x: u16, y: u16, s: &str, fg: Color, bg: Color) {
-        for (i, ch) in s.chars().enumerate() {
-            let col = x + i as u16;
+        let mut col = x;
+        for g in grapheme_clusters(s) {
             if col >= self.width {
                 break;
             }
-            self.set(col, y, Cell::new(ch).with_fg(fg).with_bg(bg));
+            let w = crate::text::grapheme_width(g) as u16;
+            if let Some(ch) = g.chars().next() {
+                self.set(col, y, Cell::new(ch).with_fg(fg).with_bg(bg));
+                if w == 2 && col + 1 < self.width {
+                    self.set(col + 1, y, Cell::new(' ').with_fg(fg).with_bg(bg));
+                }
+            }
+            col += w;
         }
     }
 
@@ -220,6 +228,90 @@ impl FrameBuffer {
 
     pub fn is_empty(&self) -> bool {
         self.cells.chars.iter().all(|&c| c == ' ')
+    }
+
+    /// Iterate over all cell positions and apply a mutable transformation to each cell.
+    pub fn process_cells<F>(&mut self, mut f: F)
+    where
+        F: FnMut(u16, u16, &mut Cell),
+    {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = self.index(x, y);
+                let mut cell = Cell {
+                    ch: self.cells.chars[idx],
+                    fg: self.cells.fg[idx],
+                    bg: self.cells.bg[idx],
+                    underline_color: self.cells.underline_color[idx],
+                    attributes: self.cells.attrs[idx],
+                };
+                f(x, y, &mut cell);
+                self.cells.chars[idx] = cell.ch;
+                self.cells.fg[idx] = cell.fg;
+                self.cells.bg[idx] = cell.bg;
+                self.cells.underline_color[idx] = cell.underline_color;
+                self.cells.attrs[idx] = cell.attributes;
+            }
+        }
+    }
+
+    /// Apply a transformation to every cell's foreground color.
+    pub fn process_fg_colors<F>(&mut self, mut f: F)
+    where
+        F: FnMut(u16, u16, Color) -> Color,
+    {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = self.index(x, y);
+                self.cells.fg[idx] = f(x, y, self.cells.fg[idx]);
+            }
+        }
+    }
+
+    /// Apply a transformation to every cell's background color.
+    pub fn process_bg_colors<F>(&mut self, mut f: F)
+    where
+        F: FnMut(u16, u16, Color) -> Color,
+    {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = self.index(x, y);
+                self.cells.bg[idx] = f(x, y, self.cells.bg[idx]);
+            }
+        }
+    }
+
+    /// Apply a transformation to every cell in a rectangular region.
+    pub fn process_region<F>(&mut self, x: u16, y: u16, w: u16, h: u16, mut f: F)
+    where
+        F: FnMut(u16, u16, &mut Cell),
+    {
+        for dy in 0..h {
+            let row = y + dy;
+            if row >= self.height {
+                break;
+            }
+            for dx in 0..w {
+                let col = x + dx;
+                if col >= self.width {
+                    break;
+                }
+                let idx = self.index(col, row);
+                let mut cell = Cell {
+                    ch: self.cells.chars[idx],
+                    fg: self.cells.fg[idx],
+                    bg: self.cells.bg[idx],
+                    underline_color: self.cells.underline_color[idx],
+                    attributes: self.cells.attrs[idx],
+                };
+                f(col, row, &mut cell);
+                self.cells.chars[idx] = cell.ch;
+                self.cells.fg[idx] = cell.fg;
+                self.cells.bg[idx] = cell.bg;
+                self.cells.underline_color[idx] = cell.underline_color;
+                self.cells.attrs[idx] = cell.attributes;
+            }
+        }
     }
 }
 

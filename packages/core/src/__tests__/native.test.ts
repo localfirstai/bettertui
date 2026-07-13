@@ -215,7 +215,6 @@ vi.mock("bettertui_bindings", () => {
   };
 });
 import { CommandBuffer } from "../command-buffer";
-import { createEventLoop } from "../native/events";
 import {
   createEngine,
   createEventBus,
@@ -224,9 +223,10 @@ import {
   createTextEngine,
   detectCapabilities,
   getVersion,
-} from "../native/index";
-import { createRuntime } from "../native/runtime";
-import type { NapiEngine, NapiEventBus } from "../native/types";
+} from "../engine";
+import { createEventLoop } from "../engine/events";
+import { createRuntime } from "../engine/runtime";
+import type { NapiEngine, NapiEventBus } from "../engine/types";
 
 function createMockEngine(overrides: Partial<NapiEngine> = {}): NapiEngine {
   return {

@@ -1,5 +1,22 @@
-//! Input runtime: manages keyboard, mouse, and clipboard input state and event queue.
+//! Input system: event model, bus, dispatch, focus management, keyboard, mouse, clipboard.
 
+// Event system
+mod event_bus;
+mod event_dispatch;
+mod event_types;
+
+pub use event_bus::EventBus;
+pub use event_dispatch::EventDispatcher;
+pub use event_types::{
+    BlurEvent, Event, EventPhase, EventResult, Key, KeyEvent, LifecycleEvent, Modifiers,
+    MouseButton, MouseEvent, PasteEvent, ResizeEvent,
+};
+
+// Focus management
+pub mod focus;
+pub use focus::{FocusDirection, FocusManager, FocusState, FocusTraversal};
+
+// Input runtime
 mod clipboard;
 mod event;
 mod keyboard;
@@ -8,7 +25,7 @@ mod mouse;
 pub use clipboard::{ClipboardAction, ClipboardInput};
 pub use event::{InputEvent, InputEventType};
 pub use keyboard::{KeyAction, KeyModifiers, KeyboardInput};
-pub use mouse::{MouseButton, MouseEvent, MouseInput};
+pub use mouse::MouseInput;
 
 use std::collections::VecDeque;
 
@@ -76,7 +93,7 @@ impl ClipboardState {
 #[derive(Debug, Clone)]
 pub struct MouseState {
     pub position: (u16, u16),
-    pub buttons: MouseButton,
+    pub buttons: mouse::MouseButton,
     pub modifiers: KeyModifiers,
     pub scroll_direction: Option<ScrollDirection>,
 }
@@ -99,7 +116,7 @@ impl MouseState {
     pub fn new() -> Self {
         Self {
             position: (0, 0),
-            buttons: MouseButton::empty(),
+            buttons: mouse::MouseButton::empty(),
             modifiers: KeyModifiers::empty(),
             scroll_direction: None,
         }
@@ -109,7 +126,7 @@ impl MouseState {
         self.position = (x, y);
     }
 
-    pub fn set_buttons(&mut self, buttons: MouseButton) {
+    pub fn set_buttons(&mut self, buttons: mouse::MouseButton) {
         self.buttons = buttons;
     }
 
@@ -364,7 +381,7 @@ mod tests {
     #[test]
     fn input_runtime_handle_mouse_input() {
         let mut runtime = InputRuntime::new();
-        let input = MouseInput::new(0, 0, MouseButton::empty());
+        let input = MouseInput::new(0, 0, mouse::MouseButton::empty());
         runtime.handle_mouse_input(input);
         assert_eq!(runtime.events().len(), 1);
     }

@@ -5,10 +5,10 @@
 // Next: text-styles, animation-basics.
 
 import { Box, Flex, Heading, Provider, Separator, Text, render } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
-import { type ExampleThemeNameLiteral, exampleThemes } from "../../lib/theme";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { KeyInputProvider, useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
+import { type ExampleThemeNameLiteral, exampleThemes } from "~/lib/theme";
 
 export const meta: ExampleMeta = {
   slug: "theming",
@@ -20,6 +20,7 @@ export const meta: ExampleMeta = {
   next: ["text-styles", "animation-basics"],
 };
 
+let storedKeyInput: KeyInput | null = null;
 const themeNames = Object.keys(exampleThemes) as ExampleThemeNameLiteral[];
 let themeIdx = 0;
 
@@ -57,11 +58,16 @@ function Theming() {
 }
 
 function renderApp() {
-  render(<Theming />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <Theming />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 
@@ -70,3 +76,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = Theming;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

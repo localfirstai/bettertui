@@ -123,12 +123,14 @@ impl Default for MouseInput {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct MouseEvent {
     pub input: MouseInput,
     pub timestamp: u64,
 }
 
 impl MouseEvent {
+    #[allow(dead_code)]
     pub fn new(input: MouseInput) -> Self {
         Self {
             input,

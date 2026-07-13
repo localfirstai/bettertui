@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "description": "High-performance terminal UI framework powered by Rust and TypeScript",
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,6 +11,8 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "build:native": "turbo run build:native",
+    "build:native:all": "turbo run build:native:all",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "turbo run format",
@@ -32,11 +35,15 @@
     "cargo:clippy": "cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings",
     "cargo:build": "cargo build --manifest-path packages/core/Cargo.toml",
     "postcargo:build": "node -e \"const fs=require('fs'); const p=require('path'); const exts=['.dylib','.so','.dll']; for (const e of exts) { const f=p.join('packages/core/target/debug/libbettertui_bindings'+e); if(fs.existsSync(f)) fs.copyFileSync(f, p.join('packages/core/target/debug/bettertui_bindings.node')); }\"",
+    "prepare-release": "node scripts/prepare-release.ts",
+    "pre-publish": "node scripts/pre-publish.ts",
+    "publish": "node scripts/publish.ts",
     "clean": "turbo run clean && cargo clean --manifest-path packages/core/Cargo.toml",
     "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "@napi-rs/cli": "^3.7.3",
     "@vitest/coverage-v8": "^3.2.7",
     "husky": "^9.1.7",
     "turbo": "^2.4.0",
@@ -44,6 +51,6 @@
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.15.0"
   }
 }

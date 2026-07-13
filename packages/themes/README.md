@@ -12,7 +12,7 @@ Design-token system for BetterTUI: a default theme and a factory for building cu
 ```ts
 import { createTheme, defaultTheme } from "@bettertui/themes";
 
-const highContrast = createTheme({ ...defaultTheme, /* overrides */ });
+const highContrast = createTheme({ colors: { fg: "#ffffff", bg: "#000000" } });
 ```
 
 ## Status

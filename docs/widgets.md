@@ -9,7 +9,7 @@ Widgets are the high-level, composable UI layer. The real framework is in the Ru
 - `WidgetHost` mounts/unmounts widgets and dispatches events.
 - ~30 built-in widgets: `BoxWidget`, `FlexWidget`, `ContainerWidget`, `StackWidget`, `GridWidget`, `TextWidget`, `LabelWidget`, `ButtonWidget`, `BadgeWidget`, `HeadingWidget`, `InputWidget`, `TextareaWidget`, `ModalWidget`, `TabsWidget`, `TooltipWidget`, `SpinnerWidget`, `ProgressWidget`, `CodeWidget`, `ScrollAreaWidget`, `SeparatorWidget`, `SpacerWidget`, `PromptComposer`, plus `chat/` and `markdown/` submodules.
 
-See [Architecture: Widget Model](architecture/WidgetModel.md).
+See [Architecture: Widget Model](architecture/widget-model.md).
 
 ## TypeScript `@bettertui/widgets`
 

@@ -1,4 +1,5 @@
-use crate::tree::{Color, FlexDirection, LayoutProps, NodeId, NodeKind, Style};
+use crate::layout::types::{FlexDirection, FlexWrap, LayoutProps};
+use crate::tree::{Color, NodeId, NodeKind, Style};
 
 /// Commands that describe mutations to the UI tree.
 ///
@@ -72,74 +73,80 @@ pub enum Command {
         direction: FlexDirection,
     },
 
+    /// Set flex wrap.
+    SetFlexWrap { id: NodeId, value: FlexWrap },
+
     /// Set justify content.
     SetJustifyContent {
         id: NodeId,
-        value: crate::tree::JustifyContent,
+        value: crate::layout::types::JustifyContent,
     },
 
     /// Set align items.
     SetAlignItems {
         id: NodeId,
-        value: crate::tree::AlignItems,
+        value: crate::layout::types::AlignItems,
     },
 
     /// Set align self.
     SetAlignSelf {
         id: NodeId,
-        value: crate::tree::AlignSelf,
+        value: crate::layout::types::AlignSelf,
     },
 
     /// Set width.
     SetWidth {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set height.
     SetHeight {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set min width.
     SetMinWidth {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set min height.
     SetMinHeight {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set max width.
     SetMaxWidth {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set max height.
     SetMaxHeight {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set padding.
     SetPadding {
         id: NodeId,
-        value: crate::tree::RectValues,
+        value: crate::layout::types::RectValues,
     },
 
     /// Set margin.
     SetMargin {
         id: NodeId,
-        value: crate::tree::RectValues,
+        value: crate::layout::types::RectValues,
     },
 
     /// Set gap.
-    SetGap { id: NodeId, value: crate::tree::Gap },
+    SetGap {
+        id: NodeId,
+        value: crate::layout::types::Gap,
+    },
 
     /// Set flex grow.
     SetFlexGrow { id: NodeId, value: f32 },
@@ -150,19 +157,19 @@ pub enum Command {
     /// Set flex basis.
     SetFlexBasis {
         id: NodeId,
-        value: crate::tree::Sizing,
+        value: crate::layout::types::Sizing,
     },
 
     /// Set position.
     SetPosition {
         id: NodeId,
-        value: crate::tree::Position,
+        value: crate::layout::types::Position,
     },
 
     /// Set inset.
     SetInset {
         id: NodeId,
-        value: crate::tree::RectValues,
+        value: crate::layout::types::RectValues,
     },
 
     // ─── Content Commands ─────────────────────────────────────────
@@ -257,6 +264,7 @@ impl Command {
             Self::SetHidden { id, .. } => Some(*id),
             Self::SetLayout { id, .. } => Some(*id),
             Self::SetFlexDirection { id, .. } => Some(*id),
+            Self::SetFlexWrap { id, .. } => Some(*id),
             Self::SetJustifyContent { id, .. } => Some(*id),
             Self::SetAlignItems { id, .. } => Some(*id),
             Self::SetAlignSelf { id, .. } => Some(*id),
@@ -316,6 +324,7 @@ impl Command {
             Self::SetHidden { .. } => "SetHidden",
             Self::SetLayout { .. } => "SetLayout",
             Self::SetFlexDirection { .. } => "SetFlexDirection",
+            Self::SetFlexWrap { .. } => "SetFlexWrap",
             Self::SetJustifyContent { .. } => "SetJustifyContent",
             Self::SetAlignItems { .. } => "SetAlignItems",
             Self::SetAlignSelf { .. } => "SetAlignSelf",
@@ -415,6 +424,9 @@ impl std::fmt::Display for Command {
             Self::SetLayout { id, layout } => write!(f, "SetLayout({id:?}, {layout:?})"),
             Self::SetFlexDirection { id, direction } => {
                 write!(f, "SetFlexDirection({id:?}, {direction:?})")
+            }
+            Self::SetFlexWrap { id, value } => {
+                write!(f, "SetFlexWrap({id:?}, {value:?})")
             }
             Self::SetJustifyContent { id, value } => {
                 write!(f, "SetJustifyContent({id:?}, {value:?})")

@@ -17,9 +17,9 @@ import {
   render,
 } from "@bettertui/react";
 import type { TreeNode } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { KeyInputProvider, useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "tree-view",
@@ -30,6 +30,8 @@ export const meta: ExampleMeta = {
   tags: ["Tree", "TreeNode", "navigation"],
   next: ["data-table-basics", "list-view"],
 };
+
+let storedKeyInput: KeyInput | null = null;
 
 const projectTree: TreeNode[] = [
   {
@@ -144,11 +146,16 @@ function TreeView() {
 }
 
 function renderApp() {
-  render(<TreeView />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <TreeView />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 
@@ -157,3 +164,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = TreeView;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

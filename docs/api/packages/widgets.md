@@ -9,4 +9,4 @@
 
 ## Status
 
-Not implemented as a package. The real widget framework lives in the Rust engine; it is not exposed through TypeScript yet. Do not document concrete TS-side widgets. See [Architecture: Widget Model](../../architecture/WidgetModel.md).
+Not implemented as a package. The real widget framework lives in the Rust engine; it is not exposed through TypeScript yet. Do not document concrete TS-side widgets. See [Architecture: Widget Model](../../architecture/widget-model.md).

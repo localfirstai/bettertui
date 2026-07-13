@@ -16,7 +16,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
-| Examples | ✅ Wired | 8 example apps in `@bettertui/examples` (`examples/src/*.tsx`), launched via `node dist/index.mjs <slug>`) |
+| Examples | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/*.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
 | `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
 | `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |

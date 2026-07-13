@@ -1,4 +1,4 @@
-use crate::terminal_process::TerminalState;
+use crate::terminal::process::TerminalState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum NeovimMode {

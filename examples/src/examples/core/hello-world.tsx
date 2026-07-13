@@ -4,10 +4,10 @@
 // example builds on this. Next: rendering-engine, flex-layout.
 
 import { Box, Flex, Heading, Provider, Separator, Text } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
-import { mountExample } from "../../lib/standalone";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
+import { mountExample } from "~/lib/standalone";
 
 export const meta: ExampleMeta = {
   slug: "hello-world",
@@ -47,8 +47,24 @@ export function run(keyInput: KeyInput): void {
 }
 
 export function destroy(keyInput: KeyInput): void {
-  keyInput.off(() => {});
-  keyInput.stop();
+  // Handlers registered via useExampleKey are cleaned up automatically when
+  // the component unmounts (useEffect cleanup). Nothing to do here.
+  // Do NOT call keyInput.stop() — the caller (launcher or standalone) owns
+  // the keyInput lifecycle and will stop it after destroy() returns.
+  void keyInput;
 }
 
 export const Example = HelloWorld;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

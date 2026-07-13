@@ -10,6 +10,7 @@
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "paths": {
+      "~/*": ["./src/*"],
       "@bettertui/core": ["../core/src/index.ts"],
       "@bettertui/react": ["../react/src/index.ts"],
       "@bettertui/shared": ["../shared/src/index.ts"]

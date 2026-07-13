@@ -2,12 +2,17 @@
 
 use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
-use bettertui_engine::events::EventBus;
-use bettertui_engine::focus::FocusManager;
-use bettertui_engine::renderer::Renderer;
+use bettertui_engine::input::EventBus;
+use bettertui_engine::input::FocusManager;
+use bettertui_engine::layout::types::{
+    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
+    Sizing,
+};
+use bettertui_engine::render::RenderPass;
+use bettertui_engine::render::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::text::TextEngine;
-use bettertui_engine::tree::{Color, LayoutProps, NodeKind, Style};
+use bettertui_engine::tree::{Color, NodeKind, Style};
 use napi_derive::napi;
 use std::collections::HashMap;
 
@@ -28,58 +33,211 @@ fn u64_to_node_id(val: u64) -> bettertui_engine::tree::NodeId {
 #[derive(serde::Deserialize)]
 #[serde(tag = "type")]
 enum CommandJson {
-    CreateNode { id: u64, kind: String },
-    RemoveNode { id: u64 },
-    AppendChild { parent: u64, child: u64 },
-    InsertBefore { reference: u64, child: u64 },
-    MoveNode { node: u64, new_parent: u64 },
-    ReplaceNode { old: u64, new: u64 },
-    DetachNode { id: u64 },
-    SetText { id: u64, text: String },
-    SetStyle { id: u64, style: StyleJson },
-    SetForeground { id: u64, color: ColorJson },
-    SetBackground { id: u64, color: ColorJson },
-    SetBold { id: u64, value: bool },
-    SetItalic { id: u64, value: bool },
-    SetUnderline { id: u64, value: bool },
-    SetStrikethrough { id: u64, value: bool },
-    SetDim { id: u64, value: bool },
-    SetInverse { id: u64, value: bool },
-    SetHidden { id: u64, value: bool },
-    SetLayout { id: u64, layout: LayoutJson },
-    SetFlexDirection { id: u64, direction: String },
-    SetJustifyContent { id: u64, value: String },
-    SetAlignItems { id: u64, value: String },
-    SetAlignSelf { id: u64, value: String },
-    SetWidth { id: u64, value: SizingJson },
-    SetHeight { id: u64, value: SizingJson },
-    SetMinWidth { id: u64, value: SizingJson },
-    SetMinHeight { id: u64, value: SizingJson },
-    SetMaxWidth { id: u64, value: SizingJson },
-    SetMaxHeight { id: u64, value: SizingJson },
-    SetFlexBasis { id: u64, value: SizingJson },
-    SetPadding { id: u64, value: RectValuesJson },
-    SetMargin { id: u64, value: RectValuesJson },
-    SetGap { id: u64, value: GapJson },
-    SetFlexGrow { id: u64, value: f32 },
-    SetFlexShrink { id: u64, value: f32 },
-    SetPosition { id: u64, value: String },
-    SetInset { id: u64, value: RectValuesJson },
-    SetDisplay { id: u64, value: String },
-    SetOpacity { id: u64, value: f32 },
-    SetClip { id: u64, value: bool },
-    SetZIndex { id: u64, value: i32 },
-    SetOverflow { id: u64, value: String },
-    SetAttribute { id: u64, key: String, value: String },
-    RemoveAttribute { id: u64, key: String },
-    SetTranslateX { id: u64, value: i32 },
-    SetTranslateY { id: u64, value: i32 },
-    SetTabIndex { id: u64, value: i32 },
-    FocusNode { id: u64 },
-    BlurNode { id: u64 },
-    BeginFrame { frame_id: u64 },
-    CommitFrame { frame_id: u64 },
-    Invalidate { id: u64 },
+    CreateNode {
+        id: u64,
+        kind: String,
+    },
+    RemoveNode {
+        id: u64,
+    },
+    AppendChild {
+        parent: u64,
+        child: u64,
+    },
+    InsertBefore {
+        reference: u64,
+        child: u64,
+    },
+    MoveNode {
+        node: u64,
+        #[serde(rename = "newParent")]
+        new_parent: u64,
+    },
+    ReplaceNode {
+        old: u64,
+        new: u64,
+    },
+    DetachNode {
+        id: u64,
+    },
+    SetText {
+        id: u64,
+        text: String,
+    },
+    SetStyle {
+        id: u64,
+        style: StyleJson,
+    },
+    SetForeground {
+        id: u64,
+        color: ColorJson,
+    },
+    SetBackground {
+        id: u64,
+        color: ColorJson,
+    },
+    SetBold {
+        id: u64,
+        value: bool,
+    },
+    SetItalic {
+        id: u64,
+        value: bool,
+    },
+    SetUnderline {
+        id: u64,
+        value: bool,
+    },
+    SetStrikethrough {
+        id: u64,
+        value: bool,
+    },
+    SetDim {
+        id: u64,
+        value: bool,
+    },
+    SetInverse {
+        id: u64,
+        value: bool,
+    },
+    SetHidden {
+        id: u64,
+        value: bool,
+    },
+    SetLayout {
+        id: u64,
+        layout: LayoutJson,
+    },
+    SetFlexDirection {
+        id: u64,
+        direction: String,
+    },
+    SetJustifyContent {
+        id: u64,
+        value: String,
+    },
+    SetAlignItems {
+        id: u64,
+        value: String,
+    },
+    SetAlignSelf {
+        id: u64,
+        value: String,
+    },
+    SetWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMinWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMinHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMaxWidth {
+        id: u64,
+        value: SizingJson,
+    },
+    SetMaxHeight {
+        id: u64,
+        value: SizingJson,
+    },
+    SetFlexBasis {
+        id: u64,
+        value: SizingJson,
+    },
+    SetPadding {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetMargin {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetGap {
+        id: u64,
+        value: GapJson,
+    },
+    SetFlexGrow {
+        id: u64,
+        value: f32,
+    },
+    SetFlexShrink {
+        id: u64,
+        value: f32,
+    },
+    SetPosition {
+        id: u64,
+        value: String,
+    },
+    SetInset {
+        id: u64,
+        value: RectValuesJson,
+    },
+    SetDisplay {
+        id: u64,
+        value: String,
+    },
+    SetOpacity {
+        id: u64,
+        value: f32,
+    },
+    SetClip {
+        id: u64,
+        value: bool,
+    },
+    SetZIndex {
+        id: u64,
+        value: i32,
+    },
+    SetOverflow {
+        id: u64,
+        value: String,
+    },
+    SetAttribute {
+        id: u64,
+        key: String,
+        value: String,
+    },
+    RemoveAttribute {
+        id: u64,
+        key: String,
+    },
+    SetTranslateX {
+        id: u64,
+        value: i32,
+    },
+    SetTranslateY {
+        id: u64,
+        value: i32,
+    },
+    SetTabIndex {
+        id: u64,
+        value: i32,
+    },
+    FocusNode {
+        id: u64,
+    },
+    BlurNode {
+        id: u64,
+    },
+    BeginFrame {
+        #[serde(rename = "frameId")]
+        frame_id: u64,
+    },
+    CommitFrame {
+        #[serde(rename = "frameId")]
+        frame_id: u64,
+    },
+    Invalidate {
+        id: u64,
+    },
     Shutdown,
 }
 
@@ -179,39 +337,31 @@ impl From<LayoutJson> for LayoutProps {
         let mut props = LayoutProps::default();
         if let Some(dir) = l.direction {
             props.direction = match dir.as_str() {
-                "row" | "Row" => bettertui_engine::tree::FlexDirection::Row,
-                "column" | "Column" => bettertui_engine::tree::FlexDirection::Column,
-                "row_reverse" | "RowReverse" => bettertui_engine::tree::FlexDirection::RowReverse,
-                "column_reverse" | "ColumnReverse" => {
-                    bettertui_engine::tree::FlexDirection::ColumnReverse
-                }
-                _ => bettertui_engine::tree::FlexDirection::Column,
+                "row" | "Row" => FlexDirection::Row,
+                "column" | "Column" => FlexDirection::Column,
+                "row_reverse" | "RowReverse" => FlexDirection::RowReverse,
+                "column_reverse" | "ColumnReverse" => FlexDirection::ColumnReverse,
+                _ => FlexDirection::Column,
             };
         }
         if let Some(j) = l.justify {
             props.justify = match j.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::JustifyContent::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::JustifyContent::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::JustifyContent::FlexEnd,
-                "space_between" | "SpaceBetween" => {
-                    bettertui_engine::tree::JustifyContent::SpaceBetween
-                }
-                "space_around" | "SpaceAround" => {
-                    bettertui_engine::tree::JustifyContent::SpaceAround
-                }
-                "space_evenly" | "SpaceEvenly" => {
-                    bettertui_engine::tree::JustifyContent::SpaceEvenly
-                }
-                _ => bettertui_engine::tree::JustifyContent::FlexStart,
+                "flex_start" | "FlexStart" => JustifyContent::FlexStart,
+                "center" | "Center" => JustifyContent::Center,
+                "flex_end" | "FlexEnd" => JustifyContent::FlexEnd,
+                "space_between" | "SpaceBetween" => JustifyContent::SpaceBetween,
+                "space_around" | "SpaceAround" => JustifyContent::SpaceAround,
+                "space_evenly" | "SpaceEvenly" => JustifyContent::SpaceEvenly,
+                _ => JustifyContent::FlexStart,
             };
         }
         if let Some(a) = l.align {
             props.align = match a.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::AlignItems::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::AlignItems::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::AlignItems::FlexEnd,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignItems::Stretch,
-                _ => bettertui_engine::tree::AlignItems::Stretch,
+                "flex_start" | "FlexStart" => AlignItems::FlexStart,
+                "center" | "Center" => AlignItems::Center,
+                "flex_end" | "FlexEnd" => AlignItems::FlexEnd,
+                "stretch" | "Stretch" => AlignItems::Stretch,
+                _ => AlignItems::Stretch,
             };
         }
         if let Some(p) = l.padding {
@@ -251,9 +401,9 @@ struct RectValuesJson {
     all: Option<f32>,
 }
 
-impl From<RectValuesJson> for bettertui_engine::tree::RectValues {
+impl From<RectValuesJson> for RectValues {
     fn from(r: RectValuesJson) -> Self {
-        let mut rv = bettertui_engine::tree::RectValues::default();
+        let mut rv = RectValues::default();
         if let Some(all) = r.all {
             rv.top = Some(all);
             rv.right = Some(all);
@@ -292,9 +442,9 @@ struct GapJson {
     height: Option<f32>,
 }
 
-impl From<GapJson> for bettertui_engine::tree::Gap {
+impl From<GapJson> for Gap {
     fn from(g: GapJson) -> Self {
-        bettertui_engine::tree::Gap {
+        Gap {
             row: g.width.unwrap_or(0.0),
             column: g.height.unwrap_or(0.0),
         }
@@ -309,12 +459,12 @@ enum SizingJson {
     Auto,
 }
 
-impl From<SizingJson> for bettertui_engine::tree::Sizing {
+impl From<SizingJson> for Sizing {
     fn from(s: SizingJson) -> Self {
         match s {
-            SizingJson::Points(v) => bettertui_engine::tree::Sizing::Points(v),
-            SizingJson::Percent(v) => bettertui_engine::tree::Sizing::Percent(v),
-            SizingJson::Auto => bettertui_engine::tree::Sizing::Auto,
+            SizingJson::Points(v) => Sizing::Points(v),
+            SizingJson::Percent(v) => Sizing::Percent(v),
+            SizingJson::Auto => Sizing::Auto,
         }
     }
 }
@@ -443,13 +593,11 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }),
         CommandJson::SetFlexDirection { id, direction } => {
             let dir = match direction.as_str() {
-                "row" | "Row" => bettertui_engine::tree::FlexDirection::Row,
-                "column" | "Column" => bettertui_engine::tree::FlexDirection::Column,
-                "row_reverse" | "RowReverse" => bettertui_engine::tree::FlexDirection::RowReverse,
-                "column_reverse" | "ColumnReverse" => {
-                    bettertui_engine::tree::FlexDirection::ColumnReverse
-                }
-                _ => bettertui_engine::tree::FlexDirection::Column,
+                "row" | "Row" => FlexDirection::Row,
+                "column" | "Column" => FlexDirection::Column,
+                "row_reverse" | "RowReverse" => FlexDirection::RowReverse,
+                "column_reverse" | "ColumnReverse" => FlexDirection::ColumnReverse,
+                _ => FlexDirection::Column,
             };
             Some(Command::SetFlexDirection {
                 id: u64_to_node_id(id),
@@ -458,19 +606,13 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetJustifyContent { id, value } => {
             let v = match value.as_str() {
-                "flex_start" | "FlexStart" => bettertui_engine::tree::JustifyContent::FlexStart,
-                "center" | "Center" => bettertui_engine::tree::JustifyContent::Center,
-                "flex_end" | "FlexEnd" => bettertui_engine::tree::JustifyContent::FlexEnd,
-                "space_between" | "SpaceBetween" => {
-                    bettertui_engine::tree::JustifyContent::SpaceBetween
-                }
-                "space_around" | "SpaceAround" => {
-                    bettertui_engine::tree::JustifyContent::SpaceAround
-                }
-                "space_evenly" | "SpaceEvenly" => {
-                    bettertui_engine::tree::JustifyContent::SpaceEvenly
-                }
-                _ => bettertui_engine::tree::JustifyContent::FlexStart,
+                "flex_start" | "FlexStart" => JustifyContent::FlexStart,
+                "center" | "Center" => JustifyContent::Center,
+                "flex_end" | "FlexEnd" => JustifyContent::FlexEnd,
+                "space_between" | "SpaceBetween" => JustifyContent::SpaceBetween,
+                "space_around" | "SpaceAround" => JustifyContent::SpaceAround,
+                "space_evenly" | "SpaceEvenly" => JustifyContent::SpaceEvenly,
+                _ => JustifyContent::FlexStart,
             };
             Some(Command::SetJustifyContent {
                 id: u64_to_node_id(id),
@@ -479,16 +621,12 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetAlignItems { id, value } => {
             let v = match value.as_str() {
-                "start" | "Start" | "flex_start" | "FlexStart" => {
-                    bettertui_engine::tree::AlignItems::FlexStart
-                }
-                "end" | "End" | "flex_end" | "FlexEnd" => {
-                    bettertui_engine::tree::AlignItems::FlexEnd
-                }
-                "center" | "Center" => bettertui_engine::tree::AlignItems::Center,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignItems::Stretch,
-                "baseline" | "Baseline" => bettertui_engine::tree::AlignItems::Baseline,
-                _ => bettertui_engine::tree::AlignItems::Stretch,
+                "start" | "Start" | "flex_start" | "FlexStart" => AlignItems::FlexStart,
+                "end" | "End" | "flex_end" | "FlexEnd" => AlignItems::FlexEnd,
+                "center" | "Center" => AlignItems::Center,
+                "stretch" | "Stretch" => AlignItems::Stretch,
+                "baseline" | "Baseline" => AlignItems::Baseline,
+                _ => AlignItems::Stretch,
             };
             Some(Command::SetAlignItems {
                 id: u64_to_node_id(id),
@@ -497,16 +635,12 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }
         CommandJson::SetAlignSelf { id, value } => {
             let v = match value.as_str() {
-                "start" | "Start" | "flex_start" | "FlexStart" => {
-                    bettertui_engine::tree::AlignSelf::FlexStart
-                }
-                "end" | "End" | "flex_end" | "FlexEnd" => {
-                    bettertui_engine::tree::AlignSelf::FlexEnd
-                }
-                "center" | "Center" => bettertui_engine::tree::AlignSelf::Center,
-                "stretch" | "Stretch" => bettertui_engine::tree::AlignSelf::Stretch,
-                "baseline" | "Baseline" => bettertui_engine::tree::AlignSelf::Baseline,
-                _ => bettertui_engine::tree::AlignSelf::Stretch,
+                "start" | "Start" | "flex_start" | "FlexStart" => AlignSelf::FlexStart,
+                "end" | "End" | "flex_end" | "FlexEnd" => AlignSelf::FlexEnd,
+                "center" | "Center" => AlignSelf::Center,
+                "stretch" | "Stretch" => AlignSelf::Stretch,
+                "baseline" | "Baseline" => AlignSelf::Baseline,
+                _ => AlignSelf::Stretch,
             };
             Some(Command::SetAlignSelf {
                 id: u64_to_node_id(id),
@@ -563,9 +697,9 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
         }),
         CommandJson::SetPosition { id, value } => {
             let v = match value.as_str() {
-                "relative" | "Relative" => bettertui_engine::tree::Position::Relative,
-                "absolute" | "Absolute" => bettertui_engine::tree::Position::Absolute,
-                _ => bettertui_engine::tree::Position::Relative,
+                "relative" | "Relative" => Position::Relative,
+                "absolute" | "Absolute" => Position::Absolute,
+                _ => Position::Relative,
             };
             Some(Command::SetPosition {
                 id: u64_to_node_id(id),
@@ -938,6 +1072,165 @@ impl NapiEngine {
         let (w, h) = self.renderer.dimensions();
         vec![w as u32, h as u32]
     }
+
+    // ─── Post-Processing Pipeline ────────────────────────────────────
+
+    /// Enable or disable the entire post-processing pipeline.
+    #[napi]
+    pub fn set_post_processing_enabled(&mut self, enabled: bool) {
+        self.renderer.pipeline_mut().set_enabled(enabled);
+    }
+
+    /// Check if post-processing is enabled.
+    #[napi]
+    pub fn is_post_processing_enabled(&self) -> bool {
+        self.renderer.pipeline().enabled()
+    }
+
+    /// Add a color matrix pass.
+    /// matrix: 16 comma-separated f32 values (row-major 4x4 RGBA matrix)
+    /// enabled: whether the pass starts enabled
+    #[napi]
+    pub fn add_color_matrix_pass(&mut self, matrix_str: String, enabled: Option<bool>) {
+        let values: Vec<f32> = matrix_str
+            .split(',')
+            .filter_map(|s| s.trim().parse().ok())
+            .collect();
+        if values.len() != 16 {
+            return;
+        }
+        let mut m = [0.0f32; 16];
+        m.copy_from_slice(&values);
+        let mut pass = bettertui_engine::render::effects::ColorMatrixPass::new(m);
+        if !enabled.unwrap_or(true) {
+            pass.set_enabled(false);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a CRT effect pass.
+    #[napi]
+    pub fn add_crt_pass(&mut self, glow: Option<f64>, curvature: Option<f64>) {
+        let mut pass = bettertui_engine::render::effects::CrtPass::new();
+        if let Some(g) = glow {
+            pass = pass.with_glow(g as f32);
+        }
+        if let Some(c) = curvature {
+            pass = pass.with_curvature(c as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a scanlines effect pass.
+    #[napi]
+    pub fn add_scanlines_pass(&mut self, intensity: Option<f64>, odd_rows: Option<bool>) {
+        let mut pass = bettertui_engine::render::effects::ScanlinesPass::new();
+        if let Some(i) = intensity {
+            pass = pass.with_intensity(i as f32);
+        }
+        if let Some(odd) = odd_rows {
+            pass = pass.with_mode(if odd {
+                bettertui_engine::render::effects::ScanlineMode::OddRows
+            } else {
+                bettertui_engine::render::effects::ScanlineMode::EvenRows
+            });
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a vignette effect pass.
+    #[napi]
+    pub fn add_vignette_pass(
+        &mut self,
+        strength: Option<f64>,
+        radius: Option<f64>,
+        falloff: Option<f64>,
+    ) {
+        let mut pass = bettertui_engine::render::effects::VignettePass::new();
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        if let Some(r) = radius {
+            pass = pass.with_radius(r as f32);
+        }
+        if let Some(f) = falloff {
+            pass = pass.with_falloff(f as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a noise effect pass.
+    #[napi]
+    pub fn add_noise_pass(&mut self, intensity: Option<f64>, seed: Option<u32>) {
+        let mut pass = bettertui_engine::render::effects::NoisePass::new();
+        if let Some(i) = intensity {
+            pass = pass.with_intensity(i as f32);
+        }
+        if let Some(s) = seed {
+            pass = pass.with_seed(s);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a chromatic aberration effect pass.
+    #[napi]
+    pub fn add_chromatic_aberration_pass(&mut self, strength: Option<f64>) {
+        let mut pass = bettertui_engine::render::effects::ChromaticAberrationPass::new();
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Add a bloom effect pass.
+    #[napi]
+    pub fn add_bloom_pass(
+        &mut self,
+        threshold: Option<f64>,
+        strength: Option<f64>,
+        radius: Option<u32>,
+    ) {
+        let mut pass = bettertui_engine::render::effects::BloomPass::new();
+        if let Some(t) = threshold {
+            pass = pass.with_threshold(t as f32);
+        }
+        if let Some(s) = strength {
+            pass = pass.with_strength(s as f32);
+        }
+        if let Some(r) = radius {
+            pass = pass.with_radius(r as u16);
+        }
+        self.renderer.pipeline_mut().add_pass(Box::new(pass));
+    }
+
+    /// Remove a render pass by name.
+    #[napi]
+    pub fn remove_render_pass(&mut self, name: String) {
+        self.renderer.pipeline_mut().remove_pass(&name);
+    }
+
+    /// Enable or disable a render pass by name.
+    #[napi]
+    pub fn set_pass_enabled(&mut self, name: String, enabled: bool) {
+        if let Some(pass) = self.renderer.pipeline_mut().get_pass_mut(&name) {
+            pass.set_enabled(enabled);
+        }
+    }
+
+    /// Check if a render pass is enabled.
+    #[napi]
+    pub fn is_pass_enabled(&self, name: String) -> Option<bool> {
+        self.renderer
+            .pipeline()
+            .get_pass(&name)
+            .map(|p| p.enabled())
+    }
+
+    /// Get the number of active render passes.
+    #[napi]
+    pub fn pass_count(&self) -> u32 {
+        self.renderer.pipeline().len() as u32
+    }
 }
 
 /// Resolve temporary IDs in a command using the mapping.
@@ -1167,7 +1460,7 @@ fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
     if combo.modifiers.meta {
         parts.push("meta".to_string());
     }
-    use bettertui_engine::events::types::Key;
+    use bettertui_engine::input::Key;
     let key_display = match &combo.key {
         Key::Character(ch) => ch.to_string(),
         Key::Ctrl(ch) => format!("ctrl_{}", ch),
@@ -1293,12 +1586,12 @@ impl NapiKeymap {
     pub fn handle_key(&mut self, key_str: String) -> Option<String> {
         match KeyParser::parse_combo(&key_str) {
             Ok(combo) => {
-                let event = bettertui_engine::events::types::KeyEvent {
+                let event = bettertui_engine::input::KeyEvent {
                     key: combo.key,
                     modifiers: combo.modifiers,
                     target: bettertui_engine::tree::NodeId::default(),
                     default_prevented: false,
-                    phase: bettertui_engine::events::types::EventPhase::Target,
+                    phase: bettertui_engine::input::EventPhase::Target,
                 };
                 self.keymap.handle_event(&event)
             }
@@ -1420,14 +1713,14 @@ impl NapiEventBus {
     #[napi(constructor)]
     pub fn new() -> Self {
         Self {
-            bus: bettertui_engine::events::EventBus::new(),
+            bus: bettertui_engine::input::EventBus::new(),
         }
     }
 
     /// Push a key event.
     #[napi]
     pub fn push_key(&mut self, key: String, ctrl: bool, shift: bool, alt: bool, target_id: u32) {
-        use bettertui_engine::events::types::{Key, Modifiers};
+        use bettertui_engine::input::{Key, Modifiers};
         let target = u64_to_node_id(target_id as u64);
         let key = match key.as_str() {
             "enter" => Key::Enter,
@@ -1471,7 +1764,7 @@ impl NapiEventBus {
     /// Push a mouse event.
     #[napi]
     pub fn push_mouse(&mut self, button: String, x: u32, y: u32, target_id: u32) {
-        use bettertui_engine::events::types::MouseButton;
+        use bettertui_engine::input::MouseButton;
         use bettertui_engine::tree::visual::Point;
         let target = u64_to_node_id(target_id as u64);
         let btn = match button.as_str() {
@@ -1489,7 +1782,7 @@ impl NapiEventBus {
     /// Push a mouse motion event.
     #[napi]
     pub fn push_mouse_motion(&mut self, x: u32, y: u32, target_id: u32) {
-        use bettertui_engine::events::types::MouseButton;
+        use bettertui_engine::input::MouseButton;
         use bettertui_engine::tree::visual::Point;
         let target = u64_to_node_id(target_id as u64);
         self.bus
@@ -1539,7 +1832,7 @@ impl NapiEventBus {
         let event_jsons: Vec<serde_json::Value> = events
             .iter()
             .map(|e| match e {
-                bettertui_engine::events::Event::Key(ke) => {
+                bettertui_engine::input::Event::Key(ke) => {
                     let key_str = format!("{:?}", ke.key);
                     serde_json::json!({
                         "type": "key",
@@ -1550,7 +1843,7 @@ impl NapiEventBus {
                         "target": node_id_to_u64(ke.target),
                     })
                 }
-                bettertui_engine::events::Event::Mouse(me) => {
+                bettertui_engine::input::Event::Mouse(me) => {
                     serde_json::json!({
                         "type": "mouse",
                         "button": format!("{:?}", me.button).to_lowercase(),
@@ -1559,7 +1852,7 @@ impl NapiEventBus {
                         "target": node_id_to_u64(me.target),
                     })
                 }
-                bettertui_engine::events::Event::Resize(re) => {
+                bettertui_engine::input::Event::Resize(re) => {
                     serde_json::json!({
                         "type": "resize",
                         "width": re.width,
@@ -1641,17 +1934,17 @@ impl NapiFocusManager {
     #[napi]
     pub fn traverse(&mut self, direction: String) -> u32 {
         let dir = match direction.to_lowercase().as_str() {
-            "forward" | "next" => bettertui_engine::focus::FocusDirection::Forward,
-            "backward" | "previous" | "prev" => bettertui_engine::focus::FocusDirection::Backward,
-            "first" => bettertui_engine::focus::FocusDirection::First,
-            "last" => bettertui_engine::focus::FocusDirection::Last,
-            "up" => bettertui_engine::focus::FocusDirection::Up,
-            "down" => bettertui_engine::focus::FocusDirection::Down,
-            "left" => bettertui_engine::focus::FocusDirection::Left,
-            "right" => bettertui_engine::focus::FocusDirection::Right,
-            _ => bettertui_engine::focus::FocusDirection::Forward,
+            "forward" | "next" => bettertui_engine::input::FocusDirection::Forward,
+            "backward" | "previous" | "prev" => bettertui_engine::input::FocusDirection::Backward,
+            "first" => bettertui_engine::input::FocusDirection::First,
+            "last" => bettertui_engine::input::FocusDirection::Last,
+            "up" => bettertui_engine::input::FocusDirection::Up,
+            "down" => bettertui_engine::input::FocusDirection::Down,
+            "left" => bettertui_engine::input::FocusDirection::Left,
+            "right" => bettertui_engine::input::FocusDirection::Right,
+            _ => bettertui_engine::input::FocusDirection::Forward,
         };
-        let next = bettertui_engine::focus::FocusTraversal::traverse(&self.manager, dir);
+        let next = bettertui_engine::input::FocusTraversal::traverse(&self.manager, dir);
         if let Some(id) = next {
             self.manager.focus(id);
             node_id_to_u64(id) as u32
@@ -2062,7 +2355,7 @@ pub struct NapiCapabilities {
 impl NapiCapabilities {
     #[napi(factory)]
     pub fn detect() -> Self {
-        let caps = bettertui_engine::capabilities::global_capabilities();
+        let caps = bettertui_engine::terminal::capabilities::global_capabilities();
         let (w, h) = caps.terminal_size();
         let pixel = caps.pixel_size();
         Self {
@@ -2202,7 +2495,7 @@ pub fn get_version() -> String {
 /// Detect terminal capabilities.
 #[napi]
 pub fn detect_capabilities() -> String {
-    let caps = bettertui_engine::capabilities::global_capabilities();
+    let caps = bettertui_engine::terminal::capabilities::global_capabilities();
     let (w, h) = caps.terminal_size();
     let pixel = caps.pixel_size();
     let features = caps.features();

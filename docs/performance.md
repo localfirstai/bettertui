@@ -13,8 +13,8 @@ flowchart TD
     E --> F[encode only dirty regions]
 ```
 
-- **Dirty tracking** — arena `generation` + per-node `layout_dirty`/`render_dirty`. Skip work when nothing changed.
-- **Layout caching** — Taffy caches per node; only dirty subtrees recompute.
+- **Dirty tracking** — arena `generation` + per-node `layout_dirty`/`render_dirty` flags exist; frame suppression via `change_count` skips the full render when nothing changed.
+- **Layout** — Taffy recomputes layout from scratch each frame; only the dirty frame is skipped when `change_count` is unchanged.
 - **Batch commands** — one FFI call per frame (amortized).
 - **Frame diffing** — only changed cells written to terminal.
 - **Style coalescing + cursor-move optimization** — minimal ANSI volume.

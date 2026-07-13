@@ -1,5 +1,5 @@
 use super::*;
-use crate::events::types::{KeyEvent, Modifiers};
+use crate::input::{KeyEvent, Modifiers};
 use crate::tree::node_id::NodeId;
 use crate::tree::node_kind::NodeKind;
 use crate::tree::render_node::RenderNode;

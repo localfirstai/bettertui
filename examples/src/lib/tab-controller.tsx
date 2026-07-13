@@ -3,7 +3,7 @@
 // Internal to the examples package.
 
 import { Box, Flex, Heading, Separator, Text } from "@bettertui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { KeyInput } from "./keyboard";
 
 export interface TabDef {
@@ -21,14 +21,17 @@ export interface TabControllerProps {
 export function TabController({ tabs, keyInput, title }: TabControllerProps) {
   const [active, setActive] = useState(0);
 
-  keyInput.on((event) => {
-    if (event.key === "ArrowRight") {
-      setActive((i) => (i + 1) % tabs.length);
-    } else if (event.key === "ArrowLeft") {
-      setActive((i) => (i - 1 + tabs.length) % tabs.length);
-    }
-    return false;
-  });
+  useEffect(() => {
+    const unsub = keyInput.on((event) => {
+      if (event.key === "ArrowRight") {
+        setActive((i) => (i + 1) % tabs.length);
+      } else if (event.key === "ArrowLeft") {
+        setActive((i) => (i - 1 + tabs.length) % tabs.length);
+      }
+      return false;
+    });
+    return unsub;
+  }, [keyInput, tabs.length]);
 
   const current = tabs[active];
   if (!current) return null;

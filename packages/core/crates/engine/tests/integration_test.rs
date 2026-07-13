@@ -2,9 +2,8 @@ use bettertui_engine::ansi::AnsiEncoder;
 use bettertui_engine::dirty_diff::{DirtyDiff, DirtyRegion};
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::layout::LayoutTreeSync;
-use bettertui_engine::painter::Painter;
-use bettertui_engine::render_object::{PaintContext, PaintFlags, RenderObject, RenderTree};
-use bettertui_engine::renderer::Renderer;
+use bettertui_engine::layout::paint::{PaintContext, PaintFlags};
+use bettertui_engine::render::{Painter, RenderObject, RenderTree, Renderer};
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::arena::NodeArena;
@@ -461,7 +460,7 @@ fn p2_dirty_diff_after_content_change() {
 
 #[test]
 fn p2_clip_bounds_intersect_correctly() {
-    use bettertui_engine::render_object::ClipBounds;
+    use bettertui_engine::layout::paint::ClipBounds;
     let outer = ClipBounds::new(0, 0, 80, 24);
     let inner = ClipBounds::new(10, 5, 20, 10);
     let clipped = outer.intersect(&inner).unwrap();

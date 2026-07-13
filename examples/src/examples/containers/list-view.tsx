@@ -4,10 +4,10 @@
 // Next: scroll-area-basics, tree-view.
 
 import { Box, Flex, Heading, List, Provider, Separator, StatusLine } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
-import { mountExample } from "../../lib/standalone";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
+import { mountExample } from "~/lib/standalone";
 
 export const meta: ExampleMeta = {
   slug: "list-view",
@@ -82,3 +82,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = ListView;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

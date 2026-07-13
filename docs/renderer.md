@@ -15,7 +15,7 @@ flowchart LR
     G --> H[stdout]
 ```
 
-See [Architecture: Rendering Pipeline](architecture/RenderingPipeline.md) for the full stage breakdown and the `Renderer`/`RenderFrame`/`RenderBackend` API.
+See [Architecture: Rendering Pipeline](architecture/rendering-pipeline.md) for the full stage breakdown and the `Renderer`/`RenderFrame`/`RenderBackend` API.
 
 ## Pipeline pieces
 
@@ -23,7 +23,7 @@ See [Architecture: Rendering Pipeline](architecture/RenderingPipeline.md) for th
 - `render_object/` — `build_render_tree`, `RenderTree` (z-sorted), `PaintContext`
 - `painter/` — `Painter.paint`
 - `framebuffer/` + `dirty_diff/` — rasterization + diffing
-- `compositor/` — layered compositing (see [Compositor](architecture/Compositor.md))
+- `compositor/` — layered compositing (see [Compositor](architecture/compositor.md))
 
 ## Status
 

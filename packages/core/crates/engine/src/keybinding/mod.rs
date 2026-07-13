@@ -16,7 +16,7 @@
 //!
 //! ```rust
 //! use bettertui_engine::keybinding::{Keymap, KeyBinding, KeyLayer};
-//! use bettertui_engine::events::types::Key;
+//! use bettertui_engine::input::Key;
 //!
 //! let mut keymap = Keymap::new();
 //!
@@ -29,7 +29,7 @@
 //! keymap.add_layer(layer);
 //! ```
 
-use crate::events::types::{Key, KeyEvent, Modifiers};
+use crate::input::{Key, KeyEvent, Modifiers};
 
 #[cfg(test)]
 mod tests;

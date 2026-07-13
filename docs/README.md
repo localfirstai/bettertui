@@ -4,29 +4,29 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 
 ## Start here
 
-- [Architecture Overview](architecture/Overview.md) — repository layout, workspaces, dependency direction
-- [Getting Started](guides/getting-started.md) — install, build, run the one wired example
+- [Architecture Overview](architecture/overview.md) — repository layout, workspaces, dependency direction
+- [Getting Started](guides/getting-started.md) — install, build, run the examples
 
 ## Architecture (Rust engine + protocol)
 
 | Doc | Scope |
 |-----|-------|
-| [Overview](architecture/Overview.md) | workspaces, build system, layers |
-| [Node Model](architecture/NodeModel.md) | arena + `RenderNode` |
-| [Protocol](architecture/Protocol.md) | command protocol (TS ↔ Rust) |
-| [Rendering Pipeline](architecture/RenderingPipeline.md) | arena → ANSI |
-| [Layout](architecture/Layout.md) | Taffy flexbox → cells |
-| [Frame Buffer](architecture/FrameBuffer.md) | cell grid + dirty diff |
-| [Event System](architecture/EventSystem.md) | capture/target/bubble |
-| [Input System](architecture/InputSystem.md) | keyboard/mouse/paste/ANSI |
-| [Animation](architecture/Animation.md) | tween/spring/keyframe |
-| [Scheduler](architecture/Scheduler.md) | frame timing |
-| [Capabilities](architecture/Capabilities.md) | terminal feature detection |
-| [Terminal](architecture/Terminal.md) | raw mode + VT emulation |
-| [PTY](architecture/PTY.md) | embedding a process |
-| [Compositor](architecture/Compositor.md) | layered output + screen |
-| [Text Editing](architecture/TextEditing.md) | rope editor |
-| [Widget Model](architecture/WidgetModel.md) | trait-based widgets |
+| [Overview](architecture/overview.md) | workspaces, build system, layers |
+| [Node Model](architecture/node-model.md) | arena + `RenderNode` |
+| [Protocol](architecture/protocol.md) | command protocol (TS ↔ Rust) |
+| [Rendering Pipeline](architecture/rendering-pipeline.md) | arena → ANSI |
+| [Layout](architecture/layout.md) | Taffy flexbox → cells |
+| [Frame Buffer](architecture/frame-buffer.md) | cell grid + dirty diff |
+| [Event System](architecture/event-system.md) | capture/target/bubble |
+| [Input System](architecture/input-system.md) | keyboard/mouse/paste/ANSI |
+| [Animation](architecture/animation.md) | tween/spring/keyframe |
+| [Scheduler](architecture/scheduler.md) | frame timing |
+| [Capabilities](architecture/capabilities.md) | terminal feature detection |
+| [Terminal](architecture/terminal.md) | raw mode + VT emulation |
+| [PTY](architecture/pty.md) | embedding a process |
+| [Compositor](architecture/compositor.md) | layered output + screen |
+| [Text Editing](architecture/text-editing.md) | rope editor |
+| [Widget Model](architecture/widget-model.md) | trait-based widgets |
 
 ## Guides
 

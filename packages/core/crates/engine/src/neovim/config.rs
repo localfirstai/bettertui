@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::terminal_process::ProcessConfig;
+use crate::terminal::process::ProcessConfig;
 
 #[derive(Debug, Clone)]
 pub struct NeovimConfig {

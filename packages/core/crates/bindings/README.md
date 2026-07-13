@@ -89,7 +89,7 @@ fn detect_capabilities() -> String; // JSON-serialized TerminalCapabilities
 
 ## Consumers
 
-- `@bettertui/core` (TypeScript) — loads this addon via `require("bettertui_bindings")` in its native bridge at `src/native/`
+- `@bettertui/core` (TypeScript) — loads this addon via `require("bettertui_bindings")` in its engine bridge at `src/engine/`
 
 ## Internal Structure
 
@@ -120,4 +120,4 @@ pnpm build  # Triggers tsdown which triggers napi-rs build
 - This crate uses `crate-type = ["cdylib"]` for Node.js addon loading.
 - The `build.rs` file must call `napi_build::setup()` for napi-rs to work.
 - The `CommandJson` enum with 60+ variants mirrors the Rust `Command` enum for JSON deserialization.
-- No `package.json` is needed here — this crate is part of `packages/core/crates/bindings/` and is loaded by the napi-rs build system. The TypeScript bridge lives at `packages/core/src/native/`.
+- No `package.json` is needed here — this crate is part of `packages/core/crates/bindings/` and is loaded by the napi-rs build system. The TypeScript bridge lives at `packages/core/src/engine/`.

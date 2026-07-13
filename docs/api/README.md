@@ -20,7 +20,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 | Crate | Surface |
 |-------|---------|
-| `bettertui-engine` | Modules listed in [Architecture Overview](../architecture/Overview.md); per-module docs under `../architecture/` |
+| `bettertui-engine` | Modules listed in [Architecture Overview](../architecture/overview.md); per-module docs under `../architecture/` |
 | `bettertui-bindings` | napi classes: `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`; free fns `getVersion`, `detectCapabilities` |
 
 ## Naming conventions

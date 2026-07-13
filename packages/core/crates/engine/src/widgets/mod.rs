@@ -1,72 +1,30 @@
 //! Widget framework: Widget trait, built-in widgets, context, reconciliation, and theming.
 
 pub mod app;
-pub mod badge_widget;
-pub mod box_widget;
-pub mod button_widget;
+pub mod basic;
 pub mod callback_types;
 pub mod chat;
-pub mod code_widget;
-pub mod container;
 pub mod context;
-pub mod flex_widget;
-pub mod grid_widget;
-pub mod heading_widget;
-pub mod input_widget;
-pub mod label_widget;
-pub mod markdown;
-pub mod modal_widget;
 pub mod pipeline;
-pub mod progress_widget;
-pub mod prompt_composer;
 pub mod reconcile;
 pub mod registry;
-pub mod scroll_area;
-pub mod separator_widget;
-pub mod spacer_widget;
-pub mod spinner_widget;
-pub mod stack_widget;
-pub mod tabs_widget;
-pub mod text_widget;
-pub mod textarea_widget;
+pub mod text;
 pub mod theme;
-pub mod tooltip_widget;
 pub mod tree;
 
 pub use app::AppState;
-pub use badge_widget::{BadgeVariant, BadgeWidget};
-pub use box_widget::BoxWidget;
-pub use button_widget::{ButtonVariant, ButtonWidget};
+pub use basic::*;
 pub use chat::{ChatState, ChatStatus, ChatView, Message, Role, StatusBar, ThinkingIndicator};
-pub use code_widget::CodeWidget;
-pub use container::ContainerWidget;
 pub use context::WidgetContext;
-pub use flex_widget::FlexWidget;
-pub use grid_widget::GridWidget;
-pub use heading_widget::{HeadingLevel, HeadingWidget};
-pub use input_widget::InputWidget;
-pub use label_widget::LabelWidget;
-pub use markdown::{InlineNode, MarkdownNode, MarkdownRenderer, Parser as MarkdownParser};
-pub use modal_widget::ModalWidget;
 pub use pipeline::Pipeline;
-pub use progress_widget::ProgressWidget;
-pub use prompt_composer::{ComposerState, PromptComposer};
 pub use reconcile::{ReconcileOp, Reconciler};
 pub use registry::WidgetRegistry;
-pub use scroll_area::ScrollAreaWidget;
-pub use separator_widget::SeparatorWidget;
-pub use spacer_widget::SpacerWidget;
-pub use spinner_widget::{SpinnerType, SpinnerWidget};
-pub use stack_widget::{StackChild, StackWidget};
-pub use tabs_widget::{TabItem, TabsWidget};
-pub use text_widget::TextWidget;
-pub use textarea_widget::TextareaWidget;
+pub use text::*;
 pub use theme::{SpacingToken, Theme, ThemeToken};
-pub use tooltip_widget::TooltipWidget;
 pub use tree::WidgetTree;
 
-use crate::events::Event;
-use crate::events::types::EventResult;
+use crate::input::Event;
+use crate::input::EventResult;
 use crate::tree::node_id::NodeId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -188,7 +146,7 @@ impl WidgetHost {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
 
@@ -201,7 +159,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                crate::tree::layout::LayoutProps::default(),
+                crate::layout::types::LayoutProps::default(),
                 crate::tree::style::Style::default(),
             );
             WidgetId(id)
@@ -219,7 +177,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                crate::tree::layout::LayoutProps::default(),
+                crate::layout::types::LayoutProps::default(),
                 crate::tree::style::Style::default(),
             );
             WidgetId(id)
@@ -307,8 +265,8 @@ mod tests {
         };
         let wid = host.mount(Box::new(widget), &mut ctx);
 
-        let event = Event::Key(crate::events::types::KeyEvent::new(
-            crate::events::types::Key::Enter,
+        let event = Event::Key(crate::input::KeyEvent::new(
+            crate::input::Key::Enter,
             wid.node_id(),
         ));
         let result = host.handle_event(wid, &mut ctx, &event);

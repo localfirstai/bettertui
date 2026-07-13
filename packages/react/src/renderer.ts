@@ -130,7 +130,8 @@ function extractLayoutCommands(
 
   // Padding shortcuts
   if (props["padding"] !== undefined) {
-    commands.push({ type: "SetPadding", id, value: { all: props["padding"] } });
+    const p = props["padding"];
+    commands.push({ type: "SetPadding", id, value: typeof p === "number" ? { all: p } : p });
   }
   if (props["paddingX"] !== undefined) {
     commands.push({
@@ -161,7 +162,8 @@ function extractLayoutCommands(
 
   // Margin shortcuts
   if (props["margin"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { all: props["margin"] } });
+    const m = props["margin"];
+    commands.push({ type: "SetMargin", id, value: typeof m === "number" ? { all: m } : m });
   }
   if (props["marginX"] !== undefined) {
     commands.push({ type: "SetMargin", id, value: { horizontal: props["marginX"] } });
@@ -300,7 +302,7 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       if (type === "Text" && typeof children === "string") {
         buffer.push({ type: "SetText", id, text: children });
         // Set width to text length so layout engine can position it correctly
-        buffer.push({ type: "SetWidth", id, value: { points: children.length } });
+        buffer.push({ type: "SetWidth", id, value: children.length });
       }
 
       // Forward style object if provided

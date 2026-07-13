@@ -56,7 +56,7 @@ cargo clippy --workspace -- -D warnings
 - `packages/core/crates/bindings/` — napi-rs Node.js bindings (`bettertui-bindings`, cdylib)
 - `packages/` — TypeScript packages (`shared`, `core`, `react`, `themes`, `devtools`, `benchmark`; `@bettertui/widgets` and `@bettertui/icons` are proposed but do not exist yet)
 - `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
-- `examples/` — example apps (mostly stubs; `counter` partially wired)
+- `examples/` — 15 example apps (built on `@bettertui/core` + `@bettertui/react`, launched via the interactive launcher)
 - `docs/` — the documentation you are reading (canonical source of truth)
 
 ## Test-Driven Development

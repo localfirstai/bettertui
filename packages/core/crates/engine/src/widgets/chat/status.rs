@@ -1,7 +1,7 @@
 use super::types::{ChatState, ChatStatus};
-use crate::events::types::{Event, EventResult};
+use crate::input::{Event, EventResult};
+use crate::layout::types::LayoutProps;
 use crate::tree::color::Color;
-use crate::tree::layout::LayoutProps;
 use crate::tree::style::Style;
 use crate::widgets::Widget;
 use crate::widgets::WidgetId;
@@ -154,7 +154,7 @@ impl Widget for ThinkingIndicator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::focus::FocusManager;
+    use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
     use crate::widgets::theme::Theme;

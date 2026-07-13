@@ -3,9 +3,10 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.15.0"
   },
   "scripts": {
     "dev": "ASTRO_DEV_BACKGROUND=0 astro dev",

@@ -1,138 +1,109 @@
-# Viewport Culling: OpenTUI vs BetterTUI Comparison
+# OpenTUI vs BetterTUI: Viewport Culling Comparison
 
-## Overview
-
-Both systems implement binary-search-based viewport culling for scrollable
-terminal UI. The pattern is adapted from OpenTUI's `getObjectsInViewport`.
-
-## Architecture Comparison
+## Rendering Architecture
 
 | Aspect | OpenTUI | BetterTUI |
 |--------|---------|-----------|
-| Language | TypeScript (objects-in-viewport.ts) | Rust (culling.rs + build.rs) |
-| Pipeline position | Framework-level | Render tree construction |
-| Input type | Generic `ViewportObject[]` | `Vec<PositionedChild>` |
-| Output type | Filtered + z-sorted array | `Vec<NodeId>` |
-| Binary search | For 16+ items | For 32+ children in scroll containers |
-| Linear scan bypass | `minTriggerSize` param | < 16 children |
-| Padding | 10px (configurable) | 5px (CULLING_PADDING constant) |
-| Look-behind limit | 50 | 50 |
-| Cross-axis check | In result filter loop | In build.rs `contains_rect` |
-| zIndex sorting | In culling result | Handled in painter phase |
-| Negative coords | Supported (f64) | Not supported (u16) |
+| Render tree | Built per-frame via `updateLayout()` recursion, cached via `canReuseRenderList` | Built per-frame from scratch via `build_render_tree()` — no caching |
+| Layout engine | Yoga (JS FFI per node, deduplicated via `_lastLayoutFrame`) | Taffy (Rust native, full recompute every frame) |
+| Paint | Zig native buffer with cell-level ops | Rust native framebuffer with SoA cells |
+| Scheduler | JS timer + FPS cap + `requestLive()` ref-counting | Rust `Scheduler` struct with priority queue (but `begin_frame()` never called) |
+| Command protocol | Direct Zig FFI calls per property | JSON serialization → napi-rs → Rust parse |
 
-## Algorithm Comparison
+## Culling Mechanisms
 
-### OpenTUI
-```typescript
-getObjectsInViewport(viewport, objects, direction, padding, minTriggerSize)
-  1. Check empty / zero-size viewport → return []
-  2. If objects.length < minTriggerSize → return all objects
-  3. Apply padding to viewport (all 4 sides)
-  4. Binary search for first overlapping child
-  5. If no candidate → start from lo position
-  6. Expand left with bounded look-behind (50 max gaps)
-  7. Expand right (stop when start >= padded_end)
-  8. Filter: check primary AND cross-axis intersection
-  9. Sort by zIndex
+| Mechanism | OpenTUI | BetterTUI |
+|-----------|---------|-----------|
+| Off-screen culling | `getObjectsInViewport()` — binary search + interval expansion | `get_objects_in_viewport()` — binary search + interval expansion on sorted children (`render_object/culling.rs`) |
+| Subtree pruning | `_getVisibleChildren()` skips culled subtrees in `updateLayout()` | `build_render_tree_with_viewport()` prunes children outside the viewport (except `Display::None`) |
+| Display:None skip | Yoga layout: display=none children excluded from layout | `build_node()` skips `Display::None` at line 47 |
+| Opacity=0 skip | `_getVisibleChildren()` checks opacity < 1 for filtering | `Painter::is_visible()` checks opacity > 0 |
+| Hidden skip | Not directly — relies on culling | `is_visible()` checks `HIDDEN` flag |
+| Clipping | Scissor rect stack in buffer + parallel hit grid stack | `PaintContext` clip stack in painter |
+| Z-index culling | None — z-sort in `_getVisibleChildren()` for visible-only | Full sort of all render objects `sorted_by_z_index()` |
+| Layout skip for invisible | Children layouts still updated (`updateFromLayout()` always called) | Full layout sync every frame regardless of visibility |
+| Frame suppression | `canReuseRenderList` skips entire `updateLayout` pass | `change_count` check skips full render if no changes |
+| Render list caching | Cached across frames for static content | **None** — render tree rebuilt every frame |
+
+## Key Algorithms
+
+### Viewport Culling: OpenTUI
 ```
-
-### BetterTUI (Rust)
-```rust
-get_objects_in_viewport(viewport, &[PositionedChild], primary_axis)
-  1. Check empty / zero-size viewport → return []
-  2. If children.len() < 16 → linear scan filter
-  3. Apply CULLING_PADDING (5) to viewport
-  4. Binary search for first overlapping child
-  5. If no candidate → expand_from(lo) with bounded look-behind
-  6. Expand left with bounded look-behind (50 max gaps)
-  7. Expand right (stop when start >= padded_end)
-  8. Filter: check primary-axis overlap
-  9. Cross-axis checks done by build.rs per-node
+getObjectsInViewport(viewport, objects[], direction, padding, minTriggerSize)
+  ├─ Early out: 0-size viewport, empty objects, <minTriggerSize
+  ├─ Binary search for first overlapping object (O(log N))
+  ├─ Left expansion (maxLookBehind=50) — catches spanning objects
+  ├─ Right expansion — linear scan until past viewport
+  └─ Cross-axis AABB filter + z-index sort
 ```
+**Complexity:** O(log N + K) dense, O(log N + 50 + K) sparse.  
+**Precondition:** Objects sorted by primary-axis start position.  
+**Cache:** `childrenSortedByPrimaryAxis` lazy-recomputed on position change.
 
-## Test Coverage Comparison
+### Viewport Culling: BetterTUI
+```
+get_objects_in_viewport(viewport, objects[], direction, padding)
+  ├─ Early out: 0-size viewport, empty objects
+  ├─ Binary search for first overlapping object (O(log N), threshold BINARY_SEARCH_MIN_CHILDREN=32)
+  ├─ Left/right expansion until past viewport
+  └─ Cross-axis AABB filter
+```
+**Complexity:** O(log N + K). Precondition: children sorted by primary-axis start. `CULLING_PADDING = 5` rows of margin so partially-visible nodes are not clipped mid-scroll. Driven by `build_render_tree_with_viewport()` in `render_object/`.
 
-| Category | OpenTUI (TS) | BetterTUI (Rust) |
-|----------|-------------|------------------|
-| Empty input | ✅ | ✅ |
-| Zero-size viewport | ✅ (3 tests) | ✅ (1 test) |
-| All visible | ✅ | ✅ |
-| Some visible | ✅ | ✅ |
-| None visible | ✅ | ✅ |
-| Row axis | ✅ | ✅ |
-| Column axis | ✅ | ✅ |
-| Small array bypass | ✅ (4 tests) | ✅ (1 test) |
-| Padding behavior | ✅ (2 tests) | ✅ (1 test) |
-| Boundary conditions | ✅ (3 tests) | ✅ (2 tests) |
-| Cross-axis filtering | ✅ (2 tests) | ✅ (via build.rs) |
-| Large objects spanning | ✅ (5 tests) | ✅ (1 test) |
-| Sparse objects | ✅ (2 tests) | ✅ (1 test) |
-| Clustered objects | ✅ (1 test) | ❌ |
-| zIndex sorting | ✅ (3 tests) | ❌ (painter handles) |
-| Negative coordinates | ✅ (2 tests) | ❌ (u16 limitation) |
-| Overlapping objects | ✅ (2 tests) | ❌ |
-| Realistic scroll | ✅ (4 tests) | ✅ (via build.rs) |
-| Stress tests | ✅ (2 tests) | ✅ (2 benchmarks) |
-| CLI/chat scenario | ✅ (1 test) | ❌ |
-| Grid layout | ✅ (1 test) | ❌ |
-| Single-pixel gaps | ✅ (1 test) | ❌ |
+## Clipping Systems
 
-**Total unit tests:** OpenTUI ~50+, BetterTUI 25
+| Property | OpenTUI | BetterTUI |
+|----------|---------|-----------|
+| Scissor stack | Yes (native buffer + JS hit grid) | Yes (`PaintContext` clip stack, `push_clip()`/`pop_clip()`) |
+| Nested clipping | Yes — stack-based, natural nesting | Yes — clip rect intersection |
+| Clip to bounds | On `overflow:hidden/scroll` | On `NEEDS_CLIP` flag (overflow=Hidden/Scroll or clip prop) |
+| Hit grid clipping | Parallel scissor stack in hit grid | **None** — hit grid not implemented |
 
-## Implementation Differences
+## Dirty Tracking
 
-### 1. Coordinate types
-OpenTUI uses `number` (f64) allowing negative coordinates. BetterTUI uses
-`u16` for coordinates, which is appropriate for terminal rendering but
-cannot represent offscreen-negative positions.
+| Mechanism | OpenTUI | BetterTUI |
+|-----------|---------|-----------|
+| Per-node dirty | `_dirty` flag on BaseRenderable | `NodeState { dirty, layout_dirty, render_dirty }` (flags defined but **unused** in render path) |
+| Global change counter | None (tree revision bumped per structural change) | `Arena::change_count()` — single u64, checked for frame suppression |
+| Layout generation | `RenderContext::bumpLayoutGeneration()` | `UpdateFlags` defined but never set or read |
+| Render list revision | `RenderContext::bumpRenderListRevision()` | **None** |
 
-### 2. Padding application
-OpenTUI applies padding to all 4 sides of the viewport (x - padding, x + width + padding,
-y - padding, y + height + padding). BetterTUI only applies padding along the primary
-axis direction. This means:
-- OpenTUI catches more cross-axis near-misses
-- BetterTUI may occasionally miss a child that's just outside the
-  viewport on the cross-axis during diagonal scroll
+## Wasted Work Comparison
 
-Fix: Apply padding to the viewport in both axes before passing to
-`get_objects_in_viewport`.
+| Waste | OpenTUI | BetterTUI |
+|-------|---------|-----------|
+| Off-screen content processed | **No** — culled before `updateLayout` recursion | **No** — `build_render_tree_with_viewport()` prunes off-screen nodes |
+| Full buffer clear each frame | **No** — incremental painting with dirty regions | **Yes** — `paint_with_clear()` clears all cells |
+| Cell-by-cell diff each frame | **No** — native Zig tracks dirty cells | **Yes** — `DirtyDiff::compute()` scans all cells |
+| Full layout recompute | **No** — Yoga incremental, `_lastLayoutFrame` guard | **Yes** — Taffy `compute_layout()` from scratch |
+| JSON serialization overhead | **No** — direct FFI calls | **Yes** — every command batch serialized to JSON |
+| Layout for hidden nodes | **Yes** (intentional — `updateFromLayout()` always called to keep positions correct for culling) | **Yes** (unintentional — no visibility check) |
+| Tree rebuild from scratch | Only when render list invalidated | **Yes** — every frame |
 
-### 3. zIndex sorting
-OpenTUI sorts results by zIndex. BetterTUI relies on tree-order + painter
-z-ordering. Both approaches are valid; OpenTUI's is an optimization that
-reduces painter work.
+## Optimisations Present Only in OpenTUI
 
-### 4. Binary search threshold
-OpenTUI triggers at 16+ objects (configurable). BetterTUI's
-`get_objects_in_viewport` triggers at 16+ but the call in `build.rs`
-only happens for scroll containers with 32+ children. This means
-flat trees with 16-31 children skip binary search.
+1. **Binary search viewport culling** — `getObjectsInViewport()` O(log N)
+2. **Render list caching** — skip `updateLayout` for static content
+3. **Layout FFI deduplication** — `_lastLayoutFrame` guard, one call per node per frame
+4. **Primary-axis sort cache** — lazy sorted children array
+5. **Parallel hit grid scissoring** — mouse event clipping matches viewport clipping
+6. **Subtree pruning** — culled children's `updateLayout` + `render` skipped entirely
+7. **Small array bypass** — `minTriggerSize=16` avoids binary search overhead
+8. **Culling padding** — `padding=10` for smooth scrolling buffer
+9. **`requestLive()` ref-counting** — continuous rendering only when animations active
 
-### 5. `contains_rect` naming
-BetterTUI's `Viewport::contains_rect` is actually an intersection check
-(`r > self.x && px < self.right() && b > self.y && py < self.bottom()`).
-OpenTUI correctly names this concept as overlap/intersection. The function
-works correctly but the name is misleading.
+## Optimisations Present Only in BetterTUI
 
-## Gaps to Address
+1. **`NodeState` flags** — `layout_dirty` and `render_dirty` defined for incremental updates
+2. **`Display::None` skip** — excluded from render tree build
+3. **Frame suppression via `change_count`** — skip entire render when nothing changed
+4. **Viewport culling** — `get_objects_in_viewport()` binary-search interval culling with `CULLING_PADDING = 5`
 
-1. **TypeScript-side culling**: No `getObjectsInViewport` equivalent in our
-   `@bettertui/core` TypeScript package. Useful for framework-level
-   optimizations.
+## Conclusion
 
-2. **Cross-axis padding**: BetterTUI applies padding only along primary
-   axis. Should apply to both axes for consistent behavior.
+Both engines implement viewport culling via binary-search interval search on primary-axis-sorted children. BetterTUI's `build_render_tree_with_viewport()` prunes off-screen subtrees; remaining work is full buffer diff, full tree rebuild when dirty, and JSON command serialization.
 
-3. **Negative coordinate handling**: `u16` prevents representing objects
-   partially offscreen above/left of the terminal. Consider `i16` for
-   scroll containers (already done: `Viewport::offset` uses `i32` and
-   clamps to 0).
-
-4. **Test coverage gaps**: Add tests for overlapping objects, clustered
-   objects, single-pixel gaps, and realistic scrolling scenarios
-   (chat, grid layout).
-
-5. **Missing zIndex check in result**: OpenTUI sorts by zIndex. BetterTUI
-   relies on painter z-ordering. Consider adding zIndex sort during
-   culling for scroll containers with mixed z-order children.
+**Remaining low-hanging fruit:**
+1. Wire existing `NodeState` flags into the render path (`layout_dirty`, `render_dirty`)
+2. Incremental render tree (reuse unchanged nodes)
+3. Dirty-region-only buffer clear instead of full clear

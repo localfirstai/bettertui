@@ -4,10 +4,10 @@
 // The workhorse for responsive composition. Next: grid-layout, scroll-area-basics.
 
 import { Box, Flex, Heading, Provider, Separator, Text } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
-import { mountExample } from "../../lib/standalone";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
+import { mountExample } from "~/lib/standalone";
 
 export const meta: ExampleMeta = {
   slug: "flex-layout",
@@ -65,3 +65,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = FlexLayout;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}
