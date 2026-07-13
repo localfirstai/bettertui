@@ -39,9 +39,7 @@
     "pre-publish": "node scripts/pre-publish.ts",
     "publish": "node scripts/publish.ts",
     "clean": "turbo run clean && cargo clean --manifest-path packages/core/Cargo.toml",
-    "prepare": "husky",
-    "example": "cd examples && tsx src/index.tsx",
-    "example:list": "cd examples && tsx src/index.tsx --list"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
