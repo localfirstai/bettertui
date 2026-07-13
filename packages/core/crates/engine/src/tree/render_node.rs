@@ -4,13 +4,13 @@ use smallvec::SmallVec;
 
 use super::{
     interaction::{EventHandlers, FocusProps, NodeState},
-    layout::LayoutProps,
     metadata::{Accessibility, Metadata},
     node_id::NodeId,
     node_kind::NodeKind,
     style::Style,
     visual::{CursorProps, Overflow, Transform, Visibility},
 };
+use crate::layout::types::LayoutProps;
 
 /// The complete data for a single UI node. Stored in the arena, accessed by `NodeId`.
 ///

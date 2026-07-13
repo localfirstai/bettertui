@@ -5,7 +5,7 @@ use crate::tree::Rect;
 /// Stores the final position and size in terminal cell coordinates.
 /// All values are integers — fractional Taffy output is rounded at the last step.
 ///
-/// **Memory:** 20 bytes per node. Stack-allocated.
+/// **Memory:** 32 bytes per node. Stack-allocated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct LayoutResult {
     /// Absolute X position in terminal cells (from left edge).
@@ -13,13 +13,25 @@ pub struct LayoutResult {
     /// Absolute Y position in terminal cells (from top edge).
     pub y: u16,
     /// Outer width including padding and border (in cells).
+    /// Clamped to minimum 1 for terminal rendering.
     pub width: u16,
     /// Outer height including padding and border (in cells).
+    /// Clamped to minimum 1 for terminal rendering.
     pub height: u16,
     /// Inner width excluding padding and border (in cells).
     pub content_width: u16,
     /// Inner height excluding padding and border (in cells).
     pub content_height: u16,
+    /// Computed padding from Taffy (resolved from percentages to concrete values).
+    pub padding_top: u16,
+    pub padding_right: u16,
+    pub padding_bottom: u16,
+    pub padding_left: u16,
+    /// Computed border from Taffy.
+    pub border_top: u16,
+    pub border_right: u16,
+    pub border_bottom: u16,
+    pub border_left: u16,
 }
 
 impl LayoutResult {
@@ -31,6 +43,7 @@ impl LayoutResult {
             height,
             content_width: width,
             content_height: height,
+            ..Default::default()
         }
     }
 
@@ -135,5 +148,21 @@ mod tests {
         let cr = lr.content_rect();
         assert_eq!(cr.width, 18);
         assert_eq!(cr.height, 8);
+    }
+
+    #[test]
+    fn layout_result_min_zero() {
+        let lr = LayoutResult::new(0, 0, 0, 0);
+        assert_eq!(lr.width, 0);
+        assert_eq!(lr.height, 0);
+    }
+
+    #[test]
+    fn layout_result_padding_and_border() {
+        let lr = LayoutResult::new(0, 0, 20, 10);
+        assert_eq!(lr.padding_left, 0);
+        assert_eq!(lr.padding_right, 0);
+        assert_eq!(lr.border_left, 0);
+        assert_eq!(lr.border_right, 0);
     }
 }

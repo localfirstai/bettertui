@@ -1,6 +1,6 @@
 use crate::events::types::{Event, EventResult, Key};
+use crate::layout::types::LayoutProps;
 use crate::tree::color::Color;
-use crate::tree::layout::LayoutProps;
 use crate::tree::style::Style;
 use crate::widgets::Widget;
 use crate::widgets::WidgetId;

@@ -27,8 +27,15 @@ impl LayoutTreeSync {
     pub fn sync_full(&mut self, arena: &NodeArena) {
         for (id, node) in arena.iter() {
             if !self.layout.has_node(id) {
-                self.layout.register_container(id, &node.layout);
+                if let Some(text) = &node.text {
+                    self.layout.register_text_node(id, &node.layout, text);
+                } else {
+                    self.layout.register_container(id, &node.layout);
+                }
             } else if node.state.layout_dirty {
+                if let Some(text) = &node.text {
+                    self.layout.update_text(id, text);
+                }
                 self.layout.update_style(id, &node.layout);
             }
         }
@@ -37,8 +44,15 @@ impl LayoutTreeSync {
     pub fn sync_node(&mut self, arena: &NodeArena, id: NodeId) {
         if let Some(node) = arena.get(id) {
             if !self.layout.has_node(id) {
-                self.layout.register_container(id, &node.layout);
+                if let Some(text) = &node.text {
+                    self.layout.register_text_node(id, &node.layout, text);
+                } else {
+                    self.layout.register_container(id, &node.layout);
+                }
             } else if node.state.layout_dirty {
+                if let Some(text) = &node.text {
+                    self.layout.update_text(id, text);
+                }
                 self.layout.update_style(id, &node.layout);
             }
         }
@@ -75,8 +89,8 @@ impl LayoutTreeSync {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::layout::types::Sizing;
     use crate::tree::arena::NodeArena;
-    use crate::tree::layout::Sizing;
     use crate::tree::node_kind::NodeKind;
     use crate::tree::render_node::RenderNode;
 

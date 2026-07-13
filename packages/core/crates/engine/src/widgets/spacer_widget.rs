@@ -1,6 +1,6 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
-use crate::tree::layout::{LayoutProps, Sizing};
+use crate::layout::types::{LayoutProps, Sizing};
 
 use super::{Widget, WidgetContext, WidgetId};
 

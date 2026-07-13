@@ -259,8 +259,6 @@ mod tests {
 
     #[test]
     fn spanning_object_caught() {
-        // A tall object at start=0 with height=50 should be caught
-        // even if viewport starts at y=30
         let mut arena = crate::tree::arena::NodeArena::new();
         let tall_id = arena.insert(crate::tree::render_node::RenderNode::new(
             crate::tree::node_kind::NodeKind::Box,
@@ -288,7 +286,6 @@ mod tests {
 
     #[test]
     fn small_array_bypasses_binary_search() {
-        // < 16 children should skip binary search but still work
         let children = make_sorted_children(0, 15, 2, 1);
         let vp = Viewport::new(0, 5, 10, 5);
         let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
@@ -300,8 +297,6 @@ mod tests {
     fn gap_between_children() {
         let children = make_sorted_children(0, 3, 100, 5);
         let vp = Viewport::new(0, 50, 10, 10);
-        // Children at y=0, 100, 200. Viewport at y=50, 10h.
-        // No child overlaps.
         let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
         assert!(result.is_empty());
     }
@@ -309,9 +304,7 @@ mod tests {
     #[test]
     fn partial_overlap_at_edge() {
         let children = make_sorted_children(0, 5, 5, 10);
-        // Child 0: y=0..10, Child 1: y=5..15, Child 2: y=10..20, etc.
         let vp = Viewport::new(0, 8, 10, 5);
-        // Viewport y=8..13. Overlaps: child 0 (0..10), child 1 (5..15), child 2 (10..20)
         let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
         assert_eq!(
             result.len(),
@@ -322,13 +315,8 @@ mod tests {
 
     #[test]
     fn padding_includes_nearby_objects() {
-        // Object 3px below viewport should be included (padding=5)
         let children = make_sorted_children(10, 3, 10, 5);
-        // Child 0: y=10..15, Child 1: y=20..25, Child 2: y=30..35
         let vp = Viewport::new(0, 0, 80, 10);
-        // Viewport y=0..10. Padded y=0..20.
-        // Child 0: y=10..15 → end=15 > 0, start=10 < 20 → visible (padding)
-        // Child 1: y=20..25 → start=20 not < 20 → not visible
         let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
         assert_eq!(
             result.len(),
@@ -342,8 +330,6 @@ mod tests {
         let children = make_sorted_children(0, 1000, 10, 5);
         let vp = Viewport::new(0, 5000, 80, 24);
         let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
-        // Children at y=0..5000 with stride 10. Viewport at y=5000, h=24.
-        // Child 500 (y=5000) overlaps. Child 501 (y=5010) might overlap.
         assert!(
             result.len() <= 3,
             "should find only overlapping children from large sparse list"

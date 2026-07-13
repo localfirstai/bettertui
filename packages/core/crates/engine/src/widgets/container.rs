@@ -1,6 +1,6 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
-use crate::tree::layout::{LayoutProps, RectValues};
+use crate::layout::types::{LayoutProps, RectValues};
 use crate::tree::style::Style;
 
 use super::{Widget, WidgetContext, WidgetId};
@@ -57,9 +57,9 @@ impl Widget for ContainerWidget {
 mod tests {
     use super::*;
     use crate::focus::FocusManager;
+    use crate::layout::types::Sizing;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
-    use crate::tree::layout::Sizing;
     use crate::tree::node_kind::NodeKind;
     use crate::widgets::theme::Theme;
 

@@ -1,9 +1,9 @@
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::events::types::{Event, EventResult, Key};
+use crate::layout::types::{LayoutProps, Sizing};
 use crate::text::display_width;
 use crate::tree::color::{Color, NamedColor};
-use crate::tree::layout::{LayoutProps, Sizing};
 use crate::tree::node_id::NodeId;
 use crate::tree::style::Style;
 

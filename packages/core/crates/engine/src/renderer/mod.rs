@@ -5,9 +5,11 @@ pub mod backend;
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::FrameBuffer;
 use crate::layout::LayoutTreeSync;
+use crate::layout::build_render_tree_with_viewport;
+use crate::layout::paint::Viewport;
 use crate::painter::Painter;
 use crate::post_process::{PassResult, RenderPassContext, RenderPipeline};
-use crate::render_object::{RenderTree, Viewport, build_render_tree_with_viewport};
+use crate::render_object::RenderTree;
 use crate::renderer::backend::RenderBackend;
 use crate::renderer::backend::ansi::AnsiBackend;
 use crate::scheduler::{FrameStatus, Scheduler};
@@ -143,7 +145,7 @@ impl Renderer {
         self.render_tree =
             build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp));
 
-        let ctx = crate::render_object::PaintContext::new(self.width, self.height);
+        let ctx = crate::layout::paint::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
 
         // Post-processing: execute render passes on the painter's framebuffer
@@ -234,7 +236,7 @@ impl Renderer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::framebuffer::Cell;
+
     use crate::post_process::effects::ColorMatrixPass;
     use crate::post_process::effects::INVERT_MATRIX;
     use crate::renderer::backend::ansi::AnsiBackend;
@@ -370,8 +372,8 @@ mod tests {
         // Add 50 children stacked vertically at y=0..50 (only first 24 in viewport)
         for _i in 0..50 {
             let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(80.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(80.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
             let id = arena.insert(n);
             arena.append_child(root, id).unwrap();
         }
@@ -427,8 +429,8 @@ mod tests {
         // Create scroll container with 1000 children
         let scroll_parent = arena.insert({
             let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Scroll);
-            n.layout.width = Some(crate::tree::Sizing::Points(80.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(20.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(80.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(20.0));
             n
         });
         arena.append_child(root, scroll_parent).unwrap();
@@ -436,8 +438,8 @@ mod tests {
         for _ in 0..1000 {
             let child = arena.insert({
                 let mut n = crate::tree::RenderNode::new(crate::tree::NodeKind::Text);
-                n.layout.width = Some(crate::tree::Sizing::Points(80.0));
-                n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+                n.layout.width = Some(crate::layout::types::Sizing::Points(80.0));
+                n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
                 n.text = Some("x".into());
                 n
             });
@@ -468,15 +470,15 @@ mod tests {
                 g: 128,
                 b: 128,
             });
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
             n
         });
         arena.append_child(arena.root(), child).unwrap();
         {
             let root = arena.get_mut(arena.root()).unwrap();
-            root.layout.width = Some(crate::tree::Sizing::Points(40.0));
-            root.layout.height = Some(crate::tree::Sizing::Points(10.0));
+            root.layout.width = Some(crate::layout::types::Sizing::Points(40.0));
+            root.layout.height = Some(crate::layout::types::Sizing::Points(10.0));
         }
         arena
     }

@@ -1,15 +1,10 @@
-//! Render tree construction: builds a sorted render tree from the arena + layout results.
-//! Provides paint context, clip bounds, and viewport culling for the painting phase.
+//! Render tree data structures: RenderObject and RenderTree.
+//!
+//! These are the output types from the layout pipeline, consumed by the painter.
+//! The layout pipeline itself (build, culling, paint primitives) lives in `crate::layout`.
 
-mod build;
-pub mod culling;
 mod object;
-mod paint;
 mod tree;
 
-pub use build::build_render_tree;
-pub use build::build_render_tree_with_viewport;
-pub use culling::{PositionedChild, PrimaryAxis, get_objects_in_viewport};
 pub use object::RenderObject;
-pub use paint::{ClipBounds, PaintBounds, PaintContext, PaintFlags, Viewport};
 pub use tree::RenderTree;

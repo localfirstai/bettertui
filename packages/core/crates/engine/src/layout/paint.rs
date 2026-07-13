@@ -135,7 +135,7 @@ impl Viewport {
         )
     }
 
-    /// Expand viewport by `padding` pixels on all sides.
+    /// Expand viewport by `padding` cells on all sides.
     /// Prevents objects from popping in/out at viewport edges during scroll.
     pub fn with_padding(&self, padding: u16) -> Viewport {
         Viewport::new(
@@ -214,6 +214,7 @@ bitflags! {
     }
 }
 
+#[derive(Clone)]
 pub struct PaintContext {
     pub terminal_width: u16,
     pub terminal_height: u16,

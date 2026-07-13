@@ -1,6 +1,6 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
-use crate::tree::layout::LayoutProps;
+use crate::layout::types::LayoutProps;
 use crate::tree::style::Style;
 
 use super::{Widget, WidgetContext, WidgetId};
@@ -46,9 +46,9 @@ impl Widget for BoxWidget {
 mod tests {
     use super::*;
     use crate::focus::FocusManager;
+    use crate::layout::types::Sizing;
     use crate::scheduler::Scheduler;
     use crate::tree::arena::NodeArena;
-    use crate::tree::layout::Sizing;
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {

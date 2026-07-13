@@ -184,6 +184,13 @@ impl CommandProcessor {
                 self.arena.mark_changed();
                 Ok(())
             }
+            Command::SetFlexWrap { id, value } => {
+                let node = self.get_node_mut(id)?;
+                node.layout.flex_wrap = value;
+                node.state.mark_layout_dirty();
+                self.arena.mark_changed();
+                Ok(())
+            }
             Command::SetJustifyContent { id, value } => {
                 let node = self.get_node_mut(id)?;
                 node.layout.justify = value;

@@ -201,7 +201,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                crate::tree::layout::LayoutProps::default(),
+                crate::layout::types::LayoutProps::default(),
                 crate::tree::style::Style::default(),
             );
             WidgetId(id)
@@ -219,7 +219,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                crate::tree::layout::LayoutProps::default(),
+                crate::layout::types::LayoutProps::default(),
                 crate::tree::style::Style::default(),
             );
             WidgetId(id)

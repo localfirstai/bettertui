@@ -1,9 +1,11 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 
-use crate::tree::NodeId;
-use crate::tree::layout::{
-    AlignItems, FlexDirection, JustifyContent, LayoutProps, RectValues, Sizing,
+use crate::layout::types::{
+    AlignItems, AlignSelf, FlexDirection, FlexWrap, JustifyContent, LayoutProps, Position,
+    RectValues, Sizing,
 };
+use crate::tree::NodeId;
 
 use super::result::LayoutResult;
 
@@ -36,6 +38,8 @@ pub struct LayoutEngine {
     taffy: taffy::TaffyTree<()>,
     node_map: HashMap<NodeId, taffy::NodeId>,
     reverse_map: HashMap<taffy::NodeId, NodeId>,
+    /// Text content for text nodes. Used by the measure function to compute intrinsic size.
+    text_map: RefCell<HashMap<NodeId, String>>,
 }
 
 impl Default for LayoutEngine {
@@ -50,6 +54,7 @@ impl LayoutEngine {
             taffy: taffy::TaffyTree::new(),
             node_map: HashMap::new(),
             reverse_map: HashMap::new(),
+            text_map: RefCell::new(HashMap::new()),
         }
     }
 
@@ -85,6 +90,7 @@ impl LayoutEngine {
     pub fn remove_node(&mut self, id: NodeId) {
         if let Some(taffy_id) = self.node_map.remove(&id) {
             self.reverse_map.remove(&taffy_id);
+            self.text_map.borrow_mut().remove(&id);
             let _ = self.taffy.remove(taffy_id);
         }
     }
@@ -94,6 +100,26 @@ impl LayoutEngine {
             let style = layout_props_to_taffy(props);
             self.taffy.set_style(taffy_id, style).unwrap();
         }
+    }
+
+    /// Register node as a text node with content for intrinsic sizing.
+    /// The measure function will compute the node's size based on text content.
+    pub fn register_text_node(&mut self, id: NodeId, props: &LayoutProps, text: &str) {
+        if self.node_map.contains_key(&id) {
+            self.text_map.borrow_mut().insert(id, text.to_string());
+            self.update_style(id, props);
+            return;
+        }
+        let style = layout_props_to_taffy(props);
+        let taffy_id = self.taffy.new_leaf(style).unwrap();
+        self.node_map.insert(id, taffy_id);
+        self.reverse_map.insert(taffy_id, id);
+        self.text_map.borrow_mut().insert(id, text.to_string());
+    }
+
+    /// Update the text content for an existing text node (for re-measurement).
+    pub fn update_text(&mut self, id: NodeId, text: &str) {
+        self.text_map.borrow_mut().insert(id, text.to_string());
     }
 
     pub fn add_child(&mut self, parent: NodeId, child: NodeId) {
@@ -122,7 +148,82 @@ impl LayoutEngine {
             width: taffy::AvailableSpace::Definite(width),
             height: taffy::AvailableSpace::Definite(height),
         };
-        self.taffy.compute_layout(taffy_root, size)?;
+        let reverse_map = &self.reverse_map;
+        let text_map = &self.text_map;
+
+        self.taffy.compute_layout_with_measure(
+            taffy_root,
+            size,
+            |known_dimensions, available_space, node_id, _context, _style| {
+                // Short-circuit if both dimensions are already known
+                if let taffy::Size {
+                    width: Some(w),
+                    height: Some(h),
+                } = known_dimensions
+                {
+                    return taffy::Size {
+                        width: w,
+                        height: h,
+                    };
+                }
+
+                // Map Taffy's NodeId to our NodeId to look up text
+                let our_id = match reverse_map.get(&node_id) {
+                    Some(id) => *id,
+                    None => return taffy::Size::ZERO,
+                };
+
+                let text = text_map.borrow();
+                let content = match text.get(&our_id) {
+                    Some(t) => t.as_str(),
+                    None => return taffy::Size::ZERO,
+                };
+
+                let available_width = match available_space.width {
+                    taffy::AvailableSpace::Definite(w) => w,
+                    _ => f32::INFINITY,
+                };
+
+                // Measure text: compute how many lines fit in available width
+                let char_width = 1.0_f32;
+                let char_height = 1.0_f32;
+                let max_chars_per_line = (available_width / char_width).floor().max(1.0) as usize;
+
+                // If no wrap, intrinsic width is the max line width
+                // We don't have wrap info here, so we measure for wrapping
+                let text_str = content;
+                let total_width = text_str
+                    .lines()
+                    .map(|line| unicode_width::UnicodeWidthStr::width(line) as f32 * char_width)
+                    .fold(0.0_f32, f32::max);
+
+                let wrapped_width = available_width.min(total_width);
+                let chars_per_line = (wrapped_width / char_width).floor().max(1.0) as usize;
+                let lines = if max_chars_per_line > 0 && total_width > available_width {
+                    // Count wrapping lines
+                    text_str
+                        .lines()
+                        .map(|line| {
+                            let w = unicode_width::UnicodeWidthStr::width(line);
+                            if w == 0 {
+                                1
+                            } else {
+                                w.div_ceil(chars_per_line)
+                            }
+                        })
+                        .sum::<usize>()
+                } else {
+                    text_str.lines().count().max(1)
+                };
+
+                taffy::Size {
+                    width: known_dimensions.width.unwrap_or(wrapped_width),
+                    height: known_dimensions
+                        .height
+                        .unwrap_or(lines as f32 * char_height),
+                }
+            },
+        )?;
         Ok(())
     }
 
@@ -137,8 +238,16 @@ impl LayoutEngine {
                         y: (layout.location.y.round() as i32).max(0) as u16,
                         width: (layout.size.width.round() as i32).max(0) as u16,
                         height: (layout.size.height.round() as i32).max(0) as u16,
-                        content_width: 0,
-                        content_height: 0,
+                        content_width: (layout.content_box_width().round() as i32).max(0) as u16,
+                        content_height: (layout.content_box_height().round() as i32).max(0) as u16,
+                        padding_top: (layout.padding.top.round() as i32).max(0) as u16,
+                        padding_right: (layout.padding.right.round() as i32).max(0) as u16,
+                        padding_bottom: (layout.padding.bottom.round() as i32).max(0) as u16,
+                        padding_left: (layout.padding.left.round() as i32).max(0) as u16,
+                        border_top: (layout.border.top.round() as i32).max(0) as u16,
+                        border_right: (layout.border.right.round() as i32).max(0) as u16,
+                        border_bottom: (layout.border.bottom.round() as i32).max(0) as u16,
+                        border_left: (layout.border.left.round() as i32).max(0) as u16,
                     },
                 );
             }
@@ -227,6 +336,52 @@ fn map_flex_direction(val: FlexDirection) -> taffy::FlexDirection {
     }
 }
 
+fn rect_values_to_inset(r: &RectValues) -> taffy::Rect<taffy::LengthPercentageAuto> {
+    taffy::Rect {
+        top: r
+            .top
+            .map(taffy::LengthPercentageAuto::Length)
+            .unwrap_or(taffy::LengthPercentageAuto::Auto),
+        right: r
+            .right
+            .map(taffy::LengthPercentageAuto::Length)
+            .unwrap_or(taffy::LengthPercentageAuto::Auto),
+        bottom: r
+            .bottom
+            .map(taffy::LengthPercentageAuto::Length)
+            .unwrap_or(taffy::LengthPercentageAuto::Auto),
+        left: r
+            .left
+            .map(taffy::LengthPercentageAuto::Length)
+            .unwrap_or(taffy::LengthPercentageAuto::Auto),
+    }
+}
+
+fn map_flex_wrap(val: FlexWrap) -> taffy::FlexWrap {
+    match val {
+        FlexWrap::NoWrap => taffy::FlexWrap::NoWrap,
+        FlexWrap::Wrap => taffy::FlexWrap::Wrap,
+        FlexWrap::WrapReverse => taffy::FlexWrap::WrapReverse,
+    }
+}
+
+fn map_position(val: Position) -> taffy::Position {
+    match val {
+        Position::Relative => taffy::Position::Relative,
+        Position::Absolute => taffy::Position::Absolute,
+    }
+}
+
+fn map_align_self(val: AlignSelf) -> taffy::AlignSelf {
+    match val {
+        AlignSelf::FlexStart => taffy::AlignSelf::FlexStart,
+        AlignSelf::FlexEnd => taffy::AlignSelf::FlexEnd,
+        AlignSelf::Center => taffy::AlignSelf::Center,
+        AlignSelf::Stretch => taffy::AlignSelf::Stretch,
+        AlignSelf::Baseline => taffy::AlignSelf::Baseline,
+    }
+}
+
 fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
     let padding = props
         .padding
@@ -245,6 +400,15 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
             right: taffy::LengthPercentageAuto::Length(0.0),
             bottom: taffy::LengthPercentageAuto::Length(0.0),
             left: taffy::LengthPercentageAuto::Length(0.0),
+        });
+    let border = props
+        .border
+        .map(|r| rect_values_to_taffy(&r))
+        .unwrap_or(taffy::Rect {
+            top: taffy::LengthPercentage::Length(0.0),
+            right: taffy::LengthPercentage::Length(0.0),
+            bottom: taffy::LengthPercentage::Length(0.0),
+            left: taffy::LengthPercentage::Length(0.0),
         });
 
     let gap = match props.gap {
@@ -265,12 +429,14 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
 
     taffy::Style {
         display: match props.display {
-            crate::tree::layout::Display::Flex => taffy::Display::Flex,
-            crate::tree::layout::Display::None => taffy::Display::None,
+            crate::layout::types::Display::Flex => taffy::Display::Flex,
+            crate::layout::types::Display::None => taffy::Display::None,
         },
+        position: map_position(props.position),
         flex_direction: map_flex_direction(props.direction),
-        flex_wrap: taffy::FlexWrap::NoWrap,
+        flex_wrap: map_flex_wrap(props.flex_wrap),
         align_items: Some(map_align_items(props.align)),
+        align_self: props.align_self.map(map_align_self),
         justify_content: Some(map_justify_content(props.justify)),
         flex_grow: props.flex_grow,
         flex_shrink: props.flex_shrink,
@@ -284,8 +450,18 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
             width: sizing_to_taffy(props.max_width),
             height: sizing_to_taffy(props.max_height),
         },
+        inset: props
+            .inset
+            .map(|r| rect_values_to_inset(&r))
+            .unwrap_or(taffy::Rect {
+                top: taffy::LengthPercentageAuto::Auto,
+                right: taffy::LengthPercentageAuto::Auto,
+                bottom: taffy::LengthPercentageAuto::Auto,
+                left: taffy::LengthPercentageAuto::Auto,
+            }),
         padding,
         margin,
+        border,
         gap,
         ..Default::default()
     }

@@ -128,12 +128,27 @@ function flushAndRender(s: NativeSession): void {
     }
     return out;
   });
-  s.engine.processCommands(JSON.stringify(converted));
+  const cmdResult = s.engine.processCommands(JSON.stringify(converted));
+  if (typeof cmdResult === "string") {
+    try {
+      const parsed = JSON.parse(cmdResult);
+      if (parsed.errors?.length > 0) {
+        console.error("[flushAndRender] command errors:", parsed.errors);
+      }
+    } catch {
+      /* ignore parse errors from result */
+    }
+  }
   s.engine.beginFrame();
   const frame = s.engine.render();
   s.engine.commitFrame();
-  if (isNode && frame && (frame as { outputData?: Uint8Array }).outputData) {
-    writeStdout((frame as { outputData: Uint8Array }).outputData);
+  if (isNode && frame) {
+    const data = (frame as { outputData?: unknown }).outputData;
+    if (data) {
+      const bytes =
+        data instanceof Uint8Array ? data : new Uint8Array(data as ArrayBuffer | number[]);
+      writeStdout(bytes);
+    }
   }
 }
 

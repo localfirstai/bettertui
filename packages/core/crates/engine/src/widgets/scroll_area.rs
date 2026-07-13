@@ -1,5 +1,5 @@
 use crate::events::types::{Event, EventResult, Key};
-use crate::tree::layout::LayoutProps;
+use crate::layout::types::LayoutProps;
 use crate::tree::node_kind::NodeKind;
 use crate::tree::render_node::RenderNode;
 use crate::tree::style::Style;

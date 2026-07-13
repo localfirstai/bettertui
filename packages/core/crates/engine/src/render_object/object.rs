@@ -1,8 +1,7 @@
+use crate::layout::paint::{ClipBounds, PaintBounds, PaintFlags};
 use crate::tree::style::ResolvedStyle;
 use crate::tree::visual::Overflow;
 use crate::tree::{NodeId, Rect};
-
-use super::paint::{ClipBounds, PaintBounds, PaintFlags};
 
 #[derive(Debug, Clone)]
 pub struct RenderObject {
@@ -12,6 +11,8 @@ pub struct RenderObject {
     pub style: ResolvedStyle,
     pub opacity: f32,
     pub z_index: i32,
+    pub translate_x: i32,
+    pub translate_y: i32,
     pub text: Option<Box<str>>,
     pub text_align: crate::text::TextAlign,
     pub text_wrap: bool,
@@ -28,6 +29,8 @@ impl RenderObject {
             style: ResolvedStyle::default(),
             opacity: 1.0,
             z_index: 0,
+            translate_x: 0,
+            translate_y: 0,
             text: None,
             text_align: crate::text::TextAlign::Left,
             text_wrap: false,
@@ -46,6 +49,13 @@ impl RenderObject {
 
     pub fn is_visible(&self) -> bool {
         self.opacity > 0.0 && !self.flags.contains(PaintFlags::HIDDEN)
+    }
+
+    pub fn translated_bounds(&self) -> PaintBounds {
+        let mut b = self.bounds;
+        b.x = (b.x as i32 + self.translate_x).max(0) as u16;
+        b.y = (b.y as i32 + self.translate_y).max(0) as u16;
+        b
     }
 
     pub fn content_rect(&self) -> Rect {

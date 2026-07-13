@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use super::culling::{PositionedChild, PrimaryAxis, get_objects_in_viewport};
-use super::object::RenderObject;
-use super::paint::{ClipBounds, PaintBounds, PaintFlags, Viewport};
-use super::tree::RenderTree;
 use crate::layout::LayoutResult;
+use crate::layout::culling::{PositionedChild, PrimaryAxis, get_objects_in_viewport};
+use crate::layout::paint::{ClipBounds, PaintBounds, PaintFlags, Viewport};
+use crate::layout::types::{FlexDirection, LayoutProps};
+use crate::render_object::RenderObject;
+use crate::render_object::RenderTree;
 use crate::tree::NodeId;
 use crate::tree::arena::NodeArena;
 use crate::tree::visual::{Display, Overflow};
@@ -26,15 +27,16 @@ pub fn build_render_tree_with_viewport(
 ) -> RenderTree {
     let mut tree = RenderTree::new();
     let root = arena.root();
-    let parent_styles: HashMap<NodeId, crate::tree::style::Style> = HashMap::new();
     build_node(
         arena,
         layout_results,
         root,
-        &parent_styles,
+        &crate::tree::style::Style::default(),
         0,
         0,
         1.0,
+        0,
+        0,
         viewport,
         &mut tree,
     );
@@ -46,10 +48,12 @@ fn build_node(
     arena: &NodeArena,
     layout_results: &HashMap<NodeId, LayoutResult>,
     id: NodeId,
-    parent_styles: &HashMap<NodeId, crate::tree::style::Style>,
+    parent_style: &crate::tree::style::Style,
     clip_x: u16,
     clip_y: u16,
     parent_opacity: f32,
+    accum_tx: i32,
+    accum_ty: i32,
     viewport: Option<&Viewport>,
     tree: &mut RenderTree,
 ) {
@@ -101,11 +105,7 @@ fn build_node(
         }
     };
 
-    let resolved_style = node.style.resolve(
-        parent_styles
-            .get(&id)
-            .unwrap_or(&crate::tree::style::Style::default()),
-    );
+    let resolved_style = node.style.resolve(parent_style);
 
     let mut flags = PaintFlags::empty();
     if resolved_style.bg.is_some() {
@@ -123,29 +123,18 @@ fn build_node(
         flags |= PaintFlags::NEEDS_CLIP;
     }
 
-    let mut bounds = PaintBounds::new(layout.x, layout.y, layout.width, layout.height);
-
-    let padding_left = node
-        .layout
-        .padding
-        .map(|p| p.left.unwrap_or(0.0) as u16)
-        .unwrap_or(0);
-    let padding_right = node
-        .layout
-        .padding
-        .map(|p| p.right.unwrap_or(0.0) as u16)
-        .unwrap_or(0);
-    let padding_top = node
-        .layout
-        .padding
-        .map(|p| p.top.unwrap_or(0.0) as u16)
-        .unwrap_or(0);
-    let padding_bottom = node
-        .layout
-        .padding
-        .map(|p| p.bottom.unwrap_or(0.0) as u16)
-        .unwrap_or(0);
-    bounds = bounds.with_padding(padding_left, padding_right, padding_top, padding_bottom);
+    let mut bounds = PaintBounds::new(
+        layout.x,
+        layout.y,
+        layout.width.max(1),
+        layout.height.max(1),
+    );
+    bounds = bounds.with_padding(
+        layout.padding_left,
+        layout.padding_right,
+        layout.padding_top,
+        layout.padding_bottom,
+    );
 
     let clip = if flags.contains(PaintFlags::NEEDS_CLIP) {
         Some(ClipBounds::new(
@@ -164,6 +153,8 @@ fn build_node(
     obj.style = resolved_style;
     obj.opacity = opacity;
     obj.z_index = node.transform.z_index;
+    obj.translate_x = accum_tx + node.transform.translate_x;
+    obj.translate_y = accum_ty + node.transform.translate_y;
     obj.text = node.text.clone();
     obj.text_align = node.text_align;
     obj.text_wrap = node.text_wrap;
@@ -211,15 +202,20 @@ fn build_node(
         _ => node.children.to_vec(),
     };
 
+    let child_accum_tx = accum_tx - node.state.scroll_x + node.transform.translate_x;
+    let child_accum_ty = accum_ty - node.state.scroll_y + node.transform.translate_y;
+
     for &child_id in &child_ids {
         build_node(
             arena,
             layout_results,
             child_id,
-            parent_styles,
+            &node.style,
             child_clip_x,
             child_clip_y,
             opacity,
+            child_accum_tx,
+            child_accum_ty,
             child_viewport.as_ref(),
             tree,
         );
@@ -230,12 +226,10 @@ fn flags_need_clip(node: &crate::tree::render_node::RenderNode) -> bool {
     node.overflow == Overflow::Hidden || node.overflow == Overflow::Scroll || node.visibility.clip
 }
 
-fn determine_primary_axis(layout: &crate::tree::layout::LayoutProps) -> PrimaryAxis {
+fn determine_primary_axis(layout: &LayoutProps) -> PrimaryAxis {
     match layout.direction {
-        crate::tree::layout::FlexDirection::Row
-        | crate::tree::layout::FlexDirection::RowReverse => PrimaryAxis::Row,
-        crate::tree::layout::FlexDirection::Column
-        | crate::tree::layout::FlexDirection::ColumnReverse => PrimaryAxis::Column,
+        FlexDirection::Row | FlexDirection::RowReverse => PrimaryAxis::Row,
+        FlexDirection::Column | FlexDirection::ColumnReverse => PrimaryAxis::Column,
     }
 }
 
@@ -350,8 +344,8 @@ mod tests {
         let mut arena = NodeArena::new();
         let child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         arena.append_child(arena.root(), child).unwrap();
@@ -392,8 +386,8 @@ mod tests {
         let parent = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
             n.visibility.opacity = 0.0;
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         let child = arena.insert(RenderNode::new(NodeKind::Box));
@@ -425,14 +419,14 @@ mod tests {
         let parent = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
             n.overflow = Overflow::Hidden;
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         let child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(20.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(20.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         arena.append_child(arena.root(), parent).unwrap();
@@ -469,14 +463,14 @@ mod tests {
                 scroll_y: 50,
                 ..NodeState::default()
             };
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         let child_outside = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         arena.append_child(arena.root(), scroll).unwrap();
@@ -515,8 +509,8 @@ mod tests {
         let mut arena = NodeArena::new();
         let child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(20.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(10.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(20.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(10.0));
             n
         });
         arena.append_child(arena.root(), child).unwrap();
@@ -548,8 +542,8 @@ mod tests {
         for _ in 0..5 {
             let n = arena.insert({
                 let mut n = RenderNode::new(NodeKind::Box);
-                n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-                n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+                n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+                n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
                 n
             });
             arena.append_child(prev, n).unwrap();
@@ -592,21 +586,21 @@ mod tests {
         let outer = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
             n.overflow = Overflow::Hidden;
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(10.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(10.0));
             n
         });
         let inner = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
             n.overflow = Overflow::Hidden;
-            n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         let deep_child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(10.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(10.0));
             n
         });
         arena.append_child(arena.root(), outer).unwrap();
@@ -649,14 +643,14 @@ mod tests {
         let outer = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
             n.overflow = Overflow::Hidden;
-            n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
             n
         });
         let deep_child = arena.insert({
             let mut n = RenderNode::new(NodeKind::Box);
-            n.layout.width = Some(crate::tree::Sizing::Points(10.0));
-            n.layout.height = Some(crate::tree::Sizing::Points(10.0));
+            n.layout.width = Some(crate::layout::types::Sizing::Points(10.0));
+            n.layout.height = Some(crate::layout::types::Sizing::Points(10.0));
             n
         });
         arena.append_child(arena.root(), outer).unwrap();
@@ -701,8 +695,8 @@ mod tests {
             .map(|_| {
                 let n = arena.insert({
                     let mut n = RenderNode::new(NodeKind::Box);
-                    n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-                    n.layout.height = Some(crate::tree::Sizing::Points(5.0));
+                    n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+                    n.layout.height = Some(crate::layout::types::Sizing::Points(5.0));
                     n
                 });
                 arena.append_child(arena.root(), n).unwrap();
@@ -748,8 +742,8 @@ mod tests {
         for i in 0..200 {
             let n = arena.insert({
                 let mut n = RenderNode::new(NodeKind::Box);
-                n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-                n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+                n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+                n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
                 if i % 2 == 0 {
                     n.style.bg = Some(crate::tree::color::Color::Named(
                         crate::tree::color::NamedColor::Blue,
@@ -831,8 +825,8 @@ mod tests {
         for _ in 0..100 {
             let n = arena.insert({
                 let mut n = RenderNode::new(NodeKind::Box);
-                n.layout.width = Some(crate::tree::Sizing::Points(5.0));
-                n.layout.height = Some(crate::tree::Sizing::Points(1.0));
+                n.layout.width = Some(crate::layout::types::Sizing::Points(5.0));
+                n.layout.height = Some(crate::layout::types::Sizing::Points(1.0));
                 n
             });
             arena.append_child(arena.root(), n).unwrap();

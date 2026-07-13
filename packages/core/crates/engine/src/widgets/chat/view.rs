@@ -1,7 +1,7 @@
 use super::types::{Message, Role};
 use crate::events::types::{Event, EventResult};
+use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::tree::color::Color;
-use crate::tree::layout::{FlexDirection, LayoutProps};
 use crate::tree::style::Style;
 use crate::widgets::Widget;
 use crate::widgets::WidgetId;

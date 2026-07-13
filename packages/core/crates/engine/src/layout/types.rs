@@ -4,12 +4,13 @@
 /// Taffy uses f32 internally. Final positions are rounded to integers
 /// only at the last step.
 ///
-/// Size: ~48 bytes. Stack-allocated.
+/// Size: ~56 bytes. Stack-allocated.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LayoutProps {
     pub display: Display,
     pub position: Position,
     pub direction: FlexDirection,
+    pub flex_wrap: FlexWrap,
     pub justify: JustifyContent,
     pub align: AlignItems,
     pub align_self: Option<AlignSelf>,
@@ -19,6 +20,7 @@ pub struct LayoutProps {
     pub gap: Option<Gap>,
     pub padding: Option<RectValues>,
     pub margin: Option<RectValues>,
+    pub border: Option<RectValues>,
     pub width: Option<Sizing>,
     pub height: Option<Sizing>,
     pub min_width: Option<Sizing>,
@@ -34,6 +36,7 @@ impl Default for LayoutProps {
             display: Display::Flex,
             position: Position::Relative,
             direction: FlexDirection::Column,
+            flex_wrap: FlexWrap::NoWrap,
             justify: JustifyContent::FlexStart,
             align: AlignItems::Stretch,
             align_self: None,
@@ -43,6 +46,7 @@ impl Default for LayoutProps {
             gap: None,
             padding: None,
             margin: None,
+            border: None,
             width: None,
             height: None,
             min_width: None,
@@ -79,6 +83,18 @@ pub enum Display {
     Flex,
     /// Node is removed from layout entirely (CSS `display: none`).
     None,
+}
+
+/// Flex wrap mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FlexWrap {
+    /// All children in a single line (may overflow).
+    #[default]
+    NoWrap,
+    /// Children wrap to next line when overflow.
+    Wrap,
+    /// Children wrap in reverse direction.
+    WrapReverse,
 }
 
 /// Flex direction for child layout.

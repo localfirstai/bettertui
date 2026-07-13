@@ -1,8 +1,8 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
+use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::syntax::global_highlighter;
 use crate::tree::color::Color;
-use crate::tree::layout::{FlexDirection, LayoutProps};
 use crate::tree::style::Style;
 
 use super::{Widget, WidgetContext, WidgetId};

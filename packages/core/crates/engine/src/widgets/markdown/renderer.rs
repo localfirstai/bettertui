@@ -1,6 +1,6 @@
+use crate::layout::types::{FlexDirection, LayoutProps};
 use crate::syntax::global_highlighter;
 use crate::tree::color::Color;
-use crate::tree::layout::{FlexDirection, LayoutProps};
 use crate::tree::node_id::NodeId;
 use crate::tree::style::Style;
 use crate::widgets::WidgetId;

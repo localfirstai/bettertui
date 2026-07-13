@@ -1,5 +1,6 @@
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::render_object::{PaintBounds, PaintContext, PaintFlags, RenderObject, RenderTree};
+use crate::layout::paint::{PaintBounds, PaintContext, PaintFlags};
+use crate::render_object::{RenderObject, RenderTree};
 use crate::text::{LayoutConfig, layout_text};
 use crate::tree::color::Color;
 use crate::tree::style::ResolvedStyle;
@@ -60,7 +61,7 @@ impl Painter {
         }
 
         if let Some(clip) = &obj.clip {
-            let mut child_ctx = PaintContext::new(ctx.terminal_width, ctx.terminal_height);
+            let mut child_ctx = ctx.clone();
             child_ctx.push_clip(*clip);
             self.paint_with_clip(obj, &child_ctx);
         } else {
@@ -69,7 +70,8 @@ impl Painter {
     }
 
     fn paint_with_clip(&mut self, obj: &RenderObject, ctx: &PaintContext) {
-        let bounds = &obj.bounds;
+        let translated = obj.translated_bounds();
+        let bounds = &translated;
 
         if !ctx.is_visible(bounds) {
             return;
@@ -191,10 +193,10 @@ fn style_to_attrs(style: &ResolvedStyle) -> CellAttributes {
 mod tests {
     use super::*;
     use crate::layout::LayoutEngine;
-    use crate::render_object::build_render_tree;
+    use crate::layout::build_render_tree;
+    use crate::layout::types::Sizing;
     use crate::tree::arena::NodeArena;
     use crate::tree::color::NamedColor;
-    use crate::tree::layout::Sizing;
     use crate::tree::node_kind::NodeKind;
     use crate::tree::render_node::RenderNode;
     use crate::tree::visual::Display;

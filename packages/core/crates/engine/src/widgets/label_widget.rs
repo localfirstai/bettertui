@@ -1,7 +1,7 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
+use crate::layout::types::LayoutProps;
 use crate::text::TextAlign;
-use crate::tree::layout::LayoutProps;
 use crate::tree::style::Style;
 
 use super::{Widget, WidgetContext, WidgetId};

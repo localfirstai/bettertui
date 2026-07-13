@@ -99,7 +99,7 @@ impl RenderTree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::render_object::object::RenderObject;
+    use crate::render_object::RenderObject;
     use crate::tree::NodeId;
     use crate::tree::arena::NodeArena;
     use crate::tree::node_kind::NodeKind;

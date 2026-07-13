@@ -4,7 +4,6 @@
 pub mod arena;
 pub mod color;
 pub mod interaction;
-pub mod layout;
 pub mod metadata;
 pub mod node_id;
 pub mod node_kind;
@@ -16,10 +15,6 @@ pub mod visual;
 pub use arena::NodeArena;
 pub use color::{Color, NamedColor};
 pub use interaction::{EventHandlers, FocusProps, NodeState, UpdateFlags};
-pub use layout::{
-    AlignItems, AlignSelf, Display as LayoutDisplay, FlexDirection, Gap, JustifyContent,
-    LayoutProps, Position, RectValues, Sizing,
-};
 pub use metadata::{Accessibility, AriaLabel, AriaLive, AriaRole, Metadata};
 pub use node_id::NodeId;
 pub use node_kind::NodeKind;
