@@ -1,9 +1,11 @@
 //! Compositor: layer-based rendering with z-ordering (background, content, overlay, cursor).
 
 mod layer;
+mod pane;
 mod renderer;
 
 pub use layer::{Layer, LayerId, LayerType};
+pub use pane::{FocusDirection, Pane, PaneError, PaneId, PaneManager, SplitDirection};
 pub use renderer::CompositorRenderer;
 
 use crate::framebuffer::FrameBuffer;

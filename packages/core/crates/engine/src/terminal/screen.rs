@@ -1,7 +1,7 @@
 //! Screen state: cursor tracking, alternate screen mode, and scroll regions.
 use crate::framebuffer::Cell;
-use crate::scrollback::ScrollbackBuffer;
-use crate::terminal_process::TerminalViewport;
+use crate::terminal::process::TerminalViewport;
+use crate::terminal::scrollback::ScrollbackBuffer;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AlternateScreen {

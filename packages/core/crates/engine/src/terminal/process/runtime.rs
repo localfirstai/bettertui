@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use crate::pty::{PtyConfig, PtyError, PtyProcess, PtySize};
-use crate::terminal_process::config::ProcessConfig;
-use crate::terminal_process::state::TerminalState;
+use crate::terminal::process::config::ProcessConfig;
+use crate::terminal::process::state::TerminalState;
 
 #[derive(Debug, Clone)]
 pub enum TerminalError {

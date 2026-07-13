@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::pty::PtySize;
-use crate::terminal_process::config::ProcessConfig;
+use crate::terminal::process::config::ProcessConfig;
 
 pub struct SpawnResult {
     pub process_config: ProcessConfig,

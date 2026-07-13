@@ -2,6 +2,7 @@
 
 mod buffer;
 mod cursor;
+mod editor;
 mod layout;
 mod measurement;
 mod search;
@@ -12,6 +13,7 @@ mod wrap;
 
 pub use buffer::TextBuffer;
 pub use cursor::{Cursor, CursorPosition};
+pub use editor::{CursorStyle, Editor, EditorConfig};
 pub use layout::{LayoutConfig, LayoutLine, TextAlign, TextLayout, layout_text};
 pub use measurement::{
     byte_offset_to_display_width, char_width, display_width, display_width_to_byte_offset,

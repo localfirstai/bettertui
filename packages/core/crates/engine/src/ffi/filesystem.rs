@@ -104,18 +104,21 @@ fn dirs_home() -> Option<PathBuf> {
 }
 
 /// Returns the current working directory.
+#[expect(dead_code)]
 pub fn current_dir() -> std::io::Result<PathBuf> {
     std::env::current_dir()
 }
 
-/// Returns the file extension (without the dot).
+/// Returns the extension of a path.
+#[expect(dead_code)]
 pub fn extension(path: &Path) -> Option<String> {
-    path.extension().and_then(|e| e.to_str()).map(String::from)
+    path.extension().map(|e| e.to_string_lossy().to_string())
 }
 
-/// Returns the file name without extension.
+/// Returns the file name stem (without extension).
+#[expect(dead_code)]
 pub fn stem(path: &Path) -> Option<String> {
-    path.file_stem().and_then(|e| e.to_str()).map(String::from)
+    path.file_stem().map(|s| s.to_string_lossy().to_string())
 }
 
 #[cfg(test)]

@@ -1,7 +1,14 @@
 //! Terminal interaction: crossterm-based terminal event handling, queries, and VT emulation.
 
+pub mod capabilities;
+pub mod process;
 pub mod query;
+pub mod screen;
+pub mod scrollback;
 pub mod vt;
+
+pub use screen::*;
+pub use scrollback::*;
 
 use std::io::{self, Write, stdout};
 

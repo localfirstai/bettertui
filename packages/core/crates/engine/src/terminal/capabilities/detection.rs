@@ -1,10 +1,10 @@
-use crate::capabilities::brand::TerminalBrand;
-use crate::capabilities::clipboard::ClipboardCapabilities;
-use crate::capabilities::graphics::GraphicsCapabilities;
-use crate::capabilities::input::InputCapabilities;
-use crate::capabilities::rendering::RenderCapabilities;
-use crate::capabilities::unicode::UnicodeCapabilities;
-use crate::capabilities::window::WindowMetrics;
+use crate::terminal::capabilities::brand::TerminalBrand;
+use crate::terminal::capabilities::clipboard::ClipboardCapabilities;
+use crate::terminal::capabilities::graphics::GraphicsCapabilities;
+use crate::terminal::capabilities::input::InputCapabilities;
+use crate::terminal::capabilities::rendering::RenderCapabilities;
+use crate::terminal::capabilities::unicode::UnicodeCapabilities;
+use crate::terminal::capabilities::window::WindowMetrics;
 use crate::terminal::query::QueryResult;
 
 #[derive(Debug, Clone)]
@@ -112,7 +112,7 @@ impl CapabilityDetector {
                         self.features.true_color = true;
                         self.render.true_color = true;
                         self.render.color_support =
-                            crate::capabilities::rendering::ColorSupport::TrueColor;
+                            crate::terminal::capabilities::rendering::ColorSupport::TrueColor;
                     }
                     if attributes.contains(&62) {
                         self.features.sixel = true;

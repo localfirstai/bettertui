@@ -2355,7 +2355,7 @@ pub struct NapiCapabilities {
 impl NapiCapabilities {
     #[napi(factory)]
     pub fn detect() -> Self {
-        let caps = bettertui_engine::capabilities::global_capabilities();
+        let caps = bettertui_engine::terminal::capabilities::global_capabilities();
         let (w, h) = caps.terminal_size();
         let pixel = caps.pixel_size();
         Self {
@@ -2495,7 +2495,7 @@ pub fn get_version() -> String {
 /// Detect terminal capabilities.
 #[napi]
 pub fn detect_capabilities() -> String {
-    let caps = bettertui_engine::capabilities::global_capabilities();
+    let caps = bettertui_engine::terminal::capabilities::global_capabilities();
     let (w, h) = caps.terminal_size();
     let pixel = caps.pixel_size();
     let features = caps.features();

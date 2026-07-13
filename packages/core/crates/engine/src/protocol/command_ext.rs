@@ -38,7 +38,7 @@ impl CommandEntry {
 
 /// Result of executing a command.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CommandResult {
+pub enum RegistryResult {
     /// Command executed successfully.
     Success,
     /// Command failed with a message.
@@ -93,7 +93,7 @@ impl CommandRegistry {
     }
 
     /// Executes a command and records it in history.
-    pub fn execute(&mut self, entry: CommandEntry) -> CommandResult {
+    pub fn execute(&mut self, entry: CommandEntry) -> RegistryResult {
         let undoable = entry.undoable;
         self.history.push_back(entry.clone());
         while self.history.len() > self.max_history {
@@ -107,7 +107,7 @@ impl CommandRegistry {
             // Clear redo stack on new command
             self.redo_stack.clear();
         }
-        CommandResult::Success
+        RegistryResult::Success
     }
 
     /// Undoes the last undoable command.

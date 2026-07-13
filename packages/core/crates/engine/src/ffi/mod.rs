@@ -1,7 +1,11 @@
 //! FFI bridge for exposing the engine to foreign language bindings.
 //!
 //! Provides a stable C-compatible interface for integrating BetterTUI
-//! with other languages and runtimes (Node.js via NAPI, Python, etc.).
+//! with other languages and runtimes (Node.js via NAPI, Rust, etc.).
+
+mod filesystem;
+
+pub use filesystem::{FileEntry, home_dir, read_dir};
 
 use crate::engine::Engine;
 

@@ -3,7 +3,7 @@
 //! Wraps TextEngine with editor-specific features: cursor management,
 //! selection, undo/redo, line numbers, and input handling.
 
-use crate::text::{SelectionRange, TextEngine};
+use super::{SelectionRange, TextEngine};
 
 /// Editor configuration.
 #[derive(Debug, Clone)]
