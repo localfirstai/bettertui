@@ -17,9 +17,9 @@ import {
   render,
   useAnimation,
 } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { KeyInputProvider, useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "animation-basics",
@@ -103,3 +103,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = AnimationDemo;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

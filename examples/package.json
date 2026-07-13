@@ -2,15 +2,20 @@
   "name": "@bettertui/examples",
   "version": "0.0.0",
   "private": true,
+  "description": "BetterTUI examples and standalone example executable",
   "type": "module",
+  "module": "src/index.tsx",
+  "main": "src/index.tsx",
   "scripts": {
-    "dev": "tsdown --watch",
-    "build": "tsdown",
-    "build:standalone": "node scripts/build.ts",
-    "start": "node dist/index.mjs",
-    "example": "node scripts/run-example.mjs",
+    "dev": "node dist/index.mjs",
+    "build": "node scripts/build.ts",
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "format:check": "biome check src/",
+    "clean": "rm -rf dist docs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate-docs": "node scripts/generate-docs.mjs"
   },
   "dependencies": {
     "@bettertui/core": "workspace:*",
@@ -18,9 +23,12 @@
     "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.15.0"
   }
 }

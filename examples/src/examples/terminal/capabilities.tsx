@@ -7,10 +7,10 @@
 
 import { detectCapabilities } from "@bettertui/core";
 import { Box, Flex, Heading, Provider, Separator, StatusLine, Text } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
-import { mountExample } from "../../lib/standalone";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
+import { mountExample } from "~/lib/standalone";
 
 export const meta: ExampleMeta = {
   slug: "capabilities",
@@ -80,3 +80,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = Capabilities;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

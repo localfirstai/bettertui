@@ -5,26 +5,26 @@
 import type { ExampleCategory, ExampleMeta } from "./meta";
 import type { ExampleEntry, ExampleModule } from "./meta";
 
-import * as animationBasics from "../examples/animation/animation-basics";
-import * as listView from "../examples/containers/list-view";
-import * as scrollAreaBasics from "../examples/containers/scroll-area-basics";
+import * as animationBasics from "~/examples/animation/animation-basics";
+import * as listView from "~/examples/containers/list-view";
+import * as scrollAreaBasics from "~/examples/containers/scroll-area-basics";
 // Statically imported example modules. This is bundler-safe: the examples are
 // inlined into the launcher bundle, so their import.meta.url matches the
 // launcher and the per-file import.meta.main guard must NOT auto-run them on
 // import. The launcher mounts a chosen example via its run() export, which is
 // the standalone execution path (node dist/index.mjs <slug>).
-import * as helloWorld from "../examples/core/hello-world";
-import * as renderingEngine from "../examples/core/rendering-engine";
-import * as flexLayout from "../examples/layout/flex-layout";
-import * as gridLayout from "../examples/layout/grid-layout";
-import * as tabsNavigation from "../examples/navigation/tabs-navigation";
-import * as liveMetrics from "../examples/performance/live-metrics";
-import * as performanceStressTest from "../examples/performance/performance-stress-test";
-import * as capabilities from "../examples/terminal/capabilities";
-import * as theming from "../examples/theming/theming";
-import * as textStyles from "../examples/typography/text-styles";
-import * as dataTableBasics from "../examples/widgets/data-table-basics";
-import * as treeView from "../examples/widgets/tree-view";
+import * as helloWorld from "~/examples/core/hello-world";
+import * as renderingEngine from "~/examples/core/rendering-engine";
+import * as flexLayout from "~/examples/layout/flex-layout";
+import * as gridLayout from "~/examples/layout/grid-layout";
+import * as tabsNavigation from "~/examples/navigation/tabs-navigation";
+import * as liveMetrics from "~/examples/performance/live-metrics";
+import * as performanceStressTest from "~/examples/performance/performance-stress-test";
+import * as capabilities from "~/examples/terminal/capabilities";
+import * as theming from "~/examples/theming/theming";
+import * as textStyles from "~/examples/typography/text-styles";
+import * as dataTableBasics from "~/examples/widgets/data-table-basics";
+import * as treeView from "~/examples/widgets/tree-view";
 
 const MODULES: Record<string, ExampleModule> = {
   "hello-world": helloWorld as unknown as ExampleModule,

@@ -7,9 +7,9 @@
 
 import { CommandBuffer, createReconciler } from "@bettertui/core";
 import { Box, Flex, Heading, Provider, Separator, Text, render } from "@bettertui/react";
-import type { KeyInput } from "../../lib/keyboard";
-import { KeyInputProvider, useExampleKey } from "../../lib/keyboard-context";
-import type { ExampleMeta } from "../../lib/meta";
+import { KeyInput, isMainModule } from "~/lib/keyboard";
+import { KeyInputProvider, useExampleKey } from "~/lib/keyboard-context";
+import type { ExampleMeta } from "~/lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "rendering-engine",
@@ -23,10 +23,10 @@ export const meta: ExampleMeta = {
 
 let storedKeyInput: KeyInput | null = null;
 const buffer = new CommandBuffer();
-// The reconciler is created to demonstrate the low-level API, but this example
-// uses the standard render() path for simplicity. See createReconciler docs
-// for direct usage patterns.
-const _reconciler = createReconciler(buffer);
+// The reconciler is created to demonstrate the low-level API; the returned
+// reconciler is not consumed inline because this example uses the standard
+// render() path for simplicity. See createReconciler docs for direct usage.
+void createReconciler(buffer);
 
 function EngineView() {
   useExampleKey((event) => {
@@ -73,3 +73,16 @@ export function destroy(keyInput: KeyInput): void {
 }
 
 export const Example = EngineView;
+
+if (isMainModule()) {
+  const ki = new KeyInput();
+  ki.start();
+  ki.on((event) => {
+    if ((event.key === "q" || event.key === "Escape") && !event.ctrl) {
+      destroy(ki);
+      ki.stop();
+      process.exit(0);
+    }
+  });
+  run(ki);
+}

@@ -51,15 +51,15 @@ describe("KeyInput parser", () => {
 
   it("carries modifier flags for ctrl sequences", () => {
     const ki = new KeyInput();
-    let captured: { key: string; ctrl: boolean } | null = null;
+    const events: Array<{ key: string; ctrl: boolean }> = [];
     ki.on((e) => {
-      captured = { key: e.key, ctrl: e.ctrl };
+      events.push({ key: e.key, ctrl: e.ctrl });
     });
     const anyKi = ki as unknown as { handleChunk: (chunk: string) => void };
     anyKi.handleChunk("\x03"); // ctrl+c
     ki.stop();
-    expect(captured).not.toBeNull();
-    expect(captured?.ctrl).toBe(true);
-    expect(captured?.key).toBe("\x03");
+    expect(events.length).toBe(1);
+    expect(events[0]?.ctrl).toBe(true);
+    expect(events[0]?.key).toBe("c");
   });
 });
