@@ -47,6 +47,7 @@ export type {
 
 // Runtime (render + RuntimeProvider + useRuntime)
 export { render, RuntimeProvider, useRuntime } from "./runtime";
+export type { RenderHandle } from "./runtime";
 
 // Re-export core types that users need
 export type {

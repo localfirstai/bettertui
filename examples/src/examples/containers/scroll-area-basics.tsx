@@ -2,7 +2,7 @@
 //
 // Demonstrates: ScrollArea with scrollTop and a long content region. Scrolls
 // with j/k. Pairs naturally with List/Tree for large datasets.
-// Next: list-view, tree-view, advanced-data-table.
+// Next: list-view, tree-view.
 
 import {
   Flex,
@@ -13,10 +13,10 @@ import {
   StatusLine,
   Text,
   render,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "scroll-area-basics",
@@ -25,7 +25,7 @@ export const meta: ExampleMeta = {
   category: "containers",
   level: 2,
   tags: ["ScrollArea", "scrolling"],
-  next: ["list-view", "tree-view", "advanced-data-table"],
+  next: ["list-view", "tree-view"],
 };
 
 const lines = Array.from({ length: 40 }, (_, i) => `Line ${i + 1} — scrollable content`);
@@ -33,20 +33,17 @@ const lines = Array.from({ length: 40 }, (_, i) => `Line ${i + 1} — scrollable
 let scrollTop = 0;
 
 function ScrollDemo() {
-  const runtime = useRuntime();
-
-  useKeyboard((key) => {
-    if (key.key === "j" || key.key === "ArrowDown") {
+  useExampleKey((event) => {
+    if (event.key === "j" || event.key === "ArrowDown") {
       scrollTop = Math.min(scrollTop + 1, lines.length - 1);
       renderApp();
-    } else if (key.key === "k" || key.key === "ArrowUp") {
+    } else if (event.key === "k" || event.key === "ArrowUp") {
       scrollTop = Math.max(scrollTop - 1, 0);
       renderApp();
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
+    } else if (event.key === "q" || event.key === "Escape") {
+      return true;
     }
-    return true;
+    return false;
   });
 
   return (
@@ -74,4 +71,17 @@ function ScrollDemo() {
   );
 }
 
-render(<ScrollDemo />);
+function renderApp() {
+  render(<ScrollDemo />);
+}
+
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  renderApp();
+}
+
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
+}
+
+export const Example = ScrollDemo;

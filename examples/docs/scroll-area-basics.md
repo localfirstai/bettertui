@@ -10,7 +10,7 @@
 ## What it shows
 
 This example focuses on **ScrollArea**. Read the source in
-`src/scroll-area-basics.tsx` — each example is small, self-contained, and commented.
+`src/examples/containers/scroll-area-basics.tsx` — each example is small, self-contained, and easy to read.
 
 ## Run it
 
@@ -19,7 +19,7 @@ pnpm --filter @bettertui/examples build
 node dist/index.mjs scroll-area-basics
 ```
 
-Or from the example browser:
+Or from the interactive browser:
 
 ```bash
 pnpm --filter @bettertui/examples dev
@@ -30,14 +30,6 @@ pnpm --filter @bettertui/examples dev
 - `ScrollArea`
 - `scrolling`
 
-## Common mistakes
-
-- Forgetting to call `runtime?.runtime.dispose()` before `process.exit(0)` on quit.
-- Mutating state without re-rendering — call `render(<App />)` after changes.
-- Assuming a mouse/PTY capability is present; check `requires` above first.
-
 ## Next examples
 
-- `tree-view` — Tree View
-- `tabs-navigation` — Tabs & Accordion
-- `live-metrics` — Live Metrics
+_None specified._

@@ -2,7 +2,7 @@
 //
 // Demonstrates: Tree with nested nodes, selectedId, and j/k navigation with
 // Enter/Space to toggle expansion. Exercises recursive node attachment.
-// Next: data-table-basics, list-view, advanced-data-table.
+// Next: data-table-basics, list-view.
 
 import {
   Badge,
@@ -13,23 +13,22 @@ import {
   Separator,
   Spacer,
   StatusLine,
-  Text,
   Tree,
   render,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
 import type { TreeNode } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "tree-view",
   title: "Tree View",
   description: "Expand/collapse a file-tree with keyboard navigation and selection.",
-  category: "data-display",
+  category: "widgets",
   level: 2,
   tags: ["Tree", "TreeNode", "navigation"],
-  next: ["data-table-basics", "list-view", "advanced-data-table"],
+  next: ["data-table-basics", "list-view"],
 };
 
 const projectTree: TreeNode[] = [
@@ -72,22 +71,6 @@ const projectTree: TreeNode[] = [
   { id: "readme.md", label: "README.md" },
 ];
 
-function count(nodes: TreeNode[]): { files: number; folders: number } {
-  let files = 0;
-  let folders = 0;
-  for (const n of nodes) {
-    if (n.children) {
-      folders++;
-      const sub = count(n.children);
-      files += sub.files;
-      folders += sub.folders;
-    } else {
-      files++;
-    }
-  }
-  return { files, folders };
-}
-
 function attachExpanded(node: TreeNode, expanded: Set<string>): TreeNode {
   const out: TreeNode = { ...node, expanded: expanded.has(node.id) };
   if (node.children) {
@@ -110,26 +93,23 @@ let selectedId = "src";
 const expandedIds = new Set(["src", "components", "hooks"]);
 
 function TreeView() {
-  const runtime = useRuntime();
-  const { files, folders } = count(projectTree);
-  const nodes = projectTree.map((n) => attachExpanded(n, expandedIds));
-  const visible = visiblePaths(projectTree, expandedIds);
-  const currentIdx = visible.indexOf(selectedId);
-
-  useKeyboard((key) => {
-    if (key.key === "j") {
-      if (currentIdx < visible.length - 1) selectedId = visible[currentIdx + 1];
-    } else if (key.key === "k") {
-      if (currentIdx > 0) selectedId = visible[currentIdx - 1];
-    } else if (key.key === "Enter" || key.key === " ") {
+  useExampleKey((event) => {
+    const nodes = projectTree.map((n) => attachExpanded(n, expandedIds));
+    const visible = visiblePaths(projectTree, expandedIds);
+    const currentIdx = visible.indexOf(selectedId);
+    if (event.key === "j") {
+      if (currentIdx < visible.length - 1) selectedId = visible[currentIdx + 1] ?? selectedId;
+    } else if (event.key === "k") {
+      if (currentIdx > 0) selectedId = visible[currentIdx - 1] ?? selectedId;
+    } else if (event.key === "Enter" || event.key === " ") {
       if (expandedIds.has(selectedId)) expandedIds.delete(selectedId);
       else expandedIds.add(selectedId);
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
-    } else {
+    } else if (event.key === "q" || event.key === "Escape") {
       return true;
+    } else {
+      return false;
     }
+    void nodes;
     renderApp();
     return true;
   });
@@ -143,19 +123,11 @@ function TreeView() {
           <Badge variant="info">{expandedIds.size} expanded</Badge>
         </Flex>
         <Separator />
-        <Flex flexDirection="row" gap={2} padding={1}>
-          <Flex flexDirection="row" gap={1}>
-            <Text bold>Folders:</Text>
-            <Badge variant="success">{folders}</Badge>
-          </Flex>
-          <Flex flexDirection="row" gap={1}>
-            <Text bold>Files:</Text>
-            <Badge variant="primary">{files}</Badge>
-          </Flex>
-        </Flex>
-        <Separator />
         <Box padding={1}>
-          <Tree nodes={nodes} selectedId={selectedId} />
+          <Tree
+            nodes={projectTree.map((n) => attachExpanded(n, expandedIds))}
+            selectedId={selectedId}
+          />
         </Box>
         <Separator />
         <StatusLine
@@ -175,4 +147,13 @@ function renderApp() {
   render(<TreeView />);
 }
 
-renderApp();
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  renderApp();
+}
+
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
+}
+
+export const Example = TreeView;

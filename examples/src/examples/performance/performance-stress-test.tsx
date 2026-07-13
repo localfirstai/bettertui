@@ -1,9 +1,9 @@
 // Performance stress test — frame-loop throughput under load.
 //
 // Demonstrates: driving re-renders on a timer while displaying FPS, frame count,
-// and render-time metrics. Uses the React `render()` loop (not the raw
+// and render-time metrics. Uses the React render() loop (not the raw
 // createReconciler path) so it matches every other example. Builds on live-metrics.
-// Next: live-metrics, dashboard-app, advanced-data-table.
+// Next: live-metrics, data-table-basics.
 
 import {
   Badge,
@@ -17,10 +17,11 @@ import {
   Text,
   Tree,
   render,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { TreeNode } from "@bettertui/react";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "performance-stress-test",
@@ -29,10 +30,10 @@ export const meta: ExampleMeta = {
   category: "performance",
   level: 5,
   tags: ["performance", "setInterval", "DataTable", "Tree", "metrics"],
-  next: ["live-metrics", "dashboard-app", "advanced-data-table"],
+  next: ["live-metrics", "data-table-basics"],
 };
 
-const TESTS = ["Idle", "Large Table", "Large Tree", "Rapid Updates"] as const;
+const TESTS = ["Idle", "Large Table", "Large Tree", "Rapid Updates"];
 
 interface Metrics {
   active: number;
@@ -66,7 +67,7 @@ function genTable(n: number) {
   }));
 }
 
-function genTree(n: number) {
+function genTree(n: number): TreeNode[] {
   return Array.from({ length: n }, (_, i) => ({
     id: `n${i + 1}`,
     label: `Node-${i + 1}`,
@@ -110,26 +111,23 @@ function start() {
 }
 
 function Stress() {
-  const runtime = useRuntime();
-
-  useKeyboard((key) => {
-    if (key.key >= "1" && key.key <= "4") {
-      m.active = Number(key) - 1;
+  useExampleKey((event) => {
+    if (event.key >= "1" && event.key <= "4") {
+      m.active = Number(event.key) - 1;
       if (m.running) start();
       renderApp();
-    } else if (key.key === " ") {
+    } else if (event.key === " ") {
       start();
-    } else if (key.key === "c") {
+    } else if (event.key === "c") {
       stop();
       m.fps = 0;
       m.frames = 0;
       m.renderTime = 0;
       renderApp();
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
+    } else if (event.key === "q" || event.key === "Escape") {
+      return true;
     }
-    return true;
+    return false;
   });
 
   return (
@@ -202,14 +200,14 @@ function renderApp() {
   render(<Stress />);
 }
 
-renderApp();
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  renderApp();
+}
 
-process.stdin.setRawMode?.(true);
-process.stdin.resume();
-process.stdin.on("data", (d) => {
-  if (d.toString() === "q") {
-    stop();
-    process.exit(0);
-  }
-});
-process.on("SIGINT", () => process.exit(0));
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
+  stop();
+}
+
+export const Example = Stress;

@@ -7,8 +7,7 @@
 //
 // Reads the compiled registry. Build first with `pnpm --filter @bettertui/examples build`.
 
-import { CATEGORY_LABELS, CATEGORY_ORDER } from "../dist/index.mjs";
-import { exampleBySlug, examples } from "../dist/index.mjs";
+import { CATEGORY_LABELS, CATEGORY_ORDER, exampleBySlug, examples } from "../dist/index.mjs";
 
 function list() {
   for (const cat of CATEGORY_ORDER) {

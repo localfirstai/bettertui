@@ -2,7 +2,7 @@
 //
 // Demonstrates: an auto-ticking state (setInterval) driving CPU/memory/disk/
 // network panels and a sortable process DataTable. Builds on data-table-basics.
-// Next: data-table-basics, dashboard-app, performance-stress-test.
+// Next: data-table-basics, performance-stress-test.
 
 import {
   Badge,
@@ -18,10 +18,10 @@ import {
   StatusLine,
   Text,
   render,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "live-metrics",
@@ -30,7 +30,7 @@ export const meta: ExampleMeta = {
   category: "performance",
   level: 4,
   tags: ["setInterval", "DataTable", "Progress", "live data"],
-  next: ["data-table-basics", "dashboard-app", "performance-stress-test"],
+  next: ["data-table-basics", "performance-stress-test"],
 };
 
 const state = {
@@ -40,10 +40,10 @@ const state = {
   disk: 64,
   net: 1.2,
   processes: [
-    { pid: 1, name: "systemd", cpu: 0.1, mem: 0.3, status: "running" as const },
-    { pid: 245, name: "node", cpu: 2.3, mem: 1.2, status: "running" as const },
-    { pid: 1023, name: "bash", cpu: 0.0, mem: 0.1, status: "sleeping" as const },
-    { pid: 2048, name: "code", cpu: 5.2, mem: 3.4, status: "running" as const },
+    { pid: 1, name: "systemd", cpu: 0.1, mem: 0.3, status: "running" },
+    { pid: 245, name: "node", cpu: 2.3, mem: 1.2, status: "running" },
+    { pid: 1023, name: "bash", cpu: 0.0, mem: 0.1, status: "sleeping" },
+    { pid: 2048, name: "code", cpu: 5.2, mem: 3.4, status: "running" },
   ],
   selected: 0,
 };
@@ -74,20 +74,17 @@ function tick() {
 }
 
 function LiveMetrics() {
-  const runtime = useRuntime();
-
-  useKeyboard((key) => {
-    if (key.key === "j") {
+  useExampleKey((event) => {
+    if (event.key === "j") {
       state.selected = Math.min(state.selected + 1, state.processes.length - 1);
       renderApp();
-    } else if (key.key === "k") {
+    } else if (event.key === "k") {
       state.selected = Math.max(state.selected - 1, 0);
       renderApp();
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
+    } else if (event.key === "q" || event.key === "Escape") {
+      return true;
     }
-    return true;
+    return false;
   });
 
   return (
@@ -148,9 +145,20 @@ function renderApp() {
   render(<LiveMetrics />);
 }
 
-renderApp();
-setInterval(tick, 1000);
+let timer: ReturnType<typeof setInterval> | null = null;
 
-process.stdin.setRawMode?.(true);
-process.stdin.resume();
-process.on("SIGINT", () => process.exit(0));
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  timer = setInterval(tick, 1000);
+  renderApp();
+}
+
+export function destroy(keyInput: KeyInput): void {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  void keyInput;
+}
+
+export const Example = LiveMetrics;

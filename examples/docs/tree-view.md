@@ -2,7 +2,7 @@
 
 > Expand/collapse a file-tree with keyboard navigation and selection.
 
-- **Category:** Data Display
+- **Category:** Widgets
 - **Level:** 2 / 5
 - **Demonstrates:** Tree, TreeNode, navigation
 - **Requires:** _None._
@@ -10,7 +10,7 @@
 ## What it shows
 
 This example focuses on **Tree**. Read the source in
-`src/tree-view.tsx` — each example is small, self-contained, and commented.
+`src/examples/widgets/tree-view.tsx` — each example is small, self-contained, and easy to read.
 
 ## Run it
 
@@ -19,7 +19,7 @@ pnpm --filter @bettertui/examples build
 node dist/index.mjs tree-view
 ```
 
-Or from the example browser:
+Or from the interactive browser:
 
 ```bash
 pnpm --filter @bettertui/examples dev
@@ -31,14 +31,6 @@ pnpm --filter @bettertui/examples dev
 - `TreeNode`
 - `navigation`
 
-## Common mistakes
-
-- Forgetting to call `runtime?.runtime.dispose()` before `process.exit(0)` on quit.
-- Mutating state without re-rendering — call `render(<App />)` after changes.
-- Assuming a mouse/PTY capability is present; check `requires` above first.
-
 ## Next examples
 
-- `live-metrics` — Live Metrics
-- `tabs-navigation` — Tabs & Accordion
-- `performance-stress-test` — Performance Stress Test
+_None specified._

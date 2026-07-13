@@ -2,44 +2,32 @@
 //
 // Demonstrates: the CommandBuffer + Runtime surface from @bettertui/core that the
 // React reconciler sits on top of. This is the "look under the hood" example;
-// most apps should use the React `render()` API instead.
-// Next: hello-world, layout-basics, widget-gallery.
+// most apps should use the React render() API instead.
+// Next: hello-world, flex-layout.
 
 import { CommandBuffer, createReconciler } from "@bettertui/core";
-import {
-  Box,
-  Flex,
-  Heading,
-  Provider,
-  Separator,
-  Text,
-  render,
-  useKeyboard,
-  useRuntime,
-} from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import { Box, Flex, Heading, Provider, Separator, Text, render } from "@bettertui/react";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "rendering-engine",
   title: "Rendering & Engine",
   description: "The CommandBuffer + reconciler layer the React API builds on.",
-  category: "rendering",
+  category: "core",
   level: 4,
   tags: ["CommandBuffer", "createReconciler", "Runtime", "engine"],
-  next: ["hello-world", "layout-basics", "widget-gallery"],
+  next: ["hello-world", "flex-layout"],
 };
 
 const buffer = new CommandBuffer();
 const reconciler = createReconciler(buffer);
 
 function EngineView() {
-  const runtime = useRuntime();
-  useKeyboard((key) => {
-    if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
-    }
-    return true;
+  useExampleKey((event) => {
+    if (event.key === "q" || event.key === "Escape") return true;
+    return false;
   });
 
   return (
@@ -65,12 +53,16 @@ function EngineView() {
 function renderApp() {
   const element = <EngineView />;
   reconciler.createInstance("Provider", { children: element });
-  // Render the same tree through the React API for actual output.
   render(element);
 }
 
-renderApp();
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  renderApp();
+}
 
-process.stdin.setRawMode?.(true);
-process.stdin.resume();
-process.on("SIGINT", () => process.exit(0));
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
+}
+
+export const Example = EngineView;

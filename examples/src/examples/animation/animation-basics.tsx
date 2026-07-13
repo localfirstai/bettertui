@@ -2,7 +2,7 @@
 //
 // Demonstrates: the useAnimation hook with named easings and a simple timeline.
 // The progress drives a Progress bar so motion is visible without a render loop.
-// Next: theming, theming, frame-loop (when added).
+// Next: theming, live-metrics.
 
 import {
   Box,
@@ -16,10 +16,10 @@ import {
   easings,
   render,
   useAnimation,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "animation-basics",
@@ -28,7 +28,7 @@ export const meta: ExampleMeta = {
   category: "animation",
   level: 3,
   tags: ["useAnimation", "easings", "useTimeline", "motion"],
-  next: ["theming", "text-styles", "live-metrics"],
+  next: ["theming", "live-metrics"],
 };
 
 const easingNames = Object.keys(easings).filter(
@@ -39,26 +39,24 @@ let progress = 0;
 let easingIdx = 0;
 
 function AnimationDemo() {
-  const runtime = useRuntime();
+  useExampleKey((event) => {
+    if (event.key === "e") {
+      easingIdx = (easingIdx + 1) % easingNames.length;
+      renderApp();
+    } else if (event.key === "q" || event.key === "Escape") {
+      return true;
+    }
+    return false;
+  });
 
+  const easing = easingNames[easingIdx] ?? "linear";
   useAnimation(
     (p) => {
       progress = Math.round(p * 100);
       renderApp();
     },
-    { duration: 1200, easing: easingNames[easingIdx], loop: true },
+    { duration: 1200, easing, loop: true },
   );
-
-  useKeyboard((key) => {
-    if (key.key === "e") {
-      easingIdx = (easingIdx + 1) % easingNames.length;
-      renderApp();
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
-    }
-    return true;
-  });
 
   return (
     <Provider>
@@ -75,7 +73,7 @@ function AnimationDemo() {
         <Separator />
         <StatusLine
           items={[
-            { label: "Easing", value: easing },
+            { label: "Easing", value: String(easingNames[easingIdx]) },
             { label: "e", value: "cycle" },
             { label: "q", value: "quit" },
           ]}
@@ -89,4 +87,13 @@ function renderApp() {
   render(<AnimationDemo />);
 }
 
-renderApp();
+export function run(keyInput: KeyInput): void {
+  void keyInput;
+  renderApp();
+}
+
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
+}
+
+export const Example = AnimationDemo;

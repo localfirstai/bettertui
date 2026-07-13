@@ -2,7 +2,7 @@
 //
 // Demonstrates: Tabs (activeIndex) and Accordion (expanded) for organizing
 // content into switchable/disclosable regions.
-// Next: list-view, dropdown-menu, tooltip-basics.
+// Next: list-view, data-table-basics.
 
 import {
   Accordion,
@@ -14,10 +14,10 @@ import {
   Tabs,
   Text,
   render,
-  useKeyboard,
-  useRuntime,
 } from "@bettertui/react";
-import type { ExampleMeta } from "./lib/meta";
+import type { KeyInput } from "../../lib/keyboard";
+import { useExampleKey } from "../../lib/keyboard-context";
+import type { ExampleMeta } from "../../lib/meta";
 
 export const meta: ExampleMeta = {
   slug: "tabs-navigation",
@@ -26,7 +26,7 @@ export const meta: ExampleMeta = {
   category: "navigation",
   level: 2,
   tags: ["Tabs", "TabItem", "Accordion"],
-  next: ["list-view", "dropdown-menu", "tooltip-basics"],
+  next: ["list-view", "data-table-basics"],
 };
 
 const tabs = [
@@ -39,23 +39,20 @@ let activeTab = 1;
 let accordionOpen = false;
 
 function TabsAndAccordion() {
-  const runtime = useRuntime();
-
-  useKeyboard((key) => {
-    if (key.key === "ArrowRight") {
+  useExampleKey((event) => {
+    if (event.key === "ArrowRight") {
       activeTab = (activeTab + 1) % tabs.length;
       renderApp();
-    } else if (key.key === "ArrowLeft") {
+    } else if (event.key === "ArrowLeft") {
       activeTab = (activeTab - 1 + tabs.length) % tabs.length;
       renderApp();
-    } else if (key.key === " ") {
+    } else if (event.key === " ") {
       accordionOpen = !accordionOpen;
       renderApp();
-    } else if (key.key === "q") {
-      runtime?.runtime.dispose();
-      process.exit(0);
+    } else if (event.key === "q" || event.key === "Escape") {
+      return true;
     }
-    return true;
+    return false;
   });
 
   return (
@@ -63,17 +60,14 @@ function TabsAndAccordion() {
       <Flex flexDirection="column" gap={1}>
         <Heading level={1}>Tabs & Accordion</Heading>
         <Separator />
-
         <Tabs tabs={tabs} activeIndex={activeTab} />
         <Box padding={1}>
           <Text>You are viewing the "{tabs[activeTab]?.label}" tab.</Text>
         </Box>
-
         <Separator />
         <Accordion title="Click to expand (or press Space)" expanded={accordionOpen}>
           <Text>This content is revealed when the accordion is expanded.</Text>
         </Accordion>
-
         <Separator />
         <Text dim>←/→ switch tabs · Space toggle accordion · q quit</Text>
       </Flex>
@@ -85,10 +79,13 @@ function renderApp() {
   render(<TabsAndAccordion />);
 }
 
-export function run() {
+export function run(keyInput: KeyInput): void {
+  void keyInput;
   renderApp();
 }
 
-if (import.meta.main) {
-  run();
+export function destroy(keyInput: KeyInput): void {
+  void keyInput;
 }
+
+export const Example = TabsAndAccordion;

@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsdown src/index.tsx --format esm --watch",
-    "build": "tsdown src/index.tsx --format esm",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "build:standalone": "node scripts/build.ts",
     "start": "node dist/index.mjs",
     "example": "node scripts/run-example.mjs",
     "typecheck": "tsc --noEmit",

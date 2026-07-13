@@ -10,7 +10,7 @@
 ## What it shows
 
 This example focuses on **performance**. Read the source in
-`src/performance-stress-test.tsx` — each example is small, self-contained, and commented.
+`src/examples/performance/performance-stress-test.tsx` — each example is small, self-contained, and easy to read.
 
 ## Run it
 
@@ -19,7 +19,7 @@ pnpm --filter @bettertui/examples build
 node dist/index.mjs performance-stress-test
 ```
 
-Or from the example browser:
+Or from the interactive browser:
 
 ```bash
 pnpm --filter @bettertui/examples dev
@@ -33,14 +33,6 @@ pnpm --filter @bettertui/examples dev
 - `Tree`
 - `metrics`
 
-## Common mistakes
-
-- Forgetting to call `runtime?.runtime.dispose()` before `process.exit(0)` on quit.
-- Mutating state without re-rendering — call `render(<App />)` after changes.
-- Assuming a mouse/PTY capability is present; check `requires` above first.
-
 ## Next examples
 
-- `live-metrics` — Live Metrics
-- `tree-view` — Tree View
-- `rendering-engine` — Rendering & Engine
+_None specified._

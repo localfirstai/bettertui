@@ -10,7 +10,7 @@
 ## What it shows
 
 This example focuses on **setInterval**. Read the source in
-`src/live-metrics.tsx` — each example is small, self-contained, and commented.
+`src/examples/performance/live-metrics.tsx` — each example is small, self-contained, and easy to read.
 
 ## Run it
 
@@ -19,7 +19,7 @@ pnpm --filter @bettertui/examples build
 node dist/index.mjs live-metrics
 ```
 
-Or from the example browser:
+Or from the interactive browser:
 
 ```bash
 pnpm --filter @bettertui/examples dev
@@ -32,14 +32,6 @@ pnpm --filter @bettertui/examples dev
 - `Progress`
 - `live data`
 
-## Common mistakes
-
-- Forgetting to call `runtime?.runtime.dispose()` before `process.exit(0)` on quit.
-- Mutating state without re-rendering — call `render(<App />)` after changes.
-- Assuming a mouse/PTY capability is present; check `requires` above first.
-
 ## Next examples
 
-- `performance-stress-test` — Performance Stress Test
-- `tree-view` — Tree View
-- `tabs-navigation` — Tabs & Accordion
+_None specified._
