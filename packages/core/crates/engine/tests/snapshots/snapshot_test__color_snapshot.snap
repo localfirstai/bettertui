@@ -1,0 +1,22 @@
+---
+source: crates/engine/tests/snapshot_test.rs
+assertion_line: 30
+expression: colors
+---
+[
+    Named(
+        Red,
+    ),
+    Named(
+        Green,
+    ),
+    Named(
+        Blue,
+    ),
+    Rgb {
+        r: 255,
+        g: 128,
+        b: 0,
+    },
+    Default,
+]
