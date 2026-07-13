@@ -37,3 +37,4 @@ tree-sitter-bash = "0.25"
 
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }
+trycmd = "1.2"
