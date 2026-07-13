@@ -6,8 +6,8 @@ use crate::layout::types::{
     RectValues, Sizing,
 };
 use crate::tree::NodeId;
-
-use super::result::LayoutResult;
+use crate::tree::Rect;
+use crate::tree::arena::NodeArena;
 
 #[derive(Debug)]
 pub enum LayoutError {
@@ -626,5 +626,372 @@ mod tests {
         let child_r = results.get(&child).unwrap();
         assert_eq!(parent_r.width, 80);
         assert_eq!(child_r.width, 20);
+    }
+}
+
+pub struct LayoutTreeSync {
+    layout: LayoutEngine,
+    results: HashMap<NodeId, LayoutResult>,
+}
+
+impl Default for LayoutTreeSync {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LayoutTreeSync {
+    pub fn new() -> Self {
+        Self {
+            layout: LayoutEngine::new(),
+            results: HashMap::new(),
+        }
+    }
+
+    pub fn sync_full(&mut self, arena: &NodeArena) {
+        for (id, node) in arena.iter() {
+            if !self.layout.has_node(id) {
+                if let Some(text) = &node.text {
+                    self.layout.register_text_node(id, &node.layout, text);
+                } else {
+                    self.layout.register_container(id, &node.layout);
+                }
+            } else if node.state.layout_dirty {
+                if let Some(text) = &node.text {
+                    self.layout.update_text(id, text);
+                }
+                self.layout.update_style(id, &node.layout);
+            }
+        }
+    }
+
+    pub fn sync_node(&mut self, arena: &NodeArena, id: NodeId) {
+        if let Some(node) = arena.get(id) {
+            if !self.layout.has_node(id) {
+                if let Some(text) = &node.text {
+                    self.layout.register_text_node(id, &node.layout, text);
+                } else {
+                    self.layout.register_container(id, &node.layout);
+                }
+            } else if node.state.layout_dirty {
+                if let Some(text) = &node.text {
+                    self.layout.update_text(id, text);
+                }
+                self.layout.update_style(id, &node.layout);
+            }
+        }
+    }
+
+    pub fn remove_node(&mut self, id: NodeId) {
+        self.layout.remove_node(id);
+    }
+
+    pub fn sync_children(&mut self, arena: &NodeArena, parent: NodeId) {
+        let children = arena.children(parent);
+        for child in &children {
+            self.sync_node(arena, *child);
+            self.layout.add_child(parent, *child);
+        }
+    }
+
+    pub fn compute(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
+        self.layout
+            .compute_layout(root, width as f32, height as f32)?;
+        self.results = self.layout.collect_results();
+        Ok(())
+    }
+
+    pub fn results(&self) -> &HashMap<NodeId, LayoutResult> {
+        &self.results
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.layout.node_count()
+    }
+}
+
+#[cfg(test)]
+mod sync_tests {
+    use super::*;
+    use crate::layout::types::Sizing;
+    use crate::tree::arena::NodeArena;
+    use crate::tree::node_kind::NodeKind;
+    use crate::tree::render_node::RenderNode;
+
+    #[test]
+    fn sync_full_basic() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
+    }
+
+    #[test]
+    fn sync_node_with_children() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_node(&arena, arena.root());
+        sync.sync_node(&arena, child);
+        sync.sync_children(&arena, arena.root());
+        assert_eq!(sync.node_count(), 2);
+    }
+
+    #[test]
+    fn compute_layout() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        sync.compute(arena.root(), 80, 24).unwrap();
+        let results = sync.results();
+        assert!(results.contains_key(&arena.root()));
+    }
+
+    #[test]
+    fn remove_node_from_layout() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.remove_node(child);
+        assert_eq!(sync.node_count(), 1);
+    }
+
+    #[test]
+    fn sync_adds_new_children() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+    }
+
+    #[test]
+    fn sync_updates_existing() {
+        let arena = NodeArena::new();
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 1);
+    }
+
+    #[test]
+    fn sync_with_styled_node() {
+        let mut arena = NodeArena::new();
+        let mut node = RenderNode::new(NodeKind::Box);
+        node.layout.width = Some(Sizing::Points(100.0));
+        node.layout.height = Some(Sizing::Points(50.0));
+        let id = arena.insert(node);
+        arena.append_child(arena.root(), id).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.compute(arena.root(), 80, 24).unwrap();
+        let results = sync.results();
+        assert!(results.contains_key(&id));
+    }
+
+    #[test]
+    fn sync_children_multiple() {
+        let mut arena = NodeArena::new();
+        let c1 = arena.insert(RenderNode::new(NodeKind::Box));
+        let c2 = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), c1).unwrap();
+        arena.append_child(arena.root(), c2).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 3);
+    }
+
+    #[test]
+    fn sync_remove_then_add() {
+        let mut arena = NodeArena::new();
+        let child = arena.insert(RenderNode::new(NodeKind::Box));
+        arena.append_child(arena.root(), child).unwrap();
+
+        let mut sync = LayoutTreeSync::new();
+        sync.sync_full(&arena);
+        assert_eq!(sync.node_count(), 2);
+        sync.remove_node(child);
+        assert_eq!(sync.node_count(), 1);
+        sync.sync_node(&arena, child);
+        assert_eq!(sync.node_count(), 2);
+    }
+}
+
+/// Resolved layout for a single node after layout computation.
+///
+/// Stores the final position and size in terminal cell coordinates.
+/// All values are integers — fractional Taffy output is rounded at the last step.
+///
+/// **Memory:** 32 bytes per node. Stack-allocated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct LayoutResult {
+    /// Absolute X position in terminal cells (from left edge).
+    pub x: u16,
+    /// Absolute Y position in terminal cells (from top edge).
+    pub y: u16,
+    /// Outer width including padding and border (in cells).
+    /// Clamped to minimum 1 for terminal rendering.
+    pub width: u16,
+    /// Outer height including padding and border (in cells).
+    /// Clamped to minimum 1 for terminal rendering.
+    pub height: u16,
+    /// Inner width excluding padding and border (in cells).
+    pub content_width: u16,
+    /// Inner height excluding padding and border (in cells).
+    pub content_height: u16,
+    /// Computed padding from Taffy (resolved from percentages to concrete values).
+    pub padding_top: u16,
+    pub padding_right: u16,
+    pub padding_bottom: u16,
+    pub padding_left: u16,
+    /// Computed border from Taffy.
+    pub border_top: u16,
+    pub border_right: u16,
+    pub border_bottom: u16,
+    pub border_left: u16,
+}
+
+impl LayoutResult {
+    pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+            content_width: width,
+            content_height: height,
+            ..Default::default()
+        }
+    }
+
+    /// Convert Taffy's f32 pixel output to terminal cell count.
+    /// In BetterTUI, 1 "pixel" = 1 terminal cell.
+    pub fn pixels_to_cells(pixels: f32) -> u16 {
+        (pixels.round() as i32).max(0) as u16
+    }
+
+    /// Returns the bounding rectangle for this layout.
+    pub fn rect(&self) -> Rect {
+        Rect::new(self.x, self.y, self.width, self.height)
+    }
+
+    /// Returns the content rectangle (excluding padding/border).
+    pub fn content_rect(&self) -> Rect {
+        Rect::new(self.x, self.y, self.content_width, self.content_height)
+    }
+
+    /// Returns the right edge (x + width).
+    pub fn right(&self) -> u16 {
+        self.x.saturating_add(self.width)
+    }
+
+    /// Returns the bottom edge (y + height).
+    pub fn bottom(&self) -> u16 {
+        self.y.saturating_add(self.height)
+    }
+
+    /// Check if a point is within this layout's bounds.
+    pub fn contains(&self, x: u16, y: u16) -> bool {
+        x >= self.x && x < self.right() && y >= self.y && y < self.bottom()
+    }
+}
+
+#[cfg(test)]
+mod result_tests {
+    use super::*;
+
+    #[test]
+    fn default_layout_result() {
+        let lr = LayoutResult::default();
+        assert_eq!(lr.x, 0);
+        assert_eq!(lr.y, 0);
+        assert_eq!(lr.width, 0);
+        assert_eq!(lr.height, 0);
+    }
+
+    #[test]
+    fn layout_result_new() {
+        let lr = LayoutResult::new(5, 10, 20, 15);
+        assert_eq!(lr.x, 5);
+        assert_eq!(lr.y, 10);
+        assert_eq!(lr.width, 20);
+        assert_eq!(lr.height, 15);
+        assert_eq!(lr.content_width, 20);
+        assert_eq!(lr.content_height, 15);
+    }
+
+    #[test]
+    fn pixels_to_cells_rounding() {
+        assert_eq!(LayoutResult::pixels_to_cells(0.0), 0);
+        assert_eq!(LayoutResult::pixels_to_cells(1.0), 1);
+        assert_eq!(LayoutResult::pixels_to_cells(1.4), 1);
+        assert_eq!(LayoutResult::pixels_to_cells(1.5), 2);
+        assert_eq!(LayoutResult::pixels_to_cells(1.6), 2);
+        assert_eq!(LayoutResult::pixels_to_cells(-1.0), 0);
+    }
+
+    #[test]
+    fn layout_result_rect() {
+        let lr = LayoutResult::new(5, 10, 20, 15);
+        let rect = lr.rect();
+        assert_eq!(rect.x, 5);
+        assert_eq!(rect.y, 10);
+        assert_eq!(rect.width, 20);
+        assert_eq!(rect.height, 15);
+    }
+
+    #[test]
+    fn layout_result_edges() {
+        let lr = LayoutResult::new(5, 10, 20, 15);
+        assert_eq!(lr.right(), 25);
+        assert_eq!(lr.bottom(), 25);
+    }
+
+    #[test]
+    fn layout_result_contains() {
+        let lr = LayoutResult::new(5, 5, 10, 10);
+        assert!(lr.contains(5, 5));
+        assert!(lr.contains(14, 14));
+        assert!(!lr.contains(4, 5));
+        assert!(!lr.contains(5, 4));
+        assert!(!lr.contains(15, 15));
+    }
+
+    #[test]
+    fn layout_result_content_rect() {
+        let mut lr = LayoutResult::new(0, 0, 20, 10);
+        lr.content_width = 18;
+        lr.content_height = 8;
+        let cr = lr.content_rect();
+        assert_eq!(cr.width, 18);
+        assert_eq!(cr.height, 8);
+    }
+
+    #[test]
+    fn layout_result_min_zero() {
+        let lr = LayoutResult::new(0, 0, 0, 0);
+        assert_eq!(lr.width, 0);
+        assert_eq!(lr.height, 0);
+    }
+
+    #[test]
+    fn layout_result_padding_and_border() {
+        let lr = LayoutResult::new(0, 0, 20, 10);
+        assert_eq!(lr.padding_left, 0);
+        assert_eq!(lr.padding_right, 0);
+        assert_eq!(lr.border_left, 0);
+        assert_eq!(lr.border_right, 0);
     }
 }
