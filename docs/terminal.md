@@ -10,7 +10,7 @@
 
 A `TerminalRuntime` spawns a `PtyProcess` (via `portable-pty`). Child output is fed through the `AnsiParser` → `VtMachine` → `ScreenBuffer`, producing a `FrameBuffer` that can be composited into the UI.
 
-See [Architecture: Terminal](architecture/Terminal.md), [PTY](architecture/PTY.md), and [Guides: Terminal & PTY](guides/terminal.md).
+See [Architecture: Terminal](architecture/terminal.md), [PTY](architecture/pty.md), and [Guides: Terminal & PTY](guides/terminal.md).
 
 ## React components
 

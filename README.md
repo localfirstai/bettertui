@@ -151,7 +151,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,332 passing lib tests** (verified with `cargo test --lib`). The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **8 runnable example apps** are available under `examples/` (`@bettertui/examples`).
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,332 passing lib tests** (verified with `cargo test --lib`). The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
 
 ## Documentation
 

@@ -19,7 +19,6 @@ render(
   <Box>
     <Text>hello</Text>
   </Box>,
-  container,
 );
 ```
 
@@ -37,4 +36,3 @@ React output is verified through `renderToStringAsync` — there is **no** `@bet
 Reconciler and hooks are real; the 53 component functions are thin wrappers not yet connected to a live native render loop.
 
 See [`docs/api/packages/react.md`](../../docs/api/packages/react.md) and [`docs/guides/testing.md`](../../docs/guides/testing.md).
-guides/testing.md`](../../docs/guides/testing.md).

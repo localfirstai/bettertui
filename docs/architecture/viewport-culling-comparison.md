@@ -14,8 +14,8 @@
 
 | Mechanism | OpenTUI | BetterTUI |
 |-----------|---------|-----------|
-| Off-screen culling | `getObjectsInViewport()` — binary search + interval expansion | **None** — all nodes visited in render tree build |
-| Subtree pruning | `_getVisibleChildren()` skips culled subtrees in `updateLayout()` | **None** — `build_node()` recurses unconditionally (except `Display::None`) |
+| Off-screen culling | `getObjectsInViewport()` — binary search + interval expansion | `get_objects_in_viewport()` — binary search + interval expansion on sorted children (`render_object/culling.rs`) |
+| Subtree pruning | `_getVisibleChildren()` skips culled subtrees in `updateLayout()` | `build_render_tree_with_viewport()` prunes children outside the viewport (except `Display::None`) |
 | Display:None skip | Yoga layout: display=none children excluded from layout | `build_node()` skips `Display::None` at line 47 |
 | Opacity=0 skip | `_getVisibleChildren()` checks opacity < 1 for filtering | `Painter::is_visible()` checks opacity > 0 |
 | Hidden skip | Not directly — relies on culling | `is_visible()` checks `HIDDEN` flag |
@@ -41,7 +41,14 @@ getObjectsInViewport(viewport, objects[], direction, padding, minTriggerSize)
 **Cache:** `childrenSortedByPrimaryAxis` lazy-recomputed on position change.
 
 ### Viewport Culling: BetterTUI
-**None.** No equivalent exists. Off-screen content is fully processed.
+```
+get_objects_in_viewport(viewport, objects[], direction, padding)
+  ├─ Early out: 0-size viewport, empty objects
+  ├─ Binary search for first overlapping object (O(log N), threshold BINARY_SEARCH_MIN_CHILDREN=32)
+  ├─ Left/right expansion until past viewport
+  └─ Cross-axis AABB filter
+```
+**Complexity:** O(log N + K). Precondition: children sorted by primary-axis start. `CULLING_PADDING = 5` rows of margin so partially-visible nodes are not clipped mid-scroll. Driven by `build_render_tree_with_viewport()` in `render_object/`.
 
 ## Clipping Systems
 
@@ -65,7 +72,7 @@ getObjectsInViewport(viewport, objects[], direction, padding, minTriggerSize)
 
 | Waste | OpenTUI | BetterTUI |
 |-------|---------|-----------|
-| Off-screen content processed | **No** — culled before `updateLayout` recursion | **Yes** — full traversal, layout sync, paint |
+| Off-screen content processed | **No** — culled before `updateLayout` recursion | **No** — `build_render_tree_with_viewport()` prunes off-screen nodes |
 | Full buffer clear each frame | **No** — incremental painting with dirty regions | **Yes** — `paint_with_clear()` clears all cells |
 | Cell-by-cell diff each frame | **No** — native Zig tracks dirty cells | **Yes** — `DirtyDiff::compute()` scans all cells |
 | Full layout recompute | **No** — Yoga incremental, `_lastLayoutFrame` guard | **Yes** — Taffy `compute_layout()` from scratch |
@@ -87,17 +94,16 @@ getObjectsInViewport(viewport, objects[], direction, padding, minTriggerSize)
 
 ## Optimisations Present Only in BetterTUI
 
-1. **`NodeState` flags** — `layout_dirty` and `render_dirty` defined (but unused — low-hanging fruit)
+1. **`NodeState` flags** — `layout_dirty` and `render_dirty` defined for incremental updates
 2. **`Display::None` skip** — excluded from render tree build
 3. **Frame suppression via `change_count`** — skip entire render when nothing changed
+4. **Viewport culling** — `get_objects_in_viewport()` binary-search interval culling with `CULLING_PADDING = 5`
 
 ## Conclusion
 
-BetterTUI has **no viewport culling**. The OpenTUI approach of binary-search-based interval culling with subtree pruning is the proven pattern. BetterTUI also has significant waste in full buffer clear, full buffer diff, full tree rebuild, and unused dirty flags.
+Both engines implement viewport culling via binary-search interval search on primary-axis-sorted children. BetterTUI's `build_render_tree_with_viewport()` prunes off-screen subtrees; remaining work is full buffer diff, full tree rebuild when dirty, and JSON command serialization.
 
-**Key wins available:**
-1. Viewport culling via interval search on sorted children (OpenTUI parity)
-2. Subtree pruning in render tree build (skip invisible subtrees)
-3. Wire existing `NodeState` flags into render path (layout_dirty, render_dirty)
-4. Incremental render tree (reuse unchanged nodes)
-5. Dirty-region-only buffer clear instead of full clear
+**Remaining low-hanging fruit:**
+1. Wire existing `NodeState` flags into the render path (`layout_dirty`, `render_dirty`)
+2. Incremental render tree (reuse unchanged nodes)
+3. Dirty-region-only buffer clear instead of full clear

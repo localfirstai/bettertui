@@ -75,7 +75,7 @@ graph TD
 | Widgets | `widgets` | ✅ (~200 tests) |
 | FFI surface | `bindings` (cdylib) | ✅ |
 
-> Note: the top-level `keyboard/`, `mouse/`, `editor/`, `clipboard/`, `selection/`, `ffi/` engine modules are **stubs**; the real logic lives in `input/`, `text/`, `capabilities/`, `terminal/vt`, and the `bindings` crate.
+> Note: the top-level `keyboard/`, `mouse/`, `editor/`, `clipboard/`, and `selection/` engine modules are implemented (keybinding handlers, hit-testing, rope editor, and clipboard/selection managers respectively). The `input/` module owns raw terminal-byte parsing and the `ffi/` module exposes a C-ABI surface; the napi FFI boundary lives in the `bindings` crate.
 
 ## TypeScript: what it owns
 
