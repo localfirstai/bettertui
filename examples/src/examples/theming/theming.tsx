@@ -20,6 +20,7 @@ export const meta: ExampleMeta = {
   next: ["text-styles", "animation-basics"],
 };
 
+let storedKeyInput: KeyInput | null = null;
 const themeNames = Object.keys(exampleThemes) as ExampleThemeNameLiteral[];
 let themeIdx = 0;
 
@@ -57,11 +58,16 @@ function Theming() {
 }
 
 function renderApp() {
-  render(<Theming />);
+  if (!storedKeyInput) return;
+  render(
+    <KeyInputProvider keyInput={storedKeyInput}>
+      <Theming />
+    </KeyInputProvider>,
+  );
 }
 
 export function run(keyInput: KeyInput): void {
-  void keyInput;
+  storedKeyInput = keyInput;
   renderApp();
 }
 

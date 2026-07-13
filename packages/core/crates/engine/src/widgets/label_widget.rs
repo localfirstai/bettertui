@@ -1,5 +1,6 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
+use crate::text::TextAlign;
 use crate::tree::layout::LayoutProps;
 use crate::tree::style::Style;
 
@@ -13,6 +14,8 @@ pub struct LabelWidget {
     pub html_for: Option<WidgetId>,
     pub style: Style,
     pub layout: LayoutProps,
+    pub wrap: bool,
+    pub align: TextAlign,
 }
 
 impl Default for LabelWidget {
@@ -22,6 +25,8 @@ impl Default for LabelWidget {
             html_for: None,
             style: Style::default(),
             layout: LayoutProps::default(),
+            wrap: false,
+            align: TextAlign::Left,
         }
     }
 }
@@ -48,6 +53,16 @@ impl LabelWidget {
         self.layout = layout;
         self
     }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn with_align(mut self, align: TextAlign) -> Self {
+        self.align = align;
+        self
+    }
 }
 
 impl Widget for LabelWidget {
@@ -61,6 +76,8 @@ impl Widget for LabelWidget {
             text: Some(self.content.clone()),
             style: self.style,
             layout: self.layout,
+            text_align: self.align,
+            text_wrap: self.wrap,
             ..crate::tree::render_node::RenderNode::default()
         };
         let id = ctx.insert_node(node);

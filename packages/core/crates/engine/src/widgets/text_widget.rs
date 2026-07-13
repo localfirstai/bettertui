@@ -1,5 +1,6 @@
 use crate::events::Event;
 use crate::events::types::EventResult;
+use crate::text::TextAlign;
 use crate::tree::style::Style;
 
 use super::{Widget, WidgetContext, WidgetId};
@@ -7,6 +8,8 @@ use super::{Widget, WidgetContext, WidgetId};
 pub struct TextWidget {
     pub content: Box<str>,
     pub style: Style,
+    pub wrap: bool,
+    pub align: TextAlign,
 }
 
 impl TextWidget {
@@ -14,11 +17,23 @@ impl TextWidget {
         Self {
             content: content.into(),
             style: Style::default(),
+            wrap: false,
+            align: TextAlign::Left,
         }
     }
 
     pub fn with_style(mut self, style: Style) -> Self {
         self.style = style;
+        self
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn with_align(mut self, align: TextAlign) -> Self {
+        self.align = align;
         self
     }
 
@@ -29,6 +44,7 @@ impl TextWidget {
                 bold: Some(true),
                 ..Style::default()
             },
+            ..Self::default()
         }
     }
 
@@ -39,6 +55,18 @@ impl TextWidget {
                 fg: Some(fg),
                 ..Style::default()
             },
+            ..Self::default()
+        }
+    }
+}
+
+impl Default for TextWidget {
+    fn default() -> Self {
+        Self {
+            content: Box::from(""),
+            style: Style::default(),
+            wrap: false,
+            align: TextAlign::Left,
         }
     }
 }
@@ -49,7 +77,15 @@ impl Widget for TextWidget {
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let id = ctx.make_text(self.content.as_ref(), self.style);
+        let node = crate::tree::render_node::RenderNode {
+            kind: crate::tree::node_kind::NodeKind::Text,
+            text: Some(self.content.clone()),
+            style: self.style,
+            text_align: self.align,
+            text_wrap: self.wrap,
+            ..crate::tree::render_node::RenderNode::default()
+        };
+        let id = ctx.insert_node(node);
         WidgetId(id)
     }
 

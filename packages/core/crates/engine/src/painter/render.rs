@@ -1,5 +1,6 @@
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::render_object::{PaintBounds, PaintContext, PaintFlags, RenderObject, RenderTree};
+use crate::text::{LayoutConfig, layout_text};
 use crate::tree::color::Color;
 use crate::tree::style::ResolvedStyle;
 
@@ -106,14 +107,47 @@ impl Painter {
         let bg = obj.style.bg.unwrap_or(Color::Default);
         let attrs = style_to_attrs(&obj.style);
 
-        for (i, ch) in text.chars().enumerate() {
-            let x = content.x + i as u16;
-            if x >= content.x + content.width {
+        if text.is_empty() {
+            return;
+        }
+
+        let config = LayoutConfig {
+            wrap: obj.text_wrap,
+            align: obj.text_align,
+            max_width: content.width,
+            max_height: content.height,
+            pad_left: content.x,
+            pad_top: content.y,
+            ..LayoutConfig::default()
+        };
+
+        let layout = layout_text(text, &config);
+
+        for line in &layout.lines {
+            let y = line.y;
+            if y >= self.buffer.height() {
                 break;
             }
-            if x < self.buffer.width() && content.y < self.buffer.height() {
-                let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
-                self.buffer.set(x, content.y, cell);
+            let mut col = line.x;
+            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true)
+            {
+                // Check content bounds BEFORE writing to avoid rendering when width=0
+                if col >= content.x + content.width {
+                    break;
+                }
+                if col >= self.buffer.width() {
+                    break;
+                }
+                let w = unicode_width::UnicodeWidthStr::width(g) as u16;
+                if let Some(ch) = g.chars().next() {
+                    let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                    self.buffer.set(col, y, cell);
+                    if w == 2 && col + 1 < self.buffer.width() {
+                        let space = Cell::new(' ').with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        self.buffer.set(col + 1, y, space);
+                    }
+                }
+                col += w;
             }
         }
     }

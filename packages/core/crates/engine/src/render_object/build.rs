@@ -165,6 +165,8 @@ fn build_node(
     obj.opacity = opacity;
     obj.z_index = node.transform.z_index;
     obj.text = node.text.clone();
+    obj.text_align = node.text_align;
+    obj.text_wrap = node.text_wrap;
     obj.overflow = node.overflow;
     obj.flags = flags;
 

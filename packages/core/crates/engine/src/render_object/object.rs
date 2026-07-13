@@ -13,6 +13,8 @@ pub struct RenderObject {
     pub opacity: f32,
     pub z_index: i32,
     pub text: Option<Box<str>>,
+    pub text_align: crate::text::TextAlign,
+    pub text_wrap: bool,
     pub overflow: Overflow,
     pub flags: PaintFlags,
 }
@@ -27,6 +29,8 @@ impl RenderObject {
             opacity: 1.0,
             z_index: 0,
             text: None,
+            text_align: crate::text::TextAlign::Left,
+            text_wrap: false,
             overflow: Overflow::Visible,
             flags: PaintFlags::empty(),
         }

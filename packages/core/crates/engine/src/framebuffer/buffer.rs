@@ -1,4 +1,5 @@
 use super::cell::{Cell, CellAttributes};
+use crate::text::grapheme_clusters;
 use crate::tree::color::Color;
 
 /// SoA (Struct of Arrays) storage for terminal cells.
@@ -160,12 +161,19 @@ impl FrameBuffer {
     }
 
     pub fn write_str(&mut self, x: u16, y: u16, s: &str, fg: Color, bg: Color) {
-        for (i, ch) in s.chars().enumerate() {
-            let col = x + i as u16;
+        let mut col = x;
+        for g in grapheme_clusters(s) {
             if col >= self.width {
                 break;
             }
-            self.set(col, y, Cell::new(ch).with_fg(fg).with_bg(bg));
+            let w = crate::text::grapheme_width(g) as u16;
+            if let Some(ch) = g.chars().next() {
+                self.set(col, y, Cell::new(ch).with_fg(fg).with_bg(bg));
+                if w == 2 && col + 1 < self.width {
+                    self.set(col + 1, y, Cell::new(' ').with_fg(fg).with_bg(bg));
+                }
+            }
+            col += w;
         }
     }
 

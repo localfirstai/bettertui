@@ -43,6 +43,10 @@ pub struct RenderNode {
     pub overflow: Overflow,
     /// Cursor appearance and position.
     pub cursor: Option<CursorProps>,
+    /// Text alignment.
+    pub text_align: crate::text::TextAlign,
+    /// Whether text should wrap.
+    pub text_wrap: bool,
     /// Focus properties.
     pub focus: FocusProps,
     /// Event handler placeholders.
@@ -71,6 +75,8 @@ impl Default for RenderNode {
             transform: Transform::default(),
             overflow: Overflow::default(),
             cursor: None,
+            text_align: crate::text::TextAlign::Left,
+            text_wrap: false,
             focus: FocusProps::default(),
             events: EventHandlers::default(),
             state: NodeState::default(),

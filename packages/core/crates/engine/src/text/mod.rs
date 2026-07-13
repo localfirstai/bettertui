@@ -1,16 +1,29 @@
-//! Text engine: buffer, cursor, selection, search, and undo management.
+//! Text engine: buffer, cursor, selection, search, undo, measurement, wrapping, layout, and styled text.
 
 mod buffer;
 mod cursor;
+mod layout;
+mod measurement;
 mod search;
 mod selection;
+mod styled;
 mod undo;
+mod wrap;
 
 pub use buffer::TextBuffer;
 pub use cursor::{Cursor, CursorPosition};
+pub use layout::{LayoutConfig, LayoutLine, TextAlign, TextLayout, layout_text};
+pub use measurement::{
+    byte_offset_to_display_width, char_width, display_width, display_width_to_byte_offset,
+    grapheme_clusters, grapheme_count, grapheme_width, is_box_drawing, is_emoji,
+    is_nerd_font_glyph, is_powerline, is_wide_char, is_zero_width, truncate_to_width,
+    truncate_with_ellipsis,
+};
 pub use search::{SearchEngine, SearchOptions, SearchResult};
 pub use selection::{Selection, SelectionRange};
+pub use styled::{StyledSpan, StyledString};
 pub use undo::{UndoAction, UndoManager};
+pub use wrap::{WrapMode, WrappedLine, wrap_text};
 
 pub struct TextEngine {
     buffer: TextBuffer,
