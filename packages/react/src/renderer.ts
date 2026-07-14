@@ -1,4 +1,4 @@
-import type { CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
+import type { Command, CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
 import { generateId } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import { createContext } from "react";
@@ -70,11 +70,8 @@ const STYLE_PROPS = new Set([
   "blink",
 ]);
 
-function extractLayoutCommands(
-  id: string,
-  props: Record<string, unknown>,
-): Array<Record<string, unknown>> {
-  const commands: Array<Record<string, unknown>> = [];
+function extractLayoutCommands(id: string, props: Record<string, unknown>): Command[] {
+  const commands: Command[] = [];
 
   if (props["flexDirection"] !== undefined) {
     commands.push({ type: "SetFlexDirection", id, direction: props["flexDirection"] });
@@ -211,11 +208,8 @@ function extractLayoutCommands(
   return commands;
 }
 
-function extractStyleCommands(
-  id: string,
-  props: Record<string, unknown>,
-): Array<Record<string, unknown>> {
-  const commands: Array<Record<string, unknown>> = [];
+function extractStyleCommands(id: string, props: Record<string, unknown>): Command[] {
+  const commands: Command[] = [];
 
   if (props["color"] !== undefined) {
     commands.push({ type: "SetForeground", id, color: props["color"] });
@@ -313,15 +307,13 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       // Extract and forward layout props as individual commands
       const layoutCommands = extractLayoutCommands(id, restProps);
       for (const cmd of layoutCommands) {
-        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
-        buffer.push(cmd as any);
+        buffer.push(cmd);
       }
 
       // Extract and forward style props (color, bold, italic, etc.)
       const styleCmds = extractStyleCommands(id, restProps);
       for (const cmd of styleCmds) {
-        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
-        buffer.push(cmd as any);
+        buffer.push(cmd);
       }
 
       // Forward remaining props as SetAttribute commands
@@ -568,14 +560,12 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       // Extract and forward layout prop changes
       const layoutCommands = extractLayoutCommands(instance.id, updatePayload);
       for (const cmd of layoutCommands) {
-        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
-        buffer.push(cmd as any);
+        buffer.push(cmd);
       }
 
       const styleCommands = extractStyleCommands(instance.id, updatePayload);
       for (const cmd of styleCommands) {
-        // biome-ignore lint/suspicious/noExplicitAny: command types are dynamic
-        buffer.push(cmd as any);
+        buffer.push(cmd);
       }
 
       // Forward remaining changed props as SetAttribute commands

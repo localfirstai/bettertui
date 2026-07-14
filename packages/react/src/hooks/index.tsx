@@ -184,21 +184,33 @@ export function useResize(handler: (width: number, height: number) => void) {
   handlerRef.current = handler;
 
   useEffect(() => {
-    const nodeGlobal =
-      (typeof globalThis !== "undefined" && (globalThis as unknown as Record<string, unknown>)) ||
-      {};
-    const process = nodeGlobal.process;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processObj =
+      typeof process !== "undefined"
+        ? (process as unknown as {
+            stdout?: {
+              columns?: number;
+              rows?: number;
+              on: (event: string, listener: () => void) => void;
+              off: (event: string, listener: () => void) => void;
+            };
+          })
+        : undefined;
+    if (!processObj || !processObj.stdout) return;
 
-    if (!process || !process.stdout) return;
+    const stdout = processObj.stdout;
 
     const onResize = () => {
-      handlerRef.current(process.stdout.columns || 80, process.stdout.rows || 24);
+      handlerRef.current(stdout.columns || 80, stdout.rows || 24);
     };
 
-    process.stdout.on("resize", onResize);
-    return () => {
-      process.stdout.off("resize", onResize);
-    };
+    if (typeof stdout.on === "function") {
+      stdout.on("resize", onResize);
+      return () => {
+        if (typeof stdout.off === "function") stdout.off("resize", onResize);
+      };
+    }
+    return () => {};
   }, []);
 }
 

@@ -82,7 +82,12 @@ export interface TableProps<T = Record<string, unknown>> {
   style?: Record<string, unknown> | undefined;
 }
 
-export function Table({ columns, data, rows, style }: TableProps): JSX.Element {
+export function Table<T extends Record<string, unknown> = Record<string, unknown>>({
+  columns,
+  data,
+  rows,
+  style,
+}: TableProps<T>): JSX.Element {
   // Normalize columns
   const normalizedColumns = columns.map((c, i) => {
     if (typeof c === "string")
@@ -97,8 +102,11 @@ export function Table({ columns, data, rows, style }: TableProps): JSX.Element {
   } else if (data) {
     normalizedRows = data.map((item) =>
       normalizedColumns.map((col) => {
-        const val = item[col.key];
-        return val !== undefined ? val : "";
+        const val = item[col.key as keyof T];
+        if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+          return val;
+        }
+        return val !== undefined && val !== null ? String(val) : "";
       }),
     );
   }
@@ -122,15 +130,21 @@ export function Table({ columns, data, rows, style }: TableProps): JSX.Element {
         ))}
       </Flex>
       {/* Body */}
-      {normalizedRows.map((row) => (
-        <Flex key={row.join("|")} flexDirection="row">
-          {row.map((cell, cIdx) => (
-            <Box key={cell} width={normalizedColumns[cIdx]?.width}>
-              <Text>{String(cell)}</Text>
-            </Box>
-          ))}
-        </Flex>
-      ))}
+      {normalizedRows.map((row, rIdx) => {
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: Table rows lack unique IDs
+          <Flex key={`row-${rIdx}`} flexDirection="row">
+            {row.map((cell, cIdx) => {
+              return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Table cells lack unique IDs
+                <Box key={`cell-${cIdx}`} width={normalizedColumns[cIdx]?.width}>
+                  <Text>{String(cell)}</Text>
+                </Box>
+              );
+            })}
+          </Flex>
+        );
+      })}
     </Flex>
   );
 }

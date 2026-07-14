@@ -3,13 +3,13 @@ import type { JSX, ReactNode } from "react";
 
 export interface TextProps {
   children?: ReactNode;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  dim?: boolean;
-  strikethrough?: boolean;
-  color?: string;
-  bgColor?: string;
+  bold?: boolean | undefined;
+  italic?: boolean | undefined;
+  underline?: boolean | undefined;
+  dim?: boolean | undefined;
+  strikethrough?: boolean | undefined;
+  color?: string | undefined;
+  bgColor?: string | undefined;
   style?: Record<string, unknown> | undefined;
 }
 

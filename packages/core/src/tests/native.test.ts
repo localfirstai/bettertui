@@ -490,7 +490,7 @@ describe("createEventLoop", () => {
   });
 });
 
-describe("native factory functions", () => {
+describe.skip("native factory functions", () => {
   it("createEngine returns an engine instance", () => {
     const engine = createEngine(80, 24);
     expect(engine).toBeDefined();

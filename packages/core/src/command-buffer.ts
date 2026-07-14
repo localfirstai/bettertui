@@ -1,4 +1,5 @@
 import type { LayoutConstraints, Style } from "@bettertui/shared";
+import { generateId } from "@bettertui/shared";
 
 export type HostContext = Record<string, unknown>;
 
@@ -50,7 +51,38 @@ export type Command =
   | { type: "BeginFrame"; frameId: number }
   | { type: "CommitFrame"; frameId: number }
   | { type: "Invalidate"; id: string }
-  | { type: "Shutdown" };
+  | { type: "Shutdown" }
+  | { type: "SetFlexDirection"; id: string; direction: unknown }
+  | { type: "SetJustifyContent"; id: string; value: unknown }
+  | { type: "SetAlignItems"; id: string; value: unknown }
+  | { type: "SetAlignSelf"; id: string; value: unknown }
+  | { type: "SetFlexGrow"; id: string; value: unknown }
+  | { type: "SetFlexShrink"; id: string; value: unknown }
+  | { type: "SetFlexBasis"; id: string; value: unknown }
+  | { type: "SetPosition"; id: string; value: unknown }
+  | { type: "SetWidth"; id: string; value: unknown }
+  | { type: "SetHeight"; id: string; value: unknown }
+  | { type: "SetMinWidth"; id: string; value: unknown }
+  | { type: "SetMaxWidth"; id: string; value: unknown }
+  | { type: "SetMinHeight"; id: string; value: unknown }
+  | { type: "SetMaxHeight"; id: string; value: unknown }
+  | { type: "SetOverflow"; id: string; value: unknown }
+  | { type: "SetOpacity"; id: string; value: unknown }
+  | { type: "SetZIndex"; id: string; value: unknown }
+  | { type: "SetPadding"; id: string; value: unknown }
+  | { type: "SetMargin"; id: string; value: unknown }
+  | { type: "SetGap"; id: string; value: unknown }
+  | { type: "SetInset"; id: string; value: unknown }
+  | { type: "SetForeground"; id: string; color: unknown }
+  | { type: "SetBackground"; id: string; color: unknown }
+  | { type: "SetBold"; id: string; value: unknown }
+  | { type: "SetItalic"; id: string; value: unknown }
+  | { type: "SetUnderline"; id: string; value: unknown }
+  | { type: "SetDim"; id: string; value: unknown }
+  | { type: "SetStrikethrough"; id: string; value: unknown }
+  | { type: "SetInverse"; id: string; value: unknown }
+  | { type: "SetHidden"; id: string; value: unknown }
+  | { type: "SetBlink"; id: string; value: unknown };
 
 export interface CommandBufferConsumer {
   push(command: Command): void;
@@ -85,10 +117,6 @@ export class CommandBuffer {
     return this.commands.length === 0;
   }
 }
-
-import { generateId } from "@bettertui/shared";
-
-export { generateId };
 
 export function createInstance(type: string, props: Record<string, unknown>): Instance {
   const id = generateId();
@@ -171,3 +199,5 @@ export function finalizeInitialChildren(_instance: Instance): boolean {
 export function resetAfterCommit(): void {
   // Flush happens at a higher level
 }
+
+export { generateId };
