@@ -1,7 +1,7 @@
 # Themes
 
 Theming is built into the Rust engine (`packages/core/crates/widgets/src/theme.rs`) 
-and exposed through `@bettertui/shared` types.
+and exposed through `@bettertui/react` (which re-exports the types).
 
 ## Theme shape
 
@@ -22,7 +22,7 @@ interface Theme {
 
 ```tsx
 import { Provider, useTheme } from "@bettertui/react";
-import type { Theme } from "@bettertui/shared";
+import type { Theme } from "@bettertui/react";
 
 const dracula: Partial<Theme> = {
   colors: {
@@ -51,6 +51,5 @@ The default dark theme is built into the Rust engine. The React `Provider` accep
 
 ## See also
 
-- `@bettertui/shared` — Theme, ThemeColors, ThemeSpacing, BorderStyle types
-- `@bettertui/react` — Provider, useTheme
+- `@bettertui/react` — Theme, ThemeColors, ThemeSpacing, BorderStyle types (re-exported from `@bettertui/shared`), Provider, useTheme
 - `packages/core/crates/widgets/src/theme.rs` — Rust canonical Theme definition

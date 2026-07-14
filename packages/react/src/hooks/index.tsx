@@ -1,4 +1,6 @@
-import type { KeyEvent as SharedKeyEvent, Theme } from "@bettertui/shared";
+import type { KeyEvent as SharedKeyEvent } from "@bettertui/shared";
+import { DEFAULT_THEME, mergeTheme } from "@bettertui/shared";
+import type { Theme } from "@bettertui/shared";
 import {
   createContext,
   useCallback,
@@ -15,57 +17,6 @@ export type { Theme };
 export type ThemeColors = Theme["colors"];
 export type ThemeSpacing = Theme["spacing"];
 export type KeyEvent = SharedKeyEvent;
-
-const DEFAULT_THEME: Theme = {
-  name: "dark",
-  colors: {
-    background: "#1e1e28",
-    surface: "#1e1e28",
-    surfaceHigh: "#282837",
-    surfaceLow: "#14141c",
-    primary: "#648cdc",
-    primaryForeground: "#ffffff",
-    secondary: "#8c64c8",
-    secondaryForeground: "#ffffff",
-    text: "#dcdce6",
-    textMuted: "#8c8ca0",
-    textDim: "#5a5a69",
-    border: "#3c3c50",
-    borderFocused: "#648cdc",
-    accent: "#50c8a0",
-    accentForeground: "#ffffff",
-    error: "#dc5050",
-    warning: "#dcb43c",
-    success: "#50c878",
-    info: "#50a0dc",
-    scrollbar: "#323241",
-    scrollbarThumb: "#646482",
-  },
-  spacing: {
-    none: 0,
-    xxs: 1,
-    xs: 2,
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-    xxl: 24,
-  },
-  borders: {
-    style: "solid",
-    fg: "#3c3c50",
-  },
-};
-
-function mergeTheme(base: Theme, overrides: Partial<Theme>): Theme {
-  return {
-    ...base,
-    ...overrides,
-    colors: { ...base.colors, ...overrides.colors },
-    spacing: { ...base.spacing, ...overrides.spacing },
-    borders: { ...base.borders, ...overrides.borders },
-  };
-}
 
 // Theme context
 interface ThemeContextValue {

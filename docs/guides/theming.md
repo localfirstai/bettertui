@@ -1,23 +1,23 @@
 # Theming
 
 Theming is built into the Rust engine (`packages/core/crates/widgets/src/theme.rs`)
-and exposed through `@bettertui/shared` types. The React `Provider` accepts
+and exposed through `@bettertui/react` (which re-exports the types). The React `Provider` accepts
 `Partial<Theme>` directly.
 
 ## Types
 
 | Export | Source | Notes |
 |--------|--------|-------|
-| `Theme` | `@bettertui/shared` | Also re-exported by `@bettertui/react` |
-| `ThemeColors` | `@bettertui/shared` | 21 semantic color tokens |
-| `ThemeSpacing` | `@bettertui/shared` | 8 spacing values |
-| `BorderStyle` | `@bettertui/shared` | Default border style + color |
+| `Theme` | `@bettertui/react` | Internal package; re-exported for public consumption |
+| `ThemeColors` | `@bettertui/react` | 21 semantic color tokens |
+| `ThemeSpacing` | `@bettertui/react` | 8 spacing values |
+| `BorderStyle` | `@bettertui/react` | Default border style + color |
 
 ## Usage
 
 ```tsx
 import { Provider } from "@bettertui/react";
-import type { Theme } from "@bettertui/shared";
+import type { Theme } from "@bettertui/react";
 
 const dracula: Partial<Theme> = {
   colors: {

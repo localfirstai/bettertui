@@ -12,7 +12,7 @@ graph TD
     C -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
     E --> F[bettertui-engine]
     F -->|crossterm + portable-pty| G[(Terminal / PTY)]
-    C --> J[@bettertui/shared]
+    C --> J[Internal: @bettertui/shared]
     B --> J
 ```
 
@@ -56,4 +56,4 @@ graph TD
 
 The Rust engine (`bettertui-engine`, **1,332 passing lib tests**, verified via `cargo test --lib`) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
 
-The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` was removed (theme system moved to Rust engine + `@bettertui/shared`); `@bettertui/devtools` is a stub. 15 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.
+The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` was removed (theme system moved to Rust engine + `@bettertui/shared` — internal package, re-exported by `@bettertui/core`/`@bettertui/react`); `@bettertui/devtools` is a stub. 15 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.

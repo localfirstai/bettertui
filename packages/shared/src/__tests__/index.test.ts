@@ -500,6 +500,8 @@ describe("ThemeColors", () => {
       warning: "#ff0",
       success: "#0f0",
       info: "#0ff",
+      scrollbar: "#333",
+      scrollbarThumb: "#666",
     };
     expect(c.background).toBe("#000");
     expect(c.text).toBe("#fff");

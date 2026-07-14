@@ -47,7 +47,7 @@ See [`docs/architecture`](docs/architecture/README.md) for the full design, and 
 ```
 bettertui/
 ├── packages/
-│   ├── shared/        # @bettertui/shared  — type-only foundation
+│   ├── shared/        # @bettertui/shared  — type-only foundation (internal, re-exported by core & react)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
 │   │   └── crates/
 │   │       ├── engine/        # bettertui-engine (Rust library)
@@ -73,7 +73,7 @@ bettertui/
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
+| `@bettertui/shared` | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** | ✅ Types complete |
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
 | `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |

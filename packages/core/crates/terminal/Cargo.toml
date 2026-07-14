@@ -16,3 +16,7 @@ crossterm.workspace = true
 tracing.workspace = true
 portable-pty.workspace = true
 bitflags.workspace = true
+
+[dev-dependencies]
+proptest = "1"
+insta = { version = "1.42", features = ["yaml", "redactions"] }

@@ -3,7 +3,7 @@ title: Theming
 description: Customize the look of your terminal application
 ---
 
-BetterTUI uses a typed theme system defined in `@bettertui/shared` and the Rust engine.
+BetterTUI uses a typed theme system defined in `@bettertui/react` and the Rust engine.
 The React `Provider` accepts `Partial<Theme>` to customize colors, spacing, and borders.
 
 ## Default Theme
@@ -30,7 +30,7 @@ Pass partial overrides to `Provider`:
 
 ```tsx
 import { Provider } from '@bettertui/react';
-import type { Theme } from '@bettertui/shared';
+import type { Theme } from '@bettertui/react';
 
 const dracula: Partial<Theme> = {
   colors: {

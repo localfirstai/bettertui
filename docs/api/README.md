@@ -6,7 +6,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 | Package | API doc | Status |
 |---------|---------|--------|
-| `@bettertui/shared` | [shared.md](packages/shared.md) | Implemented (types only) |
+| `@bettertui/shared` | [shared.md](packages/shared.md) | **Internal — types only, re-exported via `@bettertui/core`/`@bettertui/react`** |
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
 | `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks+keymap real; 53 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
@@ -29,6 +29,6 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 ## Cross-cutting notes
 
-- `@bettertui/core` re-exports `shared` types and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
-- `@bettertui/react`'s Theme, ThemeColors, and ThemeSpacing are the same types as @bettertui/shared's — re-exported for consumer convenience.
+- `@bettertui/core` re-exports `@bettertui/shared` types (shared is internal — do not install directly) and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
+- `@bettertui/react` re-exports `@bettertui/shared` types. Consumers should import `Theme`, `ThemeColors`, and `ThemeSpacing` from `@bettertui/react` (or `@bettertui/core` for framework-agnostic use).
 - `@bettertui/core`'s native bridge depends on an **unbuilt** `bettertui_bindings` addon (not declared in package.json).

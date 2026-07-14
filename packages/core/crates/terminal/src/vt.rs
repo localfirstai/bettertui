@@ -906,7 +906,10 @@ impl VtMachine {
 
     fn handle_tab(&mut self) {
         let tab_stops = self.screen().tab_stops().to_vec();
-        self.cursor_mut().tab(&tab_stops);
+        let max_col = self.screen().width().saturating_sub(1);
+        let cursor = self.cursor_mut();
+        cursor.tab(&tab_stops);
+        cursor.col = cursor.col.min(max_col);
     }
 
     fn reset(&mut self) {
@@ -1053,12 +1056,20 @@ impl VtMachine {
                 cursor.carriage_return();
                 cursor.move_up((*n).max(1) as u16);
             }
-            CursorMovement::ColumnAbsolute(n) => cursor.move_to_column(*n as u16),
+            CursorMovement::ColumnAbsolute(n) => {
+                cursor.move_to_column(*n as u16);
+                let max_col = screen_width.saturating_sub(1);
+                cursor.col = cursor.col.min(max_col);
+            }
             CursorMovement::Position(row, col) => {
                 cursor.move_to(*row as u16, *col as u16);
+                let max_row = screen_height.saturating_sub(1);
+                let max_col = screen_width.saturating_sub(1);
                 if origin {
-                    cursor.row = cursor.row.min(screen_height.saturating_sub(1));
+                    cursor.row = cursor.row.min(max_row);
                 }
+                cursor.row = cursor.row.min(max_row);
+                cursor.col = cursor.col.min(max_col);
             }
         }
     }
@@ -1491,5 +1502,404 @@ mod tests {
         assert!(m.alt_screen());
         m.toggle(TerminalMode::ALT_SCREEN);
         assert!(!m.alt_screen());
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Proptest property-based tests
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[cfg(test)]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
+mod proptests {
+    use super::*;
+    use bettertui_engine::ansi::{
+        AnsiParser, CursorMovement, EraseMode, KittyEventType, SgrAttribute,
+    };
+    use proptest::prelude::*;
+
+    // ── Strategies ──
+
+    fn arb_cursor_movement() -> impl Strategy<Value = CursorMovement> {
+        prop_oneof![
+            (1u32..100).prop_map(CursorMovement::Up),
+            (1u32..100).prop_map(CursorMovement::Down),
+            (1u32..100).prop_map(CursorMovement::Forward),
+            (1u32..100).prop_map(CursorMovement::Backward),
+            (1u32..100).prop_map(CursorMovement::NextLine),
+            (1u32..100).prop_map(CursorMovement::PreviousLine),
+            (1u32..160).prop_map(CursorMovement::ColumnAbsolute),
+            (1u32..100, 1u32..160).prop_map(|(r, c)| CursorMovement::Position(r, c)),
+        ]
+    }
+
+    fn arb_erase_mode() -> impl Strategy<Value = EraseMode> {
+        prop_oneof![
+            Just(EraseMode::CursorToEnd),
+            Just(EraseMode::CursorToBeginning),
+            Just(EraseMode::Entire),
+            Just(EraseMode::CursorToEndLines),
+            Just(EraseMode::CursorToBeginningLines),
+        ]
+    }
+
+    fn arb_sgr_attribute() -> impl Strategy<Value = SgrAttribute> {
+        prop_oneof![
+            Just(SgrAttribute::Reset),
+            Just(SgrAttribute::Bold),
+            Just(SgrAttribute::Dim),
+            Just(SgrAttribute::Italic),
+            Just(SgrAttribute::Underline),
+            Just(SgrAttribute::Blink),
+            Just(SgrAttribute::Inverse),
+            Just(SgrAttribute::Hidden),
+            Just(SgrAttribute::Strikethrough),
+            Just(SgrAttribute::Foreground(
+                bettertui_engine::ansi::ForegroundColor::Default,
+            )),
+            Just(SgrAttribute::Background(
+                bettertui_engine::ansi::BackgroundColor::Default,
+            )),
+        ]
+    }
+
+    fn arb_parser_event() -> impl Strategy<Value = ParserEvent> {
+        prop_oneof![
+            (0u8..0x7f).prop_map(ParserEvent::Char),
+            Just(ParserEvent::Backspace),
+            Just(ParserEvent::Tab),
+            Just(ParserEvent::LineFeed),
+            Just(ParserEvent::CarriageReturn),
+            Just(ParserEvent::Bell),
+            arb_csi(),
+            Just(ParserEvent::Index),
+            Just(ParserEvent::ReverseIndex),
+            Just(ParserEvent::NextLine),
+            Just(ParserEvent::Reset),
+        ]
+    }
+
+    fn arb_csi() -> impl Strategy<Value = ParserEvent> {
+        prop_oneof![
+            arb_cursor_movement().prop_map(|m| ParserEvent::Csi(
+                bettertui_engine::ansi::CsiCommand::CursorMovement(m)
+            )),
+            arb_erase_mode()
+                .prop_map(|e| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Erase(e))),
+            (0u32..5)
+                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteLine(n))),
+            (0u32..5)
+                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertLine(n))),
+            (0u32..5)
+                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteChar(n))),
+            (0u32..5)
+                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertChar(n))),
+            (0u32..5)
+                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::EraseChar(n))),
+            Just(ParserEvent::Csi(
+                bettertui_engine::ansi::CsiCommand::CursorPositionSave
+            )),
+            Just(ParserEvent::Csi(
+                bettertui_engine::ansi::CsiCommand::CursorPositionRestore
+            )),
+            Just(ParserEvent::Csi(
+                bettertui_engine::ansi::CsiCommand::AttributeReset
+            )),
+            (prop::collection::vec(arb_sgr_attribute(), 0..10))
+                .prop_map(|attrs| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Sgr(attrs))),
+        ]
+    }
+
+    // ── Cursor bounds properties ──
+
+    proptest! {
+        #[test]
+        fn cursor_stays_in_bounds_after_any_movement(
+            start_row in 0u16..50,
+            start_col in 0u16..100,
+            max_row in 2u16..50,
+            max_col in 2u16..100,
+            moves in prop::collection::vec(arb_cursor_movement(), 0..50),
+        ) {
+            let mut c = Cursor::new();
+            c.set_position(start_row.min(max_row.saturating_sub(1)), start_col.min(max_col.saturating_sub(1)));
+
+            for m in &moves {
+                match m {
+                    CursorMovement::Up(n) => c.move_up(*n as u16),
+                    CursorMovement::Down(n) => c.move_down(*n as u16, max_row),
+                    CursorMovement::Forward(n) => c.move_right(*n as u16, max_col),
+                    CursorMovement::Backward(n) => c.move_left(*n as u16),
+                    CursorMovement::ColumnAbsolute(n) => {
+                        c.move_to_column((*n as u16).min(max_col));
+                    }
+                    CursorMovement::Position(r, col) => {
+                        c.move_to((*r as u16).min(max_row), (*col as u16).min(max_col));
+                    }
+                    CursorMovement::NextLine(n) => {
+                        c.carriage_return();
+                        c.move_down(*n as u16, max_row);
+                    }
+                    CursorMovement::PreviousLine(n) => {
+                        c.carriage_return();
+                        c.move_up(*n as u16);
+                    }
+                }
+
+                assert!(
+                    c.row < max_row,
+                    "row {} should be < max_row {} after movement {:?}",
+                    c.row, max_row, m
+                );
+                assert!(
+                    c.col < max_col,
+                    "col {} should be < max_col {} after movement {:?}",
+                    c.col, max_col, m
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn cursor_save_restore_invariant(
+            moves in prop::collection::vec(arb_cursor_movement(), 0..20),
+        ) {
+            let mut c = Cursor::new();
+            c.set_position(10, 20);
+            c.save_position();
+
+            for m in &moves {
+                match m {
+                    CursorMovement::Up(n) => c.move_up(*n as u16),
+                    CursorMovement::Down(n) => c.move_down(*n as u16, 50),
+                    CursorMovement::Forward(n) => c.move_right(*n as u16, 80),
+                    CursorMovement::Backward(n) => c.move_left(*n as u16),
+                    _ => {}
+                }
+            }
+
+            c.restore_position();
+            assert_eq!(c.row, 10, "saved row should be restored");
+            assert_eq!(c.col, 20, "saved col should be restored");
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn cursor_tab_in_bounds(
+            start_col in 0u16..150,
+            max_col in 8u16..160,
+        ) {
+            let mut c = Cursor::new();
+            let pos = start_col.min(max_col.saturating_sub(1));
+            c.set_position(0, pos);
+            let mut tab_stops: Vec<u16> = (8..max_col).step_by(8).collect();
+            if !tab_stops.contains(&(max_col / 2)) {
+                tab_stops.push(max_col / 2);
+                tab_stops.sort();
+            }
+
+            c.tab(&tab_stops);
+
+            // Tab must never move backward, and must always land on a
+            // column that is either a valid tab stop or on an 8-column boundary.
+            assert!(
+                c.col >= pos,
+                "tab moved backward: col={} < pos={}",
+                c.col, pos
+            );
+            assert!(
+                tab_stops.contains(&c.col) || c.col % 8 == 0,
+                "tab landed on invalid column: col={}, stops={:?}",
+                c.col, tab_stops
+            );
+            assert!(
+                tab_stops.contains(&c.col) || c.col % 8 == 0,
+                "tab landed on invalid column: col={}, stops={:?}",
+                c.col, tab_stops
+            );
+        }
+    }
+
+    // ── TerminalMode properties ──
+
+    proptest! {
+        #[test]
+        fn terminal_mode_insert_remove_is_idempotent(
+            bits: u32
+        ) {
+            let mut m = TerminalMode::default();
+            let mode = TerminalMode::from_bits_truncate(bits);
+
+            m.insert(mode);
+            let after_insert = m;
+            m.insert(mode);
+            assert_eq!(m, after_insert, "inserting same mode twice is idempotent");
+
+            m.remove(mode);
+            let after_remove = m;
+            m.remove(mode);
+            assert_eq!(m, after_remove, "removing same mode twice is idempotent");
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn terminal_mode_toggle_twice_restores(
+            bits: u32
+        ) {
+            let mut m = TerminalMode::default();
+            let before = m;
+            let mode = TerminalMode::from_bits_truncate(bits);
+
+            m.toggle(mode);
+            m.toggle(mode);
+            assert_eq!(m, before, "toggle twice should restore original");
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn terminal_mode_contains_implies_no_remove(
+            bits: u32
+        ) {
+            let mode = TerminalMode::from_bits_truncate(bits);
+            let mut m = mode;
+
+            assert!(m.contains(mode));
+            m.remove(mode);
+            assert!(!m.contains(mode), "remove should clear the flag");
+        }
+    }
+
+    // ── VtMachine panic-free properties ──
+
+    proptest! {
+        #[test]
+        fn vt_machine_never_panics_on_any_parser_event(
+            events in prop::collection::vec(arb_parser_event(), 0..100),
+        ) {
+            let mut m = VtMachine::new(80, 24);
+            for event in &events {
+                m.process(event);
+            }
+            // framebuffer() should always return valid data
+            let fb = m.framebuffer();
+            assert_eq!(fb.width(), 80);
+            assert_eq!(fb.height(), 24);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn vt_machine_never_panics_on_ansi_bytes(
+            bytes in prop::collection::vec(any::<u8>(), 0..200),
+        ) {
+            let mut m = VtMachine::new(80, 24);
+            let mut parser = AnsiParser::new();
+            parser.feed(&bytes);
+            while let Some(event) = parser.poll_event() {
+                m.process(&event);
+            }
+            let fb = m.framebuffer();
+            assert_eq!(fb.width(), 80);
+            assert_eq!(fb.height(), 24);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn vt_machine_resize_never_panics(
+            events in prop::collection::vec(arb_parser_event(), 0..50),
+            new_w in 1u16..200,
+            new_h in 1u16..100,
+        ) {
+            let mut m = VtMachine::new(80, 24);
+            for event in &events {
+                m.process(event);
+            }
+            m.resize(new_w, new_h);
+            let fb = m.framebuffer();
+            assert_eq!(fb.width(), new_w);
+            assert_eq!(fb.height(), new_h);
+        }
+    }
+
+    // ── KittyKeyEvent properties ──
+
+    proptest! {
+        #[test]
+        fn kitty_key_event_modifier_bit_mapping(
+            keycode in 0u32..0x110000,
+            modifiers in 0u32..16u32,
+        ) {
+            let ev = KittyKeyEvent {
+                keycode,
+                modifiers,
+                event_type: KittyEventType::Press,
+                associated_text: None,
+            };
+            let ki = ev.to_keyboard_input();
+
+            // Bit 1 = Shift, bit 2 = Alt, bit 4 = Ctrl, bit 8 = Super
+            let has_shift = modifiers & 1 != 0;
+            let has_alt = modifiers & 2 != 0;
+            let has_ctrl = modifiers & 4 != 0;
+            let has_super = modifiers & 8 != 0;
+
+            assert_eq!(ki.modifiers.contains(KeyModifiers::SHIFT), has_shift);
+            assert_eq!(ki.modifiers.contains(KeyModifiers::ALT), has_alt);
+            assert_eq!(ki.modifiers.contains(KeyModifiers::CONTROL), has_ctrl);
+            assert_eq!(ki.modifiers.contains(KeyModifiers::SUPER), has_super);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn kitty_key_event_event_type_mapping(
+            event_type in prop_oneof![
+                Just(KittyEventType::Press),
+                Just(KittyEventType::Repeat),
+                Just(KittyEventType::Release),
+                Just(KittyEventType::Unknown),
+            ],
+        ) {
+            let ev = KittyKeyEvent {
+                keycode: 65,
+                modifiers: 0,
+                event_type,
+                associated_text: None,
+            };
+            let ki = ev.to_keyboard_input();
+
+            match event_type {
+                KittyEventType::Press | KittyEventType::Unknown => {
+                    assert_eq!(ki.action, KeyAction::Press);
+                }
+                KittyEventType::Repeat => {
+                    assert_eq!(ki.action, KeyAction::Repeat);
+                }
+                KittyEventType::Release => {
+                    assert_eq!(ki.action, KeyAction::Release);
+                }
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn kitty_key_event_invalid_keycode_returns_null(
+            keycode in 0x110001u32..0x200000u32,
+        ) {
+            let ev = KittyKeyEvent {
+                keycode,
+                modifiers: 0,
+                event_type: KittyEventType::Press,
+                associated_text: None,
+            };
+            let ki = ev.to_keyboard_input();
+            assert_eq!(ki.key, '\0');
+        }
     }
 }

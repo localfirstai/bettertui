@@ -17,7 +17,7 @@ graph TD
     Core -->|napi-rs FFI| Bindings[packages/core/crates/bindings]
     Bindings --> Engine[bettertui-engine]
     Engine --> Term[(crossterm / portable-pty)]
-    Core --> Shared[@bettertui/shared]
+    Core --> Shared[Internal: @bettertui/shared]
     React --> Shared
 
 ```
@@ -79,7 +79,7 @@ graph TD
 
 | Package | Role | Status |
 |---------|------|--------|
-| `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
+| `@bettertui/shared` | Type foundation (zero runtime code) — **internal, do not install directly** — re-exported via `@bettertui/core` and `@bettertui/react` | ✅ |
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
 | `@bettertui/react` | React adapter (reconciler + hooks + 53 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |

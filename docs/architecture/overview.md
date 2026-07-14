@@ -37,7 +37,7 @@ graph LR
 ```
 bettertui/
 ├── packages/
-│   ├── shared/        # @bettertui/shared  — type-only foundation (zero runtime code)
+│   ├── shared/        # @bettertui/shared  — type-only foundation (zero runtime code, internal)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
 │   │   └── crates/
 │   │       ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
@@ -66,7 +66,7 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|
-| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
+| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** |
 | `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 53 component exports) |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
@@ -114,7 +114,7 @@ graph LR
 flowchart TD
     A[pnpm install] --> B[pnpm build / turbo run build]
     B --> C{build order by ^dep}
-    C --> D[build @bettertui/shared]
+    C --> D[build @bettertui/shared (internal)]
     D --> E[build @bettertui/core]
     E --> F[build @bettertui/react]
     B -. optional .-> G[cargo build -p bettertui-bindings]
@@ -143,7 +143,7 @@ graph TD
     React --> Core
     Core -->|napi-rs| Engine[bettertui-engine]
     Engine --> Terminal[(Terminal)]
-    Core --> Shared
+    Core --> Shared[Internal: @bettertui/shared]
     React --> Shared
 
 ```

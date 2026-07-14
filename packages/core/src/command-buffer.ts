@@ -86,10 +86,9 @@ export class CommandBuffer {
   }
 }
 
-let nextId = 0;
-export function generateId(): string {
-  return `${nextId++}`;
-}
+import { generateId } from "@bettertui/shared";
+
+export { generateId };
 
 export function createInstance(type: string, props: Record<string, unknown>): Instance {
   const id = generateId();
