@@ -804,7 +804,7 @@ fn measure_text(text: &str, available_width: f32) -> (f32, usize) {
         return (1.0, 1);
     }
 
-    let line_widths: Vec<usize> = text.lines().map(|line| text::display_width(line)).collect();
+    let line_widths: Vec<usize> = text.lines().map(text::display_width).collect();
 
     let max_width = line_widths.iter().copied().max().unwrap_or(0);
 
@@ -871,10 +871,8 @@ fn count_wrapped_lines(line: &str, wrap_width: usize) -> usize {
         }
     }
 
-    if word_width > 0 {
-        if current_line_width + word_width > wrap_width && current_line_width > 0 {
-            line_count += 1;
-        }
+    if word_width > 0 && current_line_width + word_width > wrap_width && current_line_width > 0 {
+        line_count += 1;
     }
 
     line_count

@@ -537,19 +537,23 @@ impl RenderTree {
     /// If generation and revision match the cached values, returns cached commands.
     /// Otherwise, rebuilds commands and updates cache.
     pub fn collect_commands_cached(&self, generation: u64, revision: u64) -> Vec<RenderCommand> {
-        let mut cached_gen = self.cached_generation.borrow_mut();
-        let mut cached_rev = self.cached_revision.borrow_mut();
+        let cached_gen = self.cached_generation.borrow();
+        let cached_rev = self.cached_revision.borrow();
 
-        if *cached_gen == generation && *cached_rev == revision {
-            if let Some(ref commands) = *self.cached_commands.borrow() {
-                return commands.clone();
-            }
+        if *cached_gen == generation
+            && *cached_rev == revision
+            && let Some(ref commands) = *self.cached_commands.borrow()
+        {
+            return commands.clone();
         }
+
+        drop(cached_gen);
+        drop(cached_rev);
 
         let commands = self.collect_commands();
         *self.cached_commands.borrow_mut() = Some(commands.clone());
-        *cached_gen = generation;
-        *cached_rev = revision;
+        *self.cached_generation.borrow_mut() = generation;
+        *self.cached_revision.borrow_mut() = revision;
         commands
     }
 
