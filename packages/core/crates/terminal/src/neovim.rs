@@ -409,3 +409,88 @@ impl Drop for NeovimProcess {
         let _ = self.kill();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_new_default() {
+        let c = NeovimConfig::new();
+        assert!(c.preserve_user_config);
+        assert!(c.config_dir.ends_with("nvim"));
+    }
+
+    #[test]
+    fn config_builder() {
+        let c = NeovimConfig::new()
+            .with_preserve_user_config(false)
+            .with_config_dir(PathBuf::from("/tmp/my-nvim"));
+        assert!(!c.preserve_user_config);
+        assert_eq!(c.config_dir, PathBuf::from("/tmp/my-nvim"));
+    }
+
+    #[test]
+    fn config_disabled_preserve_adds_clean() {
+        let c = NeovimConfig::new().with_preserve_user_config(false);
+        let pc = c.to_process_config();
+        assert!(pc.args.contains(&"--clean".to_string()));
+    }
+
+    #[test]
+    fn state_new() {
+        let s = NeovimState::new();
+        assert!(!s.is_running());
+        assert_eq!(s.mode(), NeovimMode::Normal);
+        assert!(s.filename().is_none());
+        assert!(!s.is_modified());
+    }
+
+    #[test]
+    fn state_set_mode() {
+        let mut s = NeovimState::new();
+        s.set_mode(NeovimMode::Insert);
+        assert_eq!(s.mode(), NeovimMode::Insert);
+        assert_eq!(s.mode_name(), "INSERT");
+    }
+
+    #[test]
+    fn state_all_modes() {
+        for (mode, name) in &[
+            (NeovimMode::Normal, "NORMAL"),
+            (NeovimMode::Insert, "INSERT"),
+            (NeovimMode::Visual, "VISUAL"),
+            (NeovimMode::Command, "COMMAND"),
+            (NeovimMode::Replace, "REPLACE"),
+            (NeovimMode::Terminal, "TERMINAL"),
+        ] {
+            assert_eq!(mode.mode_name(), *name);
+        }
+    }
+
+    #[test]
+    fn state_filename() {
+        let mut s = NeovimState::new();
+        assert!(s.filename().is_none());
+        s.set_filename(Some("main.rs".to_string()));
+        assert_eq!(s.filename(), Some("main.rs"));
+        s.set_filename(None);
+        assert!(s.filename().is_none());
+    }
+
+    #[test]
+    fn state_modified() {
+        let mut s = NeovimState::new();
+        assert!(!s.is_modified());
+        s.set_modified(true);
+        assert!(s.is_modified());
+    }
+
+    #[test]
+    fn state_base_delegation() {
+        let mut s = NeovimState::new();
+        s.base_state_mut().mark_started(42);
+        assert!(s.is_running());
+        assert_eq!(s.base_state().pid(), Some(42));
+    }
+}

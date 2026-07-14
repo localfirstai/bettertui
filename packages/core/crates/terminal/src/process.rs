@@ -847,3 +847,175 @@ impl TerminalViewport {
         self.cols as u32 * self.rows as u32
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn process_config_new() {
+        let c = ProcessConfig::new("bash");
+        assert_eq!(c.program, "bash");
+        assert!(c.is_valid());
+    }
+
+    #[test]
+    fn process_config_default_invalid() {
+        let c = ProcessConfig::default();
+        assert!(!c.is_valid());
+        assert!(c.args.is_empty());
+    }
+
+    #[test]
+    fn process_config_builder() {
+        let c = ProcessConfig::new("nvim")
+            .with_args(vec!["--clean".to_string()])
+            .with_env(vec![("TERM".to_string(), "xterm-256color".to_string())])
+            .with_size(PtySize {
+                cols: 120,
+                rows: 40,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .with_auto_restart(true)
+            .with_restart_delay(Duration::from_millis(200));
+        assert_eq!(c.program, "nvim");
+        assert_eq!(c.args.len(), 1);
+        assert!(c.auto_restart);
+        assert_eq!(c.restart_delay, Duration::from_millis(200));
+    }
+
+    #[test]
+    fn process_status_running() {
+        assert!(ProcessStatus::Running.is_running());
+        assert!(!ProcessStatus::Stopped.is_running());
+        assert!(!ProcessStatus::Exited(0).is_running());
+    }
+
+    #[test]
+    fn process_status_exit_code() {
+        assert_eq!(ProcessStatus::Exited(0).exit_code(), Some(0));
+        assert_eq!(ProcessStatus::Signaled(9).exit_code(), Some(9));
+        assert_eq!(ProcessStatus::Running.exit_code(), None);
+        assert_eq!(ProcessStatus::Stopped.exit_code(), None);
+    }
+
+    #[test]
+    fn process_status_is_exited() {
+        assert!(ProcessStatus::Exited(1).is_exited());
+        assert!(ProcessStatus::Signaled(15).is_exited());
+        assert!(!ProcessStatus::Running.is_exited());
+    }
+
+    #[test]
+    fn process_status_is_stopped() {
+        assert!(ProcessStatus::Stopped.is_stopped());
+        assert!(ProcessStatus::Error.is_stopped());
+        assert!(!ProcessStatus::Running.is_stopped());
+    }
+
+    #[test]
+    fn terminal_state_new() {
+        let s = TerminalState::new();
+        assert_eq!(s.status(), ProcessStatus::Stopped);
+        assert!(s.pid().is_none());
+        assert_eq!(s.restart_count(), 0);
+    }
+
+    #[test]
+    fn terminal_state_mark_started() {
+        let mut s = TerminalState::new();
+        s.mark_started(42);
+        assert!(s.is_running());
+        assert_eq!(s.pid(), Some(42));
+        assert!(s.started_at().is_some());
+    }
+
+    #[test]
+    fn terminal_state_mark_exited() {
+        let mut s = TerminalState::new();
+        s.mark_started(1);
+        s.mark_exited(0);
+        assert_eq!(s.status(), ProcessStatus::Exited(0));
+        assert_eq!(s.exit_code(), Some(0));
+        assert!(s.pid().is_none());
+    }
+
+    #[test]
+    fn terminal_state_mark_signaled() {
+        let mut s = TerminalState::new();
+        s.mark_started(1);
+        s.mark_signaled(9);
+        assert_eq!(s.status(), ProcessStatus::Signaled(9));
+        assert_eq!(s.exit_code(), Some(9));
+    }
+
+    #[test]
+    fn terminal_state_mark_error() {
+        let mut s = TerminalState::new();
+        s.mark_started(1);
+        s.mark_error();
+        assert_eq!(s.status(), ProcessStatus::Error);
+        assert!(s.pid().is_none());
+    }
+
+    #[test]
+    fn terminal_state_restart() {
+        let mut s = TerminalState::new();
+        assert_eq!(s.restart_count(), 0);
+        s.mark_restart();
+        assert_eq!(s.restart_count(), 1);
+        s.mark_restart();
+        assert_eq!(s.restart_count(), 2);
+    }
+
+    #[test]
+    fn terminal_state_reset() {
+        let mut s = TerminalState::new();
+        s.mark_started(42);
+        s.mark_exited(0);
+        s.mark_restart();
+        s.reset();
+        assert_eq!(s.status(), ProcessStatus::Stopped);
+        assert_eq!(s.restart_count(), 0);
+    }
+
+    #[test]
+    fn spawn_result_new() {
+        let config = ProcessConfig::new("echo");
+        let r = SpawnResult::new(config, 42);
+        assert_eq!(r.pid, 42);
+        assert_eq!(r.process_config.program, "echo");
+    }
+
+    #[test]
+    fn terminal_viewport_default() {
+        let vp = TerminalViewport::default();
+        assert_eq!(vp.cols, 80);
+        assert_eq!(vp.rows, 24);
+        assert_eq!(vp.total_cells(), 1920);
+    }
+
+    #[test]
+    fn terminal_viewport_scroll() {
+        let mut vp = TerminalViewport::default();
+        assert!(!vp.is_scrolled());
+        vp.scroll_offset = 10;
+        assert!(vp.is_scrolled());
+    }
+
+    #[test]
+    fn terminal_viewport_line_counts() {
+        let vp = TerminalViewport::default();
+        assert_eq!(vp.visible_line_count(), 24);
+        assert_eq!(vp.total_line_count(), 24 + vp.scrollback_lines);
+    }
+
+    #[test]
+    fn terminal_viewport_to_pty_size() {
+        let vp = TerminalViewport::default();
+        let pty = vp.to_pty_size();
+        assert_eq!(pty.cols, 80);
+        assert_eq!(pty.rows, 24);
+    }
+}
