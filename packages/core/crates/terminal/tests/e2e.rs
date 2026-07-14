@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::pty::{PtyConfig, PtyProcess, PtySize};
-use bettertui_terminal::{ResponseKind, VtMachine};
+use bettertui_terminal::VtMachine;
 
 const WIDTH: u16 = 80;
 const HEIGHT: u16 = 24;
@@ -209,7 +209,6 @@ fn e2e_pty_empty_output() {
     let (_process, raw) = exec("true", &[]);
     // true produces no output
     let vm = parse_through_vtmachine(&raw);
-    let our = vm_text(&vm);
     // Should not panic, framebuffer should be all spaces
     let fb = vm.framebuffer();
     for y in 0..HEIGHT {
@@ -234,8 +233,16 @@ fn e2e_vtmachine_cursor_position_after_printf() {
     let (_process, raw) = exec("printf", &["\\033[2J\\033[5;10HX"]);
     let vm = parse_through_vtmachine(&raw);
     // CUP 5;10 -> 0-based (4, 9), then 'X' advances col to 10
-    assert_eq!(vm.cursor.row, 4, "cursor row after CUP 5;10 + char");
-    assert_eq!(vm.cursor.col, 10, "cursor col after CUP 5;10 + char");
+    assert_eq!(
+        vm.current_cursor().row(),
+        4,
+        "cursor row after CUP 5;10 + char"
+    );
+    assert_eq!(
+        vm.current_cursor().col(),
+        10,
+        "cursor col after CUP 5;10 + char"
+    );
     let cell = vm.framebuffer().get(9, 4);
     assert_eq!(cell.ch, 'X', "cell at (9,4) should be X");
 }
@@ -247,8 +254,8 @@ fn e2e_vtmachine_cursor_save_restore() {
 
     let vm = parse_through_vtmachine(&raw);
     // Save at (9,19), CUP to (0,0), restore back to (9,19)
-    assert_eq!(vm.cursor.row, 9, "row after save/restore");
-    assert_eq!(vm.cursor.col, 19, "col after save/restore");
+    assert_eq!(vm.current_cursor().row(), 9, "row after save/restore");
+    assert_eq!(vm.current_cursor().col(), 19, "col after save/restore");
 }
 
 #[test]

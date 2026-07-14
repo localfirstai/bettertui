@@ -1,4 +1,6 @@
-//! Tests for VT100/VTxxx terminal emulation state machine.
+//! Integration tests for VT100/VTxxx terminal emulation state machine.
+//!
+//! These tests exercise the **public API** of the vt module types.
 
 use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::framebuffer::CellAttributes;
@@ -16,7 +18,7 @@ use bettertui_terminal::{
 fn cursor_new() {
     let c = Cursor::new();
     assert_eq!(c.position(), (0, 0));
-    assert!(c.visible);
+    assert!(c.visible());
 }
 
 #[test]
@@ -24,21 +26,21 @@ fn cursor_move_up() {
     let mut c = Cursor::new();
     c.set_position(5, 5);
     c.move_up(2);
-    assert_eq!(c.row, 3);
+    assert_eq!(c.row(), 3);
 }
 
 #[test]
 fn cursor_move_up_saturating() {
     let mut c = Cursor::new();
     c.move_up(5);
-    assert_eq!(c.row, 0);
+    assert_eq!(c.row(), 0);
 }
 
 #[test]
 fn cursor_move_down() {
     let mut c = Cursor::new();
     c.move_down(3, 24);
-    assert_eq!(c.row, 3);
+    assert_eq!(c.row(), 3);
 }
 
 #[test]
@@ -46,7 +48,7 @@ fn cursor_move_down_clamp() {
     let mut c = Cursor::new();
     c.set_position(20, 0);
     c.move_down(10, 24);
-    assert_eq!(c.row, 23);
+    assert_eq!(c.row(), 23);
 }
 
 #[test]
@@ -54,24 +56,24 @@ fn cursor_move_left_right() {
     let mut c = Cursor::new();
     c.set_position(0, 10);
     c.move_left(3);
-    assert_eq!(c.col, 7);
+    assert_eq!(c.col(), 7);
     c.move_right(5, 80);
-    assert_eq!(c.col, 12);
+    assert_eq!(c.col(), 12);
 }
 
 #[test]
 fn cursor_move_to_column() {
     let mut c = Cursor::new();
     c.move_to_column(5);
-    assert_eq!(c.col, 4);
+    assert_eq!(c.col(), 4);
 }
 
 #[test]
 fn cursor_move_to() {
     let mut c = Cursor::new();
     c.move_to(10, 20);
-    assert_eq!(c.row, 9);
-    assert_eq!(c.col, 19);
+    assert_eq!(c.row(), 9);
+    assert_eq!(c.col(), 19);
 }
 
 #[test]
@@ -89,8 +91,8 @@ fn cursor_carriage_return() {
     let mut c = Cursor::new();
     c.set_position(5, 20);
     c.carriage_return();
-    assert_eq!(c.col, 0);
-    assert_eq!(c.row, 5);
+    assert_eq!(c.col(), 0);
+    assert_eq!(c.row(), 5);
 }
 
 #[test]
@@ -98,7 +100,7 @@ fn cursor_tab() {
     let mut c = Cursor::new();
     c.set_position(0, 3);
     c.tab(&[8, 16, 24]);
-    assert_eq!(c.col, 8);
+    assert_eq!(c.col(), 8);
 }
 
 #[test]
@@ -106,7 +108,7 @@ fn cursor_tab_next_stop() {
     let mut c = Cursor::new();
     c.set_position(0, 12);
     c.tab(&[8, 16, 24]);
-    assert_eq!(c.col, 16);
+    assert_eq!(c.col(), 16);
 }
 
 #[test]
@@ -114,7 +116,7 @@ fn cursor_tab_default() {
     let mut c = Cursor::new();
     c.set_position(0, 5);
     c.tab(&[]);
-    assert_eq!(c.col, 8);
+    assert_eq!(c.col(), 8);
 }
 
 #[test]
@@ -122,14 +124,14 @@ fn cursor_backspace() {
     let mut c = Cursor::new();
     c.set_position(0, 5);
     c.backspace();
-    assert_eq!(c.col, 4);
+    assert_eq!(c.col(), 4);
 }
 
 #[test]
 fn cursor_backspace_saturating() {
     let mut c = Cursor::new();
     c.backspace();
-    assert_eq!(c.col, 0);
+    assert_eq!(c.col(), 0);
 }
 
 // =============================================================================
@@ -319,7 +321,7 @@ fn screen_scrollback() {
     sb.write_char(0, 1, 'B', &pen);
     sb.write_char(0, 2, 'C', &pen);
     sb.scroll_up(2, &pen);
-    assert!(sb.scrollback().line_count() == 2);
+    assert!(sb.scrollback_len() == 2);
 }
 
 // =============================================================================
@@ -329,9 +331,10 @@ fn screen_scrollback() {
 #[test]
 fn machine_new() {
     let m = VtMachine::new(80, 24);
-    assert_eq!(m.screen.width(), 80);
-    assert_eq!(m.screen.height(), 24);
-    assert!(m.modes.auto_wrap());
+    // Use public accessors instead of direct field access
+    assert_eq!(m.current_screen().width(), 80);
+    assert_eq!(m.current_screen().height(), 24);
+    assert!(m.current_modes().auto_wrap());
 }
 
 #[test]
@@ -448,7 +451,7 @@ fn machine_osc_title() {
     while let Some(event) = p.poll_event() {
         m.process(&event);
     }
-    assert_eq!(m.title, "My Terminal");
+    assert_eq!(m.title(), "My Terminal");
 }
 
 #[test]
@@ -489,7 +492,7 @@ fn machine_alternate_screen() {
     while let Some(event) = p2.poll_event() {
         m.process(&event);
     }
-    assert!(m.modes.alt_screen());
+    assert!(m.current_modes().alt_screen());
     assert_eq!(m.framebuffer().get(0, 0).ch, 'A');
 
     let mut p3 = AnsiParser::new();
@@ -497,7 +500,7 @@ fn machine_alternate_screen() {
     while let Some(event) = p3.poll_event() {
         m.process(&event);
     }
-    assert!(!m.modes.alt_screen());
+    assert!(!m.current_modes().alt_screen());
     assert_eq!(m.framebuffer().get(0, 0).ch, 'M');
 }
 

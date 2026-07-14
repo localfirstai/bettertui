@@ -22,7 +22,7 @@ pub use screen::*;
 pub use scrollback::*;
 pub use vt::{
     Cursor, CursorShape, CursorStyle, KittyKeyEvent, Pen, PrivateMode, ResponseKind, ScreenBuffer,
-    ScrollbackBuffer, TerminalMode, TerminalResponse, VtMachine,
+    TerminalMode, TerminalResponse, VtMachine,
 };
 
 use std::io::{self, Write, stdout};

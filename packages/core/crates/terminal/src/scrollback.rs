@@ -1,13 +1,18 @@
 //! Scrollback buffer: ring buffer of terminal lines with configurable max size.
 
 use bettertui_engine::framebuffer::Cell;
+
 const DEFAULT_SCROLLBACK_LINES: usize = 10_000;
 
+/// A single line in the scrollback buffer.
+///
+/// Stores the cell data, logical line width, and whether this line
+/// is a continuation of the previous line (wrapped).
 #[derive(Debug, Clone)]
 pub struct ScrollbackLine {
-    pub cells: Vec<Cell>,
-    pub line_width: u16,
-    pub is_wrapped: bool,
+    cells: Vec<Cell>,
+    line_width: u16,
+    is_wrapped: bool,
 }
 
 impl ScrollbackLine {
@@ -35,19 +40,42 @@ impl ScrollbackLine {
         self.cells.is_empty()
     }
 
+    /// Returns a reference to the cell at `col`, or `None` if out of range.
     pub fn cell(&self, col: u16) -> Option<&Cell> {
-        if col < self.cells.len() as u16 {
-            Some(&self.cells[col as usize])
+        let idx = col as usize;
+        if idx < self.cells.len() {
+            Some(&self.cells[idx])
         } else {
             None
         }
     }
 
+    /// Returns the reconstructed text content of this line.
     pub fn text(&self) -> String {
         self.cells.iter().map(|c| c.ch).collect()
     }
+
+    /// Returns the raw cell slice.
+    pub fn cells(&self) -> &[Cell] {
+        &self.cells
+    }
+
+    /// Returns the logical line width.
+    pub fn width(&self) -> u16 {
+        self.line_width
+    }
+
+    /// Returns whether this line is a continuation of the previous line.
+    pub fn is_wrapped(&self) -> bool {
+        self.is_wrapped
+    }
 }
 
+/// Ring buffer of scrollback lines with a configurable maximum.
+///
+/// Lines are indexed from the bottom (most recent = index 0).
+/// When the buffer exceeds [`max_lines`](Self::max_lines), the oldest
+/// lines are dropped.
 #[derive(Debug, Clone)]
 pub struct ScrollbackBuffer {
     lines: Vec<ScrollbackLine>,
@@ -86,6 +114,8 @@ impl ScrollbackBuffer {
         }
     }
 
+    /// Pushes a line into the buffer. If the buffer exceeds `max_lines`,
+    /// the oldest line is dropped.
     pub fn push_line(&mut self, cells: Vec<Cell>, width: u16, wrapped: bool) {
         let line = ScrollbackLine::with_cells(cells, width, wrapped);
         self.lines.push(line);
@@ -96,15 +126,18 @@ impl ScrollbackBuffer {
         }
     }
 
+    /// Convenience: pushes a text string as a single line.
     pub fn push_text_line(&mut self, text: &str, width: u16) {
         let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
         self.push_line(cells, width, false);
     }
 
+    /// Removes all lines from the buffer.
     pub fn clear(&mut self) {
         self.lines.clear();
     }
 
+    /// Resizes all stored lines to `new_width`.
     pub fn resize(&mut self, new_width: u16) {
         self.current_width = new_width;
         for line in &mut self.lines {
@@ -112,6 +145,7 @@ impl ScrollbackBuffer {
         }
     }
 
+    /// Sets the maximum number of lines, truncating if currently above the limit.
     pub fn set_max_lines(&mut self, max: usize) {
         self.max_lines = max;
         if self.lines.len() > max {
@@ -119,6 +153,7 @@ impl ScrollbackBuffer {
         }
     }
 
+    /// Returns the line at `index` from the bottom (0 = most recent).
     pub fn line(&self, index: usize) -> Option<&ScrollbackLine> {
         if index < self.lines.len() {
             Some(&self.lines[self.lines.len() - 1 - index])
@@ -127,10 +162,12 @@ impl ScrollbackBuffer {
         }
     }
 
+    /// Returns the line at `index` from the top (0 = oldest).
     pub fn line_absolute(&self, index: usize) -> Option<&ScrollbackLine> {
         self.lines.get(index)
     }
 
+    /// Returns how many lines are stored in the buffer.
     pub fn len(&self) -> usize {
         self.lines.len()
     }
@@ -139,14 +176,17 @@ impl ScrollbackBuffer {
         self.lines.is_empty()
     }
 
+    /// Returns the maximum number of lines this buffer can hold.
     pub fn max_lines(&self) -> usize {
         self.max_lines
     }
 
+    /// Returns the current logical width.
     pub fn current_width(&self) -> u16 {
         self.current_width
     }
 
+    /// Returns up to `count` lines starting from `offset` from the bottom.
     pub fn visible_lines(&self, offset: u32, count: u16) -> Vec<&ScrollbackLine> {
         let count = count as usize;
         let start = offset as usize;
@@ -156,10 +196,12 @@ impl ScrollbackBuffer {
             .collect()
     }
 
+    /// Iterates over all stored lines from oldest to newest.
     pub fn iter(&self) -> impl Iterator<Item = &ScrollbackLine> {
         self.lines.iter()
     }
 
+    /// Estimates the memory usage of the buffer in bytes.
     pub fn estimated_memory(&self) -> usize {
         self.lines.len() * self.current_width as usize * std::mem::size_of::<Cell>()
     }
@@ -273,6 +315,52 @@ mod tests {
     fn scrollback_line_new() {
         let line = ScrollbackLine::new(80);
         assert!(line.is_empty());
-        assert_eq!(line.line_width, 80);
+        assert_eq!(line.width(), 80);
+    }
+
+    #[test]
+    fn scrollback_line_accessors() {
+        let line = ScrollbackLine::with_cells(vec![Cell::new('A')], 80, true);
+        assert_eq!(line.width(), 80);
+        assert!(line.is_wrapped());
+        assert_eq!(line.cells().len(), 1);
+        assert_eq!(line.cells()[0].ch, 'A');
+    }
+
+    #[test]
+    fn scrollback_set_max_lines_truncates() {
+        let mut sb = ScrollbackBuffer::with_max_lines(100);
+        for i in 0..50 {
+            sb.push_text_line(&format!("Line {}", i), 80);
+        }
+        assert_eq!(sb.len(), 50);
+        sb.set_max_lines(10);
+        assert_eq!(sb.len(), 10);
+    }
+
+    #[test]
+    fn scrollback_line_absolute() {
+        let mut sb = ScrollbackBuffer::new();
+        sb.push_text_line("oldest", 80);
+        sb.push_text_line("middle", 80);
+        sb.push_text_line("newest", 80);
+        assert_eq!(sb.line_absolute(0).unwrap().text(), "oldest");
+        assert_eq!(sb.line_absolute(2).unwrap().text(), "newest");
+    }
+
+    #[test]
+    fn scrollback_iter() {
+        let mut sb = ScrollbackBuffer::new();
+        sb.push_text_line("first", 80);
+        sb.push_text_line("second", 80);
+        let texts: Vec<String> = sb.iter().map(|l| l.text()).collect();
+        assert_eq!(texts, vec!["first", "second"]);
+    }
+
+    #[test]
+    fn scrollback_out_of_range_line() {
+        let sb = ScrollbackBuffer::new();
+        assert!(sb.line(0).is_none());
+        assert!(sb.line_absolute(0).is_none());
     }
 }

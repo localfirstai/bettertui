@@ -85,7 +85,7 @@ pub enum QueryResult {
 pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)> {
     let mut results = Vec::new();
 
-    if let Some(params) = &machine.device_attributes {
+    if let Some(params) = machine.device_attributes() {
         let terminal_type = params.first().copied().unwrap_or(0);
         let attributes = params[1..].to_vec();
         results.push((
@@ -97,7 +97,7 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
         ));
     }
 
-    if let Some(params) = &machine.secondary_device_attributes {
+    if let Some(params) = machine.secondary_device_attributes() {
         let model = params.first().copied().unwrap_or(0);
         let fw_major = params.get(1).copied().unwrap_or(0);
         let fw_minor = params.get(2).copied().unwrap_or(0);
@@ -111,14 +111,16 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
         ));
     }
 
-    if let Some(data) = &machine.tertiary_device_attributes {
+    if let Some(data) = machine.tertiary_device_attributes() {
         results.push((
             TerminalQuery::TertiaryDeviceAttributes,
-            QueryResult::TertiaryDeviceAttributes { data: data.clone() },
+            QueryResult::TertiaryDeviceAttributes {
+                data: data.to_string(),
+            },
         ));
     }
 
-    if let Some(params) = &machine.kitty_keyboard_query_response {
+    if let Some(params) = machine.kitty_keyboard_query_response() {
         let features = params.get(1).copied().unwrap_or(0);
         results.push((
             TerminalQuery::ProgressiveEnhancement,
@@ -131,12 +133,12 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
 
 /// Clears all stored terminal responses on the machine.
 pub fn clear_responses(machine: &mut VtMachine) {
-    machine.device_attributes = None;
-    machine.secondary_device_attributes = None;
-    machine.tertiary_device_attributes = None;
-    machine.kitty_keyboard_query_response = None;
-    machine.last_kitty_key = None;
-    machine.terminal_responses.clear();
+    *machine.device_attributes_mut() = None;
+    *machine.secondary_device_attributes_mut() = None;
+    *machine.tertiary_device_attributes_mut() = None;
+    *machine.kitty_keyboard_query_response_mut() = None;
+    *machine.last_kitty_key_mut() = None;
+    machine.terminal_responses_mut().clear();
 }
 
 /// Returns all query strings to send for a full capability probe.

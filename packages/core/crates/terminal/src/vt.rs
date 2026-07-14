@@ -8,8 +8,6 @@ use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::input::{KeyAction, KeyModifiers, KeyboardInput};
 use bettertui_engine::tree::{Color, NamedColor};
 
-const DEFAULT_SCROLLBACK_LINES: usize = 10000;
-
 // =============================================================================
 // Cursor
 // =============================================================================
@@ -32,15 +30,16 @@ pub enum CursorShape {
     VerticalLine,
 }
 
+/// Terminal cursor position, visibility, and rendering style.
 #[derive(Debug, Clone)]
 pub struct Cursor {
-    pub row: u16,
-    pub col: u16,
-    pub saved_row: u16,
-    pub saved_col: u16,
-    pub visible: bool,
-    pub style: CursorStyle,
-    pub shape: CursorShape,
+    row: u16,
+    col: u16,
+    saved_row: u16,
+    saved_col: u16,
+    visible: bool,
+    style: CursorStyle,
+    shape: CursorShape,
 }
 
 impl Default for Cursor {
@@ -62,8 +61,28 @@ impl Cursor {
         }
     }
 
+    pub fn row(&self) -> u16 {
+        self.row
+    }
+
+    pub fn col(&self) -> u16 {
+        self.col
+    }
+
     pub fn position(&self) -> (u16, u16) {
         (self.row, self.col)
+    }
+
+    pub fn visible(&self) -> bool {
+        self.visible
+    }
+
+    pub fn style(&self) -> CursorStyle {
+        self.style
+    }
+
+    pub fn shape(&self) -> CursorShape {
+        self.shape
     }
 
     pub fn set_position(&mut self, row: u16, col: u16) {
@@ -250,7 +269,6 @@ impl PrivateMode {
             1000 => Some(Self::MouseTracking),
             1002 => Some(Self::MouseButton),
             1003 => Some(Self::MouseMotion),
-            1004 => Some(Self::FocusEvents),
             1006 => Some(Self::MouseSgr),
             1015 => Some(Self::MouseUrxvt),
             1048 => Some(Self::SaveCursor),
@@ -289,51 +307,13 @@ impl PrivateMode {
 // Screen
 // =============================================================================
 
-#[derive(Debug, Clone)]
-pub struct ScrollbackBuffer {
-    lines: Vec<Vec<Cell>>,
-    max_lines: usize,
-}
-
-impl Default for ScrollbackBuffer {
-    fn default() -> Self {
-        Self::new(DEFAULT_SCROLLBACK_LINES)
-    }
-}
-
-impl ScrollbackBuffer {
-    pub fn new(max_lines: usize) -> Self {
-        Self {
-            lines: Vec::with_capacity(max_lines.min(1000)),
-            max_lines,
-        }
-    }
-
-    pub fn push_line(&mut self, line: Vec<Cell>) {
-        if self.lines.len() >= self.max_lines {
-            self.lines.remove(0);
-        }
-        self.lines.push(line);
-    }
-
-    pub fn line_count(&self) -> usize {
-        self.lines.len()
-    }
-
-    pub fn get_line(&self, index: usize) -> Option<&[Cell]> {
-        self.lines.get(index).map(|l| l.as_slice())
-    }
-
-    pub fn clear(&mut self) {
-        self.lines.clear();
-    }
-}
-
+/// A scrollable terminal screen buffer backed by a [`FrameBuffer`] with
+/// tab-stop management and a scrollback history.
 #[derive(Debug, Clone)]
 pub struct ScreenBuffer {
     buffer: FrameBuffer,
     tab_stops: Vec<u16>,
-    scrollback: ScrollbackBuffer,
+    scrollback: crate::scrollback::ScrollbackBuffer,
     default_bg: Color,
 }
 
@@ -347,7 +327,7 @@ impl ScreenBuffer {
         Self {
             buffer: FrameBuffer::new(width, height),
             tab_stops,
-            scrollback: ScrollbackBuffer::default(),
+            scrollback: crate::scrollback::ScrollbackBuffer::with_width(width),
             default_bg: Color::Default,
         }
     }
@@ -358,6 +338,7 @@ impl ScreenBuffer {
         for t in (8..width).step_by(8) {
             self.tab_stops.push(t);
         }
+        self.scrollback.resize(width);
     }
 
     pub fn buffer(&self) -> &FrameBuffer {
@@ -395,8 +376,13 @@ impl ScreenBuffer {
         self.tab_stops.clear();
     }
 
-    pub fn scrollback(&self) -> &ScrollbackBuffer {
+    pub fn scrollback(&self) -> &crate::scrollback::ScrollbackBuffer {
         &self.scrollback
+    }
+
+    /// Returns the number of lines stored in the scrollback buffer.
+    pub fn scrollback_len(&self) -> usize {
+        self.scrollback.len()
     }
 
     pub fn set_cell(
@@ -504,7 +490,7 @@ impl ScreenBuffer {
                 let cell = self.buffer.get(x, y);
                 line.push(cell);
             }
-            self.scrollback.push_line(line);
+            self.scrollback.push_line(line, cols, false);
         }
 
         for y in count..rows {
@@ -669,25 +655,33 @@ impl Default for Pen {
 // VT Machine
 // =============================================================================
 
+/// The primary VT100/VTxxx terminal emulation state machine.
+///
+/// Processes [`ParserEvent`]s from the ANSI parser and maintains:
+/// - Primary and alternate screen buffers
+/// - Cursor state (position, visibility, style)
+/// - Terminal modes (wrapping, insert, reverse video, etc.)
+/// - Rendering attributes (pen/ink state)
+/// - Terminal responses (DA1/DA2/DA3, Kitty keyboard protocol)
 #[derive(Debug, Clone)]
 pub struct VtMachine {
-    pub screen: ScreenBuffer,
-    pub alt_screen: ScreenBuffer,
-    pub cursor: Cursor,
-    pub alt_cursor: Cursor,
-    pub modes: TerminalMode,
-    pub pen: Pen,
-    pub title: String,
-    pub icon_name: String,
-    pub hyperlink: Option<(Option<String>, String)>,
-    pub clipboard: Option<String>,
-    pub device_attributes: Option<Vec<u32>>,
-    pub secondary_device_attributes: Option<Vec<u32>>,
-    pub tertiary_device_attributes: Option<String>,
-    pub terminal_responses: Vec<TerminalResponse>,
-    pub last_kitty_key: Option<KittyKeyEvent>,
-    pub kitty_enhancement_levels: [u8; 5],
-    pub kitty_keyboard_query_response: Option<Vec<u32>>,
+    screen: ScreenBuffer,
+    alt_screen: ScreenBuffer,
+    cursor: Cursor,
+    alt_cursor: Cursor,
+    modes: TerminalMode,
+    pen: Pen,
+    title: String,
+    icon_name: String,
+    hyperlink: Option<(Option<String>, String)>,
+    clipboard: Option<String>,
+    device_attributes: Option<Vec<u32>>,
+    secondary_device_attributes: Option<Vec<u32>>,
+    tertiary_device_attributes: Option<String>,
+    terminal_responses: Vec<TerminalResponse>,
+    last_kitty_key: Option<KittyKeyEvent>,
+    kitty_enhancement_levels: [u8; 5],
+    kitty_keyboard_query_response: Option<Vec<u32>>,
 }
 
 #[derive(Debug, Clone)]
@@ -768,6 +762,96 @@ impl VtMachine {
         }
     }
 
+    // ── Public accessors ──
+
+    pub fn current_screen(&self) -> &ScreenBuffer {
+        if self.modes.alt_screen() {
+            &self.alt_screen
+        } else {
+            &self.screen
+        }
+    }
+
+    pub fn current_cursor(&self) -> &Cursor {
+        if self.modes.alt_screen() {
+            &self.alt_cursor
+        } else {
+            &self.cursor
+        }
+    }
+
+    pub fn current_modes(&self) -> TerminalMode {
+        self.modes
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn icon_name(&self) -> &str {
+        &self.icon_name
+    }
+
+    pub fn device_attributes(&self) -> Option<&[u32]> {
+        self.device_attributes.as_deref()
+    }
+
+    pub fn secondary_device_attributes(&self) -> Option<&[u32]> {
+        self.secondary_device_attributes.as_deref()
+    }
+
+    pub fn tertiary_device_attributes(&self) -> Option<&str> {
+        self.tertiary_device_attributes.as_deref()
+    }
+
+    pub fn terminal_responses(&self) -> &[TerminalResponse] {
+        &self.terminal_responses
+    }
+
+    pub fn clipboard(&self) -> Option<&str> {
+        self.clipboard.as_deref()
+    }
+
+    pub fn hyperlink(&self) -> Option<&(Option<String>, String)> {
+        self.hyperlink.as_ref()
+    }
+
+    pub fn last_kitty_key(&self) -> Option<&KittyKeyEvent> {
+        self.last_kitty_key.as_ref()
+    }
+
+    pub fn kitty_keyboard_query_response(&self) -> Option<&[u32]> {
+        self.kitty_keyboard_query_response.as_deref()
+    }
+
+    // ── pub(crate) accessors (for query.rs) ──
+
+    pub(crate) fn device_attributes_mut(&mut self) -> &mut Option<Vec<u32>> {
+        &mut self.device_attributes
+    }
+
+    pub(crate) fn secondary_device_attributes_mut(&mut self) -> &mut Option<Vec<u32>> {
+        &mut self.secondary_device_attributes
+    }
+
+    pub(crate) fn tertiary_device_attributes_mut(&mut self) -> &mut Option<String> {
+        &mut self.tertiary_device_attributes
+    }
+
+    pub(crate) fn kitty_keyboard_query_response_mut(&mut self) -> &mut Option<Vec<u32>> {
+        &mut self.kitty_keyboard_query_response
+    }
+
+    pub(crate) fn last_kitty_key_mut(&mut self) -> &mut Option<KittyKeyEvent> {
+        &mut self.last_kitty_key
+    }
+
+    pub(crate) fn terminal_responses_mut(&mut self) -> &mut Vec<TerminalResponse> {
+        &mut self.terminal_responses
+    }
+
+    // ── Public mutators ──
+
     pub fn resize(&mut self, width: u16, height: u16) {
         self.screen.resize(width, height);
         self.alt_screen.resize(width, height);
@@ -796,13 +880,11 @@ impl VtMachine {
         }
     }
 
-    fn screen(&self) -> &ScreenBuffer {
-        if self.modes.alt_screen() {
-            &self.alt_screen
-        } else {
-            &self.screen
-        }
+    pub fn framebuffer(&self) -> &FrameBuffer {
+        self.current_screen().buffer()
     }
+
+    // ── Private helpers ──
 
     fn screen_mut(&mut self) -> &mut ScreenBuffer {
         if self.modes.alt_screen() {
@@ -828,10 +910,6 @@ impl VtMachine {
         }
     }
 
-    pub fn framebuffer(&self) -> &bettertui_engine::framebuffer::FrameBuffer {
-        self.screen().buffer()
-    }
-
     fn handle_char(&mut self, byte: u8) {
         let ch = byte as char;
         if ch.is_ascii_control() && ch != ' ' {
@@ -847,11 +925,10 @@ impl VtMachine {
         screen.write_char(cursor_row, cursor_col, ch, &pen);
 
         let max_col = screen.width();
-        let _ = screen;
 
         if cursor_col + 1 >= max_col {
             if auto_wrap {
-                if cursor_row + 1 >= self.screen().height() {
+                if cursor_row + 1 >= self.current_screen().height() {
                     self.screen_mut().scroll_up(1, &pen);
                 } else {
                     self.cursor_mut().row += 1;
@@ -865,7 +942,7 @@ impl VtMachine {
 
     fn handle_line_feed(&mut self) {
         let pen = self.pen;
-        let height = self.screen().height();
+        let height = self.current_screen().height();
         let row = self.cursor().row;
         if row + 1 >= height {
             self.screen_mut().scroll_up(1, &pen);
@@ -884,7 +961,7 @@ impl VtMachine {
 
     fn handle_index(&mut self) {
         let pen = self.pen;
-        let height = self.screen().height();
+        let height = self.current_screen().height();
         let row = self.cursor().row;
         if row + 1 >= height {
             self.screen_mut().scroll_up(1, &pen);
@@ -905,8 +982,8 @@ impl VtMachine {
     }
 
     fn handle_tab(&mut self) {
-        let tab_stops = self.screen().tab_stops().to_vec();
-        let max_col = self.screen().width().saturating_sub(1);
+        let tab_stops = self.current_screen().tab_stops().to_vec();
+        let max_col = self.current_screen().width().saturating_sub(1);
         let cursor = self.cursor_mut();
         cursor.tab(&tab_stops);
         cursor.col = cursor.col.min(max_col);
@@ -1034,8 +1111,8 @@ impl VtMachine {
     }
 
     fn handle_cursor_movement(&mut self, movement: &CursorMovement) {
-        let screen_width = self.screen().width();
-        let screen_height = self.screen().height();
+        let screen_width = self.current_screen().width();
+        let screen_height = self.current_screen().height();
         let origin = self.modes.origin();
         let cursor = self.cursor_mut();
 
@@ -1307,9 +1384,9 @@ mod tests {
     #[test]
     fn cursor_new_defaults() {
         let c = Cursor::new();
-        assert_eq!(c.row, 0);
-        assert_eq!(c.col, 0);
-        assert!(c.visible);
+        assert_eq!(c.row(), 0);
+        assert_eq!(c.col(), 0);
+        assert!(c.visible());
     }
 
     #[test]
@@ -1322,8 +1399,8 @@ mod tests {
     fn cursor_set_position() {
         let mut c = Cursor::new();
         c.set_position(5, 10);
-        assert_eq!(c.row, 5);
-        assert_eq!(c.col, 10);
+        assert_eq!(c.row(), 5);
+        assert_eq!(c.col(), 10);
     }
 
     #[test]
@@ -1331,21 +1408,21 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(5, 0);
         c.move_up(3);
-        assert_eq!(c.row, 2);
+        assert_eq!(c.row(), 2);
     }
 
     #[test]
     fn cursor_move_up_saturate() {
         let mut c = Cursor::new();
         c.move_up(10);
-        assert_eq!(c.row, 0);
+        assert_eq!(c.row(), 0);
     }
 
     #[test]
     fn cursor_move_down() {
         let mut c = Cursor::new();
         c.move_down(3, 10);
-        assert_eq!(c.row, 3);
+        assert_eq!(c.row(), 3);
     }
 
     #[test]
@@ -1353,7 +1430,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(8, 0);
         c.move_down(5, 10);
-        assert_eq!(c.row, 9);
+        assert_eq!(c.row(), 9);
     }
 
     #[test]
@@ -1361,7 +1438,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 10);
         c.move_left(3);
-        assert_eq!(c.col, 7);
+        assert_eq!(c.col(), 7);
     }
 
     #[test]
@@ -1369,7 +1446,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 2);
         c.move_left(10);
-        assert_eq!(c.col, 0);
+        assert_eq!(c.col(), 0);
     }
 
     #[test]
@@ -1377,7 +1454,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 3);
         c.move_right(5, 20);
-        assert_eq!(c.col, 8);
+        assert_eq!(c.col(), 8);
     }
 
     #[test]
@@ -1385,22 +1462,22 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 18);
         c.move_right(5, 20);
-        assert_eq!(c.col, 19);
+        assert_eq!(c.col(), 19);
     }
 
     #[test]
     fn cursor_move_to_column() {
         let mut c = Cursor::new();
         c.move_to_column(10);
-        assert_eq!(c.col, 9);
+        assert_eq!(c.col(), 9);
     }
 
     #[test]
     fn cursor_move_to() {
         let mut c = Cursor::new();
         c.move_to(5, 10);
-        assert_eq!(c.row, 4);
-        assert_eq!(c.col, 9);
+        assert_eq!(c.row(), 4);
+        assert_eq!(c.col(), 9);
     }
 
     #[test]
@@ -1410,8 +1487,8 @@ mod tests {
         c.save_position();
         c.set_position(5, 5);
         c.restore_position();
-        assert_eq!(c.row, 10);
-        assert_eq!(c.col, 20);
+        assert_eq!(c.row(), 10);
+        assert_eq!(c.col(), 20);
     }
 
     #[test]
@@ -1419,8 +1496,8 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(5, 15);
         c.carriage_return();
-        assert_eq!(c.col, 0);
-        assert_eq!(c.row, 5);
+        assert_eq!(c.col(), 0);
+        assert_eq!(c.row(), 5);
     }
 
     #[test]
@@ -1428,7 +1505,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(3, 0);
         c.newline();
-        assert_eq!(c.row, 4);
+        assert_eq!(c.row(), 4);
     }
 
     #[test]
@@ -1436,7 +1513,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 3);
         c.tab(&[5, 10, 20]);
-        assert_eq!(c.col, 5);
+        assert_eq!(c.col(), 5);
     }
 
     #[test]
@@ -1444,7 +1521,7 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 25);
         c.tab(&[5, 10, 20]);
-        assert_eq!(c.col, 32);
+        assert_eq!(c.col(), 32);
     }
 
     #[test]
@@ -1452,28 +1529,32 @@ mod tests {
         let mut c = Cursor::new();
         c.set_position(0, 10);
         c.backspace();
-        assert_eq!(c.col, 9);
+        assert_eq!(c.col(), 9);
     }
 
     #[test]
     fn cursor_backspace_saturate() {
         let mut c = Cursor::new();
         c.backspace();
-        assert_eq!(c.col, 0);
+        assert_eq!(c.col(), 0);
     }
-
-    // ── CursorStyle ──
 
     #[test]
     fn cursor_style_default() {
         assert_eq!(CursorStyle::default(), CursorStyle::Block);
     }
 
-    // ── CursorShape ──
-
     #[test]
     fn cursor_shape_default() {
         assert_eq!(CursorShape::default(), CursorShape::Blinking);
+    }
+
+    #[test]
+    fn cursor_visible_style_shape() {
+        let c = Cursor::new();
+        assert!(c.visible());
+        assert_eq!(c.style(), CursorStyle::Block);
+        assert_eq!(c.shape(), CursorShape::Blinking);
     }
 
     // ── TerminalMode ──
@@ -1647,14 +1728,14 @@ mod proptests {
                 }
 
                 assert!(
-                    c.row < max_row,
+                    c.row() < max_row,
                     "row {} should be < max_row {} after movement {:?}",
-                    c.row, max_row, m
+                    c.row(), max_row, m
                 );
                 assert!(
-                    c.col < max_col,
+                    c.col() < max_col,
                     "col {} should be < max_col {} after movement {:?}",
-                    c.col, max_col, m
+                    c.col(), max_col, m
                 );
             }
         }
@@ -1680,8 +1761,8 @@ mod proptests {
             }
 
             c.restore_position();
-            assert_eq!(c.row, 10, "saved row should be restored");
-            assert_eq!(c.col, 20, "saved col should be restored");
+            assert_eq!(c.row(), 10, "saved row should be restored");
+            assert_eq!(c.col(), 20, "saved col should be restored");
         }
     }
 
@@ -1694,30 +1775,19 @@ mod proptests {
             let mut c = Cursor::new();
             let pos = start_col.min(max_col.saturating_sub(1));
             c.set_position(0, pos);
-            let mut tab_stops: Vec<u16> = (8..max_col).step_by(8).collect();
-            if !tab_stops.contains(&(max_col / 2)) {
-                tab_stops.push(max_col / 2);
-                tab_stops.sort();
-            }
+            let tab_stops: Vec<u16> = (8..max_col).step_by(8).collect();
 
             c.tab(&tab_stops);
 
-            // Tab must never move backward, and must always land on a
-            // column that is either a valid tab stop or on an 8-column boundary.
             assert!(
-                c.col >= pos,
+                c.col() >= pos,
                 "tab moved backward: col={} < pos={}",
-                c.col, pos
+                c.col(), pos
             );
             assert!(
-                tab_stops.contains(&c.col) || c.col % 8 == 0,
+                tab_stops.contains(&c.col()) || c.col().is_multiple_of(8),
                 "tab landed on invalid column: col={}, stops={:?}",
-                c.col, tab_stops
-            );
-            assert!(
-                tab_stops.contains(&c.col) || c.col % 8 == 0,
-                "tab landed on invalid column: col={}, stops={:?}",
-                c.col, tab_stops
+                c.col(), tab_stops
             );
         }
     }
@@ -1784,7 +1854,6 @@ mod proptests {
             for event in &events {
                 m.process(event);
             }
-            // framebuffer() should always return valid data
             let fb = m.framebuffer();
             assert_eq!(fb.width(), 80);
             assert_eq!(fb.height(), 24);
@@ -1842,7 +1911,6 @@ mod proptests {
             };
             let ki = ev.to_keyboard_input();
 
-            // Bit 1 = Shift, bit 2 = Alt, bit 4 = Ctrl, bit 8 = Super
             let has_shift = modifiers & 1 != 0;
             let has_alt = modifiers & 2 != 0;
             let has_ctrl = modifiers & 4 != 0;
