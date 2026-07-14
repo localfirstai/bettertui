@@ -1030,12 +1030,20 @@ impl Renderer {
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
-        info!(width, height, "Renderer::resize() - resizing framebuffer");
+        let old_w = self.width;
+        let old_h = self.height;
         self.width = width;
         self.height = height;
         self.painter.resize(width, height);
         self.snapshot.resize(width, height);
         self.needs_full_repaint = true;
+        debug!(
+            old_width = old_w,
+            old_height = old_h,
+            new_width = width,
+            new_height = height,
+            "Renderer::resize() - framebuffer resized"
+        );
     }
 
     pub fn request_frame(&mut self) {

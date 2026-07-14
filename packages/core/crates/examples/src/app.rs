@@ -14,7 +14,7 @@ use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::KeyModifiers;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 use crate::examples::{self, Category, Example};
 use crate::theme::Theme;
@@ -71,6 +71,7 @@ impl App {
         terminal.enter_alternate_screen()?;
         terminal.hide_cursor()?;
 
+        terminal.refresh_size()?;
         let (w, h) = terminal.size();
         self.renderer.resize(w, h);
         self.renderer.set_backend(Box::new(AnsiBackend::new()));
@@ -98,7 +99,17 @@ impl App {
                     self.handle_key(k, terminal)?;
                 }
                 Some(TerminalEvent::Resize(w, h)) => {
+                    let (old_w, old_h) = terminal.size();
+                    debug!(
+                        old_width = old_w,
+                        old_height = old_h,
+                        new_width = w,
+                        new_height = h,
+                        "App::main_loop() - resize event received"
+                    );
+                    terminal.update_size(w, h);
                     self.renderer.resize(w, h);
+                    debug!(width = w, height = h, "App::main_loop() - renderer resized");
                 }
                 _ => {}
             }
@@ -240,6 +251,7 @@ impl App {
 
     fn draw(&mut self, _terminal: &mut Terminal) -> io::Result<()> {
         let (w, h) = _terminal.size();
+        trace!(width = w, height = h, "App::draw() - drawing frame");
         let t = self.theme;
 
         self.engine.arena_mut().clear();

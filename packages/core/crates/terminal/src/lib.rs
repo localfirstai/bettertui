@@ -34,7 +34,7 @@ use crossterm::{
     terminal::{self, ClearType},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 pub struct Terminal {
     width: u16,
@@ -62,19 +62,42 @@ impl Terminal {
     }
 
     pub fn size(&self) -> (u16, u16) {
+        trace!(
+            width = self.width,
+            height = self.height,
+            "Terminal::size() - returning cached size"
+        );
         (self.width, self.height)
     }
 
     pub fn refresh_size(&mut self) -> io::Result<(u16, u16)> {
+        let old_w = self.width;
+        let old_h = self.height;
         let (w, h) = terminal::size()?;
         self.width = w;
         self.height = h;
         debug!(
-            width = w,
-            height = h,
-            "Terminal::refresh_size() - size updated"
+            old_width = old_w,
+            old_height = old_h,
+            new_width = w,
+            new_height = h,
+            "Terminal::refresh_size() - refreshed terminal size"
         );
         Ok((w, h))
+    }
+
+    pub fn update_size(&mut self, width: u16, height: u16) {
+        let old_w = self.width;
+        let old_h = self.height;
+        self.width = width;
+        self.height = height;
+        debug!(
+            old_width = old_w,
+            old_height = old_h,
+            new_width = width,
+            new_height = height,
+            "Terminal::update_size() - updated from resize event"
+        );
     }
 
     pub fn enter_raw_mode(&mut self) -> io::Result<()> {

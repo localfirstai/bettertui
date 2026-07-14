@@ -5,6 +5,7 @@ use std::collections::VecDeque;
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::tree::{Color, NamedColor};
+use tracing::trace;
 
 // === encoder.rs ===
 
@@ -29,6 +30,12 @@ impl AnsiEncoder {
     }
 
     pub fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
+        trace!(
+            region_count = regions.len(),
+            buffer_width = buffer.width(),
+            buffer_height = buffer.height(),
+            "AnsiEncoder::encode() - encoding frame with DECSET 2026 sync mode"
+        );
         self.buffer.clear();
         self.buffer.extend_from_slice(SYNC_SET);
         self.hide_cursor();
