@@ -78,19 +78,6 @@
 
 - `terminal_process` error chain: `PtyError` → `TerminalError` → `NeovimError`. Each impls `From<T>` for the next level up, so `?` auto-converts. Adding new error types should follow this chain.
 
-## Widget Framework
-
-- **Test modules need explicit imports of sibling types.** `super::*` in `pipeline.rs` tests only brings in `pipeline.rs` imports, not `WidgetId` from `widgets/mod.rs`. Add `use crate::widgets::WidgetId;` explicitly.
-- **WidgetId is a tuple struct.** `WidgetId(pub NodeId)` — construct with `WidgetId(node_id)`, not field syntax.
-- **WidgetContext requires lifetime annotation** in return types: `WidgetContext<'_>` not `WidgetContext`.
-- **NodeArena::append_child returns Result.** Handle with `let _ = ctx.append_child(parent, child);` or propagate error.
-- **Widget::create returns WidgetId.** The trait signature is `fn create(&self, ctx: &mut WidgetContext) -> WidgetId`.
-- **FlexDirection, not Direction.** FlexWidget uses `FlexDirection::Column` (not `Direction::Vertical`).
-- **Theme has no is_dark() method.** Check `theme.colors.is_empty()` or store the mode separately.
-- **Key::Character(char) is the variant name.** Not `Key::Char` — it's `Key::Character(c)` in the enum.
-- **BoxWidget and ContainerWidget need #[derive(Default)].** Clippy `derivable_impls` fires if manual impl is identical to derived.
-- **TextEngine doesn't derive Debug.** Types containing it (like Editor) need manual Debug impl or `#[derive(Default)]` won't work with `#[derive(Debug)]`.
-- **NodeKind has no Inline or Image variants.** Variants are: Text, Box, Flex, Input, List, Table, Tree, Scroll, Tab, Modal, Spacer, Separator, Custom(u16).
 
 ## Testing Philosophy — TDD with 100% Coverage
 

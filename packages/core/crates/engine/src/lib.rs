@@ -21,6 +21,4 @@ pub mod scheduler;
 pub mod syntax;
 pub mod terminal;
 pub mod text;
-pub mod widgets;
-
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

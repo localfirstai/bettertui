@@ -54,9 +54,9 @@
 - **`@bettertui/core` is the framework-agnostic foundation:** Contains the CommandBuffer, Command protocol, Runtime class, tree manipulation (Instance, TextInstance), HostConfig types, and the framework-agnostic createReconciler(). Zero React dependency. Future adapters (Vue, Solid, Svelte) depend on core directly.
 - **`@bettertui/react` is the React adapter:** Absorbs the old `@bettertui/reconciler` and `@bettertui/runtime` packages. Contains the react-reconciler HostConfig, createRenderer, render(), RuntimeProvider, useRuntime, hooks (useTheme, useFocus, useKeyboard, etc.), and component stubs. Internal implementation details are not exported.
 - **`@bettertui/reconciler` and `@bettertui/runtime` removed:** Absorbed into `@bettertui/react` (React-specific parts) and `@bettertui/core` (framework-agnostic parts). Do not reference these packages.
-- **`@bettertui/core` owns both TypeScript runtime and Rust engine:** The engine bridge (internal to core as `src/engine/`) imports `Command` and `CommandBuffer` from core. The Rust crates live in `packages/core/crates/`.
+- **`@bettertui/core` owns both TypeScript runtime and Rust engine:** The engine bridge (internal to core as `src/engine/`) imports `Command` and `CommandBuffer` from core. The Rust crates live in `packages/core/crates/` — `engine`, `widgets`, and `bindings`.
 - **`@bettertui/shared` is the type foundation:** Pure type definitions, zero runtime dependencies. Both core and react re-export shared types.
-- **`@bettertui/widgets`** is a *proposed* TypeScript package — it does not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module). Do not import from `@bettertui/widgets`.
+- **`@bettertui/widgets` is a separate Rust crate:** Contains the Widget trait, WidgetContext, and all widget implementations. Depends on `bettertui-engine` for layout, tree, input, and rendering primitives.
 - **No `@bettertui/testing` package:** Testing is done with per-package Vitest suites (e.g. `*.test.ts` next to source). There is no separate testing package or headless harness — React output is asserted via `renderToStringAsync` in `packages/react/src/testing.ts`. Do not create `@bettertui/testing`.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
@@ -68,9 +68,11 @@
 
 ## Rust Engine Testing
 
-- Run tests: `cargo test -p bettertui-engine --lib --manifest-path packages/core/Cargo.toml` — the `--lib` flag excludes integration tests (`tests/` dir). Without it, pre-existing integration failures block CI.
-- Run clippy: `cargo clippy -p bettertui-engine --lib --manifest-path packages/core/Cargo.toml -- -D warnings`
+- Run engine tests: `cargo test -p bettertui-engine --lib --manifest-path packages/core/Cargo.toml`
+- Run widgets tests: `cargo test -p bettertui-widgets --lib --manifest-path packages/core/Cargo.toml`
+- Run all tests: `cargo test --workspace --lib --manifest-path packages/core/Cargo.toml`
+- Run clippy: `cargo clippy -p bettertui-engine -p bettertui-widgets --lib --manifest-path packages/core/Cargo.toml -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
-- Widget framework has ~200 tests in the Rust engine (total engine: 1,332 lib tests, verified via `cargo test --lib`).
+- Widget tests: 251 in `bettertui-widgets`. Engine tests: 159 in `bettertui-engine`.
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.
