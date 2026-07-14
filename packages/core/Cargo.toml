@@ -6,6 +6,8 @@ members = [
   "crates/bindings",
   "crates/terminal",
   "crates/benchmark",
+  "crates/logger",
+  "crates/examples",
 ]
 
 [workspace.package]
@@ -32,3 +34,4 @@ slotmap = "1.0"
 smallvec = "1.13"
 bitflags = "2"
 portable-pty = "0.8"
+tempfile = "3"

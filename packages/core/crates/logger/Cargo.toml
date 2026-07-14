@@ -1,0 +1,18 @@
+[package]
+name = "bettertui-logger"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "BetterTUI file-based logger for native code"
+
+[lib]
+name = "bettertui_logger"
+path = "src/lib.rs"
+
+[dependencies]
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
