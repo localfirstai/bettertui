@@ -57,18 +57,18 @@ graph TD
 |-----------|--------|--------------|
 | Arena / node tree | `tree` | ✅ |
 | Command protocol | `protocol` | ✅ |
-| Renderer / frame production | `renderer`, `render_object`, `painter` | ✅ |
+| Renderer / frame production | `render` (`Renderer`, `AnsiBackend`, `Painter`), `framebuffer`, `dirty_diff` | ✅ |
 | Frame buffer | `framebuffer` | ✅ |
 | Dirty diff | `dirty_diff` | ✅ |
 | Layout (Taffy) | `layout` | ✅ |
-| Events | `events` | ✅ |
+| Events | `input` | ✅ |
 | Input parsing | `input`, `ansi` | ✅ |
 | Animation | `animation` | ✅ (callback path partial) |
 | Scheduler | `scheduler` | ✅ |
-| Capabilities | `capabilities` | ✅ |
-| Terminal I/O + VT | `terminal`, `terminal/vt` | ✅ |
-| PTY / process | `pty`, `terminal_process` | ✅ |
-| Compositor / screen | `compositor`, `screen` | ✅ |
+| Capabilities | `bettertui-terminal` crate | ✅ |
+| Terminal I/O + VT | `bettertui-terminal` crate (`terminal` I/O, `vt.rs`) | ✅ |
+| PTY / process | `pty` (engine), `process` (terminal crate) | ✅ |
+| Compositor / screen | `tree`/`graphics` (engine), `bettertui-terminal` crate | ✅ |
 | Text editing (rope) | `text` | ✅ |
 | Widgets | `widgets` | ✅ (~200 tests) |
 | FFI surface | `bindings` (cdylib) | ✅ |
@@ -84,7 +84,7 @@ graph TD
 | `@bettertui/react` | React adapter (reconciler + hooks + 53 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
 
-| `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |
+| `@bettertui/devtools` | DevTools | ✅ Implemented | `createDevTools` factory (inspectors, logger, export helpers) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ |
 
 ## Architecture principles

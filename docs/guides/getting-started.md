@@ -29,13 +29,13 @@ The Rust workspace is independent of pnpm; the TS `build` task does not compile 
 | `pnpm typecheck` | `turbo run typecheck` |
 | `pnpm format:check` | Biome format check |
 | `pnpm check` | lint + format:check + typecheck + `cargo:check` |
-| `cargo test --lib` | engine lib tests (1,332 passing, verified) |
+| `cargo test --lib` | engine lib tests (720 passing across the engine, terminal, and widgets crates, verified) |
 | `cargo clippy --workspace -- -D warnings` | lint, warnings are errors |
 | `cargo fmt --all` | rustfmt |
 
 ## Running the examples
 
-Examples live in the `@bettertui/examples` package (`examples/`). Each example is a `src/<slug>.tsx` file launched through an example browser:
+Examples live in the `@bettertui/examples` package (`examples/`). Each example is a `src/examples/<category>/<slug>.tsx` module launched through an example browser:
 
 ```bash
 pnpm --filter @bettertui/examples build

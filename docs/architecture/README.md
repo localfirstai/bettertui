@@ -26,15 +26,15 @@ graph TD
 | [Rendering Pipeline](rendering-pipeline.md) | Render stages from arena → ANSI (`renderer`, `painter`, `dirty_diff`, `framebuffer`) |
 | [Layout](layout.md) | Taffy-based flexbox layout adapted to terminal cells (`layout` module) |
 | [Frame Buffer](frame-buffer.md) | Cell grid and dirty-region diffing (`framebuffer`, `dirty_diff`) |
-| [Event System](event-system.md) | Event dispatch and bubbling (`events` module) |
+| [Event System](event-system.md) | Event dispatch and bubbling (`input` module) |
 | [Input System](input-system.md) | Keyboard, mouse, paste, Kitty/C SI-u parsing (`input`, `ansi`) |
 | [Animation](animation.md) | Tween/spring/keyframe engine (`animation` module) |
-| [Widget Model](widget-model.md) | Trait-based widget framework on the arena (`widgets` module) |
-| [Terminal](terminal.md) | Raw mode, VT emulation, screen buffers (`terminal`, `terminal/vt`) |
-| [PTY](pty.md) | Embedded process spawning (`pty`, `terminal_process`) |
-| [Compositor](compositor.md) | Layered compositing and screen state (`compositor`, `screen`) |
-| [Capabilities](capabilities.md) | Terminal feature detection (`capabilities` module) |
-| [Text Editing](text-editing.md) | Rope-based editor (`text` module, exposed as `textEngine`) |
+| [Widget Model](widget-model.md) | Trait-based widget framework on the arena (`widgets` crate) |
+| [Terminal](terminal.md) | Raw mode, VT emulation, screen buffers (`bettertui-terminal` crate) |
+| [PTY](pty.md) | Embedded process spawning (`pty`, `process`) |
+| [Compositor](compositor.md) | Layered compositing and screen state (`tree`/`graphics`, `bettertui-terminal`) |
+| [Capabilities](capabilities.md) | Terminal feature detection (`bettertui-terminal` crate) |
+| [Text Editing](text-editing.md) | Rope-based editor (`text` module, exposed as `NapiTextEngine`) |
 | [Scheduler](scheduler.md) | Frame timing and priority scheduling (`scheduler` module) |
 
 ## Engineering notes
@@ -54,6 +54,6 @@ graph TD
 
 ## Status Reality Check
 
-The Rust engine (`bettertui-engine`, **1,332 passing lib tests**, verified via `cargo test --lib`) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
+The Rust engine (`bettertui-engine`, **720 passing Rust lib tests** across the engine, terminal, and widgets crates, verified via `cargo test --lib`) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
 
-The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` was removed (theme system moved to Rust engine + `@bettertui/shared` — internal package, re-exported by `@bettertui/core`/`@bettertui/react`); `@bettertui/devtools` is a stub. 15 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.
+The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` was removed (theme system moved to Rust engine + `@bettertui/shared` — internal package, re-exported by `@bettertui/core`/`@bettertui/react`); `@bettertui/devtools` is implemented. 15 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.

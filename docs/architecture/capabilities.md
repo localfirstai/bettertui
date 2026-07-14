@@ -12,7 +12,7 @@ flowchart TD
     D --> E[trueColor, kittyKeyboard, bracketedPaste, ...]
 ```
 
-- `CapabilityDetector::detect()` plus `update_from_queries(&[QueryResult])` (queries defined in `terminal/query.rs`: DA1/DA2/DA3/DSR/DECID/XTVersion/Kitty).
+- `CapabilityDetector::detect()` plus `update_from_queries(&[QueryResult])` (queries defined in the terminal crate's `query` module: DA1/DA2/DA3/DSR/DECID/XTVersion/Kitty).
 - `global_capabilities() -> &'static CapabilityDetector` — a `OnceLock` singleton used directly by the bindings.
 - `TerminalBrand` (Kitty, Ghostty, WezTerm, Alacritty, Foot, ITerm2, Tmux, WindowsTerminal, VSCodeTerminal, Unknown) via `brand_from_da2_model`.
 

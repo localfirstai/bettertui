@@ -1,6 +1,6 @@
 # Text Editing
 
-BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `textEngine` (no arena dependency). Core text primitives live in `packages/core/crates/engine/src/text/`; the top-level `editor/` module wraps the text engine with cursor, selection, undo/redo, and line numbers.
+BetterTUI ships a rope-based text editor engine, exposed directly to TypeScript as `NapiTextEngine` (no arena dependency). Core text primitives live in `packages/core/crates/engine/src/text/`; the `text` module (in `text.rs`) exposes `TextEngine` with cursor, selection, undo/redo, and line numbers built on top of the `text/` submodules.
 
 ## Engine
 
@@ -51,4 +51,4 @@ classDiagram
 | Delete | `deleteChar`, `deleteCharForward`, `deleteWordBackward/Forward`, `deleteLineBackward/Forward` |
 | Query | `charAt`, `substring`, `find`, `replaceAll`, `canUndo`, `canRedo`, `length`, `text`, `lines`, `lineCount`, `isEmpty`, `clear` |
 
-> The selection concept also exists at the screen level (`screen/mod.rs` `selection_*`) for terminal text selection, separate from `text/selection.rs`.
+> The selection concept also exists at the screen level (terminal crate's `screen.rs` `selection_*`) for terminal text selection, separate from the `text/selection.rs` submodule.

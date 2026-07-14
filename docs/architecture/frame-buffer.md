@@ -63,7 +63,7 @@ flowchart TD
 
 ## ANSI encoding
 
-The `AnsiBackend` (in `renderer/backend/ansi.rs`) produces ANSI bytes:
+The `AnsiBackend` (in `render/render.rs`) produces ANSI bytes:
 - cursor moves (`ESC[{row};{col}H`, plus relative moves for short hops)
 - SGR for colors/attributes, with style coalescing so adjacent same-style cells share one sequence
 - character output, cursor hide/show around the write

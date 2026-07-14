@@ -19,11 +19,10 @@ See [Architecture: Rendering Pipeline](architecture/rendering-pipeline.md) for t
 
 ## Pipeline pieces
 
-- `renderer/` — `Renderer`, `RenderFrame`, `RenderBackend` trait, `AnsiBackend`
-- `render_object/` — `build_render_tree`, `RenderTree` (z-sorted), `PaintContext`
-- `painter/` — `Painter.paint`
+- `render/` — `Renderer`, `RenderFrame`, `RenderBackend` trait, `AnsiBackend` (in `render/render.rs`); `effects.rs` post-processing passes
+- `render/` — `build_render_tree`, `RenderTree` (z-sorted), `PaintContext`
 - `framebuffer/` + `dirty_diff/` — rasterization + diffing
-- `compositor/` — layered compositing (see [Compositor](architecture/compositor.md))
+- `tree.rs` / `graphics.rs` — compositing primitives (see [Compositor](architecture/compositor.md))
 
 ## Status
 

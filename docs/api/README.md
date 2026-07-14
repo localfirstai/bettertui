@@ -11,7 +11,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks+keymap real; 53 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | **Removed** — absorbed into `@bettertui/shared` + Rust engine |
-| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |
+| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Implemented (`createDevTools` factory) |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
 
 ## Rust crates

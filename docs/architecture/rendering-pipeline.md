@@ -1,6 +1,6 @@
 # Rendering Pipeline
 
-The rendering pipeline turns the arena node tree into ANSI bytes on stdout. It lives mostly in the `renderer`, `render_object`, `painter`, `framebuffer`, and `dirty_diff` modules.
+The rendering pipeline turns the arena node tree into ANSI bytes on stdout. It lives mostly in the `render`, `framebuffer`, and `dirty_diff` modules of `bettertui-engine`.
 
 ## Stages
 
@@ -16,7 +16,7 @@ flowchart LR
     H --> I[stdout bytes]
 ```
 
-Files: `renderer/mod.rs` (`Renderer`), `renderer/backend/ansi.rs` (`AnsiBackend`), `render_object/` (`build_render_tree`, `RenderTree`, `PaintContext`), `painter/` (`Painter`), `framebuffer/`, `dirty_diff/`.
+Files: `render/mod.rs` (`Renderer`), `render/render.rs` (`AnsiBackend`, `Painter`), `render/` (`build_render_tree`, `RenderTree`, `PaintContext`), `framebuffer.rs`, `dirty_diff.rs`.
 
 ## Renderer
 

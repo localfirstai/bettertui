@@ -42,7 +42,7 @@ flowchart TD
     G --> H[layout recalculated on dirty subtrees]
 ```
 
-Files: `protocol/command.rs` (enum), `protocol/processor.rs` (`CommandProcessor`), `protocol/buffer.rs` (`CommandBuffer`), `protocol/{error,result}.rs`.
+Files: `protocol.rs` (`Command` enum, `CommandProcessor`, `CommandBuffer`, error/result types).
 
 ## TypeScript side
 

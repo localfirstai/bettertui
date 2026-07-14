@@ -54,7 +54,7 @@ bettertui/
 │   │       └── bindings/      # bettertui-bindings (napi-rs cdylib)
 │   ├── react/         # @bettertui/react   — React 19 adapter
 
-│   ├── devtools/      # @bettertui/devtools — devtools stub
+│   ├── devtools/      # @bettertui/devtools — developer tooling (implemented)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -78,7 +78,7 @@ bettertui/
 | `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
 
-| `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
+| `@bettertui/devtools` | Developer tooling | ✅ Implemented (`createDevTools` factory) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
 
 ## React Components
@@ -149,7 +149,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,332 passing lib tests** (verified with `cargo test --lib`). The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **720 passing Rust lib tests** (verified with `cargo test --lib`) across the engine, terminal, and widgets crates. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
 
 ## Documentation
 

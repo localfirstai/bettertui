@@ -1,6 +1,6 @@
 # Animation
 
-The animation engine provides tween, spring, keyframe, and color interpolation. Code: `packages/core/crates/engine/src/animation/` (single `mod.rs`, ~1200 lines, ~30 tests). It is decoupled from rendering and driven by the `Scheduler`.
+The animation engine provides tween, spring, keyframe, and color interpolation. Code: `packages/core/crates/engine/src/animation.rs` (~30 tests). It is decoupled from rendering and driven by the `Scheduler`.
 
 ## Types
 

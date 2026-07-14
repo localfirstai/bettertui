@@ -1,6 +1,6 @@
 # PTY
 
-BetterTUI can embed a real terminal process (shell, REPL, etc.) via a PTY. PTY types: `packages/core/crates/engine/src/pty/`. Process management: `packages/core/crates/terminal/src/process/`.
+BetterTUI can embed a real terminal process (shell, REPL, etc.) via a PTY. PTY types: `packages/core/crates/engine/src/pty.rs`. Process management: `packages/core/crates/terminal/src/process.rs`.
 
 ## Components
 

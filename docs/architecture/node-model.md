@@ -61,16 +61,16 @@ Used by the renderer and widgets to decide behavior. `Custom(u16)` allows widget
 
 | Type | File | Notes |
 |------|------|-------|
-| `Style` | `tree/style.rs` | `Option<bool>` per attribute to allow inheritance |
-| `Color { Named, Indexed, Rgb, Default }` | `tree/color.rs` | Stores intent; resolved at render time |
-| `LayoutProps` | `tree/layout.rs` | Maps to Taffy flexbox |
-| `Visibility { display, opacity, clip }` | `tree/visual.rs` | |
-| `Transform { translate_x, translate_y, z_index }` | `tree/visual.rs` | integer offsets (cell grid) |
-| `Overflow { Visible, Hidden, Scroll }` | `tree/node_kind.rs` / layout | |
-| `FocusProps` | `tree/interaction.rs` | `tab_index`, `focusable`, `focused` |
-| `EventHandlers` | `tree/interaction.rs` | per-node handler state |
-| `NodeState { scroll_*, dirty flags }` | `tree/interaction.rs` | `layout_dirty`, `render_dirty`, `dirty` |
-| `Metadata` / `Accessibility` | `tree/metadata.rs` | boxed; present only when set |
+| `Style` | `tree.rs` | `Option<bool>` per attribute to allow inheritance |
+| `Color { Named, Indexed, Rgb, Default }` | `tree.rs` | Stores intent; resolved at render time |
+| `LayoutProps` | `tree.rs` | Maps to Taffy flexbox |
+| `Visibility { display, opacity, clip }` | `tree.rs` | |
+| `Transform { translate_x, translate_y, z_index }` | `tree.rs` | integer offsets (cell grid) |
+| `Overflow { Visible, Hidden, Scroll }` | `tree.rs` | |
+| `FocusProps` | `tree.rs` | `tab_index`, `focusable`, `focused` |
+| `EventHandlers` | `tree.rs` | per-node handler state |
+| `NodeState { scroll_*, dirty flags }` | `tree.rs` | `layout_dirty`, `render_dirty`, `dirty` |
+| `Metadata` / `Accessibility` | `tree.rs` | boxed; present only when set |
 
 ## Tree Operations
 

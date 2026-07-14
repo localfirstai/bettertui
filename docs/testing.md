@@ -17,7 +17,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Gate | Result |
 |------|--------|
-| Rust engine unit tests | 1,332 lib tests passing (verified via `cargo test --lib`) |
+| Rust engine unit tests | 720 Rust lib tests passing (verified via `cargo test --lib`) across the engine, terminal, and widgets crates |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | `pnpm build` (turbo) | all buildable TS packages |
