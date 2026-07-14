@@ -131,7 +131,10 @@ mod tests {
 
         let w = TextWidget::new("Hello World");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, bettertui_engine::tree::NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Hello World"));
     }
@@ -139,7 +142,7 @@ mod tests {
     #[test]
     fn text_widget_bold() {
         let w = TextWidget::bold("Bold");
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
         assert_eq!(w.content.as_ref(), "Bold");
     }
 
@@ -156,6 +159,6 @@ mod tests {
             ..Style::default()
         };
         let w = TextWidget::new("Italic").with_style(style);
-        assert!(w.style.italic.unwrap());
+        assert!(w.style.italic.expect("Node missing from arena"));
     }
 }

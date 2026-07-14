@@ -184,7 +184,14 @@ mod tests {
 
         let id = ctx.insert_node(RenderNode::new(NodeKind::Text));
         ctx.set_text(id, "hello");
-        assert_eq!(ctx.arena.get(id).unwrap().text.as_deref(), Some("hello"));
+        assert_eq!(
+            ctx.arena
+                .get(id)
+                .expect("Node missing from arena")
+                .text
+                .as_deref(),
+            Some("hello")
+        );
     }
 
     #[test]
@@ -207,7 +214,7 @@ mod tests {
             ..Style::default()
         };
         let id = ctx.make_box(layout, style);
-        let node = ctx.arena.get(id).unwrap();
+        let node = ctx.arena.get(id).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.layout.width, Some(Sizing::Points(10.0)));
         assert_eq!(node.style.bg, Some(Color::Named(NamedColor::Blue)));
@@ -229,10 +236,10 @@ mod tests {
             ..Style::default()
         };
         let id = ctx.make_text("Hello World", style);
-        let node = ctx.arena.get(id).unwrap();
+        let node = ctx.arena.get(id).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Hello World"));
-        assert!(node.style.bold.unwrap());
+        assert!(node.style.bold.expect("Node missing from arena"));
     }
 
     #[test]
@@ -281,7 +288,10 @@ mod tests {
         };
 
         let id = ctx.make_flex(LayoutProps::default(), Style::default());
-        assert_eq!(ctx.arena.get(id).unwrap().kind, NodeKind::Flex);
+        assert_eq!(
+            ctx.arena.get(id).expect("Node missing from arena").kind,
+            NodeKind::Flex
+        );
     }
 
     #[test]
@@ -296,6 +306,9 @@ mod tests {
         };
 
         let id = ctx.make_spacer(LayoutProps::default());
-        assert_eq!(ctx.arena.get(id).unwrap().kind, NodeKind::Spacer);
+        assert_eq!(
+            ctx.arena.get(id).expect("Node missing from arena").kind,
+            NodeKind::Spacer
+        );
     }
 }

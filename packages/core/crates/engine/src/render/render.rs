@@ -1060,8 +1060,12 @@ impl Renderer {
         let _ = self.layout_sync.compute(root_id, self.width, self.height);
 
         let vp = Viewport::new(0, 0, self.width, self.height);
-        self.render_tree =
-            build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp));
+        build_render_tree_with_viewport(
+            arena,
+            self.layout_sync.results(),
+            Some(&vp),
+            &mut self.render_tree,
+        );
 
         let ctx = crate::layout::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);

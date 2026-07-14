@@ -115,7 +115,10 @@ mod tests {
 
         let w = StackWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.layout.position, Position::Relative);
     }
@@ -137,7 +140,7 @@ mod tests {
             ..Style::default()
         };
         let w = StackWidget::new().with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 
     #[test]

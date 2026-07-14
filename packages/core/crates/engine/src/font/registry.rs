@@ -145,7 +145,7 @@ impl IconRegistry {
     fn load_builtin(&mut self) {
         let data = super::builtin::BUILTIN_ICONS;
         for entry in data {
-            let category = IconCategory::from_prefix(&entry.category);
+            let category = IconCategory::from_prefix(entry.category);
             let glyph = IconGlyph {
                 codepoint: entry.codepoint,
                 name: entry.name.to_string(),

@@ -786,7 +786,8 @@ fn build_tree_with_layout() -> (RenderTree, NodeArena) {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     (tree, arena)
 }
 
@@ -826,7 +827,8 @@ fn build_render_tree_excludes_hidden() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     assert_eq!(tree.len(), 1);
     assert!(tree.get(child).is_none());
 }
@@ -856,7 +858,8 @@ fn build_render_tree_opacity_propagation() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let parent_obj = tree.get(parent).unwrap();
     let child_obj = tree.get(child).unwrap();
     assert_eq!(parent_obj.opacity, 0.5);
@@ -889,7 +892,8 @@ fn build_tree_for_viewport_tests() -> (NodeArena, std::collections::HashMap<Node
 fn build_viewport_culling_inside() {
     let (arena, results) = build_tree_for_viewport_tests();
     let vp = Viewport::new(0, 0, 80, 24);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     let child = arena.children(arena.root())[0];
     assert!(tree.get(child).is_some());
 }
@@ -898,7 +902,8 @@ fn build_viewport_culling_inside() {
 fn build_viewport_culling_outside() {
     let (arena, results) = build_tree_for_viewport_tests();
     let vp = Viewport::new(100, 100, 10, 10);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     let child = arena.children(arena.root())[0];
     assert!(tree.get(child).is_none());
 }
@@ -931,7 +936,8 @@ fn build_viewport_culling_opacity_zero() {
     let results = engine.collect_results();
 
     let vp = Viewport::new(0, 0, 80, 24);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     assert!(tree.get(parent).is_none());
     assert!(tree.get(child).is_none());
 }
@@ -969,7 +975,8 @@ fn build_viewport_culling_clip_narrows() {
     let results = engine.collect_results();
 
     let vp = Viewport::new(0, 0, 80, 24);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     let _layout = results.get(&parent).unwrap();
     // Child at x=0 is within parent's 10-wide bounds, should be included
     assert!(tree.get(parent).is_some());
@@ -1016,7 +1023,8 @@ fn build_viewport_culling_scroll_offset() {
     // in natural coordinates is y=50..55. Child_outside at natural y=0 is
     // scrolled out of view and should be culled.
     let vp = Viewport::new(0, 0, 80, 24);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     assert!(
         tree.get(scroll).is_some(),
         "scroll container itself is visible"
@@ -1050,7 +1058,8 @@ fn build_viewport_culling_partial_overlap() {
 
     // Viewport partially overlaps child (right edge inside)
     let vp = Viewport::new(0, 0, 10, 10);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     let child = arena.children(arena.root())[0];
     assert!(
         tree.get(child).is_some(),
@@ -1094,7 +1103,8 @@ fn build_viewport_culling_deep_tree() {
 
     // Viewport that only covers first few nodes
     let vp = Viewport::new(0, 0, 80, 5);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
 
     // Root should be in tree
     assert!(tree.get(root).is_some());
@@ -1150,7 +1160,8 @@ fn build_viewport_culling_nested_clip_narrows_viewport() {
     let results = engine.collect_results();
 
     let vp = Viewport::new(0, 0, 80, 24);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
 
     // All nodes should be in tree as they fit within nested clips
     assert!(tree.get(outer).is_some());
@@ -1200,7 +1211,8 @@ fn build_viewport_culling_outside_clip_skips_deep() {
 
     // Viewport far away from outer
     let vp = Viewport::new(50, 50, 10, 10);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     assert!(
         tree.get(outer).is_none(),
         "outer outside viewport should be culled"
@@ -1248,7 +1260,8 @@ fn build_viewport_culling_multiple_children_some_visible() {
 
     // Narrow viewport that only covers first child
     let vp = Viewport::new(0, 0, 80, 3);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
 
     let visible = ids.iter().filter(|id| tree.get(**id).is_some()).count();
     assert!(visible > 0, "at least one child should be visible");
@@ -1298,7 +1311,8 @@ fn build_viewport_culling_benchmark_large_tree() {
     // Full tree build (no viewport culling)
     let start = Instant::now();
     for _ in 0..100 {
-        let _tree = build_render_tree(&arena, &results);
+        let mut _tree = bettertui_engine::render::RenderTree::new();
+        build_render_tree(&arena, &results, &mut _tree);
     }
     let full_duration = start.elapsed();
 
@@ -1306,13 +1320,16 @@ fn build_viewport_culling_benchmark_large_tree() {
     let vp = Viewport::new(0, 0, 80, 5);
     let start = Instant::now();
     for _ in 0..100 {
-        let _tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+        let mut _tree = bettertui_engine::render::RenderTree::new();
+        build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut _tree);
     }
     let culled_duration = start.elapsed();
 
     // Verify culling: with viewport covering only 5 rows, fewer nodes should be in tree
-    let full_tree = build_render_tree(&arena, &results);
-    let culled_tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut full_tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut full_tree);
+    let mut culled_tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut culled_tree);
     let visible_count = ids
         .iter()
         .filter(|id| culled_tree.get(**id).is_some())
@@ -1374,7 +1391,8 @@ fn build_viewport_culling_benchmark_mostly_offscreen() {
 
     // Tiny viewport — should cull most of the 100 children
     let vp = Viewport::new(0, 0, 1, 1);
-    let tree = build_render_tree_with_viewport(&arena, &results, Some(&vp));
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     // Only root and at most 1 child should be visible in 1x1 viewport
     assert!(
         tree.len() <= 2,
@@ -1404,7 +1422,8 @@ fn build_render_tree_flags() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let obj = tree.get(child).unwrap();
     assert!(obj.flags.contains(PaintFlags::BACKGROUND));
     assert!(obj.flags.contains(PaintFlags::TEXT));

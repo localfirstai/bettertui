@@ -338,7 +338,8 @@ fn bench_render(c: &mut Criterion) {
         let mut layout = bettertui_engine::layout::LayoutTreeSync::new();
         layout.sync_full(&arena);
         let _ = layout.compute(arena.root(), 80, 24);
-        let tree = bettertui_engine::layout::build_render_tree(&arena, layout.results());
+        let mut tree = bettertui_engine::render::RenderTree::new();
+        bettertui_engine::layout::build_render_tree(&arena, layout.results(), &mut tree);
         b.iter(|| {
             let mut painter = bettertui_engine::render::Painter::new(80, 24);
             let ctx = bettertui_engine::layout::PaintContext::new(80, 24);
@@ -806,9 +807,10 @@ fn bench_layout(c: &mut Criterion) {
         le.compute_layout(root, 80.0, 24.0).unwrap();
         let results = le.collect_results();
 
+        let mut tree = bettertui_engine::render::RenderTree::new();
         b.iter(|| {
-            let tree = build_render_tree(black_box(&arena), black_box(&results));
-            black_box(tree.len());
+            build_render_tree(black_box(&arena), black_box(&results), &mut tree);
+            black_box(&tree);
         });
     });
 
@@ -945,15 +947,12 @@ fn bench_tree(c: &mut Criterion) {
             BenchmarkId::new("insert_sequential", count),
             &count,
             |b, &count| {
-                b.iter_with_setup(
-                    || NodeArena::new(),
-                    |mut arena| {
-                        for _ in 0..count {
-                            let id = arena.insert(RenderNode::new(NodeKind::Box));
-                            black_box(id);
-                        }
-                    },
-                );
+                b.iter_with_setup(NodeArena::new, |mut arena| {
+                    for _ in 0..count {
+                        let id = arena.insert(RenderNode::new(NodeKind::Box));
+                        black_box(id);
+                    }
+                });
             },
         );
     }
@@ -973,19 +972,16 @@ fn bench_tree(c: &mut Criterion) {
             BenchmarkId::new("build_deep_tree", count),
             &count,
             |b, &count| {
-                b.iter_with_setup(
-                    || NodeArena::new(),
-                    |mut arena| {
-                        let root = arena.root();
-                        let mut prev = root;
-                        for _ in 0..count {
-                            let id = arena.insert(RenderNode::new(NodeKind::Box));
-                            let _ = arena.append_child(prev, id);
-                            prev = id;
-                        }
-                        black_box(arena.len());
-                    },
-                );
+                b.iter_with_setup(NodeArena::new, |mut arena| {
+                    let root = arena.root();
+                    let mut prev = root;
+                    for _ in 0..count {
+                        let id = arena.insert(RenderNode::new(NodeKind::Box));
+                        let _ = arena.append_child(prev, id);
+                        prev = id;
+                    }
+                    black_box(arena.len());
+                });
             },
         );
     }
@@ -995,17 +991,14 @@ fn bench_tree(c: &mut Criterion) {
             BenchmarkId::new("build_wide_tree", count),
             &count,
             |b, &count| {
-                b.iter_with_setup(
-                    || NodeArena::new(),
-                    |mut arena| {
-                        let root = arena.root();
-                        for _ in 0..count {
-                            let id = arena.insert(RenderNode::new(NodeKind::Box));
-                            let _ = arena.append_child(root, id);
-                        }
-                        black_box(arena.len());
-                    },
-                );
+                b.iter_with_setup(NodeArena::new, |mut arena| {
+                    let root = arena.root();
+                    for _ in 0..count {
+                        let id = arena.insert(RenderNode::new(NodeKind::Box));
+                        let _ = arena.append_child(root, id);
+                    }
+                    black_box(arena.len());
+                });
             },
         );
     }

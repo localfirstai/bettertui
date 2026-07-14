@@ -16,11 +16,11 @@ fn make_vt(width: u16, height: u16) -> VtMachine {
 }
 
 fn make_scrollback(capacity: usize) -> ScrollbackBuffer {
-    let mut sb = ScrollbackBuffer::new(capacity);
+    let mut sb = ScrollbackBuffer::new();
     for i in 0..capacity {
         let text: String = format!("scrollback line {i} with some content for realism");
         let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
-        sb.push_line(cells);
+        sb.push_line(cells, 80, true);
     }
     sb
 }
@@ -70,14 +70,14 @@ fn bench_vt_machine(c: &mut Criterion) {
     group.bench_function("new_80x24", |b| {
         b.iter(|| {
             let vm = VtMachine::new(80, 24);
-            black_box(vm.screen.width());
+            black_box(vm.current_screen().width());
         });
     });
 
     group.bench_function("new_120x40", |b| {
         b.iter(|| {
             let vm = VtMachine::new(120, 40);
-            black_box(vm.screen.width());
+            black_box(vm.current_screen().width());
         });
     });
 
@@ -85,7 +85,7 @@ fn bench_vt_machine(c: &mut Criterion) {
         let mut vm = make_vt(80, 24);
         b.iter(|| {
             vm.resize(black_box(120), black_box(40));
-            black_box(vm.screen.width());
+            black_box(vm.current_screen().width());
         });
     });
 
@@ -97,7 +97,7 @@ fn bench_vt_machine(c: &mut Criterion) {
             for event in &events {
                 vm.process(black_box(event));
             }
-            black_box(vm.cursor.position());
+            black_box(vm.current_cursor().position());
         });
     });
 
@@ -114,7 +114,7 @@ fn bench_vt_machine(c: &mut Criterion) {
             for event in &csi_events {
                 vm.process(black_box(event));
             }
-            black_box(vm.cursor.position());
+            black_box(vm.current_cursor().position());
         });
     });
 
@@ -136,7 +136,7 @@ fn bench_vt_machine(c: &mut Criterion) {
             for event in &events {
                 vm.process(black_box(event));
             }
-            black_box(vm.screen.buffer().get(0, 0).ch);
+            black_box(vm.current_screen().buffer().get(0, 0).ch);
         });
     });
 
@@ -146,7 +146,7 @@ fn bench_vt_machine(c: &mut Criterion) {
             for _ in 0..100 {
                 vm.process(&ParserEvent::LineFeed);
             }
-            black_box(vm.cursor.position());
+            black_box(vm.current_cursor().position());
         });
     });
 
@@ -184,7 +184,7 @@ fn bench_cursor(c: &mut Criterion) {
     group.bench_function("cursor_state_new", |b| {
         b.iter(|| {
             let cs = CursorState::new();
-            black_box((cs.x, cs.y));
+            black_box((cs.x(), cs.y()));
         });
     });
 
@@ -195,7 +195,7 @@ fn bench_cursor(c: &mut Criterion) {
             cs.hide();
             cs.show();
             cs.set_style(bettertui_terminal::screen::CursorStyle::Bar);
-            black_box(cs.visible);
+            black_box(cs.visible());
         });
     });
 
@@ -253,7 +253,7 @@ fn bench_screen_state(c: &mut Criterion) {
         b.iter(|| {
             ss.set_selection((0, 0), (40, 12));
             ss.clear_selection();
-            black_box(ss.selection_active);
+            black_box(ss.selection_active());
         });
     });
 
@@ -267,36 +267,33 @@ fn bench_scrollback(c: &mut Criterion) {
 
     group.bench_function("new", |b| {
         b.iter(|| {
-            let sb = ScrollbackBuffer::new(1000);
-            black_box(sb.line_count());
+            let sb = ScrollbackBuffer::new();
+            black_box(sb.len());
         });
     });
 
     group.bench_function("push_line_small", |b| {
-        let mut sb = ScrollbackBuffer::new(1000);
+        let mut sb = ScrollbackBuffer::new();
         let cells: Vec<Cell> = b"Hello, World!"
             .iter()
             .map(|&b| Cell::new(b as char))
             .collect();
         b.iter(|| {
-            sb.push_line(cells.clone());
-            black_box(sb.line_count());
+            sb.push_line(cells.clone(), 80, true);
+            black_box(sb.len());
         });
     });
 
     for count in [100, 1000] {
         group.bench_with_input(BenchmarkId::new("push_bulk", count), &count, |b, &count| {
-            b.iter_with_setup(
-                || ScrollbackBuffer::new(count + 100),
-                |mut sb| {
-                    for i in 0..count {
-                        let text = format!("line {i} with some filler text for realism");
-                        let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
-                        sb.push_line(cells);
-                    }
-                    black_box(sb.line_count());
-                },
-            );
+            b.iter_with_setup(ScrollbackBuffer::new, |mut sb| {
+                for i in 0..count {
+                    let text = format!("line {i} with some filler text for realism");
+                    let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
+                    sb.push_line(cells, 80, true);
+                }
+                black_box(sb.len());
+            });
         });
     }
 
@@ -304,31 +301,28 @@ fn bench_scrollback(c: &mut Criterion) {
         let sb = make_scrollback(500);
         b.iter(|| {
             for i in 0..10 {
-                let line = sb.get_line(i);
+                let line = sb.line(i);
                 black_box(line.map(|l| l.len()));
             }
         });
     });
 
     group.bench_function("truncate_on_overflow", |b| {
-        b.iter_with_setup(
-            || ScrollbackBuffer::new(100),
-            |mut sb| {
-                for i in 0..200 {
-                    let text = format!("overflow line {i}");
-                    let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
-                    sb.push_line(cells);
-                }
-                black_box(sb.line_count());
-            },
-        );
+        b.iter_with_setup(ScrollbackBuffer::new, |mut sb| {
+            for i in 0..200 {
+                let text = format!("overflow line {i}");
+                let cells: Vec<Cell> = text.chars().map(Cell::new).collect();
+                sb.push_line(cells, 80, true);
+            }
+            black_box(sb.len());
+        });
     });
 
     group.bench_function("clear", |b| {
         let mut sb = make_scrollback(500);
         b.iter(|| {
             sb.clear();
-            black_box(sb.line_count());
+            black_box(sb.len());
         });
     });
 

@@ -139,7 +139,10 @@ mod tests {
 
         let w = GridWidget::new().with_columns(3).with_rows(2).with_gap(1.0);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Flex);
         assert_eq!(node.style.grid_columns, Some(3));
         assert_eq!(node.style.grid_rows, Some(2));
@@ -163,6 +166,6 @@ mod tests {
             ..Style::default()
         };
         let w = GridWidget::new().with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 }

@@ -160,7 +160,10 @@ mod tests {
 
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Scroll);
         assert_eq!(node.overflow, Overflow::Scroll);
     }
@@ -186,7 +189,10 @@ mod tests {
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 1);
     }
 
@@ -211,7 +217,10 @@ mod tests {
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 0);
     }
 
@@ -235,7 +244,10 @@ mod tests {
         ));
         w.handle_event(id, &mut ctx, &event);
 
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 10);
     }
 
@@ -266,7 +278,10 @@ mod tests {
         ));
         w.handle_event(id, &mut ctx, &event);
 
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 0);
     }
 

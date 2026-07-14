@@ -93,7 +93,10 @@ mod tests {
             .with_title("My Container")
             .with_padding(2.0);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(w.title.as_deref(), Some("My Container"));
     }
@@ -115,7 +118,7 @@ mod tests {
             ..Style::default()
         };
         let w = ContainerWidget::new().with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 
     #[test]

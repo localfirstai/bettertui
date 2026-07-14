@@ -3,19 +3,14 @@ const BUNDLED_FONT_DATA: &[u8] = include_bytes!("../../fonts/DroidSansMNerdFont-
 const BUNDLED_FONT_NAME: &str = "DroidSansMNerdFont";
 const BUNDLED_FONT_FAMILY: &str = "Droid Sans Mono";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum NerdFontVariant {
+    #[default]
     Complete,
     Mono,
     Propo,
     SeparatedMono,
     SeparatedPropo,
-}
-
-impl Default for NerdFontVariant {
-    fn default() -> Self {
-        Self::Complete
-    }
 }
 
 #[derive(Debug, Clone)]

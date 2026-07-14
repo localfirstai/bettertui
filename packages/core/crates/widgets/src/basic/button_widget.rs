@@ -179,7 +179,7 @@ mod tests {
     fn button_widget_primary() {
         let w = ButtonWidget::primary("Submit");
         assert_eq!(w.variant, ButtonVariant::Primary);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 
     #[test]
@@ -201,7 +201,10 @@ mod tests {
 
         let w = ButtonWidget::new("Click");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some("Click"));
     }

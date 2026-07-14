@@ -104,7 +104,7 @@ fn bench_widget_host(c: &mut Criterion) {
 
     group.bench_function("mount_single", |b| {
         b.iter_with_setup(
-            || make_host_with_context(),
+            make_host_with_context,
             |(mut host, mut arena, mut focus, mut sched, theme)| {
                 let mut ctx = WidgetContext {
                     arena: &mut arena,
@@ -121,7 +121,7 @@ fn bench_widget_host(c: &mut Criterion) {
 
     group.bench_function("mount_unmount_sequential", |b| {
         b.iter_with_setup(
-            || make_host_with_context(),
+            make_host_with_context,
             |(mut host, mut arena, mut focus, mut sched, theme)| {
                 let mut ctx = WidgetContext {
                     arena: &mut arena,

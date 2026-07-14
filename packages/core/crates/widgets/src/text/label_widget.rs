@@ -126,7 +126,10 @@ mod tests {
 
         let w = LabelWidget::new("Email");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Email"));
     }
@@ -145,6 +148,6 @@ mod tests {
             ..Style::default()
         };
         let w = LabelWidget::new("Label").with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 }

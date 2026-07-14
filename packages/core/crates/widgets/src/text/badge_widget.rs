@@ -193,7 +193,10 @@ mod tests {
 
         let w = BadgeWidget::new("5");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some(" 5 "));
     }
@@ -202,7 +205,7 @@ mod tests {
     fn badge_widget_success() {
         let w = BadgeWidget::success("OK");
         assert_eq!(w.variant, BadgeVariant::Success);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 
     #[test]
@@ -215,13 +218,13 @@ mod tests {
     fn badge_widget_primary() {
         let w = BadgeWidget::primary("NEW");
         assert_eq!(w.variant, BadgeVariant::Primary);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 
     #[test]
     fn badge_widget_info() {
         let w = BadgeWidget::info("INFO");
         assert_eq!(w.variant, BadgeVariant::Info);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 }

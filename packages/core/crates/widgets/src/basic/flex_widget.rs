@@ -146,7 +146,10 @@ mod tests {
             .with_gap(Gap::uniform(2.0))
             .with_justify(JustifyContent::Center);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Flex);
         assert_eq!(node.layout.direction, FlexDirection::Row);
         assert_eq!(node.layout.gap, Some(Gap::uniform(2.0)));
@@ -160,6 +163,6 @@ mod tests {
             ..Style::default()
         };
         let w = FlexWidget::new().with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 }

@@ -79,7 +79,10 @@ mod tests {
 
         let w = BoxWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, bettertui_engine::tree::NodeKind::Box);
     }
 
@@ -100,6 +103,6 @@ mod tests {
             ..Style::default()
         };
         let w = BoxWidget::new().with_style(style);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
     }
 }

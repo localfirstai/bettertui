@@ -497,11 +497,13 @@ bitflags! {
     }
 }
 
+use smallvec::SmallVec;
+
 #[derive(Clone)]
 pub struct PaintContext {
     pub terminal_width: u16,
     pub terminal_height: u16,
-    pub clip_stack: Vec<ClipBounds>,
+    pub clip_stack: SmallVec<[ClipBounds; 8]>,
 }
 
 impl PaintContext {
@@ -509,7 +511,7 @@ impl PaintContext {
         Self {
             terminal_width: width,
             terminal_height: height,
-            clip_stack: Vec::new(),
+            clip_stack: SmallVec::new(),
         }
     }
 
@@ -1382,16 +1384,18 @@ const BINARY_SEARCH_MIN_CHILDREN: usize = 32;
 pub fn build_render_tree(
     arena: &NodeArena,
     layout_results: &HashMap<NodeId, LayoutResult>,
-) -> RenderTree {
-    build_render_tree_with_viewport(arena, layout_results, None)
+    tree: &mut RenderTree,
+) {
+    build_render_tree_with_viewport(arena, layout_results, None, tree)
 }
 
 pub fn build_render_tree_with_viewport(
     arena: &NodeArena,
     layout_results: &HashMap<NodeId, LayoutResult>,
     viewport: Option<&Viewport>,
-) -> RenderTree {
-    let mut tree = RenderTree::new();
+    tree: &mut RenderTree,
+) {
+    tree.clear();
     let root = arena.root();
     build_node(
         arena,
@@ -1404,9 +1408,8 @@ pub fn build_render_tree_with_viewport(
         0,
         0,
         viewport,
-        &mut tree,
+        tree,
     );
-    tree
 }
 
 #[allow(clippy::too_many_arguments)]

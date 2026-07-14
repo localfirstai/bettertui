@@ -90,7 +90,10 @@ mod tests {
 
         let w = SpacerWidget::new().with_size(5.0, 3.0);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Spacer);
         assert_eq!(node.layout.width, Some(Sizing::Points(5.0)));
         assert_eq!(node.layout.height, Some(Sizing::Points(3.0)));

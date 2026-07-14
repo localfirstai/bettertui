@@ -81,7 +81,7 @@ mod tests {
 
         let widget = registry.create("Dummy");
         assert!(widget.is_some());
-        assert_eq!(widget.unwrap().kind(), "Dummy");
+        assert_eq!(widget.expect("Node missing from arena").kind(), "Dummy");
     }
 
     #[test]

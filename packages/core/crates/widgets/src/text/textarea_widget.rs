@@ -456,7 +456,10 @@ mod tests {
 
         let w = TextareaWidget::new().with_placeholder("Enter text...");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Input);
         assert_eq!(node.text.as_deref(), Some("Enter text..."));
     }

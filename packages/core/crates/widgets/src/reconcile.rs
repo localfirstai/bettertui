@@ -185,7 +185,7 @@ mod tests {
         tree.iter()
             .find(|(_, entry)| entry.parent.is_none())
             .map(|(k, _)| *k)
-            .unwrap()
+            .expect("Node missing from arena")
     }
 
     #[test]

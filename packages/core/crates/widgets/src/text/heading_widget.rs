@@ -163,7 +163,7 @@ mod tests {
     fn heading_widget_h1() {
         let w = HeadingWidget::h1("Title");
         assert_eq!(w.level, HeadingLevel::H1);
-        assert!(w.style.bold.unwrap());
+        assert!(w.style.bold.expect("Node missing from arena"));
         assert_eq!(w.content.as_ref(), "Title");
     }
 
@@ -186,10 +186,13 @@ mod tests {
 
         let w = HeadingWidget::h1("Hello");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Hello"));
-        assert!(node.style.bold.unwrap());
+        assert!(node.style.bold.expect("Node missing from arena"));
     }
 
     #[test]

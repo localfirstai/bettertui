@@ -198,7 +198,10 @@ mod tests {
         ];
         let w = TabsWidget::new().with_tabs(tabs);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Tab);
     }
 
@@ -213,7 +216,13 @@ mod tests {
     fn tabs_widget_active_tab() {
         let tabs = vec![TabItem::new("Tab 1"), TabItem::new("Tab 2")];
         let w = TabsWidget::new().with_tabs(tabs).with_active(1);
-        assert_eq!(w.active_tab().unwrap().label.as_ref(), "Tab 2");
+        assert_eq!(
+            w.active_tab()
+                .expect("Node missing from arena")
+                .label
+                .as_ref(),
+            "Tab 2"
+        );
     }
 
     #[test]

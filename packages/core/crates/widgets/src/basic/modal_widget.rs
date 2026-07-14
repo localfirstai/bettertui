@@ -143,7 +143,10 @@ mod tests {
 
         let w = ModalWidget::new().with_title("Confirm");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Modal);
         assert_eq!(node.text.as_deref(), Some(" Confirm "));
     }

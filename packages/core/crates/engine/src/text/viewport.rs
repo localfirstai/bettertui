@@ -133,7 +133,8 @@ pub fn layout_text(text: &str, config: &ViewportConfig) -> TextViewport {
 
 #[allow(dead_code)]
 pub fn layout_styled(spans: &[(String, u16)], config: &ViewportConfig) -> TextViewport {
-    let mut combined = String::new();
+    let capacity = spans.iter().map(|(t, _)| t.len()).sum();
+    let mut combined = String::with_capacity(capacity);
     for (text, _) in spans {
         combined.push_str(text);
     }

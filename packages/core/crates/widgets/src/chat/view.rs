@@ -215,7 +215,9 @@ mod tests {
         };
         let view = ChatView::new();
         let msg = Message::assistant("Answer", 300).with_thinking("Let me think...");
-        let id = view.render_thinking(&msg, &mut ctx).unwrap();
+        let id = view
+            .render_thinking(&msg, &mut ctx)
+            .expect("Node missing from arena");
         assert!(ctx.arena.contains(id.node_id()));
     }
 

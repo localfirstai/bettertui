@@ -154,7 +154,7 @@ mod tests {
         tree.insert(wid, nid, "Box");
         assert_eq!(tree.len(), 1);
         assert!(tree.get(wid).is_some());
-        assert_eq!(tree.get(wid).unwrap().kind, "Box");
+        assert_eq!(tree.get(wid).expect("Node missing from arena").kind, "Box");
     }
 
     #[test]

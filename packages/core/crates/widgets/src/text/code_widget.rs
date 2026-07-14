@@ -240,7 +240,10 @@ mod tests {
 
         let w = CodeWidget::new("hello");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.text.as_deref(), Some("hello"));
     }
 
@@ -264,7 +267,10 @@ mod tests {
         let w = CodeWidget::block("fn hello() {}", "rust");
         let id = w.create(&mut ctx);
         // Highlighted code creates a Flex container with children
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         // Should be a Flex container (from create_highlighted)
         assert_eq!(node.kind, NodeKind::Flex);
     }
@@ -284,7 +290,10 @@ mod tests {
         let inline_w = CodeWidget::inline("x");
         let inline_id = inline_w.create(&mut ctx);
         assert_eq!(
-            ctx.arena.get(inline_id.node_id()).unwrap().kind,
+            ctx.arena
+                .get(inline_id.node_id())
+                .expect("Node missing from arena")
+                .kind,
             NodeKind::Text
         );
     }

@@ -368,7 +368,10 @@ mod tests {
 
         let w = InputWidget::new().with_placeholder("Enter text...");
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Input);
         assert_eq!(node.text.as_deref(), Some("Enter text..."));
     }
@@ -379,7 +382,11 @@ mod tests {
         let w = InputWidget::new().with_value("hi");
         let (id, ctx) = create_input(&w, &mut arena, &mut focus, &mut sched, &theme);
         assert_eq!(
-            ctx.arena.get(id.node_id()).unwrap().text.as_deref(),
+            ctx.arena
+                .get(id.node_id())
+                .expect("Node missing from arena")
+                .text
+                .as_deref(),
             Some("hi")
         );
         assert_eq!(InputWidget::read_value(&ctx, id.node_id()), "hi");

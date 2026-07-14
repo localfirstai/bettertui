@@ -126,7 +126,10 @@ mod tests {
 
         let w = ProgressWidget::new().with_value(50.0);
         let id = w.create(&mut ctx);
-        let node = ctx.arena.get(id.node_id()).unwrap();
+        let node = ctx
+            .arena
+            .get(id.node_id())
+            .expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
     }
 

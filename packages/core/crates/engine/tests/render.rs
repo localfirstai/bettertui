@@ -297,7 +297,8 @@ fn make_painter_with_tree() -> (bettertui_engine::render::Painter, RenderTree) {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);
@@ -339,7 +340,8 @@ fn painter_paint_background() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);
@@ -378,7 +380,8 @@ fn painter_excludes_hidden() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);
