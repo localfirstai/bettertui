@@ -11,9 +11,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use bitflags::bitflags;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::render::RenderObject;
 use crate::render::RenderTree;
+use crate::text;
 use crate::tree::NodeArena;
 use crate::tree::NodeId;
 use crate::tree::Overflow;
@@ -781,6 +783,103 @@ impl From<taffy::TaffyError> for LayoutError {
     }
 }
 
+/// Measure text content for intrinsic layout sizing.
+///
+/// Uses grapheme-aware width calculation to properly handle:
+/// - Wide characters (CJK, emoji)
+/// - Zero-width joiners and combining marks
+/// - Multi-codepoint graphemes (flag emojis, skin tone modifiers)
+///
+/// Returns (intrinsic_width, line_count).
+///
+/// # Arguments
+/// * `text` - The text content to measure
+/// * `available_width` - Available width for wrapping (f32::INFINITY for no wrap)
+///
+/// # Returns
+/// * `intrinsic_width` - The computed width (either max line width or constrained width)
+/// * `line_count` - Number of lines after wrapping
+fn measure_text(text: &str, available_width: f32) -> (f32, usize) {
+    if text.is_empty() {
+        return (1.0, 1);
+    }
+
+    let line_widths: Vec<usize> = text.lines().map(|line| text::display_width(line)).collect();
+
+    let max_width = line_widths.iter().copied().max().unwrap_or(0);
+
+    if available_width.is_infinite() || available_width <= 0.0 {
+        return (max_width.max(1) as f32, line_widths.len().max(1));
+    }
+
+    let wrap_width = available_width.floor() as usize;
+
+    if max_width <= wrap_width {
+        return (max_width.max(1) as f32, line_widths.len().max(1));
+    }
+
+    let mut total_lines = 0usize;
+    for line in text.lines() {
+        total_lines += count_wrapped_lines(line, wrap_width);
+    }
+
+    let intrinsic_width = if wrap_width > 0 {
+        wrap_width.min(max_width) as f32
+    } else {
+        max_width.max(1) as f32
+    };
+
+    (intrinsic_width, total_lines.max(1))
+}
+
+fn count_wrapped_lines(line: &str, wrap_width: usize) -> usize {
+    if line.is_empty() || wrap_width == 0 {
+        return 1;
+    }
+
+    let line_width = text::display_width(line);
+    if line_width <= wrap_width {
+        return 1;
+    }
+
+    let mut current_line_width = 0usize;
+    let mut line_count = 1usize;
+    let mut word_width = 0usize;
+
+    for grapheme in line.graphemes(true) {
+        let g_width = text::grapheme_width(grapheme);
+
+        if current_line_width + word_width + g_width > wrap_width {
+            if current_line_width > 0 {
+                line_count += 1;
+                current_line_width = 0;
+            } else if word_width > 0 {
+                line_count += 1;
+                current_line_width = g_width;
+                word_width = 0;
+                continue;
+            }
+        }
+
+        let is_whitespace = grapheme.chars().all(|c| c.is_whitespace());
+
+        if is_whitespace {
+            current_line_width += word_width + g_width;
+            word_width = 0;
+        } else {
+            word_width += g_width;
+        }
+    }
+
+    if word_width > 0 {
+        if current_line_width + word_width > wrap_width && current_line_width > 0 {
+            line_count += 1;
+        }
+    }
+
+    line_count
+}
+
 pub struct LayoutEngine {
     taffy: taffy::TaffyTree<()>,
     node_map: HashMap<NodeId, taffy::NodeId>,
@@ -846,6 +945,24 @@ impl LayoutEngine {
         if let Some(&taffy_id) = self.node_map.get(&id) {
             let style = layout_props_to_taffy(props);
             self.taffy.set_style(taffy_id, style).unwrap();
+            let _ = self.taffy.mark_dirty(taffy_id);
+        }
+    }
+
+    /// Check if a node's layout needs recomputation.
+    pub fn is_dirty(&self, id: NodeId) -> bool {
+        if let Some(&taffy_id) = self.node_map.get(&id) {
+            self.taffy.dirty(taffy_id).unwrap_or(false)
+        } else {
+            false
+        }
+    }
+
+    /// Mark a node as needing layout recomputation.
+    /// This also marks all ancestors as dirty.
+    pub fn mark_dirty(&mut self, id: NodeId) {
+        if let Some(&taffy_id) = self.node_map.get(&id) {
+            let _ = self.taffy.mark_dirty(taffy_id);
         }
     }
 
@@ -867,6 +984,9 @@ impl LayoutEngine {
     /// Update the text content for an existing text node (for re-measurement).
     pub fn update_text(&mut self, id: NodeId, text: &str) {
         self.text_map.borrow_mut().insert(id, text.to_string());
+        if let Some(&taffy_id) = self.node_map.get(&id) {
+            let _ = self.taffy.mark_dirty(taffy_id);
+        }
     }
 
     pub fn add_child(&mut self, parent: NodeId, child: NodeId) {
@@ -891,6 +1011,11 @@ impl LayoutEngine {
             .node_map
             .get(&root)
             .ok_or(LayoutError::NodeNotRegistered(root))?;
+
+        if !self.taffy.dirty(taffy_root).unwrap_or(false) {
+            return Ok(());
+        }
+
         let size = taffy::Size {
             width: taffy::AvailableSpace::Definite(width),
             height: taffy::AvailableSpace::Definite(height),
@@ -902,7 +1027,6 @@ impl LayoutEngine {
             taffy_root,
             size,
             |known_dimensions, available_space, node_id, _context, _style| {
-                // Short-circuit if both dimensions are already known
                 if let taffy::Size {
                     width: Some(w),
                     height: Some(h),
@@ -914,7 +1038,6 @@ impl LayoutEngine {
                     };
                 }
 
-                // Map Taffy's NodeId to our NodeId to look up text
                 let our_id = match reverse_map.get(&node_id) {
                     Some(id) => *id,
                     None => return taffy::Size::ZERO,
@@ -928,50 +1051,35 @@ impl LayoutEngine {
 
                 let available_width = match available_space.width {
                     taffy::AvailableSpace::Definite(w) => w,
-                    _ => f32::INFINITY,
+                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                    taffy::AvailableSpace::MinContent => 0.0,
                 };
 
-                // Measure text: compute how many lines fit in available width
-                let char_width = 1.0_f32;
-                let char_height = 1.0_f32;
-                let max_chars_per_line = (available_width / char_width).floor().max(1.0) as usize;
-
-                // If no wrap, intrinsic width is the max line width
-                // We don't have wrap info here, so we measure for wrapping
-                let text_str = content;
-                let total_width = text_str
-                    .lines()
-                    .map(|line| unicode_width::UnicodeWidthStr::width(line) as f32 * char_width)
-                    .fold(0.0_f32, f32::max);
-
-                let wrapped_width = available_width.min(total_width);
-                let chars_per_line = (wrapped_width / char_width).floor().max(1.0) as usize;
-                let lines = if max_chars_per_line > 0 && total_width > available_width {
-                    // Count wrapping lines
-                    text_str
-                        .lines()
-                        .map(|line| {
-                            let w = unicode_width::UnicodeWidthStr::width(line);
-                            if w == 0 {
-                                1
-                            } else {
-                                w.div_ceil(chars_per_line)
-                            }
-                        })
-                        .sum::<usize>()
-                } else {
-                    text_str.lines().count().max(1)
-                };
+                let (intrinsic_width, line_count) = measure_text(content, available_width);
 
                 taffy::Size {
-                    width: known_dimensions.width.unwrap_or(wrapped_width),
-                    height: known_dimensions
-                        .height
-                        .unwrap_or(lines as f32 * char_height),
+                    width: known_dimensions.width.unwrap_or(intrinsic_width),
+                    height: known_dimensions.height.unwrap_or(line_count as f32),
                 }
             },
         )?;
         Ok(())
+    }
+
+    /// Force layout computation regardless of dirty state.
+    /// Use this when terminal size changes.
+    pub fn compute_layout_forced(
+        &mut self,
+        root: NodeId,
+        width: f32,
+        height: f32,
+    ) -> Result<(), LayoutError> {
+        let &taffy_root = self
+            .node_map
+            .get(&root)
+            .ok_or(LayoutError::NodeNotRegistered(root))?;
+        let _ = self.taffy.mark_dirty(taffy_root);
+        self.compute_layout(root, width, height)
     }
 
     pub fn collect_results(&self) -> HashMap<NodeId, LayoutResult> {
@@ -1577,7 +1685,11 @@ fn build_node(
             positioned.sort_by_key(|c| c.start);
             get_objects_in_viewport(vp, &positioned, primary)
         }
-        _ => node.children.to_vec(),
+        _ => {
+            let mut children: Vec<NodeId> = node.children.iter().copied().collect();
+            children.sort_by_key(|&cid| arena.get(cid).map(|n| n.transform.z_index).unwrap_or(0));
+            children
+        }
     };
 
     let child_accum_tx =
@@ -1610,5 +1722,88 @@ fn determine_primary_axis(layout: &LayoutProps) -> PrimaryAxis {
     match layout.direction {
         FlexDirection::Row | FlexDirection::RowReverse => PrimaryAxis::Row,
         FlexDirection::Column | FlexDirection::ColumnReverse => PrimaryAxis::Column,
+    }
+}
+
+#[cfg(test)]
+mod measure_tests {
+    use super::*;
+
+    #[test]
+    fn measure_empty_text() {
+        let (width, lines) = measure_text("", f32::INFINITY);
+        assert_eq!(width, 1.0);
+        assert_eq!(lines, 1);
+    }
+
+    #[test]
+    fn measure_ascii_text() {
+        let (width, lines) = measure_text("hello", f32::INFINITY);
+        assert_eq!(width, 5.0);
+        assert_eq!(lines, 1);
+    }
+
+    #[test]
+    fn measure_multiline_text() {
+        let (width, lines) = measure_text("hello\nworld", f32::INFINITY);
+        assert_eq!(width, 5.0);
+        assert_eq!(lines, 2);
+    }
+
+    #[test]
+    fn measure_cjk_text() {
+        let (width, lines) = measure_text("\u{4e2d}\u{6587}", f32::INFINITY);
+        assert_eq!(width, 4.0);
+        assert_eq!(lines, 1);
+    }
+
+    #[test]
+    fn measure_emoji_text() {
+        let (width, lines) = measure_text("\u{1F600}", f32::INFINITY);
+        assert_eq!(width, 2.0);
+        assert_eq!(lines, 1);
+    }
+
+    #[test]
+    fn measure_with_wrap() {
+        let (width, lines) = measure_text("hello world", 6.0);
+        assert_eq!(width, 6.0);
+        assert_eq!(lines, 2);
+    }
+
+    #[test]
+    fn count_lines_no_wrap() {
+        assert_eq!(count_wrapped_lines("hello", 10), 1);
+    }
+
+    #[test]
+    fn count_lines_simple_wrap() {
+        assert_eq!(count_wrapped_lines("hello world", 5), 3);
+    }
+
+    #[test]
+    fn count_lines_cjk_wrap() {
+        let line = "\u{4e2d}\u{6587}\u{4e2d}\u{6587}\u{4e2d}\u{6587}";
+        assert_eq!(count_wrapped_lines(line, 4), 4);
+    }
+
+    #[test]
+    fn measure_text_long_word() {
+        let (width, lines) = measure_text("supercalifragilisticexpialidocious", 10.0);
+        assert_eq!(width, 10.0);
+        assert!(lines >= 4);
+    }
+
+    #[test]
+    fn measure_respects_available_width() {
+        let (width, _) = measure_text("short", 100.0);
+        assert_eq!(width, 5.0);
+    }
+
+    #[test]
+    fn measure_max_content() {
+        let (width, lines) = measure_text("hello\nworld\ntest", f32::INFINITY);
+        assert_eq!(width, 5.0);
+        assert_eq!(lines, 3);
     }
 }
