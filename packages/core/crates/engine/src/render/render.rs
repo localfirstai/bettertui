@@ -22,6 +22,7 @@ pub trait RenderBackend {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]);
     fn finish(&self) -> &[u8];
     fn reset(&mut self);
+    fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -285,8 +286,6 @@ impl RenderBackend for AnsiBackend {
         for region in regions {
             self.encode_region(buffer, region);
         }
-
-        self.show_cursor();
     }
 
     fn finish(&self) -> &[u8] {
@@ -295,6 +294,15 @@ impl RenderBackend for AnsiBackend {
 
     fn reset(&mut self) {
         self.buffer.clear();
+    }
+
+    fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool) {
+        self.move_to(x, y);
+        if visible {
+            self.show_cursor();
+        } else {
+            self.hide_cursor();
+        }
     }
 }
 
@@ -958,6 +966,13 @@ impl RenderFrame {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct CursorState {
+    pub x: u16,
+    pub y: u16,
+    pub visible: bool,
+}
+
 pub struct Renderer {
     width: u16,
     height: u16,
@@ -972,6 +987,7 @@ pub struct Renderer {
     needs_full_repaint: bool,
     generation: u64,
     last_change_count: u64,
+    cursor_state: CursorState,
 }
 
 impl Default for Renderer {
@@ -997,6 +1013,7 @@ impl Renderer {
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
+            cursor_state: CursorState::default(),
         }
     }
 
@@ -1019,6 +1036,7 @@ impl Renderer {
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
+            cursor_state: CursorState::default(),
         }
     }
 
@@ -1027,6 +1045,14 @@ impl Renderer {
             scheduler: Scheduler::with_fps(fps),
             ..Self::new(80, 24)
         }
+    }
+
+    pub fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool) {
+        self.cursor_state = CursorState { x, y, visible };
+    }
+
+    pub fn cursor_state(&self) -> &CursorState {
+        &self.cursor_state
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
@@ -1123,6 +1149,11 @@ impl Renderer {
         };
 
         self.backend.encode(self.painter.buffer(), &dirty_regions);
+
+        if self.cursor_state.visible {
+            self.backend
+                .set_cursor_position(self.cursor_state.x, self.cursor_state.y, true);
+        }
 
         self.snapshot.copy_from(self.painter.buffer());
 

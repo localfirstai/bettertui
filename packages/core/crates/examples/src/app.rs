@@ -31,8 +31,9 @@ const CATEGORY_LABELS: &[(Category, &str)] = &[
     (Category::Terminal, "TERMINAL"),
 ];
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 enum Focus {
+    #[default]
     Filter,
     List,
 }
@@ -46,6 +47,12 @@ pub struct App {
     focus: Focus,
     engine: Engine,
     renderer: Renderer,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl App {
@@ -375,6 +382,14 @@ impl App {
 
         self.engine.begin_frame();
         self.engine.commit_frame();
+
+        if self.focus == Focus::Filter {
+            let cursor_x = 8 + self.filter_text.len() as u16;
+            let cursor_y = 2;
+            self.renderer.set_cursor_position(cursor_x, cursor_y, true);
+        } else {
+            self.renderer.set_cursor_position(0, 0, false);
+        }
 
         let frame = self.renderer.render(self.engine.arena_mut());
 
