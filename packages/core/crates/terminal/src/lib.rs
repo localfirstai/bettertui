@@ -25,7 +25,7 @@ pub use vt::{
     TerminalMode, TerminalResponse, VtMachine,
 };
 
-use std::io::{self, Write, stdout};
+use std::io::{self, IsTerminal, Write, stdout};
 
 use crossterm::{
     cursor,
@@ -34,13 +34,14 @@ use crossterm::{
     terminal::{self, ClearType},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use tracing::{debug, info, trace};
+use tracing::{debug, info, trace, warn};
 
 pub struct Terminal {
     width: u16,
     height: u16,
     raw_mode: bool,
     alternate_screen: bool,
+    is_tty: bool,
 }
 
 impl Default for Terminal {
@@ -52,13 +53,24 @@ impl Default for Terminal {
 impl Terminal {
     pub fn new() -> Self {
         let (w, h) = terminal::size().unwrap_or((80, 24));
-        info!(width = w, height = h, "Terminal::new() - creating terminal");
+        let is_tty = std::io::stdin().is_terminal();
+        info!(
+            width = w,
+            height = h,
+            is_tty,
+            "Terminal::new() - creating terminal"
+        );
         Self {
             width: w,
             height: h,
             raw_mode: false,
             alternate_screen: false,
+            is_tty,
         }
+    }
+
+    pub fn is_tty(&self) -> bool {
+        self.is_tty
     }
 
     pub fn size(&self) -> (u16, u16) {
@@ -101,6 +113,10 @@ impl Terminal {
     }
 
     pub fn enter_raw_mode(&mut self) -> io::Result<()> {
+        if !self.is_tty {
+            warn!("Terminal::enter_raw_mode() - skipping raw mode (not a TTY)");
+            return Ok(());
+        }
         if !self.raw_mode {
             info!("Terminal::enter_raw_mode() - entering raw mode");
             enable_raw_mode()?;
@@ -110,6 +126,9 @@ impl Terminal {
     }
 
     pub fn leave_raw_mode(&mut self) -> io::Result<()> {
+        if !self.is_tty {
+            return Ok(());
+        }
         if self.raw_mode {
             info!("Terminal::leave_raw_mode() - leaving raw mode");
             disable_raw_mode()?;
@@ -169,6 +188,10 @@ impl Terminal {
     }
 
     pub fn poll_event(&self, timeout: std::time::Duration) -> io::Result<Option<TerminalEvent>> {
+        if !self.is_tty {
+            std::thread::sleep(timeout);
+            return Ok(None);
+        }
         if event::poll(timeout)? {
             match event::read()? {
                 Event::Key(key_event) => {

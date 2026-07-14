@@ -16,7 +16,7 @@ use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::tree::{BorderStyle, Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::{KeyModifiers, MouseEvent, MouseEventKind};
-use tracing::{debug, info, trace};
+use tracing::{debug, info, trace, warn};
 
 use crate::examples::{self, Category, Example};
 use crate::theme::Theme;
@@ -78,6 +78,16 @@ impl App {
 
     pub fn run(&mut self, terminal: &mut Terminal) -> io::Result<()> {
         info!("App::run() - starting application main loop");
+
+        if !terminal.is_tty() {
+            warn!("App::run() - not running in a TTY, drawing one frame and exiting");
+            let (w, h) = terminal.size();
+            self.renderer.resize(w, h);
+            self.renderer.set_backend(Box::new(AnsiBackend::new()));
+            self.draw(terminal)?;
+            return Ok(());
+        }
+
         terminal.enter_raw_mode()?;
         terminal.enter_alternate_screen()?;
         terminal.hide_cursor()?;
@@ -137,7 +147,7 @@ impl App {
         if let MouseEventKind::Down(crossterm::event::MouseButton::Left) = event.kind {
             let y = event.row;
 
-            if y >= 7 && y <= 9 {
+            if (7..=9).contains(&y) {
                 self.focus = Focus::Filter;
             } else if y >= self.list_start_y && y < self.list_end_y {
                 self.focus = Focus::List;
@@ -337,12 +347,11 @@ impl App {
 
         let title_node = self.engine.create_node(NodeKind::Text);
         let title_text = r#"
-██████╗ ███████╗████████╗████████╗███████╗██████╗ ████████╗██╗   ██╗██╗
-██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗╚══██╔══╝██║   ██║██║
-██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝   ██║   ██║   ██║██║
-██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗   ██║   ██║   ██║██║
-██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║   ██║   ╚██████╔╝██║
-╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝
+ ____      _     _ _        _______     _    _ _____ ____    _  _____ _____ 
+| __ ) _  (_) __| | | ___  |_   _\ \   / /  | |  ___/ ___|  / \|_   _| ____|
+|  _ \ \/ / |/ _` | |/ _ \   | |  \ \ / /   | | |_  \___ \ / _ \ | | |  _|  
+| |_) >  <| | (_| | |  __/   | |   \ V /| |_| |  _|  ___) / ___ \| | | |___ 
+|____/_/\_\_|\__,_|_|\___|   |_|    \_/  \___/|_|   |____/_/   \_\_| |_____|
 "#;
         self.engine.set_text(title_node, title_text.trim());
         self.engine
@@ -381,9 +390,9 @@ impl App {
 
         let filter_label = self.engine.create_node(NodeKind::Text);
         let display_text = if self.filter_text.is_empty() {
-            format!("Filter examples...")
+            "Filter examples...".to_string()
         } else {
-            format!("{}", self.filter_text)
+            self.filter_text.clone()
         };
         self.engine.set_text(filter_label, display_text);
         self.engine.set_style(
@@ -455,7 +464,7 @@ impl App {
                     .unwrap_or("");
 
                 let cat_node = self.engine.create_node(NodeKind::Text);
-                self.engine.set_text(cat_node, format!("{}", cat_label));
+                self.engine.set_text(cat_node, cat_label.to_string());
                 self.engine
                     .set_style(cat_node, Style::new().fg(t.category_color).bold(true));
                 self.engine.append_child(list_container, cat_node).unwrap();
