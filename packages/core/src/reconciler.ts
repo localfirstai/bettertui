@@ -6,7 +6,6 @@ import {
   createInstance,
   createTextInstance,
   finalizeInitialChildren,
-  generateId,
   insertBefore,
   prepareUpdate,
   removeChild,
@@ -70,25 +69,19 @@ export function createReconciler(buffer: CommandBuffer): {
 
   function wrappedCreateTextInstance(text: string): TextInstance {
     const instance = createTextInstance(text);
-    const id = generateId();
-    (instance as unknown as { id: string }).id = id;
-    emitCreateNode(id, "Text");
-    emitSetText(id, text);
+    emitCreateNode(instance.id, "Text");
+    emitSetText(instance.id, text);
     return instance;
   }
 
   function wrappedAppendChild(parent: Instance, child: Instance | TextInstance): void {
     appendChild(parent, child);
-    const childId =
-      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
-    emitAppendChild(parent.id, childId);
+    emitAppendChild(parent.id, child.id);
   }
 
   function wrappedRemoveChild(parent: Instance, child: Instance | TextInstance): void {
     removeChild(parent, child);
-    const childId =
-      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
-    emitRemoveNode(childId);
+    emitRemoveNode(child.id);
   }
 
   function wrappedInsertBefore(
@@ -97,11 +90,7 @@ export function createReconciler(buffer: CommandBuffer): {
     reference: Instance | TextInstance,
   ): void {
     insertBefore(parent, child, reference);
-    const childId =
-      "id" in child ? (child as Instance).id : (child as unknown as { id: string }).id;
-    const refId =
-      "id" in reference ? (reference as Instance).id : (reference as unknown as { id: string }).id;
-    emitInsertBefore(refId, childId);
+    emitInsertBefore(reference.id, child.id);
   }
 
   function wrappedCommitUpdate(instance: Instance, updatePayload: Record<string, unknown>): void {
@@ -113,9 +102,8 @@ export function createReconciler(buffer: CommandBuffer): {
 
   function wrappedCommitTextUpdate(textInstance: TextInstance, text: string): void {
     commitTextUpdate(textInstance, text);
-    const id = (textInstance as unknown as { id: string }).id;
-    if (id) {
-      emitSetText(id, text);
+    if (textInstance.id) {
+      emitSetText(textInstance.id, text);
     }
   }
 

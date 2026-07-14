@@ -3,7 +3,10 @@ import { generateId } from "@bettertui/core";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import { createContext } from "react";
 import Reconciler from "react-reconciler";
+import type { Fiber, OpaqueRoot as ReactOpaqueRoot } from "react-reconciler";
 import { DefaultEventPriority, NoEventPriority } from "react-reconciler/constants";
+
+export type OpaqueRoot = ReactOpaqueRoot;
 
 // Module-level update priority state (required by react-reconciler@0.31+)
 let currentUpdatePriority = NoEventPriority;
@@ -250,9 +253,6 @@ export type ReconcilerType = Reconciler.Reconciler<
   Instance
 >;
 
-// biome-ignore lint/suspicious/noExplicitAny: opaque react-reconciler root type
-export type OpaqueRoot = any;
-
 export function createBetterTUIReconciler(buffer: CommandBufferConsumer): ReconcilerType {
   // biome-ignore format: host config is complex
   // Host config is inferred (not annotated) because the installed @types/react-reconciler@0.31
@@ -272,8 +272,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       props: Record<string, unknown>,
       _rootContainer: Container,
       _hostContext: Record<string, unknown>,
-      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      _internalHandle: any,
+      
+      _internalHandle: unknown,
     ): Instance {
       const id = generateId();
       const { children, style, layout, ...restProps } = props;
@@ -335,8 +335,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       text: string,
       _rootContainer: Container,
       _hostContext: Record<string, unknown>,
-      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      _internalHandle: any,
+      
+      _internalHandle: unknown,
     ): TextInstance {
       const id = generateId();
       const instance = {
@@ -395,8 +395,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       return instance as Instance;
     },
 
-    // biome-ignore lint/suspicious/noExplicitAny: react-reconciler API contract
-    prepareForCommit(_containerInfo: Container): Record<string, any> | null {
+    
+    prepareForCommit(_containerInfo: Container): Record<string, unknown> | null {
       return null;
     },
 
@@ -418,8 +418,9 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       return DefaultEventPriority;
     },
 
-    // biome-ignore lint/suspicious/noExplicitAny: react-reconciler API contract
-    getInstanceFromNode(_node: any): any {
+    
+
+    getInstanceFromNode(_node: unknown): Fiber | null | undefined {
       return null;
     },
 
@@ -427,11 +428,11 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
 
     afterActiveInstanceBlur(): void {},
 
-    // biome-ignore lint/suspicious/noExplicitAny: react-reconciler API contract
-    prepareScopeUpdate(_scopeInstance: any, _instance: any): void {},
+    
+    prepareScopeUpdate(_scopeInstance: unknown, _instance: unknown): void {},
 
-    // biome-ignore lint/suspicious/noExplicitAny: react-reconciler API contract
-    getInstanceFromScope(_scopeInstance: any): null | Instance {
+    
+    getInstanceFromScope(_scopeInstance: unknown): null | Instance {
       return null;
     },
 
@@ -532,10 +533,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
 
     commitTextUpdate(textInstance: TextInstance, _oldText: string, newText: string): void {
       textInstance.text = newText;
-      // biome-ignore lint/suspicious/noExplicitAny: TextInstance doesn't have id on the type
-      const id = (textInstance as any).id;
-      if (id) {
-        buffer.push({ type: "SetText", id, text: newText });
+      if (textInstance.id) {
+        buffer.push({ type: "SetText", id: textInstance.id, text: newText });
       }
     },
 
@@ -545,8 +544,8 @@ export function createBetterTUIReconciler(buffer: CommandBufferConsumer): Reconc
       _type: string,
       _prevProps: Record<string, unknown>,
       _nextProps: Record<string, unknown>,
-      // biome-ignore lint/suspicious/noExplicitAny: react-reconciler OpaqueHandle
-      _internalHandle: any,
+      
+      _internalHandle: unknown,
     ): void {
       // Update instance props
       Object.assign(instance.props, updatePayload);

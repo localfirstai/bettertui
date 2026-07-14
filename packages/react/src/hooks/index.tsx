@@ -617,8 +617,7 @@ export interface MouseState {
   alt: boolean;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: event handler typing
-type MouseEventHandler = (e: any) => void;
+type MouseEventHandler = (e: MouseEvent) => void;
 
 export function useMouse(handler: (event: MouseState) => boolean) {
   const handlerRef = useRef(handler);

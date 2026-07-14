@@ -14,6 +14,7 @@ export interface Instance {
 }
 
 export interface TextInstance {
+  id: string;
   type: "#text";
   text: string;
   parent: Instance | null;
@@ -135,6 +136,7 @@ export function createInstance(type: string, props: Record<string, unknown>): In
 
 export function createTextInstance(text: string): TextInstance {
   return {
+    id: generateId(),
     type: "#text",
     text,
     parent: null,
