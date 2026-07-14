@@ -145,6 +145,57 @@ export interface BindingInfo {
   layer: string;
 }
 
+export interface NapiThemeColors {
+  background: string;
+  surface: string;
+  surfaceHigh: string;
+  surfaceLow: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  text: string;
+  textMuted: string;
+  textDim: string;
+  border: string;
+  borderFocused: string;
+  accent: string;
+  accentForeground: string;
+  error: string;
+  warning: string;
+  success: string;
+  info: string;
+  scrollbar: string;
+  scrollbarThumb: string;
+}
+
+export interface NapiThemeSpacing {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+}
+
+export interface NapiThemeBorders {
+  style: string;
+  fg: string;
+}
+
+export interface NapiTheme {
+  name: string;
+  colors: NapiThemeColors;
+  spacing: NapiThemeSpacing;
+  borders: NapiThemeBorders;
+}
+
+export interface NapiWidgetHost {
+  widgetCount(): number;
+}
+
 export interface NapiKeymap {
   addBinding(
     layer: string,

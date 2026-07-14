@@ -6,6 +6,11 @@ import type {
   NapiKeymap,
   NapiScheduler,
   NapiTextEngine,
+  NapiTheme,
+  NapiThemeBorders,
+  NapiThemeColors,
+  NapiThemeSpacing,
+  NapiWidgetHost,
   ProcessResult,
   SchedulerStats,
   TerminalCapabilities,
@@ -19,6 +24,11 @@ export type {
   NapiKeymap,
   NapiTextEngine,
   NapiScheduler,
+  NapiTheme,
+  NapiThemeBorders,
+  NapiThemeColors,
+  NapiThemeSpacing,
+  NapiWidgetHost,
   ProcessResult,
   TerminalCapabilities,
   SchedulerStats,
@@ -228,6 +238,30 @@ export function getVersion(): string {
   const addon = loadNativeAddon();
   const getVersionFn = addon["getVersion"] as () => string;
   return getVersionFn();
+}
+
+export function createDefaultTheme(): NapiTheme {
+  const addon = loadNativeAddon();
+  const fn = addon["createDefaultTheme"] as () => NapiTheme;
+  return fn();
+}
+
+export function createDarkTheme(): NapiTheme {
+  const addon = loadNativeAddon();
+  const fn = addon["createDarkTheme"] as () => NapiTheme;
+  return fn();
+}
+
+export function createLightTheme(): NapiTheme {
+  const addon = loadNativeAddon();
+  const fn = addon["createLightTheme"] as () => NapiTheme;
+  return fn();
+}
+
+export function createWidgetHost(): NapiWidgetHost {
+  const addon = loadNativeAddon();
+  const WidgetHost = addon["NapiWidgetHost"] as new () => NapiWidgetHost;
+  return new WidgetHost();
 }
 
 export function createKeymap(): NapiKeymap {
