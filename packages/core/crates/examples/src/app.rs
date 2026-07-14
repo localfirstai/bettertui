@@ -173,66 +173,82 @@ impl App {
 
         terminal.clear()?;
 
-        // Title
+        // Title — centered
         let title_x = w.saturating_sub(TITLE.len()) / 2;
         terminal.move_cursor(title_x as u16, 0)?;
         write!(out, "{}{}\x1b[0m", t.title_color, TITLE)?;
 
-        // Filter box
+        // ── Filter box ──────────────────────────────────────────────────
         let filter_y: u16 = 2;
-        let box_w = w.saturating_sub(4).max(10);
+        let box_w = w.saturating_sub(6).max(10); // inner content width
+        let box_x = 3u16; // left margin (right margin also 3)
         let is_filter_focused = self.focus == Focus::Filter;
         let f_border = if is_filter_focused { t.focused_border_color } else { t.border_color };
 
-        // Filter border top
-        terminal.move_cursor(2, filter_y)?;
-        write!(out, "{f_border}┌─")?;
-        write!(out, "{}Filter\x1b[0m{f_border}", if is_filter_focused { "\x1b[1;38;2;96;165;250m" } else { "\x1b[2m" })?;
-        for _ in 0..box_w.saturating_sub(8) { write!(out, "─")?; }
+        let filter_title = " Filter ";
+        let filter_title_len = filter_title.len();
+        let _l_pad = 2u16; // left border chars before title
+
+        // Filter top border
+        terminal.move_cursor(box_x, filter_y)?;
+        write!(out, "{f_border}┌")?;
+        write!(out, "─{filter_title}\x1b[0m{f_border}")?;
+        let after_title = box_w.saturating_sub(filter_title_len + 1);
+        for _ in 0..after_title { write!(out, "─")?; }
         write!(out, "┐\x1b[0m")?;
 
-        // Filter input
-        terminal.move_cursor(4, filter_y + 1)?;
+        // Filter left & right sides, input line
+        terminal.move_cursor(box_x, filter_y + 1)?;
+        write!(out, "{f_border}│\x1b[0m ")?;
         if self.filter_text.is_empty() {
-            write!(out, " \x1b[3m{}Filter examples...\x1b[0m{}", t.input_placeholder_color,
+            write!(out, "\x1b[3m{}Filter examples...\x1b[0m{}", t.input_placeholder_color,
                 if is_filter_focused { format!("{}█\x1b[0m", t.input_cursor_color) } else { " ".into() })?;
         } else {
-            write!(out, " {}{}\x1b[0m{}", t.input_text_color, self.filter_text,
+            write!(out, "{}{}\x1b[0m{}", t.input_text_color, self.filter_text,
                 if is_filter_focused { format!("{}█\x1b[0m", t.input_cursor_color) } else { " ".into() })?;
         }
-        // Fill rest of line
-        let used = 1 + self.filter_text.len().max(16);
+        let used = 2 + self.filter_text.len().max(16);
         for _ in used..box_w { write!(out, " ")?; }
+        write!(out, " {f_border}│\x1b[0m")?;
 
-        // Filter border bottom
-        terminal.move_cursor(2, filter_y + 2)?;
+        // Filter bottom border
+        terminal.move_cursor(box_x, filter_y + 2)?;
         write!(out, "{f_border}└")?;
-        for _ in 0..box_w { write!(out, "─")?; }
+        for _ in 0..=box_w { write!(out, "─")?; }
         write!(out, "┘\x1b[0m")?;
 
-        // Examples box
+        // ── Examples box ────────────────────────────────────────────────
         let list_y = filter_y + 4;
         let list_h = (h as u16).saturating_sub(list_y + 3);
         let is_list_focused = self.focus == Focus::List;
         let l_border = if is_list_focused { t.focused_border_color } else { t.border_color };
 
-        // Examples border top
-        terminal.move_cursor(2, list_y)?;
-        let title_text = if self.filtered.is_empty() && !self.filter_text.is_empty() {
+        let examples_title = if self.filtered.is_empty() && !self.filter_text.is_empty() {
             " Examples (No Matches) "
         } else {
             " Examples "
         };
-        write!(out, "{l_border}┌─{title_text}\x1b[0m{l_border}")?;
-        let title_len = title_text.len() + 3;
-        for _ in 0..box_w.saturating_sub(title_len) { write!(out, "─")?; }
+        let examples_title_len = examples_title.len();
+
+        // Examples top border
+        terminal.move_cursor(box_x, list_y)?;
+        write!(out, "{l_border}┌─{examples_title}\x1b[0m{l_border}")?;
+        let after_title = box_w.saturating_sub(examples_title_len + 1);
+        for _ in 0..after_title { write!(out, "─")?; }
         write!(out, "┐\x1b[0m")?;
 
-        // Draw items
+        // Draw items with left/right sides
         if self.filtered.is_empty() {
-            terminal.move_cursor(4, list_y + 1)?;
-            write!(out, "{}  No matching examples\x1b[0m", t.select_description_color)?;
-            for _ in 1..list_h { write!(out, " ")?; }
+            terminal.move_cursor(box_x, list_y + 1)?;
+            write!(out, "{}│\x1b[0m  No matching examples", t.instructions_color)?;
+            for _ in 3..box_w { write!(out, " ")?; }
+            write!(out, " {}│\x1b[0m", t.instructions_color)?;
+            for r in 2..list_h {
+                terminal.move_cursor(box_x, list_y + r)?;
+                write!(out, "{}│\x1b[0m", t.instructions_color)?;
+                for _ in 0..box_w { write!(out, " ")?; }
+                write!(out, " {}│\x1b[0m", t.instructions_color)?;
+            }
         } else {
             let mut line: u16 = 0;
             let mut prev_cat: Option<Category> = None;
@@ -245,56 +261,71 @@ impl App {
                 let is_new_cat = prev_cat != Some(ex.category);
 
                 if is_new_cat && line < list_h {
-                    terminal.move_cursor(4, list_y + 1 + line)?;
+                    terminal.move_cursor(box_x, list_y + 1 + line)?;
+                    write!(out, "{}│\x1b[0m", t.instructions_color)?;
+                    write!(out, "  {}", t.select_category_color)?;
                     let cat_label = CATEGORY_LABELS.iter()
                         .find(|(c, _)| *c == ex.category)
                         .map(|(_, l)| *l)
                         .unwrap_or("");
-                    write!(out, "{}  {}\x1b[0m", t.select_category_color, cat_label)?;
+                    write!(out, "{cat_label}")?;
+                    write!(out, "\x1b[0m")?;
                     let used = cat_label.len() + 4;
                     for _ in used..box_w { write!(out, " ")?; }
+                    write!(out, " {}│\x1b[0m", t.instructions_color)?;
                     line += 1;
                     prev_cat = Some(ex.category);
                 }
 
                 if line >= list_h { break; }
 
-                terminal.move_cursor(4, list_y + 1 + line)?;
+                terminal.move_cursor(box_x, list_y + 1 + line)?;
+                write!(out, "{}│\x1b[0m", t.instructions_color)?;
                 if is_sel && is_list_focused {
-                    write!(out, "{}  \u{25b6} {}\x1b[0m", t.select_selected_bg, ex.name)?;
+                    write!(out, "{}  \u{25b6} {}", t.select_selected_bg, ex.name)?;
+                    write!(out, "\x1b[0m")?;
                     let rest = box_w.saturating_sub(ex.name.len() + 5);
                     for _ in 0..rest { write!(out, " ")?; }
                 } else if is_sel {
                     write!(out, "  \u{25b6} {}\x1b[0m", ex.name)?;
+                    let rest = box_w.saturating_sub(ex.name.len() + 5);
+                    for _ in 0..rest { write!(out, " ")?; }
                 } else {
                     write!(out, "    {}\x1b[0m", ex.name)?;
+                    let rest = box_w.saturating_sub(ex.name.len() + 5);
+                    for _ in 0..rest { write!(out, " ")?; }
                 }
+                write!(out, " {}│\x1b[0m", t.instructions_color)?;
                 line += 1;
             }
 
             // Fill remaining lines
             while line < list_h {
-                terminal.move_cursor(2, list_y + 1 + line)?;
+                terminal.move_cursor(box_x, list_y + 1 + line)?;
+                write!(out, "│")?;
                 for _ in 0..box_w { write!(out, " ")?; }
+                write!(out, "│")?;
                 line += 1;
             }
         }
 
-        // Examples border bottom
-        terminal.move_cursor(2, list_y + list_h)?;
+        // Examples bottom border
+        terminal.move_cursor(box_x, list_y + list_h)?;
         write!(out, "{l_border}└")?;
-        for _ in 0..box_w { write!(out, "─")?; }
+        for _ in 0..=box_w { write!(out, "─")?; }
         write!(out, "┘\x1b[0m")?;
 
         // Description line
         let desc_y = list_y + list_h + 1;
         if desc_y < term_h {
-            terminal.move_cursor(2, desc_y)?;
+            terminal.move_cursor(box_x, desc_y)?;
             if let Some(&idx) = self.filtered.get(self.selected_index.min(self.filtered.len().saturating_sub(1))) {
                 let desc = self.examples[idx].description;
-                let max_w = w.saturating_sub(4);
+                let max_w = w.saturating_sub(6);
                 let d = if desc.len() > max_w { &desc[..max_w] } else { desc };
-                write!(out, "{}{}\x1b[0m", t.select_description_color, d)?;
+                write!(out, "  {}\x1b[0m", t.select_description_color)?;
+                write!(out, "{d}")?;
+                write!(out, "\x1b[0m")?;
             }
         }
 

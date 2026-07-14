@@ -276,6 +276,10 @@ pub struct PaintBounds {
     pub padding_right: u16,
     pub padding_top: u16,
     pub padding_bottom: u16,
+    pub border_top: u16,
+    pub border_right: u16,
+    pub border_bottom: u16,
+    pub border_left: u16,
 }
 
 impl PaintBounds {
@@ -297,18 +301,32 @@ impl PaintBounds {
         self
     }
 
+    pub fn with_border(mut self, top: u16, right: u16, bottom: u16, left: u16) -> Self {
+        self.border_top = top;
+        self.border_right = right;
+        self.border_bottom = bottom;
+        self.border_left = left;
+        self
+    }
+
     pub fn rect(&self) -> Rect {
+        Rect::new(self.x, self.y, self.width, self.height)
+    }
+
+    pub fn border_rect(&self) -> Rect {
         Rect::new(self.x, self.y, self.width, self.height)
     }
 
     pub fn content_rect(&self) -> Rect {
         Rect::new(
-            self.x + self.padding_left,
-            self.y + self.padding_top,
-            self.width
-                .saturating_sub(self.padding_left + self.padding_right),
-            self.height
-                .saturating_sub(self.padding_top + self.padding_bottom),
+            self.x + self.border_left + self.padding_left,
+            self.y + self.border_top + self.padding_top,
+            self.width.saturating_sub(
+                self.border_left + self.border_right + self.padding_left + self.padding_right,
+            ),
+            self.height.saturating_sub(
+                self.border_top + self.border_bottom + self.padding_top + self.padding_bottom,
+            ),
         )
     }
 
@@ -1459,6 +1477,9 @@ fn build_node(
     if resolved_style.bg.is_some() {
         flags |= PaintFlags::BACKGROUND;
     }
+    if resolved_style.border_style != crate::tree::BorderStyle::None {
+        flags |= PaintFlags::BORDER;
+    }
     if node.text.is_some() {
         flags |= PaintFlags::TEXT;
     }
@@ -1483,6 +1504,12 @@ fn build_node(
         layout.padding_top,
         layout.padding_bottom,
     );
+    bounds = bounds.with_border(
+        layout.border_top,
+        layout.border_right,
+        layout.border_bottom,
+        layout.border_left,
+    );
 
     let clip = if flags.contains(PaintFlags::NEEDS_CLIP) {
         Some(ClipBounds::new(
@@ -1504,7 +1531,7 @@ fn build_node(
     obj.translate_x = accum_tx + node.transform.translate_x;
     obj.translate_y = accum_ty + node.transform.translate_y;
     obj.text = node.text.clone();
-    obj.text_align = node.text_align;
+    obj.text_align = resolved_style.text_align;
     obj.text_wrap = node.text_wrap;
     obj.overflow = node.overflow;
     obj.flags = flags;

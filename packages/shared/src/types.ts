@@ -167,6 +167,8 @@ export interface Style {
   strikethrough?: boolean;
   /** Swap foreground and background colors */
   inverse?: boolean;
+  /** Text alignment */
+  textAlign?: "left" | "center" | "right" | "justify";
 }
 
 /** All possible border visual styles. */

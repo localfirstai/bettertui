@@ -1,8 +1,0 @@
-# Seeds for failure cases proptest has generated in the past. It is
-# automatically read and these particular cases re-run before any
-# novel cases are generated.
-#
-# It is recommended to check this file in to source control so that
-# everyone who runs the test benefits from these saved cases.
-cc 0fbee9d81a8e58ccd03ffce62dcaecc2db01eb4a9f0a61b69f30c371abcfcbcf # shrinks to start_col = 40, max_col = 1
-cc 8104d4b61b7b1eac0a4c8aca547e5d0515abd336a45b42d080226ca8ac6ab0c9 # shrinks to start_row = 0, start_col = 0, max_row = 1, max_col = 1, moves = [ColumnAbsolute(2)]

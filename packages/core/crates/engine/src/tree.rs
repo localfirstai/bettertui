@@ -500,6 +500,7 @@ pub struct Style {
     pub rounded_corners: Option<bool>,
     pub overflow: Option<Overflow>,
     pub opacity: Option<u8>,
+    pub text_align: Option<crate::text::TextAlign>,
 }
 
 impl Style {
@@ -528,6 +529,7 @@ impl Style {
             && self.rounded_corners.is_none()
             && self.overflow.is_none()
             && self.opacity.is_none()
+            && self.text_align.is_none()
     }
 
     /// Merges this style with a parent style. Self values take precedence.
@@ -558,6 +560,10 @@ impl Style {
                 .or(parent.overflow)
                 .unwrap_or(Overflow::Visible),
             opacity: self.opacity.or(parent.opacity).unwrap_or(255),
+            text_align: self
+                .text_align
+                .or(parent.text_align)
+                .unwrap_or(crate::text::TextAlign::Left),
         }
     }
 
@@ -622,6 +628,12 @@ impl Style {
         self.opacity = Some(opacity);
         self
     }
+
+    /// Set text alignment.
+    pub fn text_align(mut self, align: crate::text::TextAlign) -> Self {
+        self.text_align = Some(align);
+        self
+    }
 }
 
 /// Fully resolved style with no Option fields. Used during rendering.
@@ -643,6 +655,7 @@ pub struct ResolvedStyle {
     pub rounded_corners: bool,
     pub overflow: Overflow,
     pub opacity: u8,
+    pub text_align: crate::text::TextAlign,
 }
 
 impl Default for ResolvedStyle {
@@ -664,6 +677,7 @@ impl Default for ResolvedStyle {
             rounded_corners: false,
             overflow: Overflow::Visible,
             opacity: 255,
+            text_align: crate::text::TextAlign::Left,
         }
     }
 }

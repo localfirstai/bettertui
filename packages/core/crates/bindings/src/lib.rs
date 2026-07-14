@@ -259,6 +259,8 @@ struct StyleJson {
     dim: Option<bool>,
     #[serde(default)]
     inverse: Option<bool>,
+    #[serde(default, alias = "textAlign")]
+    text_align: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -304,7 +306,7 @@ impl From<ColorJson> for Color {
                 "light_magenta" | "lightmagenta" => {
                     Color::Named(bettertui_engine::tree::NamedColor::BrightMagenta)
                 }
-                _ => bettertui_engine::tree::color::Color::parse(&name)
+                _ => Color::parse(&name)
                     .unwrap_or(Color::Named(bettertui_engine::tree::NamedColor::White)),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
@@ -545,6 +547,14 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
             }
             if let Some(v) = style.inverse {
                 s.inverse = Some(v);
+            }
+            if let Some(v) = style.text_align {
+                s.text_align = Some(match v.as_str() {
+                    "center" | "Center" => bettertui_engine::text::TextAlign::Center,
+                    "right" | "Right" => bettertui_engine::text::TextAlign::Right,
+                    "justify" | "Justify" => bettertui_engine::text::TextAlign::Justify,
+                    _ => bettertui_engine::text::TextAlign::Left,
+                });
             }
             Some(Command::SetStyle {
                 id: u64_to_node_id(id),
@@ -1434,7 +1444,7 @@ fn resolve_command_ids(
 
 // ─── NapiKeymap ─────────────────────────────────────────────────────────────
 
-use bettertui_engine::keybinding::{KeyBinding, KeyParser, Keymap};
+use bettertui_engine::input::{KeyBinding, KeyParser, Keymap};
 
 #[napi(object)]
 pub struct BindingInfo {
@@ -1446,7 +1456,7 @@ pub struct BindingInfo {
     pub layer: String,
 }
 
-fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
+fn format_key_combo(combo: &bettertui_engine::input::KeyCombo) -> String {
     let mut parts = Vec::new();
     if combo.modifiers.ctrl {
         parts.push("ctrl".to_string());
@@ -1489,7 +1499,7 @@ fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
     }
 }
 
-fn format_key_sequence(seq: &bettertui_engine::keybinding::KeySequence) -> String {
+fn format_key_sequence(seq: &bettertui_engine::input::KeySequence) -> String {
     seq.keys
         .iter()
         .map(format_key_combo)
@@ -1765,7 +1775,7 @@ impl NapiEventBus {
     #[napi]
     pub fn push_mouse(&mut self, button: String, x: u32, y: u32, target_id: u32) {
         use bettertui_engine::input::MouseButton;
-        use bettertui_engine::tree::visual::Point;
+        use bettertui_engine::tree::Point;
         let target = u64_to_node_id(target_id as u64);
         let btn = match button.as_str() {
             "left" => MouseButton::Left,
@@ -1783,7 +1793,7 @@ impl NapiEventBus {
     #[napi]
     pub fn push_mouse_motion(&mut self, x: u32, y: u32, target_id: u32) {
         use bettertui_engine::input::MouseButton;
-        use bettertui_engine::tree::visual::Point;
+        use bettertui_engine::tree::Point;
         let target = u64_to_node_id(target_id as u64);
         self.bus
             .push_mouse(MouseButton::None, Point::new(x as u16, y as u16), target);
@@ -2566,6 +2576,6 @@ pub fn highlight_code(code: String, language: String) -> String {
     }
 }
 
-fn color_to_hex(c: bettertui_engine::tree::color::Color) -> String {
+fn color_to_hex(c: Color) -> String {
     c.to_rgba(255).to_hex()
 }
