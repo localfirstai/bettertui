@@ -26,4 +26,4 @@ See [Architecture: Rendering Pipeline](architecture/rendering-pipeline.md) for t
 
 ## Status
 
-Implemented and tested (~22 renderer tests). Known issues documented in the architecture pipeline doc: full-buffer clear per paint and O(n) dirty scan.
+Implemented and tested. The renderer and its post-processing passes are exercised by the engine integration suite (`engine/tests/render.rs`, `engine/tests/effects.rs`). Known issues documented in the architecture pipeline doc: full-buffer clear per paint and O(n) dirty scan.

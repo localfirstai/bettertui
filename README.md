@@ -50,10 +50,12 @@ bettertui/
 │   ├── shared/        # @bettertui/shared  — type-only foundation (internal, re-exported by core & react)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
 │   │   └── crates/
-│   │       ├── engine/        # bettertui-engine (Rust library)
-│   │       └── bindings/      # bettertui-bindings (napi-rs cdylib)
+│   │       ├── engine/        # bettertui-engine (Rust library + layout_e2e bin)
+│   │       ├── widgets/      # bettertui-widgets (Rust widget framework)
+│   │       ├── terminal/     # bettertui-terminal (Rust terminal I/O, VT emulation, PTY)
+│   │       ├── bindings/     # bettertui-bindings (napi-rs cdylib)
+│   │       └── benchmark/    # bettertui-benchmark (Rust bench harness)
 │   ├── react/         # @bettertui/react   — React 19 adapter
-
 │   ├── devtools/      # @bettertui/devtools — developer tooling (implemented)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
