@@ -1580,8 +1580,10 @@ fn build_node(
         _ => node.children.to_vec(),
     };
 
-    let child_accum_tx = accum_tx - node.state.scroll_x + node.transform.translate_x;
-    let child_accum_ty = accum_ty - node.state.scroll_y + node.transform.translate_y;
+    let child_accum_tx =
+        accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
+    let child_accum_ty =
+        accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
 
     for &child_id in &child_ids {
         build_node(

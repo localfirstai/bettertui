@@ -561,6 +561,16 @@ impl Painter {
     }
 
     fn paint_text(&mut self, obj: &RenderObject, bounds: &PaintBounds) {
+        // If node has a border, the text is used as the border title, so don't draw it inside
+        let has_border = bounds.border_top > 0
+            || bounds.border_right > 0
+            || bounds.border_bottom > 0
+            || bounds.border_left > 0;
+
+        if has_border && obj.style.border_style != crate::tree::BorderStyle::None {
+            return;
+        }
+
         let text = match &obj.text {
             Some(t) => t.as_ref(),
             None => return,

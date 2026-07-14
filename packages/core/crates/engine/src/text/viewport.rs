@@ -55,12 +55,20 @@ pub fn layout_text(text: &str, config: &ViewportConfig) -> TextViewport {
         wrap_text(text, config.max_width, WrapMode::WordOrChar)
     } else if text.contains('\n') {
         let mut lines = Vec::new();
+        let mut current_offset = 0;
+        let mut is_first = true;
         for hard_line in text.split('\n') {
+            if !is_first {
+                current_offset += 1; // For the '\n' character
+            }
+            is_first = false;
+
             lines.push(WrappedLine {
-                byte_offset: 0,
+                byte_offset: current_offset,
                 byte_len: hard_line.len(),
                 visual_width: unicode::display_width(hard_line) as u16,
             });
+            current_offset += hard_line.len();
         }
         lines
     } else {

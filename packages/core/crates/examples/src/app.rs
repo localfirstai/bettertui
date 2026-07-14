@@ -372,6 +372,7 @@ impl App {
                 width: Some(Sizing::Percent(1.0)),
                 margin: Some(RectValues::new(1.0, 0.0)),
                 padding: Some(RectValues::sides(0.0, 0.0, 0.0, 1.0)),
+                border: Some(RectValues::uniform(1.0)),
                 ..LayoutProps::default()
             },
         );
@@ -417,7 +418,8 @@ impl App {
                 width: Some(Sizing::Percent(1.0)),
                 flex_grow: 1.0,
                 margin: Some(RectValues::sides(0.0, 1.0, 1.0, 1.0)),
-                padding: Some(RectValues::sides(1.0, 1.0, 1.0, 1.0)),
+                padding: Some(RectValues::sides(0.0, 1.0, 1.0, 1.0)),
+                border: Some(RectValues::uniform(1.0)),
                 ..LayoutProps::default()
             },
         );
@@ -433,7 +435,7 @@ impl App {
             LayoutProps {
                 position: Position::Absolute,
                 inset: Some(RectValues {
-                    top: Some(0.0),
+                    top: Some(-1.0),
                     right: None,
                     bottom: None,
                     left: Some(2.0),
@@ -557,7 +559,7 @@ impl App {
             } else {
                 3 + self.filter_text.len() as u16
             };
-            let cursor_y = 8;
+            let cursor_y = 9;
             self.renderer.set_cursor_position(cursor_x, cursor_y, true);
         } else {
             self.renderer.set_cursor_position(0, 0, false);
