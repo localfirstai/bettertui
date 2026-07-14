@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Consolidated end-to-end benchmarks for BetterTUI Rust crates"
+description = "Consolidated benchmarks for BetterTUI Rust crates"
 publish = false
 
 [lib]
@@ -17,4 +17,16 @@ bettertui-widgets = { path = "../widgets" }
 bettertui-terminal = { path = "../terminal" }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.7", features = ["html_reports"] }
+
+[[bench]]
+name = "engine"
+harness = false
+
+[[bench]]
+name = "widgets"
+harness = false
+
+[[bench]]
+name = "terminal"
+harness = false
