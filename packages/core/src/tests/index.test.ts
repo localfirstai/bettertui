@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Command } from "../command-buffer";
+import type { Command } from "../command";
 import {
   CommandBuffer,
   Runtime,

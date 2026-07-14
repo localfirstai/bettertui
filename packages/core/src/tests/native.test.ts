@@ -214,7 +214,7 @@ vi.mock("bettertui_bindings", () => {
     },
   };
 });
-import { CommandBuffer } from "../command-buffer";
+import { CommandBuffer } from "../command";
 import {
   createEngine,
   createEventBus,

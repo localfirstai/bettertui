@@ -10,8 +10,8 @@ import {
   prepareUpdate,
   removeChild,
   resetAfterCommit,
-} from "./command-buffer";
-import type { CommandBuffer, Instance, TextInstance } from "./command-buffer";
+} from "./command";
+import type { CommandBuffer, Instance, TextInstance } from "./command";
 
 export function createReconciler(buffer: CommandBuffer): {
   createInstance: (type: string, props: Record<string, unknown>) => Instance;

@@ -35,7 +35,7 @@ export type {
   HostConfig,
   Command,
   CommandBufferConsumer,
-} from "./command-buffer";
+} from "./command";
 export {
   CommandBuffer,
   generateId,
@@ -49,7 +49,7 @@ export {
   commitTextUpdate,
   finalizeInitialChildren,
   resetAfterCommit,
-} from "./command-buffer";
+} from "./command";
 
 // Framework-agnostic reconciler (wraps tree ops with command emission)
 export { createReconciler } from "./reconciler";

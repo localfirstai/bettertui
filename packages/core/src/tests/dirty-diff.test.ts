@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CommandBuffer } from "../command-buffer";
-import type { Command } from "../command-buffer";
+import { CommandBuffer } from "../command";
+import type { Command } from "../command";
 import { createReconciler } from "../index";
 import { Runtime } from "../runtime";
 

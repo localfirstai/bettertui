@@ -1,5 +1,5 @@
-import type { Command } from "./command-buffer";
-import { CommandBuffer } from "./command-buffer";
+import type { Command } from "./command";
+import { CommandBuffer } from "./command";
 
 export interface RuntimeOptions {
   frameIntervalMs?: number;
