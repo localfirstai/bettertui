@@ -44,6 +44,8 @@ pub struct App {
     selected_index: usize,
     filter_text: String,
     focus: Focus,
+    engine: Engine,
+    renderer: Renderer,
 }
 
 impl App {
@@ -58,6 +60,8 @@ impl App {
             selected_index: 0,
             filter_text: String::new(),
             focus: Focus::Filter,
+            engine: Engine::new(),
+            renderer: Renderer::new(80, 24),
         }
     }
 
@@ -66,6 +70,10 @@ impl App {
         terminal.enter_raw_mode()?;
         terminal.enter_alternate_screen()?;
         terminal.hide_cursor()?;
+
+        let (w, h) = terminal.size();
+        self.renderer.resize(w, h);
+        self.renderer.set_backend(Box::new(AnsiBackend::new()));
 
         let result = self.main_loop(terminal);
 
@@ -89,7 +97,9 @@ impl App {
                     }
                     self.handle_key(k, terminal)?;
                 }
-                Some(TerminalEvent::Resize(_, _)) => {}
+                Some(TerminalEvent::Resize(w, h)) => {
+                    self.renderer.resize(w, h);
+                }
                 _ => {}
             }
         }
@@ -194,8 +204,6 @@ impl App {
     fn run_example(&mut self, idx: usize, terminal: &mut Terminal) -> io::Result<()> {
         let example = &self.examples[idx];
         info!(idx, name = %example.name, "App::run_example() - running example");
-        terminal.clear()?;
-        terminal.move_cursor(0, 0)?;
 
         let mut out = io::stdout();
         let mut engine = Engine::new();
@@ -221,19 +229,23 @@ impl App {
         (example.run)(terminal)?;
 
         info!(name = %example.name, "App::run_example() - example completed");
-        terminal.clear()?;
         terminal.hide_cursor()?;
+
+        let (w, h) = terminal.size();
+        self.renderer.resize(w, h);
+        self.engine.arena_mut().clear();
+
         Ok(())
     }
 
-    fn draw(&self, terminal: &mut Terminal) -> io::Result<()> {
-        let (w, h) = terminal.size();
+    fn draw(&mut self, _terminal: &mut Terminal) -> io::Result<()> {
+        let (w, h) = _terminal.size();
         let t = self.theme;
 
-        let mut engine = Engine::new();
-        let root = engine.arena().root();
+        self.engine.arena_mut().clear();
+        let root = self.engine.arena().root();
 
-        engine.set_layout(
+        self.engine.set_layout(
             root,
             LayoutProps {
                 direction: FlexDirection::Column,
@@ -243,18 +255,20 @@ impl App {
             },
         );
 
-        let title_node = engine.create_node(NodeKind::Text);
-        engine.set_text(title_node, TITLE);
-        engine.set_style(title_node, Style::new().fg(t.title_color).bold(true));
-        engine.append_child(root, title_node).unwrap();
+        let title_node = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(title_node, TITLE);
+        self.engine
+            .set_style(title_node, Style::new().fg(t.title_color).bold(true));
+        self.engine.append_child(root, title_node).unwrap();
 
-        let spacer1 = engine.create_node(NodeKind::Text);
-        engine.set_text(spacer1, "");
-        engine.append_child(root, spacer1).unwrap();
+        let spacer1 = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(spacer1, "");
+        self.engine.append_child(root, spacer1).unwrap();
 
-        let filter_label = engine.create_node(NodeKind::Text);
-        engine.set_text(filter_label, format!("Filter: {}", self.filter_text));
-        engine.set_style(
+        let filter_label = self.engine.create_node(NodeKind::Text);
+        self.engine
+            .set_text(filter_label, format!("Filter: {}", self.filter_text));
+        self.engine.set_style(
             filter_label,
             Style::new()
                 .fg(if self.focus == Focus::Filter {
@@ -264,11 +278,11 @@ impl App {
                 })
                 .bold(true),
         );
-        engine.append_child(root, filter_label).unwrap();
+        self.engine.append_child(root, filter_label).unwrap();
 
-        let spacer2 = engine.create_node(NodeKind::Text);
-        engine.set_text(spacer2, "");
-        engine.append_child(root, spacer2).unwrap();
+        let spacer2 = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(spacer2, "");
+        self.engine.append_child(root, spacer2).unwrap();
 
         let mut prev_cat: Option<Category> = None;
         for &idx in &self.filtered {
@@ -282,24 +296,27 @@ impl App {
                     .map(|(_, l)| *l)
                     .unwrap_or("");
 
-                let cat_node = engine.create_node(NodeKind::Text);
-                engine.set_text(cat_node, format!("  [ {} ]", cat_label));
-                engine.set_style(cat_node, Style::new().fg(t.category_color).bold(true));
-                engine.append_child(root, cat_node).unwrap();
+                let cat_node = self.engine.create_node(NodeKind::Text);
+                self.engine
+                    .set_text(cat_node, format!("  [ {} ]", cat_label));
+                self.engine
+                    .set_style(cat_node, Style::new().fg(t.category_color).bold(true));
+                self.engine.append_child(root, cat_node).unwrap();
                 prev_cat = Some(ex.category);
             }
 
             let abs_idx = self.filtered.iter().position(|&i| i == idx).unwrap_or(0);
             let is_sel = abs_idx == self.selected_index;
 
-            let item_node = engine.create_node(NodeKind::Text);
+            let item_node = self.engine.create_node(NodeKind::Text);
             let prefix = if is_sel && self.focus == Focus::List {
                 "  ▶ "
             } else {
                 "    "
             };
-            engine.set_text(item_node, format!("{}{}", prefix, ex.name));
-            engine.set_style(
+            self.engine
+                .set_text(item_node, format!("{}{}", prefix, ex.name));
+            self.engine.set_style(
                 item_node,
                 if is_sel && self.focus == Focus::List {
                     Style::new()
@@ -312,45 +329,42 @@ impl App {
                     Style::new().fg(t.text_color)
                 },
             );
-            engine.append_child(root, item_node).unwrap();
+            self.engine.append_child(root, item_node).unwrap();
         }
 
-        let spacer3 = engine.create_node(NodeKind::Text);
-        engine.set_text(spacer3, "");
-        engine.append_child(root, spacer3).unwrap();
+        let spacer3 = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(spacer3, "");
+        self.engine.append_child(root, spacer3).unwrap();
 
         if let Some(&idx) = self.filtered.get(
             self.selected_index
                 .min(self.filtered.len().saturating_sub(1)),
         ) {
             let desc = &self.examples[idx].description;
-            let desc_node = engine.create_node(NodeKind::Text);
-            engine.set_text(desc_node, format!("  {}", desc));
-            engine.set_style(desc_node, Style::new().fg(t.description_color));
-            engine.append_child(root, desc_node).unwrap();
+            let desc_node = self.engine.create_node(NodeKind::Text);
+            self.engine.set_text(desc_node, format!("  {}", desc));
+            self.engine
+                .set_style(desc_node, Style::new().fg(t.description_color));
+            self.engine.append_child(root, desc_node).unwrap();
         }
 
-        let spacer4 = engine.create_node(NodeKind::Text);
-        engine.set_text(spacer4, "");
-        engine.append_child(root, spacer4).unwrap();
+        let spacer4 = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(spacer4, "");
+        self.engine.append_child(root, spacer4).unwrap();
 
-        let help_node = engine.create_node(NodeKind::Text);
-        engine.set_text(
+        let help_node = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(
             help_node,
             "Tab: switch  |  ↑↓/jk: navigate  |  Enter: run  |  /: filter  |  Ctrl+C: quit",
         );
-        engine.set_style(help_node, Style::new().fg(t.instructions_color));
-        engine.append_child(root, help_node).unwrap();
+        self.engine
+            .set_style(help_node, Style::new().fg(t.instructions_color));
+        self.engine.append_child(root, help_node).unwrap();
 
-        engine.begin_frame();
-        engine.commit_frame();
+        self.engine.begin_frame();
+        self.engine.commit_frame();
 
-        terminal.clear()?;
-        terminal.move_cursor(0, 0)?;
-
-        let mut renderer = Renderer::new(w, h);
-        renderer.set_backend(Box::new(AnsiBackend::new()));
-        let frame = renderer.render_full(engine.arena_mut());
+        let frame = self.renderer.render(self.engine.arena_mut());
 
         let mut out = io::stdout();
         out.write_all(&frame.output_data)?;

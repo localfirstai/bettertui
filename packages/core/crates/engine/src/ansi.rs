@@ -18,6 +18,9 @@ impl Default for AnsiEncoder {
     }
 }
 
+pub const SYNC_SET: &[u8] = b"\x1b[?2026h";
+pub const SYNC_RESET: &[u8] = b"\x1b[?2026l";
+
 impl AnsiEncoder {
     pub fn new() -> Self {
         Self {
@@ -27,6 +30,7 @@ impl AnsiEncoder {
 
     pub fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
         self.buffer.clear();
+        self.buffer.extend_from_slice(SYNC_SET);
         self.hide_cursor();
 
         for region in regions {
@@ -34,6 +38,7 @@ impl AnsiEncoder {
         }
 
         self.show_cursor();
+        self.buffer.extend_from_slice(SYNC_RESET);
     }
 
     pub fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
