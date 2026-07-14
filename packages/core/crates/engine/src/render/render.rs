@@ -3,6 +3,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use tracing::{debug, info};
+
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::layout::build_render_tree_with_viewport;
@@ -980,6 +982,7 @@ impl Default for Renderer {
 
 impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
+        info!(width, height, "Renderer::new() - creating renderer");
         Self {
             width,
             height,
@@ -998,6 +1001,10 @@ impl Renderer {
     }
 
     pub fn with_backend(width: u16, height: u16, backend: Box<dyn RenderBackend>) -> Self {
+        info!(
+            width,
+            height, "Renderer::with_backend() - creating renderer with custom backend"
+        );
         Self {
             width,
             height,
@@ -1023,6 +1030,7 @@ impl Renderer {
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
+        info!(width, height, "Renderer::resize() - resizing framebuffer");
         self.width = width;
         self.height = height;
         self.painter.resize(width, height);
@@ -1041,12 +1049,22 @@ impl Renderer {
     pub fn render(&mut self, arena: &mut NodeArena) -> RenderFrame {
         self.generation += 1;
 
-        // Frame suppression: if nothing changed and no full repaint needed, skip
         let change_count = arena.change_count();
         if !self.needs_full_repaint && change_count == self.last_change_count {
+            debug!(
+                generation = self.generation,
+                "Renderer::render() - skipping frame (no changes)"
+            );
             return RenderFrame::new_empty(self.width, self.height);
         }
         self.last_change_count = change_count;
+
+        debug!(
+            generation = self.generation,
+            node_count = arena.len(),
+            needs_full_repaint = self.needs_full_repaint,
+            "Renderer::render() - rendering frame"
+        );
 
         self.layout_sync.sync_full(arena);
 
@@ -1102,8 +1120,14 @@ impl Renderer {
 
         self.scheduler.end_frame();
 
-        // Clear dirty flags so next frame only updates changed nodes
         arena.clear_dirty_flags();
+
+        debug!(
+            generation = self.generation,
+            dirty_region_count = dirty_regions.len(),
+            output_bytes = self.backend.finish().len(),
+            "Renderer::render() - frame complete"
+        );
 
         RenderFrame {
             output_data: self.backend.finish().to_vec(),

@@ -14,6 +14,7 @@ use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::KeyModifiers;
+use tracing::{debug, info};
 
 use crate::examples::{self, Category, Example};
 use crate::theme::Theme;
@@ -47,6 +48,7 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
+        info!("App::new() - creating application");
         let all = examples::all();
         let indices: Vec<usize> = (0..all.len()).collect();
         Self {
@@ -60,12 +62,14 @@ impl App {
     }
 
     pub fn run(&mut self, terminal: &mut Terminal) -> io::Result<()> {
+        info!("App::run() - starting application main loop");
         terminal.enter_raw_mode()?;
         terminal.enter_alternate_screen()?;
         terminal.hide_cursor()?;
 
         let result = self.main_loop(terminal);
 
+        info!("App::run() - application exiting");
         terminal.show_cursor()?;
         let _ = terminal.leave_alternate_screen();
         let _ = terminal.leave_raw_mode();
@@ -73,12 +77,14 @@ impl App {
     }
 
     fn main_loop(&mut self, terminal: &mut Terminal) -> io::Result<()> {
+        debug!("App::main_loop() - entering main loop");
         loop {
             self.draw(terminal)?;
 
             match terminal.poll_event(std::time::Duration::from_millis(80))? {
                 Some(TerminalEvent::Key(k)) => {
                     if k.code == Key::Char('c') && k.modifiers.contains(KeyModifiers::CONTROL) {
+                        info!("App::main_loop() - Ctrl+C received, exiting");
                         return Ok(());
                     }
                     self.handle_key(k, terminal)?;
@@ -90,6 +96,7 @@ impl App {
     }
 
     fn handle_key(&mut self, key: KeyInput, terminal: &mut Terminal) -> io::Result<()> {
+        debug!(?key, "App::handle_key() - processing key event");
         match key.code {
             Key::Tab | Key::Char('\t') => {
                 self.focus = if self.focus == Focus::Filter {
@@ -186,6 +193,7 @@ impl App {
 
     fn run_example(&mut self, idx: usize, terminal: &mut Terminal) -> io::Result<()> {
         let example = &self.examples[idx];
+        info!(idx, name = %example.name, "App::run_example() - running example");
         terminal.clear()?;
         terminal.move_cursor(0, 0)?;
 
@@ -212,6 +220,7 @@ impl App {
 
         (example.run)(terminal)?;
 
+        info!(name = %example.name, "App::run_example() - example completed");
         terminal.clear()?;
         terminal.hide_cursor()?;
         Ok(())

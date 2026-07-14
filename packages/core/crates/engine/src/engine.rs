@@ -9,6 +9,8 @@
 
 use std::collections::HashMap;
 
+use tracing::{debug, info, warn};
+
 use crate::protocol::{Command, CommandProcessor, CommandResult};
 use crate::tree::{NodeArena, NodeId, RenderNode};
 
@@ -46,6 +48,7 @@ impl Default for Engine {
 impl Engine {
     /// Creates a new engine with a fresh tree containing only a root node.
     pub fn new() -> Self {
+        info!("Engine::new() - creating new engine instance");
         Self {
             processor: CommandProcessor::new(),
             frame_count: 0,
@@ -64,6 +67,10 @@ impl Engine {
 
     /// Processes a batch of commands.
     pub fn process_commands(&mut self, commands: Vec<Command>) -> CommandResult {
+        debug!(
+            command_count = commands.len(),
+            "Engine::process_commands() - processing batch"
+        );
         self.processor.process_batch(commands)
     }
 
@@ -72,7 +79,15 @@ impl Engine {
         &mut self,
         command: Command,
     ) -> Result<(), crate::protocol::CommandError> {
-        self.processor.process_single(command)
+        debug!(
+            ?command,
+            "Engine::process_command() - processing single command"
+        );
+        let result = self.processor.process_single(command);
+        if let Err(ref e) = result {
+            warn!(error = ?e, "Engine::process_command() - command failed");
+        }
+        result
     }
 
     /// Returns the number of nodes in the tree.
@@ -98,6 +113,10 @@ impl Engine {
     /// Begins a new frame, incrementing the frame counter.
     pub fn begin_frame(&mut self) {
         self.frame_count += 1;
+        debug!(
+            frame_id = self.frame_count,
+            "Engine::begin_frame() - starting frame"
+        );
         let _ = self.processor.process_single(Command::BeginFrame {
             frame_id: self.frame_count,
         });
@@ -105,6 +124,10 @@ impl Engine {
 
     /// Commits the current frame.
     pub fn commit_frame(&mut self) {
+        debug!(
+            frame_id = self.frame_count,
+            "Engine::commit_frame() - committing frame"
+        );
         let _ = self.processor.process_single(Command::CommitFrame {
             frame_id: self.frame_count,
         });
@@ -128,7 +151,9 @@ impl Engine {
     /// Creates a new node and returns its ID.
     pub fn create_node(&mut self, kind: crate::tree::NodeKind) -> NodeId {
         let node = RenderNode::new(kind);
-        self.arena_mut().insert(node)
+        let id = self.arena_mut().insert(node);
+        debug!(node_id = ?id, kind = ?kind, "Engine::create_node() - created node");
+        id
     }
 
     /// Appends a child to a parent node.
@@ -137,12 +162,14 @@ impl Engine {
         parent: NodeId,
         child: NodeId,
     ) -> Result<(), crate::protocol::CommandError> {
+        debug!(?parent, ?child, "Engine::append_child() - appending child");
         self.processor
             .process_single(Command::AppendChild { parent, child })
     }
 
     /// Removes a node and its descendants.
     pub fn remove_node(&mut self, id: NodeId) {
+        debug!(?id, "Engine::remove_node() - removing node");
         let _ = self.processor.process_single(Command::RemoveNode { id });
     }
 

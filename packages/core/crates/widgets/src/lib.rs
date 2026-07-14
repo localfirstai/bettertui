@@ -23,6 +23,8 @@ pub use text::*;
 pub use theme::{Theme, ThemeBorders, ThemeColors, ThemeSpacing};
 pub use tree::WidgetTree;
 
+use tracing::{debug, info, warn};
+
 use bettertui_engine::input::Event;
 use bettertui_engine::input::EventResult;
 use bettertui_engine::tree::NodeId;
@@ -73,6 +75,7 @@ impl Default for WidgetHost {
 
 impl WidgetHost {
     pub fn new() -> Self {
+        info!("WidgetHost::new() - creating widget host");
         Self {
             tree: WidgetTree::new(),
             registry: WidgetRegistry::new(),
@@ -86,6 +89,7 @@ impl WidgetHost {
         kind: &'static str,
         factory: impl Fn() -> Box<dyn Widget> + Send + Sync + 'static,
     ) {
+        debug!(kind, "WidgetHost::register() - registering widget factory");
         self.registry.register(kind, factory);
     }
 
@@ -96,14 +100,22 @@ impl WidgetHost {
         self.widgets.push(widget);
         self.tree.insert(node_id, node_id.node_id(), kind);
         self.widget_map.insert(node_id, idx);
+        info!(?node_id, kind, "WidgetHost::mount() - widget mounted");
         node_id
     }
 
     pub fn unmount(&mut self, widget_id: WidgetId, ctx: &mut WidgetContext) {
         if let Some(&idx) = self.widget_map.get(&widget_id) {
+            let kind = self.widgets[idx].kind();
+            debug!(
+                ?widget_id,
+                kind, "WidgetHost::unmount() - unmounting widget"
+            );
             self.widgets[idx].destroy(widget_id, ctx);
             self.tree.remove(widget_id);
             self.widget_map.remove(&widget_id);
+        } else {
+            warn!(?widget_id, "WidgetHost::unmount() - widget not found");
         }
     }
 
@@ -114,14 +126,24 @@ impl WidgetHost {
         event: &Event,
     ) -> EventResult {
         if let Some(&idx) = self.widget_map.get(&widget_id) {
+            let kind = self.widgets[idx].kind();
+            debug!(
+                ?widget_id,
+                kind,
+                ?event,
+                "WidgetHost::handle_event() - dispatching event"
+            );
             self.widgets[idx].handle_event(widget_id, ctx, event)
         } else {
+            warn!(?widget_id, "WidgetHost::handle_event() - widget not found");
             EventResult::Ignored
         }
     }
 
     pub fn update(&mut self, widget_id: WidgetId, ctx: &mut WidgetContext) {
         if let Some(&idx) = self.widget_map.get(&widget_id) {
+            let kind = self.widgets[idx].kind();
+            debug!(?widget_id, kind, "WidgetHost::update() - updating widget");
             self.widgets[idx].update(widget_id, ctx);
         }
     }

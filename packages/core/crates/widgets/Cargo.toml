@@ -15,6 +15,7 @@ bettertui-engine = { path = "../engine" }
 slotmap.workspace = true
 unicode-width.workspace = true
 unicode-segmentation.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }

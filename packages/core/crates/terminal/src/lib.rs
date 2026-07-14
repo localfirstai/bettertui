@@ -34,6 +34,7 @@ use crossterm::{
     terminal::{self, ClearType},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use tracing::{debug, info};
 
 pub struct Terminal {
     width: u16,
@@ -51,6 +52,7 @@ impl Default for Terminal {
 impl Terminal {
     pub fn new() -> Self {
         let (w, h) = terminal::size().unwrap_or((80, 24));
+        info!(width = w, height = h, "Terminal::new() - creating terminal");
         Self {
             width: w,
             height: h,
@@ -67,11 +69,17 @@ impl Terminal {
         let (w, h) = terminal::size()?;
         self.width = w;
         self.height = h;
+        debug!(
+            width = w,
+            height = h,
+            "Terminal::refresh_size() - size updated"
+        );
         Ok((w, h))
     }
 
     pub fn enter_raw_mode(&mut self) -> io::Result<()> {
         if !self.raw_mode {
+            info!("Terminal::enter_raw_mode() - entering raw mode");
             enable_raw_mode()?;
             self.raw_mode = true;
         }
@@ -80,6 +88,7 @@ impl Terminal {
 
     pub fn leave_raw_mode(&mut self) -> io::Result<()> {
         if self.raw_mode {
+            info!("Terminal::leave_raw_mode() - leaving raw mode");
             disable_raw_mode()?;
             self.raw_mode = false;
         }
@@ -88,6 +97,7 @@ impl Terminal {
 
     pub fn enter_alternate_screen(&mut self) -> io::Result<()> {
         if !self.alternate_screen {
+            info!("Terminal::enter_alternate_screen() - entering alternate screen");
             execute!(stdout(), terminal::EnterAlternateScreen)?;
             self.alternate_screen = true;
         }
@@ -96,6 +106,7 @@ impl Terminal {
 
     pub fn leave_alternate_screen(&mut self) -> io::Result<()> {
         if self.alternate_screen {
+            info!("Terminal::leave_alternate_screen() - leaving alternate screen");
             execute!(stdout(), terminal::LeaveAlternateScreen)?;
             self.alternate_screen = false;
         }
@@ -137,28 +148,42 @@ impl Terminal {
     pub fn poll_event(&self, timeout: std::time::Duration) -> io::Result<Option<TerminalEvent>> {
         if event::poll(timeout)? {
             match event::read()? {
-                Event::Key(key_event) => Ok(Some(TerminalEvent::Key(KeyInput {
-                    code: match key_event.code {
-                        KeyCode::Char(c) => Key::Char(c),
-                        KeyCode::Enter => Key::Enter,
-                        KeyCode::Esc => Key::Esc,
-                        KeyCode::Backspace => Key::Backspace,
-                        KeyCode::Tab => Key::Tab,
-                        KeyCode::Up => Key::Up,
-                        KeyCode::Down => Key::Down,
-                        KeyCode::Left => Key::Left,
-                        KeyCode::Right => Key::Right,
-                        KeyCode::Home => Key::Home,
-                        KeyCode::End => Key::End,
-                        KeyCode::PageUp => Key::PageUp,
-                        KeyCode::PageDown => Key::PageDown,
-                        KeyCode::F(n) => Key::F(n),
-                        _ => Key::Other,
-                    },
-                    modifiers: KeyModifiers::from_bits_truncate(key_event.modifiers.bits()),
-                }))),
-                Event::Mouse(mouse) => Ok(Some(TerminalEvent::Mouse(mouse))),
-                Event::Resize(w, h) => Ok(Some(TerminalEvent::Resize(w, h))),
+                Event::Key(key_event) => {
+                    let key_input = KeyInput {
+                        code: match key_event.code {
+                            KeyCode::Char(c) => Key::Char(c),
+                            KeyCode::Enter => Key::Enter,
+                            KeyCode::Esc => Key::Esc,
+                            KeyCode::Backspace => Key::Backspace,
+                            KeyCode::Tab => Key::Tab,
+                            KeyCode::Up => Key::Up,
+                            KeyCode::Down => Key::Down,
+                            KeyCode::Left => Key::Left,
+                            KeyCode::Right => Key::Right,
+                            KeyCode::Home => Key::Home,
+                            KeyCode::End => Key::End,
+                            KeyCode::PageUp => Key::PageUp,
+                            KeyCode::PageDown => Key::PageDown,
+                            KeyCode::F(n) => Key::F(n),
+                            _ => Key::Other,
+                        },
+                        modifiers: KeyModifiers::from_bits_truncate(key_event.modifiers.bits()),
+                    };
+                    debug!(?key_input, "Terminal::poll_event() - key event received");
+                    Ok(Some(TerminalEvent::Key(key_input)))
+                }
+                Event::Mouse(mouse) => {
+                    debug!(?mouse, "Terminal::poll_event() - mouse event received");
+                    Ok(Some(TerminalEvent::Mouse(mouse)))
+                }
+                Event::Resize(w, h) => {
+                    debug!(
+                        width = w,
+                        height = h,
+                        "Terminal::poll_event() - resize event received"
+                    );
+                    Ok(Some(TerminalEvent::Resize(w, h)))
+                }
                 _ => Ok(None),
             }
         } else {
@@ -169,6 +194,7 @@ impl Terminal {
 
 impl Drop for Terminal {
     fn drop(&mut self) {
+        info!("Terminal::drop() - cleaning up terminal state");
         let _ = self.leave_alternate_screen();
         let _ = self.leave_raw_mode();
         let _ = self.show_cursor();
