@@ -16,8 +16,7 @@
   },
   "dependencies": {
     "@bettertui/core": "workspace:*",
-    "@bettertui/shared": "workspace:*",
-    "@bettertui/themes": "workspace:*"
+    "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",

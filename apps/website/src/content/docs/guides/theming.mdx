@@ -3,96 +3,87 @@ title: Theming
 description: Customize the look of your terminal application
 ---
 
-BetterTUI uses CSS variables for theming. Dark mode and custom palettes are built in.
+BetterTUI uses a typed theme system defined in `@bettertui/shared` and the Rust engine.
+The React `Provider` accepts `Partial<Theme>` to customize colors, spacing, and borders.
 
 ## Default Theme
 
-```css
-:root {
-  --color-primary: #6366f1;
-  --color-accent: #06b6d4;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-text: #0f172a;
-  --color-text-muted: #475569;
-  --color-bg: #ffffff;
-  --color-bg-muted: #f8fafc;
-  --color-border: #e2e8f0;
+The default dark theme matches the engine's `Theme::dark()` preset:
+
+```tsx
+import { Provider, useTheme } from '@bettertui/react';
+
+function App() {
+  return (
+    <Provider>
+      <MyApp />
+    </Provider>
+  );
 }
 ```
+
+Provider is optional — omitting it uses the default dark theme.
 
 ## Custom Theme
 
-```css
-:root {
-  --color-primary: #8b5cf6;
-  --color-accent: #ec4899;
-  --color-bg: #0f172a;
-  --color-text: #f8fafc;
+Pass partial overrides to `Provider`:
+
+```tsx
+import { Provider } from '@bettertui/react';
+import type { Theme } from '@bettertui/shared';
+
+const dracula: Partial<Theme> = {
+  colors: {
+    background: '#282a36',
+    surface: '#44475a',
+    primary: '#bd93f9',
+    text: '#f8f8f2',
+    border: '#6272a4',
+  },
+};
+
+function App() {
+  return (
+    <Provider theme={dracula}>
+      <MyApp />
+    </Provider>
+  );
 }
 ```
 
-## Dark Mode
+## Dynamic Themes
 
-Dark mode is automatic based on terminal preferences, or toggle manually:
+Use `setTheme` from `useTheme()` to apply partial overrides:
 
 ```tsx
-import { useTheme } from '@bettertui/react';
+import { Provider, useTheme } from '@bettertui/react';
 
 function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <Button onPress={toggleTheme}>
-      Current: {theme}
+    <Button onPress={() => setTheme({ colors: { primary: '#ff0000' } })}>
+      Red Mode
     </Button>
   );
 }
 ```
 
-## Preset Themes
-
-```tsx
-import { ThemeProvider } from '@bettertui/react';
-import { draculaTheme } from '@bettertui/themes';
-
-function App() {
-  return (
-    <ThemeProvider theme={draculaTheme}>
-      <MyApp />
-    </ThemeProvider>
-  );
-}
-```
-
-## Available Themes
-
-| Theme | Description |
-|-------|-------------|
-| `default` | Clean light theme |
-| `dark` | Dark variant |
-| `dracula` | Dracula color scheme |
-| `monokai` | Monokai color scheme |
-| `nord` | Nord color scheme |
-| `solarized` | Solarized color scheme |
+`setTheme(partial)` deep-merges only the provided fields into the current theme.
 
 ## Customizing Components
 
-Override component styles via theme:
+Component styling is driven by the semantic color tokens. Customize any token
+to affect all components that use it:
 
 ```tsx
-const myTheme = {
-  ...defaultTheme,
-  components: {
-    Button: {
-      background: '#6366f1',
-      foreground: '#ffffff',
-      hoverBackground: '#4f46e5',
-    },
-    Text: {
-      muted: '#94a3b8',
-    },
+const myTheme: Partial<Theme> = {
+  colors: {
+    primary: '#6366f1',
+    accent: '#06b6d4',
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
   },
 };
 ```

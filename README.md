@@ -53,7 +53,7 @@ bettertui/
 │   │       ├── engine/        # bettertui-engine (Rust library)
 │   │       └── bindings/      # bettertui-bindings (napi-rs cdylib)
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── themes/        # @bettertui/themes  — theme defs + factory
+
 │   ├── devtools/      # @bettertui/devtools — devtools stub
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
@@ -77,7 +77,7 @@ bettertui/
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
 | `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
-| `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
+
 | `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
 

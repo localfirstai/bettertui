@@ -11,7 +11,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
 | `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
 | `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
-| `@bettertui/themes` | 🟡 Partial | `defaultTheme` + `createTheme`; no preset themes |
+
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
@@ -42,7 +42,7 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 - [x] React reconciler host config producing commands
 - [x] `@bettertui/core` command buffer + runtime
 - [x] `@bettertui/core` native bridge (factories, runtime, event loop; merged from `@bettertui/native`)
-- [x] `@bettertui/themes` default theme + factory
+
 
 ## In progress
 

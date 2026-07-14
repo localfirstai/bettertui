@@ -139,8 +139,10 @@ export interface Style {
   inverse?: boolean;
 }
 
+export type BorderStyleKind = "none" | "solid" | "dashed" | "dotted" | "double";
+
 export interface BorderStyle {
-  style: "none" | "single" | "double" | "rounded" | "thick" | "block";
+  style: BorderStyleKind;
   fg?: ColorValue;
 }
 
@@ -166,6 +168,8 @@ export interface ThemeColors {
   warning: string;
   success: string;
   info: string;
+  scrollbar: string;
+  scrollbarThumb: string;
 }
 
 export interface ThemeSpacing {

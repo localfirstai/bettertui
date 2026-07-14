@@ -1,51 +1,64 @@
 # Theming
 
-Theming lives in `@bettertui/themes`. It is a small, implemented package built on the `Theme` type from `@bettertui/shared`.
+Theming is built into the Rust engine (`packages/core/crates/widgets/src/theme.rs`)
+and exposed through `@bettertui/shared` types. The React `Provider` accepts
+`Partial<Theme>` directly.
 
-## API
+## Types
 
-```ts
-import { defaultTheme, createTheme } from "@bettertui/themes";
-import type { Theme } from "@bettertui/shared";
-```
-
-| Export | Type | Notes |
-|--------|------|-------|
-| `defaultTheme` | `Theme` | name `"default"`; colors `primary, secondary, success, warning, danger, background, foreground, border`; borders `{ style: "single", fg: "#666666" }` |
-| `createTheme(overrides: Partial<Theme>): Theme` | function | shallow-merges over `defaultTheme` |
-| `Theme` | type (re-export) | from `@bettertui/shared` |
+| Export | Source | Notes |
+|--------|--------|-------|
+| `Theme` | `@bettertui/shared` | Also re-exported by `@bettertui/react` |
+| `ThemeColors` | `@bettertui/shared` | 21 semantic color tokens |
+| `ThemeSpacing` | `@bettertui/shared` | 8 spacing values |
+| `BorderStyle` | `@bettertui/shared` | Default border style + color |
 
 ## Usage
 
-```ts
-import { createTheme } from "@bettertui/themes";
+```tsx
+import { Provider } from "@bettertui/react";
+import type { Theme } from "@bettertui/shared";
 
-const dracula = createTheme({
+const dracula: Partial<Theme> = {
   colors: {
     background: "#282a36",
-    foreground: "#f8f8f2",
+    surface: "#44475a",
     primary: "#bd93f9",
-    border: "#44475a",
+    text: "#f8f8f2",
+    border: "#6272a4",
   },
-});
-```
-
-## React side
-
-`@bettertui/react` provides its own richer `Theme`/`ThemeColors`/`ThemeSpacing` shape via `Provider` and `useTheme()`. That is distinct from the shared `Theme` type — the React theme is a component-authored token set, while `@bettertui/themes` deals with the engine's `Theme` (colors + borders). When integrating, map the React theme onto the engine `Theme` at the render boundary.
-
-```tsx
-import { Provider, useTheme } from "@bettertui/react";
+};
 
 function App() {
   return (
-    <Provider>
+    <Provider theme={dracula}>
       <Box>...</Box>
     </Provider>
   );
 }
 ```
 
+## React Provider
+
+`Provider` accepts an optional `theme: Partial<Theme>` prop. If omitted, the default dark
+theme is used. `useTheme()` returns `{ theme, setTheme }` where `setTheme(partial)`
+deep-merges the partial overrides into the current theme.
+
+```tsx
+import { Provider, useTheme } from "@bettertui/react";
+
+function ThemeSwitcher() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <Button onClick={() => setTheme({ colors: { primary: "#ff0000" } })}>
+      Red Primary
+    </Button>
+  );
+}
+```
+
 ## Status
 
-Themes are partially implemented: the default theme and factory exist, but built-in presets (light, high-contrast) are not yet shipped.
+The default dark theme is built in. The React Provider supports arbitrary overrides.
+Built-in presets (light, high-contrast) are not yet shipped.

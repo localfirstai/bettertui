@@ -10,7 +10,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
 | `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks+keymap real; 53 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
-| `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
+| `@bettertui/themes` | [themes.md](packages/themes.md) | **Removed** — absorbed into `@bettertui/shared` + Rust engine |
 | `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
 
@@ -30,5 +30,5 @@ This is the index for per-package API docs. Every entry below is generated from 
 ## Cross-cutting notes
 
 - `@bettertui/core` re-exports `shared` types and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
-- `@bettertui/react` `Theme` (hook-authored) differs from `@bettertui/shared` `Theme` (engine colors+borders) — do not conflate them.
+- `@bettertui/react`'s Theme, ThemeColors, and ThemeSpacing are the same types as @bettertui/shared's — re-exported for consumer convenience.
 - `@bettertui/core`'s native bridge depends on an **unbuilt** `bettertui_bindings` addon (not declared in package.json).

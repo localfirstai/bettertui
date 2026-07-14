@@ -19,7 +19,7 @@ graph TD
     Engine --> Term[(crossterm / portable-pty)]
     Core --> Shared[@bettertui/shared]
     React --> Shared
-    Themes[@bettertui/themes] --> Shared
+
 ```
 
 - `bettertui-engine` never imports any JS framework.
@@ -83,7 +83,7 @@ graph TD
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
 | `@bettertui/react` | React adapter (reconciler + hooks + 53 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
-| `@bettertui/themes` | Theme defs + factory | ✅ |
+
 | `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ |
 

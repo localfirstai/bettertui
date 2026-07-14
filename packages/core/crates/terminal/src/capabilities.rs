@@ -1025,3 +1025,436 @@ impl Default for WindowMetrics {
         Self::detect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── TerminalBrand ──
+
+    #[test]
+    fn brand_name_all_variants() {
+        assert_eq!(TerminalBrand::Ghostty.name(), "Ghostty");
+        assert_eq!(TerminalBrand::Kitty.name(), "Kitty");
+        assert_eq!(TerminalBrand::WezTerm.name(), "WezTerm");
+        assert_eq!(TerminalBrand::Alacritty.name(), "Alacritty");
+        assert_eq!(TerminalBrand::Foot.name(), "Foot");
+        assert_eq!(TerminalBrand::ITerm2.name(), "iTerm2");
+        assert_eq!(TerminalBrand::WindowsTerminal.name(), "Windows Terminal");
+        assert_eq!(TerminalBrand::VSCodeTerminal.name(), "VSCode Terminal");
+        assert_eq!(TerminalBrand::Tmux.name(), "tmux");
+        assert_eq!(TerminalBrand::GnuScreen.name(), "GNU Screen");
+        assert_eq!(TerminalBrand::Warp.name(), "Warp");
+        assert_eq!(TerminalBrand::Unknown.name(), "Unknown");
+    }
+
+    #[test]
+    fn brand_is_known() {
+        assert!(TerminalBrand::Kitty.is_known());
+        assert!(!TerminalBrand::Unknown.is_known());
+    }
+
+    #[test]
+    fn brand_display() {
+        assert_eq!(format!("{}", TerminalBrand::Ghostty), "Ghostty");
+        assert_eq!(format!("{}", TerminalBrand::Unknown), "Unknown");
+    }
+
+    #[test]
+    fn brand_detect_unknown_when_no_env() {
+        // No env vars set → Unknown
+        assert_eq!(TerminalBrand::detect(), TerminalBrand::Unknown);
+    }
+
+    // ── brand_from_da2_model ──
+
+    #[test]
+    fn da2_model_mapping() {
+        assert_eq!(brand_from_da2_model(10), TerminalBrand::Kitty);
+        assert_eq!(brand_from_da2_model(16), TerminalBrand::Kitty);
+        assert_eq!(brand_from_da2_model(17), TerminalBrand::Alacritty);
+        assert_eq!(brand_from_da2_model(18), TerminalBrand::Ghostty);
+        assert_eq!(brand_from_da2_model(19), TerminalBrand::WezTerm);
+        assert_eq!(brand_from_da2_model(20), TerminalBrand::ITerm2);
+        assert_eq!(brand_from_da2_model(21), TerminalBrand::Foot);
+        assert_eq!(brand_from_da2_model(22), TerminalBrand::WindowsTerminal);
+        assert_eq!(brand_from_da2_model(23), TerminalBrand::VSCodeTerminal);
+        assert_eq!(brand_from_da2_model(0), TerminalBrand::Unknown);
+        assert_eq!(brand_from_da2_model(999), TerminalBrand::Unknown);
+    }
+
+    // ── FeatureMatrix ──
+
+    #[test]
+    fn feature_default_values() {
+        let f = FeatureMatrix::default();
+        assert!(f.true_color);
+        assert!(f.bracketed_paste);
+        assert!(f.focus_events);
+        assert!(!f.kitty_keyboard);
+        assert!(!f.osc52);
+        assert!(f.da1_attributes.is_empty());
+    }
+
+    #[test]
+    fn feature_default_for_brand_kitty() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Kitty);
+        assert!(f.kitty_keyboard);
+        assert!(f.csi_u);
+        assert!(f.kitty_graphics);
+        assert!(f.osc52);
+        assert!(!f.sixel);
+    }
+
+    #[test]
+    fn feature_default_for_brand_ghostty() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Ghostty);
+        assert!(f.kitty_keyboard);
+        assert!(f.kitty_graphics);
+        assert!(f.osc52);
+    }
+
+    #[test]
+    fn feature_default_for_brand_wezterm() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::WezTerm);
+        assert!(f.kitty_keyboard);
+        assert!(f.iterm_images);
+        assert!(f.sixel);
+        assert!(f.osc52);
+    }
+
+    #[test]
+    fn feature_default_for_brand_alacritty() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Alacritty);
+        assert!(!f.kitty_keyboard);
+        assert!(!f.kitty_graphics);
+    }
+
+    #[test]
+    fn feature_default_for_brand_foot() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Foot);
+        assert!(f.sixel);
+    }
+
+    #[test]
+    fn feature_default_for_brand_iterm2() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::ITerm2);
+        assert!(f.iterm_images);
+        assert!(f.kitty_keyboard);
+    }
+
+    #[test]
+    fn feature_default_for_brand_tmux() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Tmux);
+        assert!(f.osc52);
+    }
+
+    #[test]
+    fn feature_default_for_brand_unknown() {
+        let f = FeatureMatrix::default_for_brand(TerminalBrand::Unknown);
+        // Should use default values only
+        assert!(!f.kitty_keyboard);
+        assert!(!f.kitty_graphics);
+    }
+
+    #[test]
+    fn feature_all_true_color() {
+        let f = FeatureMatrix::default();
+        assert!(f.all_true_color());
+    }
+
+    #[test]
+    fn feature_all_input_features() {
+        let f = FeatureMatrix {
+            kitty_keyboard: true,
+            csi_u: true,
+            ..Default::default()
+        };
+        assert!(f.all_input_features());
+        let f2 = FeatureMatrix::default();
+        assert!(!f2.all_input_features());
+    }
+
+    #[test]
+    fn feature_all_clipboard_features() {
+        let f = FeatureMatrix {
+            osc52: true,
+            osc8: true,
+            ..Default::default()
+        };
+        assert!(f.all_clipboard_features());
+    }
+
+    #[test]
+    fn feature_any_advanced_input() {
+        let f = FeatureMatrix::default();
+        assert!(!f.any_advanced_input());
+        let f2 = FeatureMatrix {
+            kitty_keyboard: true,
+            ..Default::default()
+        };
+        assert!(f2.any_advanced_input());
+    }
+
+    // ── ColorSupport ──
+
+    #[test]
+    fn color_support_max_colors() {
+        assert_eq!(ColorSupport::TrueColor.max_colors(), 16_777_216);
+        assert_eq!(ColorSupport::Color256.max_colors(), 256);
+        assert_eq!(ColorSupport::Color16.max_colors(), 16);
+        assert_eq!(ColorSupport::Color8.max_colors(), 8);
+        assert_eq!(ColorSupport::Monochrome.max_colors(), 0);
+    }
+
+    #[test]
+    fn color_support_supports_rgb() {
+        assert!(ColorSupport::TrueColor.supports_rgb());
+        assert!(!ColorSupport::Color256.supports_rgb());
+    }
+
+    // ── RenderCapabilities ──
+
+    #[test]
+    fn render_supports_color() {
+        let r = RenderCapabilities {
+            color_support: ColorSupport::TrueColor,
+            true_color: true,
+            rgb: true,
+            palette: true,
+        };
+        assert!(r.supports_color(256));
+        assert!(!r.supports_color(16_777_217));
+    }
+
+    // ── UnicodeVersion ──
+
+    #[test]
+    fn unicode_version_number() {
+        assert_eq!(UnicodeVersion::Unicode8.version_number(), 8.0);
+        assert_eq!(UnicodeVersion::Unicode15.version_number(), 15.0);
+        assert_eq!(UnicodeVersion::Unknown.version_number(), 0.0);
+        assert_eq!(UnicodeVersion::Unicode16.version_number(), 16.0);
+    }
+
+    #[test]
+    fn unicode_version_detect_unknown() {
+        assert_eq!(UnicodeVersion::detect(), UnicodeVersion::Unknown);
+    }
+
+    // ── WindowMetrics ──
+
+    #[test]
+    fn window_metrics_cell_aspect_ratio() {
+        let w = WindowMetrics {
+            terminal_width: 80,
+            terminal_height: 24,
+            pixel_width: None,
+            pixel_height: None,
+            cell_width: Some(10),
+            cell_height: Some(20),
+            dpi: None,
+        };
+        assert_eq!(w.cell_aspect_ratio(), Some(0.5));
+    }
+
+    #[test]
+    fn window_metrics_cell_aspect_ratio_none_when_missing() {
+        let w = WindowMetrics::default();
+        assert!(w.cell_aspect_ratio().is_none());
+    }
+
+    #[test]
+    fn window_metrics_pixels_per_cell_none_when_missing() {
+        let w = WindowMetrics::default();
+        assert!(w.pixels_per_cell().is_none());
+    }
+
+    #[test]
+    fn window_metrics_pixels_per_cell() {
+        let w = WindowMetrics {
+            terminal_width: 80,
+            terminal_height: 24,
+            pixel_width: Some(800),
+            pixel_height: Some(480),
+            cell_width: None,
+            cell_height: None,
+            dpi: None,
+        };
+        let ppc = w.pixels_per_cell();
+        assert_eq!(ppc, Some((10, 20)));
+    }
+
+    // ── ClipboardCapabilities ──
+
+    #[test]
+    fn clipboard_capabilities_default_values() {
+        // No env vars set
+        let c = ClipboardCapabilities {
+            osc52: false,
+            osc8: false,
+        };
+        assert!(!c.supports_osc52());
+        assert!(!c.supports_osc8());
+    }
+
+    #[test]
+    fn clipboard_capabilities_some_support() {
+        let c = ClipboardCapabilities {
+            osc52: true,
+            osc8: true,
+        };
+        assert!(c.supports_osc52());
+        assert!(c.supports_osc8());
+    }
+
+    // ── MouseModes ──
+
+    #[test]
+    fn mouse_modes_detect_defaults() {
+        let m = MouseModes {
+            normal_mouse: true,
+            button_tracking: true,
+            any_event_tracking: true,
+            sgr_extended: true,
+            urxvt: true,
+            kitty_mouse: false,
+        };
+        assert!(m.normal_mouse);
+        assert!(!m.kitty_mouse);
+    }
+
+    // ── GraphicsCapabilities ──
+
+    #[test]
+    fn graphics_capabilities_no_support_by_default() {
+        let g = GraphicsCapabilities {
+            kitty_graphics: false,
+            sixel: false,
+            iterm_images: false,
+        };
+        assert!(!g.supports_kitty_graphics());
+        assert!(!g.supports_sixel());
+        assert!(!g.supports_iterm_images());
+        assert!(!g.has_any_graphics());
+    }
+
+    #[test]
+    fn graphics_capabilities_some_support() {
+        let g = GraphicsCapabilities {
+            kitty_graphics: true,
+            sixel: false,
+            iterm_images: false,
+        };
+        assert!(g.supports_kitty_graphics());
+        assert!(g.has_any_graphics());
+    }
+
+    // ── InputCapabilities ──
+
+    #[test]
+    fn input_capabilities_defaults() {
+        let i = InputCapabilities {
+            kitty_keyboard: false,
+            csi_u: false,
+            bracketed_paste: true,
+            focus_events: true,
+            mouse_modes: MouseModes {
+                normal_mouse: true,
+                button_tracking: true,
+                any_event_tracking: true,
+                sgr_extended: true,
+                urxvt: true,
+                kitty_mouse: false,
+            },
+        };
+        assert!(!i.supports_kitty_keyboard());
+        assert!(!i.supports_csi_u());
+        assert!(i.supports_bracketed_paste());
+        assert!(i.supports_focus_events());
+    }
+
+    // ── QueryOrigin ──
+
+    #[test]
+    fn query_origin_enum_variants() {
+        let origins = [
+            QueryOrigin::EnvOnly,
+            QueryOrigin::Confirmed,
+            QueryOrigin::Inferred,
+            QueryOrigin::Unknown,
+        ];
+        assert_eq!(origins.len(), 4);
+    }
+
+    // ── EmojiWidth / CjkWidth ──
+
+    #[test]
+    fn emoji_width_default() {
+        assert_eq!(EmojiWidth::default(), EmojiWidth::DoubleWidth);
+    }
+
+    #[test]
+    fn cjk_width_default() {
+        assert_eq!(CjkWidth::default(), CjkWidth::FullWidth);
+    }
+
+    // ── CapabilityDetector ──
+
+    #[test]
+    fn detector_has_default_values() {
+        let d = CapabilityDetector::detect();
+        assert_eq!(d.brand(), &TerminalBrand::Unknown);
+        assert!(!d.is_known_terminal());
+        assert!(d.supports_bracketed_paste());
+        assert!(d.supports_focus_events());
+        // default terminal size from crossterm
+        let (w, h) = d.terminal_size();
+        assert!(w > 0);
+        assert!(h > 0);
+    }
+
+    #[test]
+    fn detector_update_from_queries() {
+        let mut d = CapabilityDetector::detect();
+        let results = [
+            QueryResult::DeviceAttributes {
+                terminal_type: 1,
+                attributes: vec![4, 22, 62],
+            },
+            QueryResult::SecondaryDeviceAttributes {
+                model: 18,
+                firmware_major: 0,
+                firmware_minor: 0,
+            },
+        ];
+        d.update_from_queries(&results);
+        assert!(d.supports_true_color());
+        assert!(d.supports_sixel());
+        assert_eq!(d.brand(), &TerminalBrand::Ghostty);
+        assert_eq!(d.query_origin(), &QueryOrigin::Confirmed);
+    }
+
+    #[test]
+    fn detector_update_from_queries_empty() {
+        let mut d = CapabilityDetector::detect();
+        d.update_from_queries(&[]);
+        assert_eq!(d.query_origin(), &QueryOrigin::EnvOnly);
+    }
+
+    #[test]
+    fn detector_pixel_and_cell_size() {
+        let d = CapabilityDetector::detect();
+        assert!(d.pixel_size().is_none());
+        assert!(d.cell_size().is_none());
+    }
+
+    // ── global_capabilities ──
+
+    #[test]
+    fn global_capabilities_is_singleton() {
+        let c1 = global_capabilities();
+        let c2 = global_capabilities();
+        assert!(std::ptr::eq(c1, c2));
+    }
+}

@@ -246,6 +246,7 @@ impl MutationEntry {
 }
 
 /// Type of mutation that occurred on a node.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MutationType {
     Created,
     Removed,
@@ -419,5 +420,270 @@ impl std::fmt::Debug for Inspector {
             .field("command_log_len", &self.command_log.len())
             .field("mutation_log_len", &self.mutation_log.len())
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tree::{NodeKind, Style};
+
+    #[test]
+    fn engine_new_creates_empty_tree() {
+        let engine = Engine::new();
+        assert_eq!(engine.node_count(), 1);
+        assert_eq!(engine.frame_count(), 0);
+    }
+
+    #[test]
+    fn engine_default_equals_new() {
+        let e1 = Engine::new();
+        let e2 = Engine::default();
+        assert_eq!(e1.node_count(), e2.node_count());
+        assert_eq!(e1.frame_count(), e2.frame_count());
+    }
+
+    #[test]
+    fn engine_create_node() {
+        let mut engine = Engine::new();
+        let id = engine.create_node(NodeKind::Text);
+        assert_eq!(engine.node_count(), 2);
+        assert!(engine.get_node(id).is_some());
+    }
+
+    #[test]
+    fn engine_append_and_remove_child() {
+        let mut engine = Engine::new();
+        let root = engine.arena().root();
+        let child = engine.create_node(NodeKind::Box);
+        engine.append_child(root, child).unwrap();
+        engine.remove_node(child);
+        assert!(engine.get_node(child).is_none());
+    }
+
+    #[test]
+    fn engine_set_text_and_style() {
+        let mut engine = Engine::new();
+        let id = engine.create_node(NodeKind::Text);
+        engine.set_text(id, "hello");
+        engine.set_style(id, Style::default());
+        let node = engine.get_node(id).unwrap();
+        assert_eq!(node.text.as_deref(), Some("hello"));
+    }
+
+    #[test]
+    fn engine_begin_and_commit_frame() {
+        let mut engine = Engine::new();
+        assert_eq!(engine.frame_count(), 0);
+        engine.begin_frame();
+        assert_eq!(engine.frame_count(), 1);
+        engine.commit_frame();
+        assert_eq!(engine.frame_count(), 1);
+    }
+
+    #[test]
+    fn engine_process_command() {
+        let mut engine = Engine::new();
+        let id = engine.create_node(NodeKind::Text);
+        let result = engine.process_command(crate::protocol::Command::SetText {
+            id,
+            text: "from command".into(),
+        });
+        assert!(result.is_ok());
+        let node = engine.get_node(id).unwrap();
+        assert_eq!(node.text.as_deref(), Some("from command"));
+    }
+
+    #[test]
+    fn engine_process_commands_batch() {
+        use crate::protocol::Command;
+        let mut engine = Engine::new();
+        let id = engine.create_node(NodeKind::Box);
+        let cmd1 = Command::SetText {
+            id,
+            text: "batch1".into(),
+        };
+        let cmd2 = Command::SetText {
+            id,
+            text: "batch2".into(),
+        };
+        let result = engine.process_commands(vec![cmd1, cmd2]);
+        assert!(result.is_success());
+        let node = engine.get_node(id).unwrap();
+        assert_eq!(node.text.as_deref(), Some("batch2"));
+    }
+
+    #[test]
+    fn engine_validate_ok() {
+        let engine = Engine::new();
+        assert!(engine.validate().is_ok());
+    }
+
+    #[test]
+    fn engine_tree_summary() {
+        let mut engine = Engine::new();
+        let child = engine.create_node(NodeKind::Text);
+        engine.append_child(engine.arena().root(), child).unwrap();
+        let summary = engine.tree_summary();
+        assert!(summary.contains("Nodes: 2"));
+        assert!(summary.contains("Frames: 0"));
+    }
+
+    #[test]
+    fn engine_print_tree() {
+        let mut engine = Engine::new();
+        let child = engine.create_node(NodeKind::Text);
+        engine.set_text(child, "test");
+        engine.append_child(engine.arena().root(), child).unwrap();
+        let tree = engine.print_tree();
+        assert!(!tree.is_empty());
+    }
+
+    #[test]
+    fn engine_arena_access() {
+        let mut engine = Engine::new();
+        let arena = engine.arena();
+        assert!(arena.get(arena.root()).is_some());
+        let id = engine.create_node(NodeKind::Box);
+        let arena_mut = engine.arena_mut();
+        assert!(arena_mut.get(id).is_some());
+    }
+
+    #[test]
+    fn engine_debug_fmt() {
+        let engine = Engine::new();
+        let s = format!("{:?}", engine);
+        assert!(s.contains("node_count"));
+        assert!(s.contains("frame_count"));
+    }
+
+    // ── Inspector tests ──
+
+    #[test]
+    fn inspector_new_has_empty_logs() {
+        let insp = Inspector::new();
+        assert!(insp.command_log().is_empty());
+        assert!(insp.mutation_log().is_empty());
+    }
+
+    #[test]
+    fn inspector_log_and_retrieve_command() {
+        let mut insp = Inspector::new();
+        let cmd = crate::protocol::Command::BeginFrame { frame_id: 1 };
+        insp.log_command(cmd, 42);
+        assert_eq!(insp.command_log().len(), 1);
+        assert!(insp.command(0).is_some());
+    }
+
+    #[test]
+    fn inspector_log_mutation() {
+        let mut insp = Inspector::new();
+        let id = crate::tree::NodeArena::new().root();
+        insp.log_mutation(id, MutationType::Created, 1);
+        assert_eq!(insp.mutation_log().len(), 1);
+        let node_id = insp.mutation_node_id(0);
+        assert!(node_id.is_some());
+    }
+
+    #[test]
+    fn inspector_clear() {
+        let mut insp = Inspector::new();
+        insp.log_command(crate::protocol::Command::BeginFrame { frame_id: 1 }, 0);
+        insp.log_mutation(
+            crate::tree::NodeArena::new().root(),
+            MutationType::Created,
+            0,
+        );
+        insp.clear();
+        assert!(insp.command_log().is_empty());
+        assert!(insp.mutation_log().is_empty());
+    }
+
+    #[test]
+    fn inspector_recent_commands() {
+        let mut insp = Inspector::new();
+        insp.log_command(crate::protocol::Command::BeginFrame { frame_id: 1 }, 1);
+        insp.log_command(crate::protocol::Command::BeginFrame { frame_id: 2 }, 2);
+        let recent = insp.recent_commands(1);
+        assert_eq!(recent.len(), 1);
+    }
+
+    #[test]
+    fn inspector_commands_for_node() {
+        use crate::protocol::Command;
+        let mut insp = Inspector::new();
+        let id = crate::tree::NodeArena::new().root();
+        insp.log_command(
+            Command::SetText {
+                id,
+                text: "a".into(),
+            },
+            1,
+        );
+        insp.log_command(Command::BeginFrame { frame_id: 1 }, 2);
+        let cmds = insp.commands_for_node(id);
+        assert_eq!(cmds.len(), 1);
+    }
+
+    #[test]
+    fn inspector_tree_summary() {
+        let arena = crate::tree::NodeArena::new();
+        let insp = Inspector::new();
+        let summary = insp.tree_summary(&arena);
+        assert_eq!(summary.total_nodes, 1);
+        assert_eq!(summary.max_depth, 0);
+    }
+
+    #[test]
+    fn inspector_print_tree_detail() {
+        let arena = crate::tree::NodeArena::new();
+        let insp = Inspector::new();
+        let output = insp.print_tree_detail(&arena);
+        assert!(output.contains("Box"));
+    }
+
+    #[test]
+    fn inspector_debug_fmt() {
+        let insp = Inspector::new();
+        let s = format!("{:?}", insp);
+        assert!(s.contains("command_log_len"));
+        assert!(s.contains("mutation_log_len"));
+    }
+
+    #[test]
+    fn tree_summary_display() {
+        use std::collections::HashMap;
+        let summary = TreeSummary {
+            total_nodes: 5,
+            max_depth: 3,
+            kind_counts: HashMap::from([("Text".into(), 3), ("Box".into(), 2)]),
+        };
+        let s = summary.to_string();
+        assert!(s.contains("Total nodes: 5"));
+        assert!(s.contains("Max depth: 3"));
+        assert!(s.contains("Text: 3"));
+        assert!(s.contains("Box: 2"));
+    }
+
+    #[test]
+    fn command_entry_accessors() {
+        let cmd = crate::protocol::Command::BeginFrame { frame_id: 7 };
+        let entry = CommandEntry {
+            command: cmd,
+            timestamp: 99,
+        };
+        assert_eq!(entry.timestamp(), 99);
+    }
+
+    #[test]
+    fn mutation_entry_accessors() {
+        let id = crate::tree::NodeArena::new().root();
+        let entry = MutationEntry {
+            node_id: id,
+            mutation_type: MutationType::Modified,
+            timestamp: 5,
+        };
+        assert_eq!(entry.mutation_type(), &MutationType::Modified);
+        assert_eq!(entry.timestamp(), 5);
     }
 }

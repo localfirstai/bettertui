@@ -1286,3 +1286,210 @@ fn parse_color_string(s: &str) -> Option<Color> {
     }
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── Cursor ──
+
+    #[test]
+    fn cursor_new_defaults() {
+        let c = Cursor::new();
+        assert_eq!(c.row, 0);
+        assert_eq!(c.col, 0);
+        assert!(c.visible);
+    }
+
+    #[test]
+    fn cursor_position() {
+        let c = Cursor::new();
+        assert_eq!(c.position(), (0, 0));
+    }
+
+    #[test]
+    fn cursor_set_position() {
+        let mut c = Cursor::new();
+        c.set_position(5, 10);
+        assert_eq!(c.row, 5);
+        assert_eq!(c.col, 10);
+    }
+
+    #[test]
+    fn cursor_move_up() {
+        let mut c = Cursor::new();
+        c.set_position(5, 0);
+        c.move_up(3);
+        assert_eq!(c.row, 2);
+    }
+
+    #[test]
+    fn cursor_move_up_saturate() {
+        let mut c = Cursor::new();
+        c.move_up(10);
+        assert_eq!(c.row, 0);
+    }
+
+    #[test]
+    fn cursor_move_down() {
+        let mut c = Cursor::new();
+        c.move_down(3, 10);
+        assert_eq!(c.row, 3);
+    }
+
+    #[test]
+    fn cursor_move_down_saturate() {
+        let mut c = Cursor::new();
+        c.set_position(8, 0);
+        c.move_down(5, 10);
+        assert_eq!(c.row, 9);
+    }
+
+    #[test]
+    fn cursor_move_left() {
+        let mut c = Cursor::new();
+        c.set_position(0, 10);
+        c.move_left(3);
+        assert_eq!(c.col, 7);
+    }
+
+    #[test]
+    fn cursor_move_left_saturate() {
+        let mut c = Cursor::new();
+        c.set_position(0, 2);
+        c.move_left(10);
+        assert_eq!(c.col, 0);
+    }
+
+    #[test]
+    fn cursor_move_right() {
+        let mut c = Cursor::new();
+        c.set_position(0, 3);
+        c.move_right(5, 20);
+        assert_eq!(c.col, 8);
+    }
+
+    #[test]
+    fn cursor_move_right_saturate() {
+        let mut c = Cursor::new();
+        c.set_position(0, 18);
+        c.move_right(5, 20);
+        assert_eq!(c.col, 19);
+    }
+
+    #[test]
+    fn cursor_move_to_column() {
+        let mut c = Cursor::new();
+        c.move_to_column(10);
+        assert_eq!(c.col, 9);
+    }
+
+    #[test]
+    fn cursor_move_to() {
+        let mut c = Cursor::new();
+        c.move_to(5, 10);
+        assert_eq!(c.row, 4);
+        assert_eq!(c.col, 9);
+    }
+
+    #[test]
+    fn cursor_save_and_restore() {
+        let mut c = Cursor::new();
+        c.set_position(10, 20);
+        c.save_position();
+        c.set_position(5, 5);
+        c.restore_position();
+        assert_eq!(c.row, 10);
+        assert_eq!(c.col, 20);
+    }
+
+    #[test]
+    fn cursor_carriage_return() {
+        let mut c = Cursor::new();
+        c.set_position(5, 15);
+        c.carriage_return();
+        assert_eq!(c.col, 0);
+        assert_eq!(c.row, 5);
+    }
+
+    #[test]
+    fn cursor_newline() {
+        let mut c = Cursor::new();
+        c.set_position(3, 0);
+        c.newline();
+        assert_eq!(c.row, 4);
+    }
+
+    #[test]
+    fn cursor_tab_to_next_stop() {
+        let mut c = Cursor::new();
+        c.set_position(0, 3);
+        c.tab(&[5, 10, 20]);
+        assert_eq!(c.col, 5);
+    }
+
+    #[test]
+    fn cursor_tab_beyond_last_stop() {
+        let mut c = Cursor::new();
+        c.set_position(0, 25);
+        c.tab(&[5, 10, 20]);
+        assert_eq!(c.col, 32);
+    }
+
+    #[test]
+    fn cursor_backspace() {
+        let mut c = Cursor::new();
+        c.set_position(0, 10);
+        c.backspace();
+        assert_eq!(c.col, 9);
+    }
+
+    #[test]
+    fn cursor_backspace_saturate() {
+        let mut c = Cursor::new();
+        c.backspace();
+        assert_eq!(c.col, 0);
+    }
+
+    // ── CursorStyle ──
+
+    #[test]
+    fn cursor_style_default() {
+        assert_eq!(CursorStyle::default(), CursorStyle::Block);
+    }
+
+    // ── CursorShape ──
+
+    #[test]
+    fn cursor_shape_default() {
+        assert_eq!(CursorShape::default(), CursorShape::Blinking);
+    }
+
+    // ── TerminalMode ──
+
+    #[test]
+    fn terminal_mode_default() {
+        let m = TerminalMode::default();
+        assert!(m.auto_wrap());
+        assert!(m.contains(TerminalMode::VISIBLE_CURSOR));
+        assert!(!m.alt_screen());
+    }
+
+    #[test]
+    fn terminal_mode_custom() {
+        let m = TerminalMode::INSERT | TerminalMode::ALT_SCREEN;
+        assert!(m.is_insert());
+        assert!(m.alt_screen());
+        assert!(!m.auto_wrap());
+    }
+
+    #[test]
+    fn terminal_mode_toggle() {
+        let mut m = TerminalMode::default();
+        assert!(!m.alt_screen());
+        m.toggle(TerminalMode::ALT_SCREEN);
+        assert!(m.alt_screen());
+        m.toggle(TerminalMode::ALT_SCREEN);
+        assert!(!m.alt_screen());
+    }
+}

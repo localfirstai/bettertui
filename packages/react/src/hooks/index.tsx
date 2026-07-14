@@ -1,4 +1,4 @@
-import type { KeyEvent as SharedKeyEvent, Theme as SharedTheme } from "@bettertui/shared";
+import type { KeyEvent as SharedKeyEvent, Theme } from "@bettertui/shared";
 import {
   createContext,
   useCallback,
@@ -11,13 +11,12 @@ import {
 import type { ReactNode } from "react";
 
 // Re-export shared types for consumer convenience
-export type Theme = SharedTheme;
-export type ThemeColors = SharedTheme["colors"];
-export type ThemeSpacing = SharedTheme["spacing"];
+export type { Theme };
+export type ThemeColors = Theme["colors"];
+export type ThemeSpacing = Theme["spacing"];
 export type KeyEvent = SharedKeyEvent;
 
-// Default dark theme
-const defaultDarkTheme: SharedTheme = {
+const DEFAULT_THEME: Theme = {
   name: "dark",
   colors: {
     background: "#1e1e28",
@@ -39,6 +38,8 @@ const defaultDarkTheme: SharedTheme = {
     warning: "#dcb43c",
     success: "#50c878",
     info: "#50a0dc",
+    scrollbar: "#323241",
+    scrollbarThumb: "#646482",
   },
   spacing: {
     none: 0,
@@ -51,33 +52,45 @@ const defaultDarkTheme: SharedTheme = {
     xxl: 24,
   },
   borders: {
-    style: "single",
+    style: "solid",
     fg: "#3c3c50",
   },
 };
 
+function mergeTheme(base: Theme, overrides: Partial<Theme>): Theme {
+  return {
+    ...base,
+    ...overrides,
+    colors: { ...base.colors, ...overrides.colors },
+    spacing: { ...base.spacing, ...overrides.spacing },
+    borders: { ...base.borders, ...overrides.borders },
+  };
+}
+
 // Theme context
 interface ThemeContextValue {
-  theme: SharedTheme;
-  setTheme: (theme: SharedTheme) => void;
+  theme: Theme;
+  setTheme: (theme: Partial<Theme>) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: defaultDarkTheme,
+  theme: DEFAULT_THEME,
   setTheme: () => {},
 });
 
 // Theme provider
 export interface ProviderProps {
   children: ReactNode;
-  theme?: SharedTheme;
+  theme?: Partial<Theme>;
 }
 
-export function Provider({ children, theme = defaultDarkTheme }: ProviderProps) {
-  const [currentTheme, setCurrentTheme] = useState<SharedTheme>(theme);
+export function Provider({ children, theme }: ProviderProps) {
+  const [currentTheme, setCurrentTheme] = useState<Theme>(() =>
+    theme ? mergeTheme(DEFAULT_THEME, theme) : DEFAULT_THEME,
+  );
 
-  const setTheme = useCallback((newTheme: SharedTheme) => {
-    setCurrentTheme(newTheme);
+  const setTheme = useCallback((partial: Partial<Theme>) => {
+    setCurrentTheme((prev) => mergeTheme(prev, partial));
   }, []);
 
   return (

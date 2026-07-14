@@ -1,3 +1,4 @@
+import type { Theme } from "@bettertui/shared";
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
@@ -143,7 +144,7 @@ describe("Provider nesting", () => {
 
 describe("Theme switching scenarios", () => {
   it("switching from dark to light theme", () => {
-    const lightTheme = {
+    const lightTheme: Partial<Theme> = {
       name: "light",
       colors: {
         background: "#ffffff",
@@ -165,9 +166,11 @@ describe("Theme switching scenarios", () => {
         warning: "#f9ab00",
         success: "#1e8e3e",
         info: "#1a73e8",
+        scrollbar: "#dadce0",
+        scrollbarThumb: "#808080",
       },
       spacing: { none: 0, xxs: 1, xs: 2, sm: 4, md: 8, lg: 12, xl: 16, xxl: 24 },
-      borders: { style: "single", fg: "#dadce0" },
+      borders: { style: "solid" as const, fg: "#dadce0" },
     };
 
     const { result } = renderHook(() => useTheme(), {

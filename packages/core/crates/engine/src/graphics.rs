@@ -263,3 +263,230 @@ impl<'a> GraphicsContext<'a> {
         self.buffer
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::framebuffer::CellAttributes;
+    use crate::tree::NamedColor;
+
+    #[test]
+    fn point_new() {
+        let p = Point::new(3, 5);
+        assert_eq!(p.x, 3);
+        assert_eq!(p.y, 5);
+    }
+
+    #[test]
+    fn rect_contains_inside() {
+        let r = Rect::new(2, 3, 10, 10);
+        assert!(r.contains(Point::new(5, 5)));
+    }
+
+    #[test]
+    fn rect_contains_edge() {
+        let r = Rect::new(0, 0, 5, 5);
+        assert!(r.contains(Point::new(0, 0)));
+        assert!(!r.contains(Point::new(5, 5)));
+    }
+
+    #[test]
+    fn rect_contains_outside() {
+        let r = Rect::new(2, 3, 10, 10);
+        assert!(!r.contains(Point::new(1, 3)));
+        assert!(!r.contains(Point::new(2, 2)));
+        assert!(!r.contains(Point::new(12, 13)));
+    }
+
+    #[test]
+    fn rect_right_bottom() {
+        let r = Rect::new(3, 5, 10, 20);
+        assert_eq!(r.right(), 13);
+        assert_eq!(r.bottom(), 25);
+    }
+
+    #[test]
+    fn rect_with_zero_size() {
+        let r = Rect::new(0, 0, 0, 0);
+        assert!(!r.contains(Point::new(0, 0)));
+    }
+
+    #[test]
+    fn draw_style_builder() {
+        let style = DrawStyle::new()
+            .fg(Color::Named(NamedColor::Red))
+            .bg(Color::Named(NamedColor::Blue))
+            .bold()
+            .italic()
+            .underline();
+        assert_eq!(style.fg, Some(Color::Named(NamedColor::Red)));
+        assert_eq!(style.bg, Some(Color::Named(NamedColor::Blue)));
+        assert!(style.attributes.contains(CellAttributes::BOLD));
+        assert!(style.attributes.contains(CellAttributes::ITALIC));
+        assert!(style.attributes.contains(CellAttributes::UNDERLINE));
+    }
+
+    fn make_buffer(w: u16, h: u16) -> FrameBuffer {
+        let mut buf = FrameBuffer::new(w, h);
+        buf.clear();
+        buf
+    }
+
+    #[test]
+    fn graphics_clear_rect() {
+        let mut buf = make_buffer(10, 10);
+        buf.set(0, 0, Cell::new('X'));
+        buf.set(9, 9, Cell::new('X'));
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.clear_rect(Rect::new(0, 0, 10, 10));
+        assert_eq!(ctx.buffer().get(0, 0).ch, ' ');
+    }
+
+    #[test]
+    fn graphics_draw_char() {
+        let mut buf = make_buffer(10, 10);
+        let style = DrawStyle::new().fg(Color::Named(NamedColor::Red));
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_char(3, 4, '@', &style);
+        let cell = ctx.buffer().get(3, 4);
+        assert_eq!(cell.ch, '@');
+    }
+
+    #[test]
+    fn graphics_draw_char_out_of_bounds() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        // Should not panic
+        ctx.draw_char(10, 10, 'X', &DrawStyle::new());
+        assert_eq!(ctx.buffer().get(0, 0).ch, ' ');
+    }
+
+    #[test]
+    fn graphics_draw_str() {
+        let mut buf = make_buffer(20, 5);
+        let style = DrawStyle::new().fg(Color::Named(NamedColor::Green));
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_str(0, 0, "Hello", &style);
+        assert_eq!(ctx.buffer().get(0, 0).ch, 'H');
+        assert_eq!(ctx.buffer().get(4, 0).ch, 'o');
+    }
+
+    #[test]
+    fn graphics_draw_str_truncated() {
+        let mut buf = make_buffer(3, 5);
+        let style = DrawStyle::new();
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_str(0, 0, "Hello!", &style);
+        assert_eq!(ctx.buffer().get(0, 0).ch, 'H');
+        assert_eq!(ctx.buffer().get(2, 0).ch, 'l');
+        // 'l' at buf[3] would be out of bounds
+    }
+
+    #[test]
+    fn graphics_draw_hline() {
+        let mut buf = make_buffer(10, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_hline(2, 2, 5, '-', &DrawStyle::new());
+        assert_eq!(ctx.buffer().get(2, 2).ch, '-');
+        assert_eq!(ctx.buffer().get(6, 2).ch, '-');
+    }
+
+    #[test]
+    fn graphics_draw_vline() {
+        let mut buf = make_buffer(10, 10);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_vline(5, 1, 4, '|', &DrawStyle::new());
+        assert_eq!(ctx.buffer().get(5, 1).ch, '|');
+        assert_eq!(ctx.buffer().get(5, 4).ch, '|');
+    }
+
+    #[test]
+    fn graphics_draw_rect() {
+        let mut buf = make_buffer(10, 10);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_rect(Rect::new(1, 1, 5, 4), &DrawStyle::new());
+        assert_eq!(ctx.buffer().get(1, 1).ch, '+');
+        assert_eq!(ctx.buffer().get(5, 1).ch, '+');
+        assert_eq!(ctx.buffer().get(1, 4).ch, '+');
+        assert_eq!(ctx.buffer().get(5, 4).ch, '+');
+        assert_eq!(ctx.buffer().get(3, 1).ch, '-');
+        assert_eq!(ctx.buffer().get(1, 2).ch, '|');
+    }
+
+    #[test]
+    fn graphics_draw_rect_zero_size() {
+        let mut buf = make_buffer(10, 10);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        // Should not panic
+        ctx.draw_rect(Rect::new(0, 0, 0, 0), &DrawStyle::new());
+        ctx.draw_rect(Rect::new(1, 1, 1, 0), &DrawStyle::new());
+    }
+
+    #[test]
+    fn graphics_fill_rect() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.fill_rect(Rect::new(0, 0, 3, 3), '#', &DrawStyle::new());
+        for y in 0..3 {
+            for x in 0..3 {
+                assert_eq!(ctx.buffer().get(x, y).ch, '#');
+            }
+        }
+    }
+
+    #[test]
+    fn graphics_draw_box_small() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_box(Rect::new(0, 0, 5, 3), &DrawStyle::new());
+        // Corners with Unicode box-drawing
+        assert_eq!(ctx.buffer().get(0, 0).ch, '\u{250C}');
+        assert_eq!(ctx.buffer().get(4, 0).ch, '\u{2510}');
+        assert_eq!(ctx.buffer().get(0, 2).ch, '\u{2514}');
+        assert_eq!(ctx.buffer().get(4, 2).ch, '\u{2518}');
+    }
+
+    #[test]
+    fn graphics_draw_box_too_small() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        // width < 2 or height < 2: should no-op
+        ctx.draw_box(Rect::new(0, 0, 1, 5), &DrawStyle::new());
+        ctx.draw_box(Rect::new(0, 0, 5, 1), &DrawStyle::new());
+        // No panic = pass
+    }
+
+    #[test]
+    fn graphics_clear() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.draw_char(0, 0, 'X', &DrawStyle::new());
+        assert_eq!(ctx.buffer().get(0, 0).ch, 'X');
+        ctx.clear();
+        assert_eq!(ctx.buffer().get(0, 0).ch, ' ');
+    }
+
+    #[test]
+    fn graphics_set_cell() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.set_cell(2, 2, Cell::new('Z'));
+        assert_eq!(ctx.buffer().get(2, 2).ch, 'Z');
+    }
+
+    #[test]
+    fn graphics_set_cell_out_of_bounds() {
+        let mut buf = make_buffer(3, 3);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        ctx.set_cell(10, 10, Cell::new('Z'));
+        // No panic = pass
+    }
+
+    #[test]
+    fn graphics_buffer_access() {
+        let mut buf = make_buffer(5, 5);
+        let mut ctx = GraphicsContext::new(&mut buf);
+        assert_eq!(ctx.buffer().width(), 5);
+        ctx.buffer_mut().clear();
+    }
+}

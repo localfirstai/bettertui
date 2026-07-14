@@ -89,8 +89,7 @@ impl AppState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bettertui_engine::tree::NodeKind;
-    use bettertui_engine::tree::RenderNode;
+    use bettertui_engine::tree::{Color, NodeKind, RenderNode};
 
     #[test]
     fn app_state_new() {
@@ -104,7 +103,7 @@ mod tests {
     fn app_state_with_theme() {
         let theme = Theme::dark();
         let state = AppState::new().with_theme(theme);
-        assert!(!state.theme.colors.is_empty());
+        assert_eq!(state.theme.colors.background, Color::Default);
     }
 
     #[test]

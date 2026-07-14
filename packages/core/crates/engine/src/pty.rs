@@ -546,3 +546,239 @@ impl From<std::io::Error> for PtyError {
         Self::SpawnFailed(err.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── PtyConfig ──
+
+    #[test]
+    fn pty_config_default() {
+        let cfg = PtyConfig::default();
+        assert_eq!(cfg.program, "bash");
+        assert!(cfg.args.is_empty());
+        assert!(cfg.env.is_empty());
+        assert!(cfg.working_directory.is_none());
+        assert_eq!(cfg.size.cols, 80);
+        assert_eq!(cfg.size.rows, 24);
+    }
+
+    #[test]
+    fn pty_config_builder() {
+        let cfg = PtyConfig::new("zsh")
+            .with_args(vec!["-l".into()])
+            .with_env(vec![("KEY".into(), "VAL".into())])
+            .with_working_directory("/tmp".into())
+            .with_size(PtySize::new(120, 40));
+        assert_eq!(cfg.program, "zsh");
+        assert_eq!(cfg.args, vec!["-l"]);
+        assert_eq!(cfg.env, vec![("KEY".to_string(), "VAL".to_string())]);
+        assert_eq!(cfg.working_directory, Some("/tmp".into()));
+        assert_eq!(cfg.size.cols, 120);
+        assert_eq!(cfg.size.rows, 40);
+    }
+
+    #[test]
+    fn pty_config_new_custom() {
+        let cfg = PtyConfig::new("fish");
+        assert_eq!(cfg.program, "fish");
+        assert!(cfg.working_directory.is_none());
+    }
+
+    // ── PtySize ──
+
+    #[test]
+    fn pty_size_default() {
+        let s = PtySize::default();
+        assert_eq!(s.cols, 80);
+        assert_eq!(s.rows, 24);
+        assert_eq!(s.pixel_width, 0);
+        assert_eq!(s.pixel_height, 0);
+    }
+
+    #[test]
+    fn pty_size_new() {
+        let s = PtySize::new(100, 30);
+        assert_eq!(s.cols, 100);
+        assert_eq!(s.rows, 30);
+    }
+
+    #[test]
+    fn pty_size_with_pixel_size() {
+        let s = PtySize::new(80, 24).with_pixel_size(800, 600);
+        assert_eq!(s.pixel_width, 800);
+        assert_eq!(s.pixel_height, 600);
+    }
+
+    // ── PtyReader ──
+
+    #[test]
+    fn pty_reader_new_is_empty() {
+        let r = PtyReader::new();
+        assert!(r.is_empty());
+        assert_eq!(r.available(), 0);
+    }
+
+    #[test]
+    fn pty_reader_read_line() {
+        let mut r = PtyReader::new();
+        r.buffer = b"hello\nworld\n".to_vec();
+        assert_eq!(r.read_line(), Some("hello\n".into()));
+        assert_eq!(r.read_line(), Some("world\n".into()));
+        assert!(r.is_empty());
+        assert_eq!(r.available(), 0);
+    }
+
+    #[test]
+    fn pty_reader_read_line_partial() {
+        let mut r = PtyReader::new();
+        r.buffer = b"no newline here".to_vec();
+        assert_eq!(r.read_line(), None);
+        assert_eq!(r.available(), 15);
+    }
+
+    #[test]
+    fn pty_reader_read_bytes() {
+        let mut r = PtyReader::new();
+        r.buffer = b"abcdefgh".to_vec();
+        let data = r.read_bytes(3);
+        assert_eq!(data, b"abc");
+        assert_eq!(r.available(), 5);
+    }
+
+    #[test]
+    fn pty_reader_read_bytes_beyond() {
+        let mut r = PtyReader::new();
+        r.buffer = b"abc".to_vec();
+        let data = r.read_bytes(100);
+        assert_eq!(data, b"abc");
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn pty_reader_clear() {
+        let mut r = PtyReader::new();
+        r.buffer = b"data".to_vec();
+        r.position = 2;
+        r.clear();
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn pty_reader_compact() {
+        let mut r = PtyReader::new();
+        r.buffer = b"abcdef".to_vec();
+        r.position = 3;
+        r.compact();
+        assert_eq!(r.buffer, b"def");
+        assert_eq!(r.position, 0);
+    }
+
+    #[test]
+    fn pty_reader_compact_when_empty() {
+        let mut r = PtyReader::new();
+        r.buffer = b"".to_vec();
+        r.position = 0;
+        r.compact();
+        assert!(r.buffer.is_empty());
+    }
+
+    // ── PtyWriter ──
+
+    #[test]
+    fn pty_writer_new() {
+        let w = PtyWriter::new();
+        assert!(w.is_empty());
+        assert_eq!(w.pending(), 0);
+    }
+
+    #[test]
+    fn pty_writer_write_and_pending() {
+        let mut w = PtyWriter::new();
+        w.write(b"hello");
+        assert_eq!(w.pending(), 5);
+        assert!(!w.is_empty());
+    }
+
+    #[test]
+    fn pty_writer_write_str() {
+        let mut w = PtyWriter::new();
+        w.write_str("world");
+        assert_eq!(w.pending(), 5);
+    }
+
+    #[test]
+    fn pty_writer_write_byte() {
+        let mut w = PtyWriter::new();
+        w.write_byte(b'A');
+        assert_eq!(w.pending(), 1);
+    }
+
+    #[test]
+    fn pty_writer_clear() {
+        let mut w = PtyWriter::new();
+        w.write(b"data");
+        w.clear();
+        assert!(w.is_empty());
+        assert!(w.flushed);
+    }
+
+    // ── PtyError ──
+
+    #[test]
+    fn pty_error_display() {
+        assert_eq!(
+            format!("{}", PtyError::SpawnFailed("bad".into())),
+            "Failed to spawn PTY: bad"
+        );
+        assert_eq!(
+            format!("{}", PtyError::ReadFailed("eof".into())),
+            "Failed to read from PTY: eof"
+        );
+        assert_eq!(
+            format!("{}", PtyError::WriteFailed("full".into())),
+            "Failed to write to PTY: full"
+        );
+        assert_eq!(
+            format!("{}", PtyError::KillFailed("sig".into())),
+            "Failed to kill PTY process: sig"
+        );
+        assert_eq!(format!("{}", PtyError::NotRunning), "PTY is not running");
+        assert_eq!(
+            format!("{}", PtyError::ProcessExited(1)),
+            "PTY process exited with code: 1"
+        );
+        assert_eq!(
+            format!("{}", PtyError::ResizeFailed("dim".into())),
+            "Failed to resize PTY: dim"
+        );
+    }
+
+    #[test]
+    fn pty_error_impl_error() {
+        use std::error::Error;
+        let err = PtyError::NotRunning;
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    fn pty_from_io_error() {
+        let io = std::io::Error::new(std::io::ErrorKind::NotFound, "missing");
+        let pty: PtyError = io.into();
+        assert!(format!("{}", pty).contains("Failed to spawn PTY"));
+    }
+
+    // ── PtyRuntime ──
+
+    #[test]
+    fn pty_runtime_new_not_running() {
+        let mut rt = PtyRuntime::new();
+        assert!(!rt.is_running());
+        assert!(rt.read(&mut [0; 4]).is_err());
+        assert!(rt.write(b"x").is_err());
+        assert!(rt.kill().is_err());
+        assert!(rt.wait().is_err());
+        assert!(rt.resize(PtySize::default()).is_err());
+    }
+}

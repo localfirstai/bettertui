@@ -20,7 +20,7 @@ pub use pipeline::Pipeline;
 pub use reconcile::{ReconcileOp, Reconciler};
 pub use registry::WidgetRegistry;
 pub use text::*;
-pub use theme::{SpacingToken, Theme, ThemeToken};
+pub use theme::{Theme, ThemeBorders, ThemeColors, ThemeSpacing};
 pub use tree::WidgetTree;
 
 use bettertui_engine::input::Event;

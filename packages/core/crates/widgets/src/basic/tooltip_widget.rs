@@ -76,10 +76,10 @@ impl Widget for TooltipWidget {
 mod tests {
     use super::*;
     use crate::theme::Theme;
-    use bettertui_engine::input::FocusManager;
+    use bettertui_engine::input::{Event, EventResult, FocusManager, Key, KeyEvent};
+    use bettertui_engine::layout::LayoutProps;
     use bettertui_engine::scheduler::Scheduler;
-    use bettertui_engine::tree::NodeArena;
-    use bettertui_engine::tree::NodeKind;
+    use bettertui_engine::tree::{NodeArena, NodeId, NodeKind, Style};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
         (
@@ -118,5 +118,44 @@ mod tests {
     fn tooltip_widget_with_delay() {
         let w = TooltipWidget::new("Tip").with_delay(1000);
         assert_eq!(w.delay, 1000);
+    }
+
+    #[test]
+    fn tooltip_widget_with_layout() {
+        let layout = LayoutProps::default();
+        let w = TooltipWidget::new("x").with_layout(layout);
+        assert_eq!(w.layout, layout);
+    }
+
+    #[test]
+    fn tooltip_widget_with_style() {
+        let style = Style {
+            bold: Some(true),
+            ..Style::default()
+        };
+        let w = TooltipWidget::new("x").with_style(style);
+        assert!(w.style.bold.unwrap());
+    }
+
+    #[test]
+    fn tooltip_widget_handle_event_ignored() {
+        let w = TooltipWidget::new("x");
+        let (mut arena, mut focus, mut sched, theme) = make_ctx();
+        let mut ctx = WidgetContext {
+            arena: &mut arena,
+            focus_manager: &mut focus,
+            scheduler: &mut sched,
+            terminal_size: (80, 24),
+            theme: &theme,
+        };
+        let event = Event::Key(KeyEvent::new(Key::Character('x'), NodeId::default()));
+        let result = w.handle_event(WidgetId::default(), &mut ctx, &event);
+        assert_eq!(result, EventResult::Ignored);
+    }
+
+    #[test]
+    fn tooltip_widget_default_delay() {
+        let w = TooltipWidget::new("x");
+        assert_eq!(w.delay, 500);
     }
 }

@@ -43,7 +43,7 @@ bettertui/
 │   │       ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
 │   │       └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── themes/        # @bettertui/themes  — theme defs + factory
+
 │   ├── devtools/      # @bettertui/devtools — devtools stub
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
@@ -69,7 +69,6 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 | `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
 | `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 53 component exports) |
-| `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
 
@@ -79,12 +78,10 @@ graph TD
     shared[shared]
     core[core]
     react[react]
-    themes[themes]
     icons[icons]
     devtools[devtools]
     shared --> core
     shared --> react
-    shared --> themes
     core --> react
     icons -.leaf.-> icons
     devtools -.leaf.-> devtools
@@ -119,7 +116,7 @@ flowchart TD
     B --> C{build order by ^dep}
     C --> D[build @bettertui/shared]
     D --> E[build @bettertui/core]
-    E --> F[build @bettertui/react / themes]
+    E --> F[build @bettertui/react]
     B -. optional .-> G[cargo build -p bettertui-bindings]
     G --> H[bettertui_bindings.node addon]
     F -->|requires| H
@@ -148,7 +145,7 @@ graph TD
     Engine --> Terminal[(Terminal)]
     Core --> Shared
     React --> Shared
-    Themes --> Shared
+
 ```
 
 Rules enforced by code, not just policy:

@@ -154,9 +154,6 @@ importers:
       '@bettertui/shared':
         specifier: workspace:*
         version: link:../shared
-      '@bettertui/themes':
-        specifier: workspace:*
-        version: link:../themes
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -243,25 +240,6 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@26.1.1)(jiti@2.7.0)(jsdom@29.1.1)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
 
   packages/shared:
-    devDependencies:
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 3.2.7(vitest@3.2.7(@types/debug@4.1.13)(@types/node@26.1.1)(jiti@2.7.0)(jsdom@29.1.1)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0))
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.5(tsx@4.23.1)(typescript@7.0.2)
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-      vitest:
-        specifier: 'catalog:'
-        version: 3.2.7(@types/debug@4.1.13)(@types/node@26.1.1)(jiti@2.7.0)(jsdom@29.1.1)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
-
-  packages/themes:
-    dependencies:
-      '@bettertui/shared':
-        specifier: workspace:*
-        version: link:../shared
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 'catalog:'

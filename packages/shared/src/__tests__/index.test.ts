@@ -220,7 +220,7 @@ describe("Style", () => {
 
 describe("BorderStyle", () => {
   it("supports all border styles", () => {
-    const styles = ["none", "single", "double", "rounded", "thick", "block"] as const;
+    const styles = ["none", "solid", "dashed", "dotted", "double"] as const;
     for (const style of styles) {
       const b: BorderStyle = { style, fg: "#fff" };
       expect(b.style).toBe(style);
@@ -228,8 +228,8 @@ describe("BorderStyle", () => {
   });
 
   it("supports border without color", () => {
-    const b: BorderStyle = { style: "single" };
-    expect(b.style).toBe("single");
+    const b: BorderStyle = { style: "solid" };
+    expect(b.style).toBe("solid");
     expect(b.fg).toBeUndefined();
   });
 });
@@ -538,15 +538,17 @@ describe("Theme", () => {
       warning: "#ff0",
       success: "#0f0",
       info: "#0ff",
+      scrollbar: "#333",
+      scrollbarThumb: "#666",
     };
     const spacing: ThemeSpacing = { none: 0, xxs: 1, xs: 2, sm: 4, md: 8, lg: 16, xl: 24, xxl: 32 };
     const t: Theme = {
       name: "test-theme",
       colors,
       spacing,
-      borders: { style: "rounded", fg: "#fff" },
+      borders: { style: "solid", fg: "#fff" },
     };
     expect(t.name).toBe("test-theme");
-    expect(t.borders.style).toBe("rounded");
+    expect(t.borders.style).toBe("solid");
   });
 });

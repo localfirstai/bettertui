@@ -32,7 +32,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 |---------|-----------|-------|
 | `@bettertui/core` | 6 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
 | `@bettertui/shared` | 1 | Type definitions |
-| `@bettertui/themes` | 2 | `defaultTheme`, `createTheme()` |
+
 | `@bettertui/devtools` | 1 | `createDevTools()` |
 | `@bettertui/react` | 10 | Public API, hooks, renderer, `renderToString`, runtime provider, easings, providers, components |
 

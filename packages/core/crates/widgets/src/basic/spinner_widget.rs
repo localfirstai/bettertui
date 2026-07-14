@@ -83,10 +83,11 @@ impl Widget for SpinnerWidget {
 mod tests {
     use super::*;
     use crate::theme::Theme;
-    use bettertui_engine::input::FocusManager;
+    use bettertui_engine::input::{Event, EventResult, FocusManager, Key, KeyEvent};
+    use bettertui_engine::layout::LayoutProps;
     use bettertui_engine::scheduler::Scheduler;
-    use bettertui_engine::tree::NodeArena;
-    use bettertui_engine::tree::NodeKind;
+    use bettertui_engine::tree::NodeId;
+    use bettertui_engine::tree::{NodeArena, NodeKind, Style};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
         (
@@ -125,5 +126,44 @@ mod tests {
     fn spinner_widget_with_type() {
         let w = SpinnerWidget::new().with_type(SpinnerType::Arc);
         assert_eq!(w.spinner_type, SpinnerType::Arc);
+    }
+
+    #[test]
+    fn spinner_widget_with_layout() {
+        let layout = LayoutProps::default();
+        let w = SpinnerWidget::new().with_layout(layout);
+        assert_eq!(w.layout, layout);
+    }
+
+    #[test]
+    fn spinner_widget_with_style() {
+        let style = Style {
+            bold: Some(true),
+            ..Style::default()
+        };
+        let w = SpinnerWidget::new().with_style(style);
+        assert!(w.style.bold.unwrap());
+    }
+
+    #[test]
+    fn spinner_widget_handle_event_ignored() {
+        let w = SpinnerWidget::new();
+        let (mut arena, mut focus, mut sched, theme) = make_ctx();
+        let mut ctx = WidgetContext {
+            arena: &mut arena,
+            focus_manager: &mut focus,
+            scheduler: &mut sched,
+            terminal_size: (80, 24),
+            theme: &theme,
+        };
+        let event = Event::Key(KeyEvent::new(Key::Character('x'), NodeId::default()));
+        let result = w.handle_event(WidgetId::default(), &mut ctx, &event);
+        assert_eq!(result, EventResult::Ignored);
+    }
+
+    #[test]
+    fn spinner_type_variants() {
+        assert_eq!(SpinnerType::default(), SpinnerType::Dots);
+        assert_ne!(SpinnerType::Line, SpinnerType::Braille);
     }
 }
