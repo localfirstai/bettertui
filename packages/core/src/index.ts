@@ -58,7 +58,7 @@ export { createReconciler } from "./reconciler";
 export { Runtime } from "./runtime";
 
 // Keymap
-export { Keymap } from "./keymap";
+export { Keymap } from "./lib/keybinding";
 export type {
   KeymapEvent,
   CommandHandler,
@@ -69,7 +69,7 @@ export type {
   KeyListener,
   KeymapOptions,
   ActiveKeyInfo,
-} from "./keymap";
+} from "./lib/keybinding";
 
 // Testing utilities
 export { createTestKeymap, createMockNativeKeymap } from "./testing";
@@ -82,8 +82,8 @@ export {
   validateStyle,
   validate,
   warnIfInvalid,
-} from "./validation";
-export type { ValidationError, ValidationResult } from "./validation";
+} from "./lib/validation";
+export type { ValidationError, ValidationResult } from "./lib/validation";
 
 // Engine (Rust napi-rs bindings)
 export type {
@@ -97,7 +97,7 @@ export type {
   ProcessResult,
   TerminalCapabilities,
   SchedulerStats,
-} from "./engine/types";
+} from "./platform/types";
 export {
   createEngine,
   createEventBus,
@@ -108,12 +108,12 @@ export {
   detectCapabilities,
   getVersion,
   highlightCode,
-} from "./engine";
-export type { HighlightSegment } from "./engine";
-export { createRuntime } from "./engine/runtime";
+} from "./platform";
+export type { HighlightSegment } from "./platform";
+export { createRuntime } from "./platform/runtime";
 export type {
   Runtime as NativeRuntime,
   RuntimeOptions as NativeRuntimeOptions,
-} from "./engine/runtime";
-export { createEventLoop } from "./engine/events";
-export type { EventLoop, EventCallback } from "./engine/events";
+} from "./platform/runtime";
+export { createEventLoop } from "./platform/events";
+export type { EventLoop, EventCallback } from "./platform/events";

@@ -115,7 +115,7 @@ describe("Runtime edge cases", () => {
     const runtime = new Runtime();
     const fns = Array.from({ length: 5 }, () => vi.fn());
     const unsubs = fns.map((fn) => runtime.subscribe(fn));
-    unsubs[2]();
+    unsubs[2]?.();
     runtime.commandBuffer.push({ type: "Shutdown" });
     runtime.flush();
     expect(fns[2]).not.toHaveBeenCalled();

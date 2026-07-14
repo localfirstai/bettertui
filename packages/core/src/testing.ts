@@ -1,6 +1,6 @@
-import type { BindingInfo, NapiKeymap } from "./engine/types";
-import { Keymap } from "./keymap";
-import type { KeymapOptions } from "./keymap";
+import { Keymap } from "./lib/keybinding";
+import type { KeymapOptions } from "./lib/keybinding";
+import type { BindingInfo, NapiKeymap } from "./platform/types";
 
 // ─── Mock Native Keymap for Testing ──
 
@@ -50,7 +50,7 @@ export function createMockNativeKeymap(): NapiKeymap {
       !trimmed.includes("<") &&
       trimmed[0] === trimmed[1]
     ) {
-      return [parseKey(trimmed[0]), parseKey(trimmed[1])];
+      return [parseKey(trimmed[0] as string), parseKey(trimmed[1] as string)];
     }
     return [parseKey(trimmed)];
   }
@@ -81,7 +81,8 @@ export function createMockNativeKeymap(): NapiKeymap {
     removeLayer(name: string): boolean {
       const before = bindings.length;
       for (let i = bindings.length - 1; i >= 0; i--) {
-        if (bindings[i].layer === name) bindings.splice(i, 1);
+        const b = bindings[i];
+        if (b && b.layer === name) bindings.splice(i, 1);
       }
       return bindings.length < before;
     },

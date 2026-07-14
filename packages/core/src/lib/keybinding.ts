@@ -1,5 +1,5 @@
-import { createKeymap as createNativeKeymap } from "./engine";
-import type { BindingInfo, NapiKeymap } from "./engine/types";
+import { createKeymap as createNativeKeymap } from "../platform";
+import type { BindingInfo, NapiKeymap } from "../platform/types";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -318,7 +318,7 @@ export class Keymap {
   // ── Command Bindings Query ──
 
   getCommandBindings(command: string): BindingInfo[] {
-    return this.native.allBindings().filter((b) => b.command === command);
+    return this.native.allBindings().filter((b: BindingInfo) => b.command === command);
   }
 
   getBindingsForCommands(commands: string[]): Map<string, BindingInfo[]> {
@@ -327,7 +327,7 @@ export class Keymap {
     for (const cmd of commands) {
       result.set(
         cmd,
-        all.filter((b) => b.command === cmd),
+        all.filter((b: BindingInfo) => b.command === cmd),
       );
     }
     return result;
@@ -344,13 +344,13 @@ export class Keymap {
       command,
       keys: [],
     };
-    const ctx: CommandContext = {
+    const ctx = {
       keymap: this,
       event,
       command,
-      payload,
+      ...(payload !== undefined ? { payload } : {}),
       data: Object.fromEntries(this.runtimeData),
-    };
+    } as CommandContext;
     handler(ctx);
     return true;
   }

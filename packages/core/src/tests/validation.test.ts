@@ -114,7 +114,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid flexDirection", () => {
     const errors = validateLayoutConstraints({
-      flexDirection: "diagonal",
+      flexDirection: "diagonal" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("flexDirection");
@@ -129,7 +129,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid justifyContent", () => {
     const errors = validateLayoutConstraints({
-      justifyContent: "invalid",
+      justifyContent: "invalid" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("justifyContent");
@@ -144,7 +144,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid alignItems", () => {
     const errors = validateLayoutConstraints({
-      alignItems: "invalid",
+      alignItems: "invalid" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("alignItems");
@@ -159,7 +159,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid alignSelf", () => {
     const errors = validateLayoutConstraints({
-      alignSelf: "invalid",
+      alignSelf: "invalid" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("alignSelf");
@@ -174,7 +174,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid position", () => {
     const errors = validateLayoutConstraints({
-      position: "fixed",
+      position: "fixed" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("position");
@@ -189,7 +189,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid overflow", () => {
     const errors = validateLayoutConstraints({
-      overflow: "auto",
+      overflow: "auto" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("overflow");
@@ -204,7 +204,7 @@ describe("validateLayoutConstraints", () => {
 
   it("rejects invalid flexWrap", () => {
     const errors = validateLayoutConstraints({
-      flexWrap: "invalid",
+      flexWrap: "invalid" as never,
     });
     expect(errors).toHaveLength(1);
     expect(errors[0]?.field).toBe("flexWrap");
@@ -261,7 +261,7 @@ describe("validate", () => {
   });
 
   it("returns invalid for invalid layout", () => {
-    const result = validate({ flexDirection: "diagonal" });
+    const result = validate({ flexDirection: "diagonal" as never });
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
   });
@@ -274,7 +274,7 @@ describe("validate", () => {
 
   it("returns multiple errors for invalid layout and style", () => {
     const result = validate(
-      { flexDirection: "diagonal", position: "fixed" },
+      { flexDirection: "diagonal" as never, position: "fixed" as never },
       { fg: "bad", bg: "worse" },
     );
     expect(result.valid).toBe(false);
@@ -293,13 +293,13 @@ describe("warnIfInvalid", () => {
 
   it("warns in development mode for invalid props", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    warnIfInvalid({ flexDirection: "diagonal" }, { fg: "bad" }, "TestComponent");
+    warnIfInvalid({ flexDirection: "diagonal" as never }, { fg: "bad" }, "TestComponent");
     expect(warnSpy).toHaveBeenCalledWith("[TestComponent] Invalid props:", expect.any(Array));
   });
 
   it("uses default component name when not provided", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    warnIfInvalid({ flexDirection: "diagonal" } as never);
+    warnIfInvalid({ flexDirection: "diagonal" as never } as never);
     expect(warnSpy).toHaveBeenCalledWith("[Component] Invalid props:", expect.any(Array));
   });
 
@@ -312,7 +312,7 @@ describe("warnIfInvalid", () => {
   it("does not warn in production mode", () => {
     vi.stubEnv("NODE_ENV", "production");
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    warnIfInvalid({ flexDirection: "diagonal" } as never);
+    warnIfInvalid({ flexDirection: "diagonal" as never } as never);
     expect(warnSpy).not.toHaveBeenCalled();
   });
 });

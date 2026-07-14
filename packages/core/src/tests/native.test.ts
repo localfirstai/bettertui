@@ -223,10 +223,10 @@ import {
   createTextEngine,
   detectCapabilities,
   getVersion,
-} from "../engine";
-import { createEventLoop } from "../engine/events";
-import { createRuntime } from "../engine/runtime";
-import type { NapiEngine, NapiEventBus } from "../engine/types";
+} from "../platform";
+import { createEventLoop } from "../platform/events";
+import { createRuntime } from "../platform/runtime";
+import type { NapiEngine, NapiEventBus } from "../platform/types";
 
 function createMockEngine(overrides: Partial<NapiEngine> = {}): NapiEngine {
   return {

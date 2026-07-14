@@ -1,12 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommandBuffer } from "../command-buffer";
-import { Runtime } from "../runtime";
-import {
-  createReconciler,
-  createInstance,
-  createTextInstance,
-} from "../index";
 import type { Command } from "../command-buffer";
+import { createReconciler } from "../index";
+import { Runtime } from "../runtime";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -25,21 +21,21 @@ describe("CommandBuffer dirty tracking behavior", () => {
     const buffer = new CommandBuffer();
     buffer.push({ type: "SetStyle", id: "1", style: { bold: true, fg: "red" } });
     const cmds = buffer.drain();
-    expect(cmds[0].type).toBe("SetStyle");
+    expect(cmds[0]?.type).toBe("SetStyle");
   });
 
   it("SetText produces text command", () => {
     const buffer = new CommandBuffer();
     buffer.push({ type: "SetText", id: "1", text: "hello" });
     const cmds = buffer.drain();
-    expect(cmds[0].type).toBe("SetText");
+    expect(cmds[0]?.type).toBe("SetText");
   });
 
   it("Invalidate triggers repaint command", () => {
     const buffer = new CommandBuffer();
     buffer.push({ type: "Invalidate", id: "1" });
     const cmds = buffer.drain();
-    expect(cmds[0].type).toBe("Invalidate");
+    expect(cmds[0]?.type).toBe("Invalidate");
   });
 
   it("BeginFrame and CommitFrame frame the lifecycle", () => {
@@ -49,9 +45,9 @@ describe("CommandBuffer dirty tracking behavior", () => {
     buffer.push({ type: "CommitFrame", frameId: 1 });
     const cmds = buffer.drain();
     expect(cmds).toHaveLength(3);
-    expect(cmds[0].type).toBe("BeginFrame");
-    expect(cmds[1].type).toBe("CreateNode");
-    expect(cmds[2].type).toBe("CommitFrame");
+    expect(cmds[0]?.type).toBe("BeginFrame");
+    expect(cmds[1]?.type).toBe("CreateNode");
+    expect(cmds[2]?.type).toBe("CommitFrame");
   });
 
   it("AppendChild maintains parent-child ordering", () => {
@@ -67,14 +63,14 @@ describe("CommandBuffer dirty tracking behavior", () => {
     const buffer = new CommandBuffer();
     buffer.push({ type: "RemoveNode", id: "1" });
     const cmds = buffer.drain();
-    expect(cmds[0].type).toBe("RemoveNode");
+    expect(cmds[0]?.type).toBe("RemoveNode");
   });
 
   it("SetLayout triggers layout update", () => {
     const buffer = new CommandBuffer();
     buffer.push({ type: "SetLayout", id: "1", layout: { width: 100, height: 50 } });
     const cmds = buffer.drain();
-    expect(cmds[0].type).toBe("SetLayout");
+    expect(cmds[0]?.type).toBe("SetLayout");
   });
 
   it("Multiple style changes coalesce in one buffer", () => {
@@ -112,7 +108,7 @@ describe("Runtime command flow", () => {
     runtime.commandBuffer.push({ type: "CreateNode", id: "1", kind: "Box" });
     runtime.flush();
     expect(received).toHaveLength(1);
-    expect(received[0].type).toBe("CreateNode");
+    expect(received[0]?.type).toBe("CreateNode");
   });
 
   it("flush drains all pending commands", () => {
@@ -127,7 +123,9 @@ describe("Runtime command flow", () => {
     vi.useFakeTimers();
     const runtime = new Runtime({ frameIntervalMs: 10 });
     const received: Command[][] = [];
-    runtime.subscribe((cmds) => { received.push(cmds); });
+    runtime.subscribe((cmds) => {
+      received.push(cmds);
+    });
     runtime.startFrameLoop();
     runtime.commandBuffer.push({ type: "CreateNode", id: "1", kind: "Box" });
     vi.advanceTimersByTime(50);
@@ -217,6 +215,6 @@ describe("CommandBuffer edge cases", () => {
     const second = buffer.drain();
     expect(first).toHaveLength(2);
     expect(second).toHaveLength(1);
-    expect(second[0].text).toBe("b");
+    expect((second[0] as { text?: string })?.text).toBe("b");
   });
 });
