@@ -1,4 +1,4 @@
-// Re-export all types from shared (internal package, not for direct public consumption)
+// Curated re-export of shared types (KeyEvent/MouseEvent come via ./platform)
 export type {
   AlignItems,
   AlignSelf,
@@ -9,11 +9,9 @@ export type {
   Gap,
   Inset,
   JustifyContent,
-  KeyEvent,
   LayoutConstraints,
   Margin,
   MouseButton,
-  MouseEvent,
   Overflow,
   Padding,
   Point,
@@ -27,93 +25,21 @@ export type {
   ThemeSpacing,
 } from "@bettertui/shared";
 
-// Framework-agnostic command protocol and tree manipulation
-export type {
-  HostContext,
-  Instance,
-  TextInstance,
-  HostConfig,
-  Command,
-  CommandBufferConsumer,
-} from "./command";
-export {
-  CommandBuffer,
-  generateId,
-  createInstance,
-  createTextInstance,
-  appendChild,
-  removeChild,
-  insertBefore,
-  prepareUpdate,
-  commitUpdate,
-  commitTextUpdate,
-  finalizeInitialChildren,
-  resetAfterCommit,
-} from "./command";
+// Command protocol, buffer, and tree operations
+export * from "./command";
 
-// Framework-agnostic reconciler (wraps tree ops with command emission)
+// Reconciler (wraps tree ops with command emission)
 export { createReconciler } from "./reconciler";
 
-// Framework-agnostic runtime
-export { Runtime } from "./runtime";
+// Command runtime (frame loop over CommandBuffer)
+export { CommandRuntime } from "./runtime";
+export type { CommandRuntimeOptions } from "./runtime";
 
-// Keymap
-export { Keymap } from "./lib/keybinding";
-export type {
-  KeymapEvent,
-  CommandHandler,
-  CommandContext,
-  CommandEntry,
-  InterceptHandler,
-  InterceptContext,
-  KeyListener,
-  KeymapOptions,
-  ActiveKeyInfo,
-} from "./lib/keybinding";
+// Keymap and validation utilities
+export * from "./lib";
 
 // Testing utilities
-export { createTestKeymap, createMockNativeKeymap } from "./testing";
-export type { TestBinding } from "./testing";
+export * from "./testing";
 
-// Validation utilities
-export {
-  isValidColor,
-  validateLayoutConstraints,
-  validateStyle,
-  validate,
-  warnIfInvalid,
-} from "./lib/validation";
-export type { ValidationError, ValidationResult } from "./lib/validation";
-
-// Engine (Rust napi-rs bindings)
-export type {
-  BindingInfo,
-  NapiEngine,
-  NapiEventBus,
-  NapiFocusManager,
-  NapiKeymap,
-  NapiTextEngine,
-  NapiScheduler,
-  ProcessResult,
-  TerminalCapabilities,
-  SchedulerStats,
-} from "./platform/types";
-export {
-  createEngine,
-  createEventBus,
-  createFocusManager,
-  createKeymap,
-  createTextEngine,
-  createScheduler,
-  detectCapabilities,
-  getVersion,
-  highlightCode,
-} from "./platform";
-export type { HighlightSegment } from "./platform";
-export { createRuntime } from "./platform/runtime";
-export type {
-  Runtime as NativeRuntime,
-  RuntimeOptions as NativeRuntimeOptions,
-} from "./platform/runtime";
-export { createEventLoop } from "./platform/events";
-export type { EventLoop, EventCallback } from "./platform/events";
+// Platform (native engine bridge, events, runtime)
+export * from "./platform";

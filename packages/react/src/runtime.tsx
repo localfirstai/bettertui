@@ -1,4 +1,4 @@
-import { CommandBuffer, Runtime } from "@bettertui/core";
+import { CommandBuffer, CommandRuntime } from "@bettertui/core";
 import { createEngine } from "@bettertui/core";
 import { createContext, useCallback, useContext, useRef } from "react";
 import type { ReactNode } from "react";
@@ -196,12 +196,12 @@ function getOrCreateNativeSession(width: number, height: number): NativeSession 
 
 export interface RenderHandle {
   root: OpaqueRoot;
-  runtime: Runtime;
+  runtime: CommandRuntime;
   dispose: () => void;
 }
 
 function renderToBuffer(element: ReactNode): RenderHandle {
-  const runtime = new Runtime();
+  const runtime = new CommandRuntime();
   const reconciler = createBetterTUIReconciler({
     push(command) {
       runtime.commandBuffer.push(command);
@@ -229,7 +229,7 @@ export function render(element: ReactNode): RenderHandle {
     if (session) {
       setupTerminal();
       updateContainer(session.reconciler, element, session.root);
-      const runtime = new Runtime();
+      const runtime = new CommandRuntime();
       return {
         root: session.root,
         runtime,
@@ -250,7 +250,7 @@ export function render(element: ReactNode): RenderHandle {
 export { renderToBuffer };
 
 interface RuntimeContextValue {
-  runtime: Runtime;
+  runtime: CommandRuntime;
   onKey: (
     handler: (
       key: string,
@@ -265,7 +265,7 @@ export function RuntimeProvider({
   runtime,
   children,
 }: {
-  runtime: Runtime;
+  runtime: CommandRuntime;
   children: ReactNode;
 }) {
   const keyHandlersRef = useRef<

@@ -1,12 +1,12 @@
 import type { Command } from "./command";
 import { CommandBuffer } from "./command";
 
-export interface RuntimeOptions {
+export interface CommandRuntimeOptions {
   frameIntervalMs?: number;
   autoStart?: boolean;
 }
 
-export class Runtime {
+export class CommandRuntime {
   private buffer: CommandBuffer;
   private running = false;
   private frameHandle: ReturnType<typeof setTimeout> | null = null;
@@ -15,7 +15,7 @@ export class Runtime {
   private lastFrameTime = 0;
   private frameIntervalMs: number;
 
-  constructor(bufferOrOptions?: CommandBuffer | RuntimeOptions) {
+  constructor(bufferOrOptions?: CommandBuffer | CommandRuntimeOptions) {
     if (bufferOrOptions instanceof CommandBuffer) {
       this.buffer = bufferOrOptions;
       this.frameIntervalMs = 16;

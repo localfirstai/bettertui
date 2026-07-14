@@ -9,18 +9,17 @@
 use std::io::{self, Write};
 
 use bettertui_engine::engine::Engine;
-use bettertui_engine::layout::{FlexDirection, LayoutProps, Sizing};
+use bettertui_engine::layout::{
+    AlignItems, FlexDirection, JustifyContent, LayoutProps, Position, RectValues, Sizing,
+};
 use bettertui_engine::render::{AnsiBackend, Renderer};
-use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
+use bettertui_engine::tree::{BorderStyle, Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::{KeyModifiers, MouseEvent, MouseEventKind};
 use tracing::{debug, info, trace};
 
 use crate::examples::{self, Category, Example};
 use crate::theme::Theme;
-
-const TITLE: &str = "BETTERTUI EXAMPLES";
-const PLACEHOLDER: &str = "Type to filter examples...";
 
 const CATEGORY_LABELS: &[(Category, &str)] = &[
     (Category::Engine, "ENGINE"),
@@ -138,13 +137,34 @@ impl App {
         if let MouseEventKind::Down(crossterm::event::MouseButton::Left) = event.kind {
             let y = event.row;
 
-            if y == 2 {
+            if y >= 7 && y <= 9 {
                 self.focus = Focus::Filter;
             } else if y >= self.list_start_y && y < self.list_end_y {
                 self.focus = Focus::List;
-                let click_idx = (y - self.list_start_y) as usize;
-                if click_idx < self.filtered.len() {
-                    self.selected_index = click_idx;
+                // Rough estimate based on new layout - this isn't exact due to descriptions
+                let click_y = y - self.list_start_y;
+                let mut current_y = 0;
+                let mut prev_cat: Option<Category> = None;
+
+                for &idx in &self.filtered {
+                    let ex = &self.examples[idx];
+                    if prev_cat != Some(ex.category) {
+                        current_y += 1;
+                        prev_cat = Some(ex.category);
+                    }
+
+                    if click_y == current_y
+                        || (click_y == current_y + 1 && !ex.description.is_empty())
+                    {
+                        let abs_idx = self.filtered.iter().position(|&i| i == idx).unwrap_or(0);
+                        self.selected_index = abs_idx;
+                        break;
+                    }
+
+                    current_y += 1;
+                    if !ex.description.is_empty() {
+                        current_y += 1;
+                    }
                 }
             }
         }
@@ -306,22 +326,28 @@ impl App {
             header,
             LayoutProps {
                 direction: FlexDirection::Column,
-                width: Some(Sizing::Points(w as f32)),
-                height: Some(Sizing::Points(3.0)),
+                width: Some(Sizing::Percent(1.0)),
+                align: AlignItems::Center,
+                justify: JustifyContent::Center,
+                margin: Some(RectValues::new(0.0, 1.0)),
                 ..LayoutProps::default()
             },
         );
         self.engine.append_child(root, header).unwrap();
 
         let title_node = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(title_node, TITLE);
+        let title_text = r#"
+██████╗ ███████╗████████╗████████╗███████╗██████╗ ████████╗██╗   ██╗██╗
+██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗╚══██╔══╝██║   ██║██║
+██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝   ██║   ██║   ██║██║
+██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗   ██║   ██║   ██║██║
+██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║   ██║   ╚██████╔╝██║
+╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝
+"#;
+        self.engine.set_text(title_node, title_text.trim());
         self.engine
             .set_style(title_node, Style::new().fg(t.title_color).bold(true));
         self.engine.append_child(header, title_node).unwrap();
-
-        let spacer1 = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(spacer1, "");
-        self.engine.append_child(header, spacer1).unwrap();
 
         let filter_container = self.engine.create_node(NodeKind::Box);
         let filter_focused = self.focus == Focus::Filter;
@@ -334,39 +360,40 @@ impl App {
             filter_container,
             LayoutProps {
                 direction: FlexDirection::Row,
-                width: Some(Sizing::Points(w as f32)),
-                height: Some(Sizing::Points(3.0)),
-                padding: Some(bettertui_engine::layout::RectValues {
-                    top: Some(0.0),
-                    right: Some(0.0),
-                    bottom: Some(0.0),
-                    left: Some(2.0),
-                }),
+                width: Some(Sizing::Percent(1.0)),
+                margin: Some(RectValues::new(1.0, 0.0)),
+                padding: Some(RectValues::sides(0.0, 0.0, 0.0, 1.0)),
                 ..LayoutProps::default()
             },
         );
-        self.engine
-            .set_style(filter_container, Style::new().bg(filter_bg));
+        self.engine.set_style(
+            filter_container,
+            Style::new().bg(filter_bg).border(
+                BorderStyle::Solid,
+                if filter_focused {
+                    t.focused_border_color
+                } else {
+                    t.border_color
+                },
+            ),
+        );
         self.engine.append_child(root, filter_container).unwrap();
 
         let filter_label = self.engine.create_node(NodeKind::Text);
         let display_text = if self.filter_text.is_empty() {
-            format!("Filter: {}", PLACEHOLDER)
+            format!("Filter examples...")
         } else {
-            format!("Filter: {}", self.filter_text)
+            format!("{}", self.filter_text)
         };
         self.engine.set_text(filter_label, display_text);
         self.engine.set_style(
             filter_label,
             Style::new()
-                .fg(if filter_focused {
-                    t.focused_border_color
-                } else if self.filter_text.is_empty() {
-                    t.description_color
+                .fg(if self.filter_text.is_empty() {
+                    t.placeholder_color
                 } else {
                     t.text_color
                 })
-                .bold(true)
                 .bg(filter_bg),
         );
         self.engine
@@ -378,14 +405,41 @@ impl App {
             list_container,
             LayoutProps {
                 direction: FlexDirection::Column,
-                width: Some(Sizing::Points(w as f32)),
+                width: Some(Sizing::Percent(1.0)),
                 flex_grow: 1.0,
+                margin: Some(RectValues::sides(0.0, 1.0, 1.0, 1.0)),
+                padding: Some(RectValues::sides(1.0, 1.0, 1.0, 1.0)),
                 ..LayoutProps::default()
             },
         );
+        self.engine.set_style(
+            list_container,
+            Style::new().border(BorderStyle::Solid, t.border_color),
+        );
         self.engine.append_child(root, list_container).unwrap();
 
-        self.list_start_y = 6;
+        let list_title = self.engine.create_node(NodeKind::Text);
+        self.engine.set_layout(
+            list_title,
+            LayoutProps {
+                position: Position::Absolute,
+                inset: Some(RectValues {
+                    top: Some(0.0),
+                    right: None,
+                    bottom: None,
+                    left: Some(2.0),
+                }),
+                ..LayoutProps::default()
+            },
+        );
+        self.engine.set_text(list_title, "Examples");
+        self.engine
+            .set_style(list_title, Style::new().fg(t.border_color));
+        self.engine
+            .append_child(list_container, list_title)
+            .unwrap();
+
+        self.list_start_y = 12; // Approx starting Y after header, filter, margins, border, padding
 
         let mut current_y = self.list_start_y;
         let mut prev_cat: Option<Category> = None;
@@ -401,8 +455,7 @@ impl App {
                     .unwrap_or("");
 
                 let cat_node = self.engine.create_node(NodeKind::Text);
-                self.engine
-                    .set_text(cat_node, format!("  [ {} ]", cat_label));
+                self.engine.set_text(cat_node, format!("{}", cat_label));
                 self.engine
                     .set_style(cat_node, Style::new().fg(t.category_color).bold(true));
                 self.engine.append_child(list_container, cat_node).unwrap();
@@ -415,8 +468,15 @@ impl App {
             let list_focused = self.focus == Focus::List;
 
             let item_node = self.engine.create_node(NodeKind::Text);
+            self.engine.set_layout(
+                item_node,
+                LayoutProps {
+                    width: Some(Sizing::Percent(1.0)),
+                    ..LayoutProps::default()
+                },
+            );
             let prefix = if is_sel && list_focused {
-                "  ▶ "
+                "▶   "
             } else {
                 "    "
             };
@@ -438,6 +498,23 @@ impl App {
                 .set_style(item_node, Style::new().fg(item_fg).bg(item_bg).bold(is_sel));
             self.engine.append_child(list_container, item_node).unwrap();
             current_y += 1;
+
+            if !ex.description.is_empty() {
+                let desc_node = self.engine.create_node(NodeKind::Text);
+                self.engine.set_layout(
+                    desc_node,
+                    LayoutProps {
+                        width: Some(Sizing::Percent(1.0)),
+                        ..LayoutProps::default()
+                    },
+                );
+                self.engine
+                    .set_text(desc_node, format!("      {}", ex.description));
+                self.engine
+                    .set_style(desc_node, Style::new().fg(t.description_color).bg(item_bg));
+                self.engine.append_child(list_container, desc_node).unwrap();
+                current_y += 1;
+            }
         }
         self.list_end_y = current_y;
 
@@ -446,26 +523,20 @@ impl App {
             footer,
             LayoutProps {
                 direction: FlexDirection::Column,
-                width: Some(Sizing::Points(w as f32)),
-                height: Some(Sizing::Points(2.0)),
+                align: AlignItems::Center,
+                flex_shrink: 0.0,
                 ..LayoutProps::default()
             },
         );
         self.engine.append_child(root, footer).unwrap();
 
-        let spacer_footer = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(spacer_footer, "");
-        self.engine.append_child(footer, spacer_footer).unwrap();
-
         let help_node = self.engine.create_node(NodeKind::Text);
         self.engine.set_text(
             help_node,
-            " Tab: switch | ↑↓/jk: navigate | Enter: run | /: filter | Ctrl+C: quit ",
+            " Tab/Esc switch focus | Type in filter | ↑↓/j/k list | Enter run | / filter | ctrl+c quit ",
         );
-        self.engine.set_style(
-            help_node,
-            Style::new().fg(t.instructions_color).bg(t.footer_bg_color),
-        );
+        self.engine
+            .set_style(help_node, Style::new().fg(t.instructions_color));
         self.engine.append_child(footer, help_node).unwrap();
 
         self.engine.begin_frame();
@@ -473,11 +544,11 @@ impl App {
 
         if self.focus == Focus::Filter {
             let cursor_x = if self.filter_text.is_empty() {
-                9
+                3
             } else {
-                9 + self.filter_text.len() as u16
+                3 + self.filter_text.len() as u16
             };
-            let cursor_y = 2;
+            let cursor_y = 8;
             self.renderer.set_cursor_position(cursor_x, cursor_y, true);
         } else {
             self.renderer.set_cursor_position(0, 0, false);

@@ -1,6 +1,6 @@
 import {
   CommandBuffer,
-  Runtime,
+  CommandRuntime,
   appendChild,
   commitTextUpdate,
   commitUpdate,
@@ -11,9 +11,9 @@ import {
 } from "@bettertui/core";
 import { bench, describe } from "vitest";
 
-describe("Runtime", () => {
+describe("CommandRuntime", () => {
   bench("create Runtime", () => {
-    new Runtime();
+    new CommandRuntime();
   });
 
   bench("create Runtime with custom buffer", () => {
@@ -21,7 +21,7 @@ describe("Runtime", () => {
   });
 
   bench("subscribe and flush", () => {
-    const runtime = new Runtime();
+    const runtime = new CommandRuntime();
     const unsub = runtime.subscribe(() => {});
     runtime.commandBuffer.push({ type: "Shutdown" });
     runtime.flush();
@@ -29,7 +29,7 @@ describe("Runtime", () => {
   });
 
   bench("subscribe, push 100, flush", () => {
-    const runtime = new Runtime();
+    const runtime = new CommandRuntime();
     const unsub = runtime.subscribe(() => {});
     for (let i = 0; i < 100; i++) {
       runtime.commandBuffer.push({
@@ -43,7 +43,7 @@ describe("Runtime", () => {
   });
 
   bench("multiple subscribers", () => {
-    const runtime = new Runtime();
+    const runtime = new CommandRuntime();
     const unsubs = Array.from({ length: 10 }, () => runtime.subscribe(() => {}));
     runtime.commandBuffer.push({ type: "Shutdown" });
     runtime.flush();
@@ -51,7 +51,7 @@ describe("Runtime", () => {
   });
 
   bench("dispose", () => {
-    const runtime = new Runtime();
+    const runtime = new CommandRuntime();
     runtime.dispose();
   });
 });

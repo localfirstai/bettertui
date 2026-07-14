@@ -666,6 +666,7 @@ impl Painter {
                     } else {
                         ' '
                     };
+
                     if col < self.buffer.width() && y + row < self.buffer.height() {
                         let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
                         self.buffer.set(x + col, y + row, cell);

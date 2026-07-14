@@ -54,7 +54,7 @@ export type {
   Command,
   CommandBuffer,
   Instance,
-  Runtime,
+  CommandRuntime,
   KeyEvent,
   MouseEvent,
   MouseButton,
