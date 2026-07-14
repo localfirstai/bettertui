@@ -1,32 +1,27 @@
 //! End-to-end engine benchmarks covering the full public API surface:
 //! text editing, framebuffer, VT parsing/machine, rendering pipeline,
-//! graphics, nerd fonts, syntax highlighting, and the high-level Engine.
+//! graphics, fonts, syntax highlighting, and the high-level Engine.
 
-use criterion::{Criterion, Throughput, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use bettertui_engine::ansi::{AnsiParser, ParserEvent};
+use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::engine::{Engine, Inspector};
+use bettertui_engine::font::{FontMetrics, FontMetricsCache, FontProvider, measure_text};
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use bettertui_engine::graphics::{DrawStyle, GraphicsContext, Point, Rect};
-use bettertui_engine::layout::LayoutProps;
-use bettertui_engine::nerdfont::{
-    GlyphCategory, MetricsCache, NerdFont, NerdFontDetector, NerdFontGlyph, NerdFontVariant,
-};
+use bettertui_engine::graphics::{DrawStyle, GraphicsContext, Rect};
 use bettertui_engine::protocol::Command;
 use bettertui_engine::pty::{PtyConfig, PtyReader, PtySize, PtyWriter};
 use bettertui_engine::render::effects::{
-    BrightnessPass, GrayscalePass, InvertPass, RainbowPass, ScanlinesPass, VignettePass,
+    BrightnessPass, GrayscalePass, InvertPass, RainbowPass, VignettePass,
 };
 use bettertui_engine::render::{
-    AnsiBackend, PassPriority, PassResult, RenderPass, RenderPassContext, RenderPipeline,
-    RenderTree,
+    AnsiBackend, RenderBackend, RenderPass, RenderPassContext, RenderPipeline,
 };
 use bettertui_engine::syntax::SyntaxHighlighter;
 use bettertui_engine::text::{
     EditBuffer, SelectionRange, StyledText, TextAlign, TextEngine, ViewportConfig, layout_text,
 };
 use bettertui_engine::tree::{Color, NamedColor, NodeArena, NodeId, NodeKind, RenderNode, Style};
-use bettertui_engine::vt::{Cursor, Pen, ScreenBuffer, TerminalMode, VtMachine};
 
 const SAMPLE_TEXT: &str = "fn main() {\n    println!(\"Hello, BetterTUI!\");\n}\n";
 
@@ -89,7 +84,7 @@ fn bench_text_engine(c: &mut Criterion) {
 
     group.bench_function("search", |b| {
         let haystack = "needle in a haystack\nneedle again\n".repeat(200);
-        let engine = TextEngine::with_text(&haystack);
+        let mut engine = TextEngine::with_text(&haystack);
         b.iter(|| {
             let results = engine.search(
                 black_box("needle"),
@@ -251,68 +246,75 @@ fn bench_vt(c: &mut Criterion) {
         })
     });
 
-    group.bench_function("machine_process_char_stream", |b| {
-        let mut data = Vec::new();
-        data.extend_from_slice(b"Hello, ");
-        for _ in 0..20 {
-            data.extend_from_slice(b"world!\r\n");
-        }
-        let data = data;
+    group.bench_function("framebuffer_write_str", |b| {
+        let mut fb = FrameBuffer::new(80, 24);
         b.iter(|| {
-            let mut machine = VtMachine::new(80, 24);
-            let mut parser = AnsiParser::new();
-            parser.feed(black_box(&data));
-            while let Some(ev) = parser.poll_event() {
-                machine.process(&ev);
-            }
-            black_box(machine.framebuffer().get(0, 0).ch)
+            fb.write_str(
+                5,
+                5,
+                black_box("Hello, world!"),
+                Color::Named(NamedColor::Green),
+                Color::Default,
+            );
+            black_box(fb.get(5, 5).ch)
         })
     });
 
-    group.bench_function("machine_csi_handling", |b| {
+    group.bench_function("framebuffer_diff", |b| {
+        let mut fb = FrameBuffer::new(80, 24);
+        fb.write_str(
+            0,
+            0,
+            "the quick brown fox",
+            Color::Named(NamedColor::White),
+            Color::Default,
+        );
+        fb.swap();
+        fb.write_str(
+            0,
+            0,
+            "the quick brown dog",
+            Color::Named(NamedColor::White),
+            Color::Default,
+        );
+        b.iter(|| black_box(fb.diff().len()))
+    });
+
+    group.bench_function("framebuffer_resize", |b| {
         b.iter(|| {
-            let mut machine = VtMachine::new(80, 24);
-            let mut parser = AnsiParser::new();
-            parser.feed(black_box(csi_stream));
-            while let Some(ev) = parser.poll_event() {
-                machine.process(&ev);
-            }
-            black_box(machine.cursor.position())
+            let mut fb = FrameBuffer::new(80, 24);
+            fb.resize(120, 30);
+            black_box(fb.get(0, 0).ch)
         })
     });
 
-    group.bench_function("screen_buffer_write_scroll", |b| {
+    group.bench_function("framebuffer_fill_rect", |b| {
         b.iter(|| {
-            let mut screen = ScreenBuffer::new(80, 24);
-            let pen = Pen::default();
-            for y in 0..100u16 {
-                let ch = (b'a' + (y % 26) as u8) as char;
-                screen.write_char(y % 24, 0, ch, &pen);
-                screen.scroll_up(1, &pen);
-            }
-            black_box(screen.scrollback().line_count())
+            let mut fb = FrameBuffer::new(80, 24);
+            fb.fill_rect(
+                0,
+                0,
+                80,
+                24,
+                Cell::new('#').with_fg(Color::Named(NamedColor::Red)),
+            );
+            black_box(fb.get(40, 12).ch)
         })
     });
 
-    group.bench_function("cursor_movement", |b| {
+    group.bench_function("framebuffer_clear", |b| {
         b.iter(|| {
-            let mut cursor = Cursor::new();
-            for _ in 0..1000 {
-                cursor.move_right(1, 80);
-                cursor.move_down(1, 24);
-                cursor.carriage_return();
-            }
-            black_box(cursor.position())
-        })
-    });
-
-    group.bench_function("terminal_mode_toggle", |b| {
-        b.iter(|| {
-            let mut m = TerminalMode::default();
-            for _ in 0..1000 {
-                m.toggle(TerminalMode::ALT_SCREEN);
-            }
-            black_box(m.alt_screen())
+            let mut fb = FrameBuffer::new(80, 24);
+            fb.fill_rect(
+                0,
+                0,
+                80,
+                24,
+                Cell::new('#').with_fg(Color::Named(NamedColor::Red)),
+            );
+            fb.swap();
+            fb.clear();
+            black_box(fb.get(0, 0).ch)
         })
     });
 
@@ -329,10 +331,7 @@ fn bench_render(c: &mut Criterion) {
         let mut layout = bettertui_engine::layout::LayoutTreeSync::new();
         layout.sync_full(&arena);
         let _ = layout.compute(arena.root(), 80, 24);
-        let tree = bettertui_engine::layout::build_render_tree(
-            arena.root_arena_ref_for_bench(),
-            layout.results(),
-        );
+        let tree = bettertui_engine::layout::build_render_tree(&arena, layout.results());
         b.iter(|| {
             let mut painter = bettertui_engine::render::Painter::new(80, 24);
             let ctx = bettertui_engine::layout::PaintContext::new(80, 24);
@@ -352,9 +351,10 @@ fn bench_render(c: &mut Criterion) {
                 Color::Default,
             );
         }
-        fb.swap();
+        let empty = FrameBuffer::new(80, 24);
+        let mut dirty = bettertui_engine::dirty_diff::DirtyDiff::new();
+        let regions = dirty.compute(&fb, &empty, 1).to_vec();
         let mut backend = AnsiBackend::new();
-        let regions = fb.diff();
         b.iter(|| {
             backend.encode(black_box(&fb), &regions);
             black_box(backend.finish().len())
@@ -375,11 +375,11 @@ fn bench_render(c: &mut Criterion) {
         let ctx = RenderPassContext::new(80, 24);
         let mut pipeline = RenderPipeline::new();
         pipeline.add_pass(Box::new(InvertPass::new(
-            crate::engine_render::effects::INVERT_MATRIX,
+            bettertui_engine::render::effects::INVERT_MATRIX,
         )));
         pipeline.add_pass(Box::new(BrightnessPass::new(0.2)));
         pipeline.add_pass(Box::new(GrayscalePass::new(
-            crate::engine_render::effects::GRAYSCALE_MATRIX,
+            bettertui_engine::render::effects::GRAYSCALE_MATRIX,
         )));
         pipeline.add_pass(Box::new(VignettePass::new()));
         b.iter(|| black_box(pipeline.execute(black_box(&mut fb.clone()), &ctx)))
@@ -451,34 +451,62 @@ fn bench_graphics(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_nerdfont(c: &mut Criterion) {
-    let mut group = c.benchmark_group("engine_nerdfont");
+fn bench_font(c: &mut Criterion) {
+    let mut group = c.benchmark_group("engine_font");
 
-    group.bench_function("build_font_with_glyphs", |b| {
+    group.bench_function("provider_new", |b| {
         b.iter(|| {
-            let glyphs: Vec<NerdFontGlyph> = (0xE0A0..0xE0B0)
-                .map(|cp| NerdFontGlyph::new(cp, "glyph", GlyphCategory::Powerline).with_width(1))
-                .collect();
-            let font = NerdFont::new("TestFont")
-                .with_variant(NerdFontVariant::Mono)
-                .with_glyphs(black_box(glyphs));
-            black_box(font.validate().valid)
+            let provider = FontProvider::new();
+            black_box(provider.total_icons())
         })
     });
 
-    group.bench_function("metrics_cache_measure", |b| {
-        let glyph = NerdFontGlyph::new(0xE0A0, "branch", GlyphCategory::Powerline).with_width(2);
-        let mut cache = MetricsCache::new(10, 20);
+    group.bench_function("registry_lookup_name", |b| {
+        let provider = FontProvider::new();
         b.iter(|| {
-            black_box(cache.get_or_create(0xE0A0, &glyph));
+            let result = provider.lookup_name(black_box("nf-fa-folder"));
+            black_box(result)
+        })
+    });
+
+    group.bench_function("registry_lookup_codepoint", |b| {
+        let provider = FontProvider::new();
+        b.iter(|| {
+            let result = provider.lookup_codepoint(black_box(0xF000));
+            black_box(result)
+        })
+    });
+
+    group.bench_function("resolve_icon", |b| {
+        let provider = FontProvider::new();
+        b.iter(|| {
+            let result = provider.resolve_icon(black_box("nf-fa-folder"));
+            black_box(result)
+        })
+    });
+
+    group.bench_function("metrics_cache_insert_get", |b| {
+        let mut cache = FontMetricsCache::new(10, 20);
+        let m = FontMetrics::new().with_dimensions(10, 20);
+        cache.insert(0xE0A0, m);
+        b.iter(|| {
+            black_box(cache.get(black_box(0xE0A0)));
             black_box(cache.len())
         })
     });
 
-    group.bench_function("detector_detect", |b| {
+    group.bench_function("metrics_cache_preload_standard", |b| {
         b.iter(|| {
-            let mut detector = NerdFontDetector::new();
-            black_box(detector.detect().len())
+            let mut cache = FontMetricsCache::new(10, 20);
+            cache.preload_standard();
+            black_box(cache.len())
+        })
+    });
+
+    group.bench_function("ascii_measure_text", |b| {
+        b.iter(|| {
+            let result = measure_text(black_box("Hello World"), black_box("tiny"));
+            black_box(result)
         })
     });
 
@@ -511,7 +539,7 @@ fn bench_syntax(c: &mut Criterion) {
     });
 
     group.bench_function("resolve_language", |b| {
-        let mut highlighter = SyntaxHighlighter::new();
+        let highlighter = SyntaxHighlighter::new();
         b.iter(|| black_box(highlighter.resolve_language(black_box("```rust"))))
     });
 
@@ -596,16 +624,14 @@ fn bench_pty(c: &mut Criterion) {
             let cfg = PtyConfig::new("bash")
                 .with_args(vec!["-l".into()])
                 .with_size(PtySize::new(120, 40));
-            black_box(cfg.is_valid())
+            black_box(cfg.size)
         })
     });
 
     group.bench_function("reader_line_buffering", |b| {
-        let mut reader = PtyReader::new();
-        reader.buffer = b"line one\nline two\nline three\n".to_vec();
         b.iter(|| {
             let mut r = PtyReader::new();
-            r.buffer = reader.buffer.clone();
+            let _ = r.read_from(&mut &b"line one\nline two\nline three\n"[..]);
             let mut lines = 0;
             while r.read_line().is_some() {
                 lines += 1;
@@ -634,7 +660,7 @@ criterion_group!(
     bench_vt,
     bench_render,
     bench_graphics,
-    bench_nerdfont,
+    bench_font,
     bench_syntax,
     bench_engine_api,
     bench_pty,
