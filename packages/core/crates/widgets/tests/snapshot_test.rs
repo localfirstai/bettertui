@@ -2,7 +2,9 @@
 //!
 //! These tests create widget trees, render them using the engine's Renderer,
 //! and capture the rendered FrameBuffer output as insta snapshots.
+//! Only text content is captured (not full Cell debug) to keep snapshots compact.
 
+use bettertui_engine::framebuffer::FrameBuffer;
 use bettertui_engine::input::FocusManager;
 use bettertui_engine::render::Renderer;
 use bettertui_engine::scheduler::Scheduler;
@@ -17,6 +19,18 @@ use bettertui_widgets::{
 const WIDTH: u16 = 40;
 const HEIGHT: u16 = 10;
 
+fn framebuffer_text(fb: &FrameBuffer) -> String {
+    let mut out = format!("{}x{} framebuffer:\n", fb.width(), fb.height());
+    for y in 0..fb.height() {
+        for x in 0..fb.width() {
+            let cell = fb.get(x, y);
+            out.push(cell.ch);
+        }
+        out.push('\n');
+    }
+    out
+}
+
 fn setup() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
     (
         WidgetHost::new(),
@@ -30,7 +44,6 @@ fn setup() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
 fn render(host: &mut WidgetHost, arena: &mut NodeArena) -> Renderer {
     let mut renderer = Renderer::new(WIDTH, HEIGHT);
 
-    // Sync widget tree into the arena using the pipeline
     let pipeline = bettertui_widgets::Pipeline::new();
     pipeline.sync_arena(host.tree(), arena);
     pipeline.build_render_tree(host.tree(), arena);
@@ -60,7 +73,7 @@ fn snapshot_box_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(BoxWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -69,7 +82,7 @@ fn snapshot_label_widget_hello() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(LabelWidget::new("Hello World")), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -78,7 +91,7 @@ fn snapshot_button_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(ButtonWidget::new("Click Me")), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -87,7 +100,7 @@ fn snapshot_container_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(ContainerWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -96,7 +109,7 @@ fn snapshot_flex_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(FlexWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -105,7 +118,7 @@ fn snapshot_spacer_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(SpacerWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -114,7 +127,7 @@ fn snapshot_separator_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(SeparatorWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -123,7 +136,7 @@ fn snapshot_spinner_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(SpinnerWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -132,7 +145,7 @@ fn snapshot_tooltip_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(TooltipWidget::new("this is a tooltip")), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -141,7 +154,7 @@ fn snapshot_progress_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(ProgressWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -150,7 +163,7 @@ fn snapshot_tabs_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(TabsWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -159,7 +172,7 @@ fn snapshot_stack_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(StackWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -168,7 +181,7 @@ fn snapshot_grid_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(GridWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -177,7 +190,7 @@ fn snapshot_modal_widget() {
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
     host.mount(Box::new(ModalWidget::new()), &mut ctx);
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
 
 #[test]
@@ -190,5 +203,5 @@ fn snapshot_nested_container_label() {
     host.tree_mut().set_parent(child, parent);
 
     let renderer = render(&mut host, &mut arena);
-    insta::assert_debug_snapshot!(renderer.framebuffer());
+    insta::assert_snapshot!(framebuffer_text(renderer.framebuffer()));
 }
