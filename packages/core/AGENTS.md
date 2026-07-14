@@ -21,9 +21,9 @@
 
 - **tsdown must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_bindings"] }` in `tsdown.config.ts`.
 - **Runtime name collision:** Engine bridge exports a `Runtime` interface (napi Rust engine wrapper). Core also has a `Runtime` class (framework-agnostic runtime). In `packages/core/src/index.ts`, rename the engine import: `import { Runtime as NativeRuntime } from "./engine/runtime"` to avoid collision.
-- **Packages/core/src/index.ts must explicitly re-export engine bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/engine/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
+- **Packages/core/src/index.ts must explicitly re-export engine bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/platform/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
 
 ## Git
 
-- When moving files between packages (e.g., reconciler → core, or native → core/src/engine/), git detects renames if content >50% similar. The diff shows only the delta (import path changes), not add+delete.
+- When moving files between packages (e.g., reconciler → core, or native → core/src/platform/), git detects renames if content >50% similar. The diff shows only the delta (import path changes), not add+delete.
 - **Misleading rename detection during refactors:** Deleting a root `Cargo.toml` and creating a new one at a different path is detected as ~93% similar by git, even if the member paths differ. Always verify content manually — don't trust rename percentages alone during workspace migrations.

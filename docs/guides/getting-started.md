@@ -19,7 +19,7 @@ cargo build -p bettertui-bindings   # produces the bettertui_bindings addon
 
 > `@bettertui/core`'s native bridge calls `require("bettertui_bindings")` at runtime. If you skip the `cargo build` step, native factories throw: `Failed to load native bindings. Run cargo build -p bettertui-bindings first.`
 
-The Rust workspace is independent of pnpm; the TS `build` task does not compile Rust. Build the addon explicitly (or wire it into your app's build) before running anything that touches the native bridge (`@bettertui/core`'s engine module at `packages/core/src/engine/`).
+The Rust workspace is independent of pnpm; the TS `build` task does not compile Rust. Build the addon explicitly (or wire it into your app's build) before running anything that touches the native bridge (`@bettertui/core`'s engine module at `packages/core/src/platform/`).
 
 ## Useful scripts
 
