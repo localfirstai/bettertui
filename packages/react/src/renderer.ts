@@ -1,6 +1,21 @@
 import type { Command, CommandBufferConsumer, Instance, TextInstance } from "@bettertui/core";
 import { generateId } from "@bettertui/core";
-import type { LayoutConstraints, Style } from "@bettertui/shared";
+import type {
+  AlignItems,
+  AlignSelf,
+  ColorValue,
+  FlexDirection,
+  Gap,
+  Inset,
+  JustifyContent,
+  LayoutConstraints,
+  Margin,
+  Overflow,
+  Padding,
+  Position,
+  Sizing,
+  Style,
+} from "@bettertui/shared";
 import { createContext } from "react";
 import Reconciler from "react-reconciler";
 import type { Fiber, OpaqueRoot as ReactOpaqueRoot } from "react-reconciler";
@@ -77,116 +92,152 @@ function extractLayoutCommands(id: string, props: Record<string, unknown>): Comm
   const commands: Command[] = [];
 
   if (props["flexDirection"] !== undefined) {
-    commands.push({ type: "SetFlexDirection", id, direction: props["flexDirection"] });
+    commands.push({
+      type: "SetFlexDirection",
+      id,
+      direction: props["flexDirection"] as FlexDirection,
+    });
   }
   if (props["justifyContent"] !== undefined) {
-    commands.push({ type: "SetJustifyContent", id, value: props["justifyContent"] });
+    commands.push({
+      type: "SetJustifyContent",
+      id,
+      value: props["justifyContent"] as JustifyContent,
+    });
   }
   if (props["alignItems"] !== undefined) {
-    commands.push({ type: "SetAlignItems", id, value: props["alignItems"] });
+    commands.push({ type: "SetAlignItems", id, value: props["alignItems"] as AlignItems });
   }
   if (props["alignSelf"] !== undefined) {
-    commands.push({ type: "SetAlignSelf", id, value: props["alignSelf"] });
+    commands.push({ type: "SetAlignSelf", id, value: props["alignSelf"] as AlignSelf });
   }
   if (props["flexGrow"] !== undefined) {
-    commands.push({ type: "SetFlexGrow", id, value: props["flexGrow"] });
+    commands.push({ type: "SetFlexGrow", id, value: props["flexGrow"] as number });
   }
   if (props["flexShrink"] !== undefined) {
-    commands.push({ type: "SetFlexShrink", id, value: props["flexShrink"] });
+    commands.push({ type: "SetFlexShrink", id, value: props["flexShrink"] as number });
   }
   if (props["flexBasis"] !== undefined) {
-    commands.push({ type: "SetFlexBasis", id, value: props["flexBasis"] });
+    commands.push({ type: "SetFlexBasis", id, value: props["flexBasis"] as Sizing });
   }
   if (props["position"] !== undefined) {
-    commands.push({ type: "SetPosition", id, value: props["position"] });
+    commands.push({ type: "SetPosition", id, value: props["position"] as Position });
   }
   if (props["width"] !== undefined) {
-    commands.push({ type: "SetWidth", id, value: props["width"] });
+    commands.push({ type: "SetWidth", id, value: props["width"] as Sizing });
   }
   if (props["height"] !== undefined) {
-    commands.push({ type: "SetHeight", id, value: props["height"] });
+    commands.push({ type: "SetHeight", id, value: props["height"] as Sizing });
   }
   if (props["minWidth"] !== undefined) {
-    commands.push({ type: "SetMinWidth", id, value: props["minWidth"] });
+    commands.push({ type: "SetMinWidth", id, value: props["minWidth"] as Sizing });
   }
   if (props["minHeight"] !== undefined) {
-    commands.push({ type: "SetMinHeight", id, value: props["minHeight"] });
+    commands.push({ type: "SetMinHeight", id, value: props["minHeight"] as Sizing });
   }
   if (props["maxWidth"] !== undefined) {
-    commands.push({ type: "SetMaxWidth", id, value: props["maxWidth"] });
+    commands.push({ type: "SetMaxWidth", id, value: props["maxWidth"] as Sizing });
   }
   if (props["maxHeight"] !== undefined) {
-    commands.push({ type: "SetMaxHeight", id, value: props["maxHeight"] });
+    commands.push({ type: "SetMaxHeight", id, value: props["maxHeight"] as Sizing });
   }
   if (props["overflow"] !== undefined) {
-    commands.push({ type: "SetOverflow", id, value: props["overflow"] });
+    commands.push({ type: "SetOverflow", id, value: props["overflow"] as Overflow });
   }
   if (props["opacity"] !== undefined) {
-    commands.push({ type: "SetOpacity", id, value: props["opacity"] });
+    commands.push({ type: "SetOpacity", id, value: props["opacity"] as number });
   }
   if (props["zIndex"] !== undefined) {
-    commands.push({ type: "SetZIndex", id, value: props["zIndex"] });
+    commands.push({ type: "SetZIndex", id, value: props["zIndex"] as number });
   }
 
   // Padding shortcuts
   if (props["padding"] !== undefined) {
     const p = props["padding"];
-    commands.push({ type: "SetPadding", id, value: typeof p === "number" ? { all: p } : p });
+    commands.push({
+      type: "SetPadding",
+      id,
+      value: (typeof p === "number" ? { top: p, right: p, bottom: p, left: p } : p) as Padding,
+    });
   }
   if (props["paddingX"] !== undefined) {
     commands.push({
       type: "SetPadding",
       id,
-      value: { horizontal: props["paddingX"] },
+      value: { left: props["paddingX"], right: props["paddingX"] } as Padding,
     });
   }
   if (props["paddingY"] !== undefined) {
-    commands.push({ type: "SetPadding", id, value: { vertical: props["paddingY"] } });
+    commands.push({
+      type: "SetPadding",
+      id,
+      value: { top: props["paddingY"], bottom: props["paddingY"] } as Padding,
+    });
   }
   if (props["paddingTop"] !== undefined) {
-    commands.push({ type: "SetPadding", id, value: { top: props["paddingTop"] } });
+    commands.push({ type: "SetPadding", id, value: { top: props["paddingTop"] } as Padding });
   }
   if (props["paddingRight"] !== undefined) {
-    commands.push({ type: "SetPadding", id, value: { right: props["paddingRight"] } });
+    commands.push({ type: "SetPadding", id, value: { right: props["paddingRight"] } as Padding });
   }
   if (props["paddingBottom"] !== undefined) {
     commands.push({
       type: "SetPadding",
       id,
-      value: { bottom: props["paddingBottom"] },
+      value: { bottom: props["paddingBottom"] } as Padding,
     });
   }
   if (props["paddingLeft"] !== undefined) {
-    commands.push({ type: "SetPadding", id, value: { left: props["paddingLeft"] } });
+    commands.push({ type: "SetPadding", id, value: { left: props["paddingLeft"] } as Padding });
   }
 
   // Margin shortcuts
   if (props["margin"] !== undefined) {
     const m = props["margin"];
-    commands.push({ type: "SetMargin", id, value: typeof m === "number" ? { all: m } : m });
+    commands.push({
+      type: "SetMargin",
+      id,
+      value: (typeof m === "number" ? { top: m, right: m, bottom: m, left: m } : m) as Margin,
+    });
   }
   if (props["marginX"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { horizontal: props["marginX"] } });
+    commands.push({
+      type: "SetMargin",
+      id,
+      value: { left: props["marginX"], right: props["marginX"] } as Margin,
+    });
   }
   if (props["marginY"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { vertical: props["marginY"] } });
+    commands.push({
+      type: "SetMargin",
+      id,
+      value: { top: props["marginY"], bottom: props["marginY"] } as Margin,
+    });
   }
   if (props["marginTop"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { top: props["marginTop"] } });
+    commands.push({ type: "SetMargin", id, value: { top: props["marginTop"] } as Margin });
   }
   if (props["marginRight"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { right: props["marginRight"] } });
+    commands.push({ type: "SetMargin", id, value: { right: props["marginRight"] } as Margin });
   }
   if (props["marginBottom"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { bottom: props["marginBottom"] } });
+    commands.push({
+      type: "SetMargin",
+      id,
+      value: { bottom: props["marginBottom"] } as Margin,
+    });
   }
   if (props["marginLeft"] !== undefined) {
-    commands.push({ type: "SetMargin", id, value: { left: props["marginLeft"] } });
+    commands.push({ type: "SetMargin", id, value: { left: props["marginLeft"] } as Margin });
   }
 
   // Gap
   if (props["gap"] !== undefined) {
-    commands.push({ type: "SetGap", id, value: { width: props["gap"], height: props["gap"] } });
+    commands.push({
+      type: "SetGap",
+      id,
+      value: { row: props["gap"], column: props["gap"] } as Gap,
+    });
   }
 
   // Inset (top/right/bottom/left for absolute positioning)
@@ -204,7 +255,7 @@ function extractLayoutCommands(id: string, props: Record<string, unknown>): Comm
         right: props["right"],
         bottom: props["bottom"],
         left: props["left"],
-      },
+      } as Inset,
     });
   }
 
@@ -215,31 +266,31 @@ function extractStyleCommands(id: string, props: Record<string, unknown>): Comma
   const commands: Command[] = [];
 
   if (props["color"] !== undefined) {
-    commands.push({ type: "SetForeground", id, color: props["color"] });
+    commands.push({ type: "SetForeground", id, color: props["color"] as ColorValue });
   }
   if (props["bgColor"] !== undefined) {
-    commands.push({ type: "SetBackground", id, color: props["bgColor"] });
+    commands.push({ type: "SetBackground", id, color: props["bgColor"] as ColorValue });
   }
   if (props["bold"] !== undefined) {
-    commands.push({ type: "SetBold", id, value: props["bold"] });
+    commands.push({ type: "SetBold", id, value: props["bold"] as boolean });
   }
   if (props["italic"] !== undefined) {
-    commands.push({ type: "SetItalic", id, value: props["italic"] });
+    commands.push({ type: "SetItalic", id, value: props["italic"] as boolean });
   }
   if (props["underline"] !== undefined) {
-    commands.push({ type: "SetUnderline", id, value: props["underline"] });
+    commands.push({ type: "SetUnderline", id, value: props["underline"] as boolean });
   }
   if (props["dim"] !== undefined) {
-    commands.push({ type: "SetDim", id, value: props["dim"] });
+    commands.push({ type: "SetDim", id, value: props["dim"] as boolean });
   }
   if (props["strikethrough"] !== undefined) {
-    commands.push({ type: "SetStrikethrough", id, value: props["strikethrough"] });
+    commands.push({ type: "SetStrikethrough", id, value: props["strikethrough"] as boolean });
   }
   if (props["inverse"] !== undefined) {
-    commands.push({ type: "SetInverse", id, value: props["inverse"] });
+    commands.push({ type: "SetInverse", id, value: props["inverse"] as boolean });
   }
   if (props["hidden"] !== undefined) {
-    commands.push({ type: "SetHidden", id, value: props["hidden"] });
+    commands.push({ type: "SetHidden", id, value: props["hidden"] as boolean });
   }
 
   return commands;
