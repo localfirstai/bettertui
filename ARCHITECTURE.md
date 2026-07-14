@@ -22,8 +22,6 @@ graph TD
     Themes[@bettertui/themes] --> Shared
 ```
 
-> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module).
-
 - `bettertui-engine` never imports any JS framework.
 - `@bettertui/core` never imports React.
 - Only `@bettertui/react` imports React.

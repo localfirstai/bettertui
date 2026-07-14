@@ -25,8 +25,9 @@ graph LR
   - `packages/core/crates/bindings` (the napi-rs cdylib)
   - `examples/*`
 - **TurboRepo** (`turbo.json`) orchestrates `build`, `dev`, `lint`, `format`, `format:check`, `typecheck`, `clean`. `build`/`lint`/`typecheck` depend on `^build`/`^lint`/`^typecheck` so dependencies build before dependents.
-- **Cargo workspace** (`packages/core/Cargo.toml`, `resolver = "2"`) contains the two Rust crates:
+- **Cargo workspace** (`packages/core/Cargo.toml`, `resolver = "2"`) contains the three Rust crates:
   - `packages/core/crates/engine` → `bettertui-engine` (the library)
+  - `packages/core/crates/widgets` → `bettertui-widgets` (widget framework, depends on engine)
   - `packages/core/crates/bindings` → `bettertui-bindings` (the napi-rs cdylib)
 
 > Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
@@ -43,7 +44,6 @@ bettertui/
 │   │       └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 │   ├── react/         # @bettertui/react   — React 19 adapter
 │   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   ├── icons/         # @bettertui/icons   — icon registry (NOT YET A PACKAGE; proposed)
 │   ├── devtools/      # @bettertui/devtools — devtools stub
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
@@ -72,7 +72,7 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 | `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
 | `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
-| `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/widget-model.md` note) |
+
 
 ```mermaid
 graph TD
@@ -94,14 +94,16 @@ graph TD
 
 | Crate | Type | Purpose |
 |-------|------|---------|
-| `bettertui-engine` | `lib` | All engine logic: tree, layout, renderer, framebuffer, events, input, animation, pty, terminal, text, widgets, capabilities, scheduler, etc. |
-| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing the engine to Node.js. Thin translation layer only. |
+| `bettertui-engine` | `lib` | All engine logic: tree, layout, renderer, framebuffer, events, input, animation, pty, terminal, text, capabilities, scheduler, etc. |
+| `bettertui-widgets` | `lib` | Widget framework: Widget trait, WidgetContext, all built-in widgets. Depends on `bettertui-engine`. |
+| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing the engine + widgets to Node.js. Thin translation layer only. |
 
-The bindings crate depends on `bettertui-engine` (`path = "../engine"`) and contains **no** Rust unit tests — all verification lives in `bettertui-engine` plus the TS layer above.
+The bindings crate depends on both `bettertui-engine` and `bettertui-widgets` and contains **no** Rust unit tests — all verification lives in `bettertui-engine` and `bettertui-widgets` plus the TS layer above.
 
 ```mermaid
 graph LR
-    B[bindings / cdylib] -->|path dep| E[engine / lib]
+    B[bindings / cdylib] -->|path dep| W[widgets / lib]
+    W -->|path dep| E[engine / lib]
     E -->|crossterm| C1[(stdout/stdin)]
     E -->|portable-pty| C2[(child process)]
 ```
@@ -145,8 +147,6 @@ graph TD
     React --> Shared
     Themes --> Shared
 ```
-
-> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet.
 
 Rules enforced by code, not just policy:
 - `bettertui-engine` must never import any JS framework.

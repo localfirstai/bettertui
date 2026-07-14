@@ -24,7 +24,6 @@
 - `@bettertui/core` depends on `@bettertui/shared`. No React dependency. Framework-agnostic.
 - `@bettertui/themes` depends on `@bettertui/shared`. No React dependency.
 - `@bettertui/devtools` has no dependencies.
-- `@bettertui/icons` is a proposed package and does not exist yet.
 - All example projects depend on `@bettertui/react` and `@bettertui/core`.
 
 ## Removed Packages

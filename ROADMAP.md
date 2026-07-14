@@ -18,8 +18,6 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
 | Examples | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/*.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
-| `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
-| `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |
 
 ## Completed
 
@@ -55,10 +53,8 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 
 ## Planned
 
-- [ ] Widget library on the TypeScript side (`@bettertui/widgets`)
 - [ ] React `Terminal` component wrapping the embedded PTY
 - [ ] Theme presets (light, high-contrast)
-- [ ] Icon registry with bundled icon sets (Phosphor preferred per project taste)
 - [ ] Developer tools (inspector, profiler, error overlay)
 - [ ] Example applications wired to the engine (dashboard, mouse, table, text-editor, tree)
 - [ ] Additional framework adapters (Vue, Solid, Svelte, vanilla TypeScript) — require no Rust changes

@@ -29,4 +29,3 @@ flowchart TD
 ## Known gaps
 
 - The `AnsiParser` + `VtMachine` are wired into tests but **not yet** into the production PTY read path (per the Phase 8 review). The embedded-terminal feature is implemented at the engine level but the end-to-end React "Terminal widget" is not exposed as a component yet.
-- `@bettertui/widgets` has no `Terminal` widget on the TS side yet.

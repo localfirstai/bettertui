@@ -18,8 +18,6 @@ graph TD
     I --> J
 ```
 
-> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module). Do not import from `@bettertui/widgets`.
-
 ## Document Index
 
 | Document | What it describes |

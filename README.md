@@ -80,8 +80,6 @@ bettertui/
 | `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
 | `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
-| `@bettertui/widgets` | Widget library (proposed on TypeScript side) | 🔜 Not a package yet (Rust widgets exist) |
-| `@bettertui/icons` | Icon registry (proposed) | 🔜 Not a package yet |
 
 ## React Components
 
