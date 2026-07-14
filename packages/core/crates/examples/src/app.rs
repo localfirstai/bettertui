@@ -1,10 +1,22 @@
+//! Application shell using BetterTUI's Engine and Renderer.
+//!
+//! This demonstrates the recommended pattern:
+//! 1. Build UI tree with `Engine`
+//! 2. Style nodes with `Style` and `Color`
+//! 3. Render with `Renderer` + `AnsiBackend`
+//! 4. Handle events with `Terminal`
+
 use std::io::{self, Write};
 
+use bettertui_engine::engine::Engine;
+use bettertui_engine::layout::{FlexDirection, LayoutProps, Sizing};
+use bettertui_engine::render::{AnsiBackend, Renderer};
+use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::KeyModifiers;
 
-use crate::theme::{self, Theme};
 use crate::examples::{self, Category, Example};
+use crate::theme::Theme;
 
 const TITLE: &str = "BETTERTUI EXAMPLES";
 
@@ -25,7 +37,7 @@ enum Focus {
 }
 
 pub struct App {
-    theme: &'static Theme,
+    theme: Theme,
     examples: Vec<Example>,
     filtered: Vec<usize>,
     selected_index: usize,
@@ -38,7 +50,7 @@ impl App {
         let all = examples::all();
         let indices: Vec<usize> = (0..all.len()).collect();
         Self {
-            theme: &theme::DARK,
+            theme: Theme::dark(),
             examples: all,
             filtered: indices,
             selected_index: 0,
@@ -61,21 +73,17 @@ impl App {
     }
 
     fn main_loop(&mut self, terminal: &mut Terminal) -> io::Result<()> {
-        let mut out = io::stdout();
-        self.draw(&mut out, terminal)?;
-
         loop {
+            self.draw(terminal)?;
+
             match terminal.poll_event(std::time::Duration::from_millis(80))? {
                 Some(TerminalEvent::Key(k)) => {
                     if k.code == Key::Char('c') && k.modifiers.contains(KeyModifiers::CONTROL) {
                         return Ok(());
                     }
                     self.handle_key(k, terminal)?;
-                    self.draw(&mut out, terminal)?;
                 }
-                Some(TerminalEvent::Resize(_, _)) => {
-                    self.draw(&mut out, terminal)?;
-                }
+                Some(TerminalEvent::Resize(_, _)) => {}
                 _ => {}
             }
         }
@@ -84,18 +92,32 @@ impl App {
     fn handle_key(&mut self, key: KeyInput, terminal: &mut Terminal) -> io::Result<()> {
         match key.code {
             Key::Tab | Key::Char('\t') => {
-                self.focus = if self.focus == Focus::Filter { Focus::List } else { Focus::Filter };
+                self.focus = if self.focus == Focus::Filter {
+                    Focus::List
+                } else {
+                    Focus::Filter
+                };
             }
             Key::Esc => {
-                self.focus = if self.focus == Focus::Filter { Focus::List } else { Focus::Filter };
+                self.focus = if self.focus == Focus::Filter {
+                    Focus::List
+                } else {
+                    Focus::Filter
+                };
             }
             Key::Up => {
-                if self.focus == Focus::List { self.move_selection(-1); }
+                if self.focus == Focus::List {
+                    self.move_selection(-1);
+                }
             }
             Key::Down => {
-                if self.focus == Focus::List { self.move_selection(1); }
+                if self.focus == Focus::List {
+                    self.move_selection(1);
+                }
             }
-            Key::Char('k') if self.focus == Focus::List && !key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Key::Char('k')
+                if self.focus == Focus::List && !key.modifiers.contains(KeyModifiers::CONTROL) =>
+            {
                 self.move_selection(-1);
             }
             Key::Char('j') if self.focus == Focus::List => {
@@ -124,7 +146,9 @@ impl App {
     }
 
     fn move_selection(&mut self, delta: isize) {
-        if self.filtered.is_empty() { return; }
+        if self.filtered.is_empty() {
+            return;
+        }
         let len = self.filtered.len();
         let new = (self.selected_index as isize + delta).rem_euclid(len as isize) as usize;
         self.selected_index = new;
@@ -135,13 +159,23 @@ impl App {
         if text.is_empty() {
             self.filtered = (0..self.examples.len()).collect();
         } else {
-            self.filtered = self.examples.iter().enumerate()
+            self.filtered = self
+                .examples
+                .iter()
+                .enumerate()
                 .filter(|(_, ex)| {
-                    let cat_label = CATEGORY_LABELS.iter()
+                    let cat_label = CATEGORY_LABELS
+                        .iter()
                         .find(|(c, _)| *c == ex.category)
                         .map(|(_, l)| *l)
                         .unwrap_or("");
-                    let search = format!("{} {} {} {}", cat_label, ex.name, ex.description, ex.category.label());
+                    let search = format!(
+                        "{} {} {} {}",
+                        cat_label,
+                        ex.name,
+                        ex.description,
+                        ex.category.label()
+                    );
                     search.to_lowercase().contains(&text)
                 })
                 .map(|(i, _)| i)
@@ -152,10 +186,28 @@ impl App {
 
     fn run_example(&mut self, idx: usize, terminal: &mut Terminal) -> io::Result<()> {
         let example = &self.examples[idx];
-        let mut out = io::stdout();
         terminal.clear()?;
         terminal.move_cursor(0, 0)?;
-        write!(out, "\x1b[2;37mRunning: {}\x1b[0m\n\n", example.name)?;
+
+        let mut out = io::stdout();
+        let mut engine = Engine::new();
+        let root = engine.arena().root();
+
+        let title_node = engine.create_node(NodeKind::Text);
+        engine.set_text(title_node, format!("Running: {}", example.name));
+        engine.set_style(
+            title_node,
+            Style::new()
+                .fg(Color::Named(NamedColor::BrightYellow))
+                .bold(true),
+        );
+        engine.append_child(root, title_node).unwrap();
+
+        let mut renderer = Renderer::new(80, 2);
+        renderer.set_backend(Box::new(AnsiBackend::new()));
+        let frame = renderer.render_full(engine.arena_mut());
+        out.write_all(&frame.output_data)?;
+        out.write_all(b"\n\n")?;
         out.flush()?;
 
         (example.run)(terminal)?;
@@ -165,176 +217,136 @@ impl App {
         Ok(())
     }
 
-    fn draw(&self, out: &mut io::Stdout, terminal: &Terminal) -> io::Result<()> {
-        let (term_w, term_h) = terminal.size();
-        let w = term_w as usize;
-        let h = term_h as usize;
+    fn draw(&self, terminal: &mut Terminal) -> io::Result<()> {
+        let (w, h) = terminal.size();
         let t = self.theme;
 
-        terminal.clear()?;
+        let mut engine = Engine::new();
+        let root = engine.arena().root();
 
-        // Title — centered
-        let title_x = w.saturating_sub(TITLE.len()) / 2;
-        terminal.move_cursor(title_x as u16, 0)?;
-        write!(out, "{}{}\x1b[0m", t.title_color, TITLE)?;
+        engine.set_layout(
+            root,
+            LayoutProps {
+                direction: FlexDirection::Column,
+                width: Some(Sizing::Points(w as f32)),
+                height: Some(Sizing::Points(h as f32)),
+                ..LayoutProps::default()
+            },
+        );
 
-        // ── Filter box ──────────────────────────────────────────────────
-        let filter_y: u16 = 2;
-        let box_w = w.saturating_sub(6).max(10); // inner content width
-        let box_x = 3u16; // left margin (right margin also 3)
-        let is_filter_focused = self.focus == Focus::Filter;
-        let f_border = if is_filter_focused { t.focused_border_color } else { t.border_color };
+        let title_node = engine.create_node(NodeKind::Text);
+        engine.set_text(title_node, TITLE);
+        engine.set_style(title_node, Style::new().fg(t.title_color).bold(true));
+        engine.append_child(root, title_node).unwrap();
 
-        let filter_title = " Filter ";
-        let filter_title_len = filter_title.len();
-        let _l_pad = 2u16; // left border chars before title
+        let spacer1 = engine.create_node(NodeKind::Text);
+        engine.set_text(spacer1, "");
+        engine.append_child(root, spacer1).unwrap();
 
-        // Filter top border
-        terminal.move_cursor(box_x, filter_y)?;
-        write!(out, "{f_border}┌")?;
-        write!(out, "─{filter_title}\x1b[0m{f_border}")?;
-        let after_title = box_w.saturating_sub(filter_title_len + 1);
-        for _ in 0..after_title { write!(out, "─")?; }
-        write!(out, "┐\x1b[0m")?;
-
-        // Filter left & right sides, input line
-        terminal.move_cursor(box_x, filter_y + 1)?;
-        write!(out, "{f_border}│\x1b[0m ")?;
-        if self.filter_text.is_empty() {
-            write!(out, "\x1b[3m{}Filter examples...\x1b[0m{}", t.input_placeholder_color,
-                if is_filter_focused { format!("{}█\x1b[0m", t.input_cursor_color) } else { " ".into() })?;
-        } else {
-            write!(out, "{}{}\x1b[0m{}", t.input_text_color, self.filter_text,
-                if is_filter_focused { format!("{}█\x1b[0m", t.input_cursor_color) } else { " ".into() })?;
-        }
-        let used = 2 + self.filter_text.len().max(16);
-        for _ in used..box_w { write!(out, " ")?; }
-        write!(out, " {f_border}│\x1b[0m")?;
-
-        // Filter bottom border
-        terminal.move_cursor(box_x, filter_y + 2)?;
-        write!(out, "{f_border}└")?;
-        for _ in 0..=box_w { write!(out, "─")?; }
-        write!(out, "┘\x1b[0m")?;
-
-        // ── Examples box ────────────────────────────────────────────────
-        let list_y = filter_y + 4;
-        let list_h = (h as u16).saturating_sub(list_y + 3);
-        let is_list_focused = self.focus == Focus::List;
-        let l_border = if is_list_focused { t.focused_border_color } else { t.border_color };
-
-        let examples_title = if self.filtered.is_empty() && !self.filter_text.is_empty() {
-            " Examples (No Matches) "
-        } else {
-            " Examples "
-        };
-        let examples_title_len = examples_title.len();
-
-        // Examples top border
-        terminal.move_cursor(box_x, list_y)?;
-        write!(out, "{l_border}┌─{examples_title}\x1b[0m{l_border}")?;
-        let after_title = box_w.saturating_sub(examples_title_len + 1);
-        for _ in 0..after_title { write!(out, "─")?; }
-        write!(out, "┐\x1b[0m")?;
-
-        // Draw items with left/right sides
-        if self.filtered.is_empty() {
-            terminal.move_cursor(box_x, list_y + 1)?;
-            write!(out, "{}│\x1b[0m  No matching examples", t.instructions_color)?;
-            for _ in 3..box_w { write!(out, " ")?; }
-            write!(out, " {}│\x1b[0m", t.instructions_color)?;
-            for r in 2..list_h {
-                terminal.move_cursor(box_x, list_y + r)?;
-                write!(out, "{}│\x1b[0m", t.instructions_color)?;
-                for _ in 0..box_w { write!(out, " ")?; }
-                write!(out, " {}│\x1b[0m", t.instructions_color)?;
-            }
-        } else {
-            let mut line: u16 = 0;
-            let mut prev_cat: Option<Category> = None;
-
-            for &idx in &self.filtered {
-                if line >= list_h { break; }
-                let abs_idx = self.filtered.iter().position(|&i| i == idx).unwrap_or(0);
-                let is_sel = abs_idx == self.selected_index;
-                let ex = &self.examples[idx];
-                let is_new_cat = prev_cat != Some(ex.category);
-
-                if is_new_cat && line < list_h {
-                    terminal.move_cursor(box_x, list_y + 1 + line)?;
-                    write!(out, "{}│\x1b[0m", t.instructions_color)?;
-                    write!(out, "  {}", t.select_category_color)?;
-                    let cat_label = CATEGORY_LABELS.iter()
-                        .find(|(c, _)| *c == ex.category)
-                        .map(|(_, l)| *l)
-                        .unwrap_or("");
-                    write!(out, "{cat_label}")?;
-                    write!(out, "\x1b[0m")?;
-                    let used = cat_label.len() + 4;
-                    for _ in used..box_w { write!(out, " ")?; }
-                    write!(out, " {}│\x1b[0m", t.instructions_color)?;
-                    line += 1;
-                    prev_cat = Some(ex.category);
-                }
-
-                if line >= list_h { break; }
-
-                terminal.move_cursor(box_x, list_y + 1 + line)?;
-                write!(out, "{}│\x1b[0m", t.instructions_color)?;
-                if is_sel && is_list_focused {
-                    write!(out, "{}  \u{25b6} {}", t.select_selected_bg, ex.name)?;
-                    write!(out, "\x1b[0m")?;
-                    let rest = box_w.saturating_sub(ex.name.len() + 5);
-                    for _ in 0..rest { write!(out, " ")?; }
-                } else if is_sel {
-                    write!(out, "  \u{25b6} {}\x1b[0m", ex.name)?;
-                    let rest = box_w.saturating_sub(ex.name.len() + 5);
-                    for _ in 0..rest { write!(out, " ")?; }
+        let filter_label = engine.create_node(NodeKind::Text);
+        engine.set_text(filter_label, format!("Filter: {}", self.filter_text));
+        engine.set_style(
+            filter_label,
+            Style::new()
+                .fg(if self.focus == Focus::Filter {
+                    t.focused_border_color
                 } else {
-                    write!(out, "    {}\x1b[0m", ex.name)?;
-                    let rest = box_w.saturating_sub(ex.name.len() + 5);
-                    for _ in 0..rest { write!(out, " ")?; }
-                }
-                write!(out, " {}│\x1b[0m", t.instructions_color)?;
-                line += 1;
+                    t.border_color
+                })
+                .bold(true),
+        );
+        engine.append_child(root, filter_label).unwrap();
+
+        let spacer2 = engine.create_node(NodeKind::Text);
+        engine.set_text(spacer2, "");
+        engine.append_child(root, spacer2).unwrap();
+
+        let mut prev_cat: Option<Category> = None;
+        for &idx in &self.filtered {
+            let ex = &self.examples[idx];
+            let is_new_cat = prev_cat != Some(ex.category);
+
+            if is_new_cat {
+                let cat_label = CATEGORY_LABELS
+                    .iter()
+                    .find(|(c, _)| *c == ex.category)
+                    .map(|(_, l)| *l)
+                    .unwrap_or("");
+
+                let cat_node = engine.create_node(NodeKind::Text);
+                engine.set_text(cat_node, format!("  [ {} ]", cat_label));
+                engine.set_style(cat_node, Style::new().fg(t.category_color).bold(true));
+                engine.append_child(root, cat_node).unwrap();
+                prev_cat = Some(ex.category);
             }
 
-            // Fill remaining lines
-            while line < list_h {
-                terminal.move_cursor(box_x, list_y + 1 + line)?;
-                write!(out, "│")?;
-                for _ in 0..box_w { write!(out, " ")?; }
-                write!(out, "│")?;
-                line += 1;
-            }
+            let abs_idx = self.filtered.iter().position(|&i| i == idx).unwrap_or(0);
+            let is_sel = abs_idx == self.selected_index;
+
+            let item_node = engine.create_node(NodeKind::Text);
+            let prefix = if is_sel && self.focus == Focus::List {
+                "  ▶ "
+            } else {
+                "    "
+            };
+            engine.set_text(item_node, format!("{}{}", prefix, ex.name));
+            engine.set_style(
+                item_node,
+                if is_sel && self.focus == Focus::List {
+                    Style::new()
+                        .fg(t.selected_text_color)
+                        .bg(t.selected_bg_color)
+                        .bold(true)
+                } else if is_sel {
+                    Style::new().fg(t.selected_text_color).bold(true)
+                } else {
+                    Style::new().fg(t.text_color)
+                },
+            );
+            engine.append_child(root, item_node).unwrap();
         }
 
-        // Examples bottom border
-        terminal.move_cursor(box_x, list_y + list_h)?;
-        write!(out, "{l_border}└")?;
-        for _ in 0..=box_w { write!(out, "─")?; }
-        write!(out, "┘\x1b[0m")?;
+        let spacer3 = engine.create_node(NodeKind::Text);
+        engine.set_text(spacer3, "");
+        engine.append_child(root, spacer3).unwrap();
 
-        // Description line
-        let desc_y = list_y + list_h + 1;
-        if desc_y < term_h {
-            terminal.move_cursor(box_x, desc_y)?;
-            if let Some(&idx) = self.filtered.get(self.selected_index.min(self.filtered.len().saturating_sub(1))) {
-                let desc = self.examples[idx].description;
-                let max_w = w.saturating_sub(6);
-                let d = if desc.len() > max_w { &desc[..max_w] } else { desc };
-                write!(out, "  {}\x1b[0m", t.select_description_color)?;
-                write!(out, "{d}")?;
-                write!(out, "\x1b[0m")?;
-            }
+        if let Some(&idx) = self.filtered.get(
+            self.selected_index
+                .min(self.filtered.len().saturating_sub(1)),
+        ) {
+            let desc = &self.examples[idx].description;
+            let desc_node = engine.create_node(NodeKind::Text);
+            engine.set_text(desc_node, format!("  {}", desc));
+            engine.set_style(desc_node, Style::new().fg(t.description_color));
+            engine.append_child(root, desc_node).unwrap();
         }
 
-        // Footer instructions
-        let footer_y = term_h.saturating_sub(1);
-        terminal.move_cursor(0, footer_y)?;
-        write!(out, "{}Tab switch focus  |  \u{2191}\u{2193}/j/k navigate  |  Enter run  |  / filter  |  Ctrl+C quit\x1b[0m", t.instructions_color)?;
+        let spacer4 = engine.create_node(NodeKind::Text);
+        engine.set_text(spacer4, "");
+        engine.append_child(root, spacer4).unwrap();
 
+        let help_node = engine.create_node(NodeKind::Text);
+        engine.set_text(
+            help_node,
+            "Tab: switch  |  ↑↓/jk: navigate  |  Enter: run  |  /: filter  |  Ctrl+C: quit",
+        );
+        engine.set_style(help_node, Style::new().fg(t.instructions_color));
+        engine.append_child(root, help_node).unwrap();
+
+        engine.begin_frame();
+        engine.commit_frame();
+
+        terminal.clear()?;
+        terminal.move_cursor(0, 0)?;
+
+        let mut renderer = Renderer::new(w, h);
+        renderer.set_backend(Box::new(AnsiBackend::new()));
+        let frame = renderer.render_full(engine.arena_mut());
+
+        let mut out = io::stdout();
+        out.write_all(&frame.output_data)?;
         out.flush()?;
+
         Ok(())
     }
 }
