@@ -65,7 +65,7 @@ export type {
   Point,
 } from "@bettertui/core";
 
-// Re-export shared layout types
+// Re-export layout types (re-exported from @bettertui/core which owns shared re-exports)
 export type {
   FlexDirection as SharedFlexDirection,
   JustifyContent as SharedJustifyContent,
@@ -79,7 +79,7 @@ export type {
   Inset as SharedInset,
   Gap as SharedGap,
   LayoutConstraints,
-} from "@bettertui/shared";
+} from "@bettertui/core";
 
 // Re-export all components
 export {

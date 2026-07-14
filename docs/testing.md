@@ -8,7 +8,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Layer | Tool | What it covers |
 |-------|------|----------------|
-| Rust engine | `cargo test` | Tree, layout, renderer, frame buffer, events, input, animation, text, PTY, terminal, capabilities |
+| Rust engine | `cargo test` (per crate) | Engine: tree, layout, renderer, frame buffer, events, input, animation, text, PTY. Terminal: I/O, VT emulation, capabilities, PTY process management, neovim |
 | Rust fmt/lint | `cargo fmt` / `cargo clippy -D warnings` | Style and correctness |
 | TypeScript | `vitest run` (per package) | Command buffer, reconciler, hooks, components, themes, shared types |
 | TS fmt/lint/typecheck | Biome + `tsc --noEmit` | Style, lint, types |
@@ -17,7 +17,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Gate | Result |
 |------|--------|
-| Rust engine unit tests | 1,332 lib tests passing (verified via `cargo test --lib`) |
+| Rust engine unit tests | 720 Rust lib tests passing (verified via `cargo test --lib`) across the engine, terminal, and widgets crates |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | `pnpm build` (turbo) | all buildable TS packages |
@@ -32,7 +32,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 |---------|-----------|-------|
 | `@bettertui/core` | 6 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
 | `@bettertui/shared` | 1 | Type definitions |
-| `@bettertui/themes` | 2 | `defaultTheme`, `createTheme()` |
+
 | `@bettertui/devtools` | 1 | `createDevTools()` |
 | `@bettertui/react` | 10 | Public API, hooks, renderer, `renderToString`, runtime provider, easings, providers, components |
 

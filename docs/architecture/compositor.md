@@ -1,6 +1,6 @@
 # Compositor & Screen
 
-Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Code: `packages/core/crates/engine/src/compositor/` and `packages/core/crates/engine/src/screen/`.
+Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Compositing primitives (`Rgba`, `blend_over`, `PaintFlags`) live in the engine's `tree.rs` / `graphics.rs`; the screen state and `ScreenBuffer` live in the `bettertui-terminal` crate (`screen` and `vt` modules).
 
 ## Layers
 
@@ -22,7 +22,7 @@ graph TD
 
 ## Screen state
 
-`screen/mod.rs`:
+The terminal crate provides screen state (`screen.rs`):
 
 ```rust
 pub struct ScreenState {
@@ -42,4 +42,5 @@ pub struct ScreenState {
 
 ## CompositorRenderer
 
-`compositor/renderer.rs` (`CompositorRenderer`) drives the composite step. The compositor is independent of the arena; the `renderer` pipeline composites after painting into the content layer.
+The terminal crate's `screen.rs` drives the composite step. The compositor is independent of the arena; the `render` pipeline composites after painting into the content layer.
+eline composites after painting into the content layer.

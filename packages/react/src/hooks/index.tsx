@@ -1,4 +1,6 @@
-import type { KeyEvent as SharedKeyEvent, Theme as SharedTheme } from "@bettertui/shared";
+import type { KeyEvent as SharedKeyEvent } from "@bettertui/shared";
+import { DEFAULT_THEME, mergeTheme } from "@bettertui/shared";
+import type { Theme } from "@bettertui/shared";
 import {
   createContext,
   useCallback,
@@ -11,73 +13,35 @@ import {
 import type { ReactNode } from "react";
 
 // Re-export shared types for consumer convenience
-export type Theme = SharedTheme;
-export type ThemeColors = SharedTheme["colors"];
-export type ThemeSpacing = SharedTheme["spacing"];
+export type { Theme };
+export type ThemeColors = Theme["colors"];
+export type ThemeSpacing = Theme["spacing"];
 export type KeyEvent = SharedKeyEvent;
-
-// Default dark theme
-const defaultDarkTheme: SharedTheme = {
-  name: "dark",
-  colors: {
-    background: "#1e1e28",
-    surface: "#1e1e28",
-    surfaceHigh: "#282837",
-    surfaceLow: "#14141c",
-    primary: "#648cdc",
-    primaryForeground: "#ffffff",
-    secondary: "#8c64c8",
-    secondaryForeground: "#ffffff",
-    text: "#dcdce6",
-    textMuted: "#8c8ca0",
-    textDim: "#5a5a69",
-    border: "#3c3c50",
-    borderFocused: "#648cdc",
-    accent: "#50c8a0",
-    accentForeground: "#ffffff",
-    error: "#dc5050",
-    warning: "#dcb43c",
-    success: "#50c878",
-    info: "#50a0dc",
-  },
-  spacing: {
-    none: 0,
-    xxs: 1,
-    xs: 2,
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-    xxl: 24,
-  },
-  borders: {
-    style: "single",
-    fg: "#3c3c50",
-  },
-};
 
 // Theme context
 interface ThemeContextValue {
-  theme: SharedTheme;
-  setTheme: (theme: SharedTheme) => void;
+  theme: Theme;
+  setTheme: (theme: Partial<Theme>) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: defaultDarkTheme,
+  theme: DEFAULT_THEME,
   setTheme: () => {},
 });
 
 // Theme provider
 export interface ProviderProps {
   children: ReactNode;
-  theme?: SharedTheme;
+  theme?: Partial<Theme>;
 }
 
-export function Provider({ children, theme = defaultDarkTheme }: ProviderProps) {
-  const [currentTheme, setCurrentTheme] = useState<SharedTheme>(theme);
+export function Provider({ children, theme }: ProviderProps) {
+  const [currentTheme, setCurrentTheme] = useState<Theme>(() =>
+    theme ? mergeTheme(DEFAULT_THEME, theme) : DEFAULT_THEME,
+  );
 
-  const setTheme = useCallback((newTheme: SharedTheme) => {
-    setCurrentTheme(newTheme);
+  const setTheme = useCallback((partial: Partial<Theme>) => {
+    setCurrentTheme((prev) => mergeTheme(prev, partial));
   }, []);
 
   return (
@@ -220,21 +184,33 @@ export function useResize(handler: (width: number, height: number) => void) {
   handlerRef.current = handler;
 
   useEffect(() => {
-    const nodeGlobal =
-      (typeof globalThis !== "undefined" && (globalThis as unknown as Record<string, unknown>)) ||
-      {};
-    const process = nodeGlobal.process;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processObj =
+      typeof process !== "undefined"
+        ? (process as unknown as {
+            stdout?: {
+              columns?: number;
+              rows?: number;
+              on: (event: string, listener: () => void) => void;
+              off: (event: string, listener: () => void) => void;
+            };
+          })
+        : undefined;
+    if (!processObj || !processObj.stdout) return;
 
-    if (!process || !process.stdout) return;
+    const stdout = processObj.stdout;
 
     const onResize = () => {
-      handlerRef.current(process.stdout.columns || 80, process.stdout.rows || 24);
+      handlerRef.current(stdout.columns || 80, stdout.rows || 24);
     };
 
-    process.stdout.on("resize", onResize);
-    return () => {
-      process.stdout.off("resize", onResize);
-    };
+    if (typeof stdout.on === "function") {
+      stdout.on("resize", onResize);
+      return () => {
+        if (typeof stdout.off === "function") stdout.off("resize", onResize);
+      };
+    }
+    return () => {};
   }, []);
 }
 
@@ -641,8 +617,7 @@ export interface MouseState {
   alt: boolean;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: event handler typing
-type MouseEventHandler = (e: any) => void;
+type MouseEventHandler = (e: MouseEvent) => void;
 
 export function useMouse(handler: (event: MouseState) => boolean) {
   const handlerRef = useRef(handler);

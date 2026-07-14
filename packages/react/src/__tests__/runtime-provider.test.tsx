@@ -30,7 +30,7 @@ describe("RuntimeProvider", () => {
     });
     expect(typeof unsub).toBe("function");
     if (unsub) {
-      act(() => unsub());
+      act(() => unsub?.());
     }
   });
 });

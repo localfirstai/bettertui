@@ -4,17 +4,19 @@
 
 ## Re-exported types (from `@bettertui/shared`)
 
-`NodeId, Point, Size, Rect, Direction, Alignment, Overflow, LayoutConstraints, LayoutResult, RenderCommand, EventType, Event, KeyEvent, MouseButton, MouseEvent, ResizeEvent, ColorValue, Color, Style, BorderStyle, Theme, Frame, FrameCell, RenderNode`
+`AlignItems, AlignSelf, BorderStyle, BorderStyleKind, ColorValue, FlexDirection, Gap, Inset, JustifyContent, KeyEvent, LayoutConstraints, Margin, MouseButton, MouseEvent, Overflow, Padding, Point, Position, Rect, Size, Sizing, Style, Theme, ThemeColors, ThemeSpacing`
 
 ## Local types
 
 | Type | Shape |
 |------|-------|
-| `NodeType` | `"text" \| "box" \| "flex" \| "input" \| "list" \| "custom"` |
-| `NodeOptions` | `{ id?, type: NodeType, props?, children?, style? }` |
-| `TreeDiff` | `{ added: string[], removed: string[], updated: string[] }` — **exported but never produced** (no internal producer) |
-| `Command` | union (16 variants) |
+| `Command` | union (16 variants): `CreateNode`, `RemoveNode`, `AppendChild`, `InsertBefore`, `MoveNode`, `ReplaceNode`, `DetachNode`, `SetText`, `SetStyle`, `SetLayout`, `SetAttribute`, `RemoveAttribute`, `BeginFrame`, `CommitFrame`, `Invalidate`, `Shutdown` |
 | `HostContext`, `Instance`, `TextInstance`, `HostConfig`, `CommandBufferConsumer` | reconciler host types |
+| `KeymapEvent`, `CommandHandler`, `CommandContext`, `CommandEntry`, `InterceptHandler`, `InterceptContext`, `KeyListener`, `KeymapOptions`, `ActiveKeyInfo` | keymap event/option shapes |
+| `ValidationError`, `ValidationResult` | validation payloads |
+| `BindingInfo`, `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiKeymap`, `NapiTextEngine`, `NapiScheduler`, `ProcessResult`, `TerminalCapabilities`, `SchedulerStats`, `HighlightSegment` | native bridge types |
+| `NativeRuntime`, `NativeRuntimeOptions`, `EventLoop`, `EventCallback` | native runtime/event-loop types |
+| `TestBinding` | testing helper type |
 
 ## Value exports
 
@@ -61,4 +63,3 @@ Key surface (all delegated to the native keymap unless noted):
 
 - `core` is the heart that `react` and `native` build on. It must never import React.
 - `Keymap` is the recommended way to bind keys; `@bettertui/react` re-exports a React provider/hook suite on top of it (see `docs/api/packages/react.md`).
-- `TreeDiff` is exported but currently unused internally — treat as a planned auxiliary type.

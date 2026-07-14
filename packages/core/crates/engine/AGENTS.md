@@ -76,21 +76,8 @@
 
 ## Error Chaining
 
-- `terminal_process` error chain: `PtyError` → `TerminalError` → `NeovimError`. Each impls `From<T>` for the next level up, so `?` auto-converts. Adding new error types should follow this chain.
+- Engine errors use `thiserror` or manual `Display + Error` impls with `From<T>` for `?` auto-conversion.
 
-## Widget Framework
-
-- **Test modules need explicit imports of sibling types.** `super::*` in `pipeline.rs` tests only brings in `pipeline.rs` imports, not `WidgetId` from `widgets/mod.rs`. Add `use crate::widgets::WidgetId;` explicitly.
-- **WidgetId is a tuple struct.** `WidgetId(pub NodeId)` — construct with `WidgetId(node_id)`, not field syntax.
-- **WidgetContext requires lifetime annotation** in return types: `WidgetContext<'_>` not `WidgetContext`.
-- **NodeArena::append_child returns Result.** Handle with `let _ = ctx.append_child(parent, child);` or propagate error.
-- **Widget::create returns WidgetId.** The trait signature is `fn create(&self, ctx: &mut WidgetContext) -> WidgetId`.
-- **FlexDirection, not Direction.** FlexWidget uses `FlexDirection::Column` (not `Direction::Vertical`).
-- **Theme has no is_dark() method.** Check `theme.colors.is_empty()` or store the mode separately.
-- **Key::Character(char) is the variant name.** Not `Key::Char` — it's `Key::Character(c)` in the enum.
-- **BoxWidget and ContainerWidget need #[derive(Default)].** Clippy `derivable_impls` fires if manual impl is identical to derived.
-- **TextEngine doesn't derive Debug.** Types containing it (like Editor) need manual Debug impl or `#[derive(Default)]` won't work with `#[derive(Debug)]`.
-- **NodeKind has no Inline or Image variants.** Variants are: Text, Box, Flex, Input, List, Table, Tree, Scroll, Tab, Modal, Spacer, Separator, Custom(u16).
 
 ## Testing Philosophy — TDD with 100% Coverage
 
@@ -129,7 +116,7 @@ assert_eq!(screen.cell(0, 0).unwrap().fgcolor(), expected_color);
 
 - **Test-first**: Write the test before the implementation. Red → Green → Refactor.
 - **Every feature must have tests**: No exception. A feature without tests is incomplete.
-- **E2E tests for all terminal interactions**: Any code path that produces ANSI output, handles input, or manages terminal state must have a PTY + vt100 e2e test.
+- **E2E tests for all terminal interactions**: Any code path that produces ANSI output, handles input, or manages terminal state must have a PTY + vt100 e2e test. Terminal-specific tests live in `bettertui-terminal`.
 - **Snapshots for complex data structures**: Use `insta::assert_debug_snapshot!` for FrameBuffer, Cell, Color, and any other structured data that is expensive to assert field-by-field.
 - **No binary targets for testing**: E2E tests use `portable-pty` directly to spawn processes — do NOT add `trycmd` or binary-only testing harnesses.
 - **Coverage gate**: All new code must maintain or improve line coverage. Do not merge code that drops coverage.

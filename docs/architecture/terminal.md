@@ -1,6 +1,6 @@
 # Terminal
 
-This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/engine/src/terminal/` and `packages/core/crates/engine/src/terminal/vt/`.
+This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/terminal/src/` (the `bettertui-terminal` crate). The crate is a flat set of files: `lib.rs`, `capabilities.rs`, `neovim.rs`, `process.rs`, `query.rs`, `screen.rs`, `scrollback.rs`, `vt.rs`.
 
 ## Two layers
 
@@ -12,8 +12,8 @@ graph TD
     E --> F[FrameBuffer for embedding]
 ```
 
-- **Host I/O** (`terminal/mod.rs`): `Terminal::enter_raw_mode`, `leave_raw_mode`, `enter/leave_alternate_screen`, `clear`, `hide/show_cursor`, `move_cursor`, `write_bytes`, `poll_event(timeout) -> Option<TerminalEvent>`. `Drop` restores terminal state.
-- **VT emulation** (`terminal/vt/`): `VtMachine` consumes `ParserEvent`s (from the `ansi` parser) and maintains screen state — used to render an embedded shell.
+- **Host I/O** (`lib.rs`): `Terminal::enter_raw_mode`, `leave_raw_mode`, `enter/leave_alternate_screen`, `clear`, `hide/show_cursor`, `move_cursor`, `write_bytes`, `poll_event(timeout) -> Option<TerminalEvent>`. `Drop` restores terminal state.
+- **VT emulation** (`vt.rs`): `VtMachine` consumes `ParserEvent`s (from the engine `ansi` parser) and maintains screen state — used to render an embedded shell.
 
 ## Terminal struct
 
@@ -30,9 +30,9 @@ graph TD
 
 ## Capability querying
 
-`terminal/query.rs` defines `TerminalQuery` (DA1/DA2/DA3/DSR/DECID/XTVersion/Kitty), `QueryResult`, `full_probe_queries()`, and `check_responses(&VtMachine)`. Results feed `capabilities::CapabilityDetector`.
+The terminal crate's `query.rs` defines `TerminalQuery` (DA1/DA2/DA3/DSR/DECID/XTVersion/Kitty), `QueryResult`, `full_probe_queries()`, and `check_responses(&VtMachine)`. Results feed `capabilities::CapabilityDetector`.
 
-## VT machine (`terminal/vt/`)
+## VT machine (`vt.rs`)
 
 ```mermaid
 classDiagram
@@ -58,9 +58,6 @@ classDiagram
     VtMachine *-- Cursor
 ```
 
-- `vt/core.rs`: `VtMachine`, `process(&ParserEvent)`, `KittyKeyEvent::to_keyboard_input()`, `TerminalResponse`/`ResponseKind`.
-- `vt/cursor.rs`: `Cursor`, `CursorShape`, `CursorStyle`.
-- `vt/modes.rs`: `TerminalMode`, `PrivateMode`.
-- `vt/screen.rs`: `ScreenBuffer`, `Pen`, `ScrollbackBuffer`.
+`vt.rs` defines `VtMachine`, `process(&ParserEvent)`, `KittyKeyEvent::to_keyboard_input()`, `TerminalResponse`/`ResponseKind`, `Cursor`/`CursorShape`/`CursorStyle`, `TerminalMode`/`PrivateMode`, and `ScreenBuffer`/`Pen`/`ScrollbackBuffer`.
 
-The screen state feeds the `screen` compositor module and a `FrameBuffer` for embedding a live shell inside the UI.
+The screen state (in `screen.rs`) feeds the compositor and a `FrameBuffer` for embedding a live shell inside the UI.

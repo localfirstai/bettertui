@@ -17,10 +17,10 @@ flowchart TD
 
 ## What exists in the engine
 
-- `pty/` — `PtyConfig`, `PtySize`, `PtyProcess` (`spawn`, `read`, `write`, `resize`, `is_running`, `kill`, `wait`, `pid`), `PtyRuntime`, `PtyReader`/`PtyWriter`, `PtyError`. Built on `portable-pty`.
-- `terminal_process/` — `TerminalRuntime` (`spawn`/`read`/`write`/`resize`/`is_running`/`kill`/`wait`), `ProcessConfig`, `ProcessSpawner`, `SpawnResult`, `TerminalState`, `TerminalViewport`, `enum ScrollMode`.
-- `terminal/vt/` — `VtMachine` consumes parser events and maintains `ScreenBuffer`/`Cursor`/`Pen`/`modes`. Produces a `FrameBuffer` for embedding.
-- `screen/` — `ScreenState` with alternate screen, scrollback, and selection.
+- `pty.rs` (engine) — `PtyConfig`, `PtySize`, `PtyProcess` (`spawn`, `read`, `write`, `resize`, `is_running`, `kill`, `wait`, `pid`), `PtyRuntime`, `PtyReader`/`PtyWriter`, `PtyError`. Built on `portable-pty`.
+- `process.rs` (terminal crate) — `TerminalRuntime` (`spawn`/`read`/`write`/`resize`/`is_running`/`kill`/`wait`), `ProcessConfig`, `ProcessSpawner`, `SpawnResult`, `TerminalState`, `TerminalViewport`, `enum ScrollMode`.
+- `vt.rs` (terminal crate) — `VtMachine` consumes parser events and maintains `ScreenBuffer`/`Cursor`/`Pen`/`modes`. Produces a `FrameBuffer` for embedding.
+- `screen.rs` (terminal crate) — `ScreenState` with alternate screen, scrollback, and selection.
 
 ## TypeScript surface
 
@@ -29,4 +29,3 @@ flowchart TD
 ## Known gaps
 
 - The `AnsiParser` + `VtMachine` are wired into tests but **not yet** into the production PTY read path (per the Phase 8 review). The embedded-terminal feature is implemented at the engine level but the end-to-end React "Terminal widget" is not exposed as a component yet.
-- `@bettertui/widgets` has no `Terminal` widget on the TS side yet.

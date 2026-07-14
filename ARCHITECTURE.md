@@ -17,12 +17,10 @@ graph TD
     Core -->|napi-rs FFI| Bindings[packages/core/crates/bindings]
     Bindings --> Engine[bettertui-engine]
     Engine --> Term[(crossterm / portable-pty)]
-    Core --> Shared[@bettertui/shared]
+    Core --> Shared[Internal: @bettertui/shared]
     React --> Shared
-    Themes[@bettertui/themes] --> Shared
-```
 
-> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet. The widget framework currently lives only in the Rust engine (`widgets` module).
+```
 
 - `bettertui-engine` never imports any JS framework.
 - `@bettertui/core` never imports React.
@@ -59,18 +57,18 @@ graph TD
 |-----------|--------|--------------|
 | Arena / node tree | `tree` | ✅ |
 | Command protocol | `protocol` | ✅ |
-| Renderer / frame production | `renderer`, `render_object`, `painter` | ✅ |
+| Renderer / frame production | `render` (`Renderer`, `AnsiBackend`, `Painter`), `framebuffer`, `dirty_diff` | ✅ |
 | Frame buffer | `framebuffer` | ✅ |
 | Dirty diff | `dirty_diff` | ✅ |
 | Layout (Taffy) | `layout` | ✅ |
-| Events | `events` | ✅ |
+| Events | `input` | ✅ |
 | Input parsing | `input`, `ansi` | ✅ |
 | Animation | `animation` | ✅ (callback path partial) |
 | Scheduler | `scheduler` | ✅ |
-| Capabilities | `capabilities` | ✅ |
-| Terminal I/O + VT | `terminal`, `terminal/vt` | ✅ |
-| PTY / process | `pty`, `terminal_process` | ✅ |
-| Compositor / screen | `compositor`, `screen` | ✅ |
+| Capabilities | `bettertui-terminal` crate | ✅ |
+| Terminal I/O + VT | `bettertui-terminal` crate (`terminal` I/O, `vt.rs`) | ✅ |
+| PTY / process | `pty` (engine), `process` (terminal crate) | ✅ |
+| Compositor / screen | `tree`/`graphics` (engine), `bettertui-terminal` crate | ✅ |
 | Text editing (rope) | `text` | ✅ |
 | Widgets | `widgets` | ✅ (~200 tests) |
 | FFI surface | `bindings` (cdylib) | ✅ |
@@ -81,12 +79,12 @@ graph TD
 
 | Package | Role | Status |
 |---------|------|--------|
-| `@bettertui/shared` | Type foundation (zero runtime code) | ✅ |
+| `@bettertui/shared` | Type foundation (zero runtime code) — **internal, do not install directly** — re-exported via `@bettertui/core` and `@bettertui/react` | ✅ |
 | `@bettertui/core` | Command protocol, tree ops, runtime | ✅ |
 | `@bettertui/react` | React adapter (reconciler + hooks + 53 components) | ⚠️ reconciler/hooks real; component fns are thin wrappers not yet wired to live render loop |
 | `@bettertui/core` (native bridge) | Internal napi bridge (merged from `@bettertui/native`) | ✅ (needs native addon) |
-| `@bettertui/themes` | Theme defs + factory | ✅ |
-| `@bettertui/devtools` | DevTools | ❌ stub (`createDevTools` → `null`) |
+
+| `@bettertui/devtools` | DevTools | ✅ Implemented | `createDevTools` factory (inspectors, logger, export helpers) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ |
 
 ## Architecture principles

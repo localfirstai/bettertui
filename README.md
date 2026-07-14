@@ -47,14 +47,16 @@ See [`docs/architecture`](docs/architecture/README.md) for the full design, and 
 ```
 bettertui/
 ├── packages/
-│   ├── shared/        # @bettertui/shared  — type-only foundation
+│   ├── shared/        # @bettertui/shared  — type-only foundation (internal, re-exported by core & react)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
 │   │   └── crates/
-│   │       ├── engine/        # bettertui-engine (Rust library)
-│   │       └── bindings/      # bettertui-bindings (napi-rs cdylib)
+│   │       ├── engine/        # bettertui-engine (Rust library + layout_e2e bin)
+│   │       ├── widgets/      # bettertui-widgets (Rust widget framework)
+│   │       ├── terminal/     # bettertui-terminal (Rust terminal I/O, VT emulation, PTY)
+│   │       ├── bindings/     # bettertui-bindings (napi-rs cdylib)
+│   │       └── benchmark/    # bettertui-benchmark (Rust bench harness)
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   ├── devtools/      # @bettertui/devtools — devtools stub
+│   ├── devtools/      # @bettertui/devtools — developer tooling (implemented)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -73,15 +75,13 @@ bettertui/
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| `@bettertui/shared` | Framework-agnostic type definitions | ✅ Types complete |
+| `@bettertui/shared` | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** | ✅ Types complete |
 | `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
 | `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
 | `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
-| `@bettertui/themes` | Theme definitions and utilities | ✅ Partial (default theme + factory) |
-| `@bettertui/devtools` | Developer tooling | ❌ Stub (`createDevTools` → `null`) |
+
+| `@bettertui/devtools` | Developer tooling | ✅ Implemented (`createDevTools` factory) |
 | `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
-| `@bettertui/widgets` | Widget library (proposed on TypeScript side) | 🔜 Not a package yet (Rust widgets exist) |
-| `@bettertui/icons` | Icon registry (proposed) | 🔜 Not a package yet |
 
 ## React Components
 
@@ -151,7 +151,7 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **1,332 passing lib tests** (verified with `cargo test --lib`). The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
+The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **720 passing Rust lib tests** (verified with `cargo test --lib`) across the engine, terminal, and widgets crates. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
 
 ## Documentation
 

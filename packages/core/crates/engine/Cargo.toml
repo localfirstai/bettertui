@@ -10,6 +10,10 @@ description = "BetterTUI native rendering engine"
 name = "bettertui_engine"
 path = "src/lib.rs"
 
+[[bin]]
+name = "layout_e2e"
+path = "src/bin/layout_e2e.rs"
+
 [dependencies]
 taffy.workspace = true
 crossterm.workspace = true
@@ -23,6 +27,7 @@ slotmap.workspace = true
 smallvec.workspace = true
 bitflags.workspace = true
 portable-pty.workspace = true
+serde_json.workspace = true
 
 # Tree-sitter for syntax highlighting
 tree-sitter = "0.25"
@@ -34,6 +39,9 @@ tree-sitter-json = "0.24"
 tree-sitter-html = "0.23"
 tree-sitter-css = "0.25"
 tree-sitter-bash = "0.25"
+
+[build-dependencies]
+serde_json = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }

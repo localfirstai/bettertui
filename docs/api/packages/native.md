@@ -1,6 +1,6 @@
 # @bettertui/core (native bridge)
 
-**The native bridge (at `packages/core/src/engine/`) loads the Rust engine addon (`bettertui_bindings` at `packages/core/crates/bindings/`).** Previously the separate `@bettertui/native` package; now part of `@bettertui/core`.
+**The native bridge (at `packages/core/src/platform/`) loads the Rust engine addon (`bettertui_bindings` at `packages/core/crates/bindings/`).** Previously the separate `@bettertui/native` package; now part of `@bettertui/core`.
 
 ## Loading
 
@@ -21,6 +21,7 @@ The addon is **not** declared in `package.json` — it must be built separately.
 | `createFocusManager()` | `NapiFocusManager` | `NapiFocusManager` |
 | `createTextEngine()` | `NapiTextEngine` | `NapiTextEngine` |
 | `createScheduler()` | `NapiScheduler` | `NapiScheduler` |
+| `createKeymap()` | `NapiKeymap` | `NapiKeymap` |
 | `detectCapabilities()` | `TerminalCapabilities` | JSON from `detectCapabilities` |
 | `getVersion()` | `string` | `getVersion` |
 
@@ -48,4 +49,4 @@ flowchart TD
 
 ## Status
 
-Implemented at `packages/core/src/engine/`. All native factories throw at runtime unless the Rust addon is built first.
+Implemented at `packages/core/src/platform/`. All native factories throw at runtime unless the Rust addon is built first.

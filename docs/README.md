@@ -39,7 +39,7 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 ## API & Packages
 
 - [API Index](api/README.md)
-- Per-package: [shared](api/packages/shared.md), [core](api/packages/core.md), [react](api/packages/react.md), [native](api/packages/native.md), [widgets](api/packages/widgets.md), [themes](api/packages/themes.md), [icons](api/packages/icons.md), [devtools](api/packages/devtools.md)
+- Per-package: [shared](api/packages/shared.md), [core](api/packages/core.md), [react](api/packages/react.md), [native](api/packages/native.md), [widgets](api/packages/widgets.md), [themes](api/packages/themes.md), [devtools](api/packages/devtools.md)
 
 ## Subsystem docs
 

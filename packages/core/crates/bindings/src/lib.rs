@@ -259,6 +259,8 @@ struct StyleJson {
     dim: Option<bool>,
     #[serde(default)]
     inverse: Option<bool>,
+    #[serde(default, alias = "textAlign")]
+    text_align: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -304,7 +306,7 @@ impl From<ColorJson> for Color {
                 "light_magenta" | "lightmagenta" => {
                     Color::Named(bettertui_engine::tree::NamedColor::BrightMagenta)
                 }
-                _ => bettertui_engine::tree::color::Color::parse(&name)
+                _ => Color::parse(&name)
                     .unwrap_or(Color::Named(bettertui_engine::tree::NamedColor::White)),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
@@ -545,6 +547,14 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
             }
             if let Some(v) = style.inverse {
                 s.inverse = Some(v);
+            }
+            if let Some(v) = style.text_align {
+                s.text_align = Some(match v.as_str() {
+                    "center" | "Center" => bettertui_engine::text::TextAlign::Center,
+                    "right" | "Right" => bettertui_engine::text::TextAlign::Right,
+                    "justify" | "Justify" => bettertui_engine::text::TextAlign::Justify,
+                    _ => bettertui_engine::text::TextAlign::Left,
+                });
             }
             Some(Command::SetStyle {
                 id: u64_to_node_id(id),
@@ -1434,7 +1444,7 @@ fn resolve_command_ids(
 
 // ─── NapiKeymap ─────────────────────────────────────────────────────────────
 
-use bettertui_engine::keybinding::{KeyBinding, KeyParser, Keymap};
+use bettertui_engine::input::{KeyBinding, KeyParser, Keymap};
 
 #[napi(object)]
 pub struct BindingInfo {
@@ -1446,7 +1456,7 @@ pub struct BindingInfo {
     pub layer: String,
 }
 
-fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
+fn format_key_combo(combo: &bettertui_engine::input::KeyCombo) -> String {
     let mut parts = Vec::new();
     if combo.modifiers.ctrl {
         parts.push("ctrl".to_string());
@@ -1489,7 +1499,7 @@ fn format_key_combo(combo: &bettertui_engine::keybinding::KeyCombo) -> String {
     }
 }
 
-fn format_key_sequence(seq: &bettertui_engine::keybinding::KeySequence) -> String {
+fn format_key_sequence(seq: &bettertui_engine::input::KeySequence) -> String {
     seq.keys
         .iter()
         .map(format_key_combo)
@@ -1765,7 +1775,7 @@ impl NapiEventBus {
     #[napi]
     pub fn push_mouse(&mut self, button: String, x: u32, y: u32, target_id: u32) {
         use bettertui_engine::input::MouseButton;
-        use bettertui_engine::tree::visual::Point;
+        use bettertui_engine::tree::Point;
         let target = u64_to_node_id(target_id as u64);
         let btn = match button.as_str() {
             "left" => MouseButton::Left,
@@ -1783,7 +1793,7 @@ impl NapiEventBus {
     #[napi]
     pub fn push_mouse_motion(&mut self, x: u32, y: u32, target_id: u32) {
         use bettertui_engine::input::MouseButton;
-        use bettertui_engine::tree::visual::Point;
+        use bettertui_engine::tree::Point;
         let target = u64_to_node_id(target_id as u64);
         self.bus
             .push_mouse(MouseButton::None, Point::new(x as u16, y as u16), target);
@@ -2355,7 +2365,7 @@ pub struct NapiCapabilities {
 impl NapiCapabilities {
     #[napi(factory)]
     pub fn detect() -> Self {
-        let caps = bettertui_engine::terminal::capabilities::global_capabilities();
+        let caps = bettertui_terminal::global_capabilities();
         let (w, h) = caps.terminal_size();
         let pixel = caps.pixel_size();
         Self {
@@ -2495,7 +2505,7 @@ pub fn get_version() -> String {
 /// Detect terminal capabilities.
 #[napi]
 pub fn detect_capabilities() -> String {
-    let caps = bettertui_engine::terminal::capabilities::global_capabilities();
+    let caps = bettertui_terminal::global_capabilities();
     let (w, h) = caps.terminal_size();
     let pixel = caps.pixel_size();
     let features = caps.features();
@@ -2566,6 +2576,181 @@ pub fn highlight_code(code: String, language: String) -> String {
     }
 }
 
-fn color_to_hex(c: bettertui_engine::tree::color::Color) -> String {
+fn color_to_hex(c: Color) -> String {
     c.to_rgba(255).to_hex()
+}
+
+// ─── Widget Napi Types ───────────────────────────────────────────────────────
+// These expose the `bettertui-widgets` crate types to the napi bridge.
+
+use bettertui_widgets::WidgetHost;
+use bettertui_widgets::theme::{Theme, ThemeBorders, ThemeColors, ThemeSpacing};
+
+#[napi(object)]
+pub struct NapiThemeColors {
+    pub background: String,
+    pub surface: String,
+    pub surface_high: String,
+    pub surface_low: String,
+    pub primary: String,
+    pub primary_foreground: String,
+    pub secondary: String,
+    pub secondary_foreground: String,
+    pub text: String,
+    pub text_muted: String,
+    pub text_dim: String,
+    pub border: String,
+    pub border_focused: String,
+    pub accent: String,
+    pub accent_foreground: String,
+    pub error: String,
+    pub warning: String,
+    pub success: String,
+    pub info: String,
+    pub scrollbar: String,
+    pub scrollbar_thumb: String,
+}
+
+fn theme_color_to_hex(c: Color) -> String {
+    color_to_hex(c)
+}
+
+impl From<ThemeColors> for NapiThemeColors {
+    fn from(c: ThemeColors) -> Self {
+        Self {
+            background: theme_color_to_hex(c.background),
+            surface: theme_color_to_hex(c.surface),
+            surface_high: theme_color_to_hex(c.surface_high),
+            surface_low: theme_color_to_hex(c.surface_low),
+            primary: theme_color_to_hex(c.primary),
+            primary_foreground: theme_color_to_hex(c.primary_foreground),
+            secondary: theme_color_to_hex(c.secondary),
+            secondary_foreground: theme_color_to_hex(c.secondary_foreground),
+            text: theme_color_to_hex(c.text),
+            text_muted: theme_color_to_hex(c.text_muted),
+            text_dim: theme_color_to_hex(c.text_dim),
+            border: theme_color_to_hex(c.border),
+            border_focused: theme_color_to_hex(c.border_focused),
+            accent: theme_color_to_hex(c.accent),
+            accent_foreground: theme_color_to_hex(c.accent_foreground),
+            error: theme_color_to_hex(c.error),
+            warning: theme_color_to_hex(c.warning),
+            success: theme_color_to_hex(c.success),
+            info: theme_color_to_hex(c.info),
+            scrollbar: theme_color_to_hex(c.scrollbar),
+            scrollbar_thumb: theme_color_to_hex(c.scrollbar_thumb),
+        }
+    }
+}
+
+#[napi(object)]
+pub struct NapiThemeSpacing {
+    pub none: u32,
+    pub xxs: u32,
+    pub xs: u32,
+    pub sm: u32,
+    pub md: u32,
+    pub lg: u32,
+    pub xl: u32,
+    pub xxl: u32,
+}
+
+impl From<ThemeSpacing> for NapiThemeSpacing {
+    fn from(s: ThemeSpacing) -> Self {
+        Self {
+            none: s.none as u32,
+            xxs: s.xxs as u32,
+            xs: s.xs as u32,
+            sm: s.sm as u32,
+            md: s.md as u32,
+            lg: s.lg as u32,
+            xl: s.xl as u32,
+            xxl: s.xxl as u32,
+        }
+    }
+}
+
+#[napi(object)]
+pub struct NapiThemeBorders {
+    pub style: String,
+    pub fg: String,
+}
+
+impl From<ThemeBorders> for NapiThemeBorders {
+    fn from(b: ThemeBorders) -> Self {
+        Self {
+            style: format!("{:?}", b.style),
+            fg: theme_color_to_hex(b.fg),
+        }
+    }
+}
+
+#[napi(object)]
+pub struct NapiTheme {
+    pub name: String,
+    pub colors: NapiThemeColors,
+    pub spacing: NapiThemeSpacing,
+    pub borders: NapiThemeBorders,
+}
+
+impl From<Theme> for NapiTheme {
+    fn from(t: Theme) -> Self {
+        Self {
+            name: t.name.to_string(),
+            colors: t.colors.into(),
+            spacing: t.spacing.into(),
+            borders: t.borders.into(),
+        }
+    }
+}
+
+/// Create a dark theme.
+#[napi]
+pub fn create_dark_theme() -> NapiTheme {
+    Theme::dark().into()
+}
+
+/// Create a light theme.
+#[napi]
+pub fn create_light_theme() -> NapiTheme {
+    Theme::light().into()
+}
+
+/// Create the default theme (dark).
+#[napi]
+pub fn create_default_theme() -> NapiTheme {
+    Theme::default().into()
+}
+
+#[napi]
+pub struct NapiWidgetHost {
+    host: WidgetHost,
+}
+
+#[napi]
+impl NapiWidgetHost {
+    #[napi(constructor)]
+    pub fn new() -> Self {
+        Self {
+            host: WidgetHost::new(),
+        }
+    }
+
+    #[napi]
+    pub fn widget_count(&self) -> u32 {
+        self.host.widget_count() as u32
+    }
+
+    #[napi]
+    pub fn register_widget_type(&mut self, _kind: String) -> napi::Result<()> {
+        Err(napi::Error::from_reason(
+            "Widget registration from JS is not supported. Use the Rust-side factory.",
+        ))
+    }
+}
+
+impl Default for NapiWidgetHost {
+    fn default() -> Self {
+        Self::new()
+    }
 }

@@ -6,15 +6,13 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 | Package | API doc | Status |
 |---------|---------|--------|
-| `@bettertui/shared` | [shared.md](packages/shared.md) | Implemented (types only) |
+| `@bettertui/shared` | [shared.md](packages/shared.md) | **Internal — types only, re-exported via `@bettertui/core`/`@bettertui/react`** |
 | `@bettertui/core` | [core.md](packages/core.md) | Implemented |
 | `@bettertui/react` | [react.md](packages/react.md) | Partial (renderer+hooks+keymap real; 53 components are thin wrappers) |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires native addon) |
-| `@bettertui/themes` | [themes.md](packages/themes.md) | Implemented |
-| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Stub (`createDevTools` → `null`) |
+| `@bettertui/themes` | [themes.md](packages/themes.md) | **Removed** — absorbed into `@bettertui/shared` + Rust engine |
+| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Implemented (`createDevTools` factory) |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
-| `@bettertui/widgets` | [widgets.md](packages/widgets.md) | Proposed (not a package yet) |
-| `@bettertui/icons` | [icons.md](packages/icons.md) | Proposed (not a package yet) |
 
 ## Rust crates
 
@@ -31,6 +29,6 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 ## Cross-cutting notes
 
-- `@bettertui/core` re-exports `shared` types and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
-- `@bettertui/react` `Theme` (hook-authored) differs from `@bettertui/shared` `Theme` (engine colors+borders) — do not conflate them.
+- `@bettertui/core` re-exports `@bettertui/shared` types (shared is internal — do not install directly) and adds `Command`, `CommandBuffer`, `Runtime`, `createReconciler`, and tree-op helpers.
+- `@bettertui/react` re-exports `@bettertui/shared` types. Consumers should import `Theme`, `ThemeColors`, and `ThemeSpacing` from `@bettertui/react` (or `@bettertui/core` for framework-agnostic use).
 - `@bettertui/core`'s native bridge depends on an **unbuilt** `bettertui_bindings` addon (not declared in package.json).

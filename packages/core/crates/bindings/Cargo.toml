@@ -13,11 +13,12 @@ crate-type = ["cdylib"]
 
 [dependencies]
 bettertui-engine = { path = "../../crates/engine" }
+bettertui-widgets = { path = "../../crates/widgets" }
+bettertui-terminal = { path = "../../crates/terminal" }
 napi.workspace = true
 napi-derive.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-slotmap.workspace = true
 
 [build-dependencies]
 napi-build = "2"

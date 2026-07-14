@@ -1,15 +1,7 @@
-# @bettertui/themes
+# @bettertui/themes — REMOVED
 
-**Theme definitions and factory.** Depends on `@bettertui/shared`. Implemented.
+The `@bettertui/themes` package has been removed.
 
-## Exports
-
-| Export | Type | Notes |
-|--------|------|-------|
-| `defaultTheme` | `Theme` | name `"default"`; colors `primary, secondary, success, warning, danger, background, foreground, border`; borders `{ style: "single", fg: "#666666" }` |
-| `createTheme(overrides: Partial<Theme>): Theme` | function | shallow merge over `defaultTheme` |
-| `Theme` | type (re-export) | from `@bettertui/shared` |
-
-## Status
-
-Small but functional. Built-in presets beyond `defaultTheme` are not yet shipped.
+Theme types (`Theme`, `ThemeColors`, `ThemeSpacing`) now live in `@bettertui/shared` (internal — re-exported by `@bettertui/react`).
+The canonical Theme definition lives in the Rust engine (`packages/core/crates/widgets/src/theme.rs`).
+The React `Provider` in `@bettertui/react` accepts `Partial<Theme>` directly.

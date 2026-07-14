@@ -1,8 +1,8 @@
 # Widgets
 
-Widgets are the high-level, composable UI layer. The real framework is in the Rust engine; the TypeScript package is currently a stub.
+Widgets are the high-level, composable UI layer in the Rust engine.
 
-## Rust widget framework (`bettertui-engine/src/widgets/`)
+## Rust widget framework (`bettertui-widgets`)
 
 - `trait Widget: Send + Sync` with `create`/`update`/`handle_event`/`destroy`, returning `WidgetId(NodeId)`.
 - `WidgetContext` gives widgets the arena, focus manager, scheduler, terminal size, and theme.
@@ -11,17 +11,6 @@ Widgets are the high-level, composable UI layer. The real framework is in the Ru
 
 See [Architecture: Widget Model](architecture/widget-model.md).
 
-## TypeScript `@bettertui/widgets`
+## TypeScript exposure
 
-Currently only:
-
-```ts
-export interface Widget { type: string; render(): unknown; }
-export const WIDGET_VERSION = "0.0.0";
-```
-
-No concrete widgets are implemented on the TS side yet.
-
-## Documenting a widget (when implemented)
-
-Each widget doc should cover: purpose, props, example, lifecycle, rendering flow, interaction flow, keyboard support, mouse support.
+Widgets are exposed through `@bettertui/core`'s native bridge. All Rust widget functionality ships through core.

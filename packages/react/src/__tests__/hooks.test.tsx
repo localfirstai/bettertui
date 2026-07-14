@@ -1,3 +1,4 @@
+import type { Theme } from "@bettertui/shared";
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
@@ -22,12 +23,7 @@ describe("useTheme", () => {
   });
 
   it("returns theme from Provider", () => {
-    const customTheme = {
-      name: "custom",
-      colors: {},
-      spacing: {},
-      borders: {},
-    } as Theme;
+    const customTheme: Partial<Theme> = { name: "custom" };
     const { result } = renderHook(() => useTheme(), {
       wrapper: ({ children }) => <Provider theme={customTheme}>{children}</Provider>,
     });
@@ -35,21 +31,18 @@ describe("useTheme", () => {
   });
 
   it("setTheme updates the theme", () => {
-    const newTheme = { name: "updated", colors: {}, spacing: {}, borders: {} } as Theme;
     const { result } = renderHook(() => useTheme(), {
       wrapper: ({ children }) => <Provider>{children}</Provider>,
     });
-    act(() => result.current.setTheme(newTheme));
+    act(() => result.current.setTheme({ name: "updated" }));
     expect(result.current.theme.name).toBe("updated");
   });
 
   it("can nest themes and children see the innermost", () => {
-    const outer = { name: "outer", colors: {}, spacing: {}, borders: {} } as Theme;
-    const inner = { name: "inner", colors: {}, spacing: {}, borders: {} } as Theme;
     const { result } = renderHook(() => useTheme(), {
       wrapper: ({ children }) => (
-        <Provider theme={outer}>
-          <Provider theme={inner}>{children}</Provider>
+        <Provider theme={{ name: "outer" }}>
+          <Provider theme={{ name: "inner" }}>{children}</Provider>
         </Provider>
       ),
     });

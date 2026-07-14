@@ -25,7 +25,7 @@ function makeTheme(name: "dark" | "light", colors: Theme["colors"]): Theme {
       xl: 16,
       xxl: 24,
     },
-    borders: { style: "single", fg: colors.border },
+    borders: { style: "solid", fg: colors.border },
   };
 }
 
@@ -49,6 +49,8 @@ const darkColors: Theme["colors"] = {
   warning: "#dcb43c",
   success: "#50c878",
   info: "#50a0dc",
+  scrollbar: "#282837",
+  scrollbarThumb: "#5a5a69",
 };
 
 const lightColors: Theme["colors"] = {
@@ -71,6 +73,8 @@ const lightColors: Theme["colors"] = {
   warning: "#b8860b",
   success: "#2e8b57",
   info: "#2f6bdc",
+  scrollbar: "#eef0f6",
+  scrollbarThumb: "#8c8ca0",
 };
 
 export const exampleThemes: Record<ExampleThemeNameLiteral, Theme> = {

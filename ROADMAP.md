@@ -6,25 +6,23 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 
 | Layer | State | Notes |
 |-------|-------|-------|
-| Rust engine (`bettertui-engine`) | ✅ Implemented | 1,332 passing lib tests (verified via `cargo test --lib`); rendering, layout, input, events, animation, text, PTY, VT, capabilities |
+| Rust engine (`bettertui-engine`) | ✅ Implemented | 720 passing Rust lib tests (verified via `cargo test --lib`) across the engine, terminal, and widgets crates; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
 | napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
 | `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
 | `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
-| `@bettertui/themes` | 🟡 Partial | `defaultTheme` + `createTheme`; no preset themes |
+
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
-| `@bettertui/devtools` | ❌ Stub | `createDevTools` returns `null` |
+| `@bettertui/devtools` | ✅ Implemented | `createDevTools()` factory (inspectors, logger, export helpers) |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
-| Examples | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/*.tsx`), launched via `node dist/index.mjs <slug>`) |
+| Examples | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/examples/<category>/<slug>.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
-| `@bettertui/widgets` | 🔜 Proposed | Not a package yet; TS widget surface planned (Rust widgets exist) |
-| `@bettertui/icons` | 🔜 Proposed | Not a package yet; icon registry planned (Phosphor preferred) |
 
 ## Completed
 
 - [x] Repository scaffolding (TurboRepo + pnpm workspace, Cargo workspace)
-- [x] Rust engine modules: tree (arena + generational indices), layout (Taffy), renderer, framebuffer, dirty diff, events, input (keyboard/mouse/paste), ansi parser, capabilities, animation, scheduler, compositor/screen, pty, terminal_process, terminal/vt, text (rope), widgets
+- [x] Rust engine modules: tree (arena + generational indices), layout (Taffy), render pipeline, framebuffer, dirty diff, input (keyboard/mouse/paste), ansi parser, capabilities (terminal crate), animation, scheduler, compositor/screen (tree/graphics + terminal crate), pty, terminal process, vt emulation, text (rope), widgets
 - [x] napi-rs bindings exposing the engine to Node.js (`bettertui_bindings`)
 - [x] Node arena with generational indices (`NodeId = slotmap::DefaultKey`, 8 bytes)
 - [x] Taffy-based flexbox layout adapted to terminal cells
@@ -44,21 +42,19 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 - [x] React reconciler host config producing commands
 - [x] `@bettertui/core` command buffer + runtime
 - [x] `@bettertui/core` native bridge (factories, runtime, event loop; merged from `@bettertui/native`)
-- [x] `@bettertui/themes` default theme + factory
+
 
 ## In progress
 
-- [ ] React components emitting element descriptors (currently stubs)
+- [x] `@bettertui/devtools` — `createDevTools()` factory with command/event/performance/tree/scheduler/focus/capability inspectors, timeline, snapshot manager, and export helpers
 - [ ] Wiring `AnsiParser`/`VtMachine` into the production PTY read path
 - [ ] Animation callback execution (`schedule_animation`/callbacks not yet firing)
 - [ ] Engine runtime lifecycle fixes (frame timing, scheduler/engine frame counters)
 
 ## Planned
 
-- [ ] Widget library on the TypeScript side (`@bettertui/widgets`)
 - [ ] React `Terminal` component wrapping the embedded PTY
 - [ ] Theme presets (light, high-contrast)
-- [ ] Icon registry with bundled icon sets (Phosphor preferred per project taste)
 - [ ] Developer tools (inspector, profiler, error overlay)
 - [ ] Example applications wired to the engine (dashboard, mouse, table, text-editor, tree)
 - [ ] Additional framework adapters (Vue, Solid, Svelte, vanilla TypeScript) — require no Rust changes

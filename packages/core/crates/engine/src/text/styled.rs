@@ -77,7 +77,8 @@ impl StyledText {
     }
 
     pub fn plain_text(&self) -> String {
-        let mut result = String::new();
+        let capacity = self.spans.iter().map(|s| s.text.len()).sum();
+        let mut result = String::with_capacity(capacity);
         for span in &self.spans {
             result.push_str(&span.text);
         }

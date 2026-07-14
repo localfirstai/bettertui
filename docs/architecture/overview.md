@@ -25,9 +25,15 @@ graph LR
   - `packages/core/crates/bindings` (the napi-rs cdylib)
   - `examples/*`
 - **TurboRepo** (`turbo.json`) orchestrates `build`, `dev`, `lint`, `format`, `format:check`, `typecheck`, `clean`. `build`/`lint`/`typecheck` depend on `^build`/`^lint`/`^typecheck` so dependencies build before dependents.
-- **Cargo workspace** (`packages/core/Cargo.toml`, `resolver = "2"`) contains the two Rust crates:
-  - `packages/core/crates/engine` → `bettertui-engine` (the library)
+- **Cargo workspace** (`packages/core/Cargo.toml`, `resolver = "2"`) contains the Rust crates:
+  - `packages/core/crates/engine` → `bettertui-engine` (the library + `layout_e2e` bin)
+  - `packages/core/crates/widgets` → `bettertui-widgets` (widget framework, depends on engine)
+  - `packages/core/crates/terminal` → `bettertui-terminal` (terminal I/O, VT emulation, PTY process, capabilities)
   - `packages/core/crates/bindings` → `bettertui-bindings` (the napi-rs cdylib)
+  - `packages/core/crates/benchmark` → `bettertui-benchmark` (Rust bench harness)
+  - `packages/core/crates/examples` → `bettertui-examples` (standalone bin, its own `[workspace]`)
+
+> Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
 
 > Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
 
@@ -36,15 +42,14 @@ graph LR
 ```
 bettertui/
 ├── packages/
-│   ├── shared/        # @bettertui/shared  — type-only foundation (zero runtime code)
+│   ├── shared/        # @bettertui/shared  — type-only foundation (zero runtime code, internal)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
 │   │   └── crates/
 │   │       ├── engine/        # bettertui-engine (Rust library) — rendering, layout, input, etc.
 │   │       └── bindings/      # bettertui-bindings (Rust cdylib) — napi-rs FFI surface
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── themes/        # @bettertui/themes  — theme defs + factory
-│   ├── icons/         # @bettertui/icons   — icon registry (NOT YET A PACKAGE; proposed)
-│   ├── devtools/      # @bettertui/devtools — devtools stub
+
+│   ├── devtools/      # @bettertui/devtools — developer tooling (implemented)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -66,25 +71,22 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|
-| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) |
+| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** |
 | `@bettertui/core` | yes | `shared` | Framework-agnostic command buffer, tree ops, reconciler wrapper, runtime, internal native bridge |
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 53 component exports) |
-| `@bettertui/themes` | yes | `shared` | `defaultTheme`, `createTheme()` |
-| `@bettertui/devtools` | yes | — | `createDevTools()` returns `null` (stub) |
+| `@bettertui/devtools` | yes | — | `createDevTools()` factory (inspectors, logger, export) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
-| `@bettertui/icons` | — | — | **Not yet a package** (proposed per `docs/architecture/widget-model.md` note) |
+
 
 ```mermaid
 graph TD
     shared[shared]
     core[core]
     react[react]
-    themes[themes]
     icons[icons]
     devtools[devtools]
     shared --> core
     shared --> react
-    shared --> themes
     core --> react
     icons -.leaf.-> icons
     devtools -.leaf.-> devtools
@@ -94,14 +96,21 @@ graph TD
 
 | Crate | Type | Purpose |
 |-------|------|---------|
-| `bettertui-engine` | `lib` | All engine logic: tree, layout, renderer, framebuffer, events, input, animation, pty, terminal, text, widgets, capabilities, scheduler, etc. |
-| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing the engine to Node.js. Thin translation layer only. |
+| `bettertui-engine` | `lib` + `bin` | Core engine: `tree`, `input`, `animation`, `ansi`, `dirty_diff`, `engine`, `ffi`, `font`, `framebuffer`, `glyph`, `graphics`, `layout`, `plugin`, `protocol`, `pty`, `render`, `scheduler`, `syntax`, `text`. |
+| `bettertui-widgets` | `lib` | Widget framework: `Widget` trait, `WidgetContext`, all built-in widgets. Depends on `bettertui-engine`. |
+| `bettertui-terminal` | `lib` | Terminal interaction: raw mode, VT emulation, PTY process management, neovim, capability detection. Depends on `bettertui-engine`. |
+| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing engine + widgets + terminal to Node.js. Translation layer only. |
+| `bettertui-benchmark` | `lib` | Rust benchmark harness (publish = false). |
+| `bettertui-examples` | `bin` | Standalone Rust example runner (its own workspace). |
 
-The bindings crate depends on `bettertui-engine` (`path = "../engine"`) and contains **no** Rust unit tests — all verification lives in `bettertui-engine` plus the TS layer above.
+The bindings crate depends on `bettertui-engine`, `bettertui-widgets`, and `bettertui-terminal` and contains **no** Rust unit tests — verification lives in the engine, widgets, and terminal crates plus the TS layer above. The engine's source is mostly flat files (`tree.rs`, `input.rs`, `layout.rs`, …) with three subdirectories: `render/` (`mod.rs`, `render.rs`, `effects.rs`), `text/`, and `font/`. There is no `renderer/`, `events/`, `compositor/`, `screen/`, or `capabilities/` directory — event dispatch, compositor primitives, screen state, and capability detection live inside `input.rs`, `tree.rs`, `graphics.rs`, and the `bettertui-terminal` crate respectively.
 
 ```mermaid
 graph LR
-    B[bindings / cdylib] -->|path dep| E[engine / lib]
+    B[bindings / cdylib] -->|path dep| T[terminal / lib]
+    B -->|path dep| W[widgets / lib]
+    W -->|path dep| E[engine / lib]
+    T -->|path dep| E
     E -->|crossterm| C1[(stdout/stdin)]
     E -->|portable-pty| C2[(child process)]
 ```
@@ -112,9 +121,9 @@ graph LR
 flowchart TD
     A[pnpm install] --> B[pnpm build / turbo run build]
     B --> C{build order by ^dep}
-    C --> D[build @bettertui/shared]
+    C --> D[build @bettertui/shared (internal)]
     D --> E[build @bettertui/core]
-    E --> F[build @bettertui/react / themes]
+    E --> F[build @bettertui/react]
     B -. optional .-> G[cargo build -p bettertui-bindings]
     G --> H[bettertui_bindings.node addon]
     F -->|requires| H
@@ -141,12 +150,10 @@ graph TD
     React --> Core
     Core -->|napi-rs| Engine[bettertui-engine]
     Engine --> Terminal[(Terminal)]
-    Core --> Shared
+    Core --> Shared[Internal: @bettertui/shared]
     React --> Shared
-    Themes --> Shared
-```
 
-> `@bettertui/widgets` and `@bettertui/icons` are proposed TypeScript packages that do not exist yet.
+```
 
 Rules enforced by code, not just policy:
 - `bettertui-engine` must never import any JS framework.
@@ -165,19 +172,24 @@ graph TD
         C[@bettertui/core]
         S[@bettertui/shared]
     end
-    subgraph L3[Rust Engine Layer]
+    subgraph L3[Rust Crate Layer]
         E[bettertui-engine]
+        W[bettertui-widgets]
+        T[bettertui-terminal]
     end
     subgraph L4[Terminal]
-        T[crossterm / portable-pty]
+        X[crossterm / portable-pty]
     end
     R --> C
     C -->|napi-rs| E
-    E --> T
+    W -->|path dep| E
+    T -->|path dep| E
+    E --> X
 ```
 
 - **Layer 1 (React adapter).** Translates React's virtual DOM operations into core `Command`s via a `react-reconciler` host config.
 - **Layer 2 (Core TypeScript).** Owns the command protocol, tree manipulation, runtime/frame loop, and the native bridge.
-- **Layer 3 (Rust engine).** Owns the arena, layout, rendering, events, input, animation, text, PTY, terminal emulation, capabilities.
+- **Layer 3 (Rust engine).** The `bettertui-engine` crate owns the arena, layout, rendering, events, input, animation, text, PTY. The `bettertui-terminal` crate handles terminal I/O, VT emulation, and capability detection. The `bettertui-widgets` crate provides built-in composable UI widgets.
 - **Layer 4 (Terminal).** Raw bytes in/out via crossterm and child processes via portable-pty.
 pty.
+y.

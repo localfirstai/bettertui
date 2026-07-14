@@ -44,7 +44,7 @@
 | Render tree caching       | ⬜ Future    | Rebuild from scratch is inherent to architecture                 |
 | Perf benchmarks           | ⬜ Future    | Existing stress tests validate culling but no formal bench suite |
 
-**1336 tests passing**, clean clippy, zero compiler warnings.
+**720 Rust lib tests passing**, clean clippy, zero compiler warnings.
 
 ### Key files
 

@@ -1,6 +1,6 @@
 # Event System
 
-Events flow from terminal input up to nodes and back down, following DOM-style capture → target → bubble. Code: `packages/core/crates/engine/src/events/`.
+Events flow from terminal input up to nodes and back down, following DOM-style capture → target → bubble. Code: `packages/core/crates/engine/src/input.rs` (the `input` module).
 
 ## Event enum
 
@@ -55,7 +55,7 @@ flowchart TD
 - `Modifiers { ctrl, shift, alt, meta }`
 - `MouseButton` (Left/Right/Middle/ScrollUp/Down/ScrollLeft/ScrollRight/None)
 
-The real keyboard/mouse *parsing* lives in `input/keyboard.rs` and `input/mouse.rs`; the top-level `keyboard/` and `mouse/` modules provide keybinding handling and hit-testing on top of that parsed input.
+The real keyboard/mouse *parsing* lives in the `input` module (`input.rs`; keyboard/mouse/paste types and the `AnsiParser` glue). The same module provides keybinding handling (`Keymap`, `KeyLayer`, `KeyBinding`) and focus management (`FocusManager`, `FocusScope`, `FocusTraversal`) on top of the parsed input.
 
 ## Resize
 

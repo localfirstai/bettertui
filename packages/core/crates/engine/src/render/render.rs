@@ -530,6 +530,7 @@ impl Painter {
 
         if let Some(clipped) = ctx.clipped_bounds(bounds) {
             self.paint_background(obj, &clipped);
+            self.paint_border(obj, &clipped);
             self.paint_text(obj, &clipped);
         }
     }
@@ -600,6 +601,137 @@ impl Painter {
                     }
                 }
                 col += w;
+            }
+        }
+    }
+
+    fn paint_border(&mut self, obj: &RenderObject, bounds: &PaintBounds) {
+        let border_style = obj.style.border_style;
+        if border_style == crate::tree::BorderStyle::None {
+            return;
+        }
+
+        let has_border = bounds.border_top > 0
+            || bounds.border_right > 0
+            || bounds.border_bottom > 0
+            || bounds.border_left > 0;
+        if !has_border {
+            return;
+        }
+
+        let fg = obj
+            .style
+            .border_color
+            .unwrap_or(obj.style.fg.unwrap_or(Color::Default));
+        let bg = obj.style.bg.unwrap_or(Color::Default);
+        let attrs = style_to_attrs(&obj.style);
+
+        let (tl, tr, bl, br, horiz, vert) = match border_style {
+            crate::tree::BorderStyle::Solid => ('┌', '┐', '└', '┘', '─', '│'),
+            crate::tree::BorderStyle::Double => ('╔', '╗', '╚', '╝', '═', '║'),
+            crate::tree::BorderStyle::Dashed => ('┌', '┐', '└', '┘', '╌', '╎'),
+            crate::tree::BorderStyle::Dotted => ('╭', '╮', '╰', '╯', '─', '│'),
+            crate::tree::BorderStyle::None => return,
+        };
+
+        let x = bounds.x;
+        let y = bounds.y;
+        let w = bounds.width;
+        let h = bounds.height;
+
+        // Draw top border
+        if bounds.border_top > 0 {
+            for row in 0..bounds.border_top {
+                for col in 0..w {
+                    let ch = if row == 0 {
+                        if col == 0 && bounds.border_left > 0 {
+                            tl
+                        } else if col == w - 1 && bounds.border_right > 0 {
+                            tr
+                        } else if bounds.border_top > 1 && row < bounds.border_top - 1 {
+                            ' '
+                        } else {
+                            horiz
+                        }
+                    } else {
+                        ' '
+                    };
+                    if col < self.buffer.width() && y + row < self.buffer.height() {
+                        let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        self.buffer.set(x + col, y + row, cell);
+                    }
+                }
+            }
+        }
+
+        // Draw bottom border
+        if bounds.border_bottom > 0 {
+            for row in 0..bounds.border_bottom {
+                for col in 0..w {
+                    let ch = if row == bounds.border_bottom - 1 {
+                        if col == 0 && bounds.border_left > 0 {
+                            bl
+                        } else if col == w - 1 && bounds.border_right > 0 {
+                            br
+                        } else {
+                            horiz
+                        }
+                    } else {
+                        ' '
+                    };
+                    let draw_y = y + h - 1 - (bounds.border_bottom - 1 - row);
+                    if col < self.buffer.width() && draw_y < self.buffer.height() {
+                        let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        self.buffer.set(x + col, draw_y, cell);
+                    }
+                }
+            }
+        }
+
+        // Draw left border
+        if bounds.border_left > 0 {
+            for row in 0..h {
+                for col in 0..bounds.border_left {
+                    let ch = if col == 0 {
+                        if row == 0 && bounds.border_top > 0 {
+                            tl
+                        } else if row == h - 1 && bounds.border_bottom > 0 {
+                            bl
+                        } else {
+                            vert
+                        }
+                    } else {
+                        ' '
+                    };
+                    if x + col < self.buffer.width() && y + row < self.buffer.height() {
+                        let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        self.buffer.set(x + col, y + row, cell);
+                    }
+                }
+            }
+        }
+
+        // Draw right border
+        if bounds.border_right > 0 {
+            for row in 0..h {
+                for col in 0..bounds.border_right {
+                    let ch = if col == bounds.border_right - 1 {
+                        if row == 0 && bounds.border_top > 0 {
+                            tr
+                        } else if row == h - 1 && bounds.border_bottom > 0 {
+                            br
+                        } else {
+                            vert
+                        }
+                    } else {
+                        ' '
+                    };
+                    let draw_x = x + w - 1 - (bounds.border_right - 1 - col);
+                    if draw_x < self.buffer.width() && y + row < self.buffer.height() {
+                        let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        self.buffer.set(draw_x, y + row, cell);
+                    }
+                }
             }
         }
     }
@@ -928,8 +1060,12 @@ impl Renderer {
         let _ = self.layout_sync.compute(root_id, self.width, self.height);
 
         let vp = Viewport::new(0, 0, self.width, self.height);
-        self.render_tree =
-            build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp));
+        build_render_tree_with_viewport(
+            arena,
+            self.layout_sync.results(),
+            Some(&vp),
+            &mut self.render_tree,
+        );
 
         let ctx = crate::layout::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);

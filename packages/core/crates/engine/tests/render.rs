@@ -6,12 +6,10 @@ use bettertui_engine::layout::{LayoutEngine, PaintContext, Sizing, build_render_
 use bettertui_engine::render::effects::ColorMatrixPass;
 use bettertui_engine::render::effects::INVERT_MATRIX;
 use bettertui_engine::render::{
-    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderFrame, RenderObject, RenderPass,
+    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderObject, RenderPass,
     RenderPassContext, RenderPipeline, RenderTree, Renderer,
 };
-use bettertui_engine::tree::{
-    Color, Display, NamedColor, NodeArena, NodeKind, Overflow, RenderNode,
-};
+use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, RenderNode};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // === Tests from ansi.rs ===
@@ -299,7 +297,8 @@ fn make_painter_with_tree() -> (bettertui_engine::render::Painter, RenderTree) {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);
@@ -341,7 +340,8 @@ fn painter_paint_background() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);
@@ -380,7 +380,8 @@ fn painter_excludes_hidden() {
     engine.compute_layout(root, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
 
-    let tree = build_render_tree(&arena, &results);
+    let mut tree = bettertui_engine::render::RenderTree::new();
+    build_render_tree(&arena, &results, &mut tree);
     let ctx = PaintContext::new(80, 24);
     let mut painter = bettertui_engine::render::Painter::new(80, 24);
     painter.paint(&tree, &ctx);

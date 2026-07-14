@@ -4,7 +4,7 @@ Vitest benchmark harness for BetterTUI's TypeScript packages.
 
 ## What's inside
 
-Benchmarks that measure the cost of core operations (command buffer, tree ops, rendering helpers) across `@bettertui/core`, `@bettertui/shared`, and `@bettertui/themes`.
+Benchmarks that measure the cost of core operations (command buffer, tree ops, rendering helpers) across `@bettertui/core` and `@bettertui/shared`.
 
 ## Running
 
