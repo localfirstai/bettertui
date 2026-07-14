@@ -90,7 +90,9 @@ impl CodeWidget {
         base_style: Style,
     ) -> WidgetId {
         let lines = {
-            let mut hl = global_highlighter().lock().unwrap();
+            let mut hl = global_highlighter()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             hl.highlight(code, language)
         };
 

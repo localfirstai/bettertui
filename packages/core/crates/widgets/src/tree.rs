@@ -78,11 +78,11 @@ impl WidgetTree {
         self.node_to_widget.get(&node_id).copied()
     }
 
-    pub fn children(&self, widget_id: WidgetId) -> Vec<WidgetId> {
+    pub fn children(&self, widget_id: WidgetId) -> &[WidgetId] {
         self.entries
             .get(&widget_id)
-            .map(|e| e.children.clone())
-            .unwrap_or_default()
+            .map(|e| e.children.as_slice())
+            .unwrap_or(&[])
     }
 
     pub fn parent(&self, widget_id: WidgetId) -> Option<WidgetId> {

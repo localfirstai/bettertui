@@ -235,7 +235,7 @@ impl<'a> Parser<'a> {
             };
 
             let content_start = if trimmed.starts_with("- [") || trimmed.starts_with("* [") {
-                let bracket_pos = trimmed.find(']').unwrap() + 1;
+                let bracket_pos = trimmed.find(']').unwrap_or(2) + 1;
                 trimmed[bracket_pos..].trim()
             } else {
                 break;
@@ -293,8 +293,9 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
         match ch {
             '*' | '_' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(current_text.clone())));
-                    current_text.clear();
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
+                        &mut current_text,
+                    ))));
                 }
                 let next = chars.peek().copied();
                 if next == Some(ch) {
@@ -308,8 +309,9 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
             }
             '~' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(current_text.clone())));
-                    current_text.clear();
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
+                        &mut current_text,
+                    ))));
                 }
                 if chars.peek() == Some(&'~') {
                     chars.next();
@@ -321,16 +323,18 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
             }
             '`' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(current_text.clone())));
-                    current_text.clear();
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
+                        &mut current_text,
+                    ))));
                 }
                 let code_text = collect_until(&mut chars, &['`']);
                 nodes.push(InlineNode::Code(Box::from(code_text)));
             }
             '[' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(current_text.clone())));
-                    current_text.clear();
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
+                        &mut current_text,
+                    ))));
                 }
                 let link_text = collect_until(&mut chars, &[']']);
                 if chars.peek() == Some(&'(') {

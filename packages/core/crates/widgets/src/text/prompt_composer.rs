@@ -227,7 +227,7 @@ impl ComposerState {
     }
 
     pub fn paste(&mut self) {
-        if let Some(clip) = self.clipboard.clone() {
+        if let Some(clip) = self.clipboard.take() {
             self.save_undo();
             let clip_str = clip.as_ref();
             let mut chars: Vec<char> = self.text.chars().collect();
@@ -238,6 +238,7 @@ impl ComposerState {
             self.text = chars.into_iter().collect();
             self.cursor += clip_str.len();
             self.clear_selection();
+            self.clipboard = Some(clip);
         }
     }
 

@@ -1653,12 +1653,11 @@ impl NodeArena {
             .ok_or(TreeError::InvalidOperation("Old node has no parent".into()))?;
 
         // Move all children from old to new
-        let old_children: SmallVec<[NodeId; 4]> = self.nodes[old].children.clone();
+        let old_children = std::mem::take(&mut self.nodes[old].children);
         for &child in &old_children {
             self.nodes[child].parent = Some(new);
             self.nodes[new].children.push(child);
         }
-        self.nodes[old].children.clear();
 
         // Replace old with new in parent's children
         if let Some(parent_node) = self.nodes.get_mut(parent)
