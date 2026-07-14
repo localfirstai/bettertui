@@ -1,0 +1,15 @@
+---
+source: crates/engine/tests/snapshot_test.rs
+assertion_line: 45
+expression: named
+---
+[
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+]

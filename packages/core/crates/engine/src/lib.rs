@@ -1,5 +1,7 @@
 pub mod tree;
 
+pub mod input;
+
 pub mod animation;
 pub mod ansi;
 pub mod benchmark;
@@ -9,10 +11,7 @@ pub mod ffi;
 pub mod framebuffer;
 pub mod glyph;
 pub mod graphics;
-pub mod input;
-pub mod keybinding;
 pub mod layout;
-pub mod neovim;
 pub mod nerdfont;
 pub mod plugin;
 pub mod protocol;

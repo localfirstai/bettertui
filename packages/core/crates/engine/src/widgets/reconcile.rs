@@ -1,4 +1,4 @@
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 use super::{WidgetId, WidgetTree};
 
@@ -156,9 +156,9 @@ impl Reconciler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
-    use crate::tree::render_node::RenderNode;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
+    use crate::tree::RenderNode;
 
     fn make_tree_with_entries() -> (WidgetTree, NodeArena) {
         let mut tree = WidgetTree::new();

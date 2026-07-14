@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::tree::node_id::NodeId;
+use crate::tree::NodeId;
 
 use super::WidgetId;
 
@@ -170,13 +170,9 @@ mod tests {
     #[test]
     fn tree_parent_child() {
         let mut tree = WidgetTree::new();
-        let mut arena = crate::tree::arena::NodeArena::new();
-        let parent_nid = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ));
-        let child_nid = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Text,
-        ));
+        let mut arena = crate::tree::NodeArena::new();
+        let parent_nid = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        let child_nid = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Text));
         let parent_wid = WidgetId(parent_nid);
         let child_wid = WidgetId(child_nid);
 
@@ -202,13 +198,9 @@ mod tests {
     #[test]
     fn tree_remove_cascades() {
         let mut tree = WidgetTree::new();
-        let mut arena = crate::tree::arena::NodeArena::new();
-        let parent_nid = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ));
-        let child_nid = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Text,
-        ));
+        let mut arena = crate::tree::NodeArena::new();
+        let parent_nid = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        let child_nid = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Text));
         let parent_wid = WidgetId(parent_nid);
         let child_wid = WidgetId(child_nid);
 
@@ -223,13 +215,9 @@ mod tests {
     #[test]
     fn tree_clear() {
         let mut tree = WidgetTree::new();
-        let mut arena = crate::tree::arena::NodeArena::new();
-        let nid1 = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ));
-        let nid2 = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Text,
-        ));
+        let mut arena = crate::tree::NodeArena::new();
+        let nid1 = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        let nid2 = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Text));
         tree.insert(WidgetId(nid1), nid1, "Box");
         tree.insert(WidgetId(nid2), nid2, "Text");
         tree.clear();
@@ -247,13 +235,9 @@ mod tests {
     #[test]
     fn tree_widget_ids() {
         let mut tree = WidgetTree::new();
-        let mut arena = crate::tree::arena::NodeArena::new();
-        let nid1 = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Box,
-        ));
-        let nid2 = arena.insert(crate::tree::render_node::RenderNode::new(
-            crate::tree::node_kind::NodeKind::Text,
-        ));
+        let mut arena = crate::tree::NodeArena::new();
+        let nid1 = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        let nid2 = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Text));
         let w1 = WidgetId(nid1);
         let w2 = WidgetId(nid2);
         tree.insert(w1, nid1, "A");

@@ -1,11 +1,11 @@
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::{LayoutProps, Sizing};
+use crate::layout::{LayoutProps, Sizing};
 use crate::text::display_width;
-use crate::tree::color::{Color, NamedColor};
-use crate::tree::node_id::NodeId;
-use crate::tree::style::Style;
+use crate::tree::NodeId;
+use crate::tree::Style;
+use crate::tree::{Color, NamedColor};
 
 use crate::widgets::callback_types::ChangeCallback;
 use crate::widgets::{Widget, WidgetContext, WidgetId};
@@ -120,7 +120,7 @@ impl TextareaWidget {
     }
 
     fn set_cursor_position(ctx: &mut WidgetContext, id: NodeId, value: &str, byte_offset: usize) {
-        use crate::tree::visual::{CursorProps, CursorStyle};
+        use crate::tree::{CursorProps, CursorStyle};
         let pos = cursor_to_point(value, byte_offset);
         if let Some(node) = ctx.arena.get_mut(id) {
             node.state.content_width = byte_offset as u32;
@@ -254,13 +254,13 @@ impl Widget for TextareaWidget {
         let mut attrs = HashMap::new();
         attrs.insert("_value".into(), self.value.to_string());
 
-        let node = crate::tree::render_node::RenderNode {
-            kind: crate::tree::node_kind::NodeKind::Input,
+        let node = crate::tree::RenderNode {
+            kind: crate::tree::NodeKind::Input,
             text: Some(display),
             style,
             layout,
             attributes: attrs,
-            ..crate::tree::render_node::RenderNode::default()
+            ..crate::tree::RenderNode::default()
         };
         let id = ctx.insert_node(node);
         Self::set_cursor_position(ctx, id, &self.value, self.value.len());
@@ -378,8 +378,8 @@ impl Widget for TextareaWidget {
     }
 }
 
-fn cursor_to_point(value: &str, byte_offset: usize) -> crate::tree::visual::Point {
-    use crate::tree::visual::Point;
+fn cursor_to_point(value: &str, byte_offset: usize) -> crate::tree::Point {
+    use crate::tree::Point;
     let mut visual_x = 0u16;
     let mut y = 0u16;
     let mut byte_pos = 0;
@@ -402,8 +402,8 @@ mod tests {
     use crate::input::FocusManager;
     use crate::input::KeyEvent;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
     use crate::widgets::theme::Theme;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {

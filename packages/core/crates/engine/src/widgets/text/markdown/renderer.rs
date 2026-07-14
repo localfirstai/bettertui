@@ -1,8 +1,8 @@
-use crate::layout::types::{FlexDirection, LayoutProps};
+use crate::layout::{FlexDirection, LayoutProps};
 use crate::syntax::global_highlighter;
-use crate::tree::color::Color;
-use crate::tree::node_id::NodeId;
-use crate::tree::style::Style;
+use crate::tree::Color;
+use crate::tree::NodeId;
+use crate::tree::Style;
 use crate::widgets::WidgetId;
 use crate::widgets::context::WidgetContext;
 
@@ -338,7 +338,7 @@ mod tests {
     use super::*;
     use crate::input::FocusManager;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
+    use crate::tree::NodeArena;
     use crate::widgets::context::WidgetContext;
     use crate::widgets::theme::Theme;
 

@@ -1,7 +1,7 @@
 //! Terminal query/response protocol implementation.
 //! Generates DCS/CSI query sequences and parses terminal responses.
 
-use crate::terminal::vt::core::VtMachine;
+use crate::terminal::vt::VtMachine;
 
 /// Query types that can be sent to the terminal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,7 +206,7 @@ mod tests {
     #[test]
     fn parse_device_attributes_response() {
         let mut machine = VtMachine::new(80, 24);
-        let mut parser = crate::ansi::parser::AnsiParser::new();
+        let mut parser = crate::ansi::AnsiParser::new();
         parser.feed(b"\x1b[?1;2c");
         while let Some(event) = parser.poll_event() {
             machine.process(&event);
@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn parse_secondary_device_attributes_response() {
         let mut machine = VtMachine::new(80, 24);
-        let mut parser = crate::ansi::parser::AnsiParser::new();
+        let mut parser = crate::ansi::AnsiParser::new();
         parser.feed(b"\x1b[>1;10;0c");
         while let Some(event) = parser.poll_event() {
             machine.process(&event);
@@ -259,7 +259,7 @@ mod tests {
     #[test]
     fn clear_responses_works() {
         let mut machine = VtMachine::new(80, 24);
-        let mut parser = crate::ansi::parser::AnsiParser::new();
+        let mut parser = crate::ansi::AnsiParser::new();
         parser.feed(b"\x1b[?1;2c");
         while let Some(event) = parser.poll_event() {
             machine.process(&event);

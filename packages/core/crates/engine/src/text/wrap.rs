@@ -1,6 +1,6 @@
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::measurement;
+use super::unicode;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WrappedLine {
@@ -43,7 +43,7 @@ fn word_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
         let mut line_start = 0usize;
         loop {
             let remaining = &text[hard_line_start + line_start..][..hard_line.len() - line_start];
-            let remaining_width = measurement::display_width(remaining);
+            let remaining_width = unicode::display_width(remaining);
             if remaining_width <= max_width as usize {
                 lines.push(WrappedLine {
                     byte_offset: hard_line_start + line_start,
@@ -60,7 +60,7 @@ fn word_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
             lines.push(WrappedLine {
                 byte_offset: hard_line_start + line_start,
                 byte_len: break_at - line_start,
-                visual_width: measurement::display_width(
+                visual_width: unicode::display_width(
                     &text[hard_line_start + line_start..hard_line_start + break_at],
                 ) as u16,
             });
@@ -76,7 +76,7 @@ fn find_word_break(text: &str, start: usize, max_width: u16) -> usize {
     let mut col = 0u16;
     let mut last_space_end = None;
     for (byte_offset, g) in remaining.grapheme_indices(true) {
-        let w = measurement::grapheme_width(g) as u16;
+        let w = unicode::grapheme_width(g) as u16;
         if col + w > max_width {
             return match last_space_end {
                 Some(space_end) => start + space_end,
@@ -109,7 +109,7 @@ fn char_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
         let mut line_start = 0usize;
         let mut col = 0u16;
         for (rel_offset, g) in line_bytes.grapheme_indices(true) {
-            let w = measurement::grapheme_width(g) as u16;
+            let w = unicode::grapheme_width(g) as u16;
             if col + w > max_width {
                 lines.push(WrappedLine {
                     byte_offset: hard_line_start + line_start,
@@ -126,7 +126,7 @@ fn char_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
             lines.push(WrappedLine {
                 byte_offset: hard_line_start + line_start,
                 byte_len: remaining.len(),
-                visual_width: measurement::display_width(remaining) as u16,
+                visual_width: unicode::display_width(remaining) as u16,
             });
         }
         text_offset += hard_line.len() + 1;
@@ -142,7 +142,7 @@ fn word_wrap_fallback(text: &str, max_width: u16) -> Vec<WrappedLine> {
     let mut result = Vec::with_capacity(word_lines.len());
     for line in &word_lines {
         let fragment = &text[line.byte_offset..][..line.byte_len];
-        if !fragment.is_empty() && measurement::display_width(fragment) <= max_width as usize {
+        if !fragment.is_empty() && unicode::display_width(fragment) <= max_width as usize {
             result.push(line.clone());
         } else {
             let char_lines = char_wrap(fragment, max_width);
@@ -205,7 +205,7 @@ mod tests {
         assert!(lines.len() >= 2);
         for line in &lines {
             let text = &"superlongword"[line.byte_offset..][..line.byte_len];
-            assert!(measurement::display_width(text) <= 5);
+            assert!(unicode::display_width(text) <= 5);
         }
     }
 
@@ -262,7 +262,7 @@ mod tests {
         assert!(lines.len() >= 3);
         for line in &lines {
             let text = &"superlongwordthatwontbreak"[line.byte_offset..][..line.byte_len];
-            assert!(measurement::display_width(text) <= 5);
+            assert!(unicode::display_width(text) <= 5);
         }
     }
 

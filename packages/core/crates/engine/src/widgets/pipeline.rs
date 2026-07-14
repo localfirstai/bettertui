@@ -1,6 +1,6 @@
-use crate::tree::arena::NodeArena;
-use crate::tree::node_id::NodeId;
-use crate::tree::render_node::RenderNode;
+use crate::tree::NodeArena;
+use crate::tree::NodeId;
+use crate::tree::RenderNode;
 use crate::widgets::tree::WidgetTree;
 
 pub struct Pipeline {
@@ -68,7 +68,7 @@ impl Pipeline {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tree::node_kind::NodeKind;
+    use crate::tree::NodeKind;
     use crate::widgets::WidgetId;
 
     fn make_tree() -> (WidgetTree, NodeArena) {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::tree::color::{Color, NamedColor};
+use crate::tree::{Color, NamedColor};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ThemeToken {

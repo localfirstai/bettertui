@@ -1,11 +1,11 @@
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::input::{Event, EventResult, Key};
-use crate::layout::types::LayoutProps;
+use crate::layout::LayoutProps;
 use crate::text::{display_width, grapheme_count};
-use crate::tree::color::{Color, NamedColor};
-use crate::tree::node_id::NodeId;
-use crate::tree::style::Style;
+use crate::tree::NodeId;
+use crate::tree::Style;
+use crate::tree::{Color, NamedColor};
 
 use crate::widgets::callback_types::{ChangeCallback, SubmitCallback};
 use crate::widgets::{Widget, WidgetContext, WidgetId};
@@ -140,7 +140,7 @@ impl InputWidget {
         byte_offset: usize,
         password: bool,
     ) {
-        use crate::tree::visual::{CursorProps, CursorStyle, Point};
+        use crate::tree::{CursorProps, CursorStyle, Point};
 
         let clamped = byte_offset.min(value.len());
         let visual_x = if password {
@@ -201,13 +201,13 @@ impl Widget for InputWidget {
         let mut attrs = HashMap::new();
         attrs.insert("_value".into(), self.value.to_string());
 
-        let node = crate::tree::render_node::RenderNode {
-            kind: crate::tree::node_kind::NodeKind::Input,
+        let node = crate::tree::RenderNode {
+            kind: crate::tree::NodeKind::Input,
             text: Some(display),
             style,
             layout: self.layout,
             attributes: attrs,
-            ..crate::tree::render_node::RenderNode::default()
+            ..crate::tree::RenderNode::default()
         };
         let id = ctx.insert_node(node);
         Self::set_cursor_position(ctx, id, &self.value, self.value.len(), self.password);
@@ -315,8 +315,8 @@ mod tests {
     use crate::input::FocusManager;
     use crate::input::KeyEvent;
     use crate::scheduler::Scheduler;
-    use crate::tree::arena::NodeArena;
-    use crate::tree::node_kind::NodeKind;
+    use crate::tree::NodeArena;
+    use crate::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
         (

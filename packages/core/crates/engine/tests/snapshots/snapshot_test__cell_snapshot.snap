@@ -1,0 +1,18 @@
+---
+source: crates/engine/tests/snapshot_test.rs
+assertion_line: 18
+expression: cell
+---
+Cell {
+    ch: 'A',
+    fg: Named(
+        Red,
+    ),
+    bg: Named(
+        Blue,
+    ),
+    underline_color: Default,
+    attributes: CellAttributes(
+        0x0,
+    ),
+}
