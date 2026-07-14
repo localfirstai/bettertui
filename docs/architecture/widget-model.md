@@ -1,6 +1,6 @@
 # Widget Model
 
-Widgets are the high-level, composable UI layer built on top of the arena. Code: `packages/core/crates/widgets/src/` (257 tests across 30+ files).
+Widgets are the high-level, composable UI layer built on top of the arena. Code: `packages/core/crates/widgets/src/` (257 lib tests across 36 files; 296 total across the crate).
 
 ## Trait
 
@@ -41,4 +41,5 @@ Structs that need Default must derive it (per project rules — e.g. `BoxWidget`
 
 ## Status
 
-The Rust widget framework is substantial and tested (251 tests). Widgets are exposed through `@bettertui/core`'s native bridge.
+The Rust widget framework is substantial and tested (296 tests). Widgets are exposed through `@bettertui/core`'s native bridge.
+
