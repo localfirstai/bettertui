@@ -1325,6 +1325,10 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
 pub struct LayoutTreeSync {
     layout: LayoutEngine,
     results: HashMap<NodeId, LayoutResult>,
+    /// Generation counter incremented on each layout computation.
+    generation: u64,
+    /// Revision counter for structural changes (child add/remove, visibility, etc.)
+    revision: u64,
 }
 
 impl Default for LayoutTreeSync {
@@ -1338,7 +1342,24 @@ impl LayoutTreeSync {
         Self {
             layout: LayoutEngine::new(),
             results: HashMap::new(),
+            generation: 0,
+            revision: 0,
         }
+    }
+
+    /// Get current layout generation.
+    pub fn generation(&self) -> u64 {
+        self.generation
+    }
+
+    /// Get current render list revision.
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
+    /// Bump revision for structural changes (child add/remove, visibility change, etc.)
+    pub fn bump_revision(&mut self) {
+        self.revision = self.revision.wrapping_add(1);
     }
 
     pub fn sync_full(&mut self, arena: &NodeArena) {
@@ -1377,21 +1398,41 @@ impl LayoutTreeSync {
 
     pub fn remove_node(&mut self, id: NodeId) {
         self.layout.remove_node(id);
+        self.bump_revision();
     }
 
     pub fn sync_children(&mut self, arena: &NodeArena, parent: NodeId) {
         let children = arena.children(parent);
+        let had_changes = !children.is_empty();
         for child in &children {
             self.sync_node(arena, *child);
             self.layout.add_child(parent, *child);
         }
+        if had_changes {
+            self.bump_revision();
+        }
     }
 
     pub fn compute(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
+        if !self.layout.is_dirty(root) {
+            return Ok(());
+        }
         self.layout
             .compute_layout(root, width as f32, height as f32)?;
         self.results = self.layout.collect_results();
+        self.generation = self.generation.wrapping_add(1);
         Ok(())
+    }
+
+    /// Force layout computation regardless of dirty state.
+    pub fn compute_forced(
+        &mut self,
+        root: NodeId,
+        width: u16,
+        height: u16,
+    ) -> Result<(), LayoutError> {
+        self.layout.mark_dirty(root);
+        self.compute(root, width, height)
     }
 
     pub fn results(&self) -> &HashMap<NodeId, LayoutResult> {
@@ -1805,5 +1846,34 @@ mod measure_tests {
         let (width, lines) = measure_text("hello\nworld\ntest", f32::INFINITY);
         assert_eq!(width, 5.0);
         assert_eq!(lines, 3);
+    }
+}
+
+#[cfg(test)]
+mod generation_tests {
+    use super::*;
+
+    #[test]
+    fn layout_tree_sync_generation() {
+        let sync = LayoutTreeSync::new();
+        assert_eq!(sync.generation(), 0);
+        assert_eq!(sync.revision(), 0);
+    }
+
+    #[test]
+    fn layout_tree_sync_bump_revision() {
+        let mut sync = LayoutTreeSync::new();
+        sync.bump_revision();
+        assert_eq!(sync.revision(), 1);
+        sync.bump_revision();
+        assert_eq!(sync.revision(), 2);
+    }
+
+    #[test]
+    fn layout_tree_sync_generation_wrapping() {
+        let mut sync = LayoutTreeSync::new();
+        sync.generation = u64::MAX;
+        sync.bump_revision();
+        assert_eq!(sync.generation(), u64::MAX);
     }
 }

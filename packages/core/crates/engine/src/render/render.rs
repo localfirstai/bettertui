@@ -432,6 +432,12 @@ pub struct RenderTree {
     index: HashMap<NodeId, usize>,
     root: Option<NodeId>,
     sorted_cache: RefCell<Option<Vec<usize>>>,
+    /// Cached render commands for reuse.
+    cached_commands: RefCell<Option<Vec<RenderCommand>>>,
+    /// Layout generation when commands were cached.
+    cached_generation: RefCell<u64>,
+    /// Render list revision when commands were cached.
+    cached_revision: RefCell<u64>,
 }
 
 impl Default for RenderTree {
@@ -447,6 +453,9 @@ impl RenderTree {
             index: HashMap::new(),
             root: None,
             sorted_cache: RefCell::new(None),
+            cached_commands: RefCell::new(None),
+            cached_generation: RefCell::new(0),
+            cached_revision: RefCell::new(0),
         }
     }
 
@@ -515,6 +524,33 @@ impl RenderTree {
         self.index.clear();
         self.root = None;
         *self.sorted_cache.borrow_mut() = None;
+        *self.cached_commands.borrow_mut() = None;
+    }
+
+    /// Invalidate the cached commands (call when render tree changes).
+    pub fn invalidate_cache(&self) {
+        *self.cached_commands.borrow_mut() = None;
+    }
+
+    /// Collect render commands with caching.
+    ///
+    /// If generation and revision match the cached values, returns cached commands.
+    /// Otherwise, rebuilds commands and updates cache.
+    pub fn collect_commands_cached(&self, generation: u64, revision: u64) -> Vec<RenderCommand> {
+        let mut cached_gen = self.cached_generation.borrow_mut();
+        let mut cached_rev = self.cached_revision.borrow_mut();
+
+        if *cached_gen == generation && *cached_rev == revision {
+            if let Some(ref commands) = *self.cached_commands.borrow() {
+                return commands.clone();
+            }
+        }
+
+        let commands = self.collect_commands();
+        *self.cached_commands.borrow_mut() = Some(commands.clone());
+        *cached_gen = generation;
+        *cached_rev = revision;
+        commands
     }
 
     /// Collect render commands with proper scissor/opacity stacking.
@@ -1539,6 +1575,39 @@ mod render_command_tests {
         tree.push(obj2);
 
         let commands = tree.collect_commands();
+        assert!(!commands.is_empty());
+    }
+
+    #[test]
+    fn render_tree_command_caching() {
+        let mut tree = RenderTree::new();
+
+        let mut obj = RenderObject::new(NodeId::default());
+        obj.opacity = 0.8;
+        tree.push(obj);
+
+        let commands1 = tree.collect_commands_cached(1, 1);
+        let commands2 = tree.collect_commands_cached(1, 1);
+        assert_eq!(commands1.len(), commands2.len());
+
+        let commands3 = tree.collect_commands_cached(2, 1);
+        assert!(!commands3.is_empty());
+
+        let commands4 = tree.collect_commands_cached(2, 2);
+        assert!(!commands4.is_empty());
+    }
+
+    #[test]
+    fn render_tree_invalidate_cache() {
+        let mut tree = RenderTree::new();
+
+        let obj = RenderObject::new(NodeId::default());
+        tree.push(obj);
+
+        let _ = tree.collect_commands_cached(1, 1);
+        tree.invalidate_cache();
+
+        let commands = tree.collect_commands_cached(1, 1);
         assert!(!commands.is_empty());
     }
 }
