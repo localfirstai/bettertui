@@ -115,7 +115,6 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         Box::new(CounterWidget::new("Beta", count2.clone())),
         &mut ctx,
     );
-    drop(ctx);
 
     engine.add_text(format!("    Mounted {} widgets", host.widget_count()));
 
@@ -146,7 +145,6 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     };
     host.update(w1, &mut ctx2);
     host.update(w2, &mut ctx2);
-    drop(ctx2);
 
     let _frame2 = renderer.render(&mut arena);
     engine.add_text("    After update (Alpha+1, Beta+10)");
@@ -165,7 +163,6 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         theme: &theme,
     };
     host.unmount(w2, &mut ctx3);
-    drop(ctx3);
 
     engine.add_text(format!("    Widgets remaining: {}", host.widget_count()));
 
@@ -200,16 +197,17 @@ struct Engine {
 
 impl Engine {
     fn new_with_text(title: &str) -> Self {
-        let mut nodes = Vec::new();
-        nodes.push((
-            title.to_string(),
-            Some(
-                Style::new()
-                    .fg(Color::Named(NamedColor::BrightWhite))
-                    .bold(true),
+        let nodes = vec![
+            (
+                title.to_string(),
+                Some(
+                    Style::new()
+                        .fg(Color::Named(NamedColor::BrightWhite))
+                        .bold(true),
+                ),
             ),
-        ));
-        nodes.push(("".to_string(), None));
+            (String::new(), None),
+        ];
         Self { nodes }
     }
 

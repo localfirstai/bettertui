@@ -15,6 +15,11 @@ pub struct Theme {
     pub selected_text_color: Color,
     pub description_color: Color,
     pub instructions_color: Color,
+    pub bg_color: Color,
+    pub focused_bg_color: Color,
+    pub hover_bg_color: Color,
+    pub footer_bg_color: Color,
+    pub placeholder_color: Color,
 }
 
 impl Theme {
@@ -29,6 +34,11 @@ impl Theme {
             selected_text_color: Color::rgb(56, 189, 248),
             description_color: Color::rgb(100, 116, 139),
             instructions_color: Color::rgb(148, 163, 184),
+            bg_color: Color::rgb(30, 41, 59),
+            focused_bg_color: Color::rgb(51, 65, 85),
+            hover_bg_color: Color::rgb(51, 65, 85),
+            footer_bg_color: Color::rgb(15, 23, 42),
+            placeholder_color: Color::rgb(71, 85, 105),
         }
     }
 
@@ -43,6 +53,11 @@ impl Theme {
             selected_text_color: Color::rgb(29, 78, 216),
             description_color: Color::rgb(71, 85, 105),
             instructions_color: Color::rgb(71, 85, 105),
+            bg_color: Color::rgb(248, 250, 252),
+            focused_bg_color: Color::rgb(241, 245, 249),
+            hover_bg_color: Color::rgb(241, 245, 249),
+            footer_bg_color: Color::rgb(226, 232, 240),
+            placeholder_color: Color::rgb(148, 163, 184),
         }
     }
 }

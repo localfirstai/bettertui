@@ -13,13 +13,14 @@ use bettertui_engine::layout::{FlexDirection, LayoutProps, Sizing};
 use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
-use crossterm::event::KeyModifiers;
+use crossterm::event::{KeyModifiers, MouseEvent, MouseEventKind};
 use tracing::{debug, info, trace};
 
 use crate::examples::{self, Category, Example};
 use crate::theme::Theme;
 
 const TITLE: &str = "BETTERTUI EXAMPLES";
+const PLACEHOLDER: &str = "Type to filter examples...";
 
 const CATEGORY_LABELS: &[(Category, &str)] = &[
     (Category::Engine, "ENGINE"),
@@ -47,6 +48,8 @@ pub struct App {
     focus: Focus,
     engine: Engine,
     renderer: Renderer,
+    list_start_y: u16,
+    list_end_y: u16,
 }
 
 impl Default for App {
@@ -69,6 +72,8 @@ impl App {
             focus: Focus::Filter,
             engine: Engine::new(),
             renderer: Renderer::new(80, 24),
+            list_start_y: 0,
+            list_end_y: 0,
         }
     }
 
@@ -78,6 +83,8 @@ impl App {
         terminal.enter_alternate_screen()?;
         terminal.hide_cursor()?;
 
+        crossterm::execute!(io::stdout(), crossterm::event::EnableMouseCapture)?;
+
         terminal.refresh_size()?;
         let (w, h) = terminal.size();
         self.renderer.resize(w, h);
@@ -86,6 +93,7 @@ impl App {
         let result = self.main_loop(terminal);
 
         info!("App::run() - application exiting");
+        let _ = crossterm::execute!(io::stdout(), crossterm::event::DisableMouseCapture);
         terminal.show_cursor()?;
         let _ = terminal.leave_alternate_screen();
         let _ = terminal.leave_raw_mode();
@@ -105,6 +113,9 @@ impl App {
                     }
                     self.handle_key(k, terminal)?;
                 }
+                Some(TerminalEvent::Mouse(m)) => {
+                    self.handle_mouse(m);
+                }
                 Some(TerminalEvent::Resize(w, h)) => {
                     let (old_w, old_h) = terminal.size();
                     debug!(
@@ -119,6 +130,22 @@ impl App {
                     debug!(width = w, height = h, "App::main_loop() - renderer resized");
                 }
                 _ => {}
+            }
+        }
+    }
+
+    fn handle_mouse(&mut self, event: MouseEvent) {
+        if let MouseEventKind::Down(crossterm::event::MouseButton::Left) = event.kind {
+            let y = event.row;
+
+            if y == 2 {
+                self.focus = Focus::Filter;
+            } else if y >= self.list_start_y && y < self.list_end_y {
+                self.focus = Focus::List;
+                let click_idx = (y - self.list_start_y) as usize;
+                if click_idx < self.filtered.len() {
+                    self.selected_index = click_idx;
+                }
             }
         }
     }
@@ -274,35 +301,93 @@ impl App {
             },
         );
 
+        let header = self.engine.create_node(NodeKind::Flex);
+        self.engine.set_layout(
+            header,
+            LayoutProps {
+                direction: FlexDirection::Column,
+                width: Some(Sizing::Points(w as f32)),
+                height: Some(Sizing::Points(3.0)),
+                ..LayoutProps::default()
+            },
+        );
+        self.engine.append_child(root, header).unwrap();
+
         let title_node = self.engine.create_node(NodeKind::Text);
         self.engine.set_text(title_node, TITLE);
         self.engine
             .set_style(title_node, Style::new().fg(t.title_color).bold(true));
-        self.engine.append_child(root, title_node).unwrap();
+        self.engine.append_child(header, title_node).unwrap();
 
         let spacer1 = self.engine.create_node(NodeKind::Text);
         self.engine.set_text(spacer1, "");
-        self.engine.append_child(root, spacer1).unwrap();
+        self.engine.append_child(header, spacer1).unwrap();
+
+        let filter_container = self.engine.create_node(NodeKind::Box);
+        let filter_focused = self.focus == Focus::Filter;
+        let filter_bg = if filter_focused {
+            t.focused_bg_color
+        } else {
+            t.bg_color
+        };
+        self.engine.set_layout(
+            filter_container,
+            LayoutProps {
+                direction: FlexDirection::Row,
+                width: Some(Sizing::Points(w as f32)),
+                height: Some(Sizing::Points(3.0)),
+                padding: Some(bettertui_engine::layout::RectValues {
+                    top: Some(0.0),
+                    right: Some(0.0),
+                    bottom: Some(0.0),
+                    left: Some(2.0),
+                }),
+                ..LayoutProps::default()
+            },
+        );
+        self.engine
+            .set_style(filter_container, Style::new().bg(filter_bg));
+        self.engine.append_child(root, filter_container).unwrap();
 
         let filter_label = self.engine.create_node(NodeKind::Text);
-        self.engine
-            .set_text(filter_label, format!("Filter: {}", self.filter_text));
+        let display_text = if self.filter_text.is_empty() {
+            format!("Filter: {}", PLACEHOLDER)
+        } else {
+            format!("Filter: {}", self.filter_text)
+        };
+        self.engine.set_text(filter_label, display_text);
         self.engine.set_style(
             filter_label,
             Style::new()
-                .fg(if self.focus == Focus::Filter {
+                .fg(if filter_focused {
                     t.focused_border_color
+                } else if self.filter_text.is_empty() {
+                    t.description_color
                 } else {
-                    t.border_color
+                    t.text_color
                 })
-                .bold(true),
+                .bold(true)
+                .bg(filter_bg),
         );
-        self.engine.append_child(root, filter_label).unwrap();
+        self.engine
+            .append_child(filter_container, filter_label)
+            .unwrap();
 
-        let spacer2 = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(spacer2, "");
-        self.engine.append_child(root, spacer2).unwrap();
+        let list_container = self.engine.create_node(NodeKind::Flex);
+        self.engine.set_layout(
+            list_container,
+            LayoutProps {
+                direction: FlexDirection::Column,
+                width: Some(Sizing::Points(w as f32)),
+                flex_grow: 1.0,
+                ..LayoutProps::default()
+            },
+        );
+        self.engine.append_child(root, list_container).unwrap();
 
+        self.list_start_y = 6;
+
+        let mut current_y = self.list_start_y;
         let mut prev_cat: Option<Category> = None;
         for &idx in &self.filtered {
             let ex = &self.examples[idx];
@@ -320,71 +405,78 @@ impl App {
                     .set_text(cat_node, format!("  [ {} ]", cat_label));
                 self.engine
                     .set_style(cat_node, Style::new().fg(t.category_color).bold(true));
-                self.engine.append_child(root, cat_node).unwrap();
+                self.engine.append_child(list_container, cat_node).unwrap();
+                current_y += 1;
                 prev_cat = Some(ex.category);
             }
 
             let abs_idx = self.filtered.iter().position(|&i| i == idx).unwrap_or(0);
             let is_sel = abs_idx == self.selected_index;
+            let list_focused = self.focus == Focus::List;
 
             let item_node = self.engine.create_node(NodeKind::Text);
-            let prefix = if is_sel && self.focus == Focus::List {
+            let prefix = if is_sel && list_focused {
                 "  ▶ "
             } else {
                 "    "
             };
             self.engine
                 .set_text(item_node, format!("{}{}", prefix, ex.name));
-            self.engine.set_style(
-                item_node,
-                if is_sel && self.focus == Focus::List {
-                    Style::new()
-                        .fg(t.selected_text_color)
-                        .bg(t.selected_bg_color)
-                        .bold(true)
-                } else if is_sel {
-                    Style::new().fg(t.selected_text_color).bold(true)
-                } else {
-                    Style::new().fg(t.text_color)
-                },
-            );
-            self.engine.append_child(root, item_node).unwrap();
-        }
-
-        let spacer3 = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(spacer3, "");
-        self.engine.append_child(root, spacer3).unwrap();
-
-        if let Some(&idx) = self.filtered.get(
-            self.selected_index
-                .min(self.filtered.len().saturating_sub(1)),
-        ) {
-            let desc = &self.examples[idx].description;
-            let desc_node = self.engine.create_node(NodeKind::Text);
-            self.engine.set_text(desc_node, format!("  {}", desc));
+            let item_bg = if is_sel && list_focused {
+                t.selected_bg_color
+            } else if is_sel {
+                t.hover_bg_color
+            } else {
+                Color::Default
+            };
+            let item_fg = if is_sel {
+                t.selected_text_color
+            } else {
+                t.text_color
+            };
             self.engine
-                .set_style(desc_node, Style::new().fg(t.description_color));
-            self.engine.append_child(root, desc_node).unwrap();
+                .set_style(item_node, Style::new().fg(item_fg).bg(item_bg).bold(is_sel));
+            self.engine.append_child(list_container, item_node).unwrap();
+            current_y += 1;
         }
+        self.list_end_y = current_y;
 
-        let spacer4 = self.engine.create_node(NodeKind::Text);
-        self.engine.set_text(spacer4, "");
-        self.engine.append_child(root, spacer4).unwrap();
+        let footer = self.engine.create_node(NodeKind::Flex);
+        self.engine.set_layout(
+            footer,
+            LayoutProps {
+                direction: FlexDirection::Column,
+                width: Some(Sizing::Points(w as f32)),
+                height: Some(Sizing::Points(2.0)),
+                ..LayoutProps::default()
+            },
+        );
+        self.engine.append_child(root, footer).unwrap();
+
+        let spacer_footer = self.engine.create_node(NodeKind::Text);
+        self.engine.set_text(spacer_footer, "");
+        self.engine.append_child(footer, spacer_footer).unwrap();
 
         let help_node = self.engine.create_node(NodeKind::Text);
         self.engine.set_text(
             help_node,
-            "Tab: switch  |  ↑↓/jk: navigate  |  Enter: run  |  /: filter  |  Ctrl+C: quit",
+            " Tab: switch | ↑↓/jk: navigate | Enter: run | /: filter | Ctrl+C: quit ",
         );
-        self.engine
-            .set_style(help_node, Style::new().fg(t.instructions_color));
-        self.engine.append_child(root, help_node).unwrap();
+        self.engine.set_style(
+            help_node,
+            Style::new().fg(t.instructions_color).bg(t.footer_bg_color),
+        );
+        self.engine.append_child(footer, help_node).unwrap();
 
         self.engine.begin_frame();
         self.engine.commit_frame();
 
         if self.focus == Focus::Filter {
-            let cursor_x = 8 + self.filter_text.len() as u16;
+            let cursor_x = if self.filter_text.is_empty() {
+                9
+            } else {
+                9 + self.filter_text.len() as u16
+            };
             let cursor_y = 2;
             self.renderer.set_cursor_position(cursor_x, cursor_y, true);
         } else {

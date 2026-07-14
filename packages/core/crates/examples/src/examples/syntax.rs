@@ -55,8 +55,8 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
             }
             let n = engine.create_node(NodeKind::Text);
             engine.set_text(n, format!("  {}", text));
-            if let Some(fg) = &line.segments.first().and_then(|s| s.style.fg.clone()) {
-                engine.set_style(n, Style::new().fg(fg.clone()));
+            if let Some(fg) = line.segments.first().and_then(|s| s.style.fg) {
+                engine.set_style(n, Style::new().fg(fg));
             }
             engine.append_child(root, n).unwrap();
         }
