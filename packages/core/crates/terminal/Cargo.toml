@@ -1,0 +1,18 @@
+[package]
+name = "bettertui-terminal"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "BetterTUI terminal interaction layer"
+
+[lib]
+name = "bettertui_terminal"
+path = "src/lib.rs"
+
+[dependencies]
+bettertui-engine = { path = "../engine" }
+crossterm.workspace = true
+tracing.workspace = true
+portable-pty.workspace = true
+bitflags.workspace = true

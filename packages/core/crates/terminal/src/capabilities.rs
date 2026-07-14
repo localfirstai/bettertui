@@ -3,15 +3,11 @@
 use std::env;
 use std::sync::OnceLock;
 
-use crate::terminal::query::QueryResult;
+use crate::query::QueryResult;
 
 static GLOBAL_CAPABILITIES: OnceLock<CapabilityDetector> = OnceLock::new();
 
 pub fn global_capabilities() -> &'static CapabilityDetector {
-    GLOBAL_CAPABILITIES.get_or_init(CapabilityDetector::detect)
-}
-
-pub fn init_capabilities() -> &'static CapabilityDetector {
     GLOBAL_CAPABILITIES.get_or_init(CapabilityDetector::detect)
 }
 

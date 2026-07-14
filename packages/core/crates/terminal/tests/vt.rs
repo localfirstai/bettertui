@@ -3,11 +3,10 @@
 use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::framebuffer::CellAttributes;
 use bettertui_engine::input::{KeyAction, KeyModifiers};
-use bettertui_engine::terminal::{
-    Cursor, CursorShape, CursorStyle, KittyKeyEvent, Pen, PrivateMode, ResponseKind, ScreenBuffer,
-    ScrollbackBuffer, TerminalMode, TerminalResponse, VtMachine,
-};
 use bettertui_engine::tree::{Color, NamedColor};
+use bettertui_terminal::{
+    Cursor, KittyKeyEvent, Pen, PrivateMode, ScreenBuffer, TerminalMode, VtMachine,
+};
 
 // =============================================================================
 // Cursor Tests

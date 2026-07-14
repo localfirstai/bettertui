@@ -2,7 +2,7 @@
 
 use bettertui_engine::protocol::{
     Command, CommandBuffer, CommandError, CommandProcessor, CommandRegistry, CommandResult,
-    CommandWarning, RegistryResult,
+    CommandWarning,
 };
 use bettertui_engine::tree::{NodeId, NodeKind, RenderNode};
 

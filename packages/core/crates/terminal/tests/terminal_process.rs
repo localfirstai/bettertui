@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use bettertui_engine::pty::PtySize;
-use bettertui_engine::terminal::process::{
+use bettertui_terminal::process::{
     ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult,
     TerminalError, TerminalRuntime, TerminalState, TerminalViewport,
 };

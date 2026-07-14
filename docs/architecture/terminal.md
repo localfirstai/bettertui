@@ -1,6 +1,6 @@
 # Terminal
 
-This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/engine/src/terminal/` and `packages/core/crates/engine/src/terminal/vt/`.
+This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/terminal/src/` (the `bettertui-terminal` crate).
 
 ## Two layers
 

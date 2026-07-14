@@ -1,7 +1,7 @@
 //! Tests for terminal capability detection.
 
-use bettertui_engine::terminal::query::QueryResult;
-use bettertui_engine::terminal::{
+use bettertui_terminal::query::QueryResult;
+use bettertui_terminal::{
     CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix,
     GraphicsCapabilities, InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities,
     TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics,

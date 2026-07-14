@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use bettertui_engine::terminal::neovim::{NeovimConfig, NeovimMode, NeovimProcess, NeovimState};
+use bettertui_terminal::neovim::{NeovimConfig, NeovimMode, NeovimProcess, NeovimState};
 
 // ---------------------------------------------------------------------------
 // NeovimConfig tests

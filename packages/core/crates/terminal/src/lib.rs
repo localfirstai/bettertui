@@ -7,7 +7,7 @@ pub mod process;
 pub use capabilities::{
     CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix,
     GraphicsCapabilities, InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities,
-    TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics,
+    TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics, global_capabilities,
 };
 pub use process::{
     ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult,

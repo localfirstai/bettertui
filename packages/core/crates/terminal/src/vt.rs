@@ -1,12 +1,12 @@
 //! VT100/VTxxx terminal emulation state machine.
 
-use crate::ansi::{
+use bettertui_engine::ansi::{
     BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType,
     ModeAction, ModeType, OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
 };
-use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::input::{KeyAction, KeyModifiers, KeyboardInput};
-use crate::tree::{Color, NamedColor};
+use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
+use bettertui_engine::input::{KeyAction, KeyModifiers, KeyboardInput};
+use bettertui_engine::tree::{Color, NamedColor};
 
 const DEFAULT_SCROLLBACK_LINES: usize = 10000;
 
@@ -828,7 +828,7 @@ impl VtMachine {
         }
     }
 
-    pub fn framebuffer(&self) -> &crate::framebuffer::FrameBuffer {
+    pub fn framebuffer(&self) -> &bettertui_engine::framebuffer::FrameBuffer {
         self.screen().buffer()
     }
 

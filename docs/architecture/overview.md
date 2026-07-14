@@ -94,16 +94,19 @@ graph TD
 
 | Crate | Type | Purpose |
 |-------|------|---------|
-| `bettertui-engine` | `lib` | All engine logic: tree, layout, renderer, framebuffer, events, input, animation, pty, terminal, text, capabilities, scheduler, etc. |
+| `bettertui-engine` | `lib` | Core engine: tree, layout, renderer, framebuffer, events, input, animation, pty, text, scheduler, etc. |
 | `bettertui-widgets` | `lib` | Widget framework: Widget trait, WidgetContext, all built-in widgets. Depends on `bettertui-engine`. |
-| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing the engine + widgets to Node.js. Thin translation layer only. |
+| `bettertui-terminal` | `lib` | Terminal interaction: crossterm I/O, VT emulation, PTY process management, neovim, capability detection. Depends on `bettertui-engine`. |
+| `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing the engine + widgets + terminal to Node.js. Thin translation layer only. |
 
 The bindings crate depends on both `bettertui-engine` and `bettertui-widgets` and contains **no** Rust unit tests — all verification lives in `bettertui-engine` and `bettertui-widgets` plus the TS layer above.
 
 ```mermaid
 graph LR
-    B[bindings / cdylib] -->|path dep| W[widgets / lib]
+    B[bindings / cdylib] -->|path dep| T[terminal / lib]
+    B -->|path dep| W[widgets / lib]
     W -->|path dep| E[engine / lib]
+    T -->|path dep| E
     E -->|crossterm| C1[(stdout/stdin)]
     E -->|portable-pty| C2[(child process)]
 ```
@@ -165,19 +168,23 @@ graph TD
         C[@bettertui/core]
         S[@bettertui/shared]
     end
-    subgraph L3[Rust Engine Layer]
+    subgraph L3[Rust Crate Layer]
         E[bettertui-engine]
+        W[bettertui-widgets]
+        T[bettertui-terminal]
     end
     subgraph L4[Terminal]
-        T[crossterm / portable-pty]
+        X[crossterm / portable-pty]
     end
     R --> C
     C -->|napi-rs| E
-    E --> T
+    W -->|path dep| E
+    T -->|path dep| E
+    E --> X
 ```
 
 - **Layer 1 (React adapter).** Translates React's virtual DOM operations into core `Command`s via a `react-reconciler` host config.
 - **Layer 2 (Core TypeScript).** Owns the command protocol, tree manipulation, runtime/frame loop, and the native bridge.
-- **Layer 3 (Rust engine).** Owns the arena, layout, rendering, events, input, animation, text, PTY, terminal emulation, capabilities.
+- **Layer 3 (Rust engine).** The `bettertui-engine` crate owns the arena, layout, rendering, events, input, animation, text, PTY. The `bettertui-terminal` crate handles terminal I/O, VT emulation, and capability detection. The `bettertui-widgets` crate provides built-in composable UI widgets.
 - **Layer 4 (Terminal).** Raw bytes in/out via crossterm and child processes via portable-pty.
 pty.

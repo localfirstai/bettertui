@@ -1,6 +1,6 @@
 //! Scrollback buffer: ring buffer of terminal lines with configurable max size.
 
-use crate::framebuffer::Cell;
+use bettertui_engine::framebuffer::Cell;
 const DEFAULT_SCROLLBACK_LINES: usize = 10_000;
 
 #[derive(Debug, Clone)]

@@ -6,12 +6,10 @@ use bettertui_engine::layout::{LayoutEngine, PaintContext, Sizing, build_render_
 use bettertui_engine::render::effects::ColorMatrixPass;
 use bettertui_engine::render::effects::INVERT_MATRIX;
 use bettertui_engine::render::{
-    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderFrame, RenderObject, RenderPass,
+    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderObject, RenderPass,
     RenderPassContext, RenderPipeline, RenderTree, Renderer,
 };
-use bettertui_engine::tree::{
-    Color, Display, NamedColor, NodeArena, NodeKind, Overflow, RenderNode,
-};
+use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, RenderNode};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // === Tests from ansi.rs ===

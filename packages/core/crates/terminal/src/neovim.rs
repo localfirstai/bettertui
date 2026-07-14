@@ -2,8 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::pty::PtySize;
-use crate::terminal::{ProcessConfig, TerminalError, TerminalRuntime, TerminalState};
+use crate::{ProcessConfig, TerminalError, TerminalRuntime, TerminalState};
+use bettertui_engine::pty::PtySize;
 
 // ============================================================================
 // Error Types

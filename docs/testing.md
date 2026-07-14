@@ -8,7 +8,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Layer | Tool | What it covers |
 |-------|------|----------------|
-| Rust engine | `cargo test` | Tree, layout, renderer, frame buffer, events, input, animation, text, PTY, terminal, capabilities |
+| Rust engine | `cargo test` (per crate) | Engine: tree, layout, renderer, frame buffer, events, input, animation, text, PTY. Terminal: I/O, VT emulation, capabilities, PTY process management, neovim |
 | Rust fmt/lint | `cargo fmt` / `cargo clippy -D warnings` | Style and correctness |
 | TypeScript | `vitest run` (per package) | Command buffer, reconciler, hooks, components, themes, shared types |
 | TS fmt/lint/typecheck | Biome + `tsc --noEmit` | Style, lint, types |
