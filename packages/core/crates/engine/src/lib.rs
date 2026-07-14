@@ -4,7 +4,6 @@ pub mod input;
 
 pub mod animation;
 pub mod ansi;
-pub mod benchmark;
 pub mod dirty_diff;
 pub mod engine;
 pub mod ffi;

@@ -1,5 +1,6 @@
 //! Benchmark harness for measuring engine performance.
 //!
+//! Migrated from the engine crate into the dedicated benchmark crate.
 //! Provides timing utilities, operation counters, and structured benchmarks
 //! for measuring rendering, layout, diff, and other engine operations.
 
