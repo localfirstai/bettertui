@@ -376,6 +376,56 @@ impl RenderObject {
     }
 }
 
+/// Render commands for structured rendering pipeline.
+///
+/// This enum matches OpenTUI's render command pattern, allowing
+/// proper stacking of scissor rects and opacity values.
+#[derive(Debug, Clone)]
+pub enum RenderCommand {
+    /// Render a renderable object
+    Render { object: RenderObject },
+    /// Push a scissor rect for clipping
+    PushScissorRect {
+        x: u16,
+        y: u16,
+        width: u16,
+        height: u16,
+    },
+    /// Pop the top scissor rect
+    PopScissorRect,
+    /// Push an opacity value (multiplied with current)
+    PushOpacity { opacity: f32 },
+    /// Pop the top opacity value
+    PopOpacity,
+}
+
+impl RenderCommand {
+    pub fn render(obj: RenderObject) -> Self {
+        Self::Render { object: obj }
+    }
+
+    pub fn push_scissor(x: u16, y: u16, width: u16, height: u16) -> Self {
+        Self::PushScissorRect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
+    pub fn pop_scissor() -> Self {
+        Self::PopScissorRect
+    }
+
+    pub fn push_opacity(opacity: f32) -> Self {
+        Self::PushOpacity { opacity }
+    }
+
+    pub fn pop_opacity() -> Self {
+        Self::PopOpacity
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderTree {
     objects: Vec<RenderObject>,
@@ -466,6 +516,55 @@ impl RenderTree {
         self.root = None;
         *self.sorted_cache.borrow_mut() = None;
     }
+
+    /// Collect render commands with proper scissor/opacity stacking.
+    ///
+    /// This follows OpenTUI's pattern:
+    /// 1. Push opacity if < 1.0
+    /// 2. Push render command
+    /// 3. Push scissor rect if overflow !== visible
+    /// 4. Process children
+    /// 5. Pop scissor rect
+    /// 6. Pop opacity
+    pub fn collect_commands(&self) -> Vec<RenderCommand> {
+        let mut commands = Vec::with_capacity(self.objects.len() * 2);
+        let sorted = self.sorted_by_z_index();
+
+        for &idx in &sorted {
+            let obj = &self.objects[idx];
+            if !obj.is_visible() {
+                continue;
+            }
+
+            let needs_opacity = obj.opacity < 1.0;
+            let needs_scissor = obj.clip.is_some();
+
+            if needs_opacity {
+                commands.push(RenderCommand::push_opacity(obj.opacity));
+            }
+
+            commands.push(RenderCommand::render(obj.clone()));
+
+            if let Some(clip) = &obj.clip {
+                commands.push(RenderCommand::push_scissor(
+                    clip.x,
+                    clip.y,
+                    clip.width,
+                    clip.height,
+                ));
+            }
+
+            if needs_scissor {
+                commands.push(RenderCommand::pop_scissor());
+            }
+
+            if needs_opacity {
+                commands.push(RenderCommand::pop_opacity());
+            }
+        }
+
+        commands
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -474,6 +573,8 @@ impl RenderTree {
 
 pub struct Painter {
     buffer: FrameBuffer,
+    opacity_stack: Vec<f32>,
+    scissor_stack: Vec<ClipBounds>,
 }
 
 impl Default for Painter {
@@ -486,6 +587,8 @@ impl Painter {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             buffer: FrameBuffer::new(width, height),
+            opacity_stack: Vec::with_capacity(8),
+            scissor_stack: Vec::with_capacity(8),
         }
     }
 
@@ -501,6 +604,48 @@ impl Painter {
         &mut self.buffer
     }
 
+    /// Get current effective opacity (product of all stacked values).
+    pub fn current_opacity(&self) -> f32 {
+        self.opacity_stack.last().copied().unwrap_or(1.0)
+    }
+
+    /// Push an opacity value onto the stack.
+    pub fn push_opacity(&mut self, opacity: f32) {
+        let current = self.current_opacity();
+        let effective = (current * opacity).clamp(0.0, 1.0);
+        self.opacity_stack.push(effective);
+    }
+
+    /// Pop an opacity value from the stack.
+    pub fn pop_opacity(&mut self) {
+        self.opacity_stack.pop();
+    }
+
+    /// Push a scissor rect onto the stack.
+    /// Intersects with current scissor if any.
+    pub fn push_scissor(&mut self, x: u16, y: u16, width: u16, height: u16) {
+        let new_clip = ClipBounds::new(x, y, width, height);
+        if let Some(current) = self.scissor_stack.last() {
+            if let Some(intersected) = current.intersect(&new_clip) {
+                self.scissor_stack.push(intersected);
+            } else {
+                self.scissor_stack.push(ClipBounds::new(0, 0, 0, 0));
+            }
+        } else {
+            self.scissor_stack.push(new_clip);
+        }
+    }
+
+    /// Pop a scissor rect from the stack.
+    pub fn pop_scissor(&mut self) {
+        self.scissor_stack.pop();
+    }
+
+    /// Get current scissor rect if any.
+    pub fn current_scissor(&self) -> Option<&ClipBounds> {
+        self.scissor_stack.last()
+    }
+
     pub fn paint(&mut self, tree: &RenderTree, ctx: &PaintContext) {
         self.paint_with_clear(tree, ctx, true);
     }
@@ -513,6 +658,89 @@ impl Painter {
         for idx in &sorted {
             let obj = &tree.objects()[*idx];
             self.paint_object(obj, ctx);
+        }
+    }
+
+    /// Paint from render commands with proper stacking.
+    pub fn paint_commands(&mut self, commands: &[RenderCommand], ctx: &PaintContext) {
+        self.buffer.clear();
+        self.opacity_stack.clear();
+        self.scissor_stack.clear();
+
+        for command in commands {
+            match command {
+                RenderCommand::Render { object } => {
+                    self.paint_object_with_scissor(object, ctx);
+                }
+                RenderCommand::PushScissorRect {
+                    x,
+                    y,
+                    width,
+                    height,
+                } => {
+                    self.push_scissor(*x, *y, *width, *height);
+                }
+                RenderCommand::PopScissorRect => {
+                    self.pop_scissor();
+                }
+                RenderCommand::PushOpacity { opacity } => {
+                    self.push_opacity(*opacity);
+                }
+                RenderCommand::PopOpacity => {
+                    self.pop_opacity();
+                }
+            }
+        }
+    }
+
+    fn paint_object_with_scissor(&mut self, obj: &RenderObject, ctx: &PaintContext) {
+        if !obj.is_visible() {
+            return;
+        }
+
+        let translated = obj.translated_bounds();
+        let bounds = &translated;
+
+        let effective_bounds = if let Some(scissor) = self.current_scissor() {
+            if let Some(intersected) = scissor.intersect(&ClipBounds::new(
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+            )) {
+                PaintBounds::new(
+                    intersected.x,
+                    intersected.y,
+                    intersected.width,
+                    intersected.height,
+                )
+                .with_padding(
+                    bounds.padding_left,
+                    bounds.padding_right,
+                    bounds.padding_top,
+                    bounds.padding_bottom,
+                )
+                .with_border(
+                    bounds.border_top,
+                    bounds.border_right,
+                    bounds.border_bottom,
+                    bounds.border_left,
+                )
+            } else {
+                return;
+            }
+        } else {
+            translated
+        };
+
+        if !ctx.is_visible(&effective_bounds) {
+            return;
+        }
+
+        if let Some(clipped) = ctx.clipped_bounds(&effective_bounds) {
+            self.paint_background(obj, &clipped);
+            self.paint_border(obj, &clipped);
+            self.paint_text(obj, &clipped);
         }
     }
 
@@ -1226,5 +1454,91 @@ impl Renderer {
 
     pub fn pipeline_mut(&mut self) -> &mut RenderPipeline {
         &mut self.pipeline
+    }
+}
+
+#[cfg(test)]
+mod render_command_tests {
+    use super::*;
+
+    #[test]
+    fn render_command_variants() {
+        let obj = RenderObject::new(NodeId::default());
+        let cmd1 = RenderCommand::render(obj);
+        assert!(matches!(cmd1, RenderCommand::Render { .. }));
+
+        let cmd2 = RenderCommand::push_scissor(0, 0, 10, 10);
+        assert!(matches!(cmd2, RenderCommand::PushScissorRect { .. }));
+
+        let cmd3 = RenderCommand::pop_scissor();
+        assert!(matches!(cmd3, RenderCommand::PopScissorRect));
+
+        let cmd4 = RenderCommand::push_opacity(0.5);
+        assert!(matches!(cmd4, RenderCommand::PushOpacity { .. }));
+
+        let cmd5 = RenderCommand::pop_opacity();
+        assert!(matches!(cmd5, RenderCommand::PopOpacity));
+    }
+
+    #[test]
+    fn painter_opacity_stack() {
+        let mut painter = Painter::new(10, 10);
+
+        assert_eq!(painter.current_opacity(), 1.0);
+
+        painter.push_opacity(0.5);
+        assert_eq!(painter.current_opacity(), 0.5);
+
+        painter.push_opacity(0.5);
+        assert_eq!(painter.current_opacity(), 0.25);
+
+        painter.pop_opacity();
+        assert_eq!(painter.current_opacity(), 0.5);
+
+        painter.pop_opacity();
+        assert_eq!(painter.current_opacity(), 1.0);
+    }
+
+    #[test]
+    fn painter_scissor_stack() {
+        let mut painter = Painter::new(20, 20);
+
+        assert!(painter.current_scissor().is_none());
+
+        painter.push_scissor(0, 0, 10, 10);
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 0);
+        assert_eq!(clip.width, 10);
+
+        painter.push_scissor(5, 5, 10, 10);
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 5);
+        assert_eq!(clip.width, 5);
+
+        painter.pop_scissor();
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 0);
+
+        painter.pop_scissor();
+        assert!(painter.current_scissor().is_none());
+    }
+
+    #[test]
+    fn render_tree_collect_commands() {
+        let mut tree = RenderTree::new();
+
+        let mut obj1 = RenderObject::new(NodeId::default());
+        obj1.opacity = 0.8;
+        obj1.z_index = 1;
+        tree.push(obj1);
+
+        let mut obj2 = RenderObject::new(NodeId::default());
+        obj2.opacity = 1.0;
+        obj2.clip = Some(ClipBounds::new(0, 0, 10, 10));
+        obj2.z_index = 0;
+        tree.push(obj2);
+
+        let commands = tree.collect_commands();
+        assert!(!commands.is_empty());
     }
 }

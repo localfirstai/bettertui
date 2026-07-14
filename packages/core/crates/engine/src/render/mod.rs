@@ -6,6 +6,6 @@ pub mod effects;
 mod render;
 
 pub use render::{
-    AnsiBackend, CursorState, Painter, PassPriority, PassResult, RenderBackend, RenderFrame,
-    RenderObject, RenderPass, RenderPassContext, RenderPipeline, RenderTree, Renderer,
+    AnsiBackend, CursorState, Painter, PassPriority, PassResult, RenderBackend, RenderCommand,
+    RenderFrame, RenderObject, RenderPass, RenderPassContext, RenderPipeline, RenderTree, Renderer,
 };
