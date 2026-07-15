@@ -9,9 +9,9 @@
 use std::io::{self, Write};
 
 use bettertui_engine::engine::Engine;
-use bettertui_engine::layout::{FlexDirection, LayoutProps};
 use bettertui_engine::protocol::Command;
 use bettertui_engine::render::{AnsiBackend, Renderer};
+use bettertui_engine::taffy::{FlexDirection, LayoutProps};
 use bettertui_engine::tree::{Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::Terminal;
 

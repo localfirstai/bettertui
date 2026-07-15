@@ -3,7 +3,7 @@ use crate::Widget;
 use crate::WidgetId;
 use crate::context::WidgetContext;
 use bettertui_engine::input::{Event, EventResult};
-use bettertui_engine::layout::LayoutProps;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::Color;
 use bettertui_engine::tree::Style;
 

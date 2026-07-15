@@ -1,6 +1,6 @@
 use bettertui_engine::input::Event;
 use bettertui_engine::input::EventResult;
-use bettertui_engine::layout::LayoutProps;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::Style;
 
 use crate::{Widget, WidgetContext, WidgetId};
@@ -77,8 +77,8 @@ mod tests {
     use super::*;
     use crate::theme::Theme;
     use bettertui_engine::input::{Event, EventResult, FocusManager, Key, KeyEvent};
-    use bettertui_engine::layout::LayoutProps;
     use bettertui_engine::scheduler::Scheduler;
+    use bettertui_engine::taffy::LayoutProps;
     use bettertui_engine::tree::{NodeArena, NodeId, NodeKind, Style};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {

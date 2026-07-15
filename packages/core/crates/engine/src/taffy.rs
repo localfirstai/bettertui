@@ -25,7 +25,7 @@ use crate::tree::Rect;
 // BACKWARD COMPATIBILITY: Re-export submodules
 // ============================================================================
 
-/// Types submodule for backward compatibility with `crate::layout::types::*`
+/// Types submodule for backward compatibility with `crate::taffy::types::*`
 pub mod types {
     pub use super::{
         AlignItems, AlignSelf, FlexDirection, FlexWrap, Gap, JustifyContent, LayoutProps, Position,
@@ -42,7 +42,7 @@ pub mod types {
     }
 }
 
-/// Paint submodule for backward compatibility with `crate::layout::paint::*`
+/// Paint submodule for backward compatibility with `crate::taffy::paint::*`
 pub mod paint {
     pub use super::{ClipBounds, PaintBounds, PaintContext, PaintFlags, Viewport};
 }

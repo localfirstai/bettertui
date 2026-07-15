@@ -7,9 +7,9 @@ use tracing::{debug, info};
 
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::layout::build_render_tree_with_viewport;
-use crate::layout::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
 use crate::scheduler::{FrameStatus, Scheduler};
+use crate::taffy::build_render_tree_with_viewport;
+use crate::taffy::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
 use crate::text::{TextAlign, ViewportConfig, layout_text};
 use crate::tree::NodeArena;
 use crate::tree::{Color, NamedColor, NodeId, Overflow, Rect, ResolvedStyle};
@@ -1398,7 +1398,7 @@ impl Renderer {
             &mut self.render_tree,
         );
 
-        let ctx = crate::layout::PaintContext::new(self.width, self.height);
+        let ctx = crate::taffy::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
 
         // Post-processing: execute render passes on the painter's framebuffer

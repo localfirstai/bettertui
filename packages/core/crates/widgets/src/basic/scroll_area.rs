@@ -1,5 +1,5 @@
 use bettertui_engine::input::{Event, EventResult, Key};
-use bettertui_engine::layout::LayoutProps;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::NodeKind;
 use bettertui_engine::tree::Overflow;
 use bettertui_engine::tree::RenderNode;

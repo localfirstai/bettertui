@@ -1,6 +1,6 @@
 use bettertui_engine::input::Event;
 use bettertui_engine::input::EventResult;
-use bettertui_engine::layout::{LayoutProps, Sizing};
+use bettertui_engine::taffy::{LayoutProps, Sizing};
 
 use crate::{Widget, WidgetContext, WidgetId};
 

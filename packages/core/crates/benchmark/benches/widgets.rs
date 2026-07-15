@@ -3,8 +3,8 @@ use std::hint::black_box;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 use bettertui_engine::input::FocusManager;
-use bettertui_engine::layout::LayoutProps;
 use bettertui_engine::scheduler::Scheduler;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::{NodeArena, NodeId, NodeKind, RenderNode, Style};
 use bettertui_widgets::{
     Pipeline, Widget, WidgetContext, WidgetHost, WidgetId, WidgetRegistry, WidgetTree,

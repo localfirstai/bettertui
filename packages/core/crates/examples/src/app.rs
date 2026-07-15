@@ -9,10 +9,10 @@
 use std::io::{self, Write};
 
 use bettertui_engine::engine::Engine;
-use bettertui_engine::layout::{
+use bettertui_engine::render::{AnsiBackend, Renderer};
+use bettertui_engine::taffy::{
     AlignItems, FlexDirection, JustifyContent, LayoutProps, Position, RectValues, Sizing,
 };
-use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::tree::{BorderStyle, Color, NamedColor, NodeKind, Style};
 use bettertui_terminal::{Key, KeyInput, Terminal, TerminalEvent};
 use crossterm::event::{KeyModifiers, MouseEvent, MouseEventKind};

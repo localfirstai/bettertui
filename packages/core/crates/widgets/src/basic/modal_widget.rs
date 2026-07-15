@@ -1,5 +1,5 @@
 use bettertui_engine::input::{Event, EventResult, Key};
-use bettertui_engine::layout::{LayoutProps, Position};
+use bettertui_engine::taffy::{LayoutProps, Position};
 use bettertui_engine::tree::Style;
 
 use crate::{Widget, WidgetContext, WidgetId};

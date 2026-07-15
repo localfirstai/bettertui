@@ -84,7 +84,7 @@ fn engine_set_style() {
 
 #[test]
 fn engine_set_layout() {
-    use bettertui_engine::layout::types::LayoutProps;
+    use bettertui_engine::taffy::types::LayoutProps;
     let mut engine = Engine::new();
     let root = engine.arena().root();
 

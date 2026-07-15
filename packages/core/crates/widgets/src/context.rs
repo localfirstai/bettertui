@@ -1,6 +1,6 @@
 use bettertui_engine::input::FocusManager;
-use bettertui_engine::layout::LayoutProps;
 use bettertui_engine::scheduler::Scheduler;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::NodeArena;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::NodeKind;
@@ -128,7 +128,7 @@ impl<'a> WidgetContext<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bettertui_engine::layout::Sizing;
+    use bettertui_engine::taffy::Sizing;
     use bettertui_engine::tree::{Color, NamedColor};
 
     fn make_context() -> (NodeArena, FocusManager, Scheduler, Theme) {

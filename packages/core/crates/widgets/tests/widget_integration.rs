@@ -1,8 +1,8 @@
 //! Integration tests for the widget framework: lifecycle, events, reconciliation, and pipeline.
 
 use bettertui_engine::input::{Event, EventResult, FocusManager, Key, KeyEvent};
-use bettertui_engine::layout::LayoutProps;
 use bettertui_engine::scheduler::Scheduler;
+use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::{NodeArena, NodeKind, Style};
 
 use bettertui_widgets::{

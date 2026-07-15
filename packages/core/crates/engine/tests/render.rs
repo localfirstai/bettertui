@@ -2,13 +2,13 @@
 
 use bettertui_engine::dirty_diff::DirtyRegion;
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use bettertui_engine::layout::{LayoutEngine, PaintContext, Sizing, build_render_tree};
 use bettertui_engine::render::effects::ColorMatrixPass;
 use bettertui_engine::render::effects::INVERT_MATRIX;
 use bettertui_engine::render::{
     AnsiBackend, PassPriority, PassResult, RenderBackend, RenderObject, RenderPass,
     RenderPassContext, RenderPipeline, RenderTree, Renderer,
 };
+use bettertui_engine::taffy::{LayoutEngine, PaintContext, Sizing, build_render_tree};
 use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, RenderNode};
 
 // ═══════════════════════════════════════════════════════════════════════════════

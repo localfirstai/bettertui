@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 
 use bettertui_engine::input::{Event, EventResult, Key};
-use bettertui_engine::layout::{LayoutProps, Sizing};
+use bettertui_engine::taffy::{LayoutProps, Sizing};
 use bettertui_engine::text::display_width;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::Style;

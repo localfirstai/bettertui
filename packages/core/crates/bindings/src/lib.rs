@@ -4,13 +4,13 @@ use bettertui_engine::VERSION;
 use bettertui_engine::engine::Engine;
 use bettertui_engine::input::EventBus;
 use bettertui_engine::input::FocusManager;
-use bettertui_engine::layout::types::{
-    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
-    Sizing,
-};
 use bettertui_engine::render::RenderPass;
 use bettertui_engine::render::Renderer;
 use bettertui_engine::scheduler::Scheduler;
+use bettertui_engine::taffy::types::{
+    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
+    Sizing,
+};
 use bettertui_engine::text::TextEngine;
 use bettertui_engine::tree::{Color, NodeKind, Style};
 use napi_derive::napi;

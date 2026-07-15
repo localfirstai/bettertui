@@ -3,7 +3,7 @@
 
 use std::collections::VecDeque;
 
-use crate::layout::{FlexDirection, FlexWrap, LayoutProps};
+use crate::taffy::{FlexDirection, FlexWrap, LayoutProps};
 use crate::tree::{Color, NodeArena, NodeId, NodeKind, RenderNode, Style};
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -88,73 +88,73 @@ pub enum Command {
     /// Set justify content.
     SetJustifyContent {
         id: NodeId,
-        value: crate::layout::JustifyContent,
+        value: crate::taffy::JustifyContent,
     },
 
     /// Set align items.
     SetAlignItems {
         id: NodeId,
-        value: crate::layout::AlignItems,
+        value: crate::taffy::AlignItems,
     },
 
     /// Set align self.
     SetAlignSelf {
         id: NodeId,
-        value: crate::layout::AlignSelf,
+        value: crate::taffy::AlignSelf,
     },
 
     /// Set width.
     SetWidth {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set height.
     SetHeight {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set min width.
     SetMinWidth {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set min height.
     SetMinHeight {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set max width.
     SetMaxWidth {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set max height.
     SetMaxHeight {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set padding.
     SetPadding {
         id: NodeId,
-        value: crate::layout::RectValues,
+        value: crate::taffy::RectValues,
     },
 
     /// Set margin.
     SetMargin {
         id: NodeId,
-        value: crate::layout::RectValues,
+        value: crate::taffy::RectValues,
     },
 
     /// Set gap.
     SetGap {
         id: NodeId,
-        value: crate::layout::Gap,
+        value: crate::taffy::Gap,
     },
 
     /// Set flex grow.
@@ -166,19 +166,19 @@ pub enum Command {
     /// Set flex basis.
     SetFlexBasis {
         id: NodeId,
-        value: crate::layout::Sizing,
+        value: crate::taffy::Sizing,
     },
 
     /// Set position.
     SetPosition {
         id: NodeId,
-        value: crate::layout::Position,
+        value: crate::taffy::Position,
     },
 
     /// Set inset.
     SetInset {
         id: NodeId,
-        value: crate::layout::RectValues,
+        value: crate::taffy::RectValues,
     },
 
     // ─── Content Commands ─────────────────────────────────────────

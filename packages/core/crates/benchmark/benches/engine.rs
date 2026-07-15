@@ -12,9 +12,6 @@ use bettertui_engine::font::{FontMetrics, FontMetricsCache, FontProvider, measur
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::graphics::{DrawStyle, GraphicsContext, Rect};
 use bettertui_engine::input::{Event, FocusManager, Key, KeyEvent};
-use bettertui_engine::layout::{
-    LayoutEngine, LayoutProps, LayoutTreeSync, Sizing, build_render_tree,
-};
 use bettertui_engine::protocol::{Command, CommandProcessor};
 use bettertui_engine::pty::{PtyConfig, PtyReader, PtySize, PtyWriter};
 use bettertui_engine::render::effects::{
@@ -25,6 +22,9 @@ use bettertui_engine::render::{
 };
 use bettertui_engine::scheduler::{FrameBudget, Scheduler};
 use bettertui_engine::syntax::SyntaxHighlighter;
+use bettertui_engine::taffy::{
+    LayoutEngine, LayoutProps, LayoutTreeSync, Sizing, build_render_tree,
+};
 use bettertui_engine::text::{
     EditBuffer, SelectionRange, StyledText, TextAlign, TextEngine, ViewportConfig, layout_text,
 };
@@ -335,14 +335,14 @@ fn bench_render(c: &mut Criterion) {
         let mut arena = NodeArena::new();
         let ids = build_sample_tree(&mut arena, 2, 10);
         let _ = ids;
-        let mut layout = bettertui_engine::layout::LayoutTreeSync::new();
+        let mut layout = bettertui_engine::taffy::LayoutTreeSync::new();
         layout.sync_full(&arena);
         let _ = layout.compute(arena.root(), 80, 24);
         let mut tree = bettertui_engine::render::RenderTree::new();
-        bettertui_engine::layout::build_render_tree(&arena, layout.results(), &mut tree);
+        bettertui_engine::taffy::build_render_tree(&arena, layout.results(), &mut tree);
         b.iter(|| {
             let mut painter = bettertui_engine::render::Painter::new(80, 24);
-            let ctx = bettertui_engine::layout::PaintContext::new(80, 24);
+            let ctx = bettertui_engine::taffy::PaintContext::new(80, 24);
             painter.paint(&tree, &ctx);
             black_box(painter.diff().len())
         })

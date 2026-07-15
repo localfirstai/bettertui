@@ -181,7 +181,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                bettertui_engine::layout::LayoutProps::default(),
+                bettertui_engine::taffy::LayoutProps::default(),
                 bettertui_engine::tree::Style::default(),
             );
             WidgetId(id)
@@ -199,7 +199,7 @@ mod tests {
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
             let id = ctx.make_box(
-                bettertui_engine::layout::LayoutProps::default(),
+                bettertui_engine::taffy::LayoutProps::default(),
                 bettertui_engine::tree::Style::default(),
             );
             WidgetId(id)

@@ -1,7 +1,7 @@
 use crate::WidgetId;
 use crate::context::WidgetContext;
-use bettertui_engine::layout::{FlexDirection, LayoutProps};
 use bettertui_engine::syntax::global_highlighter;
+use bettertui_engine::taffy::{FlexDirection, LayoutProps};
 use bettertui_engine::tree::Color;
 use bettertui_engine::tree::NodeId;
 use bettertui_engine::tree::Style;

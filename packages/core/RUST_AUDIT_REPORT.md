@@ -74,7 +74,7 @@ Benchmarks compiled cleanly. The architectural decision to switch to `SmallVec` 
 ## 14. Files Modified
 - `packages/core/crates/engine/src/font/loader.rs`
 - `packages/core/crates/engine/src/font/registry.rs`
-- `packages/core/crates/engine/src/layout.rs`
+- `packages/core/crates/engine/src/taffy.rs`
 - `packages/core/crates/engine/src/render/render.rs`
 - `packages/core/crates/engine/src/text/styled.rs`
 - `packages/core/crates/engine/src/text/viewport.rs`
