@@ -47,6 +47,9 @@ Cargo.lock
 # Rust
 packages/core/target/
 
+# Sanpshot
+*.snap
+
 # Adhoc
 .plan
 logs/
