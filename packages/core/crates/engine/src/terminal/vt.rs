@@ -1,12 +1,12 @@
 //! VT100/VTxxx terminal emulation state machine.
 
-use bettertui_engine::ansi::{
+use crate::ansi::{
     BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType, ModeAction, ModeType,
     OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
 };
-use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use bettertui_engine::input::{KeyAction, KeyModifiers, KeyboardInput};
-use bettertui_engine::tree::{Color, NamedColor};
+use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
+use crate::input::{KeyAction, KeyModifiers, KeyboardInput};
+use crate::tree::{Color, NamedColor};
 
 // =============================================================================
 // Cursor
@@ -313,7 +313,7 @@ impl PrivateMode {
 pub struct ScreenBuffer {
     buffer: FrameBuffer,
     tab_stops: Vec<u16>,
-    scrollback: crate::scrollback::ScrollbackBuffer,
+    scrollback: crate::terminal::scrollback::ScrollbackBuffer,
     default_bg: Color,
 }
 
@@ -327,7 +327,7 @@ impl ScreenBuffer {
         Self {
             buffer: FrameBuffer::new(width, height),
             tab_stops,
-            scrollback: crate::scrollback::ScrollbackBuffer::with_width(width),
+            scrollback: crate::terminal::scrollback::ScrollbackBuffer::with_width(width),
             default_bg: Color::Default,
         }
     }
@@ -376,7 +376,7 @@ impl ScreenBuffer {
         self.tab_stops.clear();
     }
 
-    pub fn scrollback(&self) -> &crate::scrollback::ScrollbackBuffer {
+    pub fn scrollback(&self) -> &crate::terminal::scrollback::ScrollbackBuffer {
         &self.scrollback
     }
 
@@ -1541,7 +1541,7 @@ mod tests {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 mod proptests {
     use super::*;
-    use bettertui_engine::ansi::{AnsiParser, CursorMovement, EraseMode, KittyEventType, SgrAttribute};
+    use crate::ansi::{AnsiParser, CursorMovement, EraseMode, KittyEventType, SgrAttribute};
     use proptest::prelude::*;
 
     // ── Strategies ──

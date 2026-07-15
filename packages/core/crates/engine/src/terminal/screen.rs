@@ -1,8 +1,8 @@
 //! Screen state: cursor tracking, alternate screen mode, and scroll regions.
 
-use crate::process::TerminalViewport;
-use crate::scrollback::ScrollbackBuffer;
-use bettertui_engine::framebuffer::Cell;
+use super::process::TerminalViewport;
+use super::scrollback::ScrollbackBuffer;
+use crate::framebuffer::Cell;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AlternateScreen {

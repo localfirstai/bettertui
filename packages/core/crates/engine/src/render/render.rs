@@ -18,7 +18,7 @@ use crate::tree::{Color, NamedColor, NodeId, Overflow, Rect, ResolvedStyle};
 // === backend.rs ===
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub trait RenderBackend {
+pub trait RenderBackend: Send {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]);
     fn finish(&self) -> &[u8];
     fn reset(&mut self);

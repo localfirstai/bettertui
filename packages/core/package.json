@@ -35,16 +35,6 @@
   "dependencies": {
     "@bettertui/shared": "workspace:*"
   },
-  "optionalDependencies": {
-    "@bettertui/core-darwin-x64": "0.0.0",
-    "@bettertui/core-darwin-arm64": "0.0.0",
-    "@bettertui/core-linux-x64-gnu": "0.0.0",
-    "@bettertui/core-linux-arm64-gnu": "0.0.0",
-    "@bettertui/core-linux-x64-musl": "0.0.0",
-    "@bettertui/core-linux-arm64-musl": "0.0.0",
-    "@bettertui/core-win32-x64": "0.0.0",
-    "@bettertui/core-win32-arm64": "0.0.0"
-  },
   "devDependencies": {
     "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",

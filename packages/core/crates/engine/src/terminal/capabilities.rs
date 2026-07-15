@@ -3,7 +3,7 @@
 use std::env;
 use std::sync::OnceLock;
 
-use crate::query::QueryResult;
+use super::query::QueryResult;
 
 static GLOBAL_CAPABILITIES: OnceLock<CapabilityDetector> = OnceLock::new();
 

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-use bettertui_engine::pty::{PtyConfig, PtyError, PtyProcess, PtySize};
+use crate::pty::{PtyConfig, PtyError, PtyProcess, PtySize};
 
 // === config.rs ===
 

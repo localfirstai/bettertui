@@ -1,7 +1,7 @@
 //! Terminal query/response protocol implementation.
 //! Generates DCS/CSI query sequences and parses terminal responses.
 
-use crate::vt::VtMachine;
+use super::vt::VtMachine;
 
 /// Query types that can be sent to the terminal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

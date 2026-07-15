@@ -4,8 +4,8 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 use bettertui_engine::ansi::{CsiCommand, CursorMovement, EraseMode, ForegroundColor, ParserEvent, SgrAttribute};
 use bettertui_engine::framebuffer::Cell;
-use bettertui_terminal::ScrollbackBuffer;
-use bettertui_terminal::{Cursor, CursorState, ScreenState, Terminal, TerminalMode, VtMachine};
+use bettertui_engine::terminal::ScrollbackBuffer;
+use bettertui_engine::terminal::{Cursor, CursorState, ScreenState, Terminal, TerminalMode, VtMachine};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -190,7 +190,7 @@ fn bench_cursor(c: &mut Criterion) {
             cs.set_position(15, 30);
             cs.hide();
             cs.show();
-            cs.set_style(bettertui_terminal::screen::CursorStyle::Bar);
+            cs.set_style(bettertui_engine::terminal::screen::CursorStyle::Bar);
             black_box(cs.visible());
         });
     });
@@ -362,7 +362,7 @@ fn bench_terminal_mode(c: &mut Criterion) {
 // ─── TerminalState Benchmarks ─────────────────────────────────────────────────
 
 fn bench_terminal_state(c: &mut Criterion) {
-    use bettertui_terminal::{ProcessStatus, TerminalState};
+    use bettertui_engine::terminal::{ProcessStatus, TerminalState};
 
     let mut group = c.benchmark_group("terminal/state");
 
