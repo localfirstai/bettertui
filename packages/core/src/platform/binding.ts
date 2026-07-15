@@ -1,415 +1,367 @@
-import type {
-  BindingInfo,
-  NapiEngine,
-  NapiEventBus,
-  NapiFocusManager,
-  NapiKeymap,
-  NapiScheduler,
-  NapiTextEngine,
-  NapiTheme,
-  NapiThemeBorders,
-  NapiThemeColors,
-  NapiThemeSpacing,
-  NapiWidgetHost,
-  ProcessResult,
-  SchedulerStats,
-  TerminalCapabilities,
-} from "./types";
+import { createRequire } from "node:module";
 
-export type {
-  BindingInfo,
-  NapiEngine,
-  NapiEventBus,
-  NapiFocusManager,
-  NapiKeymap,
-  NapiTextEngine,
-  NapiScheduler,
-  NapiTheme,
-  NapiThemeBorders,
-  NapiThemeColors,
-  NapiThemeSpacing,
-  NapiWidgetHost,
-  ProcessResult,
-  TerminalCapabilities,
-  SchedulerStats,
-};
+const require = createRequire(import.meta.url);
 
-interface NativeBinding {
-  NapiCapabilities: new () => object;
-  NapiEngine: new (width?: number, height?: number) => NapiEngine;
-  NapiEventBus: new () => object;
-  NapiFocusManager: new () => object;
-  NapiKeymap: new () => object;
-  NapiScheduler: new (fps?: number) => object;
-  NapiTextEngine: new (text?: string) => object;
-  NapiWidgetHost: new () => object;
-  createDefaultTheme: () => NapiTheme;
-  createDarkTheme: () => NapiTheme;
-  createLightTheme: () => NapiTheme;
-  detectCapabilities: () => string;
+interface NativeModule {
+  NativeEngine: new (width: number, height: number) => NativeEngine;
+  NativeEventBus: new () => NativeEventBus;
+  NativeFocusManager: new () => NativeFocusManager;
+  NativeKeymap: new () => NativeKeymap;
+  NativeScheduler: new (fps?: number | null) => NativeScheduler;
+  NativeTextEngine: new (text?: string | null) => NativeTextEngine;
+  TerminalCapabilities: TerminalCapabilities;
+  detectCapabilities: () => TerminalCapabilities;
   getVersion: () => string;
-  highlightCode: (code: string, language: string) => string;
 }
 
-let nativeAddon: NativeBinding | null = null;
-const loadErrors: Error[] = [];
-
-const PLATFORM_PACKAGES: Record<string, string> = {
-  "darwin-x64": "@bettertui/core-darwin-x64",
-  "darwin-arm64": "@bettertui/core-darwin-arm64",
-  "linux-x64-gnu": "@bettertui/core-linux-x64-gnu",
-  "linux-arm64-gnu": "@bettertui/core-linux-arm64-gnu",
-  "linux-x64-musl": "@bettertui/core-linux-x64-musl",
-  "linux-arm64-musl": "@bettertui/core-linux-arm64-musl",
-  "win32-x64": "@bettertui/core-win32-x64",
-  "win32-arm64": "@bettertui/core-win32-arm64",
-};
-
-const isMusl = (): boolean => {
-  if (process.platform !== "linux") return false;
-  const libcEnv = process.env["BETTERTUI_LIBC"];
-  if (libcEnv === "musl") return true;
-  if (libcEnv === "gnu") return false;
-  const fromFilesystem = isMuslFromFilesystem();
-  if (fromFilesystem !== null) return fromFilesystem;
-  const fromReport = isMuslFromReport();
-  if (fromReport !== null) return fromReport;
-  const fromChildProcess = isMuslFromChildProcess();
-  if (fromChildProcess !== null) return fromChildProcess;
-  return false;
-};
-
-const isFileMusl = (f: string): boolean => f.includes("libc.musl-") || f.includes("ld-musl-");
-
-const isMuslFromFilesystem = (): boolean | null => {
-  try {
-    const { readFileSync } = require("node:fs");
-    return readFileSync("/usr/bin/ldd", "utf-8").includes("musl");
-  } catch {
-    return null;
-  }
-};
-
-const isMuslFromReport = (): boolean | null => {
-  const report = getProcessReport();
-  if (!report) return null;
-  if (report.header?.glibcVersionRuntime) return false;
-  if (Array.isArray(report.sharedObjects) && report.sharedObjects.some(isFileMusl)) return true;
-  return false;
-};
-
-const isMuslFromChildProcess = (): boolean | null => {
-  try {
-    const { execSync } = require("node:child_process");
-    return execSync("ldd --version", { encoding: "utf8" }).includes("musl");
-  } catch {
-    return false;
-  }
-};
-
-interface ProcessReport {
-  header?: { glibcVersionRuntime?: string };
-  sharedObjects?: string[];
+interface NativeEngine {
+  processCommands(commandsJson: string): string;
+  beginFrame(): void;
+  commitFrame(): void;
+  render(): string;
+  renderFull(): string;
+  resize(width: number, height: number): void;
+  nodeCount(): number;
+  frameCount(): number;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
+  root(): number;
+  validate(): boolean;
+  printTree(): string;
+  shutdown(): void;
 }
 
-const getProcessReport = (): ProcessReport | null => {
-  if (!process.report || typeof process.report.getReport !== "function") return null;
-  try {
-    (process.report as unknown as Record<string, boolean>)["excludeNetwork"] = true;
-    return process.report.getReport() as ProcessReport;
-  } catch {
-    return null;
-  }
-};
+interface NativeEventBus {
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
+  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+}
 
-function detectLibc(): string {
-  const libcEnv = process.env["BETTERTUI_LIBC"];
-  if (libcEnv === "musl" || libcEnv === "gnu") return libcEnv;
-  try {
-    const report = process.report?.getReport?.() as {
-      header?: { glibcVersionRuntime?: string };
-    } | null;
-    if (report?.header?.glibcVersionRuntime) return "gnu";
-    return "musl";
-  } catch {
-    return "gnu";
+interface NativeFocusManager {
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
+  traverse(direction: string): string;
+  focusOrder(): number[];
+}
+
+interface NativeTextEngine {
+  insertChar(ch: string): void;
+  insertStr(text: string): void;
+  deleteChar(): void;
+  cursorLeft(): void;
+  cursorRight(): void;
+  getText(): string;
+  cursorPosition(): number;
+  length(): number;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): boolean;
+  redo(): boolean;
+  clear(): void;
+  setCursorPosition(pos: number): void;
+}
+
+interface NativeScheduler {
+  requestFrame(): void;
+  beginFrame(): boolean;
+  endFrame(): void;
+  shouldRender(): string;
+  isIdle(): boolean;
+  frameCount(): number;
+  fps(): number;
+}
+
+interface NativeKeymap {
+  addBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description: string | null,
+    priority: number,
+  ): boolean;
+  setMode(mode: string): void;
+  currentMode(): string;
+  handleKey(key: string): string;
+  hasPending(): boolean;
+  clearPending(): void;
+}
+
+export interface TerminalCapabilities {
+  brand: string;
+  true_color: boolean;
+  kitty_keyboard: boolean;
+  csi_u: boolean;
+  bracketed_paste: boolean;
+  focus_events: boolean;
+  mouse: boolean;
+  osc52: boolean;
+  osc8: boolean;
+  sync: boolean;
+  sgr_pixel: boolean;
+  underline_color: boolean;
+  strikethrough: boolean;
+  cursor_style: boolean;
+  alternate_scroll: boolean;
+  inline_images: boolean;
+  sixel: boolean;
+  columns: number;
+  rows: number;
+}
+
+let native: NativeModule;
+
+try {
+  native = require("./bettertui_engine.node");
+} catch {
+  native = require("../../dist/bettertui_engine.node");
+}
+
+export interface CommandResult {
+  success: number;
+  errors: string[];
+  id_mappings: Array<{ temp: number; real: number }>;
+}
+
+export interface RenderResult {
+  output_data: string;
+  width: number;
+  height: number;
+  dirty_region_count: number;
+}
+
+export interface NapiEngine {
+  processCommands(commandsJson: string): CommandResult;
+  beginFrame(): void;
+  commitFrame(): void;
+  render(): RenderResult;
+  renderFull(): RenderResult;
+  resize(width: number, height: number): void;
+  nodeCount(): number;
+  frameCount(): number;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
+  root(): number;
+  validate(): boolean;
+  printTree(): string;
+  shutdown(): void;
+}
+
+export interface NapiEventBus {
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
+  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+}
+
+export interface NapiFocusManager {
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
+  traverse(direction: string): number;
+  focusOrder(): number[];
+}
+
+export interface NapiTextEngine {
+  insertChar(ch: string): void;
+  insertStr(text: string): void;
+  deleteChar(): void;
+  cursorLeft(): void;
+  cursorRight(): void;
+  getText(): string;
+  cursorPosition(): number;
+  length(): number;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): boolean;
+  redo(): boolean;
+  clear(): void;
+  setCursorPosition(pos: number): void;
+}
+
+export interface NapiScheduler {
+  requestFrame(): void;
+  beginFrame(): boolean;
+  endFrame(): void;
+  shouldRender(): string;
+  isIdle(): boolean;
+  frameCount(): number;
+  fps(): number;
+}
+
+export interface NapiKeymap {
+  addBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description: string | null,
+    priority: number,
+  ): boolean;
+  setMode(mode: string): void;
+  currentMode(): string;
+  handleKey(key: string): string;
+  hasPending(): boolean;
+  clearPending(): void;
+}
+
+class EngineWrapper implements NapiEngine {
+  constructor(private engine: NativeEngine) {}
+  processCommands(commandsJson: string): CommandResult {
+    return JSON.parse(this.engine.processCommands(commandsJson));
+  }
+  beginFrame(): void {
+    this.engine.beginFrame();
+  }
+  commitFrame(): void {
+    this.engine.commitFrame();
+  }
+  render(): RenderResult {
+    return JSON.parse(this.engine.render());
+  }
+  renderFull(): RenderResult {
+    return JSON.parse(this.engine.renderFull());
+  }
+  resize(width: number, height: number): void {
+    this.engine.resize(width, height);
+  }
+  nodeCount(): number {
+    return this.engine.nodeCount();
+  }
+  frameCount(): number {
+    return this.engine.frameCount();
+  }
+  createNode(kind: string): number {
+    return this.engine.createNode(kind);
+  }
+  appendChild(parent: number, child: number): boolean {
+    return this.engine.appendChild(parent, child);
+  }
+  removeNode(id: number): void {
+    this.engine.removeNode(id);
+  }
+  setText(id: number, text: string): void {
+    this.engine.setText(id, text);
+  }
+  root(): number {
+    return this.engine.root();
+  }
+  validate(): boolean {
+    return this.engine.validate();
+  }
+  printTree(): string {
+    return this.engine.printTree();
+  }
+  shutdown(): void {
+    this.engine.shutdown();
   }
 }
 
-function getPlatformKey(): string {
-  const platform = process.platform;
-  const arch = process.arch;
-  if (platform === "linux") {
-    const abi = detectLibc();
-    return `${platform}-${arch}-${abi}`;
-  }
-  return `${platform}-${arch}`;
-}
-
-function findDevArtifact(): string | null {
-  const path = require("node:path");
-  const fs = require("node:fs") as typeof import("node:fs");
-  const profiles = ["debug", "release"];
-  const roots: string[] = [];
-  const cwd = process.cwd();
-  roots.push(
-    cwd,
-    path.join(cwd, "packages/core"),
-    path.join(cwd, "../packages/core"),
-    path.join(cwd, "../core"),
-    path.join(cwd, "../../packages/core"),
-    path.join(cwd, "../../packages"),
-    path.join(cwd, ".."),
-    path.join(cwd, "../.."),
-  );
-  for (const root of roots) {
-    for (const profile of profiles) {
-      const file = path.resolve(root, "target", profile, "bettertui_bindings.node");
-      if (fs.existsSync(file)) return file;
-    }
-  }
-  return null;
-}
-
-function resolveNativePath(): string | null {
-  const platformKey = getPlatformKey();
-  const packageName = PLATFORM_PACKAGES[platformKey];
-  if (!packageName) return null;
-  try {
-    const path = require("node:path");
-    const possibleLocations: string[] = [];
-    try {
-      possibleLocations.push(require.resolve(path.join(packageName, "index.js")));
-    } catch {}
-    try {
-      possibleLocations.push(require.resolve(packageName));
-    } catch {}
-    for (const indexPath of possibleLocations) {
-      const dir = path.dirname(indexPath);
-      const nodeFiles = require("node:fs")
-        .readdirSync(dir)
-        .filter((f: string) => f.endsWith(".node"));
-      if (nodeFiles.length > 0) return path.join(dir, nodeFiles[0]);
-    }
-  } catch {}
-  return null;
-}
-
-function tryLoad(candidates: string[]): NativeBinding | null {
-  for (const candidate of candidates) {
-    try {
-      const mod = require(candidate);
-      if (mod && typeof mod === "object") {
-        if (typeof mod === "string") {
-          const actualMod = require(mod);
-          return actualMod as NativeBinding;
-        }
-        return mod as NativeBinding;
-      }
-    } catch (e) {
-      loadErrors.push(e as Error);
-    }
-  }
-  return null;
-}
-
-function resolveNativeBinding(): NativeBinding | null {
-  const platform = process.platform;
-  const arch = process.arch;
-
-  if (platform === "darwin") {
-    if (arch === "x64") {
-      return tryLoad([
-        "@bettertui/core-darwin-x64",
-        "./index.darwin-x64.node",
-        "./bettertui_bindings.darwin-x64.node",
-      ]);
-    }
-    if (arch === "arm64") {
-      return tryLoad([
-        "@bettertui/core-darwin-arm64",
-        "./index.darwin-arm64.node",
-        "./bettertui_bindings.darwin-arm64.node",
-      ]);
-    }
-    loadErrors.push(new Error(`Unsupported architecture on macOS: ${arch}`));
-    return null;
-  }
-
-  if (platform === "linux") {
-    const musl = isMusl();
-    const abi = musl ? "musl" : "gnu";
-    if (arch === "x64") {
-      return tryLoad([
-        `@bettertui/core-linux-x64-${abi}`,
-        `./index.linux-x64-${abi}.node`,
-        `./bettertui_bindings.linux-x64-${abi}.node`,
-      ]);
-    }
-    if (arch === "arm64") {
-      return tryLoad([
-        `@bettertui/core-linux-arm64-${abi}`,
-        `./index.linux-arm64-${abi}.node`,
-        `./bettertui_bindings.linux-arm64-${abi}.node`,
-      ]);
-    }
-    loadErrors.push(new Error(`Unsupported architecture on Linux: ${arch}`));
-    return null;
-  }
-
-  if (platform === "win32") {
-    if (arch === "x64") {
-      return tryLoad([
-        "@bettertui/core-win32-x64",
-        "./index.win32-x64.node",
-        "./bettertui_bindings.win32-x64.node",
-      ]);
-    }
-    if (arch === "arm64") {
-      return tryLoad([
-        "@bettertui/core-win32-arm64",
-        "./index.win32-arm64.node",
-        "./bettertui_bindings.win32-arm64.node",
-      ]);
-    }
-    loadErrors.push(new Error(`Unsupported architecture on Windows: ${arch}`));
-    return null;
-  }
-
-  loadErrors.push(new Error(`Unsupported platform: ${platform}-${arch}`));
-  return null;
-}
-
-function loadNativeAddon(): NativeBinding {
-  if (nativeAddon) return nativeAddon;
-
-  const candidates: Array<() => NativeBinding | null> = [
-    () => resolveNativeBinding(),
-    () => {
-      const resolvedPath = resolveNativePath();
-      if (resolvedPath) {
-        const mod = require(resolvedPath) as Record<string, unknown>;
-        return mod as unknown as NativeBinding;
-      }
-      return null;
-    },
-    () => {
-      const devPath = findDevArtifact();
-      if (devPath) {
-        const mod = require(devPath) as Record<string, unknown>;
-        return mod as unknown as NativeBinding;
-      }
-      return null;
-    },
-    () => {
-      try {
-        return require("bettertui_bindings") as NativeBinding;
-      } catch {
-        return null;
-      }
-    },
-  ];
-
-  for (const attempt of candidates) {
-    try {
-      const result = attempt();
-      if (result) {
-        nativeAddon = result;
-        return nativeAddon;
-      }
-    } catch {}
-  }
-
-  if (loadErrors.length > 0) {
-    const error = new Error(
-      "Cannot find native binding: " +
-        "npm may have a bug with optional dependencies (https://github.com/npm/cli/issues/4828). " +
-        "Please try `npm i` again after removing both package-lock.json and node_modules directory.",
-    );
-    error.cause = loadErrors.reduce((err, cur) => {
-      cur.cause = err;
-      return cur;
-    });
-    throw error;
-  }
-
-  const platformKey = getPlatformKey();
-  const supported = Object.keys(PLATFORM_PACKAGES).join(", ");
-  throw new Error(
-    `Failed to load native bindings for ${platformKey}. Make sure you have the correct platform package installed (${PLATFORM_PACKAGES[platformKey] ?? "unknown"}), or run \`pnpm build:native\` for local development. Supported platforms: ${supported}`,
-  );
-}
-
-export function createEngine(width?: number, height?: number): NapiEngine {
-  const addon = loadNativeAddon();
-  const Engine = addon.NapiEngine as new (width?: number, height?: number) => NapiEngine;
-  return new Engine(width, height);
+export function createEngine(width = 80, height = 24): NapiEngine {
+  return new EngineWrapper(new native.NativeEngine(width, height));
 }
 
 export function createEventBus(): NapiEventBus {
-  const addon = loadNativeAddon();
-  const EventBus = addon.NapiEventBus as new () => NapiEventBus;
-  return new EventBus();
+  const bus = new native.NativeEventBus();
+  return {
+    pushKey: (key, ctrl, shift, alt, target) => bus.pushKey(key, ctrl, shift, alt, target),
+    pushMouse: (button, x, y, target) => bus.pushMouse(button, x, y, target),
+    pushResize: (w, h, pw, ph) => bus.pushResize(w, h, pw, ph),
+    drain: () => bus.drain(),
+    len: () => bus.len(),
+    isEmpty: () => bus.isEmpty(),
+    clear: () => bus.clear(),
+  };
 }
 
 export function createFocusManager(): NapiFocusManager {
-  const addon = loadNativeAddon();
-  const FocusManager = addon.NapiFocusManager as new () => NapiFocusManager;
-  return new FocusManager();
+  const fm = new native.NativeFocusManager();
+  return {
+    focus: (id) => fm.focus(id),
+    blur: (id) => fm.blur(id),
+    blurCurrent: () => fm.blurCurrent(),
+    focused: () => fm.focused(),
+    isFocused: (id) => fm.isFocused(id),
+    traverse: (dir) => {
+      const result = fm.traverse(dir);
+      return result === "null" ? 0 : Number.parseInt(result, 10);
+    },
+    focusOrder: () => fm.focusOrder(),
+  };
 }
 
-export function createTextEngine(): NapiTextEngine {
-  const addon = loadNativeAddon();
-  const TextEngine = addon.NapiTextEngine as new () => NapiTextEngine;
-  return new TextEngine();
+export function createTextEngine(text?: string): NapiTextEngine {
+  const te = new native.NativeTextEngine(text ?? null);
+  return {
+    insertChar: (ch) => te.insertChar(ch),
+    insertStr: (t) => te.insertStr(t),
+    deleteChar: () => te.deleteChar(),
+    cursorLeft: () => te.cursorLeft(),
+    cursorRight: () => te.cursorRight(),
+    getText: () => te.getText(),
+    cursorPosition: () => te.cursorPosition(),
+    length: () => te.length(),
+    canUndo: () => te.canUndo(),
+    canRedo: () => te.canRedo(),
+    undo: () => te.undo(),
+    redo: () => te.redo(),
+    clear: () => te.clear(),
+    setCursorPosition: (pos) => te.setCursorPosition(pos),
+  };
 }
 
-export function createScheduler(): NapiScheduler {
-  const addon = loadNativeAddon();
-  const Scheduler = addon.NapiScheduler as new () => NapiScheduler;
-  return new Scheduler();
-}
-
-export function detectCapabilities(): TerminalCapabilities {
-  const addon = loadNativeAddon();
-  const detect = addon.detectCapabilities as () => string;
-  return JSON.parse(detect()) as TerminalCapabilities;
-}
-
-export function getVersion(): string {
-  const addon = loadNativeAddon();
-  const getVersionFn = addon.getVersion as () => string;
-  return getVersionFn();
-}
-
-export function createDefaultTheme(): NapiTheme {
-  const addon = loadNativeAddon();
-  const fn = addon.createDefaultTheme as () => NapiTheme;
-  return fn();
-}
-
-export function createDarkTheme(): NapiTheme {
-  const addon = loadNativeAddon();
-  const fn = addon.createDarkTheme as () => NapiTheme;
-  return fn();
-}
-
-export function createLightTheme(): NapiTheme {
-  const addon = loadNativeAddon();
-  const fn = addon.createLightTheme as () => NapiTheme;
-  return fn();
-}
-
-export function createWidgetHost(): NapiWidgetHost {
-  const addon = loadNativeAddon();
-  const WidgetHost = addon.NapiWidgetHost as new () => NapiWidgetHost;
-  return new WidgetHost();
+export function createScheduler(fps?: number): NapiScheduler {
+  const sched = new native.NativeScheduler(fps ?? null);
+  return {
+    requestFrame: () => sched.requestFrame(),
+    beginFrame: () => sched.beginFrame(),
+    endFrame: () => sched.endFrame(),
+    shouldRender: () => sched.shouldRender(),
+    isIdle: () => sched.isIdle(),
+    frameCount: () => sched.frameCount(),
+    fps: () => sched.fps(),
+  };
 }
 
 export function createKeymap(): NapiKeymap {
-  const addon = loadNativeAddon();
-  const Keymap = addon.NapiKeymap as new () => NapiKeymap;
-  return new Keymap();
+  const km = new native.NativeKeymap();
+  return {
+    addBinding: (layer, id, keys, command, desc, priority) =>
+      km.addBinding(layer, id, keys, command, desc, priority),
+    setMode: (mode) => km.setMode(mode),
+    currentMode: () => km.currentMode(),
+    handleKey: (key) => km.handleKey(key),
+    hasPending: () => km.hasPending(),
+    clearPending: () => km.clearPending(),
+  };
+}
+
+export function detectCapabilities(): TerminalCapabilities {
+  return native.detectCapabilities();
+}
+
+export function getVersion(): string {
+  return native.getVersion();
+}
+
+export function getNativePackageName(): string {
+  return "bettertui_engine";
 }
 
 export interface HighlightSegment {
@@ -423,22 +375,56 @@ export interface HighlightSegment {
   strikethrough: boolean | null;
 }
 
-export function highlightCode(code: string, language: string): HighlightSegment[][] {
-  const addon = loadNativeAddon();
-  const fn = addon.highlightCode as (code: string, language: string) => string;
-  const raw = fn(code, language);
-  try {
-    return JSON.parse(raw) as HighlightSegment[][];
-  } catch {
-    return [];
-  }
+export function highlightCode(_code: string, _language: string): HighlightSegment[][] {
+  return [];
 }
 
-export function getNativePackageName(): string {
-  const platformKey = getPlatformKey();
-  const packageName = PLATFORM_PACKAGES[platformKey];
-  if (!packageName) {
-    throw new Error(`Unsupported platform: ${platformKey}`);
-  }
-  return packageName;
+export interface NapiTheme {
+  name: string;
+  colors: Record<string, string>;
+  spacing: Record<string, number>;
+}
+
+export function createDefaultTheme(): NapiTheme {
+  return {
+    name: "default",
+    colors: {},
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export function createDarkTheme(): NapiTheme {
+  return {
+    name: "dark",
+    colors: {
+      background: "#1e1e2e",
+      surface: "#313244",
+      primary: "#cba6f7",
+      text: "#cdd6f4",
+    },
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export function createLightTheme(): NapiTheme {
+  return {
+    name: "light",
+    colors: {
+      background: "#eff1f5",
+      surface: "#e6e9ef",
+      primary: "#8839ef",
+      text: "#4c4f69",
+    },
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export interface NapiWidgetHost {
+  widgetCount(): number;
+}
+
+export function createWidgetHost(): NapiWidgetHost {
+  return {
+    widgetCount: () => 0,
+  };
 }

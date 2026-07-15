@@ -46,6 +46,8 @@ Cargo.lock
 
 # Rust
 packages/core/target/
+packages/core/crates/engine/*.node
+packages/core/crates/engine/index.d.ts
 
 # Sanpshot
 *.snap

@@ -3,6 +3,8 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
+    napi_build::setup();
+
     println!("cargo::rerun-if-changed=fonts/glyphnames.json");
 
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -69,7 +71,6 @@ fn main() {
 
     output.push_str("];\n");
 
-    // Also generate a sorted list of codepoints for binary search
     output.push_str("\n#[allow(dead_code)]\n");
     output.push_str("pub(crate) static BUILTIN_CODEPOINTS: &[u32] = &[\n");
     for (cp, _, _) in &icons {

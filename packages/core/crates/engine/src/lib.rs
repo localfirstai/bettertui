@@ -21,4 +21,8 @@ pub mod taffy;
 pub mod terminal;
 pub mod text;
 pub mod theme;
+
+#[cfg(feature = "napi")]
+pub mod napi;
+
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

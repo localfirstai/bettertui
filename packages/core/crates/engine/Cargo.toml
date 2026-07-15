@@ -11,6 +11,10 @@ name = "bettertui_engine"
 path = "src/lib.rs"
 crate-type = ["cdylib", "lib"]
 
+[features]
+default = []
+napi = ["dep:napi", "dep:napi-derive"]
+
 [[bin]]
 name = "layout_e2e"
 path = "src/bin/layout_e2e.rs"
@@ -44,8 +48,13 @@ tree-sitter-html = "0.23"
 tree-sitter-css = "0.25"
 tree-sitter-bash = "0.25"
 
+# napi-rs for Node.js bindings
+napi = { version = "3", optional = true }
+napi-derive = { version = "3", optional = true }
+
 [build-dependencies]
 serde_json = { workspace = true }
+napi-build = "2"
 
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }

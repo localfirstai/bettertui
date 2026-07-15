@@ -14,11 +14,11 @@
       "types": "./dist/index.d.mts"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "bettertui_engine.node"],
   "scripts": {
-    "build": "tsdown",
-    "build:native": "node scripts/build-native.ts",
-    "build:native:all": "node scripts/build-native.ts --all",
+    "build": "tsdown && pnpm run build:native",
+    "build:native": "napi build --manifest-path crates/engine/Cargo.toml --features napi --release && cp crates/engine/bettertui_engine.node crates/engine/index.d.ts ./dist/",
+    "build:native:debug": "napi build --manifest-path crates/engine/Cargo.toml --features napi && cp crates/engine/bettertui_engine.node crates/engine/index.d.ts ./dist/",
     "dev": "tsdown --watch",
     "lint": "biome check src/",
     "format": "biome format --write src/",
@@ -36,9 +36,17 @@
     "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
+    "@napi-rs/cli": "^3.0.0",
     "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "napi": {
+    "name": "bettertui_engine",
+    "triples": {
+      "defaults": true,
+      "additional": []
+    }
   }
 }
