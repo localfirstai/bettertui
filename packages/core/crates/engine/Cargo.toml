@@ -27,7 +27,7 @@ slotmap.workspace = true
 smallvec.workspace = true
 bitflags.workspace = true
 portable-pty.workspace = true
-serde_json.workspace = true
+cfonts = { version = "1.3", default-features = false }
 
 # Tree-sitter for syntax highlighting
 tree-sitter = "0.25"

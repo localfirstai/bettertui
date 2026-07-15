@@ -1,171 +1,81 @@
-use std::collections::HashMap;
+use crate::framebuffer::{Cell, FrameBuffer};
+use crate::tree::Color;
 
 pub type AsciiFontName = &'static str;
 
-pub const FONT_NAMES: &[AsciiFontName] = &["tiny", "block", "shade", "slick", "huge", "grid", "pallet"];
+pub const FONT_NAMES: &[AsciiFontName] = &[
+    "tiny", "block", "shade", "slick", "huge", "grid", "pallet",
+    "console", "simple", "simple3d", "chrome", "simpleblock", "3d",
+];
 
-#[derive(Debug, Clone)]
-struct FontSegment {
-    text: String,
-    color_index: usize,
-}
-
-#[derive(Debug, Clone)]
-struct ParsedCharDef {
-    lines: Vec<Vec<FontSegment>>,
-}
-
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-struct ParsedFont {
-    name: String,
-    lines: usize,
-    letterspace_size: usize,
-    letterspace: Vec<String>,
-    colors: usize,
-    chars: HashMap<String, ParsedCharDef>,
-}
-
-fn parse_color_tags(text: &str) -> Vec<FontSegment> {
-    let mut segments = Vec::new();
-    let mut pos = 0;
-
-    while pos < text.len() {
-        if text[pos..].starts_with("<c") {
-            let after_open = &text[pos + 2..];
-            if let Some(end_bracket) = after_open.find('>') {
-                let tag_content = &after_open[..end_bracket];
-                if let Ok(idx) = tag_content.parse::<usize>() {
-                    let after_tag = &after_open[end_bracket + 1..];
-                    let close_tag = format!("</c{}>", idx);
-                    if let Some(close_pos) = after_tag.find(&close_tag) {
-                        let content = &after_tag[..close_pos];
-                        if !content.is_empty() {
-                            segments
-                                .push(FontSegment { text: content.to_string(), color_index: idx.saturating_sub(1) });
-                        }
-                        pos = pos + 2 + end_bracket + 1 + close_pos + close_tag.len();
-                        continue;
-                    }
-                }
-            }
-            pos += 2;
-            continue;
-        }
-
-        let remaining = &text[pos..];
-        let next_tag = remaining.find("<c");
-        let end = if let Some(tag_start) = next_tag { pos + tag_start } else { text.len() };
-
-        if end > pos {
-            segments.push(FontSegment { text: text[pos..end].to_string(), color_index: 0 });
-        }
-        pos = end;
-    }
-
-    segments
-}
-
-fn parse_font_json(json_str: &str) -> ParsedFont {
-    let value: serde_json::Value = serde_json::from_str(json_str).unwrap();
-    let obj = value.as_object().unwrap();
-
-    let name = obj["name"].as_str().unwrap().to_string();
-    let lines = obj["lines"].as_u64().unwrap() as usize;
-    let letterspace_size = obj["letterspace_size"].as_u64().unwrap_or(0) as usize;
-    let colors = obj.get("colors").and_then(|c| c.as_u64()).unwrap_or(1) as usize;
-
-    let letterspace: Vec<String> = obj["letterspace"]
-        .as_array()
-        .map(|arr| arr.iter().map(|v| v.as_str().unwrap_or(" ").to_string()).collect())
-        .unwrap_or_else(|| vec![" ".repeat(lines); lines]);
-
-    let chars_obj = obj["chars"].as_object().unwrap();
-    let mut chars = HashMap::new();
-
-    for (ch, lines_arr) in chars_obj {
-        let raw_lines: Vec<Vec<FontSegment>> =
-            lines_arr.as_array().unwrap().iter().map(|line| parse_color_tags(line.as_str().unwrap_or(""))).collect();
-
-        chars.insert(ch.clone(), ParsedCharDef { lines: raw_lines });
-    }
-
-    ParsedFont { name, lines, letterspace_size, letterspace, colors, chars }
-}
-
-macro_rules! include_font {
-    ($name:expr) => {
-        include_str!(concat!("../../fonts/ascii/", $name, ".json"))
-    };
-}
-
-fn load_font(name: &str) -> Option<ParsedFont> {
-    let json = match name {
-        "tiny" => include_font!("tiny"),
-        "block" => include_font!("block"),
-        "shade" => include_font!("shade"),
-        "slick" => include_font!("slick"),
-        "huge" => include_font!("huge"),
-        "grid" => include_font!("grid"),
-        "pallet" => include_font!("pallet"),
+fn to_cfonts_font(name: &str) -> Option<cfonts::Fonts> {
+    Some(match name {
+        "tiny" => cfonts::Fonts::FontTiny,
+        "block" => cfonts::Fonts::FontBlock,
+        "shade" => cfonts::Fonts::FontShade,
+        "slick" => cfonts::Fonts::FontSlick,
+        "huge" => cfonts::Fonts::FontHuge,
+        "grid" => cfonts::Fonts::FontGrid,
+        "pallet" => cfonts::Fonts::FontPallet,
+        "console" => cfonts::Fonts::FontConsole,
+        "simple" => cfonts::Fonts::FontSimple,
+        "simple3d" => cfonts::Fonts::FontSimple3d,
+        "chrome" => cfonts::Fonts::FontChrome,
+        "simpleblock" => cfonts::Fonts::FontSimpleBlock,
+        "3d" => cfonts::Fonts::Font3d,
         _ => return None,
-    };
-    Some(parse_font_json(json))
+    })
 }
 
-fn get_char_width(char_def: &ParsedCharDef) -> usize {
-    char_def.lines.first().map(|segments| segments.iter().map(|s| s.text.len()).sum()).unwrap_or(0)
+fn cfonts_render(text: &str, font: &str) -> Option<cfonts::render::RenderedString> {
+    let cfont = to_cfonts_font(font)?;
+    let options = cfonts::Options {
+        text: text.to_string(),
+        font: cfont,
+        colors: vec![],
+        spaceless: true,
+        raw_mode: true,
+        ..Default::default()
+    };
+    Some(cfonts::render(options))
 }
 
 pub fn measure_text(text: &str, font_name: &str) -> Option<(usize, usize)> {
-    let font = load_font(font_name)?;
-    let mut current_x = 0;
-
-    for (i, ch) in text.chars().enumerate() {
-        let upper = ch.to_uppercase().to_string();
-        let char_def = font.chars.get(&upper).or_else(|| font.chars.get(" "));
-
-        if let Some(def) = char_def {
-            current_x += get_char_width(def);
-        } else {
-            current_x += 1;
-        }
-
-        if i < text.len() - 1 {
-            current_x += font.letterspace_size;
-        }
+    let result = cfonts_render(text, font_name)?;
+    let lines = result.vec.len();
+    if text.is_empty() {
+        return Some((0, lines));
     }
+    let width = result.text.lines().map(|l| l.len()).max().unwrap_or(0);
+    Some((width, lines))
+}
 
-    Some((current_x, font.lines))
+pub fn render_text(text: &str, font_name: &str) -> Option<String> {
+    let result = cfonts_render(text, font_name)?;
+    Some(result.text)
 }
 
 pub fn get_character_positions(text: &str, font_name: &str) -> Option<Vec<usize>> {
-    let font = load_font(font_name)?;
+    let cfont = to_cfonts_font(font_name)?;
     let mut positions = vec![0usize];
-    let mut current_x = 0;
+    let mut current = 0usize;
 
-    for (i, ch) in text.chars().enumerate() {
-        let upper = ch.to_uppercase().to_string();
-        let char_def = font.chars.get(&upper).or_else(|| font.chars.get(" "));
-
-        if let Some(def) = char_def {
-            current_x += get_char_width(def);
-        } else {
-            current_x += 1;
-        }
-
-        if i < text.len() - 1 {
-            current_x += font.letterspace_size;
-        }
-        positions.push(current_x);
+    for ch in text.chars() {
+        let options = cfonts::Options {
+            text: ch.to_uppercase().to_string(),
+            font: cfont.clone(),
+            colors: vec![],
+            spaceless: true,
+            raw_mode: true,
+            ..Default::default()
+        };
+        let result = cfonts::render(options);
+        let char_width = result.text.lines().map(|l| l.len()).max().unwrap_or(0);
+        current += char_width;
+        positions.push(current);
     }
 
     Some(positions)
-}
-
-pub struct AsciiFontRenderOutput {
-    pub width: usize,
-    pub height: usize,
 }
 
 pub struct AsciiFontSegment {
@@ -175,45 +85,90 @@ pub struct AsciiFontSegment {
     pub color_index: usize,
 }
 
-pub fn layout_text(text: &str, font_name: &str, start_x: u16, start_y: u16) -> Option<AsciiFontLayout> {
-    let font = load_font(font_name)?;
-    let mut segments = Vec::new();
-    let mut current_x = start_x as usize;
-
-    for (i, ch) in text.chars().enumerate() {
-        let upper = ch.to_uppercase().to_string();
-        let char_def = font.chars.get(&upper).or_else(|| font.chars.get(" "));
-
-        if let Some(def) = char_def {
-            for (line_idx, line_segments) in def.lines.iter().enumerate() {
-                let mut seg_x = current_x;
-                for seg in line_segments {
-                    segments.push(AsciiFontSegment {
-                        x: seg_x as u16,
-                        y: start_y + line_idx as u16,
-                        text: seg.text.clone(),
-                        color_index: seg.color_index,
-                    });
-                    seg_x += seg.text.len();
-                }
-            }
-            current_x += get_char_width(def);
-        } else {
-            current_x += 1;
-        }
-
-        if i < text.len() - 1 {
-            current_x += font.letterspace_size;
-        }
-    }
-
-    Some(AsciiFontLayout { segments, width: current_x - start_x as usize, height: font.lines })
-}
-
 pub struct AsciiFontLayout {
     pub segments: Vec<AsciiFontSegment>,
     pub width: usize,
     pub height: usize,
+}
+
+pub fn layout_text(text: &str, font_name: &str, start_x: u16, start_y: u16) -> Option<AsciiFontLayout> {
+    let result = cfonts_render(text, font_name)?;
+    let mut segments = Vec::new();
+    let mut width = 0usize;
+
+    for (y, line) in result.text.lines().enumerate() {
+        let line_len = line.len();
+        width = width.max(line_len);
+        segments.push(AsciiFontSegment {
+            x: start_x,
+            y: start_y + y as u16,
+            text: line.to_string(),
+            color_index: 0,
+        });
+    }
+
+    Some(AsciiFontLayout { segments, width, height: result.vec.len() })
+}
+
+pub fn coordinate_to_character_index(x: u16, text: &str, font_name: &str) -> Option<usize> {
+    let positions = get_character_positions(text, font_name)?;
+
+    if positions.is_empty() || x < positions[0] as u16 {
+        return Some(0);
+    }
+
+    for i in 0..positions.len().saturating_sub(1) {
+        let current = positions[i] as u16;
+        let next = positions[i + 1] as u16;
+
+        if x >= current && x < next {
+            let midpoint = current + (next - current) / 2;
+            return Some(if x < midpoint { i } else { i + 1 });
+        }
+    }
+
+    if let Some(&last) = positions.last() && x >= last as u16 {
+        return Some(text.len());
+    }
+
+    Some(0)
+}
+
+pub fn render_font_to_frame_buffer(
+    buffer: &mut FrameBuffer,
+    text: &str,
+    x: u16,
+    y: u16,
+    colors: &[Color],
+    background_color: Color,
+    font_name: &str,
+) -> Option<(usize, usize)> {
+    let result = cfonts_render(text, font_name)?;
+    let buf_width = buffer.width();
+    let buf_height = buffer.height();
+    let fg = colors.first().copied().unwrap_or(Color::Default);
+
+    let mut max_line_width = 0usize;
+
+    for (line_idx, line) in result.text.lines().enumerate() {
+        let render_y = y + line_idx as u16;
+        if render_y >= buf_height {
+            break;
+        }
+        max_line_width = max_line_width.max(line.len());
+
+        for (char_idx, ch) in line.chars().enumerate() {
+            let render_x = x + char_idx as u16;
+            if render_x >= buf_width {
+                break;
+            }
+            if ch != ' ' {
+                buffer.set(render_x, render_y, Cell::new(ch).with_fg(fg).with_bg(background_color));
+            }
+        }
+    }
+
+    Some((max_line_width, result.vec.len()))
 }
 
 #[cfg(test)]
@@ -296,44 +251,10 @@ mod tests {
     }
 
     #[test]
-    fn parse_color_tags_single() {
-        let segments = parse_color_tags("hello");
-        assert_eq!(segments.len(), 1);
-        assert_eq!(segments[0].text, "hello");
-        assert_eq!(segments[0].color_index, 0);
-    }
-
-    #[test]
-    fn parse_color_tags_with_color() {
-        let segments = parse_color_tags("<c1>red</c1>");
-        assert_eq!(segments.len(), 1);
-        assert_eq!(segments[0].text, "red");
-        assert_eq!(segments[0].color_index, 0);
-    }
-
-    #[test]
-    fn parse_color_tags_mixed() {
-        let segments = parse_color_tags("plain<c1>colored</c1>end");
-        assert_eq!(segments.len(), 3);
-        assert_eq!(segments[0].text, "plain");
-        assert_eq!(segments[1].text, "colored");
-        assert_eq!(segments[1].color_index, 0);
-        assert_eq!(segments[2].text, "end");
-    }
-
-    #[test]
-    fn parse_color_tags_color2() {
-        let segments = parse_color_tags("<c2>secondary</c2>");
-        assert_eq!(segments.len(), 1);
-        assert_eq!(segments[0].text, "secondary");
-        assert_eq!(segments[0].color_index, 1);
-    }
-
-    #[test]
     fn layout_huge() {
         let layout = layout_text("A", "huge", 0, 0).unwrap();
         assert_eq!(layout.height, 11);
-        assert!(layout.segments.len() > 10);
+        assert!(layout.segments.len() > 5);
     }
 
     #[test]
@@ -342,5 +263,18 @@ mod tests {
             let result = measure_text("Hello", name);
             assert!(result.is_some(), "Failed to measure font: {}", name);
         }
+    }
+
+    #[test]
+    fn render_text_returns_string() {
+        let output = render_text("HELLO", "tiny").unwrap();
+        assert!(!output.is_empty());
+        assert!(output.lines().count() >= 2);
+    }
+
+    #[test]
+    fn render_text_unknown_font() {
+        let result = render_text("test", "nonexistent");
+        assert!(result.is_none());
     }
 }

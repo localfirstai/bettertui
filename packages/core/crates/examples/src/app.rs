@@ -9,6 +9,7 @@
 use std::io::{self, Write};
 
 use bettertui_engine::engine::Engine;
+use bettertui_engine::font::render_text;
 use bettertui_engine::render::{AnsiBackend, Renderer};
 use bettertui_engine::taffy::{AlignItems, FlexDirection, JustifyContent, LayoutProps, Position, RectValues, Sizing};
 use bettertui_engine::tree::{BorderStyle, Color, NamedColor, NodeKind, Style};
@@ -315,18 +316,15 @@ impl App {
                 ..LayoutProps::default()
             },
         );
+        self.engine.set_style(header, Style::new().bg(t.bg_color));
         self.engine.append_child(root, header).unwrap();
 
+        let title_text = "BETTERTUI EXAMPLES";
+        let title_string = render_text(title_text, "chrome").unwrap_or_else(|| title_text.to_string());
+
         let title_node = self.engine.create_node(NodeKind::Text);
-        let title_text = r#"
- ____      _     _ _        _______     _    _ _____ ____    _  _____ _____ 
-| __ ) _  (_) __| | | ___  |_   _\ \   / /  | |  ___/ ___|  / \|_   _| ____|
-|  _ \ \/ / |/ _` | |/ _ \   | |  \ \ / /   | | |_  \___ \ / _ \ | | |  _|  
-| |_) >  <| | (_| | |  __/   | |   \ V /| |_| |  _|  ___) / ___ \| | | |___ 
-|____/_/\_\_|\__,_|_|\___|   |_|    \_/  \___/|_|   |____/_/   \_\_| |_____|
-"#;
-        self.engine.set_text(title_node, title_text.trim());
-        self.engine.set_style(title_node, Style::new().fg(t.title_color).bold(true));
+        self.engine.set_text(title_node, title_string);
+        self.engine.set_style(title_node, Style::new().fg(t.title_color).bg(t.bg_color).bold(true));
         self.engine.append_child(header, title_node).unwrap();
 
         let filter_container = self.engine.create_node(NodeKind::Box);
@@ -452,6 +450,7 @@ impl App {
                 ..LayoutProps::default()
             },
         );
+        self.engine.set_style(footer, Style::new().bg(t.footer_bg_color));
         self.engine.append_child(root, footer).unwrap();
 
         let help_node = self.engine.create_node(NodeKind::Text);
@@ -459,7 +458,7 @@ impl App {
             help_node,
             " Tab/Esc switch focus | Type in filter | ↑↓/j/k list | Enter run | / filter | ctrl+c quit ",
         );
-        self.engine.set_style(help_node, Style::new().fg(t.instructions_color));
+        self.engine.set_style(help_node, Style::new().fg(t.instructions_color).bg(t.footer_bg_color));
         self.engine.append_child(footer, help_node).unwrap();
 
         self.engine.begin_frame();
