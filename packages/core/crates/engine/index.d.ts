@@ -13,6 +13,11 @@ export declare class NativeEngine {
   printTree(): string;
   validate(): boolean;
   shutdown(): void;
+  root(): number;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
 }
 
 export declare class NativeEventBus {
