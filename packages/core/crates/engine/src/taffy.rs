@@ -28,8 +28,8 @@ use crate::tree::Rect;
 /// Types submodule for backward compatibility with `crate::taffy::types::*`
 pub mod types {
     pub use super::{
-        AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, Gap, JustifyContent, LayoutOverflow, LayoutProps,
-        Position, RectValues, Sizing,
+        AlignContent, AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, Gap, JustifyContent, LayoutOverflow,
+        LayoutProps, Position, RectValues, Sizing,
     };
     /// Display mode for a node (re-exported for backward compatibility)
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -60,7 +60,7 @@ pub use types::Display;
 /// Taffy uses f32 internally. Final positions are rounded to integers
 /// only at the last step.
 ///
-/// Size: ~56 bytes. Stack-allocated.
+/// Size: ~60 bytes. Stack-allocated.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LayoutProps {
     pub display: types::Display,
@@ -69,6 +69,7 @@ pub struct LayoutProps {
     pub flex_wrap: FlexWrap,
     pub justify: JustifyContent,
     pub align: AlignItems,
+    pub align_content: Option<AlignContent>,
     pub align_self: Option<AlignSelf>,
     pub flex_grow: f32,
     pub flex_shrink: f32,
@@ -84,11 +85,8 @@ pub struct LayoutProps {
     pub max_width: Option<Sizing>,
     pub max_height: Option<Sizing>,
     pub inset: Option<RectValues>,
-    /// Aspect ratio (width / height).
     pub aspect_ratio: Option<f32>,
-    /// Overflow behavior for this container.
     pub overflow: Option<LayoutOverflow>,
-    /// Box sizing model (`border-box` vs `content-box`).
     pub box_sizing: Option<BoxSizing>,
 }
 
@@ -101,6 +99,7 @@ impl Default for LayoutProps {
             flex_wrap: FlexWrap::NoWrap,
             justify: JustifyContent::FlexStart,
             align: AlignItems::Stretch,
+            align_content: None,
             align_self: None,
             flex_grow: 0.0,
             flex_shrink: 1.0,
@@ -199,6 +198,19 @@ pub enum AlignSelf {
     Baseline,
 }
 
+/// Alignment of flex lines when there's extra space in the cross axis.
+/// Only applies when `flex_wrap` is `Wrap` or `WrapReverse`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AlignContent {
+    FlexStart,
+    #[default]
+    FlexEnd,
+    Center,
+    Stretch,
+    SpaceBetween,
+    SpaceAround,
+}
+
 /// Positioning mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Position {
@@ -208,6 +220,9 @@ pub enum Position {
     /// Removed from flow, positioned relative to parent.
     Absolute,
     /// Positioned according to normal flow.
+    /// Note: Taffy has no `Static` mode; this maps to `Relative` internally.
+    /// The semantic difference is that CSS `static` ignores `inset` properties,
+    /// but in terminal UI contexts this distinction rarely matters.
     Static,
 }
 
@@ -1125,6 +1140,7 @@ impl LayoutEngine {
         };
         let taffy_children: Vec<_> = children.iter().filter_map(|c| self.node_map.get(c).copied()).collect();
         let _ = self.taffy.set_children(p, &taffy_children);
+        self.fire_dirtied(parent);
     }
 
     pub fn remove_child(&mut self, parent: NodeId, child: NodeId) {
@@ -1165,19 +1181,18 @@ impl LayoutEngine {
                     None => return taffy::Size::ZERO,
                 };
 
-                let available_width = match available_space.width {
-                    taffy::AvailableSpace::Definite(w) => w,
-                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
-                    taffy::AvailableSpace::MinContent => 0.0,
-                };
-                let available_height = match available_space.height {
-                    taffy::AvailableSpace::Definite(h) => h,
-                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
-                    taffy::AvailableSpace::MinContent => 0.0,
-                };
-
                 // Check for per-node measure callback first (OpenTUI native measure path)
                 if let Some(callback) = measure_callbacks.get(&our_id) {
+                    let available_width = match available_space.width {
+                        taffy::AvailableSpace::Definite(w) => w,
+                        taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                        taffy::AvailableSpace::MinContent => 0.0,
+                    };
+                    let available_height = match available_space.height {
+                        taffy::AvailableSpace::Definite(h) => h,
+                        taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                        taffy::AvailableSpace::MinContent => 0.0,
+                    };
                     let result =
                         callback(known_dimensions.width, known_dimensions.height, available_width, available_height);
                     return taffy::Size { width: result.width, height: result.height };
@@ -1188,6 +1203,31 @@ impl LayoutEngine {
                 let content = match text.get(&our_id) {
                     Some(t) => t.as_str(),
                     None => return taffy::Size::ZERO,
+                };
+
+                // MinContent: return minimum intrinsic width (longest unbreakable unit)
+                // MaxContent: return maximum intrinsic width (no wrapping)
+                let available_width = match available_space.width {
+                    taffy::AvailableSpace::Definite(w) => w,
+                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                    taffy::AvailableSpace::MinContent => {
+                        // Find longest word/line as minimum intrinsic width
+                        let max_word = content
+                            .lines()
+                            .flat_map(|line| line.split_whitespace())
+                            .map(text::display_width)
+                            .max()
+                            .unwrap_or(1);
+                        return taffy::Size {
+                            width: known_dimensions.width.unwrap_or(max_word.max(1) as f32),
+                            height: known_dimensions.height.unwrap_or(content.lines().count().max(1) as f32),
+                        };
+                    }
+                };
+                let _available_height = match available_space.height {
+                    taffy::AvailableSpace::Definite(h) => h,
+                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                    taffy::AvailableSpace::MinContent => 0.0,
                 };
 
                 let (intrinsic_width, line_count) = measure_text(content, available_width);
@@ -1222,6 +1262,9 @@ impl LayoutEngine {
                         height: (layout.size.height.round() as i32).max(0) as u16,
                         content_width: (layout.content_box_width().round() as i32).max(0) as u16,
                         content_height: (layout.content_box_height().round() as i32).max(0) as u16,
+                        order: layout.order,
+                        scrollbar_width: (layout.scrollbar_size.width.round() as i32).max(0) as u16,
+                        scrollbar_height: (layout.scrollbar_size.height.round() as i32).max(0) as u16,
                         padding_top: (layout.padding.top.round() as i32).max(0) as u16,
                         padding_right: (layout.padding.right.round() as i32).max(0) as u16,
                         padding_bottom: (layout.padding.bottom.round() as i32).max(0) as u16,
@@ -1230,6 +1273,10 @@ impl LayoutEngine {
                         border_right: (layout.border.right.round() as i32).max(0) as u16,
                         border_bottom: (layout.border.bottom.round() as i32).max(0) as u16,
                         border_left: (layout.border.left.round() as i32).max(0) as u16,
+                        margin_top: (layout.margin.top.round() as i32).max(0) as u16,
+                        margin_right: (layout.margin.right.round() as i32).max(0) as u16,
+                        margin_bottom: (layout.margin.bottom.round() as i32).max(0) as u16,
+                        margin_left: (layout.margin.left.round() as i32).max(0) as u16,
                     },
                 );
             }
@@ -1344,6 +1391,17 @@ fn map_align_self(val: AlignSelf) -> taffy::AlignSelf {
     }
 }
 
+fn map_align_content(val: AlignContent) -> taffy::AlignContent {
+    match val {
+        AlignContent::FlexStart => taffy::AlignContent::FlexStart,
+        AlignContent::FlexEnd => taffy::AlignContent::FlexEnd,
+        AlignContent::Center => taffy::AlignContent::Center,
+        AlignContent::Stretch => taffy::AlignContent::Stretch,
+        AlignContent::SpaceBetween => taffy::AlignContent::SpaceBetween,
+        AlignContent::SpaceAround => taffy::AlignContent::SpaceAround,
+    }
+}
+
 fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
     let padding = props.padding.map(|r| rect_values_to_taffy(&r)).unwrap_or(taffy::Rect {
         top: taffy::LengthPercentage::Length(0.0),
@@ -1385,6 +1443,7 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
         flex_direction: map_flex_direction(props.direction),
         flex_wrap: map_flex_wrap(props.flex_wrap),
         align_items: Some(map_align_items(props.align)),
+        align_content: props.align_content.map(map_align_content),
         align_self: props.align_self.map(map_align_self),
         justify_content: Some(map_justify_content(props.justify)),
         flex_grow: props.flex_grow,
@@ -1529,7 +1588,7 @@ impl LayoutTreeSync {
 /// Stores the final position and size in terminal cell coordinates.
 /// All values are integers — fractional Taffy output is rounded at the last step.
 ///
-/// **Memory:** 32 bytes per node. Stack-allocated.
+/// **Memory:** 48 bytes per node. Stack-allocated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct LayoutResult {
     /// Absolute X position in terminal cells (from left edge).
@@ -1546,6 +1605,11 @@ pub struct LayoutResult {
     pub content_width: u16,
     /// Inner height excluding padding and border (in cells).
     pub content_height: u16,
+    /// Render order for z-indexing (higher = on top).
+    pub order: u32,
+    /// Scrollbar dimensions for scroll containers.
+    pub scrollbar_width: u16,
+    pub scrollbar_height: u16,
     /// Computed padding from Taffy (resolved from percentages to concrete values).
     pub padding_top: u16,
     pub padding_right: u16,
@@ -1556,6 +1620,11 @@ pub struct LayoutResult {
     pub border_right: u16,
     pub border_bottom: u16,
     pub border_left: u16,
+    /// Computed margin from Taffy.
+    pub margin_top: u16,
+    pub margin_right: u16,
+    pub margin_bottom: u16,
+    pub margin_left: u16,
 }
 
 impl LayoutResult {
@@ -2228,5 +2297,70 @@ mod node_operation_tests {
         let engine = LayoutEngine::new();
         assert_eq!(engine.get_computed_left(NodeId::default()), 0.0);
         assert_eq!(engine.get_computed_top(NodeId::default()), 0.0);
+    }
+}
+
+#[cfg(test)]
+mod align_content_tests {
+    use super::*;
+
+    #[test]
+    fn align_content_default_is_none() {
+        let props = LayoutProps::default();
+        assert!(props.align_content.is_none());
+    }
+
+    #[test]
+    fn align_content_variants() {
+        let props = LayoutProps { align_content: Some(AlignContent::Center), ..Default::default() };
+        assert_eq!(props.align_content, Some(AlignContent::Center));
+    }
+
+    #[test]
+    fn map_align_content_all_variants() {
+        let _ = map_align_content(AlignContent::FlexStart);
+        let _ = map_align_content(AlignContent::FlexEnd);
+        let _ = map_align_content(AlignContent::Center);
+        let _ = map_align_content(AlignContent::Stretch);
+        let _ = map_align_content(AlignContent::SpaceBetween);
+        let _ = map_align_content(AlignContent::SpaceAround);
+    }
+}
+
+#[cfg(test)]
+mod layout_result_extended_tests {
+    use super::*;
+
+    #[test]
+    fn layout_result_has_order_field() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.register_container(
+            id,
+            &LayoutProps {
+                width: Some(Sizing::Points(50.0)),
+                height: Some(Sizing::Points(30.0)),
+                ..Default::default()
+            },
+        );
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+
+        let results = engine.collect_results();
+        let result = results.get(&id).unwrap();
+        // Order should be 0 for root node
+        assert_eq!(result.order, 0);
+    }
+
+    #[test]
+    fn layout_result_has_scrollbar_and_margin_fields() {
+        let result = LayoutResult::new(10, 20, 30, 40);
+        // Default values should be 0
+        assert_eq!(result.scrollbar_width, 0);
+        assert_eq!(result.scrollbar_height, 0);
+        assert_eq!(result.margin_top, 0);
+        assert_eq!(result.margin_right, 0);
+        assert_eq!(result.margin_bottom, 0);
+        assert_eq!(result.margin_left, 0);
     }
 }
