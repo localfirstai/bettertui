@@ -9,6 +9,7 @@ export type {
   KeyListener,
   KeymapOptions,
   ActiveKeyInfo,
+  BindingInfo,
 } from "./keybinding";
 
 export {

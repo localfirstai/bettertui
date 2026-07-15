@@ -3,8 +3,8 @@
  * Demonstrates list selection with the native engine
  */
 
+import type { CliRenderer } from "@bettertui/core";
 import { defineExample } from "../lib/types.js";
-import type { CliRenderer } from "../renderer/index.js";
 
 interface SelectOption {
   name: string;

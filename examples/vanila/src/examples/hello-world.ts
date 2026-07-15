@@ -3,8 +3,8 @@
  * Demonstrates basic rendering with the native engine
  */
 
+import type { CliRenderer } from "@bettertui/core";
 import { defineExample } from "../lib/types";
-import type { CliRenderer } from "../renderer";
 
 let textNode: number | null = null;
 let infoNode: number | null = null;

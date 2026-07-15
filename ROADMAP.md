@@ -9,14 +9,14 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | Rust engine (`bettertui-engine`) | ✅ Implemented | 720 passing Rust lib tests (verified via `cargo test --lib`) across the engine, terminal, and widgets crates; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
 | napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
-| `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime |
-| `@bettertui/core` (native bridge) | ✅ Implemented | Bridge + runtime + event loop (merged from `@bettertui/native`, requires native addon) |
-
+| `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime, native bridge |
+| `@bettertui/core` (testing utilities) | ✅ Implemented | `createTestRenderer`, `createMockKeys`, `createMockMouse`, test streams, terminal capabilities mocks |
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
 | `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
 | `@bettertui/devtools` | ✅ Implemented | `createDevTools()` factory (inspectors, logger, export helpers) |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
-| Examples | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/examples/<category>/<slug>.tsx`), launched via `node dist/index.mjs <slug>`) |
+| `examples/vanila` | ✅ Implemented | Interactive CLI example browser using native Rust engine directly via `@bettertui/core` (no React) |
+| Examples (React) | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/examples/<category>/<slug>.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
 
 ## Completed
@@ -42,6 +42,8 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 - [x] React reconciler host config producing commands
 - [x] `@bettertui/core` command buffer + runtime
 - [x] `@bettertui/core` native bridge (factories, runtime, event loop; merged from `@bettertui/native`)
+- [x] `@bettertui/core` testing utilities (`createTestRenderer`, `createMockKeys`, `createMockMouse`, test streams, terminal capabilities mocks)
+- [x] `examples/vanila` - Interactive CLI example browser using native Rust engine directly (no React)
 
 
 ## In progress

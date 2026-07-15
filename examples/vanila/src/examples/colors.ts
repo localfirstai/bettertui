@@ -4,8 +4,8 @@
  */
 
 import { detectCapabilities } from "@bettertui/core";
+import type { CliRenderer } from "@bettertui/core";
 import { defineExample } from "../lib/types";
-import type { CliRenderer } from "../renderer";
 
 let keyHandler: ((key: { name: string; ctrl: boolean }) => void) | null = null;
 

@@ -3,8 +3,8 @@
  * Demonstrates flexbox layout with the native engine
  */
 
+import type { CliRenderer } from "@bettertui/core";
 import { defineExample } from "../lib/types.js";
-import type { CliRenderer } from "../renderer/index.js";
 
 let keyHandler: ((key: { name: string; ctrl: boolean }) => void) | null = null;
 let currentLayout = 0;

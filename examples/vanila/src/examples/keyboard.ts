@@ -3,8 +3,8 @@
  * Demonstrates keyboard event handling
  */
 
+import type { CliRenderer, KeyEvent } from "@bettertui/core";
 import { defineExample } from "../lib/types";
-import type { CliRenderer, KeyEvent } from "../renderer";
 
 let keyHandler: ((key: KeyEvent) => void) | null = null;
 let keyCount = 0;

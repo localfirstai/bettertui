@@ -2,7 +2,7 @@
  * Example types and definitions following OpenTUI's pattern
  */
 
-import type { CliRenderer } from "../renderer";
+import type { CliRenderer } from "@bettertui/core";
 
 export type ExampleCategory = "Core" | "Input" | "Layout" | "Widgets" | "Animation" | "Performance";
 

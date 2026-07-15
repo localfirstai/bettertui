@@ -4,8 +4,8 @@
  */
 
 import { type NapiTextEngine, createTextEngine } from "@bettertui/core";
+import type { CliRenderer } from "@bettertui/core";
 import { defineExample } from "../lib/types.js";
-import type { CliRenderer } from "../renderer/index.js";
 
 let keyHandler:
   | ((key: { name: string; ctrl: boolean; shift: boolean; sequence: string }) => void)

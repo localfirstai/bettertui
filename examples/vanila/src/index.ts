@@ -4,8 +4,8 @@
  * Interactive example browser powered by the native Rust engine
  */
 
+import { createCliRenderer, detectCapabilities, getVersion } from "@bettertui/core";
 import { findExample } from "./examples";
-import { createCliRenderer, detectCapabilities, getVersion } from "./renderer";
 import { ExampleSelector } from "./selector";
 
 async function main(): Promise<void> {

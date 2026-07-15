@@ -1,6 +1,6 @@
-import { Keymap } from "./lib/keybinding";
-import type { KeymapOptions } from "./lib/keybinding";
-import type { NapiKeymap } from "./platform/binding";
+import { Keymap } from "../lib/keybinding";
+import type { KeymapOptions } from "../lib/keybinding";
+import type { NapiKeymap } from "../platform/binding";
 
 export interface TestBinding {
   layer: string;

@@ -3,9 +3,9 @@
  * Following OpenTUI's ExampleSelector pattern exactly
  */
 
+import type { CliRenderer, KeyEvent } from "@bettertui/core";
 import { CATEGORY_LABELS, getExampleSections } from "./examples";
 import type { Example, ExampleCategory } from "./lib/types";
-import type { CliRenderer, KeyEvent } from "./renderer";
 
 type FocusArea = "filter" | "list";
 
