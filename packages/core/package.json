@@ -43,10 +43,6 @@
     "vitest": "catalog:"
   },
   "napi": {
-    "name": "bettertui_engine",
-    "triples": {
-      "defaults": true,
-      "additional": []
-    }
+    "binaryName": "bettertui_engine"
   }
 }
