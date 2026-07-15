@@ -200,8 +200,7 @@ impl Easing {
                 } else if t == 1.0 {
                     1.0
                 } else {
-                    -2.0_f32.powf(10.0 * t - 10.0)
-                        * ((t * 10.0 - 10.75) * std::f32::consts::TAU / 3.0).sin()
+                    -2.0_f32.powf(10.0 * t - 10.0) * ((t * 10.0 - 10.75) * std::f32::consts::TAU / 3.0).sin()
                 }
             }
             Self::EaseOutElastic => {
@@ -210,9 +209,7 @@ impl Easing {
                 } else if t == 1.0 {
                     1.0
                 } else {
-                    2.0_f32.powf(-10.0 * t)
-                        * ((t * 10.0 - 0.75) * std::f32::consts::TAU / 3.0).sin()
-                        + 1.0
+                    2.0_f32.powf(-10.0 * t) * ((t * 10.0 - 0.75) * std::f32::consts::TAU / 3.0).sin() + 1.0
                 }
             }
             Self::EaseInOutElastic => {
@@ -221,13 +218,9 @@ impl Easing {
                 } else if t == 1.0 {
                     1.0
                 } else if t < 0.5 {
-                    -(2.0_f32.powf(20.0 * t - 10.0)
-                        * ((20.0 * t - 11.125) * std::f32::consts::TAU / 4.5).sin())
-                        / 2.0
+                    -(2.0_f32.powf(20.0 * t - 10.0) * ((20.0 * t - 11.125) * std::f32::consts::TAU / 4.5).sin()) / 2.0
                 } else {
-                    (2.0_f32.powf(-20.0 * t + 10.0)
-                        * ((20.0 * t - 11.125) * std::f32::consts::TAU / 4.5).sin())
-                        / 2.0
+                    (2.0_f32.powf(-20.0 * t + 10.0) * ((20.0 * t - 11.125) * std::f32::consts::TAU / 4.5).sin()) / 2.0
                         + 1.0
                 }
             }
@@ -297,24 +290,13 @@ pub struct Tween {
 
 impl Default for Tween {
     fn default() -> Self {
-        Self {
-            from: 0.0,
-            to: 1.0,
-            duration: 1.0,
-            easing: Easing::Linear,
-            delay: 0.0,
-        }
+        Self { from: 0.0, to: 1.0, duration: 1.0, easing: Easing::Linear, delay: 0.0 }
     }
 }
 
 impl Tween {
     pub fn new(from: f32, to: f32, duration: f32) -> Self {
-        Self {
-            from,
-            to,
-            duration,
-            ..Default::default()
-        }
+        Self { from, to, duration, ..Default::default() }
     }
 
     pub fn with_easing(mut self, easing: Easing) -> Self {
@@ -354,23 +336,13 @@ pub struct Spring {
 
 impl Default for Spring {
     fn default() -> Self {
-        Self {
-            target: 1.0,
-            stiffness: 170.0,
-            damping: 26.0,
-            mass: 1.0,
-            velocity: 0.0,
-            precision: 0.01,
-        }
+        Self { target: 1.0, stiffness: 170.0, damping: 26.0, mass: 1.0, velocity: 0.0, precision: 0.01 }
     }
 }
 
 impl Spring {
     pub fn new(target: f32) -> Self {
-        Self {
-            target,
-            ..Default::default()
-        }
+        Self { target, ..Default::default() }
     }
 
     pub fn with_stiffness(mut self, stiffness: f32) -> Self {
@@ -404,8 +376,7 @@ impl Spring {
         self.velocity += acceleration * dt;
         let new_value = current + self.velocity * dt;
 
-        let is_settled =
-            displacement.abs() < self.precision && self.velocity.abs() < self.precision;
+        let is_settled = displacement.abs() < self.precision && self.velocity.abs() < self.precision;
 
         (new_value, is_settled)
     }
@@ -426,10 +397,7 @@ pub struct Keyframe {
 
 impl Default for Keyframes {
     fn default() -> Self {
-        Self {
-            keyframes: Vec::new(),
-            easing: Easing::Linear,
-        }
+        Self { keyframes: Vec::new(), easing: Easing::Linear }
     }
 }
 
@@ -550,32 +518,16 @@ impl Default for Animation {
 
 impl Animation {
     pub fn from_tween(tween: Tween, id: u32) -> Self {
-        Self {
-            id,
-            tween: Some(tween),
-            state: AnimationState::Idle,
-            ..Default::default()
-        }
+        Self { id, tween: Some(tween), state: AnimationState::Idle, ..Default::default() }
     }
 
     pub fn from_spring(spring: Spring, id: u32) -> Self {
         let target = spring.target;
-        Self {
-            id,
-            spring: Some(spring),
-            state: AnimationState::Idle,
-            current_value: target,
-            ..Default::default()
-        }
+        Self { id, spring: Some(spring), state: AnimationState::Idle, current_value: target, ..Default::default() }
     }
 
     pub fn from_keyframes(keyframes: Keyframes, id: u32) -> Self {
-        Self {
-            id,
-            keyframes: Some(keyframes),
-            state: AnimationState::Idle,
-            ..Default::default()
-        }
+        Self { id, keyframes: Some(keyframes), state: AnimationState::Idle, ..Default::default() }
     }
 
     pub fn with_on_complete(mut self, handler: impl Fn() + Send + Sync + 'static) -> Self {
@@ -666,10 +618,7 @@ impl Default for AnimationEngine {
 
 impl AnimationEngine {
     pub fn new() -> Self {
-        Self {
-            animations: Vec::new(),
-            next_id: 1,
-        }
+        Self { animations: Vec::new(), next_id: 1 }
     }
 
     /// Create a new tween animation.
@@ -709,8 +658,7 @@ impl AnimationEngine {
         }
 
         // Remove completed animations
-        self.animations
-            .retain(|a| a.state != AnimationState::Completed);
+        self.animations.retain(|a| a.state != AnimationState::Completed);
     }
 
     /// Get the number of active animations.
@@ -864,22 +812,17 @@ impl Timeline {
 
     /// Add an animation at a specific start time (in seconds)
     pub fn add_animation(&mut self, animation: Animation, start_time: f32) {
-        self.items
-            .push(TimelineItemType::Animation(TimelineAnimationItem {
-                start_time,
-                animation,
-                started: false,
-                completed: false,
-            }));
+        self.items.push(TimelineItemType::Animation(TimelineAnimationItem {
+            start_time,
+            animation,
+            started: false,
+            completed: false,
+        }));
     }
 
     /// Add a callback at a specific start time (in seconds)
     pub fn add_callback(&mut self, start_time: f32) {
-        self.items
-            .push(TimelineItemType::Callback(TimelineCallbackItem {
-                start_time,
-                executed: false,
-            }));
+        self.items.push(TimelineItemType::Callback(TimelineCallbackItem { start_time, executed: false }));
     }
 
     /// Check if the timeline has completed
@@ -998,8 +941,7 @@ impl Timeline {
 
     /// Get progress (0.0 to 1.0) if duration is set
     pub fn progress(&self) -> Option<f32> {
-        self.duration
-            .map(|d| if d > 0.0 { self.current_time / d } else { 0.0 })
+        self.duration.map(|d| if d > 0.0 { self.current_time / d } else { 0.0 })
     }
 }
 
@@ -1139,12 +1081,8 @@ impl AnimatableValue {
     /// Interpolate between two values
     pub fn lerp(&self, other: &Self, t: f32) -> Self {
         match (self, other) {
-            (AnimatableValue::Float(a), AnimatableValue::Float(b)) => {
-                AnimatableValue::Float(a + (b - a) * t)
-            }
-            (AnimatableValue::Color(a), AnimatableValue::Color(b)) => {
-                AnimatableValue::Color(a.lerp(b, t))
-            }
+            (AnimatableValue::Float(a), AnimatableValue::Float(b)) => AnimatableValue::Float(a + (b - a) * t),
+            (AnimatableValue::Color(a), AnimatableValue::Color(b)) => AnimatableValue::Color(a.lerp(b, t)),
             _ => other.clone(),
         }
     }
@@ -1166,20 +1104,10 @@ pub struct PropertyAnimation {
 
 impl PropertyAnimation {
     /// Create a new property animation
-    pub fn new(
-        property: AnimatableProperty,
-        from: AnimatableValue,
-        to: AnimatableValue,
-        duration: f32,
-    ) -> Self {
+    pub fn new(property: AnimatableProperty, from: AnimatableValue, to: AnimatableValue, duration: f32) -> Self {
         let id = 0; // Will be assigned by engine
         let tween = Tween::new(0.0, 1.0, duration);
-        Self {
-            property,
-            animation: Animation::from_tween(tween, id),
-            from,
-            to,
-        }
+        Self { property, animation: Animation::from_tween(tween, id), from, to }
     }
 
     /// Get the current interpolated value

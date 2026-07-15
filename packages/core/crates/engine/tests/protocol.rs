@@ -1,8 +1,7 @@
 //! Tests for the protocol module.
 
 use bettertui_engine::protocol::{
-    Command, CommandBuffer, CommandError, CommandProcessor, CommandRegistry, CommandResult,
-    CommandWarning,
+    Command, CommandBuffer, CommandError, CommandProcessor, CommandRegistry, CommandResult, CommandWarning,
 };
 use bettertui_engine::tree::{NodeId, NodeKind, RenderNode};
 
@@ -13,54 +12,22 @@ use bettertui_engine::tree::{NodeId, NodeKind, RenderNode};
 #[test]
 fn command_target() {
     let id = NodeId::default();
-    assert_eq!(
-        Command::CreateNode {
-            id,
-            kind: NodeKind::Box
-        }
-        .target(),
-        Some(id)
-    );
+    assert_eq!(Command::CreateNode { id, kind: NodeKind::Box }.target(), Some(id));
     assert_eq!(Command::Shutdown.target(), None);
     assert_eq!(Command::BeginFrame { frame_id: 1 }.target(), None);
 }
 
 #[test]
 fn command_name() {
-    assert_eq!(
-        Command::CreateNode {
-            id: NodeId::default(),
-            kind: NodeKind::Box
-        }
-        .name(),
-        "CreateNode"
-    );
+    assert_eq!(Command::CreateNode { id: NodeId::default(), kind: NodeKind::Box }.name(), "CreateNode");
     assert_eq!(Command::Shutdown.name(), "Shutdown");
 }
 
 #[test]
 fn command_is_tree_mutation() {
-    assert!(
-        Command::CreateNode {
-            id: NodeId::default(),
-            kind: NodeKind::Box
-        }
-        .is_tree_mutation()
-    );
-    assert!(
-        Command::AppendChild {
-            parent: NodeId::default(),
-            child: NodeId::default()
-        }
-        .is_tree_mutation()
-    );
-    assert!(
-        !Command::SetBold {
-            id: NodeId::default(),
-            value: true
-        }
-        .is_tree_mutation()
-    );
+    assert!(Command::CreateNode { id: NodeId::default(), kind: NodeKind::Box }.is_tree_mutation());
+    assert!(Command::AppendChild { parent: NodeId::default(), child: NodeId::default() }.is_tree_mutation());
+    assert!(!Command::SetBold { id: NodeId::default(), value: true }.is_tree_mutation());
 }
 
 #[test]
@@ -72,10 +39,7 @@ fn command_is_frame_command() {
 
 #[test]
 fn command_display() {
-    let cmd = Command::SetText {
-        id: NodeId::default(),
-        text: "hello".into(),
-    };
+    let cmd = Command::SetText { id: NodeId::default(), text: "hello".into() };
     let display = format!("{cmd}");
     assert!(display.contains("SetText"));
     assert!(display.contains("hello"));
@@ -96,9 +60,7 @@ fn execute_records_history() {
 #[test]
 fn undo_redo() {
     let mut reg = CommandRegistry::new();
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "cmd", "data", true,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", "data", true));
     assert!(reg.can_undo());
     let undone = reg.undo();
     assert!(undone.is_some());
@@ -124,23 +86,17 @@ fn redo_empty() {
 #[test]
 fn non_undoable_not_in_undo_stack() {
     let mut reg = CommandRegistry::new();
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "cmd", "data", false,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", "data", false));
     assert!(!reg.can_undo());
 }
 
 #[test]
 fn new_command_clears_redo() {
     let mut reg = CommandRegistry::new();
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "cmd", "data", true,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", "data", true));
     reg.undo();
     assert!(reg.can_redo());
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "cmd2", "data2", true,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd2", "data2", true));
     assert!(!reg.can_redo());
 }
 
@@ -148,11 +104,7 @@ fn new_command_clears_redo() {
 fn max_history() {
     let mut reg = CommandRegistry::new().with_max_history(3);
     for i in 0..5 {
-        reg.execute(bettertui_engine::protocol::CommandEntry::new(
-            "cmd",
-            i.to_string(),
-            false,
-        ));
+        reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", i.to_string(), false));
     }
     assert_eq!(reg.history_len(), 3);
 }
@@ -161,11 +113,7 @@ fn max_history() {
 fn max_undo() {
     let mut reg = CommandRegistry::new().with_max_undo(2);
     for i in 0..5 {
-        reg.execute(bettertui_engine::protocol::CommandEntry::new(
-            "cmd",
-            i.to_string(),
-            true,
-        ));
+        reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", i.to_string(), true));
     }
     assert_eq!(reg.undo_depth(), 2);
 }
@@ -173,15 +121,9 @@ fn max_undo() {
 #[test]
 fn find_commands() {
     let mut reg = CommandRegistry::new();
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "save", "f1", false,
-    ));
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "open", "f2", false,
-    ));
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "save", "f3", false,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("save", "f1", false));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("open", "f2", false));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("save", "f3", false));
     let saves = reg.find("save");
     assert_eq!(saves.len(), 2);
 }
@@ -189,9 +131,7 @@ fn find_commands() {
 #[test]
 fn clear() {
     let mut reg = CommandRegistry::new();
-    reg.execute(bettertui_engine::protocol::CommandEntry::new(
-        "cmd", "data", true,
-    ));
+    reg.execute(bettertui_engine::protocol::CommandEntry::new("cmd", "data", true));
     reg.clear();
     assert_eq!(reg.history_len(), 0);
     assert!(!reg.can_undo());
@@ -211,10 +151,7 @@ fn buffer_new() {
 #[test]
 fn buffer_push() {
     let mut buf = CommandBuffer::new();
-    buf.push(Command::CreateNode {
-        id: NodeId::default(),
-        kind: NodeKind::Box,
-    });
+    buf.push(Command::CreateNode { id: NodeId::default(), kind: NodeKind::Box });
     assert_eq!(buf.len(), 1);
     assert!(!buf.is_empty());
 }
@@ -351,10 +288,7 @@ fn processor_new() {
 fn process_create_node() {
     let mut proc = CommandProcessor::new();
     let id = NodeId::default();
-    let result = proc.process_single(Command::CreateNode {
-        id,
-        kind: NodeKind::Box,
-    });
+    let result = proc.process_single(Command::CreateNode { id, kind: NodeKind::Box });
     assert!(result.is_ok());
     assert_eq!(proc.node_count(), 2);
 }
@@ -377,10 +311,7 @@ fn process_append_child() {
     let root = proc.arena().root();
     let child = proc.arena_mut().insert(RenderNode::new(NodeKind::Text));
 
-    let result = proc.process_single(Command::AppendChild {
-        parent: root,
-        child,
-    });
+    let result = proc.process_single(Command::AppendChild { parent: root, child });
     assert!(result.is_ok());
     assert_eq!(proc.node_count(), 2);
 }
@@ -390,10 +321,7 @@ fn process_set_text() {
     let mut proc = CommandProcessor::new();
     let root = proc.arena().root();
 
-    let result = proc.process_single(Command::SetText {
-        id: root,
-        text: "hello".into(),
-    });
+    let result = proc.process_single(Command::SetText { id: root, text: "hello".into() });
     assert!(result.is_ok());
 
     let node = proc.get_node(root).unwrap();
@@ -405,10 +333,7 @@ fn process_set_bold() {
     let mut proc = CommandProcessor::new();
     let root = proc.arena().root();
 
-    let result = proc.process_single(Command::SetBold {
-        id: root,
-        value: true,
-    });
+    let result = proc.process_single(Command::SetBold { id: root, value: true });
     assert!(result.is_ok());
 
     let node = proc.get_node(root).unwrap();
@@ -422,18 +347,9 @@ fn process_batch() {
     let child = proc.arena_mut().insert(RenderNode::new(NodeKind::Text));
 
     let commands = vec![
-        Command::AppendChild {
-            parent: root,
-            child,
-        },
-        Command::SetText {
-            id: child,
-            text: "hello".into(),
-        },
-        Command::SetBold {
-            id: child,
-            value: true,
-        },
+        Command::AppendChild { parent: root, child },
+        Command::SetText { id: child, text: "hello".into() },
+        Command::SetBold { id: child, value: true },
     ];
 
     let result = proc.process_batch(commands);
@@ -446,18 +362,12 @@ fn process_set_attribute() {
     let mut proc = CommandProcessor::new();
     let root = proc.arena().root();
 
-    let result = proc.process_single(Command::SetAttribute {
-        id: root,
-        key: "data-testid".into(),
-        value: "my-element".into(),
-    });
+    let result =
+        proc.process_single(Command::SetAttribute { id: root, key: "data-testid".into(), value: "my-element".into() });
     assert!(result.is_ok());
 
     let node = proc.get_node(root).unwrap();
-    assert_eq!(
-        node.attributes.get("data-testid"),
-        Some(&"my-element".to_string())
-    );
+    assert_eq!(node.attributes.get("data-testid"), Some(&"my-element".to_string()));
 }
 
 #[test]
@@ -465,17 +375,10 @@ fn process_remove_attribute() {
     let mut proc = CommandProcessor::new();
     let root = proc.arena().root();
 
-    proc.process_single(Command::SetAttribute {
-        id: root,
-        key: "data-testid".into(),
-        value: "my-element".into(),
-    })
-    .unwrap();
+    proc.process_single(Command::SetAttribute { id: root, key: "data-testid".into(), value: "my-element".into() })
+        .unwrap();
 
-    let result = proc.process_single(Command::RemoveAttribute {
-        id: root,
-        key: "data-testid".into(),
-    });
+    let result = proc.process_single(Command::RemoveAttribute { id: root, key: "data-testid".into() });
     assert!(result.is_ok());
 
     let node = proc.get_node(root).unwrap();
@@ -487,10 +390,7 @@ fn process_invalid_command() {
     let mut proc = CommandProcessor::new();
     let bad_id = NodeId::default();
 
-    let result = proc.process_single(Command::SetText {
-        id: bad_id,
-        text: "hello".into(),
-    });
+    let result = proc.process_single(Command::SetText { id: bad_id, text: "hello".into() });
 
     // Depending on the slotmap implementation, this might succeed or fail
     // The important thing is that the processor handles it gracefully

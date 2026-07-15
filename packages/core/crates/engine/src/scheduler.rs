@@ -29,11 +29,7 @@ pub struct FrameRequest {
 
 impl FrameRequest {
     pub fn new(priority: Priority) -> Self {
-        Self {
-            priority,
-            requested_at: Instant::now(),
-            deadline: None,
-        }
+        Self { priority, requested_at: Instant::now(), deadline: None }
     }
 
     pub fn with_deadline(mut self, deadline: Instant) -> Self {
@@ -88,17 +84,10 @@ impl FrameBudget {
     /// - `target_fps`: Desired frame rate for continuous mode
     /// - `max_fps`: Maximum frame rate cap for immediate re-renders
     pub fn with_fps_range(target_fps: u32, max_fps: u32) -> Self {
-        let target = if target_fps > 0 {
-            Duration::from_millis(1000 / target_fps as u64)
-        } else {
-            Duration::from_millis(33)
-        };
+        let target =
+            if target_fps > 0 { Duration::from_millis(1000 / target_fps as u64) } else { Duration::from_millis(33) };
 
-        let min = if max_fps > 0 {
-            Duration::from_millis(1000 / max_fps as u64)
-        } else {
-            Duration::from_millis(16)
-        };
+        let min = if max_fps > 0 { Duration::from_millis(1000 / max_fps as u64) } else { Duration::from_millis(16) };
 
         Self {
             target_frame_time: target,
@@ -127,11 +116,7 @@ impl FrameBudget {
         match self.current_frame_start {
             Some(start) => {
                 let elapsed = start.elapsed();
-                if elapsed >= self.target_frame_time {
-                    Duration::ZERO
-                } else {
-                    self.target_frame_time - elapsed
-                }
+                if elapsed >= self.target_frame_time { Duration::ZERO } else { self.target_frame_time - elapsed }
             }
             None => self.target_frame_time,
         }
@@ -206,17 +191,11 @@ impl Scheduler {
     /// - `target_fps`: Desired frame rate for continuous rendering (e.g., 30)
     /// - `max_fps`: Maximum frame rate for immediate re-renders (e.g., 120)
     pub fn with_fps_range(target_fps: u32, max_fps: u32) -> Self {
-        let interval = if target_fps > 0 {
-            Duration::from_millis(1000 / target_fps as u64)
-        } else {
-            Duration::from_millis(33)
-        };
+        let interval =
+            if target_fps > 0 { Duration::from_millis(1000 / target_fps as u64) } else { Duration::from_millis(33) };
 
-        let min_interval = if max_fps > 0 {
-            Duration::from_millis(1000 / max_fps as u64)
-        } else {
-            Duration::from_millis(8)
-        };
+        let min_interval =
+            if max_fps > 0 { Duration::from_millis(1000 / max_fps as u64) } else { Duration::from_millis(8) };
 
         Self {
             frame_interval: interval,
@@ -290,19 +269,11 @@ impl Scheduler {
             return FrameStatus::Idle;
         }
 
-        let effective_interval = if self.immediate_mode {
-            self.min_frame_interval
-        } else {
-            self.frame_interval
-        };
+        let effective_interval = if self.immediate_mode { self.min_frame_interval } else { self.frame_interval };
 
         let elapsed = self.last_frame.elapsed();
         if elapsed >= effective_interval {
-            if elapsed >= effective_interval * 2 {
-                FrameStatus::Overdue
-            } else {
-                FrameStatus::Due
-            }
+            if elapsed >= effective_interval * 2 { FrameStatus::Overdue } else { FrameStatus::Due }
         } else {
             FrameStatus::Pending
         }
@@ -394,46 +365,28 @@ impl Scheduler {
 
     /// Set both target and max FPS.
     pub fn set_fps_range(&mut self, target_fps: u32, max_fps: u32) {
-        self.frame_interval = if target_fps > 0 {
-            Duration::from_millis(1000 / target_fps as u64)
-        } else {
-            Duration::from_millis(33)
-        };
+        self.frame_interval =
+            if target_fps > 0 { Duration::from_millis(1000 / target_fps as u64) } else { Duration::from_millis(33) };
 
-        self.min_frame_interval = if max_fps > 0 {
-            Duration::from_millis(1000 / max_fps as u64)
-        } else {
-            Duration::from_millis(8)
-        };
+        self.min_frame_interval =
+            if max_fps > 0 { Duration::from_millis(1000 / max_fps as u64) } else { Duration::from_millis(8) };
 
         self.frame_budget = FrameBudget::with_fps_range(target_fps, max_fps);
     }
 
     /// Get current target FPS.
     pub fn target_fps(&self) -> u32 {
-        if self.frame_interval.is_zero() {
-            60
-        } else {
-            (1000 / self.frame_interval.as_millis()) as u32
-        }
+        if self.frame_interval.is_zero() { 60 } else { (1000 / self.frame_interval.as_millis()) as u32 }
     }
 
     /// Get current max FPS.
     pub fn max_fps(&self) -> u32 {
-        if self.min_frame_interval.is_zero() {
-            120
-        } else {
-            (1000 / self.min_frame_interval.as_millis()) as u32
-        }
+        if self.min_frame_interval.is_zero() { 120 } else { (1000 / self.min_frame_interval.as_millis()) as u32 }
     }
 
     pub fn time_until_next_frame(&self) -> Duration {
         let elapsed = self.last_frame.elapsed();
-        if elapsed >= self.frame_interval {
-            Duration::ZERO
-        } else {
-            self.frame_interval - elapsed
-        }
+        if elapsed >= self.frame_interval { Duration::ZERO } else { self.frame_interval - elapsed }
     }
 
     pub fn reset(&mut self) {

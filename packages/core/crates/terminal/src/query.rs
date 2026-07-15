@@ -58,25 +58,11 @@ impl TerminalQuery {
 /// Parsed result from a terminal query response.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueryResult {
-    DeviceAttributes {
-        terminal_type: u32,
-        attributes: Vec<u32>,
-    },
-    SecondaryDeviceAttributes {
-        model: u32,
-        firmware_major: u32,
-        firmware_minor: u32,
-    },
-    TertiaryDeviceAttributes {
-        data: String,
-    },
-    CursorPosition {
-        row: u32,
-        col: u32,
-    },
-    ProgressiveEnhancement {
-        features: u32,
-    },
+    DeviceAttributes { terminal_type: u32, attributes: Vec<u32> },
+    SecondaryDeviceAttributes { model: u32, firmware_major: u32, firmware_minor: u32 },
+    TertiaryDeviceAttributes { data: String },
+    CursorPosition { row: u32, col: u32 },
+    ProgressiveEnhancement { features: u32 },
     Unknown,
 }
 
@@ -88,13 +74,7 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
     if let Some(params) = machine.device_attributes() {
         let terminal_type = params.first().copied().unwrap_or(0);
         let attributes = params[1..].to_vec();
-        results.push((
-            TerminalQuery::DeviceAttributes,
-            QueryResult::DeviceAttributes {
-                terminal_type,
-                attributes,
-            },
-        ));
+        results.push((TerminalQuery::DeviceAttributes, QueryResult::DeviceAttributes { terminal_type, attributes }));
     }
 
     if let Some(params) = machine.secondary_device_attributes() {
@@ -103,29 +83,20 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
         let fw_minor = params.get(2).copied().unwrap_or(0);
         results.push((
             TerminalQuery::SecondaryDeviceAttributes,
-            QueryResult::SecondaryDeviceAttributes {
-                model,
-                firmware_major: fw_major,
-                firmware_minor: fw_minor,
-            },
+            QueryResult::SecondaryDeviceAttributes { model, firmware_major: fw_major, firmware_minor: fw_minor },
         ));
     }
 
     if let Some(data) = machine.tertiary_device_attributes() {
         results.push((
             TerminalQuery::TertiaryDeviceAttributes,
-            QueryResult::TertiaryDeviceAttributes {
-                data: data.to_string(),
-            },
+            QueryResult::TertiaryDeviceAttributes { data: data.to_string() },
         ));
     }
 
     if let Some(params) = machine.kitty_keyboard_query_response() {
         let features = params.get(1).copied().unwrap_or(0);
-        results.push((
-            TerminalQuery::ProgressiveEnhancement,
-            QueryResult::ProgressiveEnhancement { features },
-        ));
+        results.push((TerminalQuery::ProgressiveEnhancement, QueryResult::ProgressiveEnhancement { features }));
     }
 
     results
@@ -175,10 +146,7 @@ mod tests {
         assert_eq!(TerminalQuery::CursorPosition.name(), "DSR-CPR");
         assert_eq!(TerminalQuery::TerminalId.name(), "DECID");
         assert_eq!(TerminalQuery::XTVersion.name(), "XTVersion");
-        assert_eq!(
-            TerminalQuery::ProgressiveEnhancement.name(),
-            "KittyProgressive"
-        );
+        assert_eq!(TerminalQuery::ProgressiveEnhancement.name(), "KittyProgressive");
     }
 
     #[test]
@@ -215,11 +183,7 @@ mod tests {
         }
         let results = check_responses(&machine);
         assert!(!results.is_empty());
-        if let QueryResult::DeviceAttributes {
-            terminal_type,
-            attributes,
-        } = &results[0].1
-        {
+        if let QueryResult::DeviceAttributes { terminal_type, attributes } = &results[0].1 {
             assert_eq!(*terminal_type, 1);
             assert_eq!(attributes, &[2]);
         } else {
@@ -237,12 +201,7 @@ mod tests {
         }
         let results = check_responses(&machine);
         assert!(!results.is_empty());
-        if let QueryResult::SecondaryDeviceAttributes {
-            model,
-            firmware_major,
-            firmware_minor,
-        } = &results[0].1
-        {
+        if let QueryResult::SecondaryDeviceAttributes { model, firmware_major, firmware_minor } = &results[0].1 {
             assert_eq!(*model, 1);
             assert_eq!(*firmware_major, 10);
             assert_eq!(*firmware_minor, 0);

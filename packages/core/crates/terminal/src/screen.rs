@@ -35,12 +35,7 @@ impl Default for CursorState {
 
 impl CursorState {
     pub fn new() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-            visible: true,
-            style: CursorStyle::Block,
-        }
+        Self { x: 0, y: 0, visible: true, style: CursorStyle::Block }
     }
 
     pub fn x(&self) -> u16 {
@@ -116,10 +111,7 @@ impl ScreenState {
     }
 
     pub fn with_size(cols: u16, rows: u16) -> Self {
-        Self {
-            viewport: TerminalViewport::with_size(cols, rows),
-            ..Self::new()
-        }
+        Self { viewport: TerminalViewport::with_size(cols, rows), ..Self::new() }
     }
 
     // ── Public accessors ──

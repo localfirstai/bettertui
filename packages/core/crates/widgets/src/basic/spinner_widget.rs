@@ -57,11 +57,7 @@ impl Widget for SpinnerWidget {
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let display_text = self
-            .label
-            .as_ref()
-            .map(|l| format!("⠋ {}", l))
-            .unwrap_or_else(|| "⠋".to_string());
+        let display_text = self.label.as_ref().map(|l| format!("⠋ {}", l)).unwrap_or_else(|| "⠋".to_string());
 
         let node = bettertui_engine::tree::RenderNode {
             kind: bettertui_engine::tree::NodeKind::Box,
@@ -90,12 +86,7 @@ mod tests {
     use bettertui_engine::tree::{NodeArena, NodeKind, Style};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -117,10 +108,7 @@ mod tests {
 
         let w = SpinnerWidget::new().with_label("Loading...");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some("⠋ Loading..."));
     }
@@ -140,10 +128,7 @@ mod tests {
 
     #[test]
     fn spinner_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = SpinnerWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

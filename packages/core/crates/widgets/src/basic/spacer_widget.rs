@@ -10,9 +10,7 @@ pub struct SpacerWidget {
 
 impl SpacerWidget {
     pub fn new() -> Self {
-        Self {
-            layout: LayoutProps::default(),
-        }
+        Self { layout: LayoutProps::default() }
     }
 
     pub fn with_size(mut self, width: f32, height: f32) -> Self {
@@ -63,12 +61,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -90,10 +83,7 @@ mod tests {
 
         let w = SpacerWidget::new().with_size(5.0, 3.0);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Spacer);
         assert_eq!(node.layout.width, Some(Sizing::Points(5.0)));
         assert_eq!(node.layout.height, Some(Sizing::Points(3.0)));

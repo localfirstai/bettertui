@@ -40,10 +40,7 @@ impl Default for BadgeWidget {
 
 impl BadgeWidget {
     pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            ..Default::default()
-        }
+        Self { content: content.into(), ..Default::default() }
     }
 
     pub fn success(content: impl Into<Box<str>>) -> Self {
@@ -166,12 +163,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -193,10 +185,7 @@ mod tests {
 
         let w = BadgeWidget::new("5");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some(" 5 "));
     }

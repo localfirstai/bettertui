@@ -2,9 +2,7 @@ use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
-use bettertui_engine::ansi::{
-    CsiCommand, CursorMovement, EraseMode, ForegroundColor, ParserEvent, SgrAttribute,
-};
+use bettertui_engine::ansi::{CsiCommand, CursorMovement, EraseMode, ForegroundColor, ParserEvent, SgrAttribute};
 use bettertui_engine::framebuffer::Cell;
 use bettertui_terminal::ScrollbackBuffer;
 use bettertui_terminal::{Cursor, CursorState, ScreenState, Terminal, TerminalMode, VtMachine};
@@ -26,9 +24,7 @@ fn make_scrollback(capacity: usize) -> ScrollbackBuffer {
 }
 
 fn make_csi_position(col: u32, row: u32) -> ParserEvent {
-    ParserEvent::Csi(CsiCommand::CursorMovement(CursorMovement::Position(
-        col, row,
-    )))
+    ParserEvent::Csi(CsiCommand::CursorMovement(CursorMovement::Position(col, row)))
 }
 
 fn make_csi_sgr(fg: ForegroundColor) -> ParserEvent {
@@ -274,10 +270,7 @@ fn bench_scrollback(c: &mut Criterion) {
 
     group.bench_function("push_line_small", |b| {
         let mut sb = ScrollbackBuffer::new();
-        let cells: Vec<Cell> = b"Hello, World!"
-            .iter()
-            .map(|&b| Cell::new(b as char))
-            .collect();
+        let cells: Vec<Cell> = b"Hello, World!".iter().map(|&b| Cell::new(b as char)).collect();
         b.iter(|| {
             sb.push_line(cells.clone(), 80, true);
             black_box(sb.len());

@@ -164,10 +164,7 @@ impl ComposerState {
             let prev_line = lines[current_line_idx - 1];
             let current_col = before.lines().last().map_or(0, |l| l.len());
             let new_col = current_col.min(prev_line.len());
-            let offset: usize = lines[..current_line_idx - 1]
-                .iter()
-                .map(|l| l.len() + 1)
-                .sum();
+            let offset: usize = lines[..current_line_idx - 1].iter().map(|l| l.len() + 1).sum();
             self.cursor = offset + new_col;
         }
         self.clear_selection();
@@ -314,12 +311,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]

@@ -65,9 +65,7 @@ impl<'a> Parser<'a> {
             self.parse_task_list()
         } else if trimmed.starts_with("- ") || trimmed.starts_with("* ") {
             self.parse_list(false)
-        } else if trimmed.chars().next().is_some_and(|c| c.is_ascii_digit())
-            && trimmed.contains(". ")
-        {
+        } else if trimmed.chars().next().is_some_and(|c| c.is_ascii_digit()) && trimmed.contains(". ") {
             self.parse_list(true)
         } else if trimmed == "---" || trimmed == "***" || trimmed == "___" {
             self.advance();
@@ -84,10 +82,7 @@ impl<'a> Parser<'a> {
         let content = line.trim_start_matches('#');
         let content = content.trim();
         self.advance();
-        Some(MarkdownNode::Heading {
-            level,
-            content: parse_inline(content),
-        })
+        Some(MarkdownNode::Heading { level, content: parse_inline(content) })
     }
 
     fn parse_paragraph(&mut self) -> Option<MarkdownNode> {
@@ -128,11 +123,7 @@ impl<'a> Parser<'a> {
         let line = self.current_line()?;
         let language = if line.len() > 3 {
             let lang = line[3..].trim();
-            if lang.is_empty() {
-                None
-            } else {
-                Some(Box::from(lang))
-            }
+            if lang.is_empty() { None } else { Some(Box::from(lang)) }
         } else {
             None
         };
@@ -150,10 +141,7 @@ impl<'a> Parser<'a> {
         }
 
         let code = code_lines.join("\n");
-        Some(MarkdownNode::CodeBlock {
-            language,
-            code: Box::from(code),
-        })
+        Some(MarkdownNode::CodeBlock { language, code: Box::from(code) })
     }
 
     fn parse_blockquote(&mut self) -> Option<MarkdownNode> {
@@ -205,10 +193,7 @@ impl<'a> Parser<'a> {
                     }
                 }
 
-                items.push(ListItem {
-                    content: content_nodes,
-                    children,
-                });
+                items.push(ListItem { content: content_nodes, children });
             } else {
                 break;
             }
@@ -241,10 +226,7 @@ impl<'a> Parser<'a> {
                 break;
             };
 
-            items.push(TaskItem {
-                checked,
-                content: parse_inline(content_start),
-            });
+            items.push(TaskItem { checked, content: parse_inline(content_start) });
             self.advance();
         }
         Some(MarkdownNode::TaskList(items))
@@ -276,12 +258,7 @@ impl<'a> Parser<'a> {
 }
 
 fn parse_table_row(line: &str) -> Vec<Vec<InlineNode>> {
-    line.trim()
-        .trim_start_matches('|')
-        .trim_end_matches('|')
-        .split('|')
-        .map(|cell| parse_inline(cell.trim()))
-        .collect()
+    line.trim().trim_start_matches('|').trim_end_matches('|').split('|').map(|cell| parse_inline(cell.trim())).collect()
 }
 
 pub fn parse_inline(text: &str) -> Vec<InlineNode> {
@@ -293,9 +270,7 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
         match ch {
             '*' | '_' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
-                        &mut current_text,
-                    ))));
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(&mut current_text))));
                 }
                 let next = chars.peek().copied();
                 if next == Some(ch) {
@@ -309,9 +284,7 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
             }
             '~' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
-                        &mut current_text,
-                    ))));
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(&mut current_text))));
                 }
                 if chars.peek() == Some(&'~') {
                     chars.next();
@@ -323,27 +296,20 @@ pub fn parse_inline(text: &str) -> Vec<InlineNode> {
             }
             '`' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
-                        &mut current_text,
-                    ))));
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(&mut current_text))));
                 }
                 let code_text = collect_until(&mut chars, &['`']);
                 nodes.push(InlineNode::Code(Box::from(code_text)));
             }
             '[' => {
                 if !current_text.is_empty() {
-                    nodes.push(InlineNode::Text(Box::from(std::mem::take(
-                        &mut current_text,
-                    ))));
+                    nodes.push(InlineNode::Text(Box::from(std::mem::take(&mut current_text))));
                 }
                 let link_text = collect_until(&mut chars, &[']']);
                 if chars.peek() == Some(&'(') {
                     chars.next();
                     let url = collect_until(&mut chars, &[')']);
-                    nodes.push(InlineNode::Link {
-                        text: Box::from(link_text),
-                        url: Box::from(url),
-                    });
+                    nodes.push(InlineNode::Link { text: Box::from(link_text), url: Box::from(url) });
                 } else {
                     current_text.push('[');
                     current_text.push_str(&link_text);

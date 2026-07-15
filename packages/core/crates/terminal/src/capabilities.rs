@@ -40,9 +40,7 @@ impl TerminalBrand {
             return Self::Kitty;
         }
 
-        if env::var("WEZTERM_PANE").is_ok()
-            || env::var("TERM_PROGRAM").is_ok_and(|v| v == "WezTerm")
-        {
+        if env::var("WEZTERM_PANE").is_ok() || env::var("TERM_PROGRAM").is_ok_and(|v| v == "WezTerm") {
             return Self::WezTerm;
         }
 
@@ -123,10 +121,7 @@ impl ClipboardCapabilities {
         let is_wezterm = env::var("WEZTERM_PANE").is_ok();
         let is_tmux = env::var("TMUX").is_ok();
 
-        Self {
-            osc52: is_kitty || is_ghostty || is_wezterm || is_tmux,
-            osc8: is_kitty || is_ghostty || is_wezterm,
-        }
+        Self { osc52: is_kitty || is_ghostty || is_wezterm || is_tmux, osc8: is_kitty || is_ghostty || is_wezterm }
     }
 
     pub fn supports_osc52(&self) -> bool {
@@ -237,16 +232,10 @@ impl CapabilityDetector {
     pub fn update_from_queries(&mut self, results: &[QueryResult]) {
         for result in results {
             match result {
-                QueryResult::DeviceAttributes {
-                    terminal_type,
-                    attributes,
-                } => {
+                QueryResult::DeviceAttributes { terminal_type, attributes } => {
                     self.features.da1_attributes = attributes.clone();
                     self.features.da1_attributes.insert(0, *terminal_type);
-                    if attributes.contains(&4)
-                        || attributes.contains(&22)
-                        || attributes.contains(&28)
-                    {
+                    if attributes.contains(&4) || attributes.contains(&22) || attributes.contains(&28) {
                         self.features.true_color = true;
                         self.render.true_color = true;
                         self.render.color_support = ColorSupport::TrueColor;
@@ -257,11 +246,7 @@ impl CapabilityDetector {
                     }
                     self.query_origin = QueryOrigin::Confirmed;
                 }
-                QueryResult::SecondaryDeviceAttributes {
-                    model,
-                    firmware_major: _,
-                    firmware_minor: _,
-                } => {
+                QueryResult::SecondaryDeviceAttributes { model, firmware_major: _, firmware_minor: _ } => {
                     self.features.da2_model = *model;
                     let detected_brand = brand_from_da2_model(*model);
                     if detected_brand != TerminalBrand::Unknown {
@@ -850,11 +835,7 @@ impl UnicodeCapabilities {
         Self {
             unicode_version,
             emoji_support,
-            emoji_width: if emoji_support {
-                EmojiWidth::DoubleWidth
-            } else {
-                EmojiWidth::SingleWidth
-            },
+            emoji_width: if emoji_support { EmojiWidth::DoubleWidth } else { EmojiWidth::SingleWidth },
             nerd_font_available,
             private_use_area: nerd_font_available,
             cjk_width: CjkWidth::FullWidth,
@@ -937,23 +918,11 @@ impl WindowMetrics {
         let (cell_width, cell_height) = Self::detect_cell_size();
         let dpi = Self::detect_dpi();
 
-        Self {
-            terminal_width,
-            terminal_height,
-            pixel_width,
-            pixel_height,
-            cell_width,
-            cell_height,
-            dpi,
-        }
+        Self { terminal_width, terminal_height, pixel_width, pixel_height, cell_width, cell_height, dpi }
     }
 
     fn detect_terminal_size() -> (u16, u16) {
-        if let Ok((w, h)) = crossterm::terminal::size() {
-            (w, h)
-        } else {
-            (80, 24)
-        }
+        if let Ok((w, h)) = crossterm::terminal::size() { (w, h) } else { (80, 24) }
     }
 
     fn detect_pixel_size() -> (Option<u32>, Option<u32>) {
@@ -1165,11 +1134,7 @@ mod tests {
 
     #[test]
     fn feature_all_input_features() {
-        let f = FeatureMatrix {
-            kitty_keyboard: true,
-            csi_u: true,
-            ..Default::default()
-        };
+        let f = FeatureMatrix { kitty_keyboard: true, csi_u: true, ..Default::default() };
         assert!(f.all_input_features());
         let f2 = FeatureMatrix::default();
         assert!(!f2.all_input_features());
@@ -1177,11 +1142,7 @@ mod tests {
 
     #[test]
     fn feature_all_clipboard_features() {
-        let f = FeatureMatrix {
-            osc52: true,
-            osc8: true,
-            ..Default::default()
-        };
+        let f = FeatureMatrix { osc52: true, osc8: true, ..Default::default() };
         assert!(f.all_clipboard_features());
     }
 
@@ -1189,10 +1150,7 @@ mod tests {
     fn feature_any_advanced_input() {
         let f = FeatureMatrix::default();
         assert!(!f.any_advanced_input());
-        let f2 = FeatureMatrix {
-            kitty_keyboard: true,
-            ..Default::default()
-        };
+        let f2 = FeatureMatrix { kitty_keyboard: true, ..Default::default() };
         assert!(f2.any_advanced_input());
     }
 
@@ -1217,12 +1175,8 @@ mod tests {
 
     #[test]
     fn render_supports_color() {
-        let r = RenderCapabilities {
-            color_support: ColorSupport::TrueColor,
-            true_color: true,
-            rgb: true,
-            palette: true,
-        };
+        let r =
+            RenderCapabilities { color_support: ColorSupport::TrueColor, true_color: true, rgb: true, palette: true };
         assert!(r.supports_color(256));
         assert!(!r.supports_color(16_777_217));
     }
@@ -1290,20 +1244,14 @@ mod tests {
     #[test]
     fn clipboard_capabilities_default_values() {
         // No env vars set
-        let c = ClipboardCapabilities {
-            osc52: false,
-            osc8: false,
-        };
+        let c = ClipboardCapabilities { osc52: false, osc8: false };
         assert!(!c.supports_osc52());
         assert!(!c.supports_osc8());
     }
 
     #[test]
     fn clipboard_capabilities_some_support() {
-        let c = ClipboardCapabilities {
-            osc52: true,
-            osc8: true,
-        };
+        let c = ClipboardCapabilities { osc52: true, osc8: true };
         assert!(c.supports_osc52());
         assert!(c.supports_osc8());
     }
@@ -1328,11 +1276,7 @@ mod tests {
 
     #[test]
     fn graphics_capabilities_no_support_by_default() {
-        let g = GraphicsCapabilities {
-            kitty_graphics: false,
-            sixel: false,
-            iterm_images: false,
-        };
+        let g = GraphicsCapabilities { kitty_graphics: false, sixel: false, iterm_images: false };
         assert!(!g.supports_kitty_graphics());
         assert!(!g.supports_sixel());
         assert!(!g.supports_iterm_images());
@@ -1341,11 +1285,7 @@ mod tests {
 
     #[test]
     fn graphics_capabilities_some_support() {
-        let g = GraphicsCapabilities {
-            kitty_graphics: true,
-            sixel: false,
-            iterm_images: false,
-        };
+        let g = GraphicsCapabilities { kitty_graphics: true, sixel: false, iterm_images: false };
         assert!(g.supports_kitty_graphics());
         assert!(g.has_any_graphics());
     }
@@ -1378,12 +1318,7 @@ mod tests {
 
     #[test]
     fn query_origin_enum_variants() {
-        let origins = [
-            QueryOrigin::EnvOnly,
-            QueryOrigin::Confirmed,
-            QueryOrigin::Inferred,
-            QueryOrigin::Unknown,
-        ];
+        let origins = [QueryOrigin::EnvOnly, QueryOrigin::Confirmed, QueryOrigin::Inferred, QueryOrigin::Unknown];
         assert_eq!(origins.len(), 4);
     }
 
@@ -1418,15 +1353,8 @@ mod tests {
     fn detector_update_from_queries() {
         let mut d = CapabilityDetector::detect();
         let results = [
-            QueryResult::DeviceAttributes {
-                terminal_type: 1,
-                attributes: vec![4, 22, 62],
-            },
-            QueryResult::SecondaryDeviceAttributes {
-                model: 18,
-                firmware_major: 0,
-                firmware_minor: 0,
-            },
+            QueryResult::DeviceAttributes { terminal_type: 1, attributes: vec![4, 22, 62] },
+            QueryResult::SecondaryDeviceAttributes { model: 18, firmware_major: 0, firmware_minor: 0 },
         ];
         d.update_from_queries(&results);
         assert!(d.supports_true_color());

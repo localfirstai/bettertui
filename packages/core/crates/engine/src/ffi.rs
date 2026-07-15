@@ -22,9 +22,7 @@ impl Default for FfiEngine {
 
 impl FfiEngine {
     pub fn new() -> Self {
-        Self {
-            inner: Engine::new(),
-        }
+        Self { inner: Engine::new() }
     }
 
     /// Returns a reference to the inner engine.
@@ -151,9 +149,7 @@ pub unsafe extern "C" fn ffi_string_free(s: *mut std::ffi::c_char) {
 ///
 /// # Safety
 /// `handle` must be a valid pointer returned by `ffi_engine_create`.
-pub unsafe extern "C" fn ffi_engine_tree_summary(
-    handle: *const FfiEngine,
-) -> *mut std::ffi::c_char {
+pub unsafe extern "C" fn ffi_engine_tree_summary(handle: *const FfiEngine) -> *mut std::ffi::c_char {
     if handle.is_null() {
         return std::ptr::null_mut();
     }
@@ -218,14 +214,7 @@ mod filesystem {
         /// Creates a new file entry.
         pub fn new(name: impl Into<String>, path: PathBuf, entry_type: EntryType) -> Self {
             let name_str: String = name.into();
-            Self {
-                hidden: name_str.starts_with('.'),
-                name: name_str,
-                path,
-                entry_type,
-                size: 0,
-                expanded: false,
-            }
+            Self { hidden: name_str.starts_with('.'), name: name_str, path, entry_type, size: 0, expanded: false }
         }
 
         /// Returns true if this is a directory.

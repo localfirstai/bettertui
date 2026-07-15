@@ -26,10 +26,7 @@ pub struct TabItem {
 
 impl TabItem {
     pub fn new(label: impl Into<Box<str>>) -> Self {
-        Self {
-            label: label.into(),
-            id: None,
-        }
+        Self { label: label.into(), id: None }
     }
 
     pub fn with_id(mut self, id: impl Into<Box<str>>) -> Self {
@@ -92,13 +89,7 @@ impl Widget for TabsWidget {
             .tabs
             .iter()
             .enumerate()
-            .map(|(i, tab)| {
-                if i == self.active_index {
-                    format!("[{}]", tab.label)
-                } else {
-                    format!(" {}", tab.label)
-                }
-            })
+            .map(|(i, tab)| if i == self.active_index { format!("[{}]", tab.label) } else { format!(" {}", tab.label) })
             .collect::<Vec<_>>()
             .join(" ");
 
@@ -166,12 +157,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -191,17 +177,10 @@ mod tests {
             theme: &theme,
         };
 
-        let tabs = vec![
-            TabItem::new("Tab 1"),
-            TabItem::new("Tab 2"),
-            TabItem::new("Tab 3"),
-        ];
+        let tabs = vec![TabItem::new("Tab 1"), TabItem::new("Tab 2"), TabItem::new("Tab 3")];
         let w = TabsWidget::new().with_tabs(tabs);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Tab);
     }
 
@@ -216,13 +195,7 @@ mod tests {
     fn tabs_widget_active_tab() {
         let tabs = vec![TabItem::new("Tab 1"), TabItem::new("Tab 2")];
         let w = TabsWidget::new().with_tabs(tabs).with_active(1);
-        assert_eq!(
-            w.active_tab()
-                .expect("Node missing from arena")
-                .label
-                .as_ref(),
-            "Tab 2"
-        );
+        assert_eq!(w.active_tab().expect("Node missing from arena").label.as_ref(), "Tab 2");
     }
 
     #[test]

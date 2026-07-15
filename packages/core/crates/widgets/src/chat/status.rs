@@ -18,26 +18,11 @@ pub struct StatusBar {
 impl Default for StatusBar {
     fn default() -> Self {
         Self {
-            style: Style {
-                fg: Some(Color::rgb(200, 200, 200)),
-                ..Style::default()
-            },
-            idle_style: Style {
-                fg: Some(Color::rgb(100, 200, 100)),
-                ..Style::default()
-            },
-            thinking_style: Style {
-                fg: Some(Color::rgb(200, 200, 100)),
-                ..Style::default()
-            },
-            streaming_style: Style {
-                fg: Some(Color::rgb(100, 200, 255)),
-                ..Style::default()
-            },
-            error_style: Style {
-                fg: Some(Color::rgb(255, 100, 100)),
-                ..Style::default()
-            },
+            style: Style { fg: Some(Color::rgb(200, 200, 200)), ..Style::default() },
+            idle_style: Style { fg: Some(Color::rgb(100, 200, 100)), ..Style::default() },
+            thinking_style: Style { fg: Some(Color::rgb(200, 200, 100)), ..Style::default() },
+            streaming_style: Style { fg: Some(Color::rgb(100, 200, 255)), ..Style::default() },
+            error_style: Style { fg: Some(Color::rgb(255, 100, 100)), ..Style::default() },
         }
     }
 }
@@ -72,11 +57,7 @@ impl StatusBar {
         let text = if state.messages.is_empty() {
             "No messages".to_string()
         } else {
-            format!(
-                "Position: {}/{}",
-                state.scroll_offset + 1,
-                state.messages.len()
-            )
+            format!("Position: {}/{}", state.scroll_offset + 1, state.messages.len())
         };
 
         let id = ctx.make_text(text.as_str(), self.style);
@@ -107,13 +88,7 @@ pub struct ThinkingIndicator {
 
 impl Default for ThinkingIndicator {
     fn default() -> Self {
-        Self {
-            style: Style {
-                fg: Some(Color::rgb(200, 200, 100)),
-                ..Style::default()
-            },
-            dots: 3,
-        }
+        Self { style: Style { fg: Some(Color::rgb(200, 200, 100)), ..Style::default() }, dots: 3 }
     }
 }
 
@@ -160,12 +135,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]

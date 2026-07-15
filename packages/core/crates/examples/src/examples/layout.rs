@@ -23,12 +23,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let title = engine.create_node(NodeKind::Text);
     engine.set_text(title, "Layout: Flexbox with Nested Containers");
-    engine.set_style(
-        title,
-        Style::new()
-            .fg(Color::Named(NamedColor::BrightWhite))
-            .bold(true),
-    );
+    engine.set_style(title, Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
     engine.append_child(root, title).unwrap();
 
     let spacer = engine.create_node(NodeKind::Text);
@@ -61,13 +56,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     engine.append_child(root, section2).unwrap();
 
     let row_container = engine.create_node(NodeKind::Flex);
-    engine.set_layout(
-        row_container,
-        LayoutProps {
-            direction: FlexDirection::Row,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(row_container, LayoutProps { direction: FlexDirection::Row, ..LayoutProps::default() });
     engine.append_child(root, row_container).unwrap();
 
     for (text, bg, fg) in [
@@ -93,50 +82,28 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     let outer = engine.create_node(NodeKind::Flex);
     engine.set_layout(
         outer,
-        LayoutProps {
-            direction: FlexDirection::Row,
-            width: Some(Sizing::Points(60.0)),
-            ..LayoutProps::default()
-        },
+        LayoutProps { direction: FlexDirection::Row, width: Some(Sizing::Points(60.0)), ..LayoutProps::default() },
     );
     engine.append_child(root, outer).unwrap();
 
     let left = engine.create_node(NodeKind::Box);
-    engine.set_layout(
-        left,
-        LayoutProps {
-            flex_grow: 1.0,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(left, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
     engine.set_style(left, Style::new().bg(Color::rgb(30, 30, 50)));
     engine.append_child(outer, left).unwrap();
 
     let left_text = engine.create_node(NodeKind::Text);
     engine.set_text(left_text, "  Left (1x)  ");
-    engine.set_style(
-        left_text,
-        Style::new().fg(Color::Named(NamedColor::BrightWhite)),
-    );
+    engine.set_style(left_text, Style::new().fg(Color::Named(NamedColor::BrightWhite)));
     engine.append_child(left, left_text).unwrap();
 
     let right = engine.create_node(NodeKind::Box);
-    engine.set_layout(
-        right,
-        LayoutProps {
-            flex_grow: 2.0,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(right, LayoutProps { flex_grow: 2.0, ..LayoutProps::default() });
     engine.set_style(right, Style::new().bg(Color::rgb(50, 30, 30)));
     engine.append_child(outer, right).unwrap();
 
     let right_text = engine.create_node(NodeKind::Text);
     engine.set_text(right_text, "  Right (2x)  ");
-    engine.set_style(
-        right_text,
-        Style::new().fg(Color::Named(NamedColor::BrightWhite)),
-    );
+    engine.set_style(right_text, Style::new().fg(Color::Named(NamedColor::BrightWhite)));
     engine.append_child(right, right_text).unwrap();
 
     let spacer4 = engine.create_node(NodeKind::Text);
@@ -145,14 +112,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let hint = engine.create_node(NodeKind::Text);
     engine.set_text(hint, "Press any key to return to menu...");
-    engine.set_style(
-        hint,
-        Style {
-            fg: Some(Color::Named(NamedColor::BrightBlack)),
-            dim: Some(true),
-            ..Style::new()
-        },
-    );
+    engine.set_style(hint, Style { fg: Some(Color::Named(NamedColor::BrightBlack)), dim: Some(true), ..Style::new() });
     engine.append_child(root, hint).unwrap();
 
     engine.begin_frame();

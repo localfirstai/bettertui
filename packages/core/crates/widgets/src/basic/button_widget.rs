@@ -45,10 +45,7 @@ impl Default for ButtonWidget {
 
 impl ButtonWidget {
     pub fn new(label: impl Into<Box<str>>) -> Self {
-        Self {
-            label: label.into(),
-            ..Default::default()
-        }
+        Self { label: label.into(), ..Default::default() }
     }
 
     pub fn primary(label: impl Into<Box<str>>) -> Self {
@@ -80,11 +77,7 @@ impl ButtonWidget {
     }
 
     pub fn ghost(label: impl Into<Box<str>>) -> Self {
-        Self {
-            label: label.into(),
-            variant: ButtonVariant::Ghost,
-            ..Default::default()
-        }
+        Self { label: label.into(), variant: ButtonVariant::Ghost, ..Default::default() }
     }
 
     pub fn with_variant(mut self, variant: ButtonVariant) -> Self {
@@ -161,12 +154,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -201,10 +189,7 @@ mod tests {
 
         let w = ButtonWidget::new("Click");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some("Click"));
     }

@@ -52,12 +52,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -79,29 +74,20 @@ mod tests {
 
         let w = BoxWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, bettertui_engine::tree::NodeKind::Box);
     }
 
     #[test]
     fn box_widget_with_layout() {
-        let layout = LayoutProps {
-            width: Some(Sizing::Points(20.0)),
-            ..Default::default()
-        };
+        let layout = LayoutProps { width: Some(Sizing::Points(20.0)), ..Default::default() };
         let w = BoxWidget::new().with_layout(layout);
         assert_eq!(w.layout.width, Some(Sizing::Points(20.0)));
     }
 
     #[test]
     fn box_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = BoxWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

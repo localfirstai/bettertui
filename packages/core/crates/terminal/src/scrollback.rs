@@ -17,19 +17,11 @@ pub struct ScrollbackLine {
 
 impl ScrollbackLine {
     pub fn new(width: u16) -> Self {
-        Self {
-            cells: Vec::with_capacity(width as usize),
-            line_width: width,
-            is_wrapped: false,
-        }
+        Self { cells: Vec::with_capacity(width as usize), line_width: width, is_wrapped: false }
     }
 
     pub fn with_cells(cells: Vec<Cell>, width: u16, wrapped: bool) -> Self {
-        Self {
-            cells,
-            line_width: width,
-            is_wrapped: wrapped,
-        }
+        Self { cells, line_width: width, is_wrapped: wrapped }
     }
 
     pub fn len(&self) -> usize {
@@ -43,11 +35,7 @@ impl ScrollbackLine {
     /// Returns a reference to the cell at `col`, or `None` if out of range.
     pub fn cell(&self, col: u16) -> Option<&Cell> {
         let idx = col as usize;
-        if idx < self.cells.len() {
-            Some(&self.cells[idx])
-        } else {
-            None
-        }
+        if idx < self.cells.len() { Some(&self.cells[idx]) } else { None }
     }
 
     /// Returns the reconstructed text content of this line.
@@ -91,27 +79,15 @@ impl Default for ScrollbackBuffer {
 
 impl ScrollbackBuffer {
     pub fn new() -> Self {
-        Self {
-            lines: Vec::with_capacity(1024),
-            max_lines: DEFAULT_SCROLLBACK_LINES,
-            current_width: 80,
-        }
+        Self { lines: Vec::with_capacity(1024), max_lines: DEFAULT_SCROLLBACK_LINES, current_width: 80 }
     }
 
     pub fn with_max_lines(max_lines: usize) -> Self {
-        Self {
-            lines: Vec::with_capacity(max_lines.min(1024)),
-            max_lines,
-            current_width: 80,
-        }
+        Self { lines: Vec::with_capacity(max_lines.min(1024)), max_lines, current_width: 80 }
     }
 
     pub fn with_width(width: u16) -> Self {
-        Self {
-            lines: Vec::with_capacity(1024),
-            max_lines: DEFAULT_SCROLLBACK_LINES,
-            current_width: width,
-        }
+        Self { lines: Vec::with_capacity(1024), max_lines: DEFAULT_SCROLLBACK_LINES, current_width: width }
     }
 
     /// Pushes a line into the buffer. If the buffer exceeds `max_lines`,
@@ -155,11 +131,7 @@ impl ScrollbackBuffer {
 
     /// Returns the line at `index` from the bottom (0 = most recent).
     pub fn line(&self, index: usize) -> Option<&ScrollbackLine> {
-        if index < self.lines.len() {
-            Some(&self.lines[self.lines.len() - 1 - index])
-        } else {
-            None
-        }
+        if index < self.lines.len() { Some(&self.lines[self.lines.len() - 1 - index]) } else { None }
     }
 
     /// Returns the line at `index` from the top (0 = oldest).
@@ -191,9 +163,7 @@ impl ScrollbackBuffer {
         let count = count as usize;
         let start = offset as usize;
         let end = (start + count).min(self.lines.len());
-        (start..end)
-            .map(|i| &self.lines[self.lines.len() - 1 - i])
-            .collect()
+        (start..end).map(|i| &self.lines[self.lines.len() - 1 - i]).collect()
     }
 
     /// Iterates over all stored lines from oldest to newest.

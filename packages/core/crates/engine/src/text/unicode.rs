@@ -194,10 +194,7 @@ mod tests {
 
     #[test]
     fn truncate_to_width_cjk() {
-        assert_eq!(
-            truncate_to_width("\u{4e2d}\u{6587}test", 4),
-            "\u{4e2d}\u{6587}"
-        );
+        assert_eq!(truncate_to_width("\u{4e2d}\u{6587}test", 4), "\u{4e2d}\u{6587}");
     }
 
     #[test]

@@ -84,11 +84,7 @@ impl WidgetHost {
         }
     }
 
-    pub fn register(
-        &mut self,
-        kind: &'static str,
-        factory: impl Fn() -> Box<dyn Widget> + Send + Sync + 'static,
-    ) {
+    pub fn register(&mut self, kind: &'static str, factory: impl Fn() -> Box<dyn Widget> + Send + Sync + 'static) {
         debug!(kind, "WidgetHost::register() - registering widget factory");
         self.registry.register(kind, factory);
     }
@@ -107,10 +103,7 @@ impl WidgetHost {
     pub fn unmount(&mut self, widget_id: WidgetId, ctx: &mut WidgetContext) {
         if let Some(&idx) = self.widget_map.get(&widget_id) {
             let kind = self.widgets[idx].kind();
-            debug!(
-                ?widget_id,
-                kind, "WidgetHost::unmount() - unmounting widget"
-            );
+            debug!(?widget_id, kind, "WidgetHost::unmount() - unmounting widget");
             self.widgets[idx].destroy(widget_id, ctx);
             self.tree.remove(widget_id);
             self.widget_map.remove(&widget_id);
@@ -119,20 +112,10 @@ impl WidgetHost {
         }
     }
 
-    pub fn handle_event(
-        &mut self,
-        widget_id: WidgetId,
-        ctx: &mut WidgetContext,
-        event: &Event,
-    ) -> EventResult {
+    pub fn handle_event(&mut self, widget_id: WidgetId, ctx: &mut WidgetContext, event: &Event) -> EventResult {
         if let Some(&idx) = self.widget_map.get(&widget_id) {
             let kind = self.widgets[idx].kind();
-            debug!(
-                ?widget_id,
-                kind,
-                ?event,
-                "WidgetHost::handle_event() - dispatching event"
-            );
+            debug!(?widget_id, kind, ?event, "WidgetHost::handle_event() - dispatching event");
             self.widgets[idx].handle_event(widget_id, ctx, event)
         } else {
             warn!(?widget_id, "WidgetHost::handle_event() - widget not found");
@@ -180,10 +163,8 @@ mod tests {
         }
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-            let id = ctx.make_box(
-                bettertui_engine::taffy::LayoutProps::default(),
-                bettertui_engine::tree::Style::default(),
-            );
+            let id =
+                ctx.make_box(bettertui_engine::taffy::LayoutProps::default(), bettertui_engine::tree::Style::default());
             WidgetId(id)
         }
     }
@@ -198,19 +179,12 @@ mod tests {
         }
 
         fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-            let id = ctx.make_box(
-                bettertui_engine::taffy::LayoutProps::default(),
-                bettertui_engine::tree::Style::default(),
-            );
+            let id =
+                ctx.make_box(bettertui_engine::taffy::LayoutProps::default(), bettertui_engine::tree::Style::default());
             WidgetId(id)
         }
 
-        fn handle_event(
-            &self,
-            _id: WidgetId,
-            _ctx: &mut WidgetContext,
-            event: &Event,
-        ) -> EventResult {
+        fn handle_event(&self, _id: WidgetId, _ctx: &mut WidgetContext, event: &Event) -> EventResult {
             let name = match event {
                 Event::Key(_) => "key",
                 Event::Mouse(_) => "mouse",
@@ -222,13 +196,7 @@ mod tests {
     }
 
     fn make_host() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            WidgetHost::new(),
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (WidgetHost::new(), NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -282,15 +250,11 @@ mod tests {
         };
 
         let last = std::sync::Arc::new(std::sync::Mutex::new(None));
-        let widget = EventCaptureWidget {
-            last_event: last.clone(),
-        };
+        let widget = EventCaptureWidget { last_event: last.clone() };
         let wid = host.mount(Box::new(widget), &mut ctx);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            bettertui_engine::input::Key::Enter,
-            wid.node_id(),
-        ));
+        let event =
+            Event::Key(bettertui_engine::input::KeyEvent::new(bettertui_engine::input::Key::Enter, wid.node_id()));
         let result = host.handle_event(wid, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
         assert_eq!(last.lock().unwrap().as_deref(), Some("key"));

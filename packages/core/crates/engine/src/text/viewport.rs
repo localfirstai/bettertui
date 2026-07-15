@@ -72,11 +72,7 @@ pub fn layout_text(text: &str, config: &ViewportConfig) -> TextViewport {
         }
         lines
     } else {
-        vec![WrappedLine {
-            byte_offset: 0,
-            byte_len: text.len(),
-            visual_width: unicode::display_width(text) as u16,
-        }]
+        vec![WrappedLine { byte_offset: 0, byte_len: text.len(), visual_width: unicode::display_width(text) as u16 }]
     };
 
     let mut lines = Vec::new();
@@ -122,21 +118,12 @@ pub fn layout_text(text: &str, config: &ViewportConfig) -> TextViewport {
         } else {
             unicode::display_width(&line_text) as u16
         };
-        lines.push(ViewportLine {
-            text: line_text,
-            x: x_offset,
-            y: config.pad_top + total_height,
-            width: display_w,
-        });
+        lines.push(ViewportLine { text: line_text, x: x_offset, y: config.pad_top + total_height, width: display_w });
         max_line_width = max_line_width.max(x_offset + display_w);
         total_height += 1;
     }
 
-    TextViewport {
-        lines,
-        total_height,
-        max_line_width,
-    }
+    TextViewport { lines, total_height, max_line_width }
 }
 
 #[allow(dead_code)]
@@ -155,11 +142,7 @@ mod tests {
 
     #[test]
     fn layout_left_aligned() {
-        let config = ViewportConfig {
-            align: TextAlign::Left,
-            max_width: 80,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { align: TextAlign::Left, max_width: 80, ..ViewportConfig::default() };
         let layout = layout_text("hello world", &config);
         assert_eq!(layout.lines.len(), 1);
         assert_eq!(layout.lines[0].x, 0);
@@ -168,44 +151,28 @@ mod tests {
 
     #[test]
     fn layout_center_aligned() {
-        let config = ViewportConfig {
-            align: TextAlign::Center,
-            max_width: 20,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { align: TextAlign::Center, max_width: 20, ..ViewportConfig::default() };
         let layout = layout_text("hello", &config);
         assert_eq!(layout.lines[0].x, 7);
     }
 
     #[test]
     fn layout_right_aligned() {
-        let config = ViewportConfig {
-            align: TextAlign::Right,
-            max_width: 20,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { align: TextAlign::Right, max_width: 20, ..ViewportConfig::default() };
         let layout = layout_text("hello", &config);
         assert_eq!(layout.lines[0].x, 15);
     }
 
     #[test]
     fn layout_with_wrap() {
-        let config = ViewportConfig {
-            wrap: true,
-            max_width: 10,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { wrap: true, max_width: 10, ..ViewportConfig::default() };
         let layout = layout_text("hello world foo bar", &config);
         assert!(layout.lines.len() > 1);
     }
 
     #[test]
     fn layout_with_ellipsis() {
-        let config = ViewportConfig {
-            ellipsis: true,
-            max_width: 5,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { ellipsis: true, max_width: 5, ..ViewportConfig::default() };
         let layout = layout_text("hello world", &config);
         assert_eq!(layout.lines.len(), 1);
         assert!(layout.lines[0].text.contains('\u{2026}'));
@@ -213,24 +180,14 @@ mod tests {
 
     #[test]
     fn layout_max_height() {
-        let config = ViewportConfig {
-            wrap: true,
-            max_width: 5,
-            max_height: 2,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { wrap: true, max_width: 5, max_height: 2, ..ViewportConfig::default() };
         let layout = layout_text("abcdefghijklmnop", &config);
         assert!(layout.lines.len() <= 2);
     }
 
     #[test]
     fn layout_padding() {
-        let config = ViewportConfig {
-            pad_left: 2,
-            pad_top: 1,
-            max_width: 80,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { pad_left: 2, pad_top: 1, max_width: 80, ..ViewportConfig::default() };
         let layout = layout_text("hello\nworld", &config);
         assert_eq!(layout.lines[0].x, 2);
         assert_eq!(layout.lines[0].y, 1);
@@ -239,10 +196,7 @@ mod tests {
 
     #[test]
     fn layout_newlines_no_wrap() {
-        let config = ViewportConfig {
-            max_width: 80,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { max_width: 80, ..ViewportConfig::default() };
         let layout = layout_text("hello\nworld", &config);
         assert_eq!(layout.lines.len(), 2);
     }
@@ -256,11 +210,7 @@ mod tests {
 
     #[test]
     fn layout_max_width_respected() {
-        let config = ViewportConfig {
-            wrap: true,
-            max_width: 8,
-            ..ViewportConfig::default()
-        };
+        let config = ViewportConfig { wrap: true, max_width: 8, ..ViewportConfig::default() };
         let layout = layout_text("hello world foo bar baz qux", &config);
         for line in &layout.lines {
             assert!(unicode::display_width(&line.text) <= 8);

@@ -25,42 +25,18 @@ impl Default for MarkdownRenderer {
     fn default() -> Self {
         Self {
             base_style: Style::default(),
-            heading_style: Style {
-                fg: Some(Color::rgb(100, 200, 255)),
-                bold: Some(true),
-                ..Style::default()
-            },
-            bold_style: Style {
-                bold: Some(true),
-                ..Style::default()
-            },
-            italic_style: Style {
-                italic: Some(true),
-                ..Style::default()
-            },
-            code_style: Style {
-                fg: Some(Color::rgb(200, 150, 255)),
-                ..Style::default()
-            },
+            heading_style: Style { fg: Some(Color::rgb(100, 200, 255)), bold: Some(true), ..Style::default() },
+            bold_style: Style { bold: Some(true), ..Style::default() },
+            italic_style: Style { italic: Some(true), ..Style::default() },
+            code_style: Style { fg: Some(Color::rgb(200, 150, 255)), ..Style::default() },
             code_block_style: Style {
                 fg: Some(Color::rgb(200, 200, 200)),
                 bg: Some(Color::rgb(30, 30, 40)),
                 ..Style::default()
             },
-            link_style: Style {
-                underline: Some(true),
-                fg: Some(Color::rgb(100, 180, 255)),
-                ..Style::default()
-            },
-            quote_style: Style {
-                italic: Some(true),
-                fg: Some(Color::rgb(150, 150, 150)),
-                ..Style::default()
-            },
-            rule_style: Style {
-                fg: Some(Color::rgb(80, 80, 80)),
-                ..Style::default()
-            },
+            link_style: Style { underline: Some(true), fg: Some(Color::rgb(100, 180, 255)), ..Style::default() },
+            quote_style: Style { italic: Some(true), fg: Some(Color::rgb(150, 150, 150)), ..Style::default() },
+            rule_style: Style { fg: Some(Color::rgb(80, 80, 80)), ..Style::default() },
             indent: 0,
         }
     }
@@ -88,10 +64,7 @@ impl MarkdownRenderer {
             return WidgetId(children[0]);
         }
 
-        let layout = LayoutProps {
-            direction: FlexDirection::Column,
-            ..Default::default()
-        };
+        let layout = LayoutProps { direction: FlexDirection::Column, ..Default::default() };
         let flex_id = ctx.make_flex(layout, self.base_style);
         for child in children {
             ctx.append_child(flex_id, child);
@@ -103,28 +76,11 @@ impl MarkdownRenderer {
         match node {
             MarkdownNode::Heading { level, content } => {
                 let style = match level {
-                    1 => Style {
-                        fg: Some(Color::rgb(80, 180, 255)),
-                        bold: Some(true),
-                        ..Style::default()
-                    },
-                    2 => Style {
-                        fg: Some(Color::rgb(100, 200, 255)),
-                        bold: Some(true),
-                        ..Style::default()
-                    },
-                    3 => Style {
-                        fg: Some(Color::rgb(120, 210, 255)),
-                        ..Style::default()
-                    },
-                    4 => Style {
-                        fg: Some(Color::rgb(140, 220, 255)),
-                        ..Style::default()
-                    },
-                    _ => Style {
-                        fg: Some(Color::rgb(160, 230, 255)),
-                        ..Style::default()
-                    },
+                    1 => Style { fg: Some(Color::rgb(80, 180, 255)), bold: Some(true), ..Style::default() },
+                    2 => Style { fg: Some(Color::rgb(100, 200, 255)), bold: Some(true), ..Style::default() },
+                    3 => Style { fg: Some(Color::rgb(120, 210, 255)), ..Style::default() },
+                    4 => Style { fg: Some(Color::rgb(140, 220, 255)), ..Style::default() },
+                    _ => Style { fg: Some(Color::rgb(160, 230, 255)), ..Style::default() },
                 };
                 let text = self.render_inline(content);
                 Some(ctx.make_text(text.as_str(), style))
@@ -144,10 +100,7 @@ impl MarkdownRenderer {
                 if children.len() == 1 {
                     return Some(children[0]);
                 }
-                let layout = LayoutProps {
-                    direction: FlexDirection::Column,
-                    ..Default::default()
-                };
+                let layout = LayoutProps { direction: FlexDirection::Column, ..Default::default() };
                 let flex_id = ctx.make_flex(layout, self.base_style);
                 for child in children {
                     ctx.append_child(flex_id, child);
@@ -167,10 +120,7 @@ impl MarkdownRenderer {
                 if rendered.len() == 1 {
                     return Some(rendered[0]);
                 }
-                let layout = LayoutProps {
-                    direction: FlexDirection::Column,
-                    ..Default::default()
-                };
+                let layout = LayoutProps { direction: FlexDirection::Column, ..Default::default() };
                 let flex_id = ctx.make_flex(layout, self.base_style);
                 for child in rendered {
                     ctx.append_child(flex_id, child);
@@ -183,36 +133,26 @@ impl MarkdownRenderer {
                 {
                     // Try syntax highlighting
                     let lines = {
-                        let mut hl = global_highlighter()
-                            .lock()
-                            .unwrap_or_else(|e| e.into_inner());
+                        let mut hl = global_highlighter().lock().unwrap_or_else(|e| e.into_inner());
                         hl.highlight(code, lang.as_ref())
                     };
 
                     if let Some(lines) = lines {
-                        let layout = LayoutProps {
-                            direction: FlexDirection::Column,
-                            ..LayoutProps::default()
-                        };
+                        let layout = LayoutProps { direction: FlexDirection::Column, ..LayoutProps::default() };
                         let flex_id = ctx.make_flex(layout, self.code_block_style);
 
                         for line in &lines {
                             if line.segments.len() <= 1 {
-                                let style = merge_with_base(
-                                    line.segments.first().map(|s| &s.style),
-                                    &self.code_block_style,
-                                );
+                                let style =
+                                    merge_with_base(line.segments.first().map(|s| &s.style), &self.code_block_style);
                                 let tid = ctx.make_text(line.text(), style);
                                 ctx.append_child(flex_id, tid);
                             } else {
-                                let row_layout = LayoutProps {
-                                    direction: FlexDirection::Row,
-                                    ..LayoutProps::default()
-                                };
+                                let row_layout =
+                                    LayoutProps { direction: FlexDirection::Row, ..LayoutProps::default() };
                                 let row_id = ctx.make_flex(row_layout, self.code_block_style);
                                 for seg in &line.segments {
-                                    let seg_style =
-                                        merge_with_base(Some(&seg.style), &self.code_block_style);
+                                    let seg_style = merge_with_base(Some(&seg.style), &self.code_block_style);
                                     let tid = ctx.make_text(seg.text.as_str(), seg_style);
                                     ctx.append_child(row_id, tid);
                                 }
@@ -243,12 +183,7 @@ impl MarkdownRenderer {
                 for row in rows {
                     let cells: Vec<String> = row
                         .iter()
-                        .map(|c| {
-                            c.iter()
-                                .map(|n| n.text_content().to_string())
-                                .collect::<Vec<_>>()
-                                .join("")
-                        })
+                        .map(|c| c.iter().map(|n| n.text_content().to_string()).collect::<Vec<_>>().join(""))
                         .collect();
                     let cell_refs: Vec<&str> = cells.iter().map(|s| s.as_str()).collect();
                     text.push_str(&cell_refs.join(" | "));
@@ -270,10 +205,7 @@ impl MarkdownRenderer {
                 if children.len() == 1 {
                     return Some(children[0]);
                 }
-                let layout = LayoutProps {
-                    direction: FlexDirection::Column,
-                    ..Default::default()
-                };
+                let layout = LayoutProps { direction: FlexDirection::Column, ..Default::default() };
                 let flex_id = ctx.make_flex(layout, self.base_style);
                 for child in children {
                     ctx.append_child(flex_id, child);
@@ -345,12 +277,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -376,9 +303,7 @@ mod tests {
 
     #[test]
     fn render_paragraph() {
-        let nodes = vec![MarkdownNode::Paragraph(vec![InlineNode::Text(
-            "Hello".into(),
-        )])];
+        let nodes = vec![MarkdownNode::Paragraph(vec![InlineNode::Text("Hello".into())])];
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let mut ctx = WidgetContext {
             arena: &mut arena,
@@ -411,10 +336,7 @@ mod tests {
     #[test]
     fn render_inline_link() {
         let renderer = MarkdownRenderer::new();
-        let nodes = vec![InlineNode::Link {
-            text: "click".into(),
-            url: "https://example.com".into(),
-        }];
+        let nodes = vec![InlineNode::Link { text: "click".into(), url: "https://example.com".into() }];
         let result = renderer.render_inline(&nodes);
         assert_eq!(result, "click (https://example.com)");
     }

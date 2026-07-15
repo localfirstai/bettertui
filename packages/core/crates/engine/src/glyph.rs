@@ -331,11 +331,7 @@ pub struct MetricsCache {
 
 impl MetricsCache {
     pub fn new(max_bytes: usize) -> Self {
-        Self {
-            metrics: HashMap::new(),
-            total_bytes: 0,
-            max_bytes,
-        }
+        Self { metrics: HashMap::new(), total_bytes: 0, max_bytes }
     }
 
     pub fn get(&mut self, glyph_id: &GlyphId) -> Option<&GlyphMetrics> {
@@ -384,11 +380,8 @@ impl MetricsCache {
 
     pub fn evict_lru(&mut self, target_bytes: usize) -> usize {
         let mut evicted = 0;
-        let mut candidates: Vec<(GlyphId, Instant)> = self
-            .metrics
-            .iter()
-            .map(|(id, m)| (*id, m.last_accessed))
-            .collect();
+        let mut candidates: Vec<(GlyphId, Instant)> =
+            self.metrics.iter().map(|(id, m)| (*id, m.last_accessed)).collect();
 
         candidates.sort_by_key(|(_, time)| *time);
 
@@ -484,39 +477,22 @@ impl GlyphTables {
             Glyph::new('🔥').with_category(GlyphCategory::Emoji),
         ];
 
-        Self {
-            ascii,
-            box_drawing,
-            braille,
-            common_emoji,
-        }
+        Self { ascii, box_drawing, braille, common_emoji }
     }
 
     pub fn ascii_glyph(&self, ch: char) -> Option<&Glyph> {
         let idx = ch as usize;
-        if idx < self.ascii.len() {
-            Some(&self.ascii[idx])
-        } else {
-            None
-        }
+        if idx < self.ascii.len() { Some(&self.ascii[idx]) } else { None }
     }
 
     pub fn box_drawing_glyph(&self, ch: char) -> Option<&Glyph> {
         let cp = ch as u32;
-        if (0x2500..=0x257F).contains(&cp) {
-            Some(&self.box_drawing[(cp - 0x2500) as usize])
-        } else {
-            None
-        }
+        if (0x2500..=0x257F).contains(&cp) { Some(&self.box_drawing[(cp - 0x2500) as usize]) } else { None }
     }
 
     pub fn braille_glyph(&self, ch: char) -> Option<&Glyph> {
         let cp = ch as u32;
-        if (0x2800..=0x28FF).contains(&cp) {
-            Some(&self.braille[(cp - 0x2800) as usize])
-        } else {
-            None
-        }
+        if (0x2800..=0x28FF).contains(&cp) { Some(&self.braille[(cp - 0x2800) as usize]) } else { None }
     }
 
     pub fn get_glyph(&self, ch: char) -> Option<&Glyph> {
@@ -560,11 +536,7 @@ pub struct CacheStats {
 
 impl CacheStats {
     pub fn hit_rate(&self) -> f64 {
-        if self.lookups == 0 {
-            0.0
-        } else {
-            self.hits as f64 / self.lookups as f64
-        }
+        if self.lookups == 0 { 0.0 } else { self.hits as f64 / self.lookups as f64 }
     }
 }
 
@@ -673,12 +645,8 @@ impl GlyphCache {
         let evicted = self.metrics.evict_lru(target_bytes);
         self.stats.evictions += evicted as u64;
 
-        let expired: Vec<GlyphId> = self
-            .glyphs
-            .iter()
-            .filter(|(id, _)| !self.metrics.contains(id))
-            .map(|(id, _)| *id)
-            .collect();
+        let expired: Vec<GlyphId> =
+            self.glyphs.iter().filter(|(id, _)| !self.metrics.contains(id)).map(|(id, _)| *id).collect();
 
         for id in expired {
             self.glyphs.remove(&id);

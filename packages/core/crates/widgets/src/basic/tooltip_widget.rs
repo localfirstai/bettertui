@@ -17,21 +17,13 @@ pub struct TooltipWidget {
 
 impl Default for TooltipWidget {
     fn default() -> Self {
-        Self {
-            content: Box::from(""),
-            delay: 500,
-            style: Style::default(),
-            layout: LayoutProps::default(),
-        }
+        Self { content: Box::from(""), delay: 500, style: Style::default(), layout: LayoutProps::default() }
     }
 }
 
 impl TooltipWidget {
     pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            ..Default::default()
-        }
+        Self { content: content.into(), ..Default::default() }
     }
 
     pub fn with_delay(mut self, delay: u32) -> Self {
@@ -82,12 +74,7 @@ mod tests {
     use bettertui_engine::tree::{NodeArena, NodeId, NodeKind, Style};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -109,10 +96,7 @@ mod tests {
 
         let w = TooltipWidget::new("Tooltip content");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.text.as_deref(), Some("Tooltip content"));
     }
@@ -132,10 +116,7 @@ mod tests {
 
     #[test]
     fn tooltip_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = TooltipWidget::new("x").with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

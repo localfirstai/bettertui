@@ -11,9 +11,9 @@ use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::tree::NodeArena;
 
 use bettertui_widgets::{
-    BoxWidget, ButtonWidget, ContainerWidget, FlexWidget, GridWidget, LabelWidget, ModalWidget,
-    ProgressWidget, SeparatorWidget, SpacerWidget, SpinnerWidget, StackWidget, TabsWidget, Theme,
-    TooltipWidget, WidgetContext, WidgetHost,
+    BoxWidget, ButtonWidget, ContainerWidget, FlexWidget, GridWidget, LabelWidget, ModalWidget, ProgressWidget,
+    SeparatorWidget, SpacerWidget, SpinnerWidget, StackWidget, TabsWidget, Theme, TooltipWidget, WidgetContext,
+    WidgetHost,
 };
 
 const WIDTH: u16 = 40;
@@ -32,13 +32,7 @@ fn framebuffer_text(fb: &FrameBuffer) -> String {
 }
 
 fn setup() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
-    (
-        WidgetHost::new(),
-        NodeArena::new(),
-        FocusManager::new(),
-        Scheduler::new(),
-        Theme::default(),
-    )
+    (WidgetHost::new(), NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
 }
 
 fn render(host: &mut WidgetHost, arena: &mut NodeArena) -> Renderer {
@@ -58,13 +52,7 @@ fn make_ctx<'a>(
     sched: &'a mut Scheduler,
     theme: &'a Theme,
 ) -> WidgetContext<'a> {
-    WidgetContext {
-        arena,
-        focus_manager: focus,
-        scheduler: sched,
-        terminal_size: (WIDTH, HEIGHT),
-        theme,
-    }
+    WidgetContext { arena, focus_manager: focus, scheduler: sched, terminal_size: (WIDTH, HEIGHT), theme }
 }
 
 #[test]

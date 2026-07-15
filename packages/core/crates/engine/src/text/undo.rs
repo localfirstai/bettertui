@@ -23,19 +23,11 @@ impl Default for UndoManager {
 
 impl UndoManager {
     pub fn new() -> Self {
-        Self {
-            undo_stack: Vec::new(),
-            redo_stack: Vec::new(),
-            max_undo: 1000,
-        }
+        Self { undo_stack: Vec::new(), redo_stack: Vec::new(), max_undo: 1000 }
     }
 
     pub fn with_max_undo(max_undo: usize) -> Self {
-        Self {
-            undo_stack: Vec::new(),
-            redo_stack: Vec::new(),
-            max_undo,
-        }
+        Self { undo_stack: Vec::new(), redo_stack: Vec::new(), max_undo }
     }
 
     pub fn push(&mut self, action: UndoAction) {

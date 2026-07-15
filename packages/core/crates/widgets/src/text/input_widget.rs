@@ -102,21 +102,11 @@ impl InputWidget {
     }
 
     fn display_style(value: &str, base: Style) -> Style {
-        if value.is_empty() {
-            Style {
-                fg: Some(Color::Named(NamedColor::BrightBlack)),
-                ..base
-            }
-        } else {
-            base
-        }
+        if value.is_empty() { Style { fg: Some(Color::Named(NamedColor::BrightBlack)), ..base } } else { base }
     }
 
     fn read_value(ctx: &WidgetContext, id: NodeId) -> String {
-        ctx.arena
-            .get(id)
-            .and_then(|n| n.attributes.get("_value").cloned())
-            .unwrap_or_default()
+        ctx.arena.get(id).and_then(|n| n.attributes.get("_value").cloned()).unwrap_or_default()
     }
 
     fn write_value(ctx: &mut WidgetContext, id: NodeId, value: &str, display: Box<str>) {
@@ -127,27 +117,15 @@ impl InputWidget {
     }
 
     fn read_cursor(ctx: &WidgetContext, id: NodeId) -> usize {
-        ctx.arena
-            .get(id)
-            .map(|n| n.state.content_width as usize)
-            .unwrap_or(0)
+        ctx.arena.get(id).map(|n| n.state.content_width as usize).unwrap_or(0)
     }
 
-    fn set_cursor_position(
-        ctx: &mut WidgetContext,
-        id: NodeId,
-        value: &str,
-        byte_offset: usize,
-        password: bool,
-    ) {
+    fn set_cursor_position(ctx: &mut WidgetContext, id: NodeId, value: &str, byte_offset: usize, password: bool) {
         use bettertui_engine::tree::{CursorProps, CursorStyle, Point};
 
         let clamped = byte_offset.min(value.len());
-        let visual_x = if password {
-            grapheme_count(&value[..clamped]) as u16
-        } else {
-            display_width(&value[..clamped]) as u16
-        };
+        let visual_x =
+            if password { grapheme_count(&value[..clamped]) as u16 } else { display_width(&value[..clamped]) as u16 };
 
         if let Some(node) = ctx.arena.get_mut(id) {
             node.state.content_width = clamped as u32;
@@ -247,8 +225,7 @@ impl Widget for InputWidget {
                             if let Some(ref handler) = self.on_change {
                                 handler(&value);
                             }
-                            let display =
-                                Self::display_text(&value, &self.placeholder, self.password);
+                            let display = Self::display_text(&value, &self.placeholder, self.password);
                             Self::write_value(ctx, nid, &value, display);
                             Self::set_cursor_position(ctx, nid, &value, cursor, self.password);
                             ctx.request_frame();
@@ -262,8 +239,7 @@ impl Widget for InputWidget {
                             if let Some(ref handler) = self.on_change {
                                 handler(&value);
                             }
-                            let display =
-                                Self::display_text(&value, &self.placeholder, self.password);
+                            let display = Self::display_text(&value, &self.placeholder, self.password);
                             Self::write_value(ctx, nid, &value, display);
                             Self::set_cursor_position(ctx, nid, &value, cursor, self.password);
                             ctx.request_frame();
@@ -319,12 +295,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     fn create_input<'a>(
@@ -334,13 +305,7 @@ mod tests {
         sched: &'a mut Scheduler,
         theme: &'a Theme,
     ) -> (WidgetId, WidgetContext<'a>) {
-        let mut ctx = WidgetContext {
-            arena,
-            focus_manager: focus,
-            scheduler: sched,
-            terminal_size: (80, 24),
-            theme,
-        };
+        let mut ctx = WidgetContext { arena, focus_manager: focus, scheduler: sched, terminal_size: (80, 24), theme };
         let id = w.create(&mut ctx);
         (id, ctx)
     }
@@ -368,10 +333,7 @@ mod tests {
 
         let w = InputWidget::new().with_placeholder("Enter text...");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Input);
         assert_eq!(node.text.as_deref(), Some("Enter text..."));
     }
@@ -381,14 +343,7 @@ mod tests {
         let (mut arena, mut focus, mut sched, theme) = make_ctx();
         let w = InputWidget::new().with_value("hi");
         let (id, ctx) = create_input(&w, &mut arena, &mut focus, &mut sched, &theme);
-        assert_eq!(
-            ctx.arena
-                .get(id.node_id())
-                .expect("Node missing from arena")
-                .text
-                .as_deref(),
-            Some("hi")
-        );
+        assert_eq!(ctx.arena.get(id.node_id()).expect("Node missing from arena").text.as_deref(), Some("hi"));
         assert_eq!(InputWidget::read_value(&ctx, id.node_id()), "hi");
         assert_eq!(InputWidget::read_cursor(&ctx, id.node_id()), 2);
     }

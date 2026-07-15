@@ -43,11 +43,7 @@ impl Default for AnsiBackend {
 
 impl AnsiBackend {
     pub fn new() -> Self {
-        Self {
-            buffer: Vec::with_capacity(4096),
-            cursor_x: u16::MAX,
-            cursor_y: u16::MAX,
-        }
+        Self { buffer: Vec::with_capacity(4096), cursor_x: u16::MAX, cursor_y: u16::MAX }
     }
 
     fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
@@ -62,10 +58,7 @@ impl AnsiBackend {
                 x += 1;
                 while x < region.x + region.width {
                     let next = buffer.get(x, y);
-                    if next.fg == cell.fg
-                        && next.bg == cell.bg
-                        && next.attributes == cell.attributes
-                    {
+                    if next.fg == cell.fg && next.bg == cell.bg && next.attributes == cell.attributes {
                         x += 1;
                     } else {
                         break;
@@ -385,12 +378,7 @@ pub enum RenderCommand {
     /// Render a renderable object
     Render { object: RenderObject },
     /// Push a scissor rect for clipping
-    PushScissorRect {
-        x: u16,
-        y: u16,
-        width: u16,
-        height: u16,
-    },
+    PushScissorRect { x: u16, y: u16, width: u16, height: u16 },
     /// Pop the top scissor rect
     PopScissorRect,
     /// Push an opacity value (multiplied with current)
@@ -405,12 +393,7 @@ impl RenderCommand {
     }
 
     pub fn push_scissor(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self::PushScissorRect {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self::PushScissorRect { x, y, width, height }
     }
 
     pub fn pop_scissor() -> Self {
@@ -474,10 +457,7 @@ impl RenderTree {
     }
 
     pub fn get_mut(&mut self, id: NodeId) -> Option<&mut RenderObject> {
-        self.index
-            .get(&id)
-            .copied()
-            .and_then(|idx| self.objects.get_mut(idx))
+        self.index.get(&id).copied().and_then(|idx| self.objects.get_mut(idx))
     }
 
     pub fn root(&self) -> Option<NodeId> {
@@ -586,12 +566,7 @@ impl RenderTree {
             commands.push(RenderCommand::render(obj.clone()));
 
             if let Some(clip) = &obj.clip {
-                commands.push(RenderCommand::push_scissor(
-                    clip.x,
-                    clip.y,
-                    clip.width,
-                    clip.height,
-                ));
+                commands.push(RenderCommand::push_scissor(clip.x, clip.y, clip.width, clip.height));
             }
 
             if needs_scissor {
@@ -712,12 +687,7 @@ impl Painter {
                 RenderCommand::Render { object } => {
                     self.paint_object_with_scissor(object, ctx);
                 }
-                RenderCommand::PushScissorRect {
-                    x,
-                    y,
-                    width,
-                    height,
-                } => {
+                RenderCommand::PushScissorRect { x, y, width, height } => {
                     self.push_scissor(*x, *y, *width, *height);
                 }
                 RenderCommand::PopScissorRect => {
@@ -742,30 +712,12 @@ impl Painter {
         let bounds = &translated;
 
         let effective_bounds = if let Some(scissor) = self.current_scissor() {
-            if let Some(intersected) = scissor.intersect(&ClipBounds::new(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height,
-            )) {
-                PaintBounds::new(
-                    intersected.x,
-                    intersected.y,
-                    intersected.width,
-                    intersected.height,
-                )
-                .with_padding(
-                    bounds.padding_left,
-                    bounds.padding_right,
-                    bounds.padding_top,
-                    bounds.padding_bottom,
-                )
-                .with_border(
-                    bounds.border_top,
-                    bounds.border_right,
-                    bounds.border_bottom,
-                    bounds.border_left,
-                )
+            if let Some(intersected) =
+                scissor.intersect(&ClipBounds::new(bounds.x, bounds.y, bounds.width, bounds.height))
+            {
+                PaintBounds::new(intersected.x, intersected.y, intersected.width, intersected.height)
+                    .with_padding(bounds.padding_left, bounds.padding_right, bounds.padding_top, bounds.padding_bottom)
+                    .with_border(bounds.border_top, bounds.border_right, bounds.border_bottom, bounds.border_left)
             } else {
                 return;
             }
@@ -824,16 +776,13 @@ impl Painter {
         }
 
         let cell = Cell::new(' ').with_bg(bg);
-        self.buffer
-            .fill_rect(bounds.x, bounds.y, bounds.width, bounds.height, cell);
+        self.buffer.fill_rect(bounds.x, bounds.y, bounds.width, bounds.height, cell);
     }
 
     fn paint_text(&mut self, obj: &RenderObject, bounds: &PaintBounds) {
         // If node has a border, the text is used as the border title, so don't draw it inside
-        let has_border = bounds.border_top > 0
-            || bounds.border_right > 0
-            || bounds.border_bottom > 0
-            || bounds.border_left > 0;
+        let has_border =
+            bounds.border_top > 0 || bounds.border_right > 0 || bounds.border_bottom > 0 || bounds.border_left > 0;
 
         if has_border && obj.style.border_style != crate::tree::BorderStyle::None {
             return;
@@ -871,8 +820,7 @@ impl Painter {
                 break;
             }
             let mut col = line.x;
-            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true)
-            {
+            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true) {
                 if col >= content.x + content.width {
                     break;
                 }
@@ -899,18 +847,13 @@ impl Painter {
             return;
         }
 
-        let has_border = bounds.border_top > 0
-            || bounds.border_right > 0
-            || bounds.border_bottom > 0
-            || bounds.border_left > 0;
+        let has_border =
+            bounds.border_top > 0 || bounds.border_right > 0 || bounds.border_bottom > 0 || bounds.border_left > 0;
         if !has_border {
             return;
         }
 
-        let fg = obj
-            .style
-            .border_color
-            .unwrap_or(obj.style.fg.unwrap_or(Color::Default));
+        let fg = obj.style.border_color.unwrap_or(obj.style.fg.unwrap_or(Color::Default));
         let bg = obj.style.bg.unwrap_or(Color::Default);
         let attrs = style_to_attrs(&obj.style);
 
@@ -1091,13 +1034,7 @@ pub struct RenderPassContext {
 
 impl RenderPassContext {
     pub fn new(width: u16, height: u16) -> Self {
-        Self {
-            width,
-            height,
-            delta_time: 0.0,
-            frame_count: 0,
-            generation: 0,
-        }
+        Self { width, height, delta_time: 0.0, frame_count: 0, generation: 0 }
     }
 }
 
@@ -1128,10 +1065,7 @@ impl Default for RenderPipeline {
 
 impl RenderPipeline {
     pub fn new() -> Self {
-        Self {
-            passes: Vec::new(),
-            enabled: true,
-        }
+        Self { passes: Vec::new(), enabled: true }
     }
 
     pub fn add_pass(&mut self, pass: Box<dyn RenderPass>) {
@@ -1144,17 +1078,11 @@ impl RenderPipeline {
     }
 
     pub fn get_pass(&self, name: &str) -> Option<&dyn RenderPass> {
-        self.passes
-            .iter()
-            .find(|p| p.name() == name)
-            .map(|p| p.as_ref())
+        self.passes.iter().find(|p| p.name() == name).map(|p| p.as_ref())
     }
 
     pub fn get_pass_mut(&mut self, name: &str) -> Option<&mut dyn RenderPass> {
-        self.passes
-            .iter_mut()
-            .find(|p| p.name() == name)
-            .map(|p| p.as_mut() as &mut dyn RenderPass)
+        self.passes.iter_mut().find(|p| p.name() == name).map(|p| p.as_mut() as &mut dyn RenderPass)
     }
 
     pub fn enabled(&self) -> bool {
@@ -1197,11 +1125,7 @@ impl RenderPipeline {
             }
         }
 
-        if any_modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if any_modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn resort(&mut self) {
@@ -1232,12 +1156,7 @@ pub struct RenderFrame {
 
 impl RenderFrame {
     pub fn new_empty(width: u16, height: u16) -> Self {
-        Self {
-            output_data: Vec::new(),
-            dirty_regions: Vec::new(),
-            width,
-            height,
-        }
+        Self { output_data: Vec::new(), dirty_regions: Vec::new(), width, height }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -1297,10 +1216,7 @@ impl Renderer {
     }
 
     pub fn with_backend(width: u16, height: u16, backend: Box<dyn RenderBackend>) -> Self {
-        info!(
-            width,
-            height, "Renderer::with_backend() - creating renderer with custom backend"
-        );
+        info!(width, height, "Renderer::with_backend() - creating renderer with custom backend");
         Self {
             width,
             height,
@@ -1320,10 +1236,7 @@ impl Renderer {
     }
 
     pub fn with_fps(fps: u32) -> Self {
-        Self {
-            scheduler: Scheduler::with_fps(fps),
-            ..Self::new(80, 24)
-        }
+        Self { scheduler: Scheduler::with_fps(fps), ..Self::new(80, 24) }
     }
 
     pub fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool) {
@@ -1364,10 +1277,7 @@ impl Renderer {
 
         let change_count = arena.change_count();
         if !self.needs_full_repaint && change_count == self.last_change_count {
-            debug!(
-                generation = self.generation,
-                "Renderer::render() - skipping frame (no changes)"
-            );
+            debug!(generation = self.generation, "Renderer::render() - skipping frame (no changes)");
             return RenderFrame::new_empty(self.width, self.height);
         }
         self.last_change_count = change_count;
@@ -1391,12 +1301,7 @@ impl Renderer {
         let _ = self.layout_sync.compute(root_id, self.width, self.height);
 
         let vp = Viewport::new(0, 0, self.width, self.height);
-        build_render_tree_with_viewport(
-            arena,
-            self.layout_sync.results(),
-            Some(&vp),
-            &mut self.render_tree,
-        );
+        build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp), &mut self.render_tree);
 
         let ctx = crate::taffy::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
@@ -1413,25 +1318,21 @@ impl Renderer {
 
         let dirty_regions = if pp_result == PassResult::Modified {
             // Post-processing modified the buffer — re-diff from snapshot
-            self.dirty_diff
-                .compute(self.painter.buffer(), &self.snapshot, self.generation);
+            self.dirty_diff.compute(self.painter.buffer(), &self.snapshot, self.generation);
             self.dirty_diff.regions().to_vec()
         } else if self.needs_full_repaint {
-            self.dirty_diff
-                .compute_full_repaint(self.width, self.height);
+            self.dirty_diff.compute_full_repaint(self.width, self.height);
             self.needs_full_repaint = false;
             self.dirty_diff.regions().to_vec()
         } else {
-            self.dirty_diff
-                .compute(self.painter.buffer(), &self.snapshot, self.generation);
+            self.dirty_diff.compute(self.painter.buffer(), &self.snapshot, self.generation);
             self.dirty_diff.regions().to_vec()
         };
 
         self.backend.encode(self.painter.buffer(), &dirty_regions);
 
         if self.cursor_state.visible {
-            self.backend
-                .set_cursor_position(self.cursor_state.x, self.cursor_state.y, true);
+            self.backend.set_cursor_position(self.cursor_state.x, self.cursor_state.y, true);
         }
 
         self.snapshot.copy_from(self.painter.buffer());

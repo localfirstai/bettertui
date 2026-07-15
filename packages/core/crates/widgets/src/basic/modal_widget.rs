@@ -17,13 +17,7 @@ pub struct ModalWidget {
 
 impl Default for ModalWidget {
     fn default() -> Self {
-        Self {
-            title: None,
-            closable: true,
-            style: Style::default(),
-            layout: LayoutProps::default(),
-            on_close: None,
-        }
+        Self { title: None, closable: true, style: Style::default(), layout: LayoutProps::default(), on_close: None }
     }
 }
 
@@ -67,11 +61,7 @@ impl Widget for ModalWidget {
         let mut layout = self.layout;
         layout.position = Position::Absolute;
 
-        let display_text = self
-            .title
-            .as_ref()
-            .map(|t| format!(" {} ", t))
-            .unwrap_or_default();
+        let display_text = self.title.as_ref().map(|t| format!(" {} ", t)).unwrap_or_default();
 
         let node = bettertui_engine::tree::RenderNode {
             kind: bettertui_engine::tree::NodeKind::Modal,
@@ -116,12 +106,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -143,10 +128,7 @@ mod tests {
 
         let w = ModalWidget::new().with_title("Confirm");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Modal);
         assert_eq!(node.text.as_deref(), Some(" Confirm "));
     }

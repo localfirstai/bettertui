@@ -64,12 +64,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -89,34 +84,23 @@ mod tests {
             theme: &theme,
         };
 
-        let w = ContainerWidget::new()
-            .with_title("My Container")
-            .with_padding(2.0);
+        let w = ContainerWidget::new().with_title("My Container").with_padding(2.0);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(w.title.as_deref(), Some("My Container"));
     }
 
     #[test]
     fn container_with_layout() {
-        let layout = LayoutProps {
-            width: Some(Sizing::Points(50.0)),
-            ..Default::default()
-        };
+        let layout = LayoutProps { width: Some(Sizing::Points(50.0)), ..Default::default() };
         let w = ContainerWidget::new().with_layout(layout);
         assert_eq!(w.layout.width, Some(Sizing::Points(50.0)));
     }
 
     #[test]
     fn container_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = ContainerWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

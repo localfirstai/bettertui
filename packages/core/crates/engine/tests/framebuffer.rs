@@ -27,9 +27,7 @@ fn cell_default() {
 
 #[test]
 fn cell_with_fg_bg() {
-    let c = Cell::new('X')
-        .with_fg(Color::Named(NamedColor::Red))
-        .with_bg(Color::Named(NamedColor::Blue));
+    let c = Cell::new('X').with_fg(Color::Named(NamedColor::Red)).with_bg(Color::Named(NamedColor::Blue));
     assert_eq!(c.fg, Color::Named(NamedColor::Red));
     assert_eq!(c.bg, Color::Named(NamedColor::Blue));
 }
@@ -44,9 +42,7 @@ fn cell_is_empty() {
 
 #[test]
 fn cell_clear() {
-    let mut c = Cell::new('X')
-        .with_fg(Color::Named(NamedColor::Red))
-        .with_bg(Color::Named(NamedColor::Blue));
+    let mut c = Cell::new('X').with_fg(Color::Named(NamedColor::Red)).with_bg(Color::Named(NamedColor::Blue));
     c.attributes |= CellAttributes::BOLD;
     c.clear();
     assert!(c.is_empty());

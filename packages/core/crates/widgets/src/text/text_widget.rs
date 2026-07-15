@@ -14,12 +14,7 @@ pub struct TextWidget {
 
 impl TextWidget {
     pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            style: Style::default(),
-            wrap: false,
-            align: TextAlign::Left,
-        }
+        Self { content: content.into(), style: Style::default(), wrap: false, align: TextAlign::Left }
     }
 
     pub fn with_style(mut self, style: Style) -> Self {
@@ -38,36 +33,17 @@ impl TextWidget {
     }
 
     pub fn bold(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            style: Style {
-                bold: Some(true),
-                ..Style::default()
-            },
-            ..Self::default()
-        }
+        Self { content: content.into(), style: Style { bold: Some(true), ..Style::default() }, ..Self::default() }
     }
 
     pub fn colored(content: impl Into<Box<str>>, fg: bettertui_engine::tree::Color) -> Self {
-        Self {
-            content: content.into(),
-            style: Style {
-                fg: Some(fg),
-                ..Style::default()
-            },
-            ..Self::default()
-        }
+        Self { content: content.into(), style: Style { fg: Some(fg), ..Style::default() }, ..Self::default() }
     }
 }
 
 impl Default for TextWidget {
     fn default() -> Self {
-        Self {
-            content: Box::from(""),
-            style: Style::default(),
-            wrap: false,
-            align: TextAlign::Left,
-        }
+        Self { content: Box::from(""), style: Style::default(), wrap: false, align: TextAlign::Left }
     }
 }
 
@@ -104,12 +80,7 @@ mod tests {
     use bettertui_engine::tree::{Color, NamedColor};
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -131,10 +102,7 @@ mod tests {
 
         let w = TextWidget::new("Hello World");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, bettertui_engine::tree::NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Hello World"));
     }
@@ -154,10 +122,7 @@ mod tests {
 
     #[test]
     fn text_widget_with_style() {
-        let style = Style {
-            italic: Some(true),
-            ..Style::default()
-        };
+        let style = Style { italic: Some(true), ..Style::default() };
         let w = TextWidget::new("Italic").with_style(style);
         assert!(w.style.italic.expect("Node missing from arena"));
     }

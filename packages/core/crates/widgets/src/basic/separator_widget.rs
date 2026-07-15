@@ -28,17 +28,11 @@ impl SeparatorWidget {
     }
 
     pub fn horizontal() -> Self {
-        Self {
-            orientation: SeparatorOrientation::Horizontal,
-            ..Default::default()
-        }
+        Self { orientation: SeparatorOrientation::Horizontal, ..Default::default() }
     }
 
     pub fn vertical() -> Self {
-        Self {
-            orientation: SeparatorOrientation::Vertical,
-            ..Default::default()
-        }
+        Self { orientation: SeparatorOrientation::Vertical, ..Default::default() }
     }
 
     pub fn with_orientation(mut self, orientation: SeparatorOrientation) -> Self {
@@ -88,12 +82,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -115,10 +104,7 @@ mod tests {
 
         let w = SeparatorWidget::horizontal();
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Separator);
     }
 
@@ -130,10 +116,7 @@ mod tests {
 
     #[test]
     fn separator_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = SeparatorWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

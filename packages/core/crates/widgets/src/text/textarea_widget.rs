@@ -80,29 +80,15 @@ impl TextareaWidget {
     }
 
     fn display_text(value: &str, placeholder: &str) -> Box<str> {
-        if value.is_empty() && !placeholder.is_empty() {
-            placeholder.into()
-        } else {
-            value.into()
-        }
+        if value.is_empty() && !placeholder.is_empty() { placeholder.into() } else { value.into() }
     }
 
     fn display_style(value: &str, base: Style) -> Style {
-        if value.is_empty() {
-            Style {
-                fg: Some(Color::Named(NamedColor::BrightBlack)),
-                ..base
-            }
-        } else {
-            base
-        }
+        if value.is_empty() { Style { fg: Some(Color::Named(NamedColor::BrightBlack)), ..base } } else { base }
     }
 
     fn read_value(ctx: &WidgetContext, id: NodeId) -> String {
-        ctx.arena
-            .get(id)
-            .and_then(|n| n.attributes.get("_value").cloned())
-            .unwrap_or_default()
+        ctx.arena.get(id).and_then(|n| n.attributes.get("_value").cloned()).unwrap_or_default()
     }
 
     fn write_value(ctx: &mut WidgetContext, id: NodeId, value: &str, display: Box<str>) {
@@ -113,10 +99,7 @@ impl TextareaWidget {
     }
 
     fn read_cursor(ctx: &WidgetContext, id: NodeId) -> usize {
-        ctx.arena
-            .get(id)
-            .map(|n| n.state.content_width as usize)
-            .unwrap_or(0)
+        ctx.arena.get(id).map(|n| n.state.content_width as usize).unwrap_or(0)
     }
 
     fn set_cursor_position(ctx: &mut WidgetContext, id: NodeId, value: &str, byte_offset: usize) {
@@ -124,11 +107,7 @@ impl TextareaWidget {
         let pos = cursor_to_point(value, byte_offset);
         if let Some(node) = ctx.arena.get_mut(id) {
             node.state.content_width = byte_offset as u32;
-            node.cursor = Some(CursorProps {
-                style: CursorStyle::Block,
-                blink: true,
-                position: Some(pos),
-            });
+            node.cursor = Some(CursorProps { style: CursorStyle::Block, blink: true, position: Some(pos) });
             node.state.mark_render_dirty();
             ctx.arena.mark_changed();
         }
@@ -191,11 +170,7 @@ impl TextareaWidget {
         }
         let col_visual = display_width(&value[lines[current_line]..cursor]);
         let next_line_start = lines[current_line + 1];
-        let next_line_end = if current_line + 2 < lines.len() {
-            lines[current_line + 2] - 1
-        } else {
-            value.len()
-        };
+        let next_line_end = if current_line + 2 < lines.len() { lines[current_line + 2] - 1 } else { value.len() };
         let next_line = &value[next_line_start..next_line_end];
         let byte_in_next = Self::visual_to_byte(next_line, col_visual);
         next_line_start + byte_in_next
@@ -214,11 +189,7 @@ impl TextareaWidget {
     fn end(value: &str, cursor: usize) -> usize {
         let lines = Self::line_starts(value);
         let current_line = lines.iter().rposition(|&s| s <= cursor).unwrap_or(0);
-        if current_line + 1 < lines.len() {
-            lines[current_line + 1] - 1
-        } else {
-            value.len()
-        }
+        if current_line + 1 < lines.len() { lines[current_line + 1] - 1 } else { value.len() }
     }
 
     /// Convert visual column to byte offset within a line (no newlines).
@@ -407,12 +378,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     fn create_input<'a>(
@@ -422,13 +388,7 @@ mod tests {
         sched: &'a mut Scheduler,
         theme: &'a Theme,
     ) -> (WidgetId, WidgetContext<'a>) {
-        let mut ctx = WidgetContext {
-            arena,
-            focus_manager: focus,
-            scheduler: sched,
-            terminal_size: (80, 24),
-            theme,
-        };
+        let mut ctx = WidgetContext { arena, focus_manager: focus, scheduler: sched, terminal_size: (80, 24), theme };
         let id = w.create(&mut ctx);
         (id, ctx)
     }
@@ -456,10 +416,7 @@ mod tests {
 
         let w = TextareaWidget::new().with_placeholder("Enter text...");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Input);
         assert_eq!(node.text.as_deref(), Some("Enter text..."));
     }

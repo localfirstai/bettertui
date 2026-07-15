@@ -1,8 +1,7 @@
 //! Tests for the animation module (easing, tweens, springs, keyframes, timelines).
 
 use bettertui_engine::animation::{
-    AnimColor, Animation, AnimationEngine, AnimationState, Easing, Keyframes, Spring, Timeline,
-    Tween,
+    AnimColor, Animation, AnimationEngine, AnimationState, Easing, Keyframes, Spring, Timeline, Tween,
 };
 
 #[test]
@@ -132,9 +131,7 @@ fn spring_settles() {
 
 #[test]
 fn keyframes_basic() {
-    let keyframes = Keyframes::new()
-        .add_keyframe(0.0, 0.0)
-        .add_keyframe(1.0, 100.0);
+    let keyframes = Keyframes::new().add_keyframe(0.0, 0.0).add_keyframe(1.0, 100.0);
     assert_eq!(keyframes.value_at(0.0), 0.0);
     assert_eq!(keyframes.value_at(0.5), 50.0);
     assert_eq!(keyframes.value_at(1.0), 100.0);
@@ -142,10 +139,7 @@ fn keyframes_basic() {
 
 #[test]
 fn keyframes_multiple() {
-    let keyframes = Keyframes::new()
-        .add_keyframe(0.0, 0.0)
-        .add_keyframe(0.5, 100.0)
-        .add_keyframe(1.0, 50.0);
+    let keyframes = Keyframes::new().add_keyframe(0.0, 0.0).add_keyframe(0.5, 100.0).add_keyframe(1.0, 50.0);
     assert_eq!(keyframes.value_at(0.0), 0.0);
     assert_eq!(keyframes.value_at(0.25), 50.0);
     assert_eq!(keyframes.value_at(0.5), 100.0);
@@ -242,9 +236,7 @@ fn anim_engine_spring() {
 #[test]
 fn anim_engine_keyframes() {
     let mut engine = AnimationEngine::new();
-    let keyframes = Keyframes::new()
-        .add_keyframe(0.0, 0.0)
-        .add_keyframe(1.0, 100.0);
+    let keyframes = Keyframes::new().add_keyframe(0.0, 0.0).add_keyframe(1.0, 100.0);
     engine.keyframes(keyframes);
     assert_eq!(engine.active_count(), 1);
 }
@@ -346,11 +338,9 @@ fn timeline_on_complete() {
     use std::sync::atomic::{AtomicBool, Ordering};
     let completed = std::sync::Arc::new(AtomicBool::new(false));
     let completed_clone = completed.clone();
-    let mut timeline = Timeline::new()
-        .with_duration(1.0)
-        .with_on_complete(move || {
-            completed_clone.store(true, Ordering::SeqCst);
-        });
+    let mut timeline = Timeline::new().with_duration(1.0).with_on_complete(move || {
+        completed_clone.store(true, Ordering::SeqCst);
+    });
     timeline.play();
     timeline.update(1.5);
     assert!(completed.load(Ordering::SeqCst));

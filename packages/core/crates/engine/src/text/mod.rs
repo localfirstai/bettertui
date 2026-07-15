@@ -19,10 +19,9 @@ pub use selection::{Selection, SelectionRange};
 pub use styled::{StyledSpan, StyledText};
 pub use undo::{UndoAction, UndoManager};
 pub use unicode::{
-    byte_offset_to_display_width, char_width, display_width, display_width_to_byte_offset,
-    grapheme_clusters, grapheme_count, grapheme_width, is_box_drawing, is_emoji,
-    is_nerd_font_glyph, is_powerline, is_wide_char, is_zero_width, truncate_to_width,
-    truncate_with_ellipsis,
+    byte_offset_to_display_width, char_width, display_width, display_width_to_byte_offset, grapheme_clusters,
+    grapheme_count, grapheme_width, is_box_drawing, is_emoji, is_nerd_font_glyph, is_powerline, is_wide_char,
+    is_zero_width, truncate_to_width, truncate_with_ellipsis,
 };
 pub use viewport::{TextAlign, TextViewport, ViewportConfig, ViewportLine, layout_text};
 pub use wrap::{WrapMode, WrappedLine, wrap_text};
@@ -97,10 +96,7 @@ impl TextEngine {
 
     pub fn insert_str(&mut self, s: &str) {
         let pos = self.cursor.position();
-        let action = UndoAction::InsertStr {
-            pos,
-            text: s.to_string(),
-        };
+        let action = UndoAction::InsertStr { pos, text: s.to_string() };
         self.undo_manager.push(action);
         self.buffer.insert_str(pos, s);
         self.cursor.move_right_by(s.len());
@@ -121,10 +117,7 @@ impl TextEngine {
 
     pub fn delete_range(&mut self, range: SelectionRange) {
         let text = self.buffer.substring(range.start, range.end);
-        let action = UndoAction::DeleteRange {
-            range,
-            text: text.clone(),
-        };
+        let action = UndoAction::DeleteRange { range, text: text.clone() };
         self.undo_manager.push(action);
         self.buffer.delete_range(range.start, range.end);
         self.cursor.set_position(range.start);
@@ -194,8 +187,7 @@ impl TextEngine {
         let mut count = 0;
 
         for result in results.into_iter().rev() {
-            self.buffer
-                .delete_range(result.range.start, result.range.end);
+            self.buffer.delete_range(result.range.start, result.range.end);
             self.buffer.insert_str(result.range.start, replacement);
             count += 1;
         }

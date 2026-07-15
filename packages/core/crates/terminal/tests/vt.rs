@@ -6,9 +6,7 @@ use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::framebuffer::CellAttributes;
 use bettertui_engine::input::{KeyAction, KeyModifiers};
 use bettertui_engine::tree::{Color, NamedColor};
-use bettertui_terminal::{
-    Cursor, KittyKeyEvent, Pen, PrivateMode, ScreenBuffer, TerminalMode, VtMachine,
-};
+use bettertui_terminal::{Cursor, KittyKeyEvent, Pen, PrivateMode, ScreenBuffer, TerminalMode, VtMachine};
 
 // =============================================================================
 // Cursor Tests
@@ -169,10 +167,7 @@ fn mode_toggle() {
 #[test]
 fn private_mode_from_code() {
     assert_eq!(PrivateMode::from_code(25), Some(PrivateMode::CursorVisible));
-    assert_eq!(
-        PrivateMode::from_code(2004),
-        Some(PrivateMode::BracketedPaste)
-    );
+    assert_eq!(PrivateMode::from_code(2004), Some(PrivateMode::BracketedPaste));
     assert_eq!(PrivateMode::from_code(9999), None);
 }
 
@@ -585,12 +580,5 @@ fn machine_true_color_sgr() {
     while let Some(event) = p.poll_event() {
         m.process(&event);
     }
-    assert_eq!(
-        m.framebuffer().get(0, 0).fg,
-        Color::Rgb {
-            r: 255,
-            g: 128,
-            b: 64
-        }
-    );
+    assert_eq!(m.framebuffer().get(0, 0).fg, Color::Rgb { r: 255, g: 128, b: 64 });
 }

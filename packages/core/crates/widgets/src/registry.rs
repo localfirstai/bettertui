@@ -16,16 +16,10 @@ impl Default for WidgetRegistry {
 
 impl WidgetRegistry {
     pub fn new() -> Self {
-        Self {
-            factories: HashMap::new(),
-        }
+        Self { factories: HashMap::new() }
     }
 
-    pub fn register(
-        &mut self,
-        kind: &'static str,
-        factory: impl Fn() -> Box<dyn Widget> + Send + Sync + 'static,
-    ) {
+    pub fn register(&mut self, kind: &'static str, factory: impl Fn() -> Box<dyn Widget> + Send + Sync + 'static) {
         self.factories.insert(Box::from(kind), Box::new(factory));
     }
 

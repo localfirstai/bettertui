@@ -65,10 +65,7 @@ pub struct StackChild {
 
 impl StackChild {
     pub fn new(z_index: u16) -> Self {
-        Self {
-            z_index,
-            ..Default::default()
-        }
+        Self { z_index, ..Default::default() }
     }
 
     pub fn with_offset(mut self, x: i32, y: i32) -> Self {
@@ -88,12 +85,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -115,30 +107,21 @@ mod tests {
 
         let w = StackWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
         assert_eq!(node.layout.position, Position::Relative);
     }
 
     #[test]
     fn stack_widget_with_layout() {
-        let layout = LayoutProps {
-            flex_grow: 1.0,
-            ..Default::default()
-        };
+        let layout = LayoutProps { flex_grow: 1.0, ..Default::default() };
         let w = StackWidget::new().with_layout(layout);
         assert_eq!(w.layout.flex_grow, 1.0);
     }
 
     #[test]
     fn stack_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = StackWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

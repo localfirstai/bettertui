@@ -21,23 +21,10 @@ impl Default for ChatView {
         Self {
             style: Style::default(),
             message_style: Style::default(),
-            user_style: Style {
-                fg: Some(Color::rgb(100, 180, 255)),
-                ..Style::default()
-            },
-            assistant_style: Style {
-                fg: Some(Color::rgb(100, 200, 100)),
-                ..Style::default()
-            },
-            system_style: Style {
-                fg: Some(Color::rgb(150, 150, 150)),
-                italic: Some(true),
-                ..Style::default()
-            },
-            separator_style: Style {
-                fg: Some(Color::rgb(60, 60, 60)),
-                ..Style::default()
-            },
+            user_style: Style { fg: Some(Color::rgb(100, 180, 255)), ..Style::default() },
+            assistant_style: Style { fg: Some(Color::rgb(100, 200, 100)), ..Style::default() },
+            system_style: Style { fg: Some(Color::rgb(150, 150, 150)), italic: Some(true), ..Style::default() },
+            separator_style: Style { fg: Some(Color::rgb(60, 60, 60)), ..Style::default() },
         }
     }
 }
@@ -84,11 +71,7 @@ impl ChatView {
 
     pub fn render_thinking(&self, msg: &Message, ctx: &mut WidgetContext) -> Option<WidgetId> {
         if let Some(thinking) = &msg.thinking {
-            let style = Style {
-                fg: Some(Color::rgb(120, 120, 120)),
-                italic: Some(true),
-                ..Style::default()
-            };
+            let style = Style { fg: Some(Color::rgb(120, 120, 120)), italic: Some(true), ..Style::default() };
             let mut text = String::from("Thinking: ");
             text.push_str(thinking);
             let id = ctx.make_text(text.as_str(), style);
@@ -99,10 +82,7 @@ impl ChatView {
     }
 
     pub fn render_separator(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let id = ctx.make_text(
-            "────────────────────────────────────────",
-            self.separator_style,
-        );
+        let id = ctx.make_text("────────────────────────────────────────", self.separator_style);
         WidgetId(id)
     }
 }
@@ -113,10 +93,7 @@ impl Widget for ChatView {
     }
 
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
-        let layout = LayoutProps {
-            direction: FlexDirection::Column,
-            ..Default::default()
-        };
+        let layout = LayoutProps { direction: FlexDirection::Column, ..Default::default() };
         let id = ctx.make_box(layout, self.style);
         WidgetId(id)
     }
@@ -142,12 +119,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -215,9 +187,7 @@ mod tests {
         };
         let view = ChatView::new();
         let msg = Message::assistant("Answer", 300).with_thinking("Let me think...");
-        let id = view
-            .render_thinking(&msg, &mut ctx)
-            .expect("Node missing from arena");
+        let id = view.render_thinking(&msg, &mut ctx).expect("Node missing from arena");
         assert!(ctx.arena.contains(id.node_id()));
     }
 

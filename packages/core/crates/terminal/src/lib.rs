@@ -5,13 +5,13 @@ pub mod neovim;
 pub mod process;
 
 pub use capabilities::{
-    CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix,
-    GraphicsCapabilities, InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities,
-    TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics, global_capabilities,
+    CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix, GraphicsCapabilities,
+    InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities, TerminalBrand, UnicodeCapabilities, UnicodeVersion,
+    WindowMetrics, global_capabilities,
 };
 pub use process::{
-    ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult,
-    TerminalError, TerminalRuntime, TerminalState, TerminalViewport,
+    ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult, TerminalError,
+    TerminalRuntime, TerminalState, TerminalViewport,
 };
 pub mod query;
 pub mod screen;
@@ -21,8 +21,8 @@ mod vt;
 pub use screen::*;
 pub use scrollback::*;
 pub use vt::{
-    Cursor, CursorShape, CursorStyle, KittyKeyEvent, Pen, PrivateMode, ResponseKind, ScreenBuffer,
-    TerminalMode, TerminalResponse, VtMachine,
+    Cursor, CursorShape, CursorStyle, KittyKeyEvent, Pen, PrivateMode, ResponseKind, ScreenBuffer, TerminalMode,
+    TerminalResponse, VtMachine,
 };
 
 use std::io::{self, IsTerminal, Write, stdout};
@@ -54,19 +54,8 @@ impl Terminal {
     pub fn new() -> Self {
         let (w, h) = terminal::size().unwrap_or((80, 24));
         let is_tty = std::io::stdin().is_terminal();
-        info!(
-            width = w,
-            height = h,
-            is_tty,
-            "Terminal::new() - creating terminal"
-        );
-        Self {
-            width: w,
-            height: h,
-            raw_mode: false,
-            alternate_screen: false,
-            is_tty,
-        }
+        info!(width = w, height = h, is_tty, "Terminal::new() - creating terminal");
+        Self { width: w, height: h, raw_mode: false, alternate_screen: false, is_tty }
     }
 
     pub fn is_tty(&self) -> bool {
@@ -74,11 +63,7 @@ impl Terminal {
     }
 
     pub fn size(&self) -> (u16, u16) {
-        trace!(
-            width = self.width,
-            height = self.height,
-            "Terminal::size() - returning cached size"
-        );
+        trace!(width = self.width, height = self.height, "Terminal::size() - returning cached size");
         (self.width, self.height)
     }
 
@@ -223,11 +208,7 @@ impl Terminal {
                     Ok(Some(TerminalEvent::Mouse(mouse)))
                 }
                 Event::Resize(w, h) => {
-                    debug!(
-                        width = w,
-                        height = h,
-                        "Terminal::poll_event() - resize event received"
-                    );
+                    debug!(width = w, height = h, "Terminal::poll_event() - resize event received");
                     Ok(Some(TerminalEvent::Resize(w, h)))
                 }
                 _ => Ok(None),
@@ -285,11 +266,7 @@ impl Key {
     }
 
     pub fn as_char(&self) -> Option<char> {
-        if let Key::Char(c) = self {
-            Some(*c)
-        } else {
-            None
-        }
+        if let Key::Char(c) = self { Some(*c) } else { None }
     }
 }
 
@@ -335,10 +312,7 @@ mod tests {
 
     #[test]
     fn terminal_event_clone() {
-        let ev = TerminalEvent::Key(KeyInput {
-            code: Key::Char('x'),
-            modifiers: KeyModifiers::empty(),
-        });
+        let ev = TerminalEvent::Key(KeyInput { code: Key::Char('x'), modifiers: KeyModifiers::empty() });
         let ev2 = ev.clone();
         match ev2 {
             TerminalEvent::Key(k) => assert_eq!(k.code, Key::Char('x')),

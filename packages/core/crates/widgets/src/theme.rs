@@ -84,20 +84,8 @@ impl Theme {
                 scrollbar: Color::rgb(50, 50, 65),
                 scrollbar_thumb: Color::rgb(100, 100, 130),
             },
-            spacing: ThemeSpacing {
-                none: 0,
-                xxs: 1,
-                xs: 2,
-                sm: 4,
-                md: 8,
-                lg: 12,
-                xl: 16,
-                xxl: 24,
-            },
-            borders: ThemeBorders {
-                style: BorderStyle::Solid,
-                fg: Color::rgb(60, 60, 80),
-            },
+            spacing: ThemeSpacing { none: 0, xxs: 1, xs: 2, sm: 4, md: 8, lg: 12, xl: 16, xxl: 24 },
+            borders: ThemeBorders { style: BorderStyle::Solid, fg: Color::rgb(60, 60, 80) },
         }
     }
 
@@ -127,20 +115,8 @@ impl Theme {
                 scrollbar: Color::rgb(220, 220, 230),
                 scrollbar_thumb: Color::rgb(160, 160, 180),
             },
-            spacing: ThemeSpacing {
-                none: 0,
-                xxs: 1,
-                xs: 2,
-                sm: 4,
-                md: 8,
-                lg: 12,
-                xl: 16,
-                xxl: 24,
-            },
-            borders: ThemeBorders {
-                style: BorderStyle::Solid,
-                fg: Color::rgb(200, 200, 215),
-            },
+            spacing: ThemeSpacing { none: 0, xxs: 1, xs: 2, sm: 4, md: 8, lg: 12, xl: 16, xxl: 24 },
+            borders: ThemeBorders { style: BorderStyle::Solid, fg: Color::rgb(200, 200, 215) },
         }
     }
 }

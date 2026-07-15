@@ -38,16 +38,8 @@ impl Widget for CounterWidget {
     fn create(&self, ctx: &mut WidgetContext) -> WidgetId {
         let node_id = ctx.insert_node(RenderNode::new(NodeKind::Box));
         let text_id = ctx.arena.insert(RenderNode::new(NodeKind::Text));
-        ctx.set_text(
-            text_id,
-            format!("{}: {}", self.label, self.count.load(Ordering::Relaxed)),
-        );
-        ctx.set_style(
-            text_id,
-            Style::new()
-                .fg(Color::Named(NamedColor::BrightCyan))
-                .bold(true),
-        );
+        ctx.set_text(text_id, format!("{}: {}", self.label, self.count.load(Ordering::Relaxed)));
+        ctx.set_style(text_id, Style::new().fg(Color::Named(NamedColor::BrightCyan)).bold(true));
         ctx.append_child(node_id, text_id);
         let root = ctx.arena.root();
         let _ = ctx.arena.append_child(root, node_id);
@@ -58,10 +50,7 @@ impl Widget for CounterWidget {
         if let Some(node) = ctx.arena.get(id.node_id())
             && let Some(&first_child) = node.children.first()
         {
-            ctx.set_text(
-                first_child,
-                format!("{}: {}", self.label, self.count.load(Ordering::Relaxed)),
-            );
+            ctx.set_text(first_child, format!("{}: {}", self.label, self.count.load(Ordering::Relaxed)));
         }
     }
 
@@ -76,21 +65,12 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     terminal.move_cursor(0, 0)?;
 
     let mut engine = Engine::new_with_text("Widgets: WidgetHost, Lifecycle, and Rendering");
-    engine.set_title_style(
-        Style::new()
-            .fg(Color::Named(NamedColor::BrightWhite))
-            .bold(true),
-    );
+    engine.set_title_style(Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
 
-    engine.add_section(
-        "[1] Mounted widgets",
-        Style::new().fg(Color::Named(NamedColor::Yellow)),
-    );
+    engine.add_section("[1] Mounted widgets", Style::new().fg(Color::Named(NamedColor::Yellow)));
 
     let mut host = WidgetHost::new();
-    host.register("Counter", || {
-        Box::new(CounterWidget::new("", Arc::new(AtomicU64::new(0))))
-    });
+    host.register("Counter", || Box::new(CounterWidget::new("", Arc::new(AtomicU64::new(0)))));
 
     let count1 = Arc::new(AtomicU64::new(42));
     let count2 = Arc::new(AtomicU64::new(7));
@@ -107,31 +87,19 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         theme: &theme,
     };
 
-    let w1 = host.mount(
-        Box::new(CounterWidget::new("Alpha", count1.clone())),
-        &mut ctx,
-    );
-    let w2 = host.mount(
-        Box::new(CounterWidget::new("Beta", count2.clone())),
-        &mut ctx,
-    );
+    let w1 = host.mount(Box::new(CounterWidget::new("Alpha", count1.clone())), &mut ctx);
+    let w2 = host.mount(Box::new(CounterWidget::new("Beta", count2.clone())), &mut ctx);
 
     engine.add_text(format!("    Mounted {} widgets", host.widget_count()));
 
-    engine.add_section(
-        "[2] Rendering widget tree...",
-        Style::new().fg(Color::Named(NamedColor::Yellow)),
-    );
+    engine.add_section("[2] Rendering widget tree...", Style::new().fg(Color::Named(NamedColor::Yellow)));
 
     let mut renderer = Renderer::new(80, 6);
     renderer.set_backend(Box::new(AnsiBackend::new()));
     let frame = renderer.render_full(&mut arena);
     engine.add_text(format!("    Output ({} bytes)", frame.output_data.len()));
 
-    engine.add_section(
-        "[3] Updating via shared AtomicU64...",
-        Style::new().fg(Color::Named(NamedColor::Yellow)),
-    );
+    engine.add_section("[3] Updating via shared AtomicU64...", Style::new().fg(Color::Named(NamedColor::Yellow)));
 
     count1.fetch_add(1, Ordering::Relaxed);
     count2.fetch_add(10, Ordering::Relaxed);
@@ -149,10 +117,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     let _frame2 = renderer.render(&mut arena);
     engine.add_text("    After update (Alpha+1, Beta+10)");
 
-    engine.add_section(
-        "[4] Unmounting Beta...",
-        Style::new().fg(Color::Named(NamedColor::Yellow)),
-    );
+    engine.add_section("[4] Unmounting Beta...", Style::new().fg(Color::Named(NamedColor::Yellow)));
 
     let mut focus3 = FocusManager::new();
     let mut ctx3 = WidgetContext {
@@ -166,20 +131,11 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     engine.add_text(format!("    Widgets remaining: {}", host.widget_count()));
 
-    engine.add_section(
-        "[5] Widget tree structure...",
-        Style::new().fg(Color::Named(NamedColor::Yellow)),
-    );
+    engine.add_section("[5] Widget tree structure...", Style::new().fg(Color::Named(NamedColor::Yellow)));
 
     for (wid, entry) in host.tree().iter() {
-        let parent = entry
-            .parent
-            .map(|p| format!("{:?}", p))
-            .unwrap_or_else(|| "root".into());
-        engine.add_text(format!(
-            "    Widget {:?} (kind={}) parent={}",
-            wid, entry.kind, parent
-        ));
+        let parent = entry.parent.map(|p| format!("{:?}", p)).unwrap_or_else(|| "root".into());
+        engine.add_text(format!("    Widget {:?} (kind={}) parent={}", wid, entry.kind, parent));
     }
 
     engine.add_hint("Press any key to return to menu...");
@@ -198,14 +154,7 @@ struct Engine {
 impl Engine {
     fn new_with_text(title: &str) -> Self {
         let nodes = vec![
-            (
-                title.to_string(),
-                Some(
-                    Style::new()
-                        .fg(Color::Named(NamedColor::BrightWhite))
-                        .bold(true),
-                ),
-            ),
+            (title.to_string(), Some(Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true))),
             (String::new(), None),
         ];
         Self { nodes }
@@ -230,11 +179,7 @@ impl Engine {
         self.nodes.push(("".to_string(), None));
         self.nodes.push((
             text.to_string(),
-            Some(Style {
-                fg: Some(Color::Named(NamedColor::BrightBlack)),
-                dim: Some(true),
-                ..Style::new()
-            }),
+            Some(Style { fg: Some(Color::Named(NamedColor::BrightBlack)), dim: Some(true), ..Style::new() }),
         ));
     }
 

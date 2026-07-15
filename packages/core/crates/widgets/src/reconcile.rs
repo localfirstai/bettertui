@@ -4,22 +4,10 @@ use super::{WidgetId, WidgetTree};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReconcileOp {
-    Insert {
-        parent: WidgetId,
-        widget_id: WidgetId,
-        node_id: NodeId,
-        kind: &'static str,
-    },
-    Remove {
-        widget_id: WidgetId,
-    },
-    Move {
-        widget_id: WidgetId,
-        new_parent: WidgetId,
-    },
-    Update {
-        widget_id: WidgetId,
-    },
+    Insert { parent: WidgetId, widget_id: WidgetId, node_id: NodeId, kind: &'static str },
+    Remove { widget_id: WidgetId },
+    Move { widget_id: WidgetId, new_parent: WidgetId },
+    Update { widget_id: WidgetId },
 }
 
 pub struct Reconciler {
@@ -34,17 +22,10 @@ impl Default for Reconciler {
 
 impl Reconciler {
     pub fn new() -> Self {
-        Self {
-            pending_ops: Vec::new(),
-        }
+        Self { pending_ops: Vec::new() }
     }
 
-    pub fn reconcile(
-        &mut self,
-        old_tree: &WidgetTree,
-        new_tree: &WidgetTree,
-        root: WidgetId,
-    ) -> Vec<ReconcileOp> {
+    pub fn reconcile(&mut self, old_tree: &WidgetTree, new_tree: &WidgetTree, root: WidgetId) -> Vec<ReconcileOp> {
         self.pending_ops.clear();
         self.diff_subtree(old_tree, new_tree, root);
         std::mem::take(&mut self.pending_ops)
@@ -70,10 +51,7 @@ impl Reconciler {
                 if old.parent != new.parent
                     && let Some(new_parent) = new.parent
                 {
-                    self.pending_ops.push(ReconcileOp::Move {
-                        widget_id,
-                        new_parent,
-                    });
+                    self.pending_ops.push(ReconcileOp::Move { widget_id, new_parent });
                 }
 
                 self.pending_ops.push(ReconcileOp::Update { widget_id });
@@ -108,8 +86,7 @@ impl Reconciler {
                 while old_idx < old_children.len() {
                     let child = old_children[old_idx];
                     if new_tree.get(child).is_none() {
-                        self.pending_ops
-                            .push(ReconcileOp::Remove { widget_id: child });
+                        self.pending_ops.push(ReconcileOp::Remove { widget_id: child });
                     }
                     old_idx += 1;
                 }
@@ -182,10 +159,7 @@ mod tests {
     }
 
     fn get_root_wid(tree: &WidgetTree) -> WidgetId {
-        tree.iter()
-            .find(|(_, entry)| entry.parent.is_none())
-            .map(|(k, _)| *k)
-            .expect("Node missing from arena")
+        tree.iter().find(|(_, entry)| entry.parent.is_none()).map(|(k, _)| *k).expect("Node missing from arena")
     }
 
     #[test]
@@ -203,10 +177,7 @@ mod tests {
         let root_wid = get_root_wid(&tree1);
         let ops = reconciler.reconcile(&tree1, &tree2, root_wid);
 
-        let updates: Vec<_> = ops
-            .iter()
-            .filter(|op| matches!(op, ReconcileOp::Update { .. }))
-            .collect();
+        let updates: Vec<_> = ops.iter().filter(|op| matches!(op, ReconcileOp::Update { .. })).collect();
         assert!(!updates.is_empty());
     }
 
@@ -224,10 +195,7 @@ mod tests {
         let mut reconciler = Reconciler::new();
         let ops = reconciler.reconcile(&tree1, &tree2, root_wid);
 
-        let inserts: Vec<_> = ops
-            .iter()
-            .filter(|op| matches!(op, ReconcileOp::Insert { .. }))
-            .collect();
+        let inserts: Vec<_> = ops.iter().filter(|op| matches!(op, ReconcileOp::Insert { .. })).collect();
         assert!(!inserts.is_empty());
     }
 
@@ -245,19 +213,14 @@ mod tests {
         let mut reconciler = Reconciler::new();
         let ops = reconciler.reconcile(&tree1, &tree2, root_wid);
 
-        let removes: Vec<_> = ops
-            .iter()
-            .filter(|op| matches!(op, ReconcileOp::Remove { .. }))
-            .collect();
+        let removes: Vec<_> = ops.iter().filter(|op| matches!(op, ReconcileOp::Remove { .. })).collect();
         assert!(!removes.is_empty());
     }
 
     #[test]
     fn reconciler_clear() {
         let mut reconciler = Reconciler::new();
-        reconciler.pending_ops.push(ReconcileOp::Update {
-            widget_id: WidgetId(NodeId::default()),
-        });
+        reconciler.pending_ops.push(ReconcileOp::Update { widget_id: WidgetId(NodeId::default()) });
         reconciler.clear();
         assert!(reconciler.ops().is_empty());
     }

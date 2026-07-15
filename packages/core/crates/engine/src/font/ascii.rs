@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 pub type AsciiFontName = &'static str;
 
-pub const FONT_NAMES: &[AsciiFontName] =
-    &["tiny", "block", "shade", "slick", "huge", "grid", "pallet"];
+pub const FONT_NAMES: &[AsciiFontName] = &["tiny", "block", "shade", "slick", "huge", "grid", "pallet"];
 
 #[derive(Debug, Clone)]
 struct FontSegment {
@@ -42,10 +41,8 @@ fn parse_color_tags(text: &str) -> Vec<FontSegment> {
                     if let Some(close_pos) = after_tag.find(&close_tag) {
                         let content = &after_tag[..close_pos];
                         if !content.is_empty() {
-                            segments.push(FontSegment {
-                                text: content.to_string(),
-                                color_index: idx.saturating_sub(1),
-                            });
+                            segments
+                                .push(FontSegment { text: content.to_string(), color_index: idx.saturating_sub(1) });
                         }
                         pos = pos + 2 + end_bracket + 1 + close_pos + close_tag.len();
                         continue;
@@ -58,17 +55,10 @@ fn parse_color_tags(text: &str) -> Vec<FontSegment> {
 
         let remaining = &text[pos..];
         let next_tag = remaining.find("<c");
-        let end = if let Some(tag_start) = next_tag {
-            pos + tag_start
-        } else {
-            text.len()
-        };
+        let end = if let Some(tag_start) = next_tag { pos + tag_start } else { text.len() };
 
         if end > pos {
-            segments.push(FontSegment {
-                text: text[pos..end].to_string(),
-                color_index: 0,
-            });
+            segments.push(FontSegment { text: text[pos..end].to_string(), color_index: 0 });
         }
         pos = end;
     }
@@ -87,35 +77,20 @@ fn parse_font_json(json_str: &str) -> ParsedFont {
 
     let letterspace: Vec<String> = obj["letterspace"]
         .as_array()
-        .map(|arr| {
-            arr.iter()
-                .map(|v| v.as_str().unwrap_or(" ").to_string())
-                .collect()
-        })
+        .map(|arr| arr.iter().map(|v| v.as_str().unwrap_or(" ").to_string()).collect())
         .unwrap_or_else(|| vec![" ".repeat(lines); lines]);
 
     let chars_obj = obj["chars"].as_object().unwrap();
     let mut chars = HashMap::new();
 
     for (ch, lines_arr) in chars_obj {
-        let raw_lines: Vec<Vec<FontSegment>> = lines_arr
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|line| parse_color_tags(line.as_str().unwrap_or("")))
-            .collect();
+        let raw_lines: Vec<Vec<FontSegment>> =
+            lines_arr.as_array().unwrap().iter().map(|line| parse_color_tags(line.as_str().unwrap_or(""))).collect();
 
         chars.insert(ch.clone(), ParsedCharDef { lines: raw_lines });
     }
 
-    ParsedFont {
-        name,
-        lines,
-        letterspace_size,
-        letterspace,
-        colors,
-        chars,
-    }
+    ParsedFont { name, lines, letterspace_size, letterspace, colors, chars }
 }
 
 macro_rules! include_font {
@@ -139,11 +114,7 @@ fn load_font(name: &str) -> Option<ParsedFont> {
 }
 
 fn get_char_width(char_def: &ParsedCharDef) -> usize {
-    char_def
-        .lines
-        .first()
-        .map(|segments| segments.iter().map(|s| s.text.len()).sum())
-        .unwrap_or(0)
+    char_def.lines.first().map(|segments| segments.iter().map(|s| s.text.len()).sum()).unwrap_or(0)
 }
 
 pub fn measure_text(text: &str, font_name: &str) -> Option<(usize, usize)> {
@@ -204,12 +175,7 @@ pub struct AsciiFontSegment {
     pub color_index: usize,
 }
 
-pub fn layout_text(
-    text: &str,
-    font_name: &str,
-    start_x: u16,
-    start_y: u16,
-) -> Option<AsciiFontLayout> {
+pub fn layout_text(text: &str, font_name: &str, start_x: u16, start_y: u16) -> Option<AsciiFontLayout> {
     let font = load_font(font_name)?;
     let mut segments = Vec::new();
     let mut current_x = start_x as usize;
@@ -241,11 +207,7 @@ pub fn layout_text(
         }
     }
 
-    Some(AsciiFontLayout {
-        segments,
-        width: current_x - start_x as usize,
-        height: font.lines,
-    })
+    Some(AsciiFontLayout { segments, width: current_x - start_x as usize, height: font.lines })
 }
 
 pub struct AsciiFontLayout {

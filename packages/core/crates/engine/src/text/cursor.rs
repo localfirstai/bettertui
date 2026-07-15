@@ -36,12 +36,7 @@ impl Default for Cursor {
 
 impl Cursor {
     pub fn new() -> Self {
-        Self {
-            position: 0,
-            line: 0,
-            column: 0,
-            desired_column: 0,
-        }
+        Self { position: 0, line: 0, column: 0, desired_column: 0 }
     }
 
     pub fn position(&self) -> usize {

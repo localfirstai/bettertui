@@ -28,8 +28,8 @@ use crate::tree::Rect;
 /// Types submodule for backward compatibility with `crate::taffy::types::*`
 pub mod types {
     pub use super::{
-        AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, Gap, JustifyContent,
-        LayoutOverflow, LayoutProps, Position, RectValues, Sizing,
+        AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, Gap, JustifyContent, LayoutOverflow, LayoutProps,
+        Position, RectValues, Sizing,
     };
     /// Display mode for a node (re-exported for backward compatibility)
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -249,10 +249,7 @@ impl Gap {
 
     /// Create uniform gap.
     pub fn uniform(gap: f32) -> Self {
-        Self {
-            row: gap,
-            column: gap,
-        }
+        Self { row: gap, column: gap }
     }
 }
 
@@ -268,32 +265,17 @@ pub struct RectValues {
 impl RectValues {
     /// Create uniform values on all sides.
     pub fn uniform(value: f32) -> Self {
-        Self {
-            top: Some(value),
-            right: Some(value),
-            bottom: Some(value),
-            left: Some(value),
-        }
+        Self { top: Some(value), right: Some(value), bottom: Some(value), left: Some(value) }
     }
 
     /// Create values with horizontal/vertical separation.
     pub fn new(horizontal: f32, vertical: f32) -> Self {
-        Self {
-            top: Some(vertical),
-            right: Some(horizontal),
-            bottom: Some(vertical),
-            left: Some(horizontal),
-        }
+        Self { top: Some(vertical), right: Some(horizontal), bottom: Some(vertical), left: Some(horizontal) }
     }
 
     /// Create with individual values.
     pub fn sides(top: f32, right: f32, bottom: f32, left: f32) -> Self {
-        Self {
-            top: Some(top),
-            right: Some(right),
-            bottom: Some(bottom),
-            left: Some(left),
-        }
+        Self { top: Some(top), right: Some(right), bottom: Some(bottom), left: Some(left) }
     }
 }
 
@@ -319,13 +301,7 @@ pub struct PaintBounds {
 
 impl PaintBounds {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-            ..Default::default()
-        }
+        Self { x, y, width, height, ..Default::default() }
     }
 
     pub fn with_padding(mut self, left: u16, right: u16, top: u16, bottom: u16) -> Self {
@@ -356,12 +332,8 @@ impl PaintBounds {
         Rect::new(
             self.x + self.border_left + self.padding_left,
             self.y + self.border_top + self.padding_top,
-            self.width.saturating_sub(
-                self.border_left + self.border_right + self.padding_left + self.padding_right,
-            ),
-            self.height.saturating_sub(
-                self.border_top + self.border_bottom + self.padding_top + self.padding_bottom,
-            ),
+            self.width.saturating_sub(self.border_left + self.border_right + self.padding_left + self.padding_right),
+            self.height.saturating_sub(self.border_top + self.border_bottom + self.padding_top + self.padding_bottom),
         )
     }
 
@@ -378,10 +350,7 @@ impl PaintBounds {
     }
 
     pub fn intersects(&self, other: &PaintBounds) -> bool {
-        self.x < other.right()
-            && self.right() > other.x
-            && self.y < other.bottom()
-            && self.bottom() > other.y
+        self.x < other.right() && self.right() > other.x && self.y < other.bottom() && self.bottom() > other.y
     }
 
     pub fn intersect(&self, other: &PaintBounds) -> Option<PaintBounds> {
@@ -389,11 +358,7 @@ impl PaintBounds {
         let y = self.y.max(other.y);
         let right = self.right().min(other.right());
         let bottom = self.bottom().min(other.bottom());
-        if right > x && bottom > y {
-            Some(PaintBounds::new(x, y, right - x, bottom - y))
-        } else {
-            None
-        }
+        if right > x && bottom > y { Some(PaintBounds::new(x, y, right - x, bottom - y)) } else { None }
     }
 }
 
@@ -410,12 +375,7 @@ pub struct Viewport {
 
 impl Viewport {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     pub fn right(&self) -> u16 {
@@ -437,20 +397,11 @@ impl Viewport {
         let y = self.y.max(other.y);
         let r = self.right().min(other.right());
         let b = self.bottom().min(other.bottom());
-        if r > x && b > y {
-            Some(Viewport::new(x, y, r - x, b - y))
-        } else {
-            None
-        }
+        if r > x && b > y { Some(Viewport::new(x, y, r - x, b - y)) } else { None }
     }
 
     pub fn offset(&self, dx: i32, dy: i32) -> Viewport {
-        Viewport::new(
-            (self.x as i32 + dx).max(0) as u16,
-            (self.y as i32 + dy).max(0) as u16,
-            self.width,
-            self.height,
-        )
+        Viewport::new((self.x as i32 + dx).max(0) as u16, (self.y as i32 + dy).max(0) as u16, self.width, self.height)
     }
 
     /// Expand viewport by `padding` cells on all sides.
@@ -475,21 +426,11 @@ pub struct ClipBounds {
 
 impl ClipBounds {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     pub fn from_rect(rect: &Rect) -> Self {
-        Self {
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
-        }
+        Self { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
     }
 
     pub fn right(&self) -> u16 {
@@ -509,11 +450,7 @@ impl ClipBounds {
         let y = self.y.max(other.y);
         let right = self.right().min(other.right());
         let bottom = self.bottom().min(other.bottom());
-        if right > x && bottom > y {
-            Some(ClipBounds::new(x, y, right - x, bottom - y))
-        } else {
-            None
-        }
+        if right > x && bottom > y { Some(ClipBounds::new(x, y, right - x, bottom - y)) } else { None }
     }
 }
 
@@ -559,8 +496,7 @@ pub struct MeasureResult {
 ///
 /// Parameters: (known_width, known_height, available_width, available_height)
 /// Returns: (measured_width, measured_height)
-type MeasureCallback =
-    Box<dyn Fn(Option<f32>, Option<f32>, f32, f32) -> MeasureResult + Send + 'static>;
+type MeasureCallback = Box<dyn Fn(Option<f32>, Option<f32>, f32, f32) -> MeasureResult + Send + 'static>;
 
 #[derive(Clone)]
 pub struct PaintContext {
@@ -571,18 +507,12 @@ pub struct PaintContext {
 
 impl PaintContext {
     pub fn new(width: u16, height: u16) -> Self {
-        Self {
-            terminal_width: width,
-            terminal_height: height,
-            clip_stack: SmallVec::new(),
-        }
+        Self { terminal_width: width, terminal_height: height, clip_stack: SmallVec::new() }
     }
 
     pub fn push_clip(&mut self, clip: ClipBounds) {
         let effective = if let Some(parent) = self.clip_stack.last() {
-            parent
-                .intersect(&clip)
-                .unwrap_or(ClipBounds::new(0, 0, 0, 0))
+            parent.intersect(&clip).unwrap_or(ClipBounds::new(0, 0, 0, 0))
         } else {
             clip
         };
@@ -599,13 +529,7 @@ impl PaintContext {
 
     pub fn is_visible(&self, bounds: &PaintBounds) -> bool {
         if let Some(clip) = self.clip_stack.last() {
-            clip.intersect(&ClipBounds::new(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height,
-            ))
-            .is_some()
+            clip.intersect(&ClipBounds::new(bounds.x, bounds.y, bounds.width, bounds.height)).is_some()
         } else {
             true
         }
@@ -614,8 +538,7 @@ impl PaintContext {
     pub fn clipped_bounds(&self, bounds: &PaintBounds) -> Option<PaintBounds> {
         if let Some(clip) = self.clip_stack.last() {
             let cb = ClipBounds::new(bounds.x, bounds.y, bounds.width, bounds.height);
-            cb.intersect(clip)
-                .map(|c| PaintBounds::new(c.x, c.y, c.width, c.height))
+            cb.intersect(clip).map(|c| PaintBounds::new(c.x, c.y, c.width, c.height))
         } else {
             Some(*bounds)
         }
@@ -674,8 +597,7 @@ pub fn get_objects_in_viewport(
             .iter()
             .filter(|c| {
                 let end = c.start.saturating_add(c.size);
-                end > viewport_start(&vp_padded, primary_axis)
-                    && c.start < viewport_end(&vp_padded, primary_axis)
+                end > viewport_start(&vp_padded, primary_axis) && c.start < viewport_end(&vp_padded, primary_axis)
             })
             .map(|c| c.id)
             .collect();
@@ -833,10 +755,7 @@ pub struct LayoutConfig {
 
 impl Default for LayoutConfig {
     fn default() -> Self {
-        Self {
-            point_scale_factor: 1.0,
-            use_web_defaults: false,
-        }
+        Self { point_scale_factor: 1.0, use_web_defaults: false }
     }
 }
 
@@ -909,11 +828,7 @@ fn measure_text(text: &str, available_width: f32) -> (f32, usize) {
         total_lines += count_wrapped_lines(line, wrap_width);
     }
 
-    let intrinsic_width = if wrap_width > 0 {
-        wrap_width.min(max_width) as f32
-    } else {
-        max_width.max(1) as f32
-    };
+    let intrinsic_width = if wrap_width > 0 { wrap_width.min(max_width) as f32 } else { max_width.max(1) as f32 };
 
     (intrinsic_width, total_lines.max(1))
 }
@@ -1097,11 +1012,7 @@ impl LayoutEngine {
 
     /// Check if a node's layout needs recomputation.
     pub fn is_dirty(&self, id: NodeId) -> bool {
-        if let Some(&taffy_id) = self.node_map.get(&id) {
-            self.taffy.dirty(taffy_id).unwrap_or(false)
-        } else {
-            false
-        }
+        if let Some(&taffy_id) = self.node_map.get(&id) { self.taffy.dirty(taffy_id).unwrap_or(false) } else { false }
     }
 
     /// Mark a node as needing layout recomputation.
@@ -1128,9 +1039,7 @@ impl LayoutEngine {
     /// Reset a node to its default layout state, clearing any custom style, text, or callbacks.
     pub fn reset_node(&mut self, id: NodeId) {
         if let Some(&taffy_id) = self.node_map.get(&id) {
-            self.taffy
-                .set_style(taffy_id, taffy::Style::default())
-                .unwrap();
+            self.taffy.set_style(taffy_id, taffy::Style::default()).unwrap();
             let _ = self.taffy.mark_dirty(taffy_id);
             self.text_map.borrow_mut().remove(&id);
             self.measure_callbacks.remove(&id);
@@ -1141,14 +1050,16 @@ impl LayoutEngine {
     /// Copy the layout style from one node to another.
     /// Leaves the source node unchanged; only the target node is updated.
     pub fn copy_style(&mut self, from: NodeId, to: NodeId) {
-        let from_style = self
-            .taffy
-            .style(self.node_map.get(&from).copied().ok_or(()).unwrap())
-            .ok()
-            .cloned();
-        let Some(style) = from_style else { return };
+        let from_taffy_id = match self.node_map.get(&from).copied() {
+            Some(id) => id,
+            None => return,
+        };
+        let style = match self.taffy.style(from_taffy_id) {
+            Ok(s) => s.clone(),
+            Err(_) => return,
+        };
         if let Some(&to_taffy_id) = self.node_map.get(&to) {
-            self.taffy.set_style(to_taffy_id, style).unwrap();
+            let _ = self.taffy.set_style(to_taffy_id, style);
             let _ = self.taffy.mark_dirty(to_taffy_id);
             self.fire_dirtied(to);
         }
@@ -1199,27 +1110,35 @@ impl LayoutEngine {
     }
 
     pub fn add_child(&mut self, parent: NodeId, child: NodeId) {
-        let &p = self.node_map.get(&parent).expect("parent not registered");
-        let &c = self.node_map.get(&child).expect("child not registered");
-        self.taffy.add_child(p, c).unwrap();
+        let Some(&p) = self.node_map.get(&parent) else {
+            return;
+        };
+        let Some(&c) = self.node_map.get(&child) else {
+            return;
+        };
+        let _ = self.taffy.add_child(p, c);
+    }
+
+    pub fn set_children(&mut self, parent: NodeId, children: &[NodeId]) {
+        let Some(&p) = self.node_map.get(&parent) else {
+            return;
+        };
+        let taffy_children: Vec<_> = children.iter().filter_map(|c| self.node_map.get(c).copied()).collect();
+        let _ = self.taffy.set_children(p, &taffy_children);
     }
 
     pub fn remove_child(&mut self, parent: NodeId, child: NodeId) {
-        let &p = self.node_map.get(&parent).expect("parent not registered");
-        let &c = self.node_map.get(&child).expect("child not registered");
-        self.taffy.remove_child(p, c).unwrap();
+        let Some(&p) = self.node_map.get(&parent) else {
+            return;
+        };
+        let Some(&c) = self.node_map.get(&child) else {
+            return;
+        };
+        let _ = self.taffy.remove_child(p, c);
     }
 
-    pub fn compute_layout(
-        &mut self,
-        root: NodeId,
-        width: f32,
-        height: f32,
-    ) -> Result<(), LayoutError> {
-        let &taffy_root = self
-            .node_map
-            .get(&root)
-            .ok_or(LayoutError::NodeNotRegistered(root))?;
+    pub fn compute_layout(&mut self, root: NodeId, width: f32, height: f32) -> Result<(), LayoutError> {
+        let &taffy_root = self.node_map.get(&root).ok_or(LayoutError::NodeNotRegistered(root))?;
 
         if !self.taffy.dirty(taffy_root).unwrap_or(false) {
             return Ok(());
@@ -1237,15 +1156,8 @@ impl LayoutEngine {
             taffy_root,
             size,
             |known_dimensions, available_space, node_id, _context, _style| {
-                if let taffy::Size {
-                    width: Some(w),
-                    height: Some(h),
-                } = known_dimensions
-                {
-                    return taffy::Size {
-                        width: w,
-                        height: h,
-                    };
+                if let taffy::Size { width: Some(w), height: Some(h) } = known_dimensions {
+                    return taffy::Size { width: w, height: h };
                 }
 
                 let our_id = match reverse_map.get(&node_id) {
@@ -1266,16 +1178,9 @@ impl LayoutEngine {
 
                 // Check for per-node measure callback first (OpenTUI native measure path)
                 if let Some(callback) = measure_callbacks.get(&our_id) {
-                    let result = callback(
-                        known_dimensions.width,
-                        known_dimensions.height,
-                        available_width,
-                        available_height,
-                    );
-                    return taffy::Size {
-                        width: result.width,
-                        height: result.height,
-                    };
+                    let result =
+                        callback(known_dimensions.width, known_dimensions.height, available_width, available_height);
+                    return taffy::Size { width: result.width, height: result.height };
                 }
 
                 // Fall back to text measurement (default behavior)
@@ -1298,16 +1203,8 @@ impl LayoutEngine {
 
     /// Force layout computation regardless of dirty state.
     /// Use this when terminal size changes.
-    pub fn compute_layout_forced(
-        &mut self,
-        root: NodeId,
-        width: f32,
-        height: f32,
-    ) -> Result<(), LayoutError> {
-        let &taffy_root = self
-            .node_map
-            .get(&root)
-            .ok_or(LayoutError::NodeNotRegistered(root))?;
+    pub fn compute_layout_forced(&mut self, root: NodeId, width: f32, height: f32) -> Result<(), LayoutError> {
+        let &taffy_root = self.node_map.get(&root).ok_or(LayoutError::NodeNotRegistered(root))?;
         let _ = self.taffy.mark_dirty(taffy_root);
         self.compute_layout(root, width, height)
     }
@@ -1351,43 +1248,19 @@ fn sizing_to_taffy(sizing: Option<Sizing>) -> taffy::Dimension {
 
 fn rect_values_to_taffy(r: &RectValues) -> taffy::Rect<taffy::LengthPercentage> {
     taffy::Rect {
-        top: r
-            .top
-            .map(taffy::LengthPercentage::Length)
-            .unwrap_or(taffy::LengthPercentage::Length(0.0)),
-        right: r
-            .right
-            .map(taffy::LengthPercentage::Length)
-            .unwrap_or(taffy::LengthPercentage::Length(0.0)),
-        bottom: r
-            .bottom
-            .map(taffy::LengthPercentage::Length)
-            .unwrap_or(taffy::LengthPercentage::Length(0.0)),
-        left: r
-            .left
-            .map(taffy::LengthPercentage::Length)
-            .unwrap_or(taffy::LengthPercentage::Length(0.0)),
+        top: r.top.map(taffy::LengthPercentage::Length).unwrap_or(taffy::LengthPercentage::Length(0.0)),
+        right: r.right.map(taffy::LengthPercentage::Length).unwrap_or(taffy::LengthPercentage::Length(0.0)),
+        bottom: r.bottom.map(taffy::LengthPercentage::Length).unwrap_or(taffy::LengthPercentage::Length(0.0)),
+        left: r.left.map(taffy::LengthPercentage::Length).unwrap_or(taffy::LengthPercentage::Length(0.0)),
     }
 }
 
 fn rect_values_to_taffy_auto(r: &RectValues) -> taffy::Rect<taffy::LengthPercentageAuto> {
     taffy::Rect {
-        top: r
-            .top
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
-        right: r
-            .right
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
-        bottom: r
-            .bottom
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
-        left: r
-            .left
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
+        top: r.top.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
+        right: r.right.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
+        bottom: r.bottom.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
+        left: r.left.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Length(0.0)),
     }
 }
 
@@ -1423,22 +1296,10 @@ fn map_flex_direction(val: FlexDirection) -> taffy::FlexDirection {
 
 fn rect_values_to_inset(r: &RectValues) -> taffy::Rect<taffy::LengthPercentageAuto> {
     taffy::Rect {
-        top: r
-            .top
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Auto),
-        right: r
-            .right
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Auto),
-        bottom: r
-            .bottom
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Auto),
-        left: r
-            .left
-            .map(taffy::LengthPercentageAuto::Length)
-            .unwrap_or(taffy::LengthPercentageAuto::Auto),
+        top: r.top.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Auto),
+        right: r.right.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Auto),
+        bottom: r.bottom.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Auto),
+        left: r.left.map(taffy::LengthPercentageAuto::Length).unwrap_or(taffy::LengthPercentageAuto::Auto),
     }
 }
 
@@ -1484,49 +1345,36 @@ fn map_align_self(val: AlignSelf) -> taffy::AlignSelf {
 }
 
 fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
-    let padding = props
-        .padding
-        .map(|r| rect_values_to_taffy(&r))
-        .unwrap_or(taffy::Rect {
-            top: taffy::LengthPercentage::Length(0.0),
-            right: taffy::LengthPercentage::Length(0.0),
-            bottom: taffy::LengthPercentage::Length(0.0),
-            left: taffy::LengthPercentage::Length(0.0),
-        });
-    let margin = props
-        .margin
-        .map(|r| rect_values_to_taffy_auto(&r))
-        .unwrap_or(taffy::Rect {
-            top: taffy::LengthPercentageAuto::Length(0.0),
-            right: taffy::LengthPercentageAuto::Length(0.0),
-            bottom: taffy::LengthPercentageAuto::Length(0.0),
-            left: taffy::LengthPercentageAuto::Length(0.0),
-        });
-    let border = props
-        .border
-        .map(|r| rect_values_to_taffy(&r))
-        .unwrap_or(taffy::Rect {
-            top: taffy::LengthPercentage::Length(0.0),
-            right: taffy::LengthPercentage::Length(0.0),
-            bottom: taffy::LengthPercentage::Length(0.0),
-            left: taffy::LengthPercentage::Length(0.0),
-        });
+    let padding = props.padding.map(|r| rect_values_to_taffy(&r)).unwrap_or(taffy::Rect {
+        top: taffy::LengthPercentage::Length(0.0),
+        right: taffy::LengthPercentage::Length(0.0),
+        bottom: taffy::LengthPercentage::Length(0.0),
+        left: taffy::LengthPercentage::Length(0.0),
+    });
+    let margin = props.margin.map(|r| rect_values_to_taffy_auto(&r)).unwrap_or(taffy::Rect {
+        top: taffy::LengthPercentageAuto::Length(0.0),
+        right: taffy::LengthPercentageAuto::Length(0.0),
+        bottom: taffy::LengthPercentageAuto::Length(0.0),
+        left: taffy::LengthPercentageAuto::Length(0.0),
+    });
+    let border = props.border.map(|r| rect_values_to_taffy(&r)).unwrap_or(taffy::Rect {
+        top: taffy::LengthPercentage::Length(0.0),
+        right: taffy::LengthPercentage::Length(0.0),
+        bottom: taffy::LengthPercentage::Length(0.0),
+        left: taffy::LengthPercentage::Length(0.0),
+    });
 
     let gap = match props.gap {
         Some(g) => taffy::Size {
             width: taffy::LengthPercentage::Length(g.column),
             height: taffy::LengthPercentage::Length(g.row),
         },
-        None => taffy::Size {
-            width: taffy::LengthPercentage::Length(0.0),
-            height: taffy::LengthPercentage::Length(0.0),
-        },
+        None => {
+            taffy::Size { width: taffy::LengthPercentage::Length(0.0), height: taffy::LengthPercentage::Length(0.0) }
+        }
     };
 
-    let size = taffy::Size {
-        width: sizing_to_taffy(props.width),
-        height: sizing_to_taffy(props.height),
-    };
+    let size = taffy::Size { width: sizing_to_taffy(props.width), height: sizing_to_taffy(props.height) };
 
     taffy::Style {
         display: match props.display {
@@ -1543,42 +1391,24 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
         flex_shrink: props.flex_shrink,
         flex_basis: sizing_to_taffy(props.flex_basis),
         size,
-        min_size: taffy::Size {
-            width: sizing_to_taffy(props.min_width),
-            height: sizing_to_taffy(props.min_height),
-        },
-        max_size: taffy::Size {
-            width: sizing_to_taffy(props.max_width),
-            height: sizing_to_taffy(props.max_height),
-        },
-        inset: props
-            .inset
-            .map(|r| rect_values_to_inset(&r))
-            .unwrap_or(taffy::Rect {
-                top: taffy::LengthPercentageAuto::Auto,
-                right: taffy::LengthPercentageAuto::Auto,
-                bottom: taffy::LengthPercentageAuto::Auto,
-                left: taffy::LengthPercentageAuto::Auto,
-            }),
+        min_size: taffy::Size { width: sizing_to_taffy(props.min_width), height: sizing_to_taffy(props.min_height) },
+        max_size: taffy::Size { width: sizing_to_taffy(props.max_width), height: sizing_to_taffy(props.max_height) },
+        inset: props.inset.map(|r| rect_values_to_inset(&r)).unwrap_or(taffy::Rect {
+            top: taffy::LengthPercentageAuto::Auto,
+            right: taffy::LengthPercentageAuto::Auto,
+            bottom: taffy::LengthPercentageAuto::Auto,
+            left: taffy::LengthPercentageAuto::Auto,
+        }),
         padding,
         margin,
         border,
         gap,
         aspect_ratio: props.aspect_ratio,
         overflow: taffy::Point {
-            x: props
-                .overflow
-                .map(map_layout_overflow)
-                .unwrap_or(taffy::Overflow::Visible),
-            y: props
-                .overflow
-                .map(map_layout_overflow)
-                .unwrap_or(taffy::Overflow::Visible),
+            x: props.overflow.map(map_layout_overflow).unwrap_or(taffy::Overflow::Visible),
+            y: props.overflow.map(map_layout_overflow).unwrap_or(taffy::Overflow::Visible),
         },
-        box_sizing: props
-            .box_sizing
-            .map(map_box_sizing)
-            .unwrap_or(taffy::BoxSizing::BorderBox),
+        box_sizing: props.box_sizing.map(map_box_sizing).unwrap_or(taffy::BoxSizing::BorderBox),
         ..Default::default()
     }
 }
@@ -1600,12 +1430,7 @@ impl Default for LayoutTreeSync {
 
 impl LayoutTreeSync {
     pub fn new() -> Self {
-        Self {
-            layout: LayoutEngine::new(),
-            results: HashMap::new(),
-            generation: 0,
-            revision: 0,
-        }
+        Self { layout: LayoutEngine::new(), results: HashMap::new(), generation: 0, revision: 0 }
     }
 
     /// Get current layout generation.
@@ -1667,8 +1492,8 @@ impl LayoutTreeSync {
         let had_changes = !children.is_empty();
         for child in &children {
             self.sync_node(arena, *child);
-            self.layout.add_child(parent, *child);
         }
+        self.layout.set_children(parent, &children);
         if had_changes {
             self.bump_revision();
         }
@@ -1678,20 +1503,14 @@ impl LayoutTreeSync {
         if !self.layout.is_dirty(root) {
             return Ok(());
         }
-        self.layout
-            .compute_layout(root, width as f32, height as f32)?;
+        self.layout.compute_layout(root, width as f32, height as f32)?;
         self.results = self.layout.collect_results();
         self.generation = self.generation.wrapping_add(1);
         Ok(())
     }
 
     /// Force layout computation regardless of dirty state.
-    pub fn compute_forced(
-        &mut self,
-        root: NodeId,
-        width: u16,
-        height: u16,
-    ) -> Result<(), LayoutError> {
+    pub fn compute_forced(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
         self.layout.mark_dirty(root);
         self.compute(root, width, height)
     }
@@ -1741,15 +1560,7 @@ pub struct LayoutResult {
 
 impl LayoutResult {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-            content_width: width,
-            content_height: height,
-            ..Default::default()
-        }
+        Self { x, y, width, height, content_width: width, content_height: height, ..Default::default() }
     }
 
     /// Convert Taffy's f32 pixel output to terminal cell count.
@@ -1791,11 +1602,7 @@ impl LayoutResult {
 /// Minimum children to trigger binary search culling for scroll containers.
 const BINARY_SEARCH_MIN_CHILDREN: usize = 32;
 
-pub fn build_render_tree(
-    arena: &NodeArena,
-    layout_results: &HashMap<NodeId, LayoutResult>,
-    tree: &mut RenderTree,
-) {
+pub fn build_render_tree(arena: &NodeArena, layout_results: &HashMap<NodeId, LayoutResult>, tree: &mut RenderTree) {
     build_render_tree_with_viewport(arena, layout_results, None, tree)
 }
 
@@ -1807,19 +1614,7 @@ pub fn build_render_tree_with_viewport(
 ) {
     tree.clear();
     let root = arena.root();
-    build_node(
-        arena,
-        layout_results,
-        root,
-        &crate::tree::Style::default(),
-        0,
-        0,
-        1.0,
-        0,
-        0,
-        viewport,
-        tree,
-    );
+    build_node(arena, layout_results, root, &crate::tree::Style::default(), 0, 0, 1.0, 0, 0, viewport, tree);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1857,12 +1652,7 @@ fn build_node(
         None => (None, None),
         Some(vp) => {
             let narrowed = if flags_need_clip(node) {
-                vp.intersect(&Viewport::new(
-                    layout.x,
-                    layout.y,
-                    layout.width,
-                    layout.height,
-                ))
+                vp.intersect(&Viewport::new(layout.x, layout.y, layout.width, layout.height))
             } else {
                 Some(*vp)
             };
@@ -1905,32 +1695,12 @@ fn build_node(
         flags |= PaintFlags::NEEDS_CLIP;
     }
 
-    let mut bounds = PaintBounds::new(
-        layout.x,
-        layout.y,
-        layout.width.max(1),
-        layout.height.max(1),
-    );
-    bounds = bounds.with_padding(
-        layout.padding_left,
-        layout.padding_right,
-        layout.padding_top,
-        layout.padding_bottom,
-    );
-    bounds = bounds.with_border(
-        layout.border_top,
-        layout.border_right,
-        layout.border_bottom,
-        layout.border_left,
-    );
+    let mut bounds = PaintBounds::new(layout.x, layout.y, layout.width.max(1), layout.height.max(1));
+    bounds = bounds.with_padding(layout.padding_left, layout.padding_right, layout.padding_top, layout.padding_bottom);
+    bounds = bounds.with_border(layout.border_top, layout.border_right, layout.border_bottom, layout.border_left);
 
     let clip = if flags.contains(PaintFlags::NEEDS_CLIP) {
-        Some(ClipBounds::new(
-            layout.x,
-            layout.y,
-            layout.width,
-            layout.height,
-        ))
+        Some(ClipBounds::new(layout.x, layout.y, layout.width, layout.height))
     } else {
         None
     };
@@ -1951,22 +1721,11 @@ fn build_node(
 
     tree.push(obj);
 
-    let child_clip_x = if flags.contains(PaintFlags::NEEDS_CLIP) {
-        layout.x
-    } else {
-        clip_x
-    };
-    let child_clip_y = if flags.contains(PaintFlags::NEEDS_CLIP) {
-        layout.y
-    } else {
-        clip_y
-    };
+    let child_clip_x = if flags.contains(PaintFlags::NEEDS_CLIP) { layout.x } else { clip_x };
+    let child_clip_y = if flags.contains(PaintFlags::NEEDS_CLIP) { layout.y } else { clip_y };
 
     let child_ids: Vec<NodeId> = match child_viewport {
-        Some(ref vp)
-            if node.overflow == Overflow::Scroll
-                && node.children.len() >= BINARY_SEARCH_MIN_CHILDREN =>
-        {
+        Some(ref vp) if node.overflow == Overflow::Scroll && node.children.len() >= BINARY_SEARCH_MIN_CHILDREN => {
             let primary = determine_primary_axis(&node.layout);
             let mut positioned: Vec<PositionedChild> = node
                 .children
@@ -1977,11 +1736,7 @@ fn build_node(
                         PrimaryAxis::Column => (layout.y, layout.height),
                         PrimaryAxis::Row => (layout.x, layout.width),
                     };
-                    Some(PositionedChild {
-                        id: cid,
-                        start,
-                        size,
-                    })
+                    Some(PositionedChild { id: cid, start, size })
                 })
                 .collect();
             positioned.sort_by_key(|c| c.start);
@@ -1994,10 +1749,8 @@ fn build_node(
         }
     };
 
-    let child_accum_tx =
-        accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
-    let child_accum_ty =
-        accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
+    let child_accum_tx = accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
+    let child_accum_ty = accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
 
     for &child_id in &child_ids {
         build_node(
@@ -2143,13 +1896,7 @@ mod dirtied_callback_tests {
             *fired_id_clone.lock().unwrap() = nid;
         });
 
-        engine.update_style(
-            id,
-            &LayoutProps {
-                flex_grow: 2.0,
-                ..Default::default()
-            },
-        );
+        engine.update_style(id, &LayoutProps { flex_grow: 2.0, ..Default::default() });
         assert!(fired.load(Ordering::SeqCst));
         assert_eq!(*fired_id.lock().unwrap(), id);
     }
@@ -2244,10 +1991,7 @@ mod measure_callback_tests {
         let id = NodeId::default();
         assert!(!engine.has_measure_callback(id));
 
-        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
-            width: 10.0,
-            height: 5.0,
-        });
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult { width: 10.0, height: 5.0 });
         assert!(engine.has_measure_callback(id));
     }
 
@@ -2255,10 +1999,7 @@ mod measure_callback_tests {
     fn remove_measure_callback() {
         let mut engine = LayoutEngine::new();
         let id = NodeId::default();
-        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
-            width: 10.0,
-            height: 5.0,
-        });
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult { width: 10.0, height: 5.0 });
         assert!(engine.has_measure_callback(id));
 
         engine.remove_measure_callback(id);
@@ -2271,11 +2012,7 @@ mod measure_callback_tests {
         let id = NodeId::default();
         engine.register_text_node(
             id,
-            &LayoutProps {
-                width: Some(Sizing::Points(50.0)),
-                height: Some(Sizing::Auto),
-                ..Default::default()
-            },
+            &LayoutProps { width: Some(Sizing::Points(50.0)), height: Some(Sizing::Auto), ..Default::default() },
             "hello",
         );
 
@@ -2304,18 +2041,11 @@ mod measure_callback_tests {
         // Use Auto sizing so the callback fully controls the result.
         engine.register_text_node(
             id,
-            &LayoutProps {
-                width: Some(Sizing::Auto),
-                height: Some(Sizing::Auto),
-                ..Default::default()
-            },
+            &LayoutProps { width: Some(Sizing::Auto), height: Some(Sizing::Auto), ..Default::default() },
             "this is long text that would measure wide",
         );
 
-        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
-            width: 5.0,
-            height: 1.0,
-        });
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult { width: 5.0, height: 1.0 });
         engine.mark_dirty(id);
         engine.compute_layout(id, 80.0, 24.0).unwrap();
 
@@ -2341,10 +2071,7 @@ mod config_tests {
     #[test]
     fn set_and_get_config() {
         let mut engine = LayoutEngine::new();
-        let config = LayoutConfig {
-            point_scale_factor: 2.0,
-            use_web_defaults: true,
-        };
+        let config = LayoutConfig { point_scale_factor: 2.0, use_web_defaults: true };
         engine.set_config(config);
         assert_eq!(engine.config().point_scale_factor, 2.0);
         assert!(engine.config().use_web_defaults);
@@ -2363,10 +2090,7 @@ mod new_style_props_tests {
 
     #[test]
     fn layout_props_aspect_ratio_set() {
-        let props = LayoutProps {
-            aspect_ratio: Some(2.0),
-            ..Default::default()
-        };
+        let props = LayoutProps { aspect_ratio: Some(2.0), ..Default::default() };
         assert_eq!(props.aspect_ratio, Some(2.0));
     }
 
@@ -2431,13 +2155,7 @@ mod node_operation_tests {
     fn reset_node_clears_style() {
         let mut engine = LayoutEngine::new();
         let id = NodeId::default();
-        engine.register_container(
-            id,
-            &LayoutProps {
-                flex_grow: 2.0,
-                ..Default::default()
-            },
-        );
+        engine.register_container(id, &LayoutProps { flex_grow: 2.0, ..Default::default() });
         engine.reset_node(id);
 
         engine.mark_dirty(id);

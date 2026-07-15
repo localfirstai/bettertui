@@ -76,51 +76,27 @@ impl<'a> WidgetContext<'a> {
     }
 
     pub fn make_box(&mut self, layout: LayoutProps, style: Style) -> NodeId {
-        let node = RenderNode {
-            kind: NodeKind::Box,
-            style,
-            layout,
-            ..RenderNode::default()
-        };
+        let node = RenderNode { kind: NodeKind::Box, style, layout, ..RenderNode::default() };
         self.arena.insert(node)
     }
 
     pub fn make_text(&mut self, content: impl Into<Box<str>>, style: Style) -> NodeId {
-        let node = RenderNode {
-            kind: NodeKind::Text,
-            text: Some(content.into()),
-            style,
-            ..RenderNode::default()
-        };
+        let node = RenderNode { kind: NodeKind::Text, text: Some(content.into()), style, ..RenderNode::default() };
         self.arena.insert(node)
     }
 
     pub fn make_flex(&mut self, layout: LayoutProps, style: Style) -> NodeId {
-        let node = RenderNode {
-            kind: NodeKind::Flex,
-            style,
-            layout,
-            ..RenderNode::default()
-        };
+        let node = RenderNode { kind: NodeKind::Flex, style, layout, ..RenderNode::default() };
         self.arena.insert(node)
     }
 
     pub fn make_spacer(&mut self, layout: LayoutProps) -> NodeId {
-        let node = RenderNode {
-            kind: NodeKind::Spacer,
-            layout,
-            ..RenderNode::default()
-        };
+        let node = RenderNode { kind: NodeKind::Spacer, layout, ..RenderNode::default() };
         self.arena.insert(node)
     }
 
     pub fn make_separator(&mut self, layout: LayoutProps, style: Style) -> NodeId {
-        let node = RenderNode {
-            kind: NodeKind::Separator,
-            style,
-            layout,
-            ..RenderNode::default()
-        };
+        let node = RenderNode { kind: NodeKind::Separator, style, layout, ..RenderNode::default() };
         self.arena.insert(node)
     }
 }
@@ -132,12 +108,7 @@ mod tests {
     use bettertui_engine::tree::{Color, NamedColor};
 
     fn make_context() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -184,14 +155,7 @@ mod tests {
 
         let id = ctx.insert_node(RenderNode::new(NodeKind::Text));
         ctx.set_text(id, "hello");
-        assert_eq!(
-            ctx.arena
-                .get(id)
-                .expect("Node missing from arena")
-                .text
-                .as_deref(),
-            Some("hello")
-        );
+        assert_eq!(ctx.arena.get(id).expect("Node missing from arena").text.as_deref(), Some("hello"));
     }
 
     #[test]
@@ -205,14 +169,8 @@ mod tests {
             theme: &theme,
         };
 
-        let layout = LayoutProps {
-            width: Some(Sizing::Points(10.0)),
-            ..Default::default()
-        };
-        let style = Style {
-            bg: Some(Color::Named(NamedColor::Blue)),
-            ..Style::default()
-        };
+        let layout = LayoutProps { width: Some(Sizing::Points(10.0)), ..Default::default() };
+        let style = Style { bg: Some(Color::Named(NamedColor::Blue)), ..Style::default() };
         let id = ctx.make_box(layout, style);
         let node = ctx.arena.get(id).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
@@ -231,10 +189,7 @@ mod tests {
             theme: &theme,
         };
 
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let id = ctx.make_text("Hello World", style);
         let node = ctx.arena.get(id).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Text);
@@ -288,10 +243,7 @@ mod tests {
         };
 
         let id = ctx.make_flex(LayoutProps::default(), Style::default());
-        assert_eq!(
-            ctx.arena.get(id).expect("Node missing from arena").kind,
-            NodeKind::Flex
-        );
+        assert_eq!(ctx.arena.get(id).expect("Node missing from arena").kind, NodeKind::Flex);
     }
 
     #[test]
@@ -306,9 +258,6 @@ mod tests {
         };
 
         let id = ctx.make_spacer(LayoutProps::default());
-        assert_eq!(
-            ctx.arena.get(id).expect("Node missing from arena").kind,
-            NodeKind::Spacer
-        );
+        assert_eq!(ctx.arena.get(id).expect("Node missing from arena").kind, NodeKind::Spacer);
     }
 }

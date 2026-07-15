@@ -22,11 +22,7 @@ fn rect_edges() {
 
 #[test]
 fn draw_style_chain() {
-    let style = DrawStyle::new()
-        .fg(Color::rgb(255, 0, 0))
-        .bg(Color::rgb(0, 0, 0))
-        .bold()
-        .italic();
+    let style = DrawStyle::new().fg(Color::rgb(255, 0, 0)).bg(Color::rgb(0, 0, 0)).bold().italic();
     assert!(style.fg.is_some());
     assert!(style.bg.is_some());
     assert!(style.attributes.contains(CellAttributes::BOLD));

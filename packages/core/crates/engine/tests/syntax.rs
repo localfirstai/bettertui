@@ -150,10 +150,7 @@ fn theme_returns_none_for_unknown() {
 fn theme_github_light_has_keywords() {
     let theme = SyntaxTheme::github_light();
     assert!(theme.get("keyword").is_some());
-    assert_eq!(
-        theme.get("keyword").unwrap().fg,
-        Some(Color::rgb(215, 58, 73))
-    );
+    assert_eq!(theme.get("keyword").unwrap().fg, Some(Color::rgb(215, 58, 73)));
 }
 
 #[test]
@@ -180,10 +177,7 @@ fn theme_convert_from_scopes() {
         dim: None,
     }];
     let theme = SyntaxTheme::convert_from_theme(scopes);
-    assert_eq!(
-        theme.get("keyword").unwrap().fg,
-        Some(Color::rgb(255, 0, 0))
-    );
+    assert_eq!(theme.get("keyword").unwrap().fg, Some(Color::rgb(255, 0, 0)));
     assert!(theme.get("keyword").unwrap().bold.unwrap());
     assert!(theme.get("keyword.control").is_some());
 }
@@ -199,15 +193,8 @@ fn theme_markdown_groups() {
 
 #[test]
 fn merge_child_overrides_parent() {
-    let parent = Style {
-        fg: Some(Color::rgb(255, 0, 0)),
-        bold: Some(true),
-        ..Style::default()
-    };
-    let child = Style {
-        fg: Some(Color::rgb(0, 255, 0)),
-        ..Style::default()
-    };
+    let parent = Style { fg: Some(Color::rgb(255, 0, 0)), bold: Some(true), ..Style::default() };
+    let child = Style { fg: Some(Color::rgb(0, 255, 0)), ..Style::default() };
     let merged = SyntaxTheme::merge(&parent, &child);
     assert_eq!(merged.fg, Some(Color::rgb(0, 255, 0)));
     assert_eq!(merged.bold, Some(true));

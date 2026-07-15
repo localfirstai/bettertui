@@ -125,11 +125,7 @@ pub struct KeyboardInput {
 
 impl KeyboardInput {
     pub fn new(key: char, modifiers: KeyModifiers) -> Self {
-        Self {
-            key,
-            modifiers,
-            action: KeyAction::Press,
-        }
+        Self { key, modifiers, action: KeyAction::Press }
     }
 
     pub fn with_action(mut self, action: KeyAction) -> Self {
@@ -166,10 +162,7 @@ impl KeyboardInput {
     }
 
     pub fn is_modifier_only(&self) -> bool {
-        matches!(
-            self.key,
-            '\x00' | '\x1b' | '\x08' | '\x09' | '\x0d' | '\x0a'
-        )
+        matches!(self.key, '\x00' | '\x1b' | '\x08' | '\x09' | '\x0d' | '\x0a')
     }
 
     pub fn to_display_string(&self) -> String {
@@ -250,14 +243,7 @@ pub struct MouseInput {
 
 impl MouseInput {
     pub fn new(x: u16, y: u16, buttons: MouseButtons) -> Self {
-        Self {
-            x,
-            y,
-            buttons,
-            modifiers: KeyModifiers::empty(),
-            event_type: MouseEventType::Press,
-            scroll_delta: None,
-        }
+        Self { x, y, buttons, modifiers: KeyModifiers::empty(), event_type: MouseEventType::Press, scroll_delta: None }
     }
 
     pub fn with_modifiers(mut self, modifiers: KeyModifiers) -> Self {
@@ -544,12 +530,7 @@ pub struct Modifiers {
 }
 
 impl Modifiers {
-    pub const NONE: Self = Self {
-        ctrl: false,
-        shift: false,
-        alt: false,
-        meta: false,
-    };
+    pub const NONE: Self = Self { ctrl: false, shift: false, alt: false, meta: false };
 
     pub fn is_empty(&self) -> bool {
         !self.ctrl && !self.shift && !self.alt && !self.meta
@@ -567,13 +548,7 @@ pub struct KeyEvent {
 
 impl KeyEvent {
     pub fn new(key: Key, target: NodeId) -> Self {
-        Self {
-            key,
-            modifiers: Modifiers::NONE,
-            target,
-            phase: EventPhase::Target,
-            default_prevented: false,
-        }
+        Self { key, modifiers: Modifiers::NONE, target, phase: EventPhase::Target, default_prevented: false }
     }
 
     pub fn with_modifiers(mut self, modifiers: Modifiers) -> Self {
@@ -635,12 +610,7 @@ pub struct PasteEvent {
 
 impl PasteEvent {
     pub fn new(text: impl Into<Box<str>>, target: NodeId) -> Self {
-        Self {
-            text: text.into(),
-            target,
-            phase: EventPhase::Target,
-            default_prevented: false,
-        }
+        Self { text: text.into(), target, phase: EventPhase::Target, default_prevented: false }
     }
 }
 
@@ -653,11 +623,7 @@ pub struct FocusEvent {
 
 impl FocusEvent {
     pub fn new(target: NodeId, previous: Option<NodeId>) -> Self {
-        Self {
-            target,
-            previous,
-            phase: EventPhase::Target,
-        }
+        Self { target, previous, phase: EventPhase::Target }
     }
 }
 
@@ -670,11 +636,7 @@ pub struct BlurEvent {
 
 impl BlurEvent {
     pub fn new(target: NodeId, next: Option<NodeId>) -> Self {
-        Self {
-            target,
-            next,
-            phase: EventPhase::Target,
-        }
+        Self { target, next, phase: EventPhase::Target }
     }
 }
 
@@ -688,12 +650,7 @@ pub struct ResizeEvent {
 
 impl ResizeEvent {
     pub fn new(width: u16, height: u16, previous_width: u16, previous_height: u16) -> Self {
-        Self {
-            width,
-            height,
-            previous_width,
-            previous_height,
-        }
+        Self { width, height, previous_width, previous_height }
     }
 }
 
@@ -732,21 +689,11 @@ impl Default for EventDispatcher {
 
 impl EventDispatcher {
     pub fn new() -> Self {
-        Self {
-            handlers: HashMap::new(),
-            global_handlers: Vec::new(),
-        }
+        Self { handlers: HashMap::new(), global_handlers: Vec::new() }
     }
 
-    pub fn on(
-        &mut self,
-        node_id: NodeId,
-        handler: impl FnMut(&mut Event) -> EventResult + Send + 'static,
-    ) {
-        self.handlers
-            .entry(node_id)
-            .or_default()
-            .push(Box::new(handler));
+    pub fn on(&mut self, node_id: NodeId, handler: impl FnMut(&mut Event) -> EventResult + Send + 'static) {
+        self.handlers.entry(node_id).or_default().push(Box::new(handler));
     }
 
     pub fn on_global(&mut self, handler: impl FnMut(&mut Event) -> EventResult + Send + 'static) {
@@ -839,19 +786,11 @@ impl Default for EventBus {
 
 impl EventBus {
     pub fn new() -> Self {
-        Self {
-            queue: VecDeque::new(),
-            max_queue_size: 256,
-            coalesce_mouse: true,
-        }
+        Self { queue: VecDeque::new(), max_queue_size: 256, coalesce_mouse: true }
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            queue: VecDeque::with_capacity(capacity),
-            max_queue_size: 256,
-            coalesce_mouse: true,
-        }
+        Self { queue: VecDeque::with_capacity(capacity), max_queue_size: 256, coalesce_mouse: true }
     }
 
     pub fn push(&mut self, event: Event) {
@@ -896,12 +835,7 @@ impl EventBus {
     }
 
     pub fn push_resize(&mut self, width: u16, height: u16, prev_width: u16, prev_height: u16) {
-        self.push(Event::Resize(ResizeEvent::new(
-            width,
-            height,
-            prev_width,
-            prev_height,
-        )));
+        self.push(Event::Resize(ResizeEvent::new(width, height, prev_width, prev_height)));
     }
 
     pub fn push_lifecycle(&mut self, event: LifecycleEvent) {
@@ -928,11 +862,7 @@ impl EventBus {
         self.coalesce_mouse = coalesce;
     }
 
-    pub fn process_all(
-        &mut self,
-        dispatcher: &mut EventDispatcher,
-        arena: &crate::tree::NodeArena,
-    ) {
+    pub fn process_all(&mut self, dispatcher: &mut EventDispatcher, arena: &crate::tree::NodeArena) {
         let events: VecDeque<Event> = self.drain();
         for mut event in events {
             let _ = dispatcher.dispatch(&mut event, arena);
@@ -972,10 +902,7 @@ pub struct FocusEvent_ {
 
 impl FocusEvent_ {
     pub fn new(node_id: NodeId, event_type: FocusEventType) -> Self {
-        Self {
-            node_id,
-            event_type,
-        }
+        Self { node_id, event_type }
     }
 
     pub fn is_focus(&self) -> bool {
@@ -1016,12 +943,7 @@ pub struct FocusScope {
 
 impl FocusScope {
     pub fn new(id: NodeId, scope_type: FocusScopeType) -> Self {
-        Self {
-            id,
-            scope_type,
-            modal: false,
-            trap_focus: false,
-        }
+        Self { id, scope_type, modal: false, trap_focus: false }
     }
 
     pub fn with_modal(mut self, modal: bool) -> Self {
@@ -1094,11 +1016,7 @@ impl FocusTraversal {
         let current = manager.focused();
         if let Some(current_id) = current {
             if let Some(pos) = focusable.iter().position(|&id| id == current_id) {
-                let prev_pos = if pos == 0 {
-                    focusable.len() - 1
-                } else {
-                    pos - 1
-                };
+                let prev_pos = if pos == 0 { focusable.len() - 1 } else { pos - 1 };
                 Some(focusable[prev_pos])
             } else {
                 Some(focusable[focusable.len() - 1])
@@ -1124,10 +1042,9 @@ impl FocusTraversal {
             FocusDirection::Backward => Self::previous(manager),
             FocusDirection::First => Self::first(manager),
             FocusDirection::Last => Self::last(manager),
-            FocusDirection::Up
-            | FocusDirection::Down
-            | FocusDirection::Left
-            | FocusDirection::Right => Self::next(manager),
+            FocusDirection::Up | FocusDirection::Down | FocusDirection::Left | FocusDirection::Right => {
+                Self::next(manager)
+            }
         }
     }
 }
@@ -1153,13 +1070,7 @@ impl Default for FocusManager {
 
 impl FocusManager {
     pub fn new() -> Self {
-        Self {
-            nodes: StdHashMap::new(),
-            focused: None,
-            previous: None,
-            scopes: Vec::new(),
-            tab_order: Vec::new(),
-        }
+        Self { nodes: StdHashMap::new(), focused: None, previous: None, scopes: Vec::new(), tab_order: Vec::new() }
     }
 
     pub fn register(&mut self, node_id: NodeId, state: FocusState) {
@@ -1196,18 +1107,12 @@ impl FocusManager {
             && let Some(state) = self.nodes.get_mut(&old_id.node_id())
         {
             state.focused = None;
-            events.push(FocusEvent_ {
-                node_id: old_id.node_id(),
-                event_type: FocusEventType::Blur,
-            });
+            events.push(FocusEvent_ { node_id: old_id.node_id(), event_type: FocusEventType::Blur });
         }
 
         if let Some(state) = self.nodes.get_mut(&node_id) {
             state.focused = Some(FocusId::new(node_id));
-            events.push(FocusEvent_ {
-                node_id,
-                event_type: FocusEventType::Focus,
-            });
+            events.push(FocusEvent_ { node_id, event_type: FocusEventType::Focus });
         }
 
         events.first().cloned()
@@ -1219,10 +1124,7 @@ impl FocusManager {
             if let Some(state) = self.nodes.get_mut(&node_id) {
                 state.focused = None;
             }
-            Some(FocusEvent_ {
-                node_id,
-                event_type: FocusEventType::Blur,
-            })
+            Some(FocusEvent_ { node_id, event_type: FocusEventType::Blur })
         } else {
             None
         }
@@ -1237,17 +1139,11 @@ impl FocusManager {
     }
 
     pub fn restore(&mut self) -> Option<FocusEvent_> {
-        if let Some(prev) = self.previous {
-            self.focus(prev.node_id())
-        } else {
-            None
-        }
+        if let Some(prev) = self.previous { self.focus(prev.node_id()) } else { None }
     }
 
     pub fn is_focusable(&self, node_id: NodeId) -> bool {
-        self.nodes
-            .get(&node_id)
-            .is_some_and(|state| state.is_focusable())
+        self.nodes.get(&node_id).is_some_and(|state| state.is_focusable())
     }
 
     pub fn is_focused(&self, node_id: NodeId) -> bool {
@@ -1255,11 +1151,7 @@ impl FocusManager {
     }
 
     pub fn focusable_nodes(&self) -> Vec<NodeId> {
-        self.nodes
-            .iter()
-            .filter(|(_, state)| state.is_focusable())
-            .map(|(id, _)| *id)
-            .collect()
+        self.nodes.iter().filter(|(_, state)| state.is_focusable()).map(|(id, _)| *id).collect()
     }
 
     pub fn tab_order(&self) -> &[NodeId] {
@@ -1278,8 +1170,7 @@ impl FocusManager {
             .into_iter()
             .map(|(id, _)| id)
             .collect();
-        self.tab_order
-            .sort_by_key(|id| self.nodes.get(id).map_or(0, |state| state.tab_index));
+        self.tab_order.sort_by_key(|id| self.nodes.get(id).map_or(0, |state| state.tab_index));
     }
 
     pub fn push_scope(&mut self, scope: FocusScope) {
@@ -1342,27 +1233,15 @@ impl Default for FocusState {
 
 impl FocusState {
     pub fn new() -> Self {
-        Self {
-            focused: None,
-            previous: None,
-            scope: FocusScope::default(),
-            tab_index: 0,
-            focusable: true,
-        }
+        Self { focused: None, previous: None, scope: FocusScope::default(), tab_index: 0, focusable: true }
     }
 
     pub fn with_focusable(focusable: bool) -> Self {
-        Self {
-            focusable,
-            ..Self::new()
-        }
+        Self { focusable, ..Self::new() }
     }
 
     pub fn with_tab_index(tab_index: i32) -> Self {
-        Self {
-            tab_index,
-            ..Self::new()
-        }
+        Self { tab_index, ..Self::new() }
     }
 
     pub fn is_focusable(&self) -> bool {
@@ -1399,11 +1278,7 @@ impl Default for ClipboardState {
 
 impl ClipboardState {
     pub fn new() -> Self {
-        Self {
-            content: None,
-            selection: None,
-            primary: None,
-        }
+        Self { content: None, selection: None, primary: None }
     }
 
     pub fn set_content(&mut self, content: String) {
@@ -1506,12 +1381,7 @@ impl Default for KeyboardState {
 
 impl KeyboardState {
     pub fn new() -> Self {
-        Self {
-            modifiers: KeyModifiers::empty(),
-            kitty_keyboard: false,
-            bracketed_paste: false,
-            focus_events: false,
-        }
+        Self { modifiers: KeyModifiers::empty(), kitty_keyboard: false, bracketed_paste: false, focus_events: false }
     }
 
     pub fn with_kitty_keyboard(mut self, enabled: bool) -> Self {
@@ -1534,19 +1404,11 @@ impl KeyboardState {
     }
 
     pub fn press_key(&mut self, key: char, modifiers: KeyModifiers) -> KeyboardInput {
-        KeyboardInput {
-            key,
-            modifiers,
-            action: KeyAction::Press,
-        }
+        KeyboardInput { key, modifiers, action: KeyAction::Press }
     }
 
     pub fn release_key(&mut self, key: char, modifiers: KeyModifiers) -> KeyboardInput {
-        KeyboardInput {
-            key,
-            modifiers,
-            action: KeyAction::Release,
-        }
+        KeyboardInput { key, modifiers, action: KeyAction::Release }
     }
 }
 
@@ -1689,40 +1551,19 @@ impl KeyCombo {
     }
 
     pub fn plain(key: Key) -> Self {
-        Self {
-            key,
-            modifiers: Modifiers::NONE,
-        }
+        Self { key, modifiers: Modifiers::NONE }
     }
 
     pub fn with_ctrl(key: Key) -> Self {
-        Self {
-            key,
-            modifiers: Modifiers {
-                ctrl: true,
-                ..Modifiers::NONE
-            },
-        }
+        Self { key, modifiers: Modifiers { ctrl: true, ..Modifiers::NONE } }
     }
 
     pub fn with_shift(key: Key) -> Self {
-        Self {
-            key,
-            modifiers: Modifiers {
-                shift: true,
-                ..Modifiers::NONE
-            },
-        }
+        Self { key, modifiers: Modifiers { shift: true, ..Modifiers::NONE } }
     }
 
     pub fn with_alt(key: Key) -> Self {
-        Self {
-            key,
-            modifiers: Modifiers {
-                alt: true,
-                ..Modifiers::NONE
-            },
-        }
+        Self { key, modifiers: Modifiers { alt: true, ..Modifiers::NONE } }
     }
 
     pub fn matches(&self, event: &KeyEvent) -> bool {
@@ -1752,9 +1593,7 @@ impl KeySequence {
     }
 
     pub fn tail(&self) -> Self {
-        Self {
-            keys: self.keys[1..].to_vec(),
-        }
+        Self { keys: self.keys[1..].to_vec() }
     }
 }
 
@@ -1826,9 +1665,7 @@ impl KeyParser {
             "page_up" | "pgup" => Ok(Key::PageUp),
             "page_down" | "pgdn" => Ok(Key::PageDown),
             s if s.starts_with('f') && s.len() <= 3 => {
-                let num: u8 = s[1..]
-                    .parse()
-                    .map_err(|_| ParseError::InvalidKey(s.to_string()))?;
+                let num: u8 = s[1..].parse().map_err(|_| ParseError::InvalidKey(s.to_string()))?;
                 Ok(Key::F(num))
             }
             s if s.len() == 1 => Ok(Key::Character(s.chars().next().unwrap())),
@@ -1944,12 +1781,7 @@ pub struct KeyLayer {
 
 impl KeyLayer {
     pub fn new(name: impl Into<String>, priority: i32) -> Self {
-        Self {
-            name: name.into(),
-            priority,
-            enabled: true,
-            bindings: Vec::new(),
-        }
+        Self { name: name.into(), priority, enabled: true, bindings: Vec::new() }
     }
 
     pub fn add_binding(&mut self, binding: KeyBinding) {
@@ -1966,17 +1798,11 @@ impl KeyLayer {
         &self.bindings
     }
 
-    pub fn find_binding(
-        &self,
-        event: &KeyEvent,
-        current_mode: Option<&str>,
-    ) -> Option<&KeyBinding> {
+    pub fn find_binding(&self, event: &KeyEvent, current_mode: Option<&str>) -> Option<&KeyBinding> {
         if !self.enabled {
             return None;
         }
-        self.bindings
-            .iter()
-            .find(|b| b.matches(event, current_mode))
+        self.bindings.iter().find(|b| b.matches(event, current_mode))
     }
 
     pub fn enable(&mut self) {
@@ -2136,15 +1962,7 @@ impl Keymap {
     }
 
     pub fn all_bindings(&self) -> Vec<(&KeyBinding, &str)> {
-        self.layers
-            .iter()
-            .flat_map(|layer| {
-                layer
-                    .bindings()
-                    .iter()
-                    .map(move |b| (b, layer.name.as_str()))
-            })
-            .collect()
+        self.layers.iter().flat_map(|layer| layer.bindings().iter().map(move |b| (b, layer.name.as_str()))).collect()
     }
 
     fn last_binding_command(&self) -> Option<String> {
@@ -2159,9 +1977,7 @@ pub struct KeymapBuilder {
 
 impl KeymapBuilder {
     pub fn new() -> Self {
-        Self {
-            keymap: Keymap::new(),
-        }
+        Self { keymap: Keymap::new() }
     }
 
     pub fn binding(mut self, id: &str, keys: &str, desc: &str) -> Self {
@@ -2169,16 +1985,8 @@ impl KeymapBuilder {
         self
     }
 
-    pub fn binding_in_layer(
-        mut self,
-        layer: &str,
-        priority: i32,
-        id: &str,
-        keys: &str,
-        desc: &str,
-    ) -> Self {
-        self.keymap
-            .add_binding_to_layer(layer, KeyBinding::new(id, keys, desc), priority);
+    pub fn binding_in_layer(mut self, layer: &str, priority: i32, id: &str, keys: &str, desc: &str) -> Self {
+        self.keymap.add_binding_to_layer(layer, KeyBinding::new(id, keys, desc), priority);
         self
     }
 
@@ -2504,11 +2312,8 @@ mod tests {
 
         #[test]
         fn key_event_with_modifiers() {
-            let ke =
-                KeyEvent::new(Key::Character('c'), NodeId::default()).with_modifiers(Modifiers {
-                    ctrl: true,
-                    ..Default::default()
-                });
+            let ke = KeyEvent::new(Key::Character('c'), NodeId::default())
+                .with_modifiers(Modifiers { ctrl: true, ..Default::default() });
             assert_eq!(ke.key, Key::Character('c'));
             assert!(ke.modifiers.ctrl);
         }
@@ -2620,10 +2425,7 @@ mod tests {
 
         #[test]
         fn is_empty_false() {
-            let m = Modifiers {
-                ctrl: true,
-                ..Default::default()
-            };
+            let m = Modifiers { ctrl: true, ..Default::default() };
             assert!(!m.is_empty());
         }
     }

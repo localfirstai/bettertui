@@ -119,10 +119,7 @@ impl fmt::Display for TreeError {
         match self {
             Self::NodeNotFound(id) => write!(f, "Node not found: {id:?}"),
             Self::CycleDetected { node, ancestor } => {
-                write!(
-                    f,
-                    "Cycle detected: node {node:?} is ancestor of {ancestor:?}"
-                )
+                write!(f, "Cycle detected: node {node:?} is ancestor of {ancestor:?}")
             }
             Self::InvalidOperation(msg) => write!(f, "Invalid operation: {msg}"),
         }
@@ -258,11 +255,7 @@ impl Default for Rgba {
 
 impl From<Rgba> for Color {
     fn from(rgba: Rgba) -> Self {
-        Color::Rgb {
-            r: rgba.r,
-            g: rgba.g,
-            b: rgba.b,
-        }
+        Color::Rgb { r: rgba.r, g: rgba.g, b: rgba.b }
     }
 }
 
@@ -320,20 +313,14 @@ impl Color {
             "magenta" | "purple" => Some(Self::Named(NamedColor::Magenta)),
             "cyan" | "teal" => Some(Self::Named(NamedColor::Cyan)),
             "white" | "default" => Some(Self::Named(NamedColor::White)),
-            "gray" | "grey" | "dark_gray" | "darkgrey" => {
-                Some(Self::Named(NamedColor::BrightBlack))
-            }
+            "gray" | "grey" | "dark_gray" | "darkgrey" => Some(Self::Named(NamedColor::BrightBlack)),
             "bright_red" | "light_red" => Some(Self::Named(NamedColor::BrightRed)),
             "bright_green" | "light_green" => Some(Self::Named(NamedColor::BrightGreen)),
             "bright_yellow" | "light_yellow" => Some(Self::Named(NamedColor::BrightYellow)),
             "bright_blue" | "light_blue" => Some(Self::Named(NamedColor::BrightBlue)),
-            "bright_magenta" | "light_magenta" | "pink" => {
-                Some(Self::Named(NamedColor::BrightMagenta))
-            }
+            "bright_magenta" | "light_magenta" | "pink" => Some(Self::Named(NamedColor::BrightMagenta)),
             "bright_cyan" | "light_cyan" => Some(Self::Named(NamedColor::BrightCyan)),
-            "bright_white" | "light_gray" | "lightgrey" | "lightgray" => {
-                Some(Self::Named(NamedColor::BrightWhite))
-            }
+            "bright_white" | "light_gray" | "lightgrey" | "lightgray" => Some(Self::Named(NamedColor::BrightWhite)),
             _ => None,
         }
     }
@@ -359,11 +346,7 @@ impl Color {
         let c1 = self.to_rgba(255);
         let c2 = other.to_rgba(255);
         let blended = c1.lerp(&c2, t);
-        Color::Rgb {
-            r: blended.r,
-            g: blended.g,
-            b: blended.b,
-        }
+        Color::Rgb { r: blended.r, g: blended.g, b: blended.b }
     }
 }
 
@@ -440,9 +423,7 @@ impl NamedColor {
 #[doc(hidden)]
 pub fn indexed_to_rgb(index: u8) -> (u8, u8, u8) {
     match index {
-        0..=15 => NamedColor::from_ansi_index(index)
-            .map(|c| c.to_rgb())
-            .unwrap_or((0, 0, 0)),
+        0..=15 => NamedColor::from_ansi_index(index).map(|c| c.to_rgb()).unwrap_or((0, 0, 0)),
         16..=231 => {
             // 6x6x6 color cube
             let idx = index - 16;
@@ -545,25 +526,13 @@ impl Style {
             strikethrough: self.strikethrough.or(parent.strikethrough).unwrap_or(false),
             inverse: self.inverse.or(parent.inverse).unwrap_or(false),
             hidden: self.hidden.or(parent.hidden).unwrap_or(false),
-            border_style: self
-                .border_style
-                .or(parent.border_style)
-                .unwrap_or(BorderStyle::None),
+            border_style: self.border_style.or(parent.border_style).unwrap_or(BorderStyle::None),
             border_color: self.border_color.or(parent.border_color),
             border_width: self.border_width.or(parent.border_width).unwrap_or(0),
-            rounded_corners: self
-                .rounded_corners
-                .or(parent.rounded_corners)
-                .unwrap_or(false),
-            overflow: self
-                .overflow
-                .or(parent.overflow)
-                .unwrap_or(Overflow::Visible),
+            rounded_corners: self.rounded_corners.or(parent.rounded_corners).unwrap_or(false),
+            overflow: self.overflow.or(parent.overflow).unwrap_or(Overflow::Visible),
             opacity: self.opacity.or(parent.opacity).unwrap_or(255),
-            text_align: self
-                .text_align
-                .or(parent.text_align)
-                .unwrap_or(crate::text::TextAlign::Left),
+            text_align: self.text_align.or(parent.text_align).unwrap_or(crate::text::TextAlign::Left),
         }
     }
 
@@ -696,11 +665,7 @@ pub struct Visibility {
 
 impl Default for Visibility {
     fn default() -> Self {
-        Self {
-            display: Display::Flex,
-            opacity: 1.0,
-            clip: false,
-        }
+        Self { display: Display::Flex, opacity: 1.0, clip: false }
     }
 }
 
@@ -791,12 +756,7 @@ pub struct Rect {
 
 impl Rect {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     /// Returns the right edge (x + width).
@@ -816,10 +776,7 @@ impl Rect {
 
     /// Checks if this rectangle intersects another.
     pub fn intersects(&self, other: &Rect) -> bool {
-        self.x < other.right()
-            && self.right() > other.x
-            && self.y < other.bottom()
-            && self.bottom() > other.y
+        self.x < other.right() && self.right() > other.x && self.y < other.bottom() && self.bottom() > other.y
     }
 }
 
@@ -920,12 +877,7 @@ pub struct AriaRelevant {
 
 impl Default for AriaRelevant {
     fn default() -> Self {
-        Self {
-            additions: true,
-            removals: false,
-            text: true,
-            all: false,
-        }
+        Self { additions: true, removals: false, text: true, all: false }
     }
 }
 
@@ -1037,10 +989,7 @@ pub struct Keybinding {
 
 impl Keybinding {
     pub fn new(key: impl Into<Box<str>>, description: impl Into<Box<str>>) -> Self {
-        Self {
-            key: key.into(),
-            description: description.into(),
-        }
+        Self { key: key.into(), description: description.into() }
     }
 }
 
@@ -1232,19 +1181,12 @@ impl Default for RenderNode {
 impl RenderNode {
     /// Create a new node with the given kind. ID is set by the arena.
     pub fn new(kind: NodeKind) -> Self {
-        Self {
-            kind,
-            ..Default::default()
-        }
+        Self { kind, ..Default::default() }
     }
 
     /// Create a new text node.
     pub fn text(content: impl Into<Box<str>>) -> Self {
-        Self {
-            kind: NodeKind::Text,
-            text: Some(content.into()),
-            ..Default::default()
-        }
+        Self { kind: NodeKind::Text, text: Some(content.into()), ..Default::default() }
     }
 
     /// Create a new box/container node.
@@ -1336,16 +1278,8 @@ impl NodeArena {
     /// Create a new arena with a root node.
     pub fn new() -> Self {
         let mut nodes = SlotMap::with_key();
-        let root = nodes.insert(RenderNode {
-            kind: NodeKind::Box,
-            ..Default::default()
-        });
-        Self {
-            nodes,
-            root,
-            generation: 0,
-            change_count: 0,
-        }
+        let root = nodes.insert(RenderNode { kind: NodeKind::Box, ..Default::default() });
+        Self { nodes, root, generation: 0, change_count: 0 }
     }
 
     /// Mark arena as changed (for property mutations from CommandProcessor).
@@ -1413,10 +1347,7 @@ impl NodeArena {
     /// Remove all nodes from the arena, keeping only root.
     pub fn clear(&mut self) {
         self.nodes.clear();
-        self.root = self.nodes.insert(RenderNode {
-            kind: NodeKind::Box,
-            ..Default::default()
-        });
+        self.root = self.nodes.insert(RenderNode { kind: NodeKind::Box, ..Default::default() });
         self.nodes[self.root].id = self.root;
         self.generation += 1;
         self.mark_changed();
@@ -1444,10 +1375,7 @@ impl NodeArena {
 
     /// Get direct children of a node.
     pub fn children(&self, id: NodeId) -> SmallVec<[NodeId; 4]> {
-        self.nodes
-            .get(id)
-            .map(|n| n.children.clone())
-            .unwrap_or_default()
+        self.nodes.get(id).map(|n| n.children.clone()).unwrap_or_default()
     }
 
     /// Get descendants of a node in DFS order.
@@ -1535,15 +1463,10 @@ impl NodeArena {
             return Err(TreeError::NodeNotFound(child));
         }
         if child == self.root {
-            return Err(TreeError::InvalidOperation(
-                "Cannot append root as child".into(),
-            ));
+            return Err(TreeError::InvalidOperation("Cannot append root as child".into()));
         }
         if self.is_ancestor(child, parent) {
-            return Err(TreeError::CycleDetected {
-                node: child,
-                ancestor: parent,
-            });
+            return Err(TreeError::CycleDetected { node: child, ancestor: parent });
         }
 
         // Detach child from current parent if any
@@ -1567,22 +1490,14 @@ impl NodeArena {
             return Err(TreeError::NodeNotFound(child));
         }
         if child == self.root {
-            return Err(TreeError::InvalidOperation(
-                "Cannot insert root as child".into(),
-            ));
+            return Err(TreeError::InvalidOperation("Cannot insert root as child".into()));
         }
         if self.is_ancestor(child, reference) {
-            return Err(TreeError::CycleDetected {
-                node: child,
-                ancestor: reference,
-            });
+            return Err(TreeError::CycleDetected { node: child, ancestor: reference });
         }
 
-        let parent = self.nodes[reference]
-            .parent
-            .ok_or(TreeError::InvalidOperation(
-                "Reference node has no parent".into(),
-            ))?;
+        let parent =
+            self.nodes[reference].parent.ok_or(TreeError::InvalidOperation("Reference node has no parent".into()))?;
 
         // Detach child from current parent if any
         if let Some(_current_parent) = self.nodes[child].parent {
@@ -1594,9 +1509,7 @@ impl NodeArena {
             if let Some(idx) = parent_node.children.iter().position(|&id| id == reference) {
                 parent_node.children.insert(idx, child);
             } else {
-                return Err(TreeError::InvalidOperation(
-                    "Reference node not found in parent's children".into(),
-                ));
+                return Err(TreeError::InvalidOperation("Reference node not found in parent's children".into()));
             }
         }
 
@@ -1618,10 +1531,7 @@ impl NodeArena {
             return Err(TreeError::InvalidOperation("Cannot move root".into()));
         }
         if self.is_ancestor(node, new_parent) {
-            return Err(TreeError::CycleDetected {
-                node,
-                ancestor: new_parent,
-            });
+            return Err(TreeError::CycleDetected { node, ancestor: new_parent });
         }
 
         // Detach from current parent
@@ -1643,14 +1553,10 @@ impl NodeArena {
             return Err(TreeError::InvalidOperation("Cannot replace root".into()));
         }
         if new == self.root {
-            return Err(TreeError::InvalidOperation(
-                "Cannot replace with root".into(),
-            ));
+            return Err(TreeError::InvalidOperation("Cannot replace with root".into()));
         }
 
-        let parent = self.nodes[old]
-            .parent
-            .ok_or(TreeError::InvalidOperation("Old node has no parent".into()))?;
+        let parent = self.nodes[old].parent.ok_or(TreeError::InvalidOperation("Old node has no parent".into()))?;
 
         // Move all children from old to new
         let old_children = std::mem::take(&mut self.nodes[old].children);
@@ -1690,11 +1596,7 @@ impl NodeArena {
     }
 
     fn remove_subtree_recursive(&mut self, id: NodeId) {
-        let children: SmallVec<[NodeId; 4]> = self
-            .nodes
-            .get(id)
-            .map(|n| n.children.clone())
-            .unwrap_or_default();
+        let children: SmallVec<[NodeId; 4]> = self.nodes.get(id).map(|n| n.children.clone()).unwrap_or_default();
         for child in children {
             self.remove_subtree_recursive(child);
         }
@@ -1729,10 +1631,7 @@ impl NodeArena {
     /// Validate tree invariants. Returns Ok(()) if valid.
     pub fn validate(&self) -> Result<(), TreeError> {
         // Check root exists and has no parent
-        let root = self
-            .nodes
-            .get(self.root)
-            .ok_or(TreeError::NodeNotFound(self.root))?;
+        let root = self.nodes.get(self.root).ok_or(TreeError::NodeNotFound(self.root))?;
         if root.parent.is_some() {
             return Err(TreeError::InvalidOperation("Root has parent".into()));
         }
@@ -1744,9 +1643,8 @@ impl NodeArena {
             }
 
             // Check parent exists
-            let parent_id = node.parent.ok_or(TreeError::InvalidOperation(format!(
-                "Non-root node {id:?} has no parent"
-            )))?;
+            let parent_id =
+                node.parent.ok_or(TreeError::InvalidOperation(format!("Non-root node {id:?} has no parent")))?;
 
             if !self.contains(parent_id) {
                 return Err(TreeError::InvalidOperation(format!(
@@ -1788,11 +1686,7 @@ impl NodeArena {
         if let Some(node) = self.nodes.get(id) {
             let connector = if is_last { "└── " } else { "├── " };
             let kind_name = node.kind.name();
-            let text_preview = node
-                .text
-                .as_ref()
-                .map(|t| format!(" \"{}\"", t))
-                .unwrap_or_default();
+            let text_preview = node.text.as_ref().map(|t| format!(" \"{}\"", t)).unwrap_or_default();
             output.push_str(&format!("{prefix}{connector}{kind_name}{text_preview}\n"));
 
             let child_prefix = format!("{prefix}{}", if is_last { "    " } else { "│   " });

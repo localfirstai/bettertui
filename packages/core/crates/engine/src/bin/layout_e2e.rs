@@ -44,31 +44,13 @@ fn render_basic() -> Vec<u8> {
 fn render_flex_row() -> Vec<u8> {
     let mut engine = Engine::new();
     let root = engine.arena().root();
-    engine.set_layout(
-        root,
-        LayoutProps {
-            direction: FlexDirection::Row,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(root, LayoutProps { direction: FlexDirection::Row, ..LayoutProps::default() });
     let a = engine.create_node(NodeKind::Text);
     let b = engine.create_node(NodeKind::Text);
     engine.set_text(a, "Left");
     engine.set_text(b, "Right");
-    engine.set_layout(
-        a,
-        LayoutProps {
-            flex_grow: 1.0,
-            ..LayoutProps::default()
-        },
-    );
-    engine.set_layout(
-        b,
-        LayoutProps {
-            flex_grow: 1.0,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(a, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
+    engine.set_layout(b, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
     engine.append_child(root, a).unwrap();
     engine.append_child(root, b).unwrap();
     engine.begin_frame();
@@ -81,31 +63,13 @@ fn render_flex_row() -> Vec<u8> {
 fn render_flex_column() -> Vec<u8> {
     let mut engine = Engine::new();
     let root = engine.arena().root();
-    engine.set_layout(
-        root,
-        LayoutProps {
-            direction: FlexDirection::Column,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(root, LayoutProps { direction: FlexDirection::Column, ..LayoutProps::default() });
     let a = engine.create_node(NodeKind::Text);
     let b = engine.create_node(NodeKind::Text);
     engine.set_text(a, "Top");
     engine.set_text(b, "Bottom");
-    engine.set_layout(
-        a,
-        LayoutProps {
-            flex_grow: 1.0,
-            ..LayoutProps::default()
-        },
-    );
-    engine.set_layout(
-        b,
-        LayoutProps {
-            flex_grow: 1.0,
-            ..LayoutProps::default()
-        },
-    );
+    engine.set_layout(a, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
+    engine.set_layout(b, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
     engine.append_child(root, a).unwrap();
     engine.append_child(root, b).unwrap();
     engine.begin_frame();
@@ -118,22 +82,12 @@ fn render_flex_column() -> Vec<u8> {
 fn render_styled() -> Vec<u8> {
     let mut engine = Engine::new();
     let root = engine.arena().root();
-    let colors = [
-        ("Red", NamedColor::BrightRed),
-        ("Green", NamedColor::BrightGreen),
-        ("Blue", NamedColor::BrightBlue),
-    ];
+    let colors = [("Red", NamedColor::BrightRed), ("Green", NamedColor::BrightGreen), ("Blue", NamedColor::BrightBlue)];
     for &(label, named) in &colors {
         let child = engine.create_node(NodeKind::Text);
         engine.set_text(child, label);
         engine.set_style(child, Style::new().fg(Color::Named(named)));
-        engine.set_layout(
-            child,
-            LayoutProps {
-                flex_grow: 1.0,
-                ..LayoutProps::default()
-            },
-        );
+        engine.set_layout(child, LayoutProps { flex_grow: 1.0, ..LayoutProps::default() });
         engine.append_child(root, child).unwrap();
     }
     engine.begin_frame();
@@ -150,12 +104,7 @@ fn render_nested() -> Vec<u8> {
     engine.set_layout(
         container,
         LayoutProps {
-            padding: Some(RectValues {
-                left: Some(5.0),
-                right: Some(5.0),
-                top: Some(2.0),
-                bottom: Some(2.0),
-            }),
+            padding: Some(RectValues { left: Some(5.0), right: Some(5.0), top: Some(2.0), bottom: Some(2.0) }),
             ..LayoutProps::default()
         },
     );

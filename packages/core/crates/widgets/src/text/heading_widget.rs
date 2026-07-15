@@ -52,20 +52,14 @@ impl Default for HeadingWidget {
 
 impl HeadingWidget {
     pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            ..Default::default()
-        }
+        Self { content: content.into(), ..Default::default() }
     }
 
     pub fn h1(content: impl Into<Box<str>>) -> Self {
         Self {
             level: HeadingLevel::H1,
             content: content.into(),
-            style: Style {
-                bold: Some(true),
-                ..Style::default()
-            },
+            style: Style { bold: Some(true), ..Style::default() },
             ..Default::default()
         }
     }
@@ -74,10 +68,7 @@ impl HeadingWidget {
         Self {
             level: HeadingLevel::H2,
             content: content.into(),
-            style: Style {
-                bold: Some(true),
-                ..Style::default()
-            },
+            style: Style { bold: Some(true), ..Style::default() },
             ..Default::default()
         }
     }
@@ -86,10 +77,7 @@ impl HeadingWidget {
         Self {
             level: HeadingLevel::H3,
             content: content.into(),
-            style: Style {
-                bold: Some(true),
-                ..Style::default()
-            },
+            style: Style { bold: Some(true), ..Style::default() },
             ..Default::default()
         }
     }
@@ -145,12 +133,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -186,10 +169,7 @@ mod tests {
 
         let w = HeadingWidget::h1("Hello");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Text);
         assert_eq!(node.text.as_deref(), Some("Hello"));
         assert!(node.style.bold.expect("Node missing from arena"));

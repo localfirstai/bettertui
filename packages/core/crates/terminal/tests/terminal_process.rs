@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use bettertui_engine::pty::PtySize;
 use bettertui_terminal::process::{
-    ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult,
-    TerminalError, TerminalRuntime, TerminalState, TerminalViewport,
+    ProcessConfig, ProcessConfigBuilder, ProcessSpawner, ProcessStatus, ScrollMode, SpawnResult, TerminalError,
+    TerminalRuntime, TerminalState, TerminalViewport,
 };
 
 mod config {
@@ -141,9 +141,8 @@ mod spawner {
 
     #[test]
     fn spawner_builder() {
-        let builder = ProcessConfigBuilder::new("nvim")
-            .with_args(vec!["file.txt".to_string()])
-            .with_size(PtySize::new(120, 40));
+        let builder =
+            ProcessConfigBuilder::new("nvim").with_args(vec!["file.txt".to_string()]).with_size(PtySize::new(120, 40));
 
         let spawner = ProcessSpawner::new();
         let config = spawner.build_config_from_parts(builder);

@@ -21,10 +21,7 @@ impl Default for ProgressWidget {
         Self {
             value: 0.0,
             max: 100.0,
-            style: Style {
-                fg: Some(Color::Named(NamedColor::Green)),
-                ..Style::default()
-            },
+            style: Style { fg: Some(Color::Named(NamedColor::Green)), ..Style::default() },
             layout: LayoutProps::default(),
         }
     }
@@ -56,11 +53,7 @@ impl ProgressWidget {
     }
 
     pub fn percentage(&self) -> f32 {
-        if self.max == 0.0 {
-            0.0
-        } else {
-            (self.value / self.max * 100.0).min(100.0)
-        }
+        if self.max == 0.0 { 0.0 } else { (self.value / self.max * 100.0).min(100.0) }
     }
 }
 
@@ -99,12 +92,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -126,10 +114,7 @@ mod tests {
 
         let w = ProgressWidget::new().with_value(50.0);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Box);
     }
 

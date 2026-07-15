@@ -2,9 +2,9 @@
 
 use bettertui_terminal::query::QueryResult;
 use bettertui_terminal::{
-    CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix,
-    GraphicsCapabilities, InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities,
-    TerminalBrand, UnicodeCapabilities, UnicodeVersion, WindowMetrics,
+    CapabilityDetector, CjkWidth, ClipboardCapabilities, ColorSupport, EmojiWidth, FeatureMatrix, GraphicsCapabilities,
+    InputCapabilities, MouseModes, QueryOrigin, RenderCapabilities, TerminalBrand, UnicodeCapabilities, UnicodeVersion,
+    WindowMetrics,
 };
 
 mod brand {
@@ -189,10 +189,7 @@ mod detection {
     #[test]
     fn update_from_da1_response() {
         let mut detector = CapabilityDetector::detect();
-        let results = vec![QueryResult::DeviceAttributes {
-            terminal_type: 1,
-            attributes: vec![4, 22, 28],
-        }];
+        let results = vec![QueryResult::DeviceAttributes { terminal_type: 1, attributes: vec![4, 22, 28] }];
         detector.update_from_queries(&results);
         assert!(detector.features().da1_attributes.contains(&4));
         assert!(detector.supports_true_color());
@@ -202,11 +199,7 @@ mod detection {
     #[test]
     fn update_from_da2_kitty() {
         let mut detector = CapabilityDetector::detect();
-        let results = vec![QueryResult::SecondaryDeviceAttributes {
-            model: 10,
-            firmware_major: 0,
-            firmware_minor: 0,
-        }];
+        let results = vec![QueryResult::SecondaryDeviceAttributes { model: 10, firmware_major: 0, firmware_minor: 0 }];
         detector.update_from_queries(&results);
         assert_eq!(*detector.brand(), TerminalBrand::Kitty);
         assert!(detector.supports_kitty_keyboard());
@@ -216,11 +209,7 @@ mod detection {
     #[test]
     fn update_from_da2_ghostty() {
         let mut detector = CapabilityDetector::detect();
-        let results = vec![QueryResult::SecondaryDeviceAttributes {
-            model: 18,
-            firmware_major: 0,
-            firmware_minor: 0,
-        }];
+        let results = vec![QueryResult::SecondaryDeviceAttributes { model: 18, firmware_major: 0, firmware_minor: 0 }];
         detector.update_from_queries(&results);
         assert_eq!(*detector.brand(), TerminalBrand::Ghostty);
         assert!(detector.supports_kitty_keyboard());
@@ -229,11 +218,7 @@ mod detection {
     #[test]
     fn update_from_da2_unknown() {
         let mut detector = CapabilityDetector::detect();
-        let results = vec![QueryResult::SecondaryDeviceAttributes {
-            model: 999,
-            firmware_major: 0,
-            firmware_minor: 0,
-        }];
+        let results = vec![QueryResult::SecondaryDeviceAttributes { model: 999, firmware_major: 0, firmware_minor: 0 }];
         detector.update_from_queries(&results);
         assert_eq!(*detector.query_origin(), QueryOrigin::EnvOnly);
     }

@@ -33,10 +33,7 @@ impl FlexWidget {
     }
 
     pub fn row() -> Self {
-        Self {
-            direction: FlexDirection::Row,
-            ..Self::default()
-        }
+        Self { direction: FlexDirection::Row, ..Self::default() }
     }
 
     pub fn column() -> Self {
@@ -105,12 +102,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -142,14 +134,9 @@ mod tests {
             theme: &theme,
         };
 
-        let w = FlexWidget::row()
-            .with_gap(Gap::uniform(2.0))
-            .with_justify(JustifyContent::Center);
+        let w = FlexWidget::row().with_gap(Gap::uniform(2.0)).with_justify(JustifyContent::Center);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Flex);
         assert_eq!(node.layout.direction, FlexDirection::Row);
         assert_eq!(node.layout.gap, Some(Gap::uniform(2.0)));
@@ -158,10 +145,7 @@ mod tests {
 
     #[test]
     fn flex_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = FlexWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

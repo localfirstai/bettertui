@@ -57,9 +57,7 @@ impl AppState {
     pub fn mount(&mut self, parent_id: WidgetId, child_id: WidgetId, kind: &'static str) {
         self.tree.insert(child_id, child_id.node_id(), kind);
         self.tree.set_parent(child_id, parent_id);
-        let _ = self
-            .arena
-            .append_child(parent_id.node_id(), child_id.node_id());
+        let _ = self.arena.append_child(parent_id.node_id(), child_id.node_id());
     }
 
     pub fn unmount(&mut self, widget_id: WidgetId) {

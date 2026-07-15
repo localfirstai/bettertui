@@ -112,12 +112,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -139,10 +134,7 @@ mod tests {
 
         let w = GridWidget::new().with_columns(3).with_rows(2).with_gap(1.0);
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Flex);
         assert_eq!(node.style.grid_columns, Some(3));
         assert_eq!(node.style.grid_rows, Some(2));
@@ -151,20 +143,14 @@ mod tests {
 
     #[test]
     fn grid_widget_with_layout() {
-        let layout = LayoutProps {
-            flex_grow: 1.0,
-            ..Default::default()
-        };
+        let layout = LayoutProps { flex_grow: 1.0, ..Default::default() };
         let w = GridWidget::new().with_layout(layout);
         assert_eq!(w.layout.flex_grow, 1.0);
     }
 
     #[test]
     fn grid_widget_with_style() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let w = GridWidget::new().with_style(style);
         assert!(w.style.bold.expect("Node missing from arena"));
     }

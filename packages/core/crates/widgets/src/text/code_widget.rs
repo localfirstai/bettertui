@@ -26,10 +26,7 @@ impl Default for CodeWidget {
             content: Box::from(""),
             language: None,
             inline: false,
-            style: Style {
-                fg: Some(Color::Named(bettertui_engine::tree::NamedColor::Cyan)),
-                ..Style::default()
-            },
+            style: Style { fg: Some(Color::Named(bettertui_engine::tree::NamedColor::Cyan)), ..Style::default() },
             layout: LayoutProps::default(),
         }
     }
@@ -37,27 +34,15 @@ impl Default for CodeWidget {
 
 impl CodeWidget {
     pub fn new(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            ..Default::default()
-        }
+        Self { content: content.into(), ..Default::default() }
     }
 
     pub fn inline(content: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            inline: true,
-            ..Default::default()
-        }
+        Self { content: content.into(), inline: true, ..Default::default() }
     }
 
     pub fn block(content: impl Into<Box<str>>, language: impl Into<Box<str>>) -> Self {
-        Self {
-            content: content.into(),
-            language: Some(language.into()),
-            inline: false,
-            ..Default::default()
-        }
+        Self { content: content.into(), language: Some(language.into()), inline: false, ..Default::default() }
     }
 
     pub fn with_language(mut self, language: impl Into<Box<str>>) -> Self {
@@ -82,45 +67,28 @@ impl CodeWidget {
 
     /// Create the highlighted render nodes for code content.
     /// Returns the root node ID of the created tree.
-    fn create_highlighted(
-        &self,
-        ctx: &mut WidgetContext,
-        code: &str,
-        language: &str,
-        base_style: Style,
-    ) -> WidgetId {
+    fn create_highlighted(&self, ctx: &mut WidgetContext, code: &str, language: &str, base_style: Style) -> WidgetId {
         let lines = {
-            let mut hl = global_highlighter()
-                .lock()
-                .unwrap_or_else(|e| e.into_inner());
+            let mut hl = global_highlighter().lock().unwrap_or_else(|e| e.into_inner());
             hl.highlight(code, language)
         };
 
         if let Some(lines) = lines {
             // Create a Flex column container for the code
-            let flex_layout = LayoutProps {
-                direction: FlexDirection::Column,
-                ..LayoutProps::default()
-            };
+            let flex_layout = LayoutProps { direction: FlexDirection::Column, ..LayoutProps::default() };
             let flex_id = ctx.make_flex(flex_layout, base_style);
 
             for line in &lines {
                 let line_text = line.text();
                 if line.segments.len() <= 1 {
                     // Single-style line: create one Text node
-                    let style = line
-                        .segments
-                        .first()
-                        .map(|s| merge_with_base(&s.style, &base_style))
-                        .unwrap_or(base_style);
+                    let style =
+                        line.segments.first().map(|s| merge_with_base(&s.style, &base_style)).unwrap_or(base_style);
                     let text_id = ctx.make_text(line_text.as_str(), style);
                     ctx.append_child(flex_id, text_id);
                 } else {
                     // Multi-style line: create a Flex row with styled Text children
-                    let row_layout = LayoutProps {
-                        direction: FlexDirection::Row,
-                        ..LayoutProps::default()
-                    };
+                    let row_layout = LayoutProps { direction: FlexDirection::Row, ..LayoutProps::default() };
                     let row_id = ctx.make_flex(row_layout, base_style);
                     for seg in &line.segments {
                         let seg_style = merge_with_base(&seg.style, &base_style);
@@ -201,12 +169,7 @@ mod tests {
     use bettertui_engine::tree::NodeKind;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -242,10 +205,7 @@ mod tests {
 
         let w = CodeWidget::new("hello");
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.text.as_deref(), Some("hello"));
     }
 
@@ -269,10 +229,7 @@ mod tests {
         let w = CodeWidget::block("fn hello() {}", "rust");
         let id = w.create(&mut ctx);
         // Highlighted code creates a Flex container with children
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         // Should be a Flex container (from create_highlighted)
         assert_eq!(node.kind, NodeKind::Flex);
     }
@@ -291,12 +248,6 @@ mod tests {
         // Inline code should create a plain Text node
         let inline_w = CodeWidget::inline("x");
         let inline_id = inline_w.create(&mut ctx);
-        assert_eq!(
-            ctx.arena
-                .get(inline_id.node_id())
-                .expect("Node missing from arena")
-                .kind,
-            NodeKind::Text
-        );
+        assert_eq!(ctx.arena.get(inline_id.node_id()).expect("Node missing from arena").kind, NodeKind::Text);
     }
 }

@@ -84,10 +84,7 @@ impl Cell {
 
     /// Returns `true` if the cell is in its default state (space character, default colors, no attributes).
     pub fn is_empty(&self) -> bool {
-        self.ch == ' '
-            && self.fg == Color::Default
-            && self.bg == Color::Default
-            && self.attributes.is_empty()
+        self.ch == ' ' && self.fg == Color::Default && self.bg == Color::Default && self.attributes.is_empty()
     }
 
     /// Resets the cell to its default state.
@@ -235,12 +232,7 @@ impl FrameBuffer {
     /// All cells are initialized to the default (space character, default colors).
     pub fn new(width: u16, height: u16) -> Self {
         let size = (width as usize) * (height as usize);
-        Self {
-            width,
-            height,
-            cells: CellArrays::new(size),
-            back: CellArrays::new(size),
-        }
+        Self { width, height, cells: CellArrays::new(size), back: CellArrays::new(size) }
     }
 
     /// Returns the width of the buffer in cells.
@@ -389,8 +381,7 @@ impl FrameBuffer {
         self.cells.chars[..copy_len].copy_from_slice(&other.cells.chars[..copy_len]);
         self.cells.fg[..copy_len].copy_from_slice(&other.cells.fg[..copy_len]);
         self.cells.bg[..copy_len].copy_from_slice(&other.cells.bg[..copy_len]);
-        self.cells.underline_color[..copy_len]
-            .copy_from_slice(&other.cells.underline_color[..copy_len]);
+        self.cells.underline_color[..copy_len].copy_from_slice(&other.cells.underline_color[..copy_len]);
         self.cells.attrs[..copy_len].copy_from_slice(&other.cells.attrs[..copy_len]);
     }
 

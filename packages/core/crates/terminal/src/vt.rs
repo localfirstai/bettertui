@@ -1,8 +1,8 @@
 //! VT100/VTxxx terminal emulation state machine.
 
 use bettertui_engine::ansi::{
-    BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType,
-    ModeAction, ModeType, OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
+    BackgroundColor, CsiCommand, CursorMovement, EraseMode, ForegroundColor, KittyEventType, ModeAction, ModeType,
+    OscCommand, ParserEvent, ScrollDirection, SgrAttribute, TabStopAction,
 };
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::input::{KeyAction, KeyModifiers, KeyboardInput};
@@ -385,15 +385,7 @@ impl ScreenBuffer {
         self.scrollback.len()
     }
 
-    pub fn set_cell(
-        &mut self,
-        row: u16,
-        col: u16,
-        ch: char,
-        fg: Color,
-        bg: Color,
-        attrs: CellAttributes,
-    ) {
+    pub fn set_cell(&mut self, row: u16, col: u16, ch: char, fg: Color, bg: Color, attrs: CellAttributes) {
         if row < self.buffer.height() && col < self.buffer.width() {
             let mut cell = Cell::new(ch);
             cell.fg = fg;
@@ -408,14 +400,7 @@ impl ScreenBuffer {
     }
 
     pub fn erase_char(&mut self, row: u16, col: u16, pen: &Pen) {
-        self.set_cell(
-            row,
-            col,
-            ' ',
-            Color::Default,
-            pen.bg,
-            CellAttributes::empty(),
-        );
+        self.set_cell(row, col, ' ', Color::Default, pen.bg, CellAttributes::empty());
     }
 
     pub fn erase_in_display(&mut self, mode: u32, cursor_row: u16, cursor_col: u16, pen: &Pen) {
@@ -433,11 +418,7 @@ impl ScreenBuffer {
             }
             1 => {
                 for y in 0..=cursor_row {
-                    let end_col = if y == cursor_row {
-                        cursor_col + 1
-                    } else {
-                        cols
-                    };
+                    let end_col = if y == cursor_row { cursor_col + 1 } else { cols };
                     for x in 0..end_col {
                         self.erase_char(y, x, pen);
                     }
@@ -643,11 +624,7 @@ pub struct Pen {
 
 impl Default for Pen {
     fn default() -> Self {
-        Self {
-            fg: Color::Default,
-            bg: Color::Default,
-            attrs: CellAttributes::empty(),
-        }
+        Self { fg: Color::Default, bg: Color::Default, attrs: CellAttributes::empty() }
     }
 }
 
@@ -714,11 +691,7 @@ impl KittyKeyEvent {
             KittyEventType::Unknown => KeyAction::Press,
         };
         let key = char::from_u32(self.keycode).unwrap_or('\0');
-        KeyboardInput {
-            key,
-            modifiers: mods,
-            action,
-        }
+        KeyboardInput { key, modifiers: mods, action }
     }
 }
 
@@ -765,19 +738,11 @@ impl VtMachine {
     // ── Public accessors ──
 
     pub fn current_screen(&self) -> &ScreenBuffer {
-        if self.modes.alt_screen() {
-            &self.alt_screen
-        } else {
-            &self.screen
-        }
+        if self.modes.alt_screen() { &self.alt_screen } else { &self.screen }
     }
 
     pub fn current_cursor(&self) -> &Cursor {
-        if self.modes.alt_screen() {
-            &self.alt_cursor
-        } else {
-            &self.cursor
-        }
+        if self.modes.alt_screen() { &self.alt_cursor } else { &self.cursor }
     }
 
     pub fn current_modes(&self) -> TerminalMode {
@@ -887,27 +852,15 @@ impl VtMachine {
     // ── Private helpers ──
 
     fn screen_mut(&mut self) -> &mut ScreenBuffer {
-        if self.modes.alt_screen() {
-            &mut self.alt_screen
-        } else {
-            &mut self.screen
-        }
+        if self.modes.alt_screen() { &mut self.alt_screen } else { &mut self.screen }
     }
 
     fn cursor(&self) -> &Cursor {
-        if self.modes.alt_screen() {
-            &self.alt_cursor
-        } else {
-            &self.cursor
-        }
+        if self.modes.alt_screen() { &self.alt_cursor } else { &self.cursor }
     }
 
     fn cursor_mut(&mut self) -> &mut Cursor {
-        if self.modes.alt_screen() {
-            &mut self.alt_cursor
-        } else {
-            &mut self.cursor
-        }
+        if self.modes.alt_screen() { &mut self.alt_cursor } else { &mut self.cursor }
     }
 
     fn handle_char(&mut self, byte: u8) {
@@ -1072,12 +1025,7 @@ impl VtMachine {
             CsiCommand::AttributeReset => {
                 self.pen = Pen::default();
             }
-            CsiCommand::KittyKeyEvent {
-                keycode,
-                modifiers,
-                event_type,
-                associated_text,
-            } => {
+            CsiCommand::KittyKeyEvent { keycode, modifiers, event_type, associated_text } => {
                 self.last_kitty_key = Some(KittyKeyEvent {
                     keycode: *keycode,
                     modifiers: *modifiers,
@@ -1223,8 +1171,7 @@ impl VtMachine {
                         PrivateMode::AltScreen => {
                             if enabled {
                                 self.cursor.save_position();
-                                self.alt_screen =
-                                    ScreenBuffer::new(self.screen.width(), self.screen.height());
+                                self.alt_screen = ScreenBuffer::new(self.screen.width(), self.screen.height());
                                 self.modes.insert(m);
                                 self.alt_cursor = Cursor::new();
                             } else {
@@ -1594,9 +1541,7 @@ mod tests {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 mod proptests {
     use super::*;
-    use bettertui_engine::ansi::{
-        AnsiParser, CursorMovement, EraseMode, KittyEventType, SgrAttribute,
-    };
+    use bettertui_engine::ansi::{AnsiParser, CursorMovement, EraseMode, KittyEventType, SgrAttribute};
     use proptest::prelude::*;
 
     // ── Strategies ──
@@ -1635,12 +1580,8 @@ mod proptests {
             Just(SgrAttribute::Inverse),
             Just(SgrAttribute::Hidden),
             Just(SgrAttribute::Strikethrough),
-            Just(SgrAttribute::Foreground(
-                bettertui_engine::ansi::ForegroundColor::Default,
-            )),
-            Just(SgrAttribute::Background(
-                bettertui_engine::ansi::BackgroundColor::Default,
-            )),
+            Just(SgrAttribute::Foreground(bettertui_engine::ansi::ForegroundColor::Default,)),
+            Just(SgrAttribute::Background(bettertui_engine::ansi::BackgroundColor::Default,)),
         ]
     }
 
@@ -1662,30 +1603,16 @@ mod proptests {
 
     fn arb_csi() -> impl Strategy<Value = ParserEvent> {
         prop_oneof![
-            arb_cursor_movement().prop_map(|m| ParserEvent::Csi(
-                bettertui_engine::ansi::CsiCommand::CursorMovement(m)
-            )),
-            arb_erase_mode()
-                .prop_map(|e| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Erase(e))),
-            (0u32..5)
-                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteLine(n))),
-            (0u32..5)
-                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertLine(n))),
-            (0u32..5)
-                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteChar(n))),
-            (0u32..5)
-                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertChar(n))),
-            (0u32..5)
-                .prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::EraseChar(n))),
-            Just(ParserEvent::Csi(
-                bettertui_engine::ansi::CsiCommand::CursorPositionSave
-            )),
-            Just(ParserEvent::Csi(
-                bettertui_engine::ansi::CsiCommand::CursorPositionRestore
-            )),
-            Just(ParserEvent::Csi(
-                bettertui_engine::ansi::CsiCommand::AttributeReset
-            )),
+            arb_cursor_movement().prop_map(|m| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorMovement(m))),
+            arb_erase_mode().prop_map(|e| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Erase(e))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteLine(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertLine(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteChar(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertChar(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::EraseChar(n))),
+            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorPositionSave)),
+            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorPositionRestore)),
+            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::AttributeReset)),
             (prop::collection::vec(arb_sgr_attribute(), 0..10))
                 .prop_map(|attrs| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Sgr(attrs))),
         ]

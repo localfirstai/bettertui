@@ -1,8 +1,6 @@
 //! Tests for the glyph module (character classification, cache, metrics, tables).
 
-use bettertui_engine::glyph::{
-    Glyph, GlyphCache, GlyphCategory, GlyphId, GlyphMetrics, GlyphTables, MetricsCache,
-};
+use bettertui_engine::glyph::{Glyph, GlyphCache, GlyphCategory, GlyphId, GlyphMetrics, GlyphTables, MetricsCache};
 
 // ---------------------------------------------------------------------------
 // Character / Glyph tests

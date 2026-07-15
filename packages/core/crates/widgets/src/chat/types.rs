@@ -33,30 +33,15 @@ pub struct Message {
 
 impl Message {
     pub fn user(content: impl Into<Box<str>>, timestamp: u64) -> Self {
-        Self {
-            role: Role::User,
-            content: content.into(),
-            timestamp,
-            thinking: None,
-        }
+        Self { role: Role::User, content: content.into(), timestamp, thinking: None }
     }
 
     pub fn assistant(content: impl Into<Box<str>>, timestamp: u64) -> Self {
-        Self {
-            role: Role::Assistant,
-            content: content.into(),
-            timestamp,
-            thinking: None,
-        }
+        Self { role: Role::Assistant, content: content.into(), timestamp, thinking: None }
     }
 
     pub fn system(content: impl Into<Box<str>>, timestamp: u64) -> Self {
-        Self {
-            role: Role::System,
-            content: content.into(),
-            timestamp,
-            thinking: None,
-        }
+        Self { role: Role::System, content: content.into(), timestamp, thinking: None }
     }
 
     pub fn with_thinking(mut self, thinking: impl Into<Box<str>>) -> Self {

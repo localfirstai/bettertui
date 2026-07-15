@@ -15,11 +15,7 @@ pub struct ScrollAreaWidget {
 
 impl Default for ScrollAreaWidget {
     fn default() -> Self {
-        Self {
-            layout: LayoutProps::default(),
-            style: Style::default(),
-            show_scrollbar: true,
-        }
+        Self { layout: LayoutProps::default(), style: Style::default(), show_scrollbar: true }
     }
 }
 
@@ -133,12 +129,7 @@ mod tests {
     use bettertui_engine::tree::NodeArena;
 
     fn make_ctx() -> (NodeArena, FocusManager, Scheduler, Theme) {
-        (
-            NodeArena::new(),
-            FocusManager::new(),
-            Scheduler::new(),
-            Theme::default(),
-        )
+        (NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
     }
 
     #[test]
@@ -160,10 +151,7 @@ mod tests {
 
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.kind, NodeKind::Scroll);
         assert_eq!(node.overflow, Overflow::Scroll);
     }
@@ -182,17 +170,11 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            Key::ArrowDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(bettertui_engine::input::KeyEvent::new(Key::ArrowDown, id.node_id()));
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 1);
     }
 
@@ -210,17 +192,11 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            Key::ArrowUp,
-            id.node_id(),
-        ));
+        let event = Event::Key(bettertui_engine::input::KeyEvent::new(Key::ArrowUp, id.node_id()));
         let result = w.handle_event(id, &mut ctx, &event);
         assert_eq!(result, EventResult::Consumed);
 
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 0);
     }
 
@@ -238,16 +214,10 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            Key::PageDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(bettertui_engine::input::KeyEvent::new(Key::PageDown, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
 
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 10);
     }
 
@@ -265,23 +235,14 @@ mod tests {
         let w = ScrollAreaWidget::new();
         let id = w.create(&mut ctx);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            Key::ArrowDown,
-            id.node_id(),
-        ));
+        let event = Event::Key(bettertui_engine::input::KeyEvent::new(Key::ArrowDown, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
         w.handle_event(id, &mut ctx, &event);
 
-        let event = Event::Key(bettertui_engine::input::KeyEvent::new(
-            Key::Home,
-            id.node_id(),
-        ));
+        let event = Event::Key(bettertui_engine::input::KeyEvent::new(Key::Home, id.node_id()));
         w.handle_event(id, &mut ctx, &event);
 
-        let node = ctx
-            .arena
-            .get(id.node_id())
-            .expect("Node missing from arena");
+        let node = ctx.arena.get(id.node_id()).expect("Node missing from arena");
         assert_eq!(node.state.scroll_y, 0);
     }
 

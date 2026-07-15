@@ -14,9 +14,7 @@ struct LoggerState {
 }
 
 fn today_date() -> String {
-    let dur = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default();
+    let dur = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default();
     let secs = dur.as_secs();
     let days = secs / 86400;
     let mut y = 1970u64;
@@ -50,9 +48,7 @@ fn is_leap(year: u64) -> bool {
 }
 
 fn platform_validate_path(path: &Path) -> Result<(), String> {
-    let path_str = path
-        .to_str()
-        .ok_or("Log path contains invalid characters")?;
+    let path_str = path.to_str().ok_or("Log path contains invalid characters")?;
 
     if path_str.is_empty() {
         return Err("Log path must not be empty".into());
@@ -94,18 +90,11 @@ fn daily_log_path(log_dir: &Path) -> PathBuf {
 
 fn open_or_truncate(path: &Path) -> Result<fs::File, String> {
     if path.exists() {
-        let metadata =
-            fs::metadata(path).map_err(|e| format!("Failed to get file metadata: {}", e))?;
+        let metadata = fs::metadata(path).map_err(|e| format!("Failed to get file metadata: {}", e))?;
         let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
-        let modified_secs = modified
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
+        let modified_secs = modified.duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_secs();
 
-        let now_secs = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
+        let now_secs = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_secs();
 
         let modified_day = modified_secs / 86400;
         let now_day = now_secs / 86400;
@@ -134,10 +123,7 @@ pub fn init() {
     if let Ok(log_path) = std::env::var("BETTERTUI_LOG_DIR") {
         let log_dir = PathBuf::from(&log_path);
         if let Err(e) = platform_validate_path(&log_dir) {
-            eprintln!(
-                "[logger] Invalid BETTERTUI_LOG_DIR '{}', logger disabled: {}",
-                log_path, e
-            );
+            eprintln!("[logger] Invalid BETTERTUI_LOG_DIR '{}', logger disabled: {}", log_path, e);
             return;
         }
         init_with_dir(&log_dir);
@@ -254,19 +240,9 @@ mod tests {
         #[test]
         fn format_is_zero_padded() {
             let date = today_date();
-            assert_eq!(
-                date.len(),
-                10,
-                "Date should be exactly 10 chars (YYYY-MM-DD)"
-            );
-            assert!(
-                date.chars().nth(4) == Some('-'),
-                "Fifth char should be dash"
-            );
-            assert!(
-                date.chars().nth(7) == Some('-'),
-                "Eighth char should be dash"
-            );
+            assert_eq!(date.len(), 10, "Date should be exactly 10 chars (YYYY-MM-DD)");
+            assert!(date.chars().nth(4) == Some('-'), "Fifth char should be dash");
+            assert!(date.chars().nth(7) == Some('-'), "Eighth char should be dash");
         }
     }
 
@@ -326,11 +302,7 @@ mod tests {
                 let result = platform_validate_path(path);
                 assert!(result.is_err(), "Path '{}' should fail", path_str);
                 let err = result.unwrap_err();
-                assert!(
-                    err.contains(invalid_char),
-                    "Error should mention '{}'",
-                    invalid_char
-                );
+                assert!(err.contains(invalid_char), "Error should mention '{}'", invalid_char);
             }
         }
 
@@ -353,14 +325,8 @@ mod tests {
             assert!(path.starts_with(&temp_dir), "Path should be inside log_dir");
 
             let file_name = path.file_name().unwrap().to_str().unwrap();
-            assert!(
-                file_name.starts_with("bettertui-"),
-                "Filename should start with 'bettertui-'"
-            );
-            assert!(
-                file_name.ends_with(".log"),
-                "Filename should end with '.log'"
-            );
+            assert!(file_name.starts_with("bettertui-"), "Filename should start with 'bettertui-'");
+            assert!(file_name.ends_with(".log"), "Filename should end with '.log'");
         }
 
         #[test]
@@ -369,11 +335,7 @@ mod tests {
             let path = daily_log_path(&temp_dir);
             let file_name = path.file_name().unwrap().to_str().unwrap();
 
-            let date_part = file_name
-                .strip_prefix("bettertui-")
-                .unwrap()
-                .strip_suffix(".log")
-                .unwrap();
+            let date_part = file_name.strip_prefix("bettertui-").unwrap().strip_suffix(".log").unwrap();
 
             let parts: Vec<&str> = date_part.split('-').collect();
             assert_eq!(parts.len(), 3, "Date part should be YYYY-MM-DD");
@@ -427,25 +389,18 @@ mod tests {
             let (temp_dir, log_path) = create_temp_file();
 
             let mut file1 = open_or_truncate(&log_path).expect("First open should succeed");
-            file1
-                .write_all(b"first line\n")
-                .expect("Write should succeed");
+            file1.write_all(b"first line\n").expect("Write should succeed");
             file1.flush().expect("Flush should succeed");
             drop(file1);
 
             let mut file2 = open_or_truncate(&log_path).expect("Second open should succeed");
-            file2
-                .write_all(b"second line\n")
-                .expect("Write should succeed");
+            file2.write_all(b"second line\n").expect("Write should succeed");
             file2.flush().expect("Flush should succeed");
             drop(file2);
 
             let contents = fs::read_to_string(&log_path).expect("Should read file");
             assert!(contents.contains("first line"), "Should contain first line");
-            assert!(
-                contents.contains("second line"),
-                "Should contain second line"
-            );
+            assert!(contents.contains("second line"), "Should contain second line");
 
             drop(temp_dir);
         }

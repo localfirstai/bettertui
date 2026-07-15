@@ -22,12 +22,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let title = engine.create_node(NodeKind::Text);
     engine.set_text(title, "Styling: Colors, Borders, Text Effects");
-    engine.set_style(
-        title,
-        Style::new()
-            .fg(Color::Named(NamedColor::BrightWhite))
-            .bold(true),
-    );
+    engine.set_style(title, Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
     engine.append_child(root, title).unwrap();
 
     let spacer = engine.create_node(NodeKind::Text);
@@ -52,15 +47,8 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     {
         let n = engine.create_node(NodeKind::Text);
         engine.set_text(n, format!("  {:12}  ", name));
-        let bg = if i % 2 == 0 {
-            NamedColor::BrightBlack
-        } else {
-            NamedColor::Black
-        };
-        engine.set_style(
-            n,
-            Style::new().fg(Color::Named(*named)).bg(Color::Named(bg)),
-        );
+        let bg = if i % 2 == 0 { NamedColor::BrightBlack } else { NamedColor::Black };
+        engine.set_style(n, Style::new().fg(Color::Named(*named)).bg(Color::Named(bg)));
         engine.append_child(root, n).unwrap();
     }
 
@@ -75,18 +63,9 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     for i in 0..6 {
         let n = engine.create_node(NodeKind::Text);
-        let (r, g, b) = (
-            (i * 40).min(255) as u8,
-            (255 - i * 30).max(0) as u8,
-            (128 + i * 20).min(255) as u8,
-        );
+        let (r, g, b) = ((i * 40).min(255) as u8, (255 - i * 30).max(0) as u8, (128 + i * 20).min(255) as u8);
         engine.set_text(n, format!("  RGB({:>3},{:>3},{:>3})  ", r, g, b));
-        engine.set_style(
-            n,
-            Style::new()
-                .fg(Color::rgb(r, g, b))
-                .bg(Color::Named(NamedColor::Black)),
-        );
+        engine.set_style(n, Style::new().fg(Color::rgb(r, g, b)).bg(Color::Named(NamedColor::Black)));
         engine.append_child(root, n).unwrap();
     }
 
@@ -127,14 +106,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let hint = engine.create_node(NodeKind::Text);
     engine.set_text(hint, "Press any key to return to menu...");
-    engine.set_style(
-        hint,
-        Style {
-            fg: Some(Color::Named(NamedColor::BrightBlack)),
-            dim: Some(true),
-            ..Style::new()
-        },
-    );
+    engine.set_style(hint, Style { fg: Some(Color::Named(NamedColor::BrightBlack)), dim: Some(true), ..Style::new() });
     engine.append_child(root, hint).unwrap();
 
     engine.begin_frame();

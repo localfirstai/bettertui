@@ -37,10 +37,7 @@ impl Default for ProcessConfig {
 
 impl ProcessConfig {
     pub fn new(program: &str) -> Self {
-        Self {
-            program: program.to_string(),
-            ..Default::default()
-        }
+        Self { program: program.to_string(), ..Default::default() }
     }
 
     pub fn with_args(mut self, args: Vec<String>) -> Self {
@@ -220,11 +217,7 @@ pub struct SpawnResult {
 
 impl SpawnResult {
     pub fn new(process_config: ProcessConfig, pid: u32) -> Self {
-        Self {
-            process_config,
-            pid,
-            time: Instant::now(),
-        }
+        Self { process_config, pid, time: Instant::now() }
     }
 }
 
@@ -245,9 +238,8 @@ impl Default for ProcessSpawner {
 
 impl ProcessSpawner {
     pub fn new() -> Self {
-        let default_shell = std::env::var("SHELL")
-            .or_else(|_| std::env::var("COMSPEC"))
-            .unwrap_or_else(|_| "/bin/bash".to_string());
+        let default_shell =
+            std::env::var("SHELL").or_else(|_| std::env::var("COMSPEC")).unwrap_or_else(|_| "/bin/bash".to_string());
 
         Self {
             default_shell,
@@ -317,11 +309,8 @@ impl ProcessSpawner {
     }
 
     pub fn build_config_from_parts(&self, parts: ProcessConfigBuilder) -> ProcessConfig {
-        let program = if parts.program.is_empty() {
-            self.default_shell.clone()
-        } else {
-            self.resolve_command(&parts.program)
-        };
+        let program =
+            if parts.program.is_empty() { self.default_shell.clone() } else { self.resolve_command(&parts.program) };
 
         let mut env = self.default_env.clone();
         env.extend(parts.env);
@@ -515,9 +504,7 @@ impl TerminalRuntime {
 
     pub fn spawn(&mut self) -> Result<(), TerminalError> {
         if !self.config.is_valid() {
-            return Err(TerminalError::InvalidConfig(
-                "No program specified in ProcessConfig".to_string(),
-            ));
+            return Err(TerminalError::InvalidConfig("No program specified in ProcessConfig".to_string()));
         }
 
         if self.state.is_running() {
@@ -528,11 +515,7 @@ impl TerminalRuntime {
             program: self.config.program.clone(),
             args: self.config.args.clone(),
             env: self.config.env.clone(),
-            working_directory: self
-                .config
-                .working_directory
-                .as_ref()
-                .map(|p| p.to_string_lossy().to_string()),
+            working_directory: self.config.working_directory.as_ref().map(|p| p.to_string_lossy().to_string()),
             size: self.config.size,
         };
 
@@ -797,10 +780,7 @@ impl TerminalViewport {
         if self.scroll_mode == ScrollMode::Fixed {
             return;
         }
-        self.scroll_offset = self
-            .scroll_offset
-            .saturating_add(lines)
-            .min(self.scrollback_lines);
+        self.scroll_offset = self.scroll_offset.saturating_add(lines).min(self.scrollback_lines);
     }
 
     pub fn scroll_down(&mut self, lines: u32) {
@@ -835,12 +815,7 @@ impl TerminalViewport {
     }
 
     pub fn to_pty_size(&self) -> PtySize {
-        PtySize {
-            cols: self.cols,
-            rows: self.rows,
-            pixel_width: self.pixel_width,
-            pixel_height: self.pixel_height,
-        }
+        PtySize { cols: self.cols, rows: self.rows, pixel_width: self.pixel_width, pixel_height: self.pixel_height }
     }
 
     pub fn total_cells(&self) -> u32 {
@@ -871,12 +846,7 @@ mod tests {
         let c = ProcessConfig::new("nvim")
             .with_args(vec!["--clean".to_string()])
             .with_env(vec![("TERM".to_string(), "xterm-256color".to_string())])
-            .with_size(PtySize {
-                cols: 120,
-                rows: 40,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
+            .with_size(PtySize { cols: 120, rows: 40, pixel_width: 0, pixel_height: 0 })
             .with_auto_restart(true)
             .with_restart_delay(Duration::from_millis(200));
         assert_eq!(c.program, "nvim");

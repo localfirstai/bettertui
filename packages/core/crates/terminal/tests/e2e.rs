@@ -80,10 +80,7 @@ fn e2e_pty_echo_text() {
     let (_process, raw) = exec("echo", &["Hello E2E"]);
 
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows.iter().any(|r| r.contains("Hello E2E")),
-        "vt100 should see text"
-    );
+    assert!(ref_rows.iter().any(|r| r.contains("Hello E2E")), "vt100 should see text");
 
     let vm = parse_through_vtmachine(&raw);
     let our = vm_text(&vm);
@@ -92,20 +89,11 @@ fn e2e_pty_echo_text() {
 
 #[test]
 fn e2e_pty_ansi_cursor_movement() {
-    let (_process, raw) = exec(
-        "printf",
-        &["\\033[2J\\033[HLine1\\nLine2\\nLine3\\033[2AXXX\\033[2BYYY"],
-    );
+    let (_process, raw) = exec("printf", &["\\033[2J\\033[HLine1\\nLine2\\nLine3\\033[2AXXX\\033[2BYYY"]);
 
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows.iter().any(|r| r.contains("XXX")),
-        "vt100: XXX at moved cursor"
-    );
-    assert!(
-        ref_rows.iter().any(|r| r.contains("YYY")),
-        "vt100: YYY at moved cursor"
-    );
+    assert!(ref_rows.iter().any(|r| r.contains("XXX")), "vt100: XXX at moved cursor");
+    assert!(ref_rows.iter().any(|r| r.contains("YYY")), "vt100: YYY at moved cursor");
 
     let vm = parse_through_vtmachine(&raw);
     let our = vm_text(&vm);
@@ -129,57 +117,33 @@ fn e2e_pty_sgr_colors_text() {
 
 #[test]
 fn e2e_pty_erase_display() {
-    let (_process, raw) = exec(
-        "printf",
-        &["\\033[2J\\033[H\\033[31mTOP\\033[2J\\033[32mBOTTOM"],
-    );
+    let (_process, raw) = exec("printf", &["\\033[2J\\033[H\\033[31mTOP\\033[2J\\033[32mBOTTOM"]);
 
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows[0].contains("BOTTOM"),
-        "vt100: row 0 should be BOTTOM after erase, got={:?}",
-        ref_rows[0]
-    );
+    assert!(ref_rows[0].contains("BOTTOM"), "vt100: row 0 should be BOTTOM after erase, got={:?}", ref_rows[0]);
 
     let vm = parse_through_vtmachine(&raw);
     let our = vm_text(&vm);
-    assert!(
-        our.lines().next().unwrap_or("").contains("BOTTOM"),
-        "VtMachine: first line BOTTOM after erase"
-    );
+    assert!(our.lines().next().unwrap_or("").contains("BOTTOM"), "VtMachine: first line BOTTOM after erase");
 }
 
 #[test]
 fn e2e_pty_alt_screen() {
-    let (_process, raw) = exec(
-        "printf",
-        &["\\033[?1049h\\033[2J\\033[HALT\\033[?1049l\\033[2J\\033[HMAIN"],
-    );
+    let (_process, raw) = exec("printf", &["\\033[?1049h\\033[2J\\033[HALT\\033[?1049l\\033[2J\\033[HMAIN"]);
 
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows[0].contains("MAIN"),
-        "vt100: row 0 MAIN after alt-screen cycle, got={:?}",
-        ref_rows[0]
-    );
+    assert!(ref_rows[0].contains("MAIN"), "vt100: row 0 MAIN after alt-screen cycle, got={:?}", ref_rows[0]);
 
     let vm = parse_through_vtmachine(&raw);
     let our = vm_text(&vm);
-    assert!(
-        our.lines().next().unwrap_or("").contains("MAIN"),
-        "VtMachine: MAIN after alt-screen cycle"
-    );
+    assert!(our.lines().next().unwrap_or("").contains("MAIN"), "VtMachine: MAIN after alt-screen cycle");
 }
 
 #[test]
 fn e2e_pty_unicode_text() {
     let (_process, raw) = exec("echo", &["Hello 日本語"]);
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows.iter().any(|r| r.contains("日本語")),
-        "vt100 should see unicode, rows={:?}",
-        ref_rows
-    );
+    assert!(ref_rows.iter().any(|r| r.contains("日本語")), "vt100 should see unicode, rows={:?}", ref_rows);
 
     // VtMachine parser doesn't handle UTF-8 multi-byte decoding yet
     // Each byte is treated as an individual ParserEvent::Char(byte)
@@ -188,16 +152,10 @@ fn e2e_pty_unicode_text() {
 
 #[test]
 fn e2e_pty_large_output() {
-    let (_process, raw) = exec(
-        "python3",
-        &["-c", "for i in range(100): print(f'Line {i}')"],
-    );
+    let (_process, raw) = exec("python3", &["-c", "for i in range(100): print(f'Line {i}')"]);
 
     let ref_rows = vt100_rows(&raw);
-    assert!(
-        ref_rows.iter().any(|r| r.contains("Line 99")),
-        "vt100: last line visible"
-    );
+    assert!(ref_rows.iter().any(|r| r.contains("Line 99")), "vt100: last line visible");
 
     let vm = parse_through_vtmachine(&raw);
     let our = vm_text(&vm);
@@ -233,16 +191,8 @@ fn e2e_vtmachine_cursor_position_after_printf() {
     let (_process, raw) = exec("printf", &["\\033[2J\\033[5;10HX"]);
     let vm = parse_through_vtmachine(&raw);
     // CUP 5;10 -> 0-based (4, 9), then 'X' advances col to 10
-    assert_eq!(
-        vm.current_cursor().row(),
-        4,
-        "cursor row after CUP 5;10 + char"
-    );
-    assert_eq!(
-        vm.current_cursor().col(),
-        10,
-        "cursor col after CUP 5;10 + char"
-    );
+    assert_eq!(vm.current_cursor().row(), 4, "cursor row after CUP 5;10 + char");
+    assert_eq!(vm.current_cursor().col(), 10, "cursor col after CUP 5;10 + char");
     let cell = vm.framebuffer().get(9, 4);
     assert_eq!(cell.ch, 'X', "cell at (9,4) should be X");
 }
@@ -281,10 +231,7 @@ fn e2e_vtmachine_device_status_report() {
 
 #[test]
 fn e2e_vtmachine_cursor_position_multiple_moves() {
-    let (_process, raw) = exec(
-        "printf",
-        &["\\033[2J\\033[H\\033[3CA\\033[2BB\\033[3DC\\033[2DA"],
-    );
+    let (_process, raw) = exec("printf", &["\\033[2J\\033[H\\033[3CA\\033[2BB\\033[3DC\\033[2DA"]);
     let vm = parse_through_vtmachine(&raw);
 
     // Trace: CUP→Home→CUF3→A→CUD2→B→CUB3→C→CUU2→A

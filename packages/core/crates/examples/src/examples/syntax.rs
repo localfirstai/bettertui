@@ -23,12 +23,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let title = engine.create_node(NodeKind::Text);
     engine.set_text(title, "Syntax: Tree-Sitter Highlighting");
-    engine.set_style(
-        title,
-        Style::new()
-            .fg(Color::Named(NamedColor::BrightWhite))
-            .bold(true),
-    );
+    engine.set_style(title, Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
     engine.append_child(root, title).unwrap();
 
     let spacer = engine.create_node(NodeKind::Text);
@@ -62,10 +57,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         }
         let count = engine.create_node(NodeKind::Text);
         engine.set_text(count, format!("  ({} lines highlighted)", lines.len()));
-        engine.set_style(
-            count,
-            Style::new().fg(Color::Named(NamedColor::BrightBlack)),
-        );
+        engine.set_style(count, Style::new().fg(Color::Named(NamedColor::BrightBlack)));
         engine.append_child(root, count).unwrap();
     } else {
         let n = engine.create_node(NodeKind::Text);
@@ -102,10 +94,7 @@ function greet(user: User): string {
         }
         let count = engine.create_node(NodeKind::Text);
         engine.set_text(count, format!("  ({} lines highlighted)", lines.len()));
-        engine.set_style(
-            count,
-            Style::new().fg(Color::Named(NamedColor::BrightBlack)),
-        );
+        engine.set_style(count, Style::new().fg(Color::Named(NamedColor::BrightBlack)));
         engine.append_child(root, count).unwrap();
     } else {
         let n = engine.create_node(NodeKind::Text);
@@ -141,10 +130,7 @@ print(f"The answer is {result}")"#;
         }
         let count = engine.create_node(NodeKind::Text);
         engine.set_text(count, format!("  ({} lines highlighted)", lines.len()));
-        engine.set_style(
-            count,
-            Style::new().fg(Color::Named(NamedColor::BrightBlack)),
-        );
+        engine.set_style(count, Style::new().fg(Color::Named(NamedColor::BrightBlack)));
         engine.append_child(root, count).unwrap();
     } else {
         let n = engine.create_node(NodeKind::Text);
@@ -158,14 +144,7 @@ print(f"The answer is {result}")"#;
 
     let hint = engine.create_node(NodeKind::Text);
     engine.set_text(hint, "Press any key to return to menu...");
-    engine.set_style(
-        hint,
-        Style {
-            fg: Some(Color::Named(NamedColor::BrightBlack)),
-            dim: Some(true),
-            ..Style::new()
-        },
-    );
+    engine.set_style(hint, Style { fg: Some(Color::Named(NamedColor::BrightBlack)), dim: Some(true), ..Style::new() });
     engine.append_child(root, hint).unwrap();
 
     engine.begin_frame();

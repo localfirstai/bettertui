@@ -32,11 +32,7 @@ fn metrics_new() {
 
 #[test]
 fn metrics_builder() {
-    let m = FontMetrics::new()
-        .with_dimensions(10, 20)
-        .with_bearing(1, 2)
-        .with_advance(10, 0)
-        .with_monospace(true);
+    let m = FontMetrics::new().with_dimensions(10, 20).with_bearing(1, 2).with_advance(10, 0).with_monospace(true);
 
     assert_eq!(m.width, 10);
     assert_eq!(m.height, 20);

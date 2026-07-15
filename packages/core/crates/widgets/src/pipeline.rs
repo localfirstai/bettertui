@@ -16,10 +16,7 @@ impl Default for Pipeline {
 
 impl Pipeline {
     pub fn new() -> Self {
-        Self {
-            dirty: true,
-            generation: 0,
-        }
+        Self { dirty: true, generation: 0 }
     }
 
     pub fn mark_dirty(&mut self) {

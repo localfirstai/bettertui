@@ -196,14 +196,7 @@ impl NeovimConfig {
         let data_dir = home_path.join(".local").join("share").join("nvim");
         let cache_dir = home_path.join(".cache").join("nvim");
 
-        Self {
-            config_dir,
-            data_dir,
-            cache_dir,
-            session_file: None,
-            init_lua: None,
-            preserve_user_config: true,
-        }
+        Self { config_dir, data_dir, cache_dir, session_file: None, init_lua: None, preserve_user_config: true }
     }
 
     /// Converts this NeovimConfig into a generic ProcessConfig.
@@ -311,19 +304,11 @@ impl Default for NeovimProcess {
 
 impl NeovimProcess {
     pub fn new() -> Self {
-        Self {
-            runtime: TerminalRuntime::new(),
-            state: NeovimState::new(),
-            config: NeovimConfig::new(),
-        }
+        Self { runtime: TerminalRuntime::new(), state: NeovimState::new(), config: NeovimConfig::new() }
     }
 
     pub fn with_config(config: NeovimConfig) -> Self {
-        Self {
-            runtime: TerminalRuntime::with_config(config.to_process_config()),
-            state: NeovimState::new(),
-            config,
-        }
+        Self { runtime: TerminalRuntime::with_config(config.to_process_config()), state: NeovimState::new(), config }
     }
 
     pub fn spawn(&mut self, size: PtySize) -> Result<(), NeovimError> {
@@ -331,9 +316,9 @@ impl NeovimProcess {
             return Err(NeovimError::SpawnFailed("Already running".to_string()));
         }
 
-        self.config.ensure_dirs().map_err(|e| {
-            NeovimError::SpawnFailed(format!("Failed to create directories: {}", e))
-        })?;
+        self.config
+            .ensure_dirs()
+            .map_err(|e| NeovimError::SpawnFailed(format!("Failed to create directories: {}", e)))?;
 
         self.runtime.config_mut().size = size;
         self.runtime.config_mut().args = self.config.to_process_config().args;
@@ -423,9 +408,7 @@ mod tests {
 
     #[test]
     fn config_builder() {
-        let c = NeovimConfig::new()
-            .with_preserve_user_config(false)
-            .with_config_dir(PathBuf::from("/tmp/my-nvim"));
+        let c = NeovimConfig::new().with_preserve_user_config(false).with_config_dir(PathBuf::from("/tmp/my-nvim"));
         assert!(!c.preserve_user_config);
         assert_eq!(c.config_dir, PathBuf::from("/tmp/my-nvim"));
     }

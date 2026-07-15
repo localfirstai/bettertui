@@ -7,8 +7,8 @@ use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::{NodeArena, NodeId, NodeKind, RenderNode, Style};
 use bettertui_widgets::{
-    Pipeline, Widget, WidgetContext, WidgetHost, WidgetId, WidgetRegistry, WidgetTree,
-    reconcile::Reconciler, theme::Theme,
+    Pipeline, Widget, WidgetContext, WidgetHost, WidgetId, WidgetRegistry, WidgetTree, reconcile::Reconciler,
+    theme::Theme,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -26,13 +26,7 @@ fn make_arena_and_ids(count: usize) -> (NodeArena, Vec<WidgetId>, Vec<NodeId>) {
 }
 
 fn make_host_with_context() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
-    (
-        WidgetHost::new(),
-        NodeArena::new(),
-        FocusManager::new(),
-        Scheduler::new(),
-        Theme::default(),
-    )
+    (WidgetHost::new(), NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
 }
 
 struct BenchWidget;
@@ -48,12 +42,7 @@ impl Widget for BenchWidget {
     }
 }
 
-fn make_tree_with(
-    tree: &mut WidgetTree,
-    arena: &mut NodeArena,
-    count: usize,
-    branching: usize,
-) -> WidgetId {
+fn make_tree_with(tree: &mut WidgetTree, arena: &mut NodeArena, count: usize, branching: usize) -> WidgetId {
     let root_nid = arena.insert(RenderNode::new(NodeKind::Box));
     let root_wid = WidgetId(root_nid);
     tree.insert(root_wid, root_nid, "Box");
@@ -80,10 +69,7 @@ fn make_tree_with(
 }
 
 /// Build two identical trees by recreating the same structure.
-fn build_identical_trees(
-    count: usize,
-    branching: usize,
-) -> (NodeArena, WidgetTree, WidgetTree, WidgetId) {
+fn build_identical_trees(count: usize, branching: usize) -> (NodeArena, WidgetTree, WidgetTree, WidgetId) {
     let mut arena = NodeArena::new();
     let mut tree_a = WidgetTree::new();
     let root_a = make_tree_with(&mut tree_a, &mut arena, count, branching);
@@ -103,40 +89,34 @@ fn bench_widget_host(c: &mut Criterion) {
     let mut group = c.benchmark_group("widgets/host");
 
     group.bench_function("mount_single", |b| {
-        b.iter_with_setup(
-            make_host_with_context,
-            |(mut host, mut arena, mut focus, mut sched, theme)| {
-                let mut ctx = WidgetContext {
-                    arena: &mut arena,
-                    focus_manager: &mut focus,
-                    scheduler: &mut sched,
-                    terminal_size: (80, 24),
-                    theme: &theme,
-                };
-                let _wid = host.mount(Box::new(BenchWidget), &mut ctx);
-                black_box(host.widget_count());
-            },
-        );
+        b.iter_with_setup(make_host_with_context, |(mut host, mut arena, mut focus, mut sched, theme)| {
+            let mut ctx = WidgetContext {
+                arena: &mut arena,
+                focus_manager: &mut focus,
+                scheduler: &mut sched,
+                terminal_size: (80, 24),
+                theme: &theme,
+            };
+            let _wid = host.mount(Box::new(BenchWidget), &mut ctx);
+            black_box(host.widget_count());
+        });
     });
 
     group.bench_function("mount_unmount_sequential", |b| {
-        b.iter_with_setup(
-            make_host_with_context,
-            |(mut host, mut arena, mut focus, mut sched, theme)| {
-                let mut ctx = WidgetContext {
-                    arena: &mut arena,
-                    focus_manager: &mut focus,
-                    scheduler: &mut sched,
-                    terminal_size: (80, 24),
-                    theme: &theme,
-                };
-                for _ in 0..10 {
-                    let wid = host.mount(Box::new(BenchWidget), &mut ctx);
-                    host.unmount(wid, &mut ctx);
-                }
-                black_box(host.widget_count());
-            },
-        );
+        b.iter_with_setup(make_host_with_context, |(mut host, mut arena, mut focus, mut sched, theme)| {
+            let mut ctx = WidgetContext {
+                arena: &mut arena,
+                focus_manager: &mut focus,
+                scheduler: &mut sched,
+                terminal_size: (80, 24),
+                theme: &theme,
+            };
+            for _ in 0..10 {
+                let wid = host.mount(Box::new(BenchWidget), &mut ctx);
+                host.unmount(wid, &mut ctx);
+            }
+            black_box(host.widget_count());
+        });
     });
 
     let sizes = [10, 100, 500];
@@ -219,18 +199,14 @@ fn bench_widget_tree(c: &mut Criterion) {
     });
 
     for size in [10, 100] {
-        group.bench_with_input(
-            BenchmarkId::new("build_parent_child_tree", size),
-            &size,
-            |b, &size| {
-                b.iter(|| {
-                    let mut arena = NodeArena::new();
-                    let mut tree = WidgetTree::new();
-                    let _root = make_tree_with(&mut tree, &mut arena, size, 4);
-                    black_box(tree.len());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("build_parent_child_tree", size), &size, |b, &size| {
+            b.iter(|| {
+                let mut arena = NodeArena::new();
+                let mut tree = WidgetTree::new();
+                let _root = make_tree_with(&mut tree, &mut arena, size, 4);
+                black_box(tree.len());
+            });
+        });
     }
 
     for size in [10, 100] {
@@ -266,21 +242,15 @@ fn bench_widget_registry(c: &mut Criterion) {
     });
 
     for count in [10, 50, 200] {
-        group.bench_with_input(
-            BenchmarkId::new("register_batch", count),
-            &count,
-            |b, &count| {
-                b.iter(|| {
-                    let mut reg = WidgetRegistry::new();
-                    for i in 0..count {
-                        reg.register(Box::leak(format!("Bench_{}", i).into_boxed_str()), || {
-                            Box::new(BenchWidget)
-                        });
-                    }
-                    black_box(reg.len());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("register_batch", count), &count, |b, &count| {
+            b.iter(|| {
+                let mut reg = WidgetRegistry::new();
+                for i in 0..count {
+                    reg.register(Box::leak(format!("Bench_{}", i).into_boxed_str()), || Box::new(BenchWidget));
+                }
+                black_box(reg.len());
+            });
+        });
     }
 
     group.bench_function("lookup_exists", |b| {
@@ -331,12 +301,7 @@ fn bench_widget_registry(c: &mut Criterion) {
 fn bench_reconciler(c: &mut Criterion) {
     let mut group = c.benchmark_group("widgets/reconciler");
 
-    fn make_deep_tree(
-        arena: &mut NodeArena,
-        tree: &mut WidgetTree,
-        depth: usize,
-        fanout: usize,
-    ) -> WidgetId {
+    fn make_deep_tree(arena: &mut NodeArena, tree: &mut WidgetTree, depth: usize, fanout: usize) -> WidgetId {
         let root_nid = arena.insert(RenderNode::new(NodeKind::Box));
         let root_wid = WidgetId(root_nid);
         tree.insert(root_wid, root_nid, "Box");
@@ -369,18 +334,14 @@ fn bench_reconciler(c: &mut Criterion) {
     });
 
     for node_count in [10, 100] {
-        group.bench_with_input(
-            BenchmarkId::new("identical_medium", node_count),
-            &node_count,
-            |b, &count| {
-                let (_arena, tree_a, tree_b, root) = build_identical_trees(count, 4);
-                let mut reconciler = Reconciler::new();
-                b.iter(|| {
-                    let ops = reconciler.reconcile(black_box(&tree_a), black_box(&tree_b), root);
-                    black_box(ops.len());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("identical_medium", node_count), &node_count, |b, &count| {
+            let (_arena, tree_a, tree_b, root) = build_identical_trees(count, 4);
+            let mut reconciler = Reconciler::new();
+            b.iter(|| {
+                let ops = reconciler.reconcile(black_box(&tree_a), black_box(&tree_b), root);
+                black_box(ops.len());
+            });
+        });
     }
 
     group.bench_function("one_added", |b| {

@@ -27,11 +27,7 @@ impl Default for WidgetTree {
 
 impl WidgetTree {
     pub fn new() -> Self {
-        Self {
-            entries: HashMap::new(),
-            node_to_widget: HashMap::new(),
-            next_id: 0,
-        }
+        Self { entries: HashMap::new(), node_to_widget: HashMap::new(), next_id: 0 }
     }
 
     pub fn next_id(&mut self) -> WidgetId {
@@ -40,13 +36,7 @@ impl WidgetTree {
     }
 
     pub fn insert(&mut self, widget_id: WidgetId, node_id: NodeId, kind: &'static str) {
-        let entry = WidgetEntry {
-            widget_id,
-            node_id,
-            parent: None,
-            children: Vec::new(),
-            kind,
-        };
+        let entry = WidgetEntry { widget_id, node_id, parent: None, children: Vec::new(), kind };
         self.entries.insert(widget_id, entry);
         self.node_to_widget.insert(node_id, widget_id);
     }
@@ -65,9 +55,7 @@ impl WidgetTree {
     }
 
     pub fn get_by_node(&self, node_id: NodeId) -> Option<&WidgetEntry> {
-        self.node_to_widget
-            .get(&node_id)
-            .and_then(|wid| self.entries.get(wid))
+        self.node_to_widget.get(&node_id).and_then(|wid| self.entries.get(wid))
     }
 
     pub fn node_id(&self, widget_id: WidgetId) -> Option<NodeId> {
@@ -79,10 +67,7 @@ impl WidgetTree {
     }
 
     pub fn children(&self, widget_id: WidgetId) -> &[WidgetId] {
-        self.entries
-            .get(&widget_id)
-            .map(|e| e.children.as_slice())
-            .unwrap_or(&[])
+        self.entries.get(&widget_id).map(|e| e.children.as_slice()).unwrap_or(&[])
     }
 
     pub fn parent(&self, widget_id: WidgetId) -> Option<WidgetId> {
@@ -171,12 +156,8 @@ mod tests {
     fn tree_parent_child() {
         let mut tree = WidgetTree::new();
         let mut arena = bettertui_engine::tree::NodeArena::new();
-        let parent_nid = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Box,
-        ));
-        let child_nid = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Text,
-        ));
+        let parent_nid = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Box));
+        let child_nid = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Text));
         let parent_wid = WidgetId(parent_nid);
         let child_wid = WidgetId(child_nid);
 
@@ -203,12 +184,8 @@ mod tests {
     fn tree_remove_cascades() {
         let mut tree = WidgetTree::new();
         let mut arena = bettertui_engine::tree::NodeArena::new();
-        let parent_nid = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Box,
-        ));
-        let child_nid = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Text,
-        ));
+        let parent_nid = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Box));
+        let child_nid = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Text));
         let parent_wid = WidgetId(parent_nid);
         let child_wid = WidgetId(child_nid);
 
@@ -224,12 +201,8 @@ mod tests {
     fn tree_clear() {
         let mut tree = WidgetTree::new();
         let mut arena = bettertui_engine::tree::NodeArena::new();
-        let nid1 = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Box,
-        ));
-        let nid2 = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Text,
-        ));
+        let nid1 = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Box));
+        let nid2 = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Text));
         tree.insert(WidgetId(nid1), nid1, "Box");
         tree.insert(WidgetId(nid2), nid2, "Text");
         tree.clear();
@@ -248,12 +221,8 @@ mod tests {
     fn tree_widget_ids() {
         let mut tree = WidgetTree::new();
         let mut arena = bettertui_engine::tree::NodeArena::new();
-        let nid1 = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Box,
-        ));
-        let nid2 = arena.insert(bettertui_engine::tree::RenderNode::new(
-            bettertui_engine::tree::NodeKind::Text,
-        ));
+        let nid1 = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Box));
+        let nid2 = arena.insert(bettertui_engine::tree::RenderNode::new(bettertui_engine::tree::NodeKind::Text));
         let w1 = WidgetId(nid1);
         let w2 = WidgetId(nid2);
         tree.insert(w1, nid1, "A");

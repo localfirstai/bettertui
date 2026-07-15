@@ -6,10 +6,9 @@ use bettertui_engine::taffy::LayoutProps;
 use bettertui_engine::tree::{NodeArena, NodeKind, Style};
 
 use bettertui_widgets::{
-    BoxWidget, ButtonWidget, ContainerWidget, FlexWidget, GridWidget, LabelWidget, ModalWidget,
-    Pipeline, ProgressWidget, ReconcileOp, Reconciler, SeparatorWidget, SpacerWidget, SpinnerType,
-    SpinnerWidget, StackWidget, TabsWidget, Theme, TooltipWidget, Widget, WidgetContext,
-    WidgetHost, WidgetId, WidgetTree,
+    BoxWidget, ButtonWidget, ContainerWidget, FlexWidget, GridWidget, LabelWidget, ModalWidget, Pipeline,
+    ProgressWidget, ReconcileOp, Reconciler, SeparatorWidget, SpacerWidget, SpinnerType, SpinnerWidget, StackWidget,
+    TabsWidget, Theme, TooltipWidget, Widget, WidgetContext, WidgetHost, WidgetId, WidgetTree,
 };
 
 fn make_ctx<'a>(
@@ -18,23 +17,11 @@ fn make_ctx<'a>(
     sched: &'a mut Scheduler,
     theme: &'a Theme,
 ) -> WidgetContext<'a> {
-    WidgetContext {
-        arena,
-        focus_manager: focus,
-        scheduler: sched,
-        terminal_size: (80, 24),
-        theme,
-    }
+    WidgetContext { arena, focus_manager: focus, scheduler: sched, terminal_size: (80, 24), theme }
 }
 
 fn make_host() -> (WidgetHost, NodeArena, FocusManager, Scheduler, Theme) {
-    (
-        WidgetHost::new(),
-        NodeArena::new(),
-        FocusManager::new(),
-        Scheduler::new(),
-        Theme::default(),
-    )
+    (WidgetHost::new(), NodeArena::new(), FocusManager::new(), Scheduler::new(), Theme::default())
 }
 
 #[test]
@@ -63,10 +50,7 @@ fn widget_host_handle_event_unmounted() {
     let (mut host, mut arena, mut focus, mut sched, theme) = make_host();
     let mut ctx = make_ctx(&mut arena, &mut focus, &mut sched, &theme);
 
-    let event = Event::Key(KeyEvent::new(
-        Key::Character('x'),
-        WidgetId::default().node_id(),
-    ));
+    let event = Event::Key(KeyEvent::new(Key::Character('x'), WidgetId::default().node_id()));
     let result = host.handle_event(WidgetId::default(), &mut ctx, &event);
     assert_eq!(result, EventResult::Ignored);
 }
@@ -82,9 +66,7 @@ fn widget_host_update_untracked() {
 #[test]
 fn widget_host_registry() {
     let mut host = WidgetHost::new();
-    host.register("registered_test", || -> Box<dyn Widget> {
-        Box::new(LabelWidget::new("x"))
-    });
+    host.register("registered_test", || -> Box<dyn Widget> { Box::new(LabelWidget::new("x")) });
     assert!(host.registry().has("registered_test"));
 }
 
@@ -251,10 +233,7 @@ fn reconciler_added_child() {
     let mut reconciler = Reconciler::new();
     let ops = reconciler.reconcile(&tree1, &tree2, root_wid);
 
-    assert!(
-        ops.iter()
-            .any(|op| matches!(op, ReconcileOp::Insert { .. }))
-    );
+    assert!(ops.iter().any(|op| matches!(op, ReconcileOp::Insert { .. })));
 }
 
 #[test]
@@ -271,10 +250,7 @@ fn reconciler_removed_child() {
     let mut reconciler = Reconciler::new();
     let ops = reconciler.reconcile(&tree1, &tree2, root_wid);
 
-    assert!(
-        ops.iter()
-            .any(|op| matches!(op, ReconcileOp::Remove { .. }))
-    );
+    assert!(ops.iter().any(|op| matches!(op, ReconcileOp::Remove { .. })));
 }
 
 fn make_widget_tree() -> (WidgetTree, NodeArena) {
@@ -299,10 +275,7 @@ fn make_widget_tree() -> (WidgetTree, NodeArena) {
 }
 
 fn get_root_wid(tree: &WidgetTree) -> WidgetId {
-    tree.iter()
-        .find(|(_, entry)| entry.parent.is_none())
-        .map(|(k, _)| *k)
-        .unwrap()
+    tree.iter().find(|(_, entry)| entry.parent.is_none()).map(|(k, _)| *k).unwrap()
 }
 
 #[test]

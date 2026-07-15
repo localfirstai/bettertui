@@ -8,8 +8,7 @@ use bettertui_engine::render::RenderPass;
 use bettertui_engine::render::Renderer;
 use bettertui_engine::scheduler::Scheduler;
 use bettertui_engine::taffy::types::{
-    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues,
-    Sizing,
+    AlignItems, AlignSelf, FlexDirection, Gap, JustifyContent, LayoutProps, Position, RectValues, Sizing,
 };
 use bettertui_engine::text::TextEngine;
 use bettertui_engine::tree::{Color, NodeKind, Style};
@@ -282,32 +281,15 @@ impl From<ColorJson> for Color {
                 "magenta" => Color::Named(bettertui_engine::tree::NamedColor::Magenta),
                 "white" => Color::Named(bettertui_engine::tree::NamedColor::White),
                 "black" => Color::Named(bettertui_engine::tree::NamedColor::Black),
-                "dark_gray" | "darkgray" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightBlack)
-                }
-                "light_gray" | "lightgray" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightWhite)
-                }
-                "light_red" | "lightred" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightRed)
-                }
-                "light_green" | "lightgreen" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightGreen)
-                }
-                "light_blue" | "lightblue" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightBlue)
-                }
-                "light_yellow" | "lightyellow" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightYellow)
-                }
-                "light_cyan" | "lightcyan" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightCyan)
-                }
-                "light_magenta" | "lightmagenta" => {
-                    Color::Named(bettertui_engine::tree::NamedColor::BrightMagenta)
-                }
-                _ => Color::parse(&name)
-                    .unwrap_or(Color::Named(bettertui_engine::tree::NamedColor::White)),
+                "dark_gray" | "darkgray" => Color::Named(bettertui_engine::tree::NamedColor::BrightBlack),
+                "light_gray" | "lightgray" => Color::Named(bettertui_engine::tree::NamedColor::BrightWhite),
+                "light_red" | "lightred" => Color::Named(bettertui_engine::tree::NamedColor::BrightRed),
+                "light_green" | "lightgreen" => Color::Named(bettertui_engine::tree::NamedColor::BrightGreen),
+                "light_blue" | "lightblue" => Color::Named(bettertui_engine::tree::NamedColor::BrightBlue),
+                "light_yellow" | "lightyellow" => Color::Named(bettertui_engine::tree::NamedColor::BrightYellow),
+                "light_cyan" | "lightcyan" => Color::Named(bettertui_engine::tree::NamedColor::BrightCyan),
+                "light_magenta" | "lightmagenta" => Color::Named(bettertui_engine::tree::NamedColor::BrightMagenta),
+                _ => Color::parse(&name).unwrap_or(Color::Named(bettertui_engine::tree::NamedColor::White)),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
         }
@@ -446,10 +428,7 @@ struct GapJson {
 
 impl From<GapJson> for Gap {
     fn from(g: GapJson) -> Self {
-        Gap {
-            row: g.width.unwrap_or(0.0),
-            column: g.height.unwrap_or(0.0),
-        }
+        Gap { row: g.width.unwrap_or(0.0), column: g.height.unwrap_or(0.0) }
     }
 }
 
@@ -492,36 +471,24 @@ fn parse_node_kind(kind: &str) -> NodeKind {
 fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Command> {
     use bettertui_engine::protocol::Command;
     match cj {
-        CommandJson::CreateNode { id, kind } => Some(Command::CreateNode {
-            id: u64_to_node_id(id),
-            kind: parse_node_kind(&kind),
-        }),
-        CommandJson::RemoveNode { id } => Some(Command::RemoveNode {
-            id: u64_to_node_id(id),
-        }),
-        CommandJson::AppendChild { parent, child } => Some(Command::AppendChild {
-            parent: u64_to_node_id(parent),
-            child: u64_to_node_id(child),
-        }),
-        CommandJson::InsertBefore { reference, child } => Some(Command::InsertBefore {
-            reference: u64_to_node_id(reference),
-            child: u64_to_node_id(child),
-        }),
-        CommandJson::MoveNode { node, new_parent } => Some(Command::MoveNode {
-            node: u64_to_node_id(node),
-            new_parent: u64_to_node_id(new_parent),
-        }),
-        CommandJson::ReplaceNode { old, new } => Some(Command::ReplaceNode {
-            old: u64_to_node_id(old),
-            new: u64_to_node_id(new),
-        }),
-        CommandJson::DetachNode { id } => Some(Command::DetachNode {
-            id: u64_to_node_id(id),
-        }),
-        CommandJson::SetText { id, text } => Some(Command::SetText {
-            id: u64_to_node_id(id),
-            text,
-        }),
+        CommandJson::CreateNode { id, kind } => {
+            Some(Command::CreateNode { id: u64_to_node_id(id), kind: parse_node_kind(&kind) })
+        }
+        CommandJson::RemoveNode { id } => Some(Command::RemoveNode { id: u64_to_node_id(id) }),
+        CommandJson::AppendChild { parent, child } => {
+            Some(Command::AppendChild { parent: u64_to_node_id(parent), child: u64_to_node_id(child) })
+        }
+        CommandJson::InsertBefore { reference, child } => {
+            Some(Command::InsertBefore { reference: u64_to_node_id(reference), child: u64_to_node_id(child) })
+        }
+        CommandJson::MoveNode { node, new_parent } => {
+            Some(Command::MoveNode { node: u64_to_node_id(node), new_parent: u64_to_node_id(new_parent) })
+        }
+        CommandJson::ReplaceNode { old, new } => {
+            Some(Command::ReplaceNode { old: u64_to_node_id(old), new: u64_to_node_id(new) })
+        }
+        CommandJson::DetachNode { id } => Some(Command::DetachNode { id: u64_to_node_id(id) }),
+        CommandJson::SetText { id, text } => Some(Command::SetText { id: u64_to_node_id(id), text }),
         CommandJson::SetStyle { id, style } => {
             let mut s = Style::default();
             if let Some(fg) = style.fg {
@@ -556,51 +523,26 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                     _ => bettertui_engine::text::TextAlign::Left,
                 });
             }
-            Some(Command::SetStyle {
-                id: u64_to_node_id(id),
-                style: s,
-            })
+            Some(Command::SetStyle { id: u64_to_node_id(id), style: s })
         }
-        CommandJson::SetForeground { id, color } => Some(Command::SetForeground {
-            id: u64_to_node_id(id),
-            color: color.into(),
-        }),
-        CommandJson::SetBackground { id, color } => Some(Command::SetBackground {
-            id: u64_to_node_id(id),
-            color: color.into(),
-        }),
-        CommandJson::SetBold { id, value } => Some(Command::SetBold {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetItalic { id, value } => Some(Command::SetItalic {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetUnderline { id, value } => Some(Command::SetUnderline {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetStrikethrough { id, value } => Some(Command::SetStrikethrough {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetDim { id, value } => Some(Command::SetDim {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetInverse { id, value } => Some(Command::SetInverse {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetHidden { id, value } => Some(Command::SetHidden {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetLayout { id, layout } => Some(Command::SetLayout {
-            id: u64_to_node_id(id),
-            layout: layout.into(),
-        }),
+        CommandJson::SetForeground { id, color } => {
+            Some(Command::SetForeground { id: u64_to_node_id(id), color: color.into() })
+        }
+        CommandJson::SetBackground { id, color } => {
+            Some(Command::SetBackground { id: u64_to_node_id(id), color: color.into() })
+        }
+        CommandJson::SetBold { id, value } => Some(Command::SetBold { id: u64_to_node_id(id), value }),
+        CommandJson::SetItalic { id, value } => Some(Command::SetItalic { id: u64_to_node_id(id), value }),
+        CommandJson::SetUnderline { id, value } => Some(Command::SetUnderline { id: u64_to_node_id(id), value }),
+        CommandJson::SetStrikethrough { id, value } => {
+            Some(Command::SetStrikethrough { id: u64_to_node_id(id), value })
+        }
+        CommandJson::SetDim { id, value } => Some(Command::SetDim { id: u64_to_node_id(id), value }),
+        CommandJson::SetInverse { id, value } => Some(Command::SetInverse { id: u64_to_node_id(id), value }),
+        CommandJson::SetHidden { id, value } => Some(Command::SetHidden { id: u64_to_node_id(id), value }),
+        CommandJson::SetLayout { id, layout } => {
+            Some(Command::SetLayout { id: u64_to_node_id(id), layout: layout.into() })
+        }
         CommandJson::SetFlexDirection { id, direction } => {
             let dir = match direction.as_str() {
                 "row" | "Row" => FlexDirection::Row,
@@ -609,10 +551,7 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 "column_reverse" | "ColumnReverse" => FlexDirection::ColumnReverse,
                 _ => FlexDirection::Column,
             };
-            Some(Command::SetFlexDirection {
-                id: u64_to_node_id(id),
-                direction: dir,
-            })
+            Some(Command::SetFlexDirection { id: u64_to_node_id(id), direction: dir })
         }
         CommandJson::SetJustifyContent { id, value } => {
             let v = match value.as_str() {
@@ -624,10 +563,7 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 "space_evenly" | "SpaceEvenly" => JustifyContent::SpaceEvenly,
                 _ => JustifyContent::FlexStart,
             };
-            Some(Command::SetJustifyContent {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetJustifyContent { id: u64_to_node_id(id), value: v })
         }
         CommandJson::SetAlignItems { id, value } => {
             let v = match value.as_str() {
@@ -638,10 +574,7 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 "baseline" | "Baseline" => AlignItems::Baseline,
                 _ => AlignItems::Stretch,
             };
-            Some(Command::SetAlignItems {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetAlignItems { id: u64_to_node_id(id), value: v })
         }
         CommandJson::SetAlignSelf { id, value } => {
             let v = match value.as_str() {
@@ -652,139 +585,75 @@ fn convert_command(cj: CommandJson) -> Option<bettertui_engine::protocol::Comman
                 "baseline" | "Baseline" => AlignSelf::Baseline,
                 _ => AlignSelf::Stretch,
             };
-            Some(Command::SetAlignSelf {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetAlignSelf { id: u64_to_node_id(id), value: v })
         }
-        CommandJson::SetWidth { id, value } => Some(Command::SetWidth {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetHeight { id, value } => Some(Command::SetHeight {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetMinWidth { id, value } => Some(Command::SetMinWidth {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetMinHeight { id, value } => Some(Command::SetMinHeight {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetMaxWidth { id, value } => Some(Command::SetMaxWidth {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetMaxHeight { id, value } => Some(Command::SetMaxHeight {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetFlexBasis { id, value } => Some(Command::SetFlexBasis {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetPadding { id, value } => Some(Command::SetPadding {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetMargin { id, value } => Some(Command::SetMargin {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetGap { id, value } => Some(Command::SetGap {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
-        CommandJson::SetFlexGrow { id, value } => Some(Command::SetFlexGrow {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetFlexShrink { id, value } => Some(Command::SetFlexShrink {
-            id: u64_to_node_id(id),
-            value,
-        }),
+        CommandJson::SetWidth { id, value } => Some(Command::SetWidth { id: u64_to_node_id(id), value: value.into() }),
+        CommandJson::SetHeight { id, value } => {
+            Some(Command::SetHeight { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetMinWidth { id, value } => {
+            Some(Command::SetMinWidth { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetMinHeight { id, value } => {
+            Some(Command::SetMinHeight { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetMaxWidth { id, value } => {
+            Some(Command::SetMaxWidth { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetMaxHeight { id, value } => {
+            Some(Command::SetMaxHeight { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetFlexBasis { id, value } => {
+            Some(Command::SetFlexBasis { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetPadding { id, value } => {
+            Some(Command::SetPadding { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetMargin { id, value } => {
+            Some(Command::SetMargin { id: u64_to_node_id(id), value: value.into() })
+        }
+        CommandJson::SetGap { id, value } => Some(Command::SetGap { id: u64_to_node_id(id), value: value.into() }),
+        CommandJson::SetFlexGrow { id, value } => Some(Command::SetFlexGrow { id: u64_to_node_id(id), value }),
+        CommandJson::SetFlexShrink { id, value } => Some(Command::SetFlexShrink { id: u64_to_node_id(id), value }),
         CommandJson::SetPosition { id, value } => {
             let v = match value.as_str() {
                 "relative" | "Relative" => Position::Relative,
                 "absolute" | "Absolute" => Position::Absolute,
                 _ => Position::Relative,
             };
-            Some(Command::SetPosition {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetPosition { id: u64_to_node_id(id), value: v })
         }
-        CommandJson::SetInset { id, value } => Some(Command::SetInset {
-            id: u64_to_node_id(id),
-            value: value.into(),
-        }),
+        CommandJson::SetInset { id, value } => Some(Command::SetInset { id: u64_to_node_id(id), value: value.into() }),
         CommandJson::SetDisplay { id, value } => {
             let v = match value.as_str() {
                 "none" | "None" => bettertui_engine::tree::VisibilityDisplay::None,
                 _ => bettertui_engine::tree::VisibilityDisplay::Flex,
             };
-            Some(Command::SetDisplay {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetDisplay { id: u64_to_node_id(id), value: v })
         }
-        CommandJson::SetOpacity { id, value } => Some(Command::SetOpacity {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetClip { id, value } => Some(Command::SetClip {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetZIndex { id, value } => Some(Command::SetZIndex {
-            id: u64_to_node_id(id),
-            value,
-        }),
+        CommandJson::SetOpacity { id, value } => Some(Command::SetOpacity { id: u64_to_node_id(id), value }),
+        CommandJson::SetClip { id, value } => Some(Command::SetClip { id: u64_to_node_id(id), value }),
+        CommandJson::SetZIndex { id, value } => Some(Command::SetZIndex { id: u64_to_node_id(id), value }),
         CommandJson::SetOverflow { id, value } => {
             let v = match value.as_str() {
                 "hidden" | "Hidden" => bettertui_engine::tree::Overflow::Hidden,
                 "scroll" | "Scroll" => bettertui_engine::tree::Overflow::Scroll,
                 _ => bettertui_engine::tree::Overflow::Visible,
             };
-            Some(Command::SetOverflow {
-                id: u64_to_node_id(id),
-                value: v,
-            })
+            Some(Command::SetOverflow { id: u64_to_node_id(id), value: v })
         }
-        CommandJson::SetAttribute { id, key, value } => Some(Command::SetAttribute {
-            id: u64_to_node_id(id),
-            key,
-            value,
-        }),
-        CommandJson::RemoveAttribute { id, key } => Some(Command::RemoveAttribute {
-            id: u64_to_node_id(id),
-            key,
-        }),
-        CommandJson::SetTranslateX { id, value } => Some(Command::SetTranslateX {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetTranslateY { id, value } => Some(Command::SetTranslateY {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::SetTabIndex { id, value } => Some(Command::SetTabIndex {
-            id: u64_to_node_id(id),
-            value,
-        }),
-        CommandJson::FocusNode { id } => Some(Command::FocusNode {
-            id: u64_to_node_id(id),
-        }),
-        CommandJson::BlurNode { id } => Some(Command::BlurNode {
-            id: u64_to_node_id(id),
-        }),
+        CommandJson::SetAttribute { id, key, value } => {
+            Some(Command::SetAttribute { id: u64_to_node_id(id), key, value })
+        }
+        CommandJson::RemoveAttribute { id, key } => Some(Command::RemoveAttribute { id: u64_to_node_id(id), key }),
+        CommandJson::SetTranslateX { id, value } => Some(Command::SetTranslateX { id: u64_to_node_id(id), value }),
+        CommandJson::SetTranslateY { id, value } => Some(Command::SetTranslateY { id: u64_to_node_id(id), value }),
+        CommandJson::SetTabIndex { id, value } => Some(Command::SetTabIndex { id: u64_to_node_id(id), value }),
+        CommandJson::FocusNode { id } => Some(Command::FocusNode { id: u64_to_node_id(id) }),
+        CommandJson::BlurNode { id } => Some(Command::BlurNode { id: u64_to_node_id(id) }),
         CommandJson::BeginFrame { frame_id } => Some(Command::BeginFrame { frame_id }),
         CommandJson::CommitFrame { frame_id } => Some(Command::CommitFrame { frame_id }),
-        CommandJson::Invalidate { id } => Some(Command::Invalidate {
-            id: u64_to_node_id(id),
-        }),
+        CommandJson::Invalidate { id } => Some(Command::Invalidate { id: u64_to_node_id(id) }),
         CommandJson::Shutdown => Some(Command::Shutdown),
     }
 }
@@ -846,10 +715,8 @@ impl NapiEngine {
         }
 
         // Resolve temporary IDs in remaining commands using the mapping
-        let resolved_commands: Vec<bettertui_engine::protocol::Command> = rust_commands
-            .into_iter()
-            .map(|cmd| resolve_command_ids(cmd, &self.id_map))
-            .collect();
+        let resolved_commands: Vec<bettertui_engine::protocol::Command> =
+            rust_commands.into_iter().map(|cmd| resolve_command_ids(cmd, &self.id_map)).collect();
 
         let result = self.engine.process_commands(resolved_commands);
 
@@ -948,13 +815,9 @@ impl NapiEngine {
                 "bright_black" | "dark_gray" => bettertui_engine::tree::NamedColor::BrightBlack,
                 "bright_red" | "light_red" => bettertui_engine::tree::NamedColor::BrightRed,
                 "bright_green" | "light_green" => bettertui_engine::tree::NamedColor::BrightGreen,
-                "bright_yellow" | "light_yellow" => {
-                    bettertui_engine::tree::NamedColor::BrightYellow
-                }
+                "bright_yellow" | "light_yellow" => bettertui_engine::tree::NamedColor::BrightYellow,
                 "bright_blue" | "light_blue" => bettertui_engine::tree::NamedColor::BrightBlue,
-                "bright_magenta" | "light_magenta" => {
-                    bettertui_engine::tree::NamedColor::BrightMagenta
-                }
+                "bright_magenta" | "light_magenta" => bettertui_engine::tree::NamedColor::BrightMagenta,
                 "bright_cyan" | "light_cyan" => bettertui_engine::tree::NamedColor::BrightCyan,
                 "bright_white" | "light_gray" => bettertui_engine::tree::NamedColor::BrightWhite,
                 _ => bettertui_engine::tree::NamedColor::White,
@@ -973,13 +836,9 @@ impl NapiEngine {
                 "bright_black" | "dark_gray" => bettertui_engine::tree::NamedColor::BrightBlack,
                 "bright_red" | "light_red" => bettertui_engine::tree::NamedColor::BrightRed,
                 "bright_green" | "light_green" => bettertui_engine::tree::NamedColor::BrightGreen,
-                "bright_yellow" | "light_yellow" => {
-                    bettertui_engine::tree::NamedColor::BrightYellow
-                }
+                "bright_yellow" | "light_yellow" => bettertui_engine::tree::NamedColor::BrightYellow,
                 "bright_blue" | "light_blue" => bettertui_engine::tree::NamedColor::BrightBlue,
-                "bright_magenta" | "light_magenta" => {
-                    bettertui_engine::tree::NamedColor::BrightMagenta
-                }
+                "bright_magenta" | "light_magenta" => bettertui_engine::tree::NamedColor::BrightMagenta,
                 "bright_cyan" | "light_cyan" => bettertui_engine::tree::NamedColor::BrightCyan,
                 "bright_white" | "light_gray" => bettertui_engine::tree::NamedColor::BrightWhite,
                 _ => bettertui_engine::tree::NamedColor::White,
@@ -1022,9 +881,7 @@ impl NapiEngine {
     /// Shutdown the engine.
     #[napi]
     pub fn shutdown(&mut self) {
-        let _ = self
-            .engine
-            .process_command(bettertui_engine::protocol::Command::Shutdown);
+        let _ = self.engine.process_command(bettertui_engine::protocol::Command::Shutdown);
     }
 
     /// Resize the renderer.
@@ -1102,10 +959,7 @@ impl NapiEngine {
     /// enabled: whether the pass starts enabled
     #[napi]
     pub fn add_color_matrix_pass(&mut self, matrix_str: String, enabled: Option<bool>) {
-        let values: Vec<f32> = matrix_str
-            .split(',')
-            .filter_map(|s| s.trim().parse().ok())
-            .collect();
+        let values: Vec<f32> = matrix_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
         if values.len() != 16 {
             return;
         }
@@ -1150,12 +1004,7 @@ impl NapiEngine {
 
     /// Add a vignette effect pass.
     #[napi]
-    pub fn add_vignette_pass(
-        &mut self,
-        strength: Option<f64>,
-        radius: Option<f64>,
-        falloff: Option<f64>,
-    ) {
+    pub fn add_vignette_pass(&mut self, strength: Option<f64>, radius: Option<f64>, falloff: Option<f64>) {
         let mut pass = bettertui_engine::render::effects::VignettePass::new();
         if let Some(s) = strength {
             pass = pass.with_strength(s as f32);
@@ -1194,12 +1043,7 @@ impl NapiEngine {
 
     /// Add a bloom effect pass.
     #[napi]
-    pub fn add_bloom_pass(
-        &mut self,
-        threshold: Option<f64>,
-        strength: Option<f64>,
-        radius: Option<u32>,
-    ) {
+    pub fn add_bloom_pass(&mut self, threshold: Option<f64>, strength: Option<f64>, radius: Option<u32>) {
         let mut pass = bettertui_engine::render::effects::BloomPass::new();
         if let Some(t) = threshold {
             pass = pass.with_threshold(t as f32);
@@ -1230,10 +1074,7 @@ impl NapiEngine {
     /// Check if a render pass is enabled.
     #[napi]
     pub fn is_pass_enabled(&self, name: String) -> Option<bool> {
-        self.renderer
-            .pipeline()
-            .get_pass(&name)
-            .map(|p| p.enabled())
+        self.renderer.pipeline().get_pass(&name).map(|p| p.enabled())
     }
 
     /// Get the number of active render passes.
@@ -1257,186 +1098,59 @@ fn resolve_command_ids(
 
     match cmd {
         Command::RemoveNode { id } => Command::RemoveNode { id: resolve(id) },
-        Command::AppendChild { parent, child } => Command::AppendChild {
-            parent: resolve(parent),
-            child: resolve(child),
-        },
-        Command::InsertBefore { reference, child } => Command::InsertBefore {
-            reference: resolve(reference),
-            child: resolve(child),
-        },
-        Command::MoveNode { node, new_parent } => Command::MoveNode {
-            node: resolve(node),
-            new_parent: resolve(new_parent),
-        },
-        Command::ReplaceNode { old, new } => Command::ReplaceNode {
-            old: resolve(old),
-            new: resolve(new),
-        },
+        Command::AppendChild { parent, child } => {
+            Command::AppendChild { parent: resolve(parent), child: resolve(child) }
+        }
+        Command::InsertBefore { reference, child } => {
+            Command::InsertBefore { reference: resolve(reference), child: resolve(child) }
+        }
+        Command::MoveNode { node, new_parent } => {
+            Command::MoveNode { node: resolve(node), new_parent: resolve(new_parent) }
+        }
+        Command::ReplaceNode { old, new } => Command::ReplaceNode { old: resolve(old), new: resolve(new) },
         Command::DetachNode { id } => Command::DetachNode { id: resolve(id) },
-        Command::SetStyle { id, style } => Command::SetStyle {
-            id: resolve(id),
-            style,
-        },
-        Command::SetForeground { id, color } => Command::SetForeground {
-            id: resolve(id),
-            color,
-        },
-        Command::SetBackground { id, color } => Command::SetBackground {
-            id: resolve(id),
-            color,
-        },
-        Command::SetBold { id, value } => Command::SetBold {
-            id: resolve(id),
-            value,
-        },
-        Command::SetItalic { id, value } => Command::SetItalic {
-            id: resolve(id),
-            value,
-        },
-        Command::SetUnderline { id, value } => Command::SetUnderline {
-            id: resolve(id),
-            value,
-        },
-        Command::SetStrikethrough { id, value } => Command::SetStrikethrough {
-            id: resolve(id),
-            value,
-        },
-        Command::SetDim { id, value } => Command::SetDim {
-            id: resolve(id),
-            value,
-        },
-        Command::SetInverse { id, value } => Command::SetInverse {
-            id: resolve(id),
-            value,
-        },
-        Command::SetHidden { id, value } => Command::SetHidden {
-            id: resolve(id),
-            value,
-        },
-        Command::SetLayout { id, layout } => Command::SetLayout {
-            id: resolve(id),
-            layout,
-        },
-        Command::SetFlexDirection { id, direction } => Command::SetFlexDirection {
-            id: resolve(id),
-            direction,
-        },
-        Command::SetJustifyContent { id, value } => Command::SetJustifyContent {
-            id: resolve(id),
-            value,
-        },
-        Command::SetAlignItems { id, value } => Command::SetAlignItems {
-            id: resolve(id),
-            value,
-        },
-        Command::SetAlignSelf { id, value } => Command::SetAlignSelf {
-            id: resolve(id),
-            value,
-        },
-        Command::SetWidth { id, value } => Command::SetWidth {
-            id: resolve(id),
-            value,
-        },
-        Command::SetHeight { id, value } => Command::SetHeight {
-            id: resolve(id),
-            value,
-        },
-        Command::SetMinWidth { id, value } => Command::SetMinWidth {
-            id: resolve(id),
-            value,
-        },
-        Command::SetMinHeight { id, value } => Command::SetMinHeight {
-            id: resolve(id),
-            value,
-        },
-        Command::SetMaxWidth { id, value } => Command::SetMaxWidth {
-            id: resolve(id),
-            value,
-        },
-        Command::SetMaxHeight { id, value } => Command::SetMaxHeight {
-            id: resolve(id),
-            value,
-        },
-        Command::SetPadding { id, value } => Command::SetPadding {
-            id: resolve(id),
-            value,
-        },
-        Command::SetMargin { id, value } => Command::SetMargin {
-            id: resolve(id),
-            value,
-        },
-        Command::SetGap { id, value } => Command::SetGap {
-            id: resolve(id),
-            value,
-        },
-        Command::SetFlexGrow { id, value } => Command::SetFlexGrow {
-            id: resolve(id),
-            value,
-        },
-        Command::SetFlexShrink { id, value } => Command::SetFlexShrink {
-            id: resolve(id),
-            value,
-        },
-        Command::SetFlexBasis { id, value } => Command::SetFlexBasis {
-            id: resolve(id),
-            value,
-        },
-        Command::SetPosition { id, value } => Command::SetPosition {
-            id: resolve(id),
-            value,
-        },
-        Command::SetInset { id, value } => Command::SetInset {
-            id: resolve(id),
-            value,
-        },
-        Command::SetText { id, text } => Command::SetText {
-            id: resolve(id),
-            text,
-        },
-        Command::SetAttribute { id, key, value } => Command::SetAttribute {
-            id: resolve(id),
-            key,
-            value,
-        },
-        Command::RemoveAttribute { id, key } => Command::RemoveAttribute {
-            id: resolve(id),
-            key,
-        },
-        Command::SetDisplay { id, value } => Command::SetDisplay {
-            id: resolve(id),
-            value,
-        },
-        Command::SetOpacity { id, value } => Command::SetOpacity {
-            id: resolve(id),
-            value,
-        },
-        Command::SetClip { id, value } => Command::SetClip {
-            id: resolve(id),
-            value,
-        },
-        Command::SetTranslateX { id, value } => Command::SetTranslateX {
-            id: resolve(id),
-            value,
-        },
-        Command::SetTranslateY { id, value } => Command::SetTranslateY {
-            id: resolve(id),
-            value,
-        },
-        Command::SetZIndex { id, value } => Command::SetZIndex {
-            id: resolve(id),
-            value,
-        },
-        Command::SetOverflow { id, value } => Command::SetOverflow {
-            id: resolve(id),
-            value,
-        },
+        Command::SetStyle { id, style } => Command::SetStyle { id: resolve(id), style },
+        Command::SetForeground { id, color } => Command::SetForeground { id: resolve(id), color },
+        Command::SetBackground { id, color } => Command::SetBackground { id: resolve(id), color },
+        Command::SetBold { id, value } => Command::SetBold { id: resolve(id), value },
+        Command::SetItalic { id, value } => Command::SetItalic { id: resolve(id), value },
+        Command::SetUnderline { id, value } => Command::SetUnderline { id: resolve(id), value },
+        Command::SetStrikethrough { id, value } => Command::SetStrikethrough { id: resolve(id), value },
+        Command::SetDim { id, value } => Command::SetDim { id: resolve(id), value },
+        Command::SetInverse { id, value } => Command::SetInverse { id: resolve(id), value },
+        Command::SetHidden { id, value } => Command::SetHidden { id: resolve(id), value },
+        Command::SetLayout { id, layout } => Command::SetLayout { id: resolve(id), layout },
+        Command::SetFlexDirection { id, direction } => Command::SetFlexDirection { id: resolve(id), direction },
+        Command::SetJustifyContent { id, value } => Command::SetJustifyContent { id: resolve(id), value },
+        Command::SetAlignItems { id, value } => Command::SetAlignItems { id: resolve(id), value },
+        Command::SetAlignSelf { id, value } => Command::SetAlignSelf { id: resolve(id), value },
+        Command::SetWidth { id, value } => Command::SetWidth { id: resolve(id), value },
+        Command::SetHeight { id, value } => Command::SetHeight { id: resolve(id), value },
+        Command::SetMinWidth { id, value } => Command::SetMinWidth { id: resolve(id), value },
+        Command::SetMinHeight { id, value } => Command::SetMinHeight { id: resolve(id), value },
+        Command::SetMaxWidth { id, value } => Command::SetMaxWidth { id: resolve(id), value },
+        Command::SetMaxHeight { id, value } => Command::SetMaxHeight { id: resolve(id), value },
+        Command::SetPadding { id, value } => Command::SetPadding { id: resolve(id), value },
+        Command::SetMargin { id, value } => Command::SetMargin { id: resolve(id), value },
+        Command::SetGap { id, value } => Command::SetGap { id: resolve(id), value },
+        Command::SetFlexGrow { id, value } => Command::SetFlexGrow { id: resolve(id), value },
+        Command::SetFlexShrink { id, value } => Command::SetFlexShrink { id: resolve(id), value },
+        Command::SetFlexBasis { id, value } => Command::SetFlexBasis { id: resolve(id), value },
+        Command::SetPosition { id, value } => Command::SetPosition { id: resolve(id), value },
+        Command::SetInset { id, value } => Command::SetInset { id: resolve(id), value },
+        Command::SetText { id, text } => Command::SetText { id: resolve(id), text },
+        Command::SetAttribute { id, key, value } => Command::SetAttribute { id: resolve(id), key, value },
+        Command::RemoveAttribute { id, key } => Command::RemoveAttribute { id: resolve(id), key },
+        Command::SetDisplay { id, value } => Command::SetDisplay { id: resolve(id), value },
+        Command::SetOpacity { id, value } => Command::SetOpacity { id: resolve(id), value },
+        Command::SetClip { id, value } => Command::SetClip { id: resolve(id), value },
+        Command::SetTranslateX { id, value } => Command::SetTranslateX { id: resolve(id), value },
+        Command::SetTranslateY { id, value } => Command::SetTranslateY { id: resolve(id), value },
+        Command::SetZIndex { id, value } => Command::SetZIndex { id: resolve(id), value },
+        Command::SetOverflow { id, value } => Command::SetOverflow { id: resolve(id), value },
         Command::FocusNode { id } => Command::FocusNode { id: resolve(id) },
         Command::BlurNode { id } => Command::BlurNode { id: resolve(id) },
-        Command::SetTabIndex { id, value } => Command::SetTabIndex {
-            id: resolve(id),
-            value,
-        },
+        Command::SetTabIndex { id, value } => Command::SetTabIndex { id: resolve(id), value },
         Command::Invalidate { id } => Command::Invalidate { id: resolve(id) },
         other => other,
     }
@@ -1492,19 +1206,11 @@ fn format_key_combo(combo: &bettertui_engine::input::KeyCombo) -> String {
         Key::F(n) => format!("f{}", n),
     };
     parts.push(key_display);
-    if parts.len() == 1 {
-        parts[0].clone()
-    } else {
-        parts.join("+")
-    }
+    if parts.len() == 1 { parts[0].clone() } else { parts.join("+") }
 }
 
 fn format_key_sequence(seq: &bettertui_engine::input::KeySequence) -> String {
-    seq.keys
-        .iter()
-        .map(format_key_combo)
-        .collect::<Vec<_>>()
-        .join(" ")
+    seq.keys.iter().map(format_key_combo).collect::<Vec<_>>().join(" ")
 }
 
 #[napi]
@@ -1522,9 +1228,7 @@ impl Default for NapiKeymap {
 impl NapiKeymap {
     #[napi(constructor)]
     pub fn new() -> Self {
-        Self {
-            keymap: Keymap::new(),
-        }
+        Self { keymap: Keymap::new() }
     }
 
     /// Add a binding to a specific layer with full command name support
@@ -1540,14 +1244,7 @@ impl NapiKeymap {
     ) -> bool {
         match KeyParser::parse_sequence(&keys) {
             Ok(seq) => {
-                let binding = KeyBinding {
-                    id,
-                    command,
-                    sequence: seq,
-                    description,
-                    condition: None,
-                    enabled: true,
-                };
+                let binding = KeyBinding { id, command, sequence: seq, description, condition: None, enabled: true };
                 self.keymap.add_binding_to_layer(&layer, binding, priority);
                 true
             }
@@ -1624,11 +1321,7 @@ impl NapiKeymap {
     /// Get formatted pending keys (for UI display)
     #[napi]
     pub fn pending_keys(&self) -> Vec<String> {
-        self.keymap
-            .pending_keys()
-            .iter()
-            .map(format_key_combo)
-            .collect()
+        self.keymap.pending_keys().iter().map(format_key_combo).collect()
     }
 
     /// Get active bindings for cheat sheet / UI display
@@ -1680,9 +1373,7 @@ impl NapiKeymap {
     /// Parse a key string into its normalized form
     #[napi]
     pub fn parse_key(&self, key_str: String) -> Option<String> {
-        KeyParser::parse_combo(&key_str)
-            .ok()
-            .map(|combo| format_key_combo(&combo))
+        KeyParser::parse_combo(&key_str).ok().map(|combo| format_key_combo(&combo))
     }
 
     /// Parse a key sequence string into normalized parts
@@ -1722,9 +1413,7 @@ impl Default for NapiEventBus {
 impl NapiEventBus {
     #[napi(constructor)]
     pub fn new() -> Self {
-        Self {
-            bus: bettertui_engine::input::EventBus::new(),
-        }
+        Self { bus: bettertui_engine::input::EventBus::new() }
     }
 
     /// Push a key event.
@@ -1759,16 +1448,7 @@ impl NapiEventBus {
             s if s.len() == 1 => Key::Character(s.chars().next().unwrap()),
             _ => Key::Character(key.chars().next().unwrap_or(' ')),
         };
-        self.bus.push_key(
-            key,
-            Modifiers {
-                ctrl,
-                shift,
-                alt,
-                meta: false,
-            },
-            target,
-        );
+        self.bus.push_key(key, Modifiers { ctrl, shift, alt, meta: false }, target);
     }
 
     /// Push a mouse event.
@@ -1785,8 +1465,7 @@ impl NapiEventBus {
             "scroll_down" => MouseButton::ScrollDown,
             _ => MouseButton::None,
         };
-        self.bus
-            .push_mouse(btn, Point::new(x as u16, y as u16), target);
+        self.bus.push_mouse(btn, Point::new(x as u16, y as u16), target);
     }
 
     /// Push a mouse motion event.
@@ -1795,8 +1474,7 @@ impl NapiEventBus {
         use bettertui_engine::input::MouseButton;
         use bettertui_engine::tree::Point;
         let target = u64_to_node_id(target_id as u64);
-        self.bus
-            .push_mouse(MouseButton::None, Point::new(x as u16, y as u16), target);
+        self.bus.push_mouse(MouseButton::None, Point::new(x as u16, y as u16), target);
     }
 
     /// Push a paste event.
@@ -1809,12 +1487,7 @@ impl NapiEventBus {
     /// Push a resize event.
     #[napi]
     pub fn push_resize(&mut self, width: u32, height: u32, prev_width: u32, prev_height: u32) {
-        self.bus.push_resize(
-            width as u16,
-            height as u16,
-            prev_width as u16,
-            prev_height as u16,
-        );
+        self.bus.push_resize(width as u16, height as u16, prev_width as u16, prev_height as u16);
     }
 
     /// Get the number of pending events.
@@ -1895,9 +1568,7 @@ impl Default for NapiFocusManager {
 impl NapiFocusManager {
     #[napi(constructor)]
     pub fn new() -> Self {
-        Self {
-            manager: FocusManager::new(),
-        }
+        Self { manager: FocusManager::new() }
     }
 
     /// Focus a node. Returns true if focus changed.
@@ -1910,11 +1581,7 @@ impl NapiFocusManager {
     /// Blur the currently focused node.
     #[napi]
     pub fn blur_current(&mut self) -> bool {
-        if let Some(focused) = self.manager.focused() {
-            self.manager.blur(focused).is_some()
-        } else {
-            false
-        }
+        if let Some(focused) = self.manager.focused() { self.manager.blur(focused).is_some() } else { false }
     }
 
     /// Blur a specific node. Returns true if the node was blurred.
@@ -1927,10 +1594,7 @@ impl NapiFocusManager {
     /// Get the currently focused node ID (0 if none).
     #[napi]
     pub fn focused(&self) -> u32 {
-        self.manager
-            .focused()
-            .map(|id| node_id_to_u64(id) as u32)
-            .unwrap_or(0)
+        self.manager.focused().map(|id| node_id_to_u64(id) as u32).unwrap_or(0)
     }
 
     /// Check if a specific node is focused.
@@ -1966,11 +1630,7 @@ impl NapiFocusManager {
     /// Get focus order list.
     #[napi]
     pub fn focus_order(&self) -> Vec<u32> {
-        self.manager
-            .tab_order()
-            .iter()
-            .map(|id| node_id_to_u64(*id) as u32)
-            .collect()
+        self.manager.tab_order().iter().map(|id| node_id_to_u64(*id) as u32).collect()
     }
 }
 
@@ -1985,9 +1645,7 @@ pub struct NapiTextEngine {
 impl NapiTextEngine {
     #[napi(constructor)]
     pub fn new(text: Option<String>) -> Self {
-        Self {
-            engine: text.map(|t| TextEngine::with_text(&t)).unwrap_or_default(),
-        }
+        Self { engine: text.map(|t| TextEngine::with_text(&t)).unwrap_or_default() }
     }
 
     /// Insert a character at the cursor position.
@@ -2093,29 +1751,21 @@ impl NapiTextEngine {
     /// Move cursor up one line.
     #[napi]
     pub fn cursor_up(&mut self) {
-        let line = self
-            .engine
-            .buffer()
-            .char_to_line(self.engine.cursor().position());
+        let line = self.engine.buffer().char_to_line(self.engine.cursor().position());
         if line > 0 {
             let current_line_start = self.engine.buffer().line_to_char(line);
             let prev_line_start = self.engine.buffer().line_to_char(line - 1);
             let prev_line_len = current_line_start - prev_line_start - 1;
             let col = self.engine.cursor().position() - current_line_start;
             let new_col = col.min(prev_line_len);
-            self.engine
-                .cursor_mut()
-                .set_position(prev_line_start + new_col);
+            self.engine.cursor_mut().set_position(prev_line_start + new_col);
         }
     }
 
     /// Move cursor down one line.
     #[napi]
     pub fn cursor_down(&mut self) {
-        let line = self
-            .engine
-            .buffer()
-            .char_to_line(self.engine.cursor().position());
+        let line = self.engine.buffer().char_to_line(self.engine.cursor().position());
         if line + 1 < self.engine.line_count() {
             let current_line_start = self.engine.buffer().line_to_char(line);
             let next_line_start = self.engine.buffer().line_to_char(line + 1);
@@ -2126,19 +1776,14 @@ impl NapiTextEngine {
             };
             let col = self.engine.cursor().position() - current_line_start;
             let new_col = col.min(next_line_len);
-            self.engine
-                .cursor_mut()
-                .set_position(next_line_start + new_col);
+            self.engine.cursor_mut().set_position(next_line_start + new_col);
         }
     }
 
     /// Move cursor to start of the current line.
     #[napi]
     pub fn cursor_line_start(&mut self) {
-        let line = self
-            .engine
-            .buffer()
-            .char_to_line(self.engine.cursor().position());
+        let line = self.engine.buffer().char_to_line(self.engine.cursor().position());
         let line_start = self.engine.buffer().line_to_char(line);
         self.engine.cursor_mut().set_position(line_start);
     }
@@ -2146,10 +1791,7 @@ impl NapiTextEngine {
     /// Move cursor to end of the current line.
     #[napi]
     pub fn cursor_line_end(&mut self) {
-        let line = self
-            .engine
-            .buffer()
-            .char_to_line(self.engine.cursor().position());
+        let line = self.engine.buffer().char_to_line(self.engine.cursor().position());
         let line_end = if line + 1 < self.engine.line_count() {
             self.engine.buffer().line_to_char(line + 1) - 1
         } else {
@@ -2187,11 +1829,7 @@ impl NapiTextEngine {
     #[napi]
     pub fn char_at(&self, position: u32) -> String {
         let result = self.engine.buffer().char_at(position as usize);
-        if result == '\0' {
-            String::new()
-        } else {
-            result.to_string()
-        }
+        if result == '\0' { String::new() } else { result.to_string() }
     }
 
     /// Get a substring of the text buffer.
@@ -2202,17 +1840,9 @@ impl NapiTextEngine {
 
     /// Replace all occurrences of a pattern with replacement. Returns number of replacements.
     #[napi]
-    pub fn replace_all(
-        &mut self,
-        pattern: String,
-        replacement: String,
-        case_sensitive: bool,
-    ) -> u32 {
+    pub fn replace_all(&mut self, pattern: String, replacement: String, case_sensitive: bool) -> u32 {
         use bettertui_engine::text::SearchOptions;
-        let options = SearchOptions {
-            case_sensitive,
-            ..Default::default()
-        };
+        let options = SearchOptions { case_sensitive, ..Default::default() };
         self.engine.replace(&pattern, &replacement, options) as u32
     }
 
@@ -2256,9 +1886,7 @@ pub struct NapiScheduler {
 impl NapiScheduler {
     #[napi(constructor)]
     pub fn new(fps: Option<u32>) -> Self {
-        Self {
-            scheduler: fps.map(Scheduler::with_fps).unwrap_or_default(),
-        }
+        Self { scheduler: fps.map(Scheduler::with_fps).unwrap_or_default() }
     }
 
     /// Request a frame.
@@ -2306,30 +1934,19 @@ impl NapiScheduler {
     #[napi]
     pub fn fps(&self) -> String {
         let interval = self.scheduler.frame_budget().target_frame_time;
-        if interval.is_zero() {
-            "0".into()
-        } else {
-            (1000 / interval.as_millis()).to_string()
-        }
+        if interval.is_zero() { "0".into() } else { (1000 / interval.as_millis()).to_string() }
     }
 
     /// Get the frame budget in milliseconds.
     #[napi]
     pub fn frame_budget_ms(&self) -> String {
-        self.scheduler
-            .frame_budget()
-            .target_frame_time
-            .as_millis()
-            .to_string()
+        self.scheduler.frame_budget().target_frame_time.as_millis().to_string()
     }
 
     /// Check if the scheduler is idle.
     #[napi]
     pub fn is_idle(&self) -> bool {
-        matches!(
-            self.scheduler.status(),
-            bettertui_engine::scheduler::FrameStatus::Idle
-        )
+        matches!(self.scheduler.status(), bettertui_engine::scheduler::FrameStatus::Idle)
     }
 }
 
@@ -2431,11 +2048,7 @@ impl NapiCapabilities {
 
     #[napi(getter)]
     pub fn get_pixel_size(&self) -> Vec<u32> {
-        if self.has_pixel_size {
-            vec![self.pixel_width, self.pixel_height]
-        } else {
-            vec![]
-        }
+        if self.has_pixel_size { vec![self.pixel_width, self.pixel_height] } else { vec![] }
     }
 
     #[napi(getter)]
@@ -2540,9 +2153,7 @@ pub fn detect_capabilities() -> String {
 /// Colors are hex strings like `"#ff7b72"` or named strings like `"red"`.
 #[napi]
 pub fn highlight_code(code: String, language: String) -> String {
-    let mut hl = bettertui_engine::syntax::global_highlighter()
-        .lock()
-        .unwrap();
+    let mut hl = bettertui_engine::syntax::global_highlighter().lock().unwrap();
     let lines = hl.highlight(&code, &language);
     match lines {
         Some(lines) => {
@@ -2678,10 +2289,7 @@ pub struct NapiThemeBorders {
 
 impl From<ThemeBorders> for NapiThemeBorders {
     fn from(b: ThemeBorders) -> Self {
-        Self {
-            style: format!("{:?}", b.style),
-            fg: theme_color_to_hex(b.fg),
-        }
+        Self { style: format!("{:?}", b.style), fg: theme_color_to_hex(b.fg) }
     }
 }
 
@@ -2695,12 +2303,7 @@ pub struct NapiTheme {
 
 impl From<Theme> for NapiTheme {
     fn from(t: Theme) -> Self {
-        Self {
-            name: t.name.to_string(),
-            colors: t.colors.into(),
-            spacing: t.spacing.into(),
-            borders: t.borders.into(),
-        }
+        Self { name: t.name.to_string(), colors: t.colors.into(), spacing: t.spacing.into(), borders: t.borders.into() }
     }
 }
 
@@ -2731,9 +2334,7 @@ pub struct NapiWidgetHost {
 impl NapiWidgetHost {
     #[napi(constructor)]
     pub fn new() -> Self {
-        Self {
-            host: WidgetHost::new(),
-        }
+        Self { host: WidgetHost::new() }
     }
 
     #[napi]
@@ -2743,9 +2344,7 @@ impl NapiWidgetHost {
 
     #[napi]
     pub fn register_widget_type(&mut self, _kind: String) -> napi::Result<()> {
-        Err(napi::Error::from_reason(
-            "Widget registration from JS is not supported. Use the Rust-side factory.",
-        ))
+        Err(napi::Error::from_reason("Widget registration from JS is not supported. Use the Rust-side factory."))
     }
 }
 

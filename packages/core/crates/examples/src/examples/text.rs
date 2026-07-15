@@ -24,12 +24,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let title = engine.create_node(NodeKind::Text);
     engine.set_text(title, "Text: TextEngine Buffer, Cursor, and Search");
-    engine.set_style(
-        title,
-        Style::new()
-            .fg(Color::Named(NamedColor::BrightWhite))
-            .bold(true),
-    );
+    engine.set_style(title, Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
     engine.append_child(root, title).unwrap();
 
     let spacer = engine.create_node(NodeKind::Text);
@@ -47,14 +42,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     engine.append_child(root, info1).unwrap();
 
     let info1b = engine.create_node(NodeKind::Text);
-    engine.set_text(
-        info1b,
-        format!(
-            "    Char count: {}, Line count: {}",
-            te.char_count(),
-            te.line_count()
-        ),
-    );
+    engine.set_text(info1b, format!("    Char count: {}, Line count: {}", te.char_count(), te.line_count()));
     engine.append_child(root, info1b).unwrap();
 
     let spacer2 = engine.create_node(NodeKind::Text);
@@ -69,10 +57,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     te.cursor_mut().set_position(7);
     te.insert_str(" Native");
     let info2 = engine.create_node(NodeKind::Text);
-    engine.set_text(
-        info2,
-        format!("    After insert at pos 7: \"{}\"", te.text()),
-    );
+    engine.set_text(info2, format!("    After insert at pos 7: \"{}\"", te.text()));
     engine.append_child(root, info2).unwrap();
 
     te.cursor_mut().set_position(0);
@@ -96,10 +81,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         te2.delete_char();
     }
     let info3 = engine.create_node(NodeKind::Text);
-    engine.set_text(
-        info3,
-        format!("    After deleting 'text ': \"{}\"", te2.text()),
-    );
+    engine.set_text(info3, format!("    After deleting 'text ': \"{}\"", te2.text()));
     engine.append_child(root, info3).unwrap();
 
     let spacer4 = engine.create_node(NodeKind::Text);
@@ -130,8 +112,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     engine.set_style(section5, Style::new().fg(Color::Named(NamedColor::Yellow)));
     engine.append_child(root, section5).unwrap();
 
-    let mut te4 =
-        TextEngine::with_text("The quick brown fox jumps over the lazy dog. The fox is quick.");
+    let mut te4 = TextEngine::with_text("The quick brown fox jumps over the lazy dog. The fox is quick.");
     let results = te4.search("fox", SearchOptions::default());
     let info5 = engine.create_node(NodeKind::Text);
     engine.set_text(info5, format!("    Found 'fox' {} times", results.len()));
@@ -141,15 +122,9 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         let info5b = engine.create_node(NodeKind::Text);
         engine.set_text(
             info5b,
-            format!(
-                "      at chars {}-{} (line {}, col {})",
-                r.range.start, r.range.end, r.line, r.column
-            ),
+            format!("      at chars {}-{} (line {}, col {})", r.range.start, r.range.end, r.line, r.column),
         );
-        engine.set_style(
-            info5b,
-            Style::new().fg(Color::Named(NamedColor::BrightBlack)),
-        );
+        engine.set_style(info5b, Style::new().fg(Color::Named(NamedColor::BrightBlack)));
         engine.append_child(root, info5b).unwrap();
     }
 
@@ -172,17 +147,11 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
     engine.append_child(root, info6b).unwrap();
 
     let info6c = engine.create_node(NodeKind::Text);
-    engine.set_text(
-        info6c,
-        format!("    Display width: {}", display_width(&te5.text())),
-    );
+    engine.set_text(info6c, format!("    Display width: {}", display_width(&te5.text())));
     engine.append_child(root, info6c).unwrap();
 
     let info6d = engine.create_node(NodeKind::Text);
-    engine.set_text(
-        info6d,
-        format!("    Grapheme count: {}", grapheme_count(&te5.text())),
-    );
+    engine.set_text(info6d, format!("    Grapheme count: {}", grapheme_count(&te5.text())));
     engine.append_child(root, info6d).unwrap();
 
     let spacer7 = engine.create_node(NodeKind::Text);
@@ -191,14 +160,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
     let hint = engine.create_node(NodeKind::Text);
     engine.set_text(hint, "Press any key to return to menu...");
-    engine.set_style(
-        hint,
-        Style {
-            fg: Some(Color::Named(NamedColor::BrightBlack)),
-            dim: Some(true),
-            ..Style::new()
-        },
-    );
+    engine.set_style(hint, Style { fg: Some(Color::Named(NamedColor::BrightBlack)), dim: Some(true), ..Style::new() });
     engine.append_child(root, hint).unwrap();
 
     engine.begin_frame();

@@ -40,16 +40,8 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
         engine.append_child(root, border_box).unwrap();
 
         let title = engine.create_node(NodeKind::Text);
-        engine.set_text(
-            title,
-            format!("BetterTUI Terminal Example - Frame {}", frame),
-        );
-        engine.set_style(
-            title,
-            Style::new()
-                .fg(Color::Named(NamedColor::BrightWhite))
-                .bold(true),
-        );
+        engine.set_text(title, format!("BetterTUI Terminal Example - Frame {}", frame));
+        engine.set_style(title, Style::new().fg(Color::Named(NamedColor::BrightWhite)).bold(true));
         engine.append_child(border_box, title).unwrap();
 
         let spacer1 = engine.create_node(NodeKind::Text);
@@ -58,18 +50,12 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
         let size_info = engine.create_node(NodeKind::Text);
         engine.set_text(size_info, format!("Terminal: {}x{}", w, h));
-        engine.set_style(
-            size_info,
-            Style::new().fg(Color::Named(NamedColor::BrightCyan)),
-        );
+        engine.set_style(size_info, Style::new().fg(Color::Named(NamedColor::BrightCyan)));
         engine.append_child(border_box, size_info).unwrap();
 
         let frame_info = engine.create_node(NodeKind::Text);
         engine.set_text(frame_info, format!("Frame: #{}", frame));
-        engine.set_style(
-            frame_info,
-            Style::new().fg(Color::Named(NamedColor::BrightGreen)),
-        );
+        engine.set_style(frame_info, Style::new().fg(Color::Named(NamedColor::BrightGreen)));
         engine.append_child(border_box, frame_info).unwrap();
 
         let spacer2 = engine.create_node(NodeKind::Text);
@@ -95,10 +81,7 @@ pub fn run(terminal: &mut Terminal) -> io::Result<()> {
 
         let ascii_bottom = engine.create_node(NodeKind::Text);
         engine.set_text(ascii_bottom, "  +---------------------+");
-        engine.set_style(
-            ascii_bottom,
-            Style::new().fg(Color::Named(NamedColor::Cyan)),
-        );
+        engine.set_style(ascii_bottom, Style::new().fg(Color::Named(NamedColor::Cyan)));
         engine.append_child(border_box, ascii_bottom).unwrap();
 
         let spacer3 = engine.create_node(NodeKind::Text);

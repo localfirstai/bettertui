@@ -1,36 +1,21 @@
 use bettertui_engine::framebuffer::{Cell, FrameBuffer};
 use bettertui_engine::taffy::{
-    BoxSizing, FlexDirection, LayoutOverflow, LayoutProps, LayoutResult, Position, RectValues,
-    Sizing, Viewport,
+    BoxSizing, FlexDirection, LayoutOverflow, LayoutProps, LayoutResult, Position, RectValues, Sizing, Viewport,
 };
 use bettertui_engine::tree::{Color, NamedColor};
 
 #[test]
 fn test_framebuffer_snapshot() {
     let mut fb = FrameBuffer::new(10, 5);
-    fb.write_str(
-        0,
-        0,
-        "Hello",
-        Color::Named(NamedColor::White),
-        Color::Named(NamedColor::Black),
-    );
-    fb.write_str(
-        0,
-        1,
-        "World",
-        Color::Named(NamedColor::Green),
-        Color::Default,
-    );
+    fb.write_str(0, 0, "Hello", Color::Named(NamedColor::White), Color::Named(NamedColor::Black));
+    fb.write_str(0, 1, "World", Color::Named(NamedColor::Green), Color::Default);
 
     insta::assert_debug_snapshot!(fb);
 }
 
 #[test]
 fn test_cell_snapshot() {
-    let cell = Cell::new('A')
-        .with_fg(Color::Named(NamedColor::Red))
-        .with_bg(Color::Named(NamedColor::Blue));
+    let cell = Cell::new('A').with_fg(Color::Named(NamedColor::Red)).with_bg(Color::Named(NamedColor::Blue));
     insta::assert_debug_snapshot!(cell);
 }
 

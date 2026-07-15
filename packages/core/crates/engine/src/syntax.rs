@@ -51,11 +51,7 @@ mod syntax_highlighter {
 
     impl SyntaxHighlighter {
         pub fn new() -> Self {
-            let mut sh = Self {
-                grammars: HashMap::new(),
-                parsers: HashMap::new(),
-                theme: SyntaxTheme::default(),
-            };
+            let mut sh = Self { grammars: HashMap::new(), parsers: HashMap::new(), theme: SyntaxTheme::default() };
             sh.register_builtin_languages();
             sh
         }
@@ -96,62 +92,21 @@ mod syntax_highlighter {
                 tree_sitter_typescript::LANGUAGE_TSX.into(),
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
             );
-            self.register_language(
-                "rust",
-                tree_sitter_rust::LANGUAGE.into(),
-                tree_sitter_rust::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "rs",
-                tree_sitter_rust::LANGUAGE.into(),
-                tree_sitter_rust::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "python",
-                tree_sitter_python::LANGUAGE.into(),
-                tree_sitter_python::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "py",
-                tree_sitter_python::LANGUAGE.into(),
-                tree_sitter_python::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "json",
-                tree_sitter_json::LANGUAGE.into(),
-                tree_sitter_json::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "html",
-                tree_sitter_html::LANGUAGE.into(),
-                tree_sitter_html::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "css",
-                tree_sitter_css::LANGUAGE.into(),
-                tree_sitter_css::HIGHLIGHTS_QUERY,
-            );
-            self.register_language(
-                "bash",
-                tree_sitter_bash::LANGUAGE.into(),
-                tree_sitter_bash::HIGHLIGHT_QUERY,
-            );
-            self.register_language(
-                "sh",
-                tree_sitter_bash::LANGUAGE.into(),
-                tree_sitter_bash::HIGHLIGHT_QUERY,
-            );
-            self.register_language(
-                "shell",
-                tree_sitter_bash::LANGUAGE.into(),
-                tree_sitter_bash::HIGHLIGHT_QUERY,
-            );
+            self.register_language("rust", tree_sitter_rust::LANGUAGE.into(), tree_sitter_rust::HIGHLIGHTS_QUERY);
+            self.register_language("rs", tree_sitter_rust::LANGUAGE.into(), tree_sitter_rust::HIGHLIGHTS_QUERY);
+            self.register_language("python", tree_sitter_python::LANGUAGE.into(), tree_sitter_python::HIGHLIGHTS_QUERY);
+            self.register_language("py", tree_sitter_python::LANGUAGE.into(), tree_sitter_python::HIGHLIGHTS_QUERY);
+            self.register_language("json", tree_sitter_json::LANGUAGE.into(), tree_sitter_json::HIGHLIGHTS_QUERY);
+            self.register_language("html", tree_sitter_html::LANGUAGE.into(), tree_sitter_html::HIGHLIGHTS_QUERY);
+            self.register_language("css", tree_sitter_css::LANGUAGE.into(), tree_sitter_css::HIGHLIGHTS_QUERY);
+            self.register_language("bash", tree_sitter_bash::LANGUAGE.into(), tree_sitter_bash::HIGHLIGHT_QUERY);
+            self.register_language("sh", tree_sitter_bash::LANGUAGE.into(), tree_sitter_bash::HIGHLIGHT_QUERY);
+            self.register_language("shell", tree_sitter_bash::LANGUAGE.into(), tree_sitter_bash::HIGHLIGHT_QUERY);
         }
 
         pub fn register_language(&mut self, name: &str, language: Language, query_source: &str) {
             if let Ok(query) = Query::new(&language, query_source) {
-                self.grammars
-                    .insert(name.to_string(), Grammar { language, query });
+                self.grammars.insert(name.to_string(), Grammar { language, query });
             }
         }
 
@@ -160,18 +115,10 @@ mod syntax_highlighter {
         }
 
         pub fn resolve_language(&self, input: &str) -> Option<&str> {
-            let lower = input
-                .split_whitespace()
-                .next()
-                .unwrap_or(input)
-                .to_lowercase();
+            let lower = input.split_whitespace().next().unwrap_or(input).to_lowercase();
 
             if self.grammars.contains_key(&lower) {
-                return self
-                    .grammars
-                    .keys()
-                    .find(|k| *k == &lower)
-                    .map(|s| s.as_str());
+                return self.grammars.keys().find(|k| *k == &lower).map(|s| s.as_str());
             }
 
             match lower.as_str() {
@@ -184,21 +131,14 @@ mod syntax_highlighter {
         }
 
         fn default_text_style() -> Style {
-            Style {
-                fg: Some(crate::tree::Color::rgb(230, 237, 243)),
-                ..Style::default()
-            }
+            Style { fg: Some(crate::tree::Color::rgb(230, 237, 243)), ..Style::default() }
         }
 
         pub fn specificity(name: &str) -> usize {
             name.chars().filter(|&c| c == '.').count()
         }
 
-        fn resolve_cascade(
-            active: &[&CaptureMeta],
-            theme: &SyntaxTheme,
-            default_style: &Style,
-        ) -> ResolvedStyle {
+        fn resolve_cascade(active: &[&CaptureMeta], theme: &SyntaxTheme, default_style: &Style) -> ResolvedStyle {
             for cm in active {
                 if cm.conceal.is_some() {
                     return ResolvedStyle::Concealed(cm.conceal.clone().unwrap_or_default());
@@ -287,28 +227,18 @@ mod syntax_highlighter {
                 .enumerate()
                 .flat_map(|(i, cap)| {
                     vec![
-                        Boundary {
-                            offset: cap.start,
-                            btype: BoundaryType::Start,
-                            capture_index: i,
-                        },
-                        Boundary {
-                            offset: cap.end,
-                            btype: BoundaryType::End,
-                            capture_index: i,
-                        },
+                        Boundary { offset: cap.start, btype: BoundaryType::Start, capture_index: i },
+                        Boundary { offset: cap.end, btype: BoundaryType::End, capture_index: i },
                     ]
                 })
                 .collect();
 
             boundaries.sort_by(|a, b| {
-                a.offset
-                    .cmp(&b.offset)
-                    .then_with(|| match (a.btype, b.btype) {
-                        (BoundaryType::End, BoundaryType::Start) => Ordering::Less,
-                        (BoundaryType::Start, BoundaryType::End) => Ordering::Greater,
-                        _ => Ordering::Equal,
-                    })
+                a.offset.cmp(&b.offset).then_with(|| match (a.btype, b.btype) {
+                    (BoundaryType::End, BoundaryType::Start) => Ordering::Less,
+                    (BoundaryType::Start, BoundaryType::End) => Ordering::Greater,
+                    _ => Ordering::Equal,
+                })
             });
 
             let default_style = Self::default_text_style();
@@ -318,8 +248,7 @@ mod syntax_highlighter {
 
             for boundary in &boundaries {
                 if boundary.offset > pos {
-                    let active_refs: Vec<&CaptureMeta> =
-                        active.iter().map(|&i| &captures[i]).collect();
+                    let active_refs: Vec<&CaptureMeta> = active.iter().map(|&i| &captures[i]).collect();
 
                     match Self::resolve_cascade(&active_refs, &self.theme, &default_style) {
                         ResolvedStyle::Styled(style) => {
@@ -373,10 +302,7 @@ mod syntax_highlighter {
             merged
         }
 
-        fn split_into_lines(
-            segments: Vec<StyledSegment>,
-            default_style: &Style,
-        ) -> Vec<HighlightedLine> {
+        fn split_into_lines(segments: Vec<StyledSegment>, default_style: &Style) -> Vec<HighlightedLine> {
             let mut lines: Vec<HighlightedLine> = Vec::new();
             let mut current_segments: Vec<StyledSegment> = Vec::new();
             let mut current_line_text = String::new();
@@ -387,10 +313,7 @@ mod syntax_highlighter {
                     if ch == '\n' {
                         ends_with_newline = true;
                         if current_segments.is_empty() {
-                            current_segments.push(StyledSegment::new(
-                                current_line_text.clone(),
-                                *default_style,
-                            ));
+                            current_segments.push(StyledSegment::new(current_line_text.clone(), *default_style));
                         }
                         lines.push(HighlightedLine::new(std::mem::take(&mut current_segments)));
                         current_line_text.clear();
@@ -410,16 +333,9 @@ mod syntax_highlighter {
                 }
             }
 
-            if ends_with_newline
-                || !current_segments.is_empty()
-                || !current_line_text.is_empty()
-                || lines.is_empty()
-            {
+            if ends_with_newline || !current_segments.is_empty() || !current_line_text.is_empty() || lines.is_empty() {
                 if current_segments.is_empty() {
-                    current_segments.push(StyledSegment::new(
-                        current_line_text.clone(),
-                        *default_style,
-                    ));
+                    current_segments.push(StyledSegment::new(current_line_text.clone(), *default_style));
                 }
                 lines.push(HighlightedLine::new(current_segments));
             }
@@ -447,10 +363,7 @@ mod segment {
 
     impl StyledSegment {
         pub fn new(text: impl Into<String>, style: Style) -> Self {
-            Self {
-                text: text.into(),
-                style,
-            }
+            Self { text: text.into(), style }
         }
     }
 
@@ -466,9 +379,7 @@ mod segment {
         }
 
         pub fn plain(text: impl Into<String>, style: Style) -> Self {
-            Self {
-                segments: vec![StyledSegment::new(text, style)],
-            }
+            Self { segments: vec![StyledSegment::new(text, style)] }
         }
 
         pub fn text(&self) -> String {
@@ -518,278 +429,88 @@ mod theme {
             let mut m = HashMap::new();
             m.insert(
                 "keyword".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 123, 114)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(255, 123, 114)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "keyword.operator".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 123, 114)),
-                    ..Style::default()
-                },
-            );
+            m.insert("keyword.operator".into(), Style { fg: Some(Color::rgb(255, 123, 114)), ..Style::default() });
             m.insert(
                 "keyword.control".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 123, 114)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(255, 123, 114)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "string".into(),
-                Style {
-                    fg: Some(Color::rgb(165, 214, 255)),
-                    ..Style::default()
-                },
-            );
+            m.insert("string".into(), Style { fg: Some(Color::rgb(165, 214, 255)), ..Style::default() });
             m.insert(
                 "string.special".into(),
-                Style {
-                    fg: Some(Color::rgb(165, 214, 255)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(165, 214, 255)), italic: Some(true), ..Style::default() },
             );
             m.insert(
                 "comment".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(139, 148, 158)), italic: Some(true), ..Style::default() },
             );
-            m.insert(
-                "type".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 166, 87)),
-                    ..Style::default()
-                },
-            );
+            m.insert("type".into(), Style { fg: Some(Color::rgb(255, 166, 87)), ..Style::default() });
             m.insert(
                 "type.builtin".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 166, 87)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(255, 166, 87)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "function".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "function.method".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    ..Style::default()
-                },
-            );
+            m.insert("function".into(), Style { fg: Some(Color::rgb(210, 168, 255)), ..Style::default() });
+            m.insert("function.method".into(), Style { fg: Some(Color::rgb(210, 168, 255)), ..Style::default() });
             m.insert(
                 "function.builtin".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(210, 168, 255)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "number".into(),
-                Style {
-                    fg: Some(Color::rgb(121, 192, 255)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "constant".into(),
-                Style {
-                    fg: Some(Color::rgb(121, 192, 255)),
-                    ..Style::default()
-                },
-            );
+            m.insert("number".into(), Style { fg: Some(Color::rgb(121, 192, 255)), ..Style::default() });
+            m.insert("constant".into(), Style { fg: Some(Color::rgb(121, 192, 255)), ..Style::default() });
             m.insert(
                 "constant.builtin".into(),
-                Style {
-                    fg: Some(Color::rgb(121, 192, 255)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(121, 192, 255)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "variable".into(),
-                Style {
-                    fg: Some(Color::rgb(230, 237, 243)),
-                    ..Style::default()
-                },
-            );
+            m.insert("variable".into(), Style { fg: Some(Color::rgb(230, 237, 243)), ..Style::default() });
             m.insert(
                 "variable.parameter".into(),
-                Style {
-                    fg: Some(Color::rgb(230, 237, 243)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(230, 237, 243)), italic: Some(true), ..Style::default() },
             );
-            m.insert(
-                "punctuation".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "punctuation.delimiter".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "punctuation.bracket".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "operator".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 123, 114)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "attribute".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 166, 87)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "property".into(),
-                Style {
-                    fg: Some(Color::rgb(121, 192, 255)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "tag".into(),
-                Style {
-                    fg: Some(Color::rgb(123, 188, 123)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "label".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "include".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 123, 114)),
-                    ..Style::default()
-                },
-            );
+            m.insert("punctuation".into(), Style { fg: Some(Color::rgb(139, 148, 158)), ..Style::default() });
+            m.insert("punctuation.delimiter".into(), Style { fg: Some(Color::rgb(139, 148, 158)), ..Style::default() });
+            m.insert("punctuation.bracket".into(), Style { fg: Some(Color::rgb(139, 148, 158)), ..Style::default() });
+            m.insert("operator".into(), Style { fg: Some(Color::rgb(255, 123, 114)), ..Style::default() });
+            m.insert("attribute".into(), Style { fg: Some(Color::rgb(255, 166, 87)), ..Style::default() });
+            m.insert("property".into(), Style { fg: Some(Color::rgb(121, 192, 255)), ..Style::default() });
+            m.insert("tag".into(), Style { fg: Some(Color::rgb(123, 188, 123)), ..Style::default() });
+            m.insert("label".into(), Style { fg: Some(Color::rgb(210, 168, 255)), ..Style::default() });
+            m.insert("include".into(), Style { fg: Some(Color::rgb(255, 123, 114)), ..Style::default() });
             m.insert(
                 "embedded".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(139, 148, 158)), italic: Some(true), ..Style::default() },
             );
             m.insert(
                 "markup.heading.1".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(210, 168, 255)), bold: Some(true), ..Style::default() },
             );
             m.insert(
                 "markup.heading.2".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(210, 168, 255)), bold: Some(true), ..Style::default() },
             );
             m.insert(
                 "markup.heading".into(),
-                Style {
-                    fg: Some(Color::rgb(210, 168, 255)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(210, 168, 255)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "markup.raw.block".into(),
-                Style {
-                    fg: Some(Color::rgb(165, 214, 255)),
-                    ..Style::default()
-                },
-            );
+            m.insert("markup.raw.block".into(), Style { fg: Some(Color::rgb(165, 214, 255)), ..Style::default() });
             m.insert(
                 "markup.link.url".into(),
-                Style {
-                    fg: Some(Color::rgb(165, 214, 255)),
-                    underline: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(165, 214, 255)), underline: Some(true), ..Style::default() },
             );
             m.insert(
                 "markup.link.label".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(139, 148, 158)), italic: Some(true), ..Style::default() },
             );
-            m.insert(
-                "markup.list".into(),
-                Style {
-                    fg: Some(Color::rgb(255, 166, 87)),
-                    ..Style::default()
-                },
-            );
+            m.insert("markup.list".into(), Style { fg: Some(Color::rgb(255, 166, 87)), ..Style::default() });
             m.insert(
                 "markup.quote".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(139, 148, 158)), italic: Some(true), ..Style::default() },
             );
-            m.insert(
-                "markup.list.unchecked".into(),
-                Style {
-                    fg: Some(Color::rgb(139, 148, 158)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "markup.list.checked".into(),
-                Style {
-                    fg: Some(Color::rgb(123, 188, 123)),
-                    ..Style::default()
-                },
-            );
+            m.insert("markup.list.unchecked".into(), Style { fg: Some(Color::rgb(139, 148, 158)), ..Style::default() });
+            m.insert("markup.list.checked".into(), Style { fg: Some(Color::rgb(123, 188, 123)), ..Style::default() });
             m.insert(
                 "spell".into(),
-                Style {
-                    fg: Some(Color::rgb(230, 237, 243)),
-                    underline: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(230, 237, 243)), underline: Some(true), ..Style::default() },
             );
             Self { mappings: m }
         }
@@ -841,69 +562,19 @@ mod theme {
             let mut m = HashMap::new();
             m.insert(
                 "keyword".into(),
-                Style {
-                    fg: Some(Color::rgb(215, 58, 73)),
-                    bold: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(215, 58, 73)), bold: Some(true), ..Style::default() },
             );
-            m.insert(
-                "string".into(),
-                Style {
-                    fg: Some(Color::rgb(3, 47, 98)),
-                    ..Style::default()
-                },
-            );
+            m.insert("string".into(), Style { fg: Some(Color::rgb(3, 47, 98)), ..Style::default() });
             m.insert(
                 "comment".into(),
-                Style {
-                    fg: Some(Color::rgb(106, 115, 125)),
-                    italic: Some(true),
-                    ..Style::default()
-                },
+                Style { fg: Some(Color::rgb(106, 115, 125)), italic: Some(true), ..Style::default() },
             );
-            m.insert(
-                "type".into(),
-                Style {
-                    fg: Some(Color::rgb(109, 66, 0)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "function".into(),
-                Style {
-                    fg: Some(Color::rgb(111, 66, 193)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "number".into(),
-                Style {
-                    fg: Some(Color::rgb(0, 92, 197)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "variable".into(),
-                Style {
-                    fg: Some(Color::rgb(36, 41, 46)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "punctuation".into(),
-                Style {
-                    fg: Some(Color::rgb(149, 157, 165)),
-                    ..Style::default()
-                },
-            );
-            m.insert(
-                "tag".into(),
-                Style {
-                    fg: Some(Color::rgb(34, 134, 58)),
-                    ..Style::default()
-                },
-            );
+            m.insert("type".into(), Style { fg: Some(Color::rgb(109, 66, 0)), ..Style::default() });
+            m.insert("function".into(), Style { fg: Some(Color::rgb(111, 66, 193)), ..Style::default() });
+            m.insert("number".into(), Style { fg: Some(Color::rgb(0, 92, 197)), ..Style::default() });
+            m.insert("variable".into(), Style { fg: Some(Color::rgb(36, 41, 46)), ..Style::default() });
+            m.insert("punctuation".into(), Style { fg: Some(Color::rgb(149, 157, 165)), ..Style::default() });
+            m.insert("tag".into(), Style { fg: Some(Color::rgb(34, 134, 58)), ..Style::default() });
             Self { mappings: m }
         }
 
