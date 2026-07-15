@@ -9,3 +9,5 @@ export {
   detectCapabilities,
   getVersion,
 } from "./binding";
+export { CliRenderer, KeyInput, createCliRenderer } from "./cli-renderer";
+export type { CliRendererOptions, KeyEvent } from "./cli-renderer";

@@ -1,39 +1,54 @@
-// Standalone build for the example suite. Mirrors OpenTUI's scripts/build.ts,
-// which compiles a runnable artifact; here we use tsdown (the package's existing
-// bundler) to produce a single ESM executable at dist/index.mjs.
-//
-//   node scripts/build.ts
+#!/usr/bin/env node
+/**
+ * Build standalone executable for BetterTUI examples
+ * Following OpenTUI's build pattern
+ */
 
-import { chmodSync, mkdirSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "tsdown";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(here, "..");
-const outfile = resolve(packageRoot, "dist", "index.mjs");
+const distDir = resolve(packageRoot, "dist");
 
-mkdirSync(dirname(outfile), { recursive: true });
+console.log("Building BetterTUI examples...\n");
 
-console.log("Building examples standalone executable...");
+mkdirSync(distDir, { recursive: true });
 
+const coreDist = resolve(packageRoot, "../../packages/core/dist");
+if (!existsSync(resolve(coreDist, "bettertui_engine.node"))) {
+  console.log("Building native engine first...");
+  execSync("pnpm build:native", {
+    cwd: resolve(packageRoot, "../../packages/core"),
+    stdio: "inherit",
+  });
+}
+
+console.log("Bundling TypeScript...");
 await build({
-  entry: [resolve(packageRoot, "src", "index.tsx")],
+  entry: [resolve(packageRoot, "src", "index.ts")],
   format: ["esm"],
-  outDir: resolve(packageRoot, "dist"),
-  outExtension: () => ({ js: ".mjs" }),
+  outDir: distDir,
+  outExtensions: () => ({ js: ".mjs" }),
   platform: "node",
-  target: "node20",
-  banner: { js: "#!/usr/bin/env node" },
+  target: "node22",
   clean: true,
   shims: true,
+  deps: {
+    neverBundle: ["@bettertui/core", "@bettertui/shared"],
+  },
 });
 
+const outfile = resolve(distDir, "index.mjs");
 try {
   chmodSync(outfile, 0o755);
 } catch {
-  // chmod is best-effort; on some filesystems it is a no-op.
+  // chmod is best-effort
 }
 
-console.log(`✅ Built standalone executable: ${outfile}`);
+console.log(`\n✅ Built standalone executable: ${outfile}`);
 console.log("   Run with: node dist/index.mjs --list   (or a slug)");
+console.log("   Or run directly: ./dist/index.mjs");

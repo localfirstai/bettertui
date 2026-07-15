@@ -1,0 +1,335 @@
+/**
+ * BetterTUI CLI Renderer
+ * Wraps the native Rust engine with an OpenTUI-compatible API
+ */
+
+import { EventEmitter } from "node:events";
+import {
+  type NapiEngine,
+  type NapiKeymap,
+  type TerminalCapabilities,
+  createEngine,
+  createKeymap,
+  detectCapabilities,
+  getVersion,
+} from "@bettertui/core";
+
+export interface KeyEvent {
+  name: string;
+  ctrl: boolean;
+  shift: boolean;
+  alt: boolean;
+  meta: boolean;
+  sequence: string;
+}
+
+export interface CliRendererOptions {
+  width?: number;
+  height?: number;
+  exitOnCtrlC?: boolean;
+  targetFps?: number;
+}
+
+export interface Theme {
+  name: string;
+  titleColor: string;
+  borderColor: string;
+  focusedBorderColor: string;
+  textColor: string;
+  textDimColor: string;
+  selectedBgColor: string;
+  selectedTextColor: string;
+  descriptionColor: string;
+  instructionsColor: string;
+}
+
+const DARK_THEME: Theme = {
+  name: "dark",
+  titleColor: "#60A5FA",
+  borderColor: "#475569",
+  focusedBorderColor: "#60A5FA",
+  textColor: "#E2E8F0",
+  textDimColor: "#64748B",
+  selectedBgColor: "#1E3A5F",
+  selectedTextColor: "#FFFFFF",
+  descriptionColor: "#94A3B8",
+  instructionsColor: "#64748B",
+};
+
+const LIGHT_THEME: Theme = {
+  name: "light",
+  titleColor: "#1D4ED8",
+  borderColor: "#CBD5E1",
+  focusedBorderColor: "#1D4ED8",
+  textColor: "#1E293B",
+  textDimColor: "#64748B",
+  selectedBgColor: "#DBEAFE",
+  selectedTextColor: "#1E293B",
+  descriptionColor: "#64748B",
+  instructionsColor: "#94A3B8",
+};
+
+const NAMED_KEYS: Record<string, string> = {
+  "\x1b[A": "up",
+  "\x1b[B": "down",
+  "\x1b[C": "right",
+  "\x1b[D": "left",
+  "\x1b[5~": "pageup",
+  "\x1b[6~": "pagedown",
+  "\x1b[H": "home",
+  "\x1b[F": "end",
+  "\x1b[3~": "delete",
+  "\x1b[Z": "tab",
+  "\x1b": "escape",
+  "\r": "enter",
+  "\n": "enter",
+  "\t": "tab",
+  " ": "space",
+  "\x7f": "backspace",
+  "\x08": "backspace",
+};
+
+type KeyInputEvents = {
+  keypress: [KeyEvent];
+};
+
+export class KeyInput extends EventEmitter<KeyInputEvents> {
+  private buffer = "";
+  private timeout: ReturnType<typeof setTimeout> | null = null;
+  private rawMode = false;
+
+  start(): void {
+    const stdin = process.stdin;
+    if (stdin.setRawMode && !this.rawMode) {
+      stdin.setRawMode(true);
+      this.rawMode = true;
+    }
+    stdin.resume();
+    stdin.on("data", this.onData);
+  }
+
+  stop(): void {
+    process.stdin.off("data", this.onData);
+    if (this.rawMode && process.stdin.setRawMode) {
+      process.stdin.setRawMode(false);
+      this.rawMode = false;
+    }
+    process.stdin.pause();
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+
+  private onData = (data: Buffer): void => {
+    this.buffer += data.toString("latin1");
+    if (this.timeout) clearTimeout(this.timeout);
+
+    const flush = () => {
+      this.timeout = null;
+      const data = this.buffer;
+      this.buffer = "";
+      this.dispatch(data);
+    };
+
+    if (this.buffer === "\x1b") {
+      this.timeout = setTimeout(flush, 20);
+      return;
+    }
+    flush();
+  };
+
+  private dispatch(data: string): void {
+    const trimmed = data.replace(/\r?\n+$/u, "");
+    const payload = trimmed.length > 0 ? trimmed : data;
+
+    const isNamed = NAMED_KEYS[payload] !== undefined;
+    const ctrl = !isNamed && payload.length === 1 && payload.charCodeAt(0) < 32;
+    const alt = payload.startsWith("\x1b") && payload.length > 1;
+    const shift = payload === "\x1b[Z";
+
+    const known =
+      NAMED_KEYS[payload] !== undefined ||
+      (payload.length === 1 && payload.charCodeAt(0) >= 32) ||
+      ctrl;
+
+    if (!known) return;
+
+    let key: string;
+    if (NAMED_KEYS[payload]) {
+      key = NAMED_KEYS[payload] ?? payload;
+    } else if (ctrl && payload.length === 1 && payload.charCodeAt(0) < 32) {
+      key = String.fromCharCode(payload.charCodeAt(0) + 96);
+    } else if (payload.length === 1) {
+      key = payload;
+    } else {
+      key = payload;
+    }
+
+    this.emit("keypress", {
+      name: key,
+      ctrl,
+      shift,
+      alt,
+      meta: false,
+      sequence: payload,
+    });
+  }
+}
+
+export class CliRenderer {
+  private engine: NapiEngine;
+  private keymap: NapiKeymap;
+  private _keyInput: KeyInput;
+  private capabilities: TerminalCapabilities;
+  private width: number;
+  private height: number;
+  private nodes: Map<number, { parent: number | null; children: number[] }> = new Map();
+
+  readonly theme: Theme;
+
+  constructor(options: CliRendererOptions = {}) {
+    this.capabilities = detectCapabilities();
+    this.width = options.width ?? this.capabilities.columns;
+    this.height = options.height ?? this.capabilities.rows;
+
+    this.engine = createEngine(this.width, this.height);
+    this.keymap = createKeymap();
+    this._keyInput = new KeyInput();
+    this.theme = DARK_THEME;
+
+    const rootId = this.engine.root();
+    this.nodes.set(rootId, { parent: null, children: [] });
+  }
+
+  get terminalWidth(): number {
+    return this.width;
+  }
+
+  get terminalHeight(): number {
+    return this.height;
+  }
+
+  get keyInput(): KeyInput {
+    return this._keyInput;
+  }
+
+  get keyHandler(): KeyInput {
+    return this._keyInput;
+  }
+
+  get version(): string {
+    return getVersion();
+  }
+
+  start(): void {
+    this.enterAlternateScreen();
+    this._keyInput.start();
+  }
+
+  stop(): void {
+    this._keyInput.stop();
+    this.exitAlternateScreen();
+    this.engine.shutdown();
+  }
+
+  createNode(kind: string): number {
+    const id = this.engine.createNode(kind);
+    this.nodes.set(id, { parent: null, children: [] });
+    return id;
+  }
+
+  appendChild(parent: number, child: number): boolean {
+    const result = this.engine.appendChild(parent, child);
+    if (result) {
+      const parentNode = this.nodes.get(parent);
+      const childNode = this.nodes.get(child);
+      if (parentNode && childNode) {
+        parentNode.children.push(child);
+        childNode.parent = parent;
+      }
+    }
+    return result;
+  }
+
+  removeNode(id: number): void {
+    const node = this.nodes.get(id);
+    if (node) {
+      if (node.parent !== null) {
+        const parent = this.nodes.get(node.parent);
+        if (parent) {
+          parent.children = parent.children.filter((c) => c !== id);
+        }
+      }
+      for (const child of node.children) {
+        this.removeNode(child);
+      }
+      this.nodes.delete(id);
+    }
+    this.engine.removeNode(id);
+  }
+
+  setText(id: number, text: string): void {
+    this.engine.setText(id, text);
+  }
+
+  clearTree(): void {
+    const rootId = this.engine.root();
+    const rootNode = this.nodes.get(rootId);
+    if (rootNode) {
+      for (const child of [...rootNode.children]) {
+        this.removeNode(child);
+      }
+    }
+  }
+
+  render(): void {
+    this.engine.beginFrame();
+    const frame = this.engine.render();
+    this.engine.commitFrame();
+
+    if (frame.output_data) {
+      const decoded = Buffer.from(frame.output_data, "base64");
+      process.stdout.write(decoded);
+    }
+  }
+
+  clearScreen(): void {
+    process.stdout.write("\x1b[2J\x1b[H");
+  }
+
+  write(text: string): void {
+    process.stdout.write(text);
+  }
+
+  private enterAlternateScreen(): void {
+    process.stdout.write("\x1b[?1049h\x1b[?25l");
+  }
+
+  private exitAlternateScreen(): void {
+    process.stdout.write("\x1b[?25h\x1b[?1049l");
+  }
+
+  handleKey(sequence: string): string | null {
+    return this.keymap.handleKey(sequence);
+  }
+
+  addKeyBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description?: string,
+    priority = 0,
+  ): boolean {
+    return this.keymap.addBinding(layer, id, keys, command, description ?? null, priority);
+  }
+}
+
+export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
+  return new CliRenderer(options);
+}
+
+export { getVersion, detectCapabilities };
+export { DARK_THEME, LIGHT_THEME };
+export type { Theme as ThemeMode };

@@ -1,8 +1,6 @@
 import { Keymap } from "./lib/keybinding";
 import type { KeymapOptions } from "./lib/keybinding";
-import type { BindingInfo, NapiKeymap } from "./platform/types";
-
-// ─── Mock Native Keymap for Testing ──
+import type { NapiKeymap } from "./platform/binding";
 
 export interface TestBinding {
   layer: string;
@@ -22,8 +20,7 @@ interface PendingState {
 export function createMockNativeKeymap(): NapiKeymap {
   const bindings: TestBinding[] = [];
   const parsedKeys = new Map<string, string>();
-  let currentMode: string | null = null;
-  let chordTimeout = 1000;
+  let currentModeStr = "";
   let pending: PendingState | null = null;
   const history: string[] = [];
 
@@ -69,32 +66,13 @@ export function createMockNativeKeymap(): NapiKeymap {
     },
 
     setMode(mode: string): void {
-      currentMode = mode;
+      currentModeStr = mode;
     },
-    currentMode(): string | null {
-      return currentMode;
-    },
-    clearMode(): void {
-      currentMode = null;
+    currentMode(): string {
+      return currentModeStr;
     },
 
-    removeLayer(name: string): boolean {
-      const before = bindings.length;
-      for (let i = bindings.length - 1; i >= 0; i--) {
-        const b = bindings[i];
-        if (b && b.layer === name) bindings.splice(i, 1);
-      }
-      return bindings.length < before;
-    },
-
-    setChordTimeout(ms: number): void {
-      chordTimeout = ms;
-    },
-    chordTimeout(): number {
-      return chordTimeout;
-    },
-
-    handleKey(keyStr: string): string | null {
+    handleKey(keyStr: string): string {
       const parsed = parseKey(keyStr);
 
       // Check pending sequence first
@@ -105,10 +83,13 @@ export function createMockNativeKeymap(): NapiKeymap {
           if (pending.keys.length === 0) {
             const cmd = pending.command;
             pending = null;
-            if (cmd) history.push(cmd);
-            return cmd;
+            if (cmd) {
+              history.push(cmd);
+              return cmd;
+            }
+            return "";
           }
-          return null;
+          return "";
         }
         pending = null;
       }
@@ -126,10 +107,10 @@ export function createMockNativeKeymap(): NapiKeymap {
         }
 
         pending = { keys: seq.slice(1), command: b.command };
-        return null;
+        return "";
       }
 
-      return null;
+      return "";
     },
 
     hasPending(): boolean {
@@ -137,48 +118,6 @@ export function createMockNativeKeymap(): NapiKeymap {
     },
     clearPending(): void {
       pending = null;
-    },
-    pendingKeys(): string[] {
-      return pending?.keys ?? [];
-    },
-
-    activeBindings(): BindingInfo[] {
-      return bindings
-        .filter((b) => b.enabled)
-        .map((b) => ({
-          id: b.id,
-          keys: b.keys,
-          command: b.command,
-          description: b.description,
-          enabled: b.enabled,
-          layer: b.layer,
-        }));
-    },
-
-    allBindings(): BindingInfo[] {
-      return bindings.map((b) => ({
-        id: b.id,
-        keys: b.keys,
-        command: b.command,
-        description: b.description,
-        enabled: b.enabled,
-        layer: b.layer,
-      }));
-    },
-
-    commandHistory(): string[] {
-      return [...history];
-    },
-    clearHistory(): void {
-      history.length = 0;
-    },
-
-    parseKey(keyStr: string): string | null {
-      return parseKey(keyStr);
-    },
-
-    parseSequence(keyStr: string): string[] {
-      return parseSequence(keyStr);
     },
   };
 }

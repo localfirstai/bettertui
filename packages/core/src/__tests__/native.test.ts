@@ -517,7 +517,7 @@ describe.skip("native factory functions", () => {
   it("createTextEngine returns a text engine", () => {
     const te = createTextEngine();
     expect(te).toBeDefined();
-    expect(typeof te.insertText).toBe("function");
+    expect(typeof te.insertStr).toBe("function");
   });
 
   it("createScheduler returns a scheduler", () => {

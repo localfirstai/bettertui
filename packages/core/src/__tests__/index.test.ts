@@ -519,14 +519,15 @@ describe("createReconciler", () => {
     expect(commands.some((c) => c.type === "SetText")).toBe(true);
   });
 
-  it("commitTextUpdate without id does not emit SetText", () => {
+  it("commitTextUpdate emits SetText with text instance id", () => {
     const buffer = new CommandBuffer();
     const reconciler = createReconciler(buffer);
     const text = createTextInstance("hello");
     buffer.clear();
     reconciler.commitTextUpdate(text, "world");
     const commands = buffer.drain();
-    expect(commands.some((c) => c.type === "SetText")).toBe(false);
+    expect(commands.some((c) => c.type === "SetText")).toBe(true);
+    expect(commands.find((c) => c.type === "SetText")).toMatchObject({ text: "world" });
   });
 
   it("createTextInstance emits CreateNode and SetText", () => {

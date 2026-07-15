@@ -36,7 +36,7 @@ export { CommandRuntime } from "./runtime";
 export type { CommandRuntimeOptions } from "./runtime";
 
 export { Renderable } from "./renderable";
-export type { WidgetContext, WidgetLifecycle } from "./renderable";
+export type { WidgetContext, WidgetLifecycle, ImperativeContext } from "./renderable";
 
 // Keymap and validation utilities
 export * from "./lib";

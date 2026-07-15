@@ -1,20 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["node"],
     "noEmit": true,
-    "allowImportingTsExtensions": false,
-    "resolveJsonModule": true,
-    "paths": {
-      "~/*": ["./src/*"],
-      "@bettertui/core": ["../core/src/index.ts"],
-      "@bettertui/react": ["../react/src/index.ts"],
-      "@bettertui/shared": ["../shared/src/index.ts"]
-    }
+    "resolveJsonModule": true
   },
-  "include": ["src", "scripts", "test"]
+  "include": ["src"]
 }

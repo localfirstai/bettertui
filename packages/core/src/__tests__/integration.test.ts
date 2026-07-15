@@ -175,14 +175,14 @@ describe("Reconciler + CommandBuffer integration", () => {
     expect(text.text).toBe("world");
   });
 
-  it("commitTextUpdate does not emit SetText if text instance has no id", () => {
+  it("commitTextUpdate emits SetText with text instance id", () => {
     const buffer = new CommandBuffer();
     const reconciler = createReconciler(buffer);
     const text = createTextInstance("hello");
     buffer.clear();
     reconciler.commitTextUpdate(text, "world");
     const commands = buffer.drain();
-    expect(commands.some((c) => c.type === "SetText")).toBe(false);
+    expect(commands.some((c) => c.type === "SetText")).toBe(true);
   });
 });
 

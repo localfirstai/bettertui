@@ -1,9 +1,12 @@
 import type { Command } from "./command";
 import { CommandBuffer } from "./command";
+import type { NapiEngine } from "./platform/binding";
+import { detectCapabilities } from "./platform/binding";
 
 export interface CommandRuntimeOptions {
   frameIntervalMs?: number;
   autoStart?: boolean;
+  engine?: NapiEngine;
 }
 
 export class CommandRuntime {
@@ -14,14 +17,23 @@ export class CommandRuntime {
   private frameCallbacks: Array<(deltaMs: number) => void> = [];
   private lastFrameTime = 0;
   private frameIntervalMs: number;
+  private engine: NapiEngine | undefined;
+  private width: number;
+  private height: number;
 
   constructor(bufferOrOptions?: CommandBuffer | CommandRuntimeOptions) {
     if (bufferOrOptions instanceof CommandBuffer) {
       this.buffer = bufferOrOptions;
       this.frameIntervalMs = 16;
+      this.width = 80;
+      this.height = 24;
     } else {
       this.buffer = new CommandBuffer();
       this.frameIntervalMs = bufferOrOptions?.frameIntervalMs ?? 16;
+      this.engine = bufferOrOptions?.engine;
+      const caps = detectCapabilities();
+      this.width = caps.columns;
+      this.height = caps.rows;
       if (bufferOrOptions?.autoStart) {
         this.startFrameLoop();
       }
@@ -34,6 +46,14 @@ export class CommandRuntime {
 
   get isRunning(): boolean {
     return this.running;
+  }
+
+  get terminalWidth(): number {
+    return this.width;
+  }
+
+  get terminalHeight(): number {
+    return this.height;
   }
 
   drain(): Command[] {
@@ -97,10 +117,32 @@ export class CommandRuntime {
     this.flush();
   }
 
+  resize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.engine?.resize(width, height);
+  }
+
+  render(): { outputData: Buffer; width: number; height: number } | null {
+    if (!this.engine) return null;
+    this.engine.beginFrame();
+    const frame = this.engine.render();
+    this.engine.commitFrame();
+    if (frame.output_data) {
+      return {
+        outputData: Buffer.from(frame.output_data, "base64"),
+        width: frame.width,
+        height: frame.height,
+      };
+    }
+    return null;
+  }
+
   dispose(): void {
     this.stopFrameLoop();
     this.subscribers = [];
     this.frameCallbacks = [];
     this.buffer.clear();
+    this.engine?.shutdown();
   }
 }

@@ -1,6 +1,7 @@
 import { generateId } from "@bettertui/shared";
 import type { KeyEvent, MouseEvent } from "@bettertui/shared";
 import type { Command, CommandBufferConsumer } from "./command/types";
+import type { CliRenderer } from "./platform/cli-renderer";
 
 export interface WidgetContext {
   buffer: CommandBufferConsumer;
@@ -13,6 +14,11 @@ export interface WidgetLifecycle {
   unmount(): void;
 }
 
+export interface ImperativeContext {
+  renderer: CliRenderer;
+  parentId: number;
+}
+
 export abstract class Renderable<TOptions = Record<string, unknown>> {
   readonly id: string;
   protected ctx: WidgetContext | null = null;
@@ -21,6 +27,7 @@ export abstract class Renderable<TOptions = Record<string, unknown>> {
   protected _focused = false;
   protected _visible = true;
   protected _isDestroyed = false;
+  protected _nodeId: number | null = null;
 
   constructor(options: TOptions = {} as TOptions) {
     this.id = generateId();
@@ -41,6 +48,10 @@ export abstract class Renderable<TOptions = Record<string, unknown>> {
 
   get isDestroyed(): boolean {
     return this._isDestroyed;
+  }
+
+  get nodeId(): number | null {
+    return this._nodeId;
   }
 
   mount(ctx: WidgetContext): void {
@@ -109,6 +120,31 @@ export abstract class Renderable<TOptions = Record<string, unknown>> {
       this.ctx.buffer.push(cmd);
     }
   }
+
+  renderImperative(ctx: ImperativeContext): number {
+    const nodeId = ctx.renderer.createNode(this.getNodeKind());
+    this._nodeId = nodeId;
+
+    this.applyImperativeStyle(ctx.renderer, nodeId);
+    this.applyImperativeLayout(ctx.renderer, nodeId);
+    this.applyImperativeContent(ctx.renderer, nodeId);
+
+    ctx.renderer.appendChild(ctx.parentId, nodeId);
+
+    for (const child of this.children) {
+      child.renderImperative({ renderer: ctx.renderer, parentId: nodeId });
+    }
+
+    return nodeId;
+  }
+
+  protected getNodeKind(): string {
+    return "Box";
+  }
+
+  protected applyImperativeStyle(_renderer: CliRenderer, _nodeId: number): void {}
+  protected applyImperativeLayout(_renderer: CliRenderer, _nodeId: number): void {}
+  protected applyImperativeContent(_renderer: CliRenderer, _nodeId: number): void {}
 
   protected layoutCommands(id: string, layout: Record<string, unknown>): Command[] {
     const cmds: Command[] = [];
