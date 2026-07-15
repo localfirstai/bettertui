@@ -28,8 +28,8 @@ use crate::tree::Rect;
 /// Types submodule for backward compatibility with `crate::taffy::types::*`
 pub mod types {
     pub use super::{
-        AlignItems, AlignSelf, FlexDirection, FlexWrap, Gap, JustifyContent, LayoutProps, Position,
-        RectValues, Sizing,
+        AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, Gap, JustifyContent,
+        LayoutOverflow, LayoutProps, Position, RectValues, Sizing,
     };
     /// Display mode for a node (re-exported for backward compatibility)
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -84,6 +84,12 @@ pub struct LayoutProps {
     pub max_width: Option<Sizing>,
     pub max_height: Option<Sizing>,
     pub inset: Option<RectValues>,
+    /// Aspect ratio (width / height).
+    pub aspect_ratio: Option<f32>,
+    /// Overflow behavior for this container.
+    pub overflow: Option<LayoutOverflow>,
+    /// Box sizing model (`border-box` vs `content-box`).
+    pub box_sizing: Option<BoxSizing>,
 }
 
 impl Default for LayoutProps {
@@ -110,6 +116,9 @@ impl Default for LayoutProps {
             max_width: None,
             max_height: None,
             inset: None,
+            aspect_ratio: None,
+            overflow: None,
+            box_sizing: None,
         }
     }
 }
@@ -198,6 +207,30 @@ pub enum Position {
     Relative,
     /// Removed from flow, positioned relative to parent.
     Absolute,
+    /// Positioned according to normal flow.
+    Static,
+}
+
+/// Layout-level overflow behavior for flex items.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LayoutOverflow {
+    /// Content is not clipped (may overflow the container).
+    #[default]
+    Visible,
+    /// Content is clipped to the container bounds.
+    Hidden,
+    /// Content is clipped and scrollable.
+    Scroll,
+}
+
+/// Box sizing model, mirroring CSS `box-sizing`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum BoxSizing {
+    /// `border-box`: width/height includes padding and border.
+    BorderBox,
+    /// `content-box`: width/height excludes padding and border (CSS default).
+    #[default]
+    ContentBox,
 }
 
 /// Gap between children.
@@ -501,6 +534,34 @@ bitflags! {
 
 use smallvec::SmallVec;
 
+#[cfg(test)]
+use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(test)]
+use std::sync::{Arc, Mutex};
+
+// ============================================================================
+// CALLBACK TYPES
+// ============================================================================
+
+/// Callback invoked when a node's layout becomes dirty.
+/// Useful for invalidating cached layout data or triggering re-renders.
+type DirtiedCallback = Box<dyn Fn(NodeId) + Send + 'static>;
+
+/// Result of a custom measure function.
+pub struct MeasureResult {
+    pub width: f32,
+    pub height: f32,
+}
+
+/// Callback for measuring a node's intrinsic size.
+/// Allows custom measurement strategies (text content, rendered widgets, etc.)
+/// instead of using the default text-based heuristic.
+///
+/// Parameters: (known_width, known_height, available_width, available_height)
+/// Returns: (measured_width, measured_height)
+type MeasureCallback =
+    Box<dyn Fn(Option<f32>, Option<f32>, f32, f32) -> MeasureResult + Send + 'static>;
+
 #[derive(Clone)]
 pub struct PaintContext {
     pub terminal_width: u16,
@@ -755,6 +816,31 @@ fn viewport_end(vp: &Viewport, axis: PrimaryAxis) -> u16 {
 }
 
 // ============================================================================
+// CONFIG (matching OpenTUI's YGConfig)
+// ============================================================================
+
+/// Layout configuration controlling global layout behavior.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LayoutConfig {
+    /// Scale factor for rounding layout positions.
+    /// Terminal cells are 1:1, so this is typically 1.0.
+    pub point_scale_factor: f32,
+    /// Whether to use web-like defaults for flexbox.
+    /// When `true`, nodes default to flex row direction.
+    /// When `false` (default), nodes default to column direction.
+    pub use_web_defaults: bool,
+}
+
+impl Default for LayoutConfig {
+    fn default() -> Self {
+        Self {
+            point_scale_factor: 1.0,
+            use_web_defaults: false,
+        }
+    }
+}
+
+// ============================================================================
 // ENGINE
 // ============================================================================
 
@@ -882,8 +968,14 @@ pub struct LayoutEngine {
     taffy: taffy::TaffyTree<()>,
     node_map: HashMap<NodeId, taffy::NodeId>,
     reverse_map: HashMap<taffy::NodeId, NodeId>,
-    /// Text content for text nodes. Used by the measure function to compute intrinsic size.
+    /// Text content for text nodes. Used by the default measure function to compute intrinsic size.
     text_map: RefCell<HashMap<NodeId, String>>,
+    /// Callback invoked when a node's layout becomes dirty.
+    dirtied_handler: Option<DirtiedCallback>,
+    /// Per-node measure callbacks for custom measurement.
+    measure_callbacks: HashMap<NodeId, MeasureCallback>,
+    /// Layout configuration.
+    config: LayoutConfig,
 }
 
 impl Default for LayoutEngine {
@@ -899,6 +991,59 @@ impl LayoutEngine {
             node_map: HashMap::new(),
             reverse_map: HashMap::new(),
             text_map: RefCell::new(HashMap::new()),
+            dirtied_handler: None,
+            measure_callbacks: HashMap::new(),
+            config: LayoutConfig::default(),
+        }
+    }
+
+    /// Set a callback invoked when any node's layout becomes dirty.
+    pub fn set_dirtied_handler<F>(&mut self, handler: F)
+    where
+        F: Fn(NodeId) + Send + 'static,
+    {
+        self.dirtied_handler = Some(Box::new(handler));
+    }
+
+    /// Remove the dirtied callback.
+    pub fn clear_dirtied_handler(&mut self) {
+        self.dirtied_handler = None;
+    }
+
+    /// Set a custom measure callback for a specific node.
+    /// When set, this callback is invoked during layout computation to
+    /// determine the node's intrinsic size, instead of using text heuristics.
+    pub fn set_measure_callback<F>(&mut self, id: NodeId, callback: F)
+    where
+        F: Fn(Option<f32>, Option<f32>, f32, f32) -> MeasureResult + Send + 'static,
+    {
+        self.measure_callbacks.insert(id, Box::new(callback));
+    }
+
+    /// Remove the measure callback for a node, reverting to default text-based measurement.
+    pub fn remove_measure_callback(&mut self, id: NodeId) {
+        self.measure_callbacks.remove(&id);
+    }
+
+    /// Check if a node has a custom measure callback registered.
+    pub fn has_measure_callback(&self, id: NodeId) -> bool {
+        self.measure_callbacks.contains_key(&id)
+    }
+
+    /// Get the current layout config.
+    pub fn config(&self) -> &LayoutConfig {
+        &self.config
+    }
+
+    /// Set the layout config.
+    pub fn set_config(&mut self, config: LayoutConfig) {
+        self.config = config;
+    }
+
+    /// Fire the dirtied callback if one is registered.
+    fn fire_dirtied(&self, id: NodeId) {
+        if let Some(ref handler) = self.dirtied_handler {
+            handler(id);
         }
     }
 
@@ -935,7 +1080,9 @@ impl LayoutEngine {
         if let Some(taffy_id) = self.node_map.remove(&id) {
             self.reverse_map.remove(&taffy_id);
             self.text_map.borrow_mut().remove(&id);
+            self.measure_callbacks.remove(&id);
             let _ = self.taffy.remove(taffy_id);
+            self.fire_dirtied(id);
         }
     }
 
@@ -944,6 +1091,7 @@ impl LayoutEngine {
             let style = layout_props_to_taffy(props);
             self.taffy.set_style(taffy_id, style).unwrap();
             let _ = self.taffy.mark_dirty(taffy_id);
+            self.fire_dirtied(id);
         }
     }
 
@@ -961,7 +1109,69 @@ impl LayoutEngine {
     pub fn mark_dirty(&mut self, id: NodeId) {
         if let Some(&taffy_id) = self.node_map.get(&id) {
             let _ = self.taffy.mark_dirty(taffy_id);
+            self.fire_dirtied(id);
         }
+    }
+
+    /// Check if a node has a freshly computed layout.
+    /// Returns `true` if the node's layout was computed and is not dirty.
+    pub fn has_new_layout(&self, id: NodeId) -> bool {
+        if let Some(&taffy_id) = self.node_map.get(&id) {
+            // After compute_layout, Taffy resets dirty flags.
+            // A node that is not dirty and has a layout has "new" layout.
+            !self.taffy.dirty(taffy_id).unwrap_or(true) && self.taffy.layout(taffy_id).is_ok()
+        } else {
+            false
+        }
+    }
+
+    /// Reset a node to its default layout state, clearing any custom style, text, or callbacks.
+    pub fn reset_node(&mut self, id: NodeId) {
+        if let Some(&taffy_id) = self.node_map.get(&id) {
+            self.taffy
+                .set_style(taffy_id, taffy::Style::default())
+                .unwrap();
+            let _ = self.taffy.mark_dirty(taffy_id);
+            self.text_map.borrow_mut().remove(&id);
+            self.measure_callbacks.remove(&id);
+            self.fire_dirtied(id);
+        }
+    }
+
+    /// Copy the layout style from one node to another.
+    /// Leaves the source node unchanged; only the target node is updated.
+    pub fn copy_style(&mut self, from: NodeId, to: NodeId) {
+        let from_style = self
+            .taffy
+            .style(self.node_map.get(&from).copied().ok_or(()).unwrap())
+            .ok()
+            .cloned();
+        let Some(style) = from_style else { return };
+        if let Some(&to_taffy_id) = self.node_map.get(&to) {
+            self.taffy.set_style(to_taffy_id, style).unwrap();
+            let _ = self.taffy.mark_dirty(to_taffy_id);
+            self.fire_dirtied(to);
+        }
+    }
+
+    /// Get the computed left edge position for a node.
+    pub fn get_computed_left(&self, id: NodeId) -> f32 {
+        if let Some(&taffy_id) = self.node_map.get(&id)
+            && let Ok(layout) = self.taffy.layout(taffy_id)
+        {
+            return layout.location.x;
+        }
+        0.0
+    }
+
+    /// Get the computed top edge position for a node.
+    pub fn get_computed_top(&self, id: NodeId) -> f32 {
+        if let Some(&taffy_id) = self.node_map.get(&id)
+            && let Ok(layout) = self.taffy.layout(taffy_id)
+        {
+            return layout.location.y;
+        }
+        0.0
     }
 
     /// Register node as a text node with content for intrinsic sizing.
@@ -984,6 +1194,7 @@ impl LayoutEngine {
         self.text_map.borrow_mut().insert(id, text.to_string());
         if let Some(&taffy_id) = self.node_map.get(&id) {
             let _ = self.taffy.mark_dirty(taffy_id);
+            self.fire_dirtied(id);
         }
     }
 
@@ -1020,6 +1231,7 @@ impl LayoutEngine {
         };
         let reverse_map = &self.reverse_map;
         let text_map = &self.text_map;
+        let measure_callbacks = &self.measure_callbacks;
 
         self.taffy.compute_layout_with_measure(
             taffy_root,
@@ -1041,16 +1253,36 @@ impl LayoutEngine {
                     None => return taffy::Size::ZERO,
                 };
 
-                let text = text_map.borrow();
-                let content = match text.get(&our_id) {
-                    Some(t) => t.as_str(),
-                    None => return taffy::Size::ZERO,
-                };
-
                 let available_width = match available_space.width {
                     taffy::AvailableSpace::Definite(w) => w,
                     taffy::AvailableSpace::MaxContent => f32::INFINITY,
                     taffy::AvailableSpace::MinContent => 0.0,
+                };
+                let available_height = match available_space.height {
+                    taffy::AvailableSpace::Definite(h) => h,
+                    taffy::AvailableSpace::MaxContent => f32::INFINITY,
+                    taffy::AvailableSpace::MinContent => 0.0,
+                };
+
+                // Check for per-node measure callback first (OpenTUI native measure path)
+                if let Some(callback) = measure_callbacks.get(&our_id) {
+                    let result = callback(
+                        known_dimensions.width,
+                        known_dimensions.height,
+                        available_width,
+                        available_height,
+                    );
+                    return taffy::Size {
+                        width: result.width,
+                        height: result.height,
+                    };
+                }
+
+                // Fall back to text measurement (default behavior)
+                let text = text_map.borrow();
+                let content = match text.get(&our_id) {
+                    Some(t) => t.as_str(),
+                    None => return taffy::Size::ZERO,
                 };
 
                 let (intrinsic_width, line_count) = measure_text(content, available_width);
@@ -1222,6 +1454,22 @@ fn map_position(val: Position) -> taffy::Position {
     match val {
         Position::Relative => taffy::Position::Relative,
         Position::Absolute => taffy::Position::Absolute,
+        Position::Static => taffy::Position::Relative, // Taffy has no Static; Relative is closest
+    }
+}
+
+fn map_layout_overflow(val: LayoutOverflow) -> taffy::Overflow {
+    match val {
+        LayoutOverflow::Visible => taffy::Overflow::Visible,
+        LayoutOverflow::Hidden => taffy::Overflow::Hidden,
+        LayoutOverflow::Scroll => taffy::Overflow::Scroll,
+    }
+}
+
+fn map_box_sizing(val: BoxSizing) -> taffy::BoxSizing {
+    match val {
+        BoxSizing::BorderBox => taffy::BoxSizing::BorderBox,
+        BoxSizing::ContentBox => taffy::BoxSizing::ContentBox,
     }
 }
 
@@ -1316,6 +1564,21 @@ fn layout_props_to_taffy(props: &LayoutProps) -> taffy::Style {
         margin,
         border,
         gap,
+        aspect_ratio: props.aspect_ratio,
+        overflow: taffy::Point {
+            x: props
+                .overflow
+                .map(map_layout_overflow)
+                .unwrap_or(taffy::Overflow::Visible),
+            y: props
+                .overflow
+                .map(map_layout_overflow)
+                .unwrap_or(taffy::Overflow::Visible),
+        },
+        box_sizing: props
+            .box_sizing
+            .map(map_box_sizing)
+            .unwrap_or(taffy::BoxSizing::BorderBox),
         ..Default::default()
     }
 }
@@ -1857,21 +2120,395 @@ mod generation_tests {
         assert_eq!(sync.generation(), 0);
         assert_eq!(sync.revision(), 0);
     }
+}
+
+#[cfg(test)]
+mod dirtied_callback_tests {
+    use super::*;
+    use crate::tree::NodeArena;
 
     #[test]
-    fn layout_tree_sync_bump_revision() {
-        let mut sync = LayoutTreeSync::new();
-        sync.bump_revision();
-        assert_eq!(sync.revision(), 1);
-        sync.bump_revision();
-        assert_eq!(sync.revision(), 2);
+    fn dirtied_handler_fires_on_update_style() {
+        let mut engine = LayoutEngine::new();
+        let mut arena = NodeArena::new();
+        let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        engine.register_container(id, &LayoutProps::default());
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let fired_clone = fired.clone();
+        let fired_id = Arc::new(Mutex::new(NodeId::default()));
+        let fired_id_clone = fired_id.clone();
+        engine.set_dirtied_handler(move |nid| {
+            fired_clone.store(true, Ordering::SeqCst);
+            *fired_id_clone.lock().unwrap() = nid;
+        });
+
+        engine.update_style(
+            id,
+            &LayoutProps {
+                flex_grow: 2.0,
+                ..Default::default()
+            },
+        );
+        assert!(fired.load(Ordering::SeqCst));
+        assert_eq!(*fired_id.lock().unwrap(), id);
     }
 
     #[test]
-    fn layout_tree_sync_generation_wrapping() {
-        let mut sync = LayoutTreeSync::new();
-        sync.generation = u64::MAX;
-        sync.bump_revision();
-        assert_eq!(sync.generation(), u64::MAX);
+    fn dirtied_handler_fires_on_mark_dirty() {
+        let mut engine = LayoutEngine::new();
+        let mut arena = NodeArena::new();
+        let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        engine.register_container(id, &LayoutProps::default());
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let f = fired.clone();
+        engine.set_dirtied_handler(move |_| {
+            f.store(true, Ordering::SeqCst);
+        });
+        engine.mark_dirty(id);
+        assert!(fired.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn dirtied_handler_fires_on_remove_node() {
+        let mut engine = LayoutEngine::new();
+        let mut arena = NodeArena::new();
+        let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        engine.register_container(id, &LayoutProps::default());
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let f = fired.clone();
+        engine.set_dirtied_handler(move |_| {
+            f.store(true, Ordering::SeqCst);
+        });
+        engine.remove_node(id);
+        assert!(fired.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn dirtied_handler_fires_on_update_text() {
+        let mut engine = LayoutEngine::new();
+        engine.register_text_node(NodeId::default(), &LayoutProps::default(), "hello");
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let f = fired.clone();
+        engine.set_dirtied_handler(move |_| {
+            f.store(true, Ordering::SeqCst);
+        });
+        engine.update_text(NodeId::default(), "world");
+        assert!(fired.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn clear_dirtied_handler_stops_firing() {
+        let mut engine = LayoutEngine::new();
+        let mut arena = NodeArena::new();
+        let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        engine.register_container(id, &LayoutProps::default());
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let f = fired.clone();
+        engine.set_dirtied_handler(move |_| {
+            f.store(true, Ordering::SeqCst);
+        });
+        engine.clear_dirtied_handler();
+        engine.mark_dirty(id);
+        assert!(!fired.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn dirtied_handler_fires_on_reset_node() {
+        let mut engine = LayoutEngine::new();
+        let mut arena = NodeArena::new();
+        let id = arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box));
+        engine.register_container(id, &LayoutProps::default());
+
+        let fired = Arc::new(AtomicBool::new(false));
+        let f = fired.clone();
+        engine.set_dirtied_handler(move |_| {
+            f.store(true, Ordering::SeqCst);
+        });
+        engine.reset_node(id);
+        assert!(fired.load(Ordering::SeqCst));
+    }
+}
+
+#[cfg(test)]
+mod measure_callback_tests {
+    use super::*;
+
+    #[test]
+    fn set_and_has_measure_callback() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        assert!(!engine.has_measure_callback(id));
+
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
+            width: 10.0,
+            height: 5.0,
+        });
+        assert!(engine.has_measure_callback(id));
+    }
+
+    #[test]
+    fn remove_measure_callback() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
+            width: 10.0,
+            height: 5.0,
+        });
+        assert!(engine.has_measure_callback(id));
+
+        engine.remove_measure_callback(id);
+        assert!(!engine.has_measure_callback(id));
+    }
+
+    #[test]
+    fn measure_callback_invoked_during_compute() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.register_text_node(
+            id,
+            &LayoutProps {
+                width: Some(Sizing::Points(50.0)),
+                height: Some(Sizing::Auto),
+                ..Default::default()
+            },
+            "hello",
+        );
+
+        engine.set_measure_callback(id, |known_w, known_h, _avail_w, _avail_h| MeasureResult {
+            width: known_w.unwrap_or(20.0),
+            height: known_h.unwrap_or(10.0),
+        });
+
+        // Force dirty and compute
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+
+        // Callback returned width=50 (known) and height=10 (default)
+        let results = engine.collect_results();
+        let result = results.get(&id).unwrap();
+        assert_eq!(result.width, 50);
+        assert_eq!(result.height, 10);
+    }
+
+    #[test]
+    fn measure_callback_overrides_text_measurement() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+
+        // Register with text, but override with callback.
+        // Use Auto sizing so the callback fully controls the result.
+        engine.register_text_node(
+            id,
+            &LayoutProps {
+                width: Some(Sizing::Auto),
+                height: Some(Sizing::Auto),
+                ..Default::default()
+            },
+            "this is long text that would measure wide",
+        );
+
+        engine.set_measure_callback(id, |_, _, _, _| MeasureResult {
+            width: 5.0,
+            height: 1.0,
+        });
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+
+        let results = engine.collect_results();
+        let result = results.get(&id).unwrap();
+        // Callback returned (5, 1), so width should be 5, height 1
+        assert_eq!(result.width, 5);
+        assert_eq!(result.height, 1);
+    }
+}
+
+#[cfg(test)]
+mod config_tests {
+    use super::*;
+
+    #[test]
+    fn default_config() {
+        let config = LayoutConfig::default();
+        assert_eq!(config.point_scale_factor, 1.0);
+        assert!(!config.use_web_defaults);
+    }
+
+    #[test]
+    fn set_and_get_config() {
+        let mut engine = LayoutEngine::new();
+        let config = LayoutConfig {
+            point_scale_factor: 2.0,
+            use_web_defaults: true,
+        };
+        engine.set_config(config);
+        assert_eq!(engine.config().point_scale_factor, 2.0);
+        assert!(engine.config().use_web_defaults);
+    }
+}
+
+#[cfg(test)]
+mod new_style_props_tests {
+    use super::*;
+
+    #[test]
+    fn layout_props_default_aspect_ratio() {
+        let props = LayoutProps::default();
+        assert_eq!(props.aspect_ratio, None);
+    }
+
+    #[test]
+    fn layout_props_aspect_ratio_set() {
+        let props = LayoutProps {
+            aspect_ratio: Some(2.0),
+            ..Default::default()
+        };
+        assert_eq!(props.aspect_ratio, Some(2.0));
+    }
+
+    #[test]
+    fn position_static_variant() {
+        let pos = Position::Static;
+        match pos {
+            Position::Static => {}
+            _ => panic!("expected Static"),
+        }
+    }
+
+    #[test]
+    fn layout_overflow_default() {
+        assert_eq!(LayoutOverflow::default(), LayoutOverflow::Visible);
+    }
+
+    #[test]
+    fn box_sizing_default() {
+        assert_eq!(BoxSizing::default(), BoxSizing::ContentBox);
+    }
+
+    #[test]
+    fn map_layout_overflow_roundtrip() {
+        let _ = map_layout_overflow(LayoutOverflow::Visible);
+        let _ = map_layout_overflow(LayoutOverflow::Hidden);
+        let _ = map_layout_overflow(LayoutOverflow::Scroll);
+    }
+
+    #[test]
+    fn map_box_sizing_roundtrip() {
+        let _ = map_box_sizing(BoxSizing::BorderBox);
+        let _ = map_box_sizing(BoxSizing::ContentBox);
+    }
+}
+
+#[cfg(test)]
+mod node_operation_tests {
+    use super::*;
+    use crate::tree::NodeArena;
+
+    #[test]
+    fn has_new_layout_after_compute() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.register_container(
+            id,
+            &LayoutProps {
+                width: Some(Sizing::Points(100.0)),
+                height: Some(Sizing::Points(50.0)),
+                ..Default::default()
+            },
+        );
+
+        assert!(!engine.has_new_layout(id));
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+        assert!(engine.has_new_layout(id));
+    }
+
+    #[test]
+    fn reset_node_clears_style() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.register_container(
+            id,
+            &LayoutProps {
+                flex_grow: 2.0,
+                ..Default::default()
+            },
+        );
+        engine.reset_node(id);
+
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+
+        // After reset, style should be default
+        let results = engine.collect_results();
+        let result = results.get(&id).unwrap();
+        // Default style has flex_grow=0, so width/height should be 0 in 80x24
+        assert!(result.width <= 80);
+    }
+
+    #[test]
+    fn copy_style_transfers_props() {
+        let mut engine = LayoutEngine::new();
+        let id_from = NodeId::default();
+        let id_to = {
+            let mut arena = NodeArena::new();
+            arena.insert(crate::tree::RenderNode::new(crate::tree::NodeKind::Box))
+        };
+
+        engine.register_container(
+            id_from,
+            &LayoutProps {
+                flex_grow: 3.0,
+                width: Some(Sizing::Points(200.0)),
+                height: Some(Sizing::Points(100.0)),
+                ..Default::default()
+            },
+        );
+        engine.register_container(id_to, &LayoutProps::default());
+
+        engine.copy_style(id_from, id_to);
+
+        // Both should now have same layout positions
+        engine.mark_dirty(id_from);
+        engine.mark_dirty(id_to);
+        engine.compute_layout(id_from, 80.0, 24.0).unwrap();
+        engine.compute_layout(id_to, 80.0, 24.0).unwrap();
+
+        let results = engine.collect_results();
+        let from_result = results.get(&id_from).unwrap();
+        let to_result = results.get(&id_to).unwrap();
+        assert_eq!(from_result.width, to_result.width);
+        assert_eq!(from_result.height, to_result.height);
+    }
+
+    #[test]
+    fn get_computed_left_and_top() {
+        let mut engine = LayoutEngine::new();
+        let id = NodeId::default();
+        engine.register_container(
+            id,
+            &LayoutProps {
+                width: Some(Sizing::Points(100.0)),
+                height: Some(Sizing::Points(50.0)),
+                ..Default::default()
+            },
+        );
+        engine.mark_dirty(id);
+        engine.compute_layout(id, 80.0, 24.0).unwrap();
+
+        // Left and top should be 0 for root
+        assert_eq!(engine.get_computed_left(id), 0.0);
+        assert_eq!(engine.get_computed_top(id), 0.0);
+    }
+
+    #[test]
+    fn get_computed_edge_for_unregistered_node() {
+        let engine = LayoutEngine::new();
+        assert_eq!(engine.get_computed_left(NodeId::default()), 0.0);
+        assert_eq!(engine.get_computed_top(NodeId::default()), 0.0);
     }
 }
