@@ -9,8 +9,6 @@ pub mod styling;
 pub mod syntax;
 pub mod terminal;
 pub mod text;
-pub mod widgets;
-
 use bettertui_terminal::Terminal;
 use std::io;
 
@@ -20,7 +18,7 @@ pub enum Category {
     Layout,
     Styling,
     Text,
-    Widgets,
+
     Effects,
     Terminal,
 }
@@ -32,7 +30,6 @@ impl Category {
             Category::Layout => "LAYOUT",
             Category::Styling => "STYLING",
             Category::Text => "TEXT",
-            Category::Widgets => "WIDGETS",
             Category::Effects => "EFFECTS",
             Category::Terminal => "TERMINAL",
         }
@@ -77,12 +74,6 @@ pub fn all() -> Vec<Example> {
             description: "Tree-sitter highlighting for Rust, TypeScript, Python",
             category: Category::Text,
             run: syntax::run,
-        },
-        Example {
-            name: "Widgets",
-            description: "WidgetHost lifecycle: mount, update, unmount with shared state",
-            category: Category::Widgets,
-            run: widgets::run,
         },
         Example {
             name: "Post-Processing",

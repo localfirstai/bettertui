@@ -1,4 +1,4 @@
-use bettertui_engine::tree::{BorderStyle, Color, NamedColor};
+use crate::tree::{BorderStyle, Color, NamedColor};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ThemeColors {

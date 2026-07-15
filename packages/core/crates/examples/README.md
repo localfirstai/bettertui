@@ -4,7 +4,7 @@
 
 Native Rust examples for BetterTUI, intended as production-ready
 demonstrations for crate documentation. They show how to combine the core
-crates (`engine`, `widgets`, `terminal`, `logger`) into a working TUI
+crates (`engine`, `terminal`, `logger`) into a working TUI
 application.
 
 ## Responsibilities
@@ -26,7 +26,6 @@ application.
 | Layout | `examples/layout.rs` | Flexbox column/row layouts with nested containers |
 | Styling | `examples/styling.rs` | Named colors, RGB true color, bold/italic/underline |
 | Text | `examples/text.rs` | Rope-based text engine, cursor, selection |
-| Widgets | `examples/widgets.rs` | `WidgetHost` reactive component lifecycle |
 | Effects | `examples/post_process.rs` | Post-processing / render effects |
 | Terminal | `examples/terminal.rs` | Raw mode, alternate screen, event polling |
 | Syntax | `examples/syntax.rs` | tree-sitter syntax highlighting |
@@ -38,7 +37,7 @@ application.
 
 ## Dependencies
 
-- `bettertui-engine`, `bettertui-widgets`, `bettertui-terminal`, `bettertui-logger`
+- `bettertui-engine`, `bettertui-terminal`, `bettertui-logger`
 - `crossterm`, `tracing`, `tracing-subscriber`
 
 ## Usage
@@ -52,7 +51,7 @@ cargo run --manifest-path packages/core/Cargo.toml -p bettertui-examples
 1. **Terminal setup:** `bettertui_terminal::Terminal` for raw mode and alternate screen.
 2. **Tree building:** `bettertui_engine::Engine` for imperative tree manipulation.
 3. **Rendering:** `bettertui_engine::render::Renderer` + `AnsiBackend`.
-4. **Widgets:** `bettertui_widgets::WidgetHost` for reactive lifecycle.
+4. **Theming:** `bettertui_engine::theme::Theme` for light/dark color schemes.
 5. **Logging:** `bettertui_logger::init()` for production logging.
 
 ## Notes

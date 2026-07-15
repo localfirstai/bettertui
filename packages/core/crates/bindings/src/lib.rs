@@ -2194,8 +2194,7 @@ fn color_to_hex(c: Color) -> String {
 // ─── Widget Napi Types ───────────────────────────────────────────────────────
 // These expose the `bettertui-widgets` crate types to the napi bridge.
 
-use bettertui_widgets::WidgetHost;
-use bettertui_widgets::theme::{Theme, ThemeBorders, ThemeColors, ThemeSpacing};
+use bettertui_engine::theme::{Theme, ThemeBorders, ThemeColors, ThemeSpacing};
 
 #[napi(object)]
 pub struct NapiThemeColors {
@@ -2323,33 +2322,4 @@ pub fn create_light_theme() -> NapiTheme {
 #[napi]
 pub fn create_default_theme() -> NapiTheme {
     Theme::default().into()
-}
-
-#[napi]
-pub struct NapiWidgetHost {
-    host: WidgetHost,
-}
-
-#[napi]
-impl NapiWidgetHost {
-    #[napi(constructor)]
-    pub fn new() -> Self {
-        Self { host: WidgetHost::new() }
-    }
-
-    #[napi]
-    pub fn widget_count(&self) -> u32 {
-        self.host.widget_count() as u32
-    }
-
-    #[napi]
-    pub fn register_widget_type(&mut self, _kind: String) -> napi::Result<()> {
-        Err(napi::Error::from_reason("Widget registration from JS is not supported. Use the Rust-side factory."))
-    }
-}
-
-impl Default for NapiWidgetHost {
-    fn default() -> Self {
-        Self::new()
-    }
 }

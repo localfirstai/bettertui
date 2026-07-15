@@ -1,13 +1,11 @@
+import type { CalendarOptions, ChartOptions, PaneOptions, ViewportOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 import { Box, Flex } from "./layout";
 import { Text } from "./typography";
 
-export interface PaneProps {
+export interface PaneProps extends PaneOptions {
   children?: ReactNode;
-  title?: string;
-  border?: boolean;
-  scrollable?: boolean;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -16,12 +14,8 @@ export function Pane(props: PaneProps): JSX.Element {
   return createElement("Pane", { style: userStyle, ...rest }, children);
 }
 
-export interface ViewportProps {
+export interface ViewportProps extends ViewportOptions {
   children?: ReactNode;
-  width?: number;
-  height?: number;
-  scrollX?: number;
-  scrollY?: number;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -30,11 +24,7 @@ export function Viewport(props: ViewportProps): JSX.Element {
   return createElement("Viewport", { style: userStyle, ...rest }, children);
 }
 
-export interface CalendarProps {
-  value?: Date;
-  min?: Date;
-  max?: Date;
-  onSelect?: (date: Date) => void;
+export interface CalendarProps extends CalendarOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -42,11 +32,7 @@ export function Calendar(props: CalendarProps): JSX.Element {
   return createElement("Calendar", props);
 }
 
-export interface ChartProps {
-  data?: Array<{ label: string; value: number }>;
-  type?: "bar" | "line" | "sparkline";
-  width?: number;
-  height?: number;
+export interface ChartProps extends ChartOptions {
   style?: Record<string, unknown> | undefined;
 }
 

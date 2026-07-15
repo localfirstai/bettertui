@@ -17,7 +17,7 @@ describe("CommandRuntime", () => {
   });
 
   bench("create Runtime with custom buffer", () => {
-    new Runtime(new CommandBuffer());
+    new CommandRuntime(new CommandBuffer());
   });
 
   bench("subscribe and flush", () => {

@@ -40,7 +40,7 @@ describe("Flex component", () => {
 
   it("renders with justifyContent center", () => {
     const { container } = renderToContainer(
-      <Flex justifyContent="center">
+      <Flex flexDirection="row" justifyContent="center">
         <Text>centered</Text>
       </Flex>,
     );
@@ -49,7 +49,7 @@ describe("Flex component", () => {
 
   it("renders with alignItems stretch", () => {
     const { container } = renderToContainer(
-      <Flex alignItems="stretch">
+      <Flex flexDirection="row" alignItems="stretch">
         <Text>stretched</Text>
       </Flex>,
     );
@@ -58,7 +58,7 @@ describe("Flex component", () => {
 
   it("renders with gap", () => {
     const { container } = renderToContainer(
-      <Flex gap={4}>
+      <Flex flexDirection="row" gap={4}>
         <Text>a</Text>
         <Text>b</Text>
       </Flex>,

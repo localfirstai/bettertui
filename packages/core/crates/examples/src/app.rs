@@ -25,7 +25,6 @@ const CATEGORY_LABELS: &[(Category, &str)] = &[
     (Category::Layout, "LAYOUT"),
     (Category::Styling, "STYLING"),
     (Category::Text, "TEXT"),
-    (Category::Widgets, "WIDGETS"),
     (Category::Effects, "EFFECTS"),
     (Category::Terminal, "TERMINAL"),
 ];

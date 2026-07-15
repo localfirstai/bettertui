@@ -25,7 +25,7 @@ vi.mock("@bettertui/core", async (importOriginal) => {
 describe("renderToStringAsync", () => {
   it("renders a simple component tree to a string", async () => {
     const result = await renderToStringAsync(
-      <Flex>
+      <Flex flexDirection="row">
         <Text>Hello Testing</Text>
       </Flex>,
     );

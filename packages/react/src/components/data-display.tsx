@@ -1,18 +1,20 @@
+import type {
+  ListItem as CoreListItem,
+  TableColumn as CoreTableColumn,
+  TreeNode as CoreTreeNode,
+  DataTableOptions,
+  ListOptions,
+  TableOptions,
+  TreeOptions,
+} from "@bettertui/core";
 import { createElement } from "react";
-import type { JSX, ReactNode } from "react";
+import type { JSX } from "react";
 import { Box, Flex } from "./layout";
 import { Text } from "./typography";
 
-export interface ListItem {
-  id: string;
-  label: string;
-  disabled?: boolean;
-}
+export type ListItem = CoreListItem;
 
-export interface ListProps {
-  items: ListItem[];
-  selectedId?: string;
-  onSelect?: (id: string) => void;
+export interface ListProps extends ListOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -20,18 +22,9 @@ export function List(props: ListProps): JSX.Element {
   return createElement("List", props);
 }
 
-export interface TreeNode {
-  id: string;
-  label: string;
-  children?: TreeNode[];
-  expanded?: boolean;
-}
+export type TreeNode = CoreTreeNode;
 
-export interface TreeProps {
-  nodes: TreeNode[];
-  selectedId?: string;
-  onSelect?: (id: string) => void;
-  onToggle?: (id: string) => void;
+export interface TreeProps extends TreeOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -65,20 +58,9 @@ export function Tree({ nodes, selectedId, style }: TreeProps): JSX.Element {
   );
 }
 
-export interface TableColumn<T = Record<string, unknown>> {
-  key: string;
-  header: string;
-  width?: number;
-  align?: "left" | "center" | "right";
-  render?: (value: unknown, row: T) => ReactNode;
-}
+export type TableColumn<T = Record<string, unknown>> = CoreTableColumn<T>;
 
-export interface TableProps<T = Record<string, unknown>> {
-  columns: (string | TableColumn<T>)[];
-  data?: T[];
-  rows?: (string | number | boolean)[][];
-  selectedId?: string;
-  onSelect?: (id: string) => void;
+export interface TableProps<T = Record<string, unknown>> extends TableOptions<T> {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -149,14 +131,7 @@ export function Table<T extends Record<string, unknown> = Record<string, unknown
   );
 }
 
-export interface DataTableProps<T = Record<string, unknown>> {
-  columns: TableColumn<T>[];
-  data?: T[];
-  rows?: T[]; // Example uses rows instead of data
-  sortable?: boolean;
-  filterable?: boolean;
-  selectedIndex?: number;
-  onSelect?: (index: number) => void;
+export interface DataTableProps<T = Record<string, unknown>> extends DataTableOptions<T> {
   style?: Record<string, unknown> | undefined;
 }
 

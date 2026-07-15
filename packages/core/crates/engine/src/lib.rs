@@ -19,4 +19,5 @@ pub mod scheduler;
 pub mod syntax;
 pub mod taffy;
 pub mod text;
+pub mod theme;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

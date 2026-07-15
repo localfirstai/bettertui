@@ -1,11 +1,15 @@
+import type {
+  ContextMenuOptions,
+  DropdownOptions,
+  ModalOptions,
+  PopoverOptions,
+  TooltipOptions,
+} from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface TooltipProps {
+export interface TooltipProps extends TooltipOptions {
   children?: ReactNode;
-  content: string;
-  delay?: number;
-  position?: "top" | "bottom" | "left" | "right";
   style?: Record<string, unknown> | undefined;
 }
 
@@ -14,11 +18,8 @@ export function Tooltip(props: TooltipProps): JSX.Element {
   return createElement("Tooltip", { style: userStyle, ...rest }, children);
 }
 
-export interface ModalProps {
+export interface ModalProps extends ModalOptions {
   children?: ReactNode;
-  title?: string;
-  closable?: boolean;
-  onClose?: () => void;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -27,10 +28,8 @@ export function Modal(props: ModalProps): JSX.Element {
   return createElement("Modal", { style: userStyle, ...rest }, children);
 }
 
-export interface PopoverProps {
+export interface PopoverProps extends PopoverOptions {
   children?: ReactNode;
-  content?: ReactNode;
-  position?: "top" | "bottom" | "left" | "right";
   style?: Record<string, unknown> | undefined;
 }
 
@@ -39,10 +38,8 @@ export function Popover(props: PopoverProps): JSX.Element {
   return createElement("Popover", { style: userStyle, ...rest }, children);
 }
 
-export interface DropdownProps {
+export interface DropdownProps extends DropdownOptions {
   children?: ReactNode;
-  items?: Array<{ label: string; value: string; disabled?: boolean }>;
-  onSelect?: (value: string) => void;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -51,10 +48,8 @@ export function Dropdown(props: DropdownProps): JSX.Element {
   return createElement("Dropdown", { style: userStyle, ...rest }, children);
 }
 
-export interface ContextMenuProps {
+export interface ContextMenuProps extends ContextMenuOptions {
   children?: ReactNode;
-  items?: Array<{ label: string; value: string; disabled?: boolean; separator?: boolean }>;
-  onSelect?: (value: string) => void;
   style?: Record<string, unknown> | undefined;
 }
 

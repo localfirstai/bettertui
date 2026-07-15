@@ -1,10 +1,9 @@
+import type { SlotOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX } from "react";
 import { Text } from "./typography";
 
-export interface SlotProps {
-  plugin: string;
-  name: string;
+export interface SlotProps extends SlotOptions {
   style?: Record<string, unknown> | undefined;
 }
 

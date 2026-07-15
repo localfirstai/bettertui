@@ -276,6 +276,10 @@ impl RenderBackend for AnsiBackend {
 
         self.hide_cursor();
 
+        // Reset all SGR attributes at frame start so stale state (e.g. DIM left
+        // active by a previous screen) cannot bleed into this frame's cells.
+        self.reset_sgr();
+
         for region in regions {
             self.encode_region(buffer, region);
         }

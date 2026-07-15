@@ -1,11 +1,8 @@
+import type { StatusLineOptions, ToastOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface ToastProps {
-  message: string;
-  variant?: "default" | "success" | "warning" | "error" | "info";
-  duration?: number;
-  onDismiss?: () => void;
+export interface ToastProps extends ToastOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -13,9 +10,8 @@ export function Toast(props: ToastProps): JSX.Element {
   return createElement("Toast", props);
 }
 
-export interface StatusLineProps {
+export interface StatusLineProps extends StatusLineOptions {
   children?: ReactNode;
-  items?: Array<{ label: string; value?: string; separator?: boolean }>;
   style?: Record<string, unknown> | undefined;
 }
 

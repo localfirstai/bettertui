@@ -1,16 +1,10 @@
+import type { AccordionOptions, TabItem as CoreTabItem, TabsOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface TabItem {
-  label: string;
-  id?: string;
-}
+export type TabItem = CoreTabItem;
 
-export interface TabsProps {
-  tabs: TabItem[];
-  activeIndex?: number;
-  disabled?: boolean;
-  onChange?: (index: number) => void;
+export interface TabsProps extends TabsOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -18,11 +12,8 @@ export function Tabs(props: TabsProps): JSX.Element {
   return createElement("Tabs", props);
 }
 
-export interface AccordionProps {
+export interface AccordionProps extends AccordionOptions {
   children?: ReactNode;
-  title?: string;
-  expanded?: boolean;
-  onToggle?: () => void;
   style?: Record<string, unknown> | undefined;
 }
 

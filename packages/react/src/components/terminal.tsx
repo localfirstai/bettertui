@@ -1,20 +1,12 @@
+import type {
+  TerminalOptions,
+  TerminalProcessOptions,
+  TerminalViewportOptions,
+} from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface TerminalProps {
-  program?: string;
-  args?: string[];
-  cwd?: string;
-  env?: Record<string, string>;
-  cols?: number;
-  rows?: number;
-  autoFocus?: boolean;
-  cursorStyle?: "block" | "underline" | "bar";
-  cursorBlink?: boolean;
-  mouseTracking?: boolean;
-  onInput?: (data: string) => void;
-  onResize?: (cols: number, rows: number) => void;
-  onExit?: (code: number) => void;
+export interface TerminalProps extends TerminalOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -22,10 +14,8 @@ export function Terminal(props: TerminalProps): JSX.Element {
   return createElement("Terminal", props);
 }
 
-export interface TerminalViewportProps {
+export interface TerminalViewportProps extends TerminalViewportOptions {
   children?: ReactNode;
-  scrollOffset?: number;
-  scrollMode?: "fixed" | "scrollable" | "infinite";
   style?: Record<string, unknown> | undefined;
 }
 
@@ -34,11 +24,7 @@ export function TerminalViewport(props: TerminalViewportProps): JSX.Element {
   return createElement("TerminalViewport", { style: userStyle, ...rest }, children);
 }
 
-export interface TerminalProcessProps {
-  command: string;
-  args?: string[];
-  cwd?: string;
-  env?: Record<string, string>;
+export interface TerminalProcessProps extends TerminalProcessOptions {
   style?: Record<string, unknown> | undefined;
 }
 

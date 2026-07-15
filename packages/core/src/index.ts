@@ -43,3 +43,6 @@ export * from "./testing";
 
 // Platform (native engine bridge, events, runtime)
 export * from "./platform";
+
+// Framework-agnostic widget option types
+export * from "./widgets";

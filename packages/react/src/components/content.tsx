@@ -1,19 +1,10 @@
+import type { CodeBlockOptions, DiffOptions, MarkdownOptions } from "@bettertui/core";
 import { highlightCode } from "@bettertui/core";
 import type { JSX } from "react";
 import { Box, Flex } from "./layout";
 import { Text } from "./typography";
 
-export interface MarkdownProps {
-  content?: string;
-  indent?: number;
-  headingStyle?: Record<string, unknown>;
-  boldStyle?: Record<string, unknown>;
-  italicStyle?: Record<string, unknown>;
-  codeStyle?: Record<string, unknown>;
-  codeBlockStyle?: Record<string, unknown>;
-  linkStyle?: Record<string, unknown>;
-  quoteStyle?: Record<string, unknown>;
-  ruleStyle?: Record<string, unknown>;
+export interface MarkdownProps extends MarkdownOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -34,10 +25,7 @@ export function Markdown({ content = "", indent = 0, style }: MarkdownProps): JS
   );
 }
 
-export interface CodeBlockProps {
-  code?: string;
-  language?: string;
-  showLineNumbers?: boolean;
+export interface CodeBlockProps extends CodeBlockOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -60,11 +48,11 @@ export function CodeBlock({ code, language, showLineNumbers, style }: CodeBlockP
               <Text
                 // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional tokens
                 key={`s-${segIdx}`}
-                color={seg.fg || undefined}
-                bold={seg.bold ?? undefined}
-                italic={seg.italic ?? undefined}
-                dim={seg.dim ?? undefined}
-                underline={seg.underline ?? undefined}
+                color={seg.fg ?? ""}
+                bold={seg.bold ?? false}
+                italic={seg.italic ?? false}
+                dim={seg.dim ?? false}
+                underline={seg.underline ?? false}
               >
                 {seg.text}
               </Text>
@@ -92,10 +80,7 @@ export function CodeBlock({ code, language, showLineNumbers, style }: CodeBlockP
   );
 }
 
-export interface DiffProps {
-  oldText?: string;
-  newText?: string;
-  unified?: boolean;
+export interface DiffProps extends DiffOptions {
   style?: Record<string, unknown> | undefined;
 }
 

@@ -1,12 +1,9 @@
+import type { ScrollAreaOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface ScrollAreaProps {
+export interface ScrollAreaProps extends ScrollAreaOptions {
   children?: ReactNode;
-  scrollTop?: number;
-  scrollLeft?: number;
-  showScrollbar?: boolean;
-  onScroll?: (scrollTop: number, scrollLeft: number) => void;
   style?: Record<string, unknown> | undefined;
 }
 

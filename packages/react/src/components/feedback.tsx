@@ -1,9 +1,9 @@
+import type { BadgeOptions, ProgressOptions, SpinnerOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface BadgeProps {
+export interface BadgeProps extends BadgeOptions {
   children?: ReactNode;
-  variant?: "default" | "primary" | "success" | "warning" | "danger" | "info";
   style?: Record<string, unknown> | undefined;
 }
 
@@ -12,9 +12,7 @@ export function Badge(props: BadgeProps): JSX.Element {
   return createElement("Badge", { style: userStyle, ...rest }, children);
 }
 
-export interface ProgressProps {
-  value?: number;
-  max?: number;
+export interface ProgressProps extends ProgressOptions {
   style?: Record<string, unknown> | undefined;
 }
 
@@ -22,9 +20,7 @@ export function Progress(props: ProgressProps): JSX.Element {
   return createElement("Progress", props);
 }
 
-export interface SpinnerProps {
-  label?: string;
-  type?: "dots" | "line" | "braille" | "arc";
+export interface SpinnerProps extends SpinnerOptions {
   style?: Record<string, unknown> | undefined;
 }
 

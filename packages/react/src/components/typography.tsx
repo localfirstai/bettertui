@@ -1,15 +1,15 @@
+import type {
+  BlockquoteOptions,
+  CodeOptions,
+  HeadingOptions,
+  LabelOptions,
+  TextOptions,
+} from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface TextProps {
+export interface TextProps extends TextOptions {
   children?: ReactNode;
-  bold?: boolean | undefined;
-  italic?: boolean | undefined;
-  underline?: boolean | undefined;
-  dim?: boolean | undefined;
-  strikethrough?: boolean | undefined;
-  color?: string | undefined;
-  bgColor?: string | undefined;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -18,9 +18,8 @@ export function Text(props: TextProps): JSX.Element {
   return createElement("Text", { style: userStyle, ...rest }, children);
 }
 
-export interface HeadingProps {
+export interface HeadingProps extends HeadingOptions {
   children?: ReactNode;
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -30,9 +29,8 @@ export function Heading(props: HeadingProps): JSX.Element {
   return createElement("Heading", { style: mergedStyle, ...rest }, children);
 }
 
-export interface LabelProps {
+export interface LabelProps extends LabelOptions {
   children?: ReactNode;
-  htmlFor?: string;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -41,10 +39,8 @@ export function Label(props: LabelProps): JSX.Element {
   return createElement("Label", { style: userStyle, ...rest }, children);
 }
 
-export interface CodeProps {
+export interface CodeProps extends CodeOptions {
   children?: ReactNode;
-  inline?: boolean;
-  language?: string;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -56,7 +52,7 @@ export function Code({ children, style, ...rest }: CodeProps): JSX.Element {
   );
 }
 
-export interface BlockquoteProps {
+export interface BlockquoteProps extends BlockquoteOptions {
   children?: ReactNode;
   style?: Record<string, unknown> | undefined;
 }
