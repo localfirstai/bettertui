@@ -52,7 +52,6 @@ struct automatically restores terminal state on `Drop`.
 ## Consumers
 
 - `bettertui-bindings` — exposes terminal capabilities and event bus to Node.js
-- `bettertui-examples` — uses `Terminal` for raw mode and event polling
 - `bettertui-widgets` — depends transitively via engine
 
 ## Build & Test

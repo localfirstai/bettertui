@@ -37,7 +37,6 @@ native-side diagnostics don't pollute stdout (which the UI relies on).
 
 ## Consumers
 
-- `bettertui-examples` — calls `bettertui_logger::init()` for production-style logging
 - Any native crate that wants file-based diagnostics
 
 ## Build & Test
