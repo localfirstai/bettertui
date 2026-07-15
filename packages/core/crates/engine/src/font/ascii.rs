@@ -4,8 +4,19 @@ use crate::tree::Color;
 pub type AsciiFontName = &'static str;
 
 pub const FONT_NAMES: &[AsciiFontName] = &[
-    "tiny", "block", "shade", "slick", "huge", "grid", "pallet",
-    "console", "simple", "simple3d", "chrome", "simpleblock", "3d",
+    "tiny",
+    "block",
+    "shade",
+    "slick",
+    "huge",
+    "grid",
+    "pallet",
+    "console",
+    "simple",
+    "simple3d",
+    "chrome",
+    "simpleblock",
+    "3d",
 ];
 
 fn to_cfonts_font(name: &str) -> Option<cfonts::Fonts> {
@@ -99,12 +110,7 @@ pub fn layout_text(text: &str, font_name: &str, start_x: u16, start_y: u16) -> O
     for (y, line) in result.text.lines().enumerate() {
         let line_len = line.len();
         width = width.max(line_len);
-        segments.push(AsciiFontSegment {
-            x: start_x,
-            y: start_y + y as u16,
-            text: line.to_string(),
-            color_index: 0,
-        });
+        segments.push(AsciiFontSegment { x: start_x, y: start_y + y as u16, text: line.to_string(), color_index: 0 });
     }
 
     Some(AsciiFontLayout { segments, width, height: result.vec.len() })
@@ -127,7 +133,9 @@ pub fn coordinate_to_character_index(x: u16, text: &str, font_name: &str) -> Opt
         }
     }
 
-    if let Some(&last) = positions.last() && x >= last as u16 {
+    if let Some(&last) = positions.last()
+        && x >= last as u16
+    {
         return Some(text.len());
     }
 

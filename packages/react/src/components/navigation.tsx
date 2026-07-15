@@ -1,23 +1,12 @@
-import type { AccordionOptions, TabItem as CoreTabItem, TabsOptions } from "@bettertui/core";
-import { createElement } from "react";
-import type { JSX, ReactNode } from "react";
+import type { JSX } from "react";
 
-export type TabItem = CoreTabItem;
-
-export interface TabsProps extends TabsOptions {
+export interface TabSelectProps {
+  tabs?: Array<{ label: string; value: string }>;
+  activeIndex?: number;
+  onChange?: (value: string) => void;
   style?: Record<string, unknown> | undefined;
 }
 
-export function Tabs(props: TabsProps): JSX.Element {
-  return createElement("Tabs", props);
-}
-
-export interface AccordionProps extends AccordionOptions {
-  children?: ReactNode;
-  style?: Record<string, unknown> | undefined;
-}
-
-export function Accordion(props: AccordionProps): JSX.Element {
-  const { children, style: userStyle, ...rest } = props;
-  return createElement("Accordion", { style: userStyle, ...rest }, children);
+export function TabSelect(_props: TabSelectProps): JSX.Element {
+  return <div />;
 }

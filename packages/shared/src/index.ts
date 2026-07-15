@@ -52,3 +52,19 @@ export {
   validateStyle,
   warnIfInvalid,
 } from "./utils";
+
+export type {
+  BoxOptions,
+  TextOptions,
+  CodeOptions,
+  InputOptions,
+  TextareaOptions,
+  SelectOptions,
+  SliderOptions,
+  TabSelectOptions,
+  MarkdownOptions,
+  DiffOptions,
+  TextTableOptions,
+  ScrollBarOptions,
+  ScrollBoxOptions,
+} from "./widget.types";
