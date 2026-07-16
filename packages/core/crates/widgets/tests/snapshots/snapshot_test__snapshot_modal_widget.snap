@@ -1,5 +1,0 @@
----
-source: crates/widgets/tests/snapshot_test.rs
-expression: framebuffer_text(renderer.framebuffer())
----
-40x10 framebuffer:

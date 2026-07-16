@@ -80,10 +80,7 @@ impl Default for PluginHost {
 impl PluginHost {
     /// Creates a new plugin host.
     pub fn new() -> Self {
-        Self {
-            plugins: Vec::new(),
-            index: HashMap::new(),
-        }
+        Self { plugins: Vec::new(), index: HashMap::new() }
     }
 
     /// Registers a plugin.
@@ -92,21 +89,14 @@ impl PluginHost {
             return Err(format!("Plugin '{}' is already registered", info.name));
         }
         let idx = self.plugins.len();
-        self.plugins.push(Plugin {
-            info: info.clone(),
-            state: PluginState::Registered,
-            commands: Vec::new(),
-        });
+        self.plugins.push(Plugin { info: info.clone(), state: PluginState::Registered, commands: Vec::new() });
         self.index.insert(info.name, idx);
         Ok(())
     }
 
     /// Unregisters a plugin by name.
     pub fn unregister(&mut self, name: &str) -> Result<(), String> {
-        let idx = self
-            .index
-            .remove(name)
-            .ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
+        let idx = self.index.remove(name).ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
         self.plugins.remove(idx);
         self.index.clear();
         for (i, plugin) in self.plugins.iter().enumerate() {
@@ -117,10 +107,7 @@ impl PluginHost {
 
     /// Transitions a plugin to a new state.
     pub fn set_state(&mut self, name: &str, state: PluginState) -> Result<(), String> {
-        let idx = self
-            .index
-            .get(name)
-            .ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
+        let idx = self.index.get(name).ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
         self.plugins[*idx].state = state;
         Ok(())
     }
@@ -147,10 +134,7 @@ impl PluginHost {
 
     /// Returns all plugins with a given capability.
     pub fn with_capability(&self, cap: &Capability) -> Vec<&Plugin> {
-        self.plugins
-            .iter()
-            .filter(|p| p.info.capabilities.contains(cap))
-            .collect()
+        self.plugins.iter().filter(|p| p.info.capabilities.contains(cap)).collect()
     }
 
     /// Returns all plugin names.
@@ -160,28 +144,19 @@ impl PluginHost {
 
     /// Registers a command for a plugin.
     pub fn add_command(&mut self, plugin_name: &str, command: String) -> Result<(), String> {
-        let idx = self
-            .index
-            .get(plugin_name)
-            .ok_or_else(|| format!("Plugin '{plugin_name}' is not registered"))?;
+        let idx = self.index.get(plugin_name).ok_or_else(|| format!("Plugin '{plugin_name}' is not registered"))?;
         self.plugins[*idx].commands.push(command);
         Ok(())
     }
 
     /// Returns all commands provided by all plugins.
     pub fn all_commands(&self) -> Vec<&str> {
-        self.plugins
-            .iter()
-            .flat_map(|p| p.commands.iter().map(|s| s.as_str()))
-            .collect()
+        self.plugins.iter().flat_map(|p| p.commands.iter().map(|s| s.as_str())).collect()
     }
 
     /// Returns all running plugins.
     pub fn running(&self) -> Vec<&Plugin> {
-        self.plugins
-            .iter()
-            .filter(|p| p.state == PluginState::Running)
-            .collect()
+        self.plugins.iter().filter(|p| p.state == PluginState::Running).collect()
     }
 }
 

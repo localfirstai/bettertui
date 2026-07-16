@@ -31,11 +31,7 @@ fn word_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
     let mut text_offset = 0usize;
     for hard_line in text.split('\n') {
         if hard_line.is_empty() {
-            lines.push(WrappedLine {
-                byte_offset: text_offset,
-                byte_len: 0,
-                visual_width: 0,
-            });
+            lines.push(WrappedLine { byte_offset: text_offset, byte_len: 0, visual_width: 0 });
             text_offset += 1;
             continue;
         }
@@ -52,17 +48,13 @@ fn word_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
                 });
                 break;
             }
-            let break_at = find_word_break(
-                &text[hard_line_start..hard_line_start + hard_line.len()],
-                line_start,
-                max_width,
-            );
+            let break_at =
+                find_word_break(&text[hard_line_start..hard_line_start + hard_line.len()], line_start, max_width);
             lines.push(WrappedLine {
                 byte_offset: hard_line_start + line_start,
                 byte_len: break_at - line_start,
-                visual_width: unicode::display_width(
-                    &text[hard_line_start + line_start..hard_line_start + break_at],
-                ) as u16,
+                visual_width: unicode::display_width(&text[hard_line_start + line_start..hard_line_start + break_at])
+                    as u16,
             });
             line_start = break_at;
         }
@@ -97,11 +89,7 @@ fn char_wrap(text: &str, max_width: u16) -> Vec<WrappedLine> {
     for hard_line in text.split('\n') {
         let hard_line_start = text_offset;
         if hard_line.is_empty() {
-            lines.push(WrappedLine {
-                byte_offset: hard_line_start,
-                byte_len: 0,
-                visual_width: 0,
-            });
+            lines.push(WrappedLine { byte_offset: hard_line_start, byte_len: 0, visual_width: 0 });
             text_offset += 1;
             continue;
         }
@@ -179,10 +167,7 @@ mod tests {
         let lines = word_wrap(text, 10);
         assert_eq!(lines.len(), 2, "got {lines:#?}");
         assert_eq!(&text[lines[0].byte_offset..][..lines[0].byte_len], "hello ");
-        assert_eq!(
-            &text[lines[1].byte_offset..][..lines[1].byte_len],
-            "world foo"
-        );
+        assert_eq!(&text[lines[1].byte_offset..][..lines[1].byte_len], "world foo");
     }
 
     #[test]
@@ -213,14 +198,8 @@ mod tests {
     fn char_wrap_simple() {
         let lines = char_wrap("abcdefghij", 5);
         assert_eq!(lines.len(), 2);
-        assert_eq!(
-            &"abcdefghij"[lines[0].byte_offset..][..lines[0].byte_len],
-            "abcde"
-        );
-        assert_eq!(
-            &"abcdefghij"[lines[1].byte_offset..][..lines[1].byte_len],
-            "fghij"
-        );
+        assert_eq!(&"abcdefghij"[lines[0].byte_offset..][..lines[0].byte_len], "abcde");
+        assert_eq!(&"abcdefghij"[lines[1].byte_offset..][..lines[1].byte_len], "fghij");
     }
 
     #[test]

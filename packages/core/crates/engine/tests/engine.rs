@@ -31,10 +31,7 @@ fn engine_append_child() {
     let root = engine.arena().root();
     let child = engine.create_node(NodeKind::Text);
 
-    let result = engine.processor_mut().process_single(Command::AppendChild {
-        parent: root,
-        child,
-    });
+    let result = engine.processor_mut().process_single(Command::AppendChild { parent: root, child });
     assert!(result.is_ok());
     assert_eq!(engine.node_count(), 2);
 }
@@ -44,13 +41,7 @@ fn engine_remove_node() {
     let mut engine = Engine::new();
     let root = engine.arena().root();
     let child = engine.create_node(NodeKind::Text);
-    engine
-        .processor_mut()
-        .process_single(Command::AppendChild {
-            parent: root,
-            child,
-        })
-        .unwrap();
+    engine.processor_mut().process_single(Command::AppendChild { parent: root, child }).unwrap();
 
     engine.remove_node(child);
     assert_eq!(engine.node_count(), 1);
@@ -72,10 +63,7 @@ fn engine_set_style() {
     let mut engine = Engine::new();
     let root = engine.arena().root();
 
-    let style = Style {
-        bold: Some(true),
-        ..Default::default()
-    };
+    let style = Style { bold: Some(true), ..Default::default() };
     engine.set_style(root, style);
 
     let node = engine.get_node(root).unwrap();
@@ -84,14 +72,11 @@ fn engine_set_style() {
 
 #[test]
 fn engine_set_layout() {
-    use bettertui_engine::layout::types::LayoutProps;
+    use bettertui_engine::taffy::types::LayoutProps;
     let mut engine = Engine::new();
     let root = engine.arena().root();
 
-    let layout = LayoutProps {
-        flex_grow: 1.0,
-        ..Default::default()
-    };
+    let layout = LayoutProps { flex_grow: 1.0, ..Default::default() };
     engine.set_layout(root, layout);
 
     let node = engine.get_node(root).unwrap();
@@ -144,16 +129,8 @@ fn engine_process_commands_batch() {
     let root = engine.arena().root();
     let child = engine.create_node(NodeKind::Text);
 
-    let commands = vec![
-        Command::AppendChild {
-            parent: root,
-            child,
-        },
-        Command::SetText {
-            id: child,
-            text: "hello".into(),
-        },
-    ];
+    let commands =
+        vec![Command::AppendChild { parent: root, child }, Command::SetText { id: child, text: "hello".into() }];
 
     let result = engine.process_commands(commands);
     assert!(result.total() > 0);
@@ -173,10 +150,7 @@ fn inspector_new() {
 #[test]
 fn inspector_log_command() {
     let mut inspector = Inspector::new();
-    let command = Command::CreateNode {
-        id: NodeId::default(),
-        kind: NodeKind::Box,
-    };
+    let command = Command::CreateNode { id: NodeId::default(), kind: NodeKind::Box };
     inspector.log_command(command, 1);
     assert_eq!(inspector.command_log().len(), 1);
 }
@@ -232,13 +206,7 @@ fn inspector_recent_commands() {
 fn inspector_commands_for_node() {
     let mut inspector = Inspector::new();
     let id = NodeId::default();
-    inspector.log_command(
-        Command::SetText {
-            id,
-            text: "hello".into(),
-        },
-        1,
-    );
+    inspector.log_command(Command::SetText { id, text: "hello".into() }, 1);
     inspector.log_command(Command::Shutdown, 2);
 
     let commands = inspector.commands_for_node(id);
@@ -251,11 +219,7 @@ fn tree_summary_display() {
     kind_counts.insert("Box".to_string(), 5);
     kind_counts.insert("Text".to_string(), 3);
 
-    let summary = TreeSummary {
-        total_nodes: 8,
-        max_depth: 3,
-        kind_counts,
-    };
+    let summary = TreeSummary { total_nodes: 8, max_depth: 3, kind_counts };
 
     let display = format!("{}", summary);
     assert!(display.contains("Total nodes: 8"));

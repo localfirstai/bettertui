@@ -19,15 +19,7 @@ impl Default for FontMetrics {
 
 impl FontMetrics {
     pub fn new() -> Self {
-        Self {
-            width: 0,
-            height: 0,
-            bearing_x: 0,
-            bearing_y: 0,
-            advance_x: 0,
-            advance_y: 0,
-            is_monospace: true,
-        }
+        Self { width: 0, height: 0, bearing_x: 0, bearing_y: 0, advance_x: 0, advance_y: 0, is_monospace: true }
     }
 
     pub fn with_dimensions(mut self, width: u16, height: u16) -> Self {
@@ -54,11 +46,7 @@ impl FontMetrics {
     }
 
     pub fn cell_width(&self, cell_width: u16) -> u16 {
-        if self.is_monospace {
-            cell_width
-        } else {
-            self.advance_x
-        }
+        if self.is_monospace { cell_width } else { self.advance_x }
     }
 
     pub fn is_wide(&self) -> bool {
@@ -81,11 +69,7 @@ impl Default for FontMetricsCache {
 
 impl FontMetricsCache {
     pub fn new(cell_width: u16, cell_height: u16) -> Self {
-        Self {
-            metrics: HashMap::new(),
-            cell_width,
-            cell_height,
-        }
+        Self { metrics: HashMap::new(), cell_width, cell_height }
     }
 
     pub fn get(&self, codepoint: u32) -> Option<&FontMetrics> {
@@ -165,10 +149,7 @@ impl FontMetricsCache {
     }
 
     pub fn stats(&self) -> MetricsStats {
-        MetricsStats {
-            total_glyphs: self.metrics.len(),
-            total_bytes: self.total_memory(),
-        }
+        MetricsStats { total_glyphs: self.metrics.len(), total_bytes: self.total_memory() }
     }
 }
 
@@ -191,11 +172,7 @@ mod tests {
 
     #[test]
     fn metrics_builder() {
-        let m = FontMetrics::new()
-            .with_dimensions(10, 20)
-            .with_bearing(1, 2)
-            .with_advance(10, 0)
-            .with_monospace(true);
+        let m = FontMetrics::new().with_dimensions(10, 20).with_bearing(1, 2).with_advance(10, 0).with_monospace(true);
 
         assert_eq!(m.width, 10);
         assert_eq!(m.height, 20);

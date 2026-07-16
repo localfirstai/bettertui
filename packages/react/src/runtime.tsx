@@ -1,4 +1,4 @@
-import { CommandBuffer, Runtime } from "@bettertui/core";
+import { CommandBuffer, CommandRuntime } from "@bettertui/core";
 import { createEngine } from "@bettertui/core";
 import { createContext, useCallback, useContext, useRef } from "react";
 import type { ReactNode } from "react";
@@ -11,7 +11,7 @@ interface NodeProcess {
 
 interface NodeGlobal {
   process?: NodeProcess;
-  Buffer?: { from(data: Uint8Array): Uint8Array };
+  Buffer?: { from(data: string | Uint8Array, encoding?: string): Uint8Array };
 }
 
 const nodeGlobal: NodeGlobal =
@@ -109,12 +109,6 @@ let nativeUnavailable = false;
 
 function flushAndRender(s: NativeSession): void {
   const commands = s.buffer.drain();
-  if (commands.length === 0) {
-    s.engine.beginFrame();
-    s.engine.render();
-    s.engine.commitFrame();
-    return;
-  }
   const idKeys = new Set(["id", "parent", "child", "reference", "node", "newParent", "old", "new"]);
   const converted = commands.map((cmd) => {
     const out: Record<string, unknown> = { type: cmd.type };
@@ -128,27 +122,50 @@ function flushAndRender(s: NativeSession): void {
     }
     return out;
   });
-  const cmdResult = s.engine.processCommands(JSON.stringify(converted));
-  if (typeof cmdResult === "string") {
-    try {
-      const parsed = JSON.parse(cmdResult);
-      if (parsed.errors?.length > 0) {
-        console.error("[flushAndRender] command errors:", parsed.errors);
+
+  if (converted.length > 0) {
+    const cmdResult = s.engine.processCommands(JSON.stringify(converted));
+    if (typeof cmdResult === "string") {
+      try {
+        const parsed = JSON.parse(cmdResult);
+        if (parsed.errors?.length > 0) {
+          console.error("[flushAndRender] command errors:", parsed.errors);
+        }
+      } catch {
+        /* ignore parse errors from result */
       }
-    } catch {
-      /* ignore parse errors from result */
     }
   }
+
   s.engine.beginFrame();
   const frame = s.engine.render();
   s.engine.commitFrame();
-  if (isNode && frame) {
-    const data = (frame as { outputData?: unknown }).outputData;
-    if (data) {
-      const bytes =
-        data instanceof Uint8Array ? data : new Uint8Array(data as ArrayBuffer | number[]);
-      writeStdout(bytes);
+
+  if (isNode && frame && frame.output_data) {
+    const decoded = decodeBase64(frame.output_data);
+    if (decoded) {
+      writeStdout(decoded);
     }
+  }
+}
+
+function decodeBase64(b64: string): Uint8Array | null {
+  try {
+    const buf = nodeGlobal.Buffer?.from(b64, "base64");
+    if (buf) {
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    }
+    if (typeof atob === "function") {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -196,12 +213,12 @@ function getOrCreateNativeSession(width: number, height: number): NativeSession 
 
 export interface RenderHandle {
   root: OpaqueRoot;
-  runtime: Runtime;
+  runtime: CommandRuntime;
   dispose: () => void;
 }
 
 function renderToBuffer(element: ReactNode): RenderHandle {
-  const runtime = new Runtime();
+  const runtime = new CommandRuntime();
   const reconciler = createBetterTUIReconciler({
     push(command) {
       runtime.commandBuffer.push(command);
@@ -229,7 +246,7 @@ export function render(element: ReactNode): RenderHandle {
     if (session) {
       setupTerminal();
       updateContainer(session.reconciler, element, session.root);
-      const runtime = new Runtime();
+      const runtime = new CommandRuntime();
       return {
         root: session.root,
         runtime,
@@ -250,7 +267,7 @@ export function render(element: ReactNode): RenderHandle {
 export { renderToBuffer };
 
 interface RuntimeContextValue {
-  runtime: Runtime;
+  runtime: CommandRuntime;
   onKey: (
     handler: (
       key: string,
@@ -265,7 +282,7 @@ export function RuntimeProvider({
   runtime,
   children,
 }: {
-  runtime: Runtime;
+  runtime: CommandRuntime;
   children: ReactNode;
 }) {
   const keyHandlersRef = useRef<

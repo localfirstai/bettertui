@@ -17,9 +17,7 @@ impl TextBuffer {
     }
 
     pub fn with_text(text: &str) -> Self {
-        Self {
-            rope: Rope::from_str(text),
-        }
+        Self { rope: Rope::from_str(text) }
     }
 
     pub fn insert_char(&mut self, pos: usize, ch: char) {
@@ -43,11 +41,7 @@ impl TextBuffer {
     }
 
     pub fn char_at(&self, pos: usize) -> char {
-        if pos < self.rope.len_chars() {
-            self.rope.char(pos)
-        } else {
-            '\0'
-        }
+        if pos < self.rope.len_chars() { self.rope.char(pos) } else { '\0' }
     }
 
     pub fn substring(&self, start: usize, end: usize) -> String {
@@ -60,24 +54,14 @@ impl TextBuffer {
 
     pub fn line(&self, line: usize) -> Option<String> {
         if line < self.rope.len_lines() {
-            Some(
-                self.rope
-                    .line(line)
-                    .to_string()
-                    .trim_end_matches('\n')
-                    .to_string(),
-            )
+            Some(self.rope.line(line).to_string().trim_end_matches('\n').to_string())
         } else {
             None
         }
     }
 
     pub fn line_length(&self, line: usize) -> Option<usize> {
-        if line < self.rope.len_lines() {
-            Some(self.rope.line(line).len_chars())
-        } else {
-            None
-        }
+        if line < self.rope.len_lines() { Some(self.rope.line(line).len_chars()) } else { None }
     }
 
     pub fn line_count(&self) -> usize {

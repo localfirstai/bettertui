@@ -2,16 +2,14 @@
 
 use std::time::Instant;
 
-use bettertui_engine::layout::{
-    AlignItems, ClipBounds, Display, FlexDirection, Gap, JustifyContent, LayoutEngine, LayoutProps,
-    LayoutResult, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Position, PositionedChild,
-    PrimaryAxis, RectValues, Sizing, Viewport, build_render_tree, build_render_tree_with_viewport,
-    get_objects_in_viewport,
-};
 use bettertui_engine::render::RenderTree;
+use bettertui_engine::taffy::{
+    AlignItems, ClipBounds, Display, FlexDirection, Gap, JustifyContent, LayoutEngine, LayoutProps, LayoutResult,
+    LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Position, PositionedChild, PrimaryAxis, RectValues, Sizing,
+    Viewport, build_render_tree, build_render_tree_with_viewport, get_objects_in_viewport,
+};
 use bettertui_engine::tree::{
-    Color, Display as NodeDisplay, NamedColor, NodeArena, NodeId, NodeKind, NodeState, Overflow,
-    RenderNode,
+    Color, Display as NodeDisplay, NamedColor, NodeArena, NodeId, NodeKind, NodeState, Overflow, RenderNode,
 };
 
 // ============================================================================
@@ -276,11 +274,7 @@ fn make_sorted_children(start: u16, count: usize, step: u16, size: u16) -> Vec<P
     (0..count)
         .map(|i| {
             let id = arena.insert(RenderNode::new(NodeKind::Box));
-            PositionedChild {
-                id,
-                start: start + i as u16 * step,
-                size,
-            }
+            PositionedChild { id, start: start + i as u16 * step, size }
         })
         .collect()
 }
@@ -331,11 +325,7 @@ fn culling_no_children_visible() {
 fn culling_spanning_object_caught() {
     let mut arena = NodeArena::new();
     let tall_id = arena.insert(RenderNode::new(NodeKind::Box));
-    let children = vec![PositionedChild {
-        id: tall_id,
-        start: 0,
-        size: 50,
-    }];
+    let children = vec![PositionedChild { id: tall_id, start: 0, size: 50 }];
     let vp = Viewport::new(0, 30, 10, 10);
     let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
     assert_eq!(result.len(), 1);
@@ -374,11 +364,7 @@ fn culling_partial_overlap_at_edge() {
     let children = make_sorted_children(0, 5, 5, 10);
     let vp = Viewport::new(0, 8, 10, 5);
     let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
-    assert_eq!(
-        result.len(),
-        4,
-        "with padding should catch 4 overlapping children"
-    );
+    assert_eq!(result.len(), 4, "with padding should catch 4 overlapping children");
 }
 
 #[test]
@@ -386,11 +372,7 @@ fn culling_padding_includes_nearby_objects() {
     let children = make_sorted_children(10, 3, 10, 5);
     let vp = Viewport::new(0, 0, 80, 10);
     let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
-    assert_eq!(
-        result.len(),
-        1,
-        "padding should include child just below viewport"
-    );
+    assert_eq!(result.len(), 1, "padding should include child just below viewport");
 }
 
 #[test]
@@ -398,10 +380,7 @@ fn culling_large_sparse_list() {
     let children = make_sorted_children(0, 1000, 10, 5);
     let vp = Viewport::new(0, 5000, 80, 24);
     let result = get_objects_in_viewport(&vp, &children, PrimaryAxis::Column);
-    assert!(
-        result.len() <= 3,
-        "should find only overlapping children from large sparse list"
-    );
+    assert!(result.len() <= 3, "should find only overlapping children from large sparse list");
 }
 
 // ============================================================================
@@ -439,11 +418,8 @@ fn engine_register_container_and_compute() {
     let mut engine = LayoutEngine::new();
     let ids = make_ids(1);
     let id = ids[0];
-    let props = LayoutProps {
-        width: Some(Sizing::Points(80.0)),
-        height: Some(Sizing::Points(24.0)),
-        ..Default::default()
-    };
+    let props =
+        LayoutProps { width: Some(Sizing::Points(80.0)), height: Some(Sizing::Points(24.0)), ..Default::default() };
     engine.register_container(id, &props);
     engine.compute_layout(id, 80.0, 24.0).unwrap();
     let results = engine.collect_results();
@@ -459,16 +435,10 @@ fn engine_add_child_and_compute() {
     let ids = make_ids(2);
     let parent = ids[0];
     let child = ids[1];
-    let parent_props = LayoutProps {
-        width: Some(Sizing::Points(80.0)),
-        height: Some(Sizing::Points(24.0)),
-        ..Default::default()
-    };
-    let child_props = LayoutProps {
-        width: Some(Sizing::Points(20.0)),
-        height: Some(Sizing::Points(10.0)),
-        ..Default::default()
-    };
+    let parent_props =
+        LayoutProps { width: Some(Sizing::Points(80.0)), height: Some(Sizing::Points(24.0)), ..Default::default() };
+    let child_props =
+        LayoutProps { width: Some(Sizing::Points(20.0)), height: Some(Sizing::Points(10.0)), ..Default::default() };
     engine.register_container(parent, &parent_props);
     engine.register_container(child, &child_props);
     engine.add_child(parent, child);
@@ -485,16 +455,10 @@ fn engine_multiple_children() {
     let parent = ids[0];
     let child1 = ids[1];
     let child2 = ids[2];
-    let parent_props = LayoutProps {
-        width: Some(Sizing::Points(80.0)),
-        height: Some(Sizing::Points(24.0)),
-        ..Default::default()
-    };
-    let child_props = LayoutProps {
-        width: Some(Sizing::Points(40.0)),
-        height: Some(Sizing::Points(5.0)),
-        ..Default::default()
-    };
+    let parent_props =
+        LayoutProps { width: Some(Sizing::Points(80.0)), height: Some(Sizing::Points(24.0)), ..Default::default() };
+    let child_props =
+        LayoutProps { width: Some(Sizing::Points(40.0)), height: Some(Sizing::Points(5.0)), ..Default::default() };
     engine.register_container(parent, &parent_props);
     engine.register_container(child1, &child_props);
     engine.register_container(child2, &child_props);
@@ -517,11 +481,8 @@ fn engine_child_positioning_column() {
         direction: FlexDirection::Column,
         ..Default::default()
     };
-    let child_props = LayoutProps {
-        width: Some(Sizing::Points(20.0)),
-        height: Some(Sizing::Points(10.0)),
-        ..Default::default()
-    };
+    let child_props =
+        LayoutProps { width: Some(Sizing::Points(20.0)), height: Some(Sizing::Points(10.0)), ..Default::default() };
     engine.register_container(parent, &parent_props);
     engine.register_container(child, &child_props);
     engine.add_child(parent, child);
@@ -546,11 +507,8 @@ fn engine_child_positioning_row() {
         direction: FlexDirection::Row,
         ..Default::default()
     };
-    let child_props = LayoutProps {
-        width: Some(Sizing::Points(20.0)),
-        height: Some(Sizing::Points(10.0)),
-        ..Default::default()
-    };
+    let child_props =
+        LayoutProps { width: Some(Sizing::Points(20.0)), height: Some(Sizing::Points(10.0)), ..Default::default() };
     engine.register_container(parent, &parent_props);
     engine.register_container(child, &child_props);
     engine.add_child(parent, child);
@@ -989,10 +947,7 @@ fn build_viewport_culling_scroll_offset() {
     let scroll = arena.insert({
         let mut n = RenderNode::new(NodeKind::Box);
         n.overflow = Overflow::Scroll;
-        n.state = NodeState {
-            scroll_y: 50,
-            ..NodeState::default()
-        };
+        n.state = NodeState { scroll_y: 50, ..NodeState::default() };
         n.layout.width = Some(Sizing::Points(10.0));
         n.layout.height = Some(Sizing::Points(5.0));
         n
@@ -1025,14 +980,8 @@ fn build_viewport_culling_scroll_offset() {
     let vp = Viewport::new(0, 0, 80, 24);
     let mut tree = bettertui_engine::render::RenderTree::new();
     build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
-    assert!(
-        tree.get(scroll).is_some(),
-        "scroll container itself is visible"
-    );
-    assert!(
-        tree.get(child_outside).is_none(),
-        "child at y=0 should be culled when scroll_y=50"
-    );
+    assert!(tree.get(scroll).is_some(), "scroll container itself is visible");
+    assert!(tree.get(child_outside).is_none(), "child at y=0 should be culled when scroll_y=50");
 }
 
 #[test]
@@ -1061,10 +1010,7 @@ fn build_viewport_culling_partial_overlap() {
     let mut tree = bettertui_engine::render::RenderTree::new();
     build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     let child = arena.children(arena.root())[0];
-    assert!(
-        tree.get(child).is_some(),
-        "partially overlapping child should be visible"
-    );
+    assert!(tree.get(child).is_some(), "partially overlapping child should be visible");
 }
 
 #[test]
@@ -1213,14 +1159,8 @@ fn build_viewport_culling_outside_clip_skips_deep() {
     let vp = Viewport::new(50, 50, 10, 10);
     let mut tree = bettertui_engine::render::RenderTree::new();
     build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
-    assert!(
-        tree.get(outer).is_none(),
-        "outer outside viewport should be culled"
-    );
-    assert!(
-        tree.get(deep_child).is_none(),
-        "deep child should also be culled"
-    );
+    assert!(tree.get(outer).is_none(), "outer outside viewport should be culled");
+    assert!(tree.get(deep_child).is_none(), "deep child should also be culled");
 }
 
 #[test]
@@ -1265,10 +1205,7 @@ fn build_viewport_culling_multiple_children_some_visible() {
 
     let visible = ids.iter().filter(|id| tree.get(**id).is_some()).count();
     assert!(visible > 0, "at least one child should be visible");
-    assert!(
-        visible < ids.len(),
-        "not all children should be visible in narrow viewport"
-    );
+    assert!(visible < ids.len(), "not all children should be visible in narrow viewport");
 }
 
 #[test]
@@ -1330,14 +1267,8 @@ fn build_viewport_culling_benchmark_large_tree() {
     build_render_tree(&arena, &results, &mut full_tree);
     let mut culled_tree = bettertui_engine::render::RenderTree::new();
     build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut culled_tree);
-    let visible_count = ids
-        .iter()
-        .filter(|id| culled_tree.get(**id).is_some())
-        .count();
-    let total_count = ids
-        .iter()
-        .filter(|id| full_tree.get(**id).is_some())
-        .count();
+    let visible_count = ids.iter().filter(|id| culled_tree.get(**id).is_some()).count();
+    let total_count = ids.iter().filter(|id| full_tree.get(**id).is_some()).count();
 
     assert!(
         visible_count < total_count,
@@ -1345,10 +1276,7 @@ fn build_viewport_culling_benchmark_large_tree() {
         visible_count,
         total_count
     );
-    assert!(
-        visible_count > 0,
-        "viewport culling should keep some visible nodes"
-    );
+    assert!(visible_count > 0, "viewport culling should keep some visible nodes");
     assert!(
         culled_duration <= full_duration * 2,
         "culled build should not be drastically slower (culled={:?}, full={:?})",
@@ -1394,11 +1322,7 @@ fn build_viewport_culling_benchmark_mostly_offscreen() {
     let mut tree = bettertui_engine::render::RenderTree::new();
     build_render_tree_with_viewport(&arena, &results, Some(&vp), &mut tree);
     // Only root and at most 1 child should be visible in 1x1 viewport
-    assert!(
-        tree.len() <= 2,
-        "tree should be tiny with 1x1 viewport, got {} nodes",
-        tree.len()
-    );
+    assert!(tree.len() <= 2, "tree should be tiny with 1x1 viewport, got {} nodes", tree.len());
 }
 
 #[test]

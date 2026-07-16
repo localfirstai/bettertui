@@ -98,12 +98,7 @@ pub struct IconGlyph {
 
 impl IconGlyph {
     pub fn new(codepoint: u32, name: &str, category: IconCategory) -> Self {
-        Self {
-            codepoint,
-            name: name.to_string(),
-            category,
-            width: 1,
-        }
+        Self { codepoint, name: name.to_string(), category, width: 1 }
     }
 
     pub fn to_char(&self) -> Option<char> {
@@ -129,11 +124,7 @@ impl Default for IconRegistry {
 
 impl IconRegistry {
     pub fn new() -> Self {
-        Self {
-            by_codepoint: HashMap::new(),
-            by_name: HashMap::new(),
-            by_category: HashMap::new(),
-        }
+        Self { by_codepoint: HashMap::new(), by_name: HashMap::new(), by_category: HashMap::new() }
     }
 
     pub fn with_builtin() -> Self {
@@ -146,23 +137,14 @@ impl IconRegistry {
         let data = super::builtin::BUILTIN_ICONS;
         for entry in data {
             let category = IconCategory::from_prefix(entry.category);
-            let glyph = IconGlyph {
-                codepoint: entry.codepoint,
-                name: entry.name.to_string(),
-                category,
-                width: 1,
-            };
+            let glyph = IconGlyph { codepoint: entry.codepoint, name: entry.name.to_string(), category, width: 1 };
 
             self.by_codepoint.insert(entry.codepoint, glyph);
 
             self.by_name.insert(entry.name.to_string(), entry.codepoint);
-            self.by_name
-                .insert(format!("nf-{}", entry.name), entry.codepoint);
+            self.by_name.insert(format!("nf-{}", entry.name), entry.codepoint);
 
-            self.by_category
-                .entry(category)
-                .or_default()
-                .push(entry.codepoint);
+            self.by_category.entry(category).or_default().push(entry.codepoint);
         }
     }
 
@@ -190,11 +172,7 @@ impl IconRegistry {
     pub fn icons_by_category(&self, category: IconCategory) -> Vec<&IconGlyph> {
         self.by_category
             .get(&category)
-            .map(|cps| {
-                cps.iter()
-                    .filter_map(|cp| self.by_codepoint.get(cp))
-                    .collect()
-            })
+            .map(|cps| cps.iter().filter_map(|cp| self.by_codepoint.get(cp)).collect())
             .unwrap_or_default()
     }
 
@@ -304,9 +282,6 @@ mod tests {
         let reg = IconRegistry::with_builtin();
         assert!(reg.contains_name("fa-glass"));
         assert!(reg.contains_name("fa-martini_glass_empty"));
-        assert_eq!(
-            reg.codepoint_for_name("fa-glass"),
-            reg.codepoint_for_name("fa-martini_glass_empty")
-        );
+        assert_eq!(reg.codepoint_for_name("fa-glass"), reg.codepoint_for_name("fa-martini_glass_empty"));
     }
 }

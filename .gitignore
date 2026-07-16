@@ -46,6 +46,10 @@ Cargo.lock
 
 # Rust
 packages/core/target/
+packages/core/crates/engine/*.node
+
+# Sanpshot
+*.snap
 
 # Adhoc
 .plan

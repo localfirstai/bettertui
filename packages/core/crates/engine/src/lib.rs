@@ -11,12 +11,18 @@ pub mod font;
 pub mod framebuffer;
 pub mod glyph;
 pub mod graphics;
-pub mod layout;
 pub mod plugin;
 pub mod protocol;
 pub mod pty;
 pub mod render;
 pub mod scheduler;
 pub mod syntax;
+pub mod taffy;
+pub mod terminal;
 pub mod text;
+pub mod theme;
+
+#[cfg(feature = "napi")]
+pub mod napi;
+
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

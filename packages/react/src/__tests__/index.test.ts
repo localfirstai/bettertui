@@ -1,62 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
-  Accordion,
-  Badge,
-  Blockquote,
   Box,
-  Button,
-  Calendar,
   CapabilitiesProvider,
-  Chart,
-  ChatView,
-  Checkbox,
   Code,
-  CodeBlock,
-  Combobox,
-  ContextMenu,
-  DataTable,
   Diff,
-  Dropdown,
-  Flex,
   FocusProvider,
-  Heading,
   Input,
-  Label,
-  List,
   Markdown,
-  Modal,
-  NerdFont,
-  Pane,
-  Popover,
-  Progress,
-  PromptComposer,
   Provider,
-  Radio,
   RuntimeProvider,
-  ScrollArea,
+  ScrollBar,
+  ScrollBox,
   Select,
   SelectionProvider,
-  Separator,
   Slider,
-  Slot,
-  Spacer,
-  Spinner,
-  StatusBar,
-  StatusLine,
-  Switch,
-  Table,
-  Tabs,
-  Terminal,
-  TerminalProcess,
+  TabSelect,
   TerminalProvider,
-  TerminalViewport,
   Text,
+  TextTable,
   Textarea,
-  ThinkingIndicator,
-  Toast,
-  Tooltip,
-  Tree,
-  Viewport,
   easings,
   render,
   renderToStringAsync,
@@ -122,74 +84,38 @@ describe("public API exports", () => {
     expect(typeof Box).toBe("function");
   });
 
-  it("exports container components", () => {
-    expect(Flex).toBeDefined();
+  it("exports Text component", () => {
     expect(Text).toBeDefined();
-    expect(Spacer).toBeDefined();
-    expect(Separator).toBeDefined();
-    expect(Viewport).toBeDefined();
-    expect(ScrollArea).toBeDefined();
-    expect(Pane).toBeDefined();
+    expect(typeof Text).toBe("function");
   });
 
-  it("exports form components", () => {
-    expect(Button).toBeDefined();
+  it("exports Code component", () => {
+    expect(Code).toBeDefined();
+    expect(typeof Code).toBe("function");
+  });
+
+  it("exports interactive components", () => {
     expect(Input).toBeDefined();
     expect(Textarea).toBeDefined();
-    expect(Checkbox).toBeDefined();
-    expect(Radio).toBeDefined();
-    expect(Switch).toBeDefined();
-    expect(Slider).toBeDefined();
     expect(Select).toBeDefined();
-    expect(Combobox).toBeDefined();
+    expect(Slider).toBeDefined();
   });
 
-  it("exports display components", () => {
-    expect(Badge).toBeDefined();
-    expect(Progress).toBeDefined();
-    expect(Spinner).toBeDefined();
-    expect(Table).toBeDefined();
-    expect(DataTable).toBeDefined();
-    expect(Tree).toBeDefined();
-    expect(List).toBeDefined();
-    expect(Calendar).toBeDefined();
-    expect(Chart).toBeDefined();
+  it("exports TabSelect component", () => {
+    expect(TabSelect).toBeDefined();
   });
 
-  it("exports overlay components", () => {
-    expect(Tooltip).toBeDefined();
-    expect(Modal).toBeDefined();
-    expect(Popover).toBeDefined();
-    expect(Dropdown).toBeDefined();
-    expect(ContextMenu).toBeDefined();
-    expect(Toast).toBeDefined();
-    expect(Tabs).toBeDefined();
-    expect(Accordion).toBeDefined();
-  });
-
-  it("exports text components", () => {
-    expect(Heading).toBeDefined();
-    expect(Label).toBeDefined();
-    expect(Code).toBeDefined();
-    expect(Blockquote).toBeDefined();
-  });
-
-  it("exports markdown components", () => {
+  it("exports content components", () => {
     expect(Markdown).toBeDefined();
-    expect(CodeBlock).toBeDefined();
     expect(Diff).toBeDefined();
   });
 
-  it("exports specialized components", () => {
-    expect(PromptComposer).toBeDefined();
-    expect(ChatView).toBeDefined();
-    expect(StatusBar).toBeDefined();
-    expect(StatusLine).toBeDefined();
-    expect(ThinkingIndicator).toBeDefined();
-    expect(Terminal).toBeDefined();
-    expect(TerminalViewport).toBeDefined();
-    expect(TerminalProcess).toBeDefined();
-    expect(Slot).toBeDefined();
-    expect(NerdFont).toBeDefined();
+  it("exports display components", () => {
+    expect(TextTable).toBeDefined();
+  });
+
+  it("exports scroll components", () => {
+    expect(ScrollBar).toBeDefined();
+    expect(ScrollBox).toBeDefined();
   });
 });

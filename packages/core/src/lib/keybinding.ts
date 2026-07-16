@@ -1,7 +1,14 @@
-import { createKeymap as createNativeKeymap } from "../platform";
-import type { BindingInfo, NapiKeymap } from "../platform/types";
+import { createKeymap as createNativeKeymap } from "../platform/binding";
+import type { NapiKeymap } from "../platform/binding";
 
-// ─── Types ──────────────────────────────────────────────────────
+export interface BindingInfo {
+  id: string;
+  keys: string;
+  command: string;
+  description: string | null;
+  enabled: boolean;
+  layer: string;
+}
 
 export interface KeymapEvent {
   phase:
@@ -56,8 +63,6 @@ export interface ActiveKeyInfo {
   id: string;
 }
 
-// ─── Keymap ──────────────────────────────────────────────────────
-
 export class Keymap {
   private native: NapiKeymap;
   private commands = new Map<string, CommandHandler>();
@@ -65,18 +70,22 @@ export class Keymap {
   private keyAfterIntercepts: Array<{ priority: number; handler: InterceptHandler }> = [];
   private listeners = new Map<string, Set<KeyListener>>();
   private runtimeData = new Map<string, unknown>();
+  private bindings: BindingInfo[] = [];
+  private layers = new Set<string>(["default"]);
+  private currentModeValue: string | null = null;
+  private chordTimeoutMsValue = 500;
+  private pendingKeysValue: string[] = [];
+  private commandHistoryValue: string[] = [];
 
   constructor(native?: NapiKeymap, options?: KeymapOptions) {
     this.native = native ?? createNativeKeymap();
     if (options?.chordTimeoutMs !== undefined) {
-      this.native.setChordTimeout(options.chordTimeoutMs);
+      this.chordTimeoutMsValue = options.chordTimeoutMs;
     }
     if (options?.mode !== undefined) {
-      this.native.setMode(options.mode);
+      this.currentModeValue = options.mode;
     }
   }
-
-  // ── Binding Registration ──
 
   addBinding(
     layer: string,
@@ -86,7 +95,26 @@ export class Keymap {
     description?: string,
     priority?: number,
   ): boolean {
-    return this.native.addBinding(layer, id, keys, command, description ?? null, priority ?? 0);
+    const result = this.native.addBinding(
+      layer,
+      id,
+      keys,
+      command,
+      description ?? null,
+      priority ?? 0,
+    );
+    if (result) {
+      this.bindings.push({
+        id,
+        keys,
+        command,
+        description: description ?? null,
+        enabled: true,
+        layer,
+      });
+      this.layers.add(layer);
+    }
+    return result;
   }
 
   addSimpleBinding(keys: string, command: string, description?: string): boolean {
@@ -94,10 +122,18 @@ export class Keymap {
   }
 
   removeLayer(name: string): boolean {
-    return this.native.removeLayer(name);
+    this.bindings = this.bindings.filter((b) => b.layer !== name);
+    this.layers.delete(name);
+    return true;
   }
 
-  // ── Command Registry ──
+  setChordTimeout(ms: number): void {
+    this.chordTimeoutMsValue = ms;
+  }
+
+  chordTimeout(): number {
+    return this.chordTimeoutMsValue;
+  }
 
   registerCommand(name: string, handler: CommandHandler): void {
     this.commands.set(name, handler);
@@ -123,8 +159,6 @@ export class Keymap {
     return entries;
   }
 
-  // ── Intercepts ──
-
   intercept(name: "key" | "key:after", handler: InterceptHandler, priority?: number): () => void {
     const pri = priority ?? 0;
     const entry = { priority: pri, handler };
@@ -143,8 +177,6 @@ export class Keymap {
       }
     };
   }
-
-  // ── Event Listeners ──
 
   on(event: "state" | "pendingSequence" | "dispatch", listener: KeyListener): () => void {
     if (!this.listeners.has(event)) {
@@ -168,7 +200,7 @@ export class Keymap {
         try {
           listener(data);
         } catch {
-          // Listener error - swallow to prevent cascade
+          // Swallow errors
         }
       }
     };
@@ -176,17 +208,14 @@ export class Keymap {
     if (event !== "state") fire("state");
   }
 
-  // ── Key Dispatch ──
-
   handleKey(keyStr: string): string | null {
     const event: KeymapEvent = {
       phase: "sequence-start",
       key: keyStr,
       command: null,
-      keys: this.hasPending() ? [...this.pendingKeys(), keyStr] : [keyStr],
+      keys: this.hasPending() ? [...this.pendingKeysValue, keyStr] : [keyStr],
     };
 
-    // Run key intercepts
     for (const intercept of this.keyIntercepts) {
       const ctx: InterceptContext = {
         key: keyStr,
@@ -207,36 +236,35 @@ export class Keymap {
     }
 
     const command = this.native.handleKey(keyStr);
+    const commandOrNull = command.length > 0 ? command : null;
 
-    if (command !== null) {
+    if (commandOrNull !== null) {
       event.phase = "binding-execute";
-      event.command = command;
-
+      event.command = commandOrNull;
       this.emit("dispatch", event);
       if (this.hasPending()) {
         this.emit("pendingSequence", event);
       }
-
-      // Run the command handler
-      const handler = this.commands.get(command);
+      this.commandHistoryValue.push(commandOrNull);
+      const handler = this.commands.get(commandOrNull);
       if (handler) {
         const ctx: CommandContext = {
           keymap: this,
           event,
-          command,
+          command: commandOrNull,
           data: Object.fromEntries(this.runtimeData),
         };
         handler(ctx);
       }
     } else if (this.hasPending()) {
       event.phase = "sequence-advance";
+      this.pendingKeysValue.push(keyStr);
       this.emit("pendingSequence", event);
     } else {
       event.phase = "sequence-clear";
       this.emit("dispatch", event);
     }
 
-    // Run key:after intercepts
     for (const intercept of this.keyAfterIntercepts) {
       const ctx: InterceptContext = {
         key: keyStr,
@@ -254,24 +282,20 @@ export class Keymap {
     }
 
     this.emit("state", event);
-    return command;
+    return commandOrNull;
   }
 
-  // ── Mode Management ──
-
   setMode(mode: string): void {
-    this.native.setMode(mode);
+    this.currentModeValue = mode;
   }
 
   currentMode(): string | null {
-    return this.native.currentMode();
+    return this.currentModeValue;
   }
 
   clearMode(): void {
-    this.native.clearMode();
+    this.currentModeValue = null;
   }
-
-  // ── Pending Sequence ──
 
   hasPending(): boolean {
     return this.native.hasPending();
@@ -279,33 +303,28 @@ export class Keymap {
 
   clearPending(): void {
     this.native.clearPending();
+    this.pendingKeysValue = [];
   }
 
   pendingKeys(): string[] {
-    return this.native.pendingKeys();
+    return this.pendingKeysValue;
   }
 
-  // ── Query Bindings ──
-
   activeBindings(): BindingInfo[] {
-    return this.native.activeBindings();
+    return this.bindings.filter((b) => b.enabled);
   }
 
   allBindings(): BindingInfo[] {
-    return this.native.allBindings();
+    return [...this.bindings];
   }
 
-  // ── Command History ──
-
   commandHistory(): string[] {
-    return this.native.commandHistory();
+    return [...this.commandHistoryValue];
   }
 
   clearHistory(): void {
-    this.native.clearHistory();
+    this.commandHistoryValue = [];
   }
-
-  // ── Runtime Data ──
 
   setData(key: string, value: unknown): void {
     this.runtimeData.set(key, value);
@@ -315,25 +334,20 @@ export class Keymap {
     return this.runtimeData.get(key);
   }
 
-  // ── Command Bindings Query ──
-
   getCommandBindings(command: string): BindingInfo[] {
-    return this.native.allBindings().filter((b: BindingInfo) => b.command === command);
+    return this.bindings.filter((b) => b.command === command);
   }
 
   getBindingsForCommands(commands: string[]): Map<string, BindingInfo[]> {
     const result = new Map<string, BindingInfo[]>();
-    const all = this.native.allBindings();
     for (const cmd of commands) {
       result.set(
         cmd,
-        all.filter((b: BindingInfo) => b.command === cmd),
+        this.bindings.filter((b) => b.command === cmd),
       );
     }
     return result;
   }
-
-  // ── Run Command Directly ──
 
   runCommand(command: string, payload?: Record<string, unknown>): boolean {
     const handler = this.commands.get(command);
@@ -344,25 +358,23 @@ export class Keymap {
       command,
       keys: [],
     };
-    const ctx = {
+    const ctx: CommandContext = {
       keymap: this,
       event,
       command,
       ...(payload !== undefined ? { payload } : {}),
       data: Object.fromEntries(this.runtimeData),
-    } as CommandContext;
+    };
     handler(ctx);
     return true;
   }
 
-  // ── Parsing / Formatting ──
-
   parseKey(keyStr: string): string | null {
-    return this.native.parseKey(keyStr);
+    return keyStr.length > 0 ? keyStr : null;
   }
 
   parseSequence(keyStr: string): string[] {
-    return this.native.parseSequence(keyStr);
+    return keyStr.split(" ").filter((k) => k.length > 0);
   }
 
   formatKeySequence(keys: string[]): string {
@@ -390,8 +402,6 @@ export class Keymap {
       return `${entry.command}: ${keys}`;
     });
   }
-
-  // ── Access Native Instance ──
 
   getNative(): NapiKeymap {
     return this.native;

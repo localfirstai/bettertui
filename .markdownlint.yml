@@ -1,0 +1,30 @@
+---
+###########################
+###########################
+## Markdown Linter rules ##
+###########################
+###########################
+
+# Linter rules doc:
+# - https://github.com/DavidAnson/markdownlint
+#
+# Note:
+# To comment out a single error:
+#   <!-- markdownlint-disable -->
+#   any violations you want
+#   <!-- markdownlint-restore -->
+#
+
+###############
+# Rules by id #
+###############
+# MD013:
+#  line_length: 120
+
+#################
+# Rules by tags #
+#################
+# blank_lines: false  # Error on blank lines
+line_length: false # Ignore excessively long lines
+no-duplicate-heading: false # This is useful in RELEASES.md
+no-inline-html: false # Needed to create complex tables

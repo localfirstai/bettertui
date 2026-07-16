@@ -9,6 +9,11 @@ description = "BetterTUI native rendering engine"
 [lib]
 name = "bettertui_engine"
 path = "src/lib.rs"
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+napi = ["dep:napi", "dep:napi-derive"]
 
 [[bin]]
 name = "layout_e2e"
@@ -27,7 +32,10 @@ slotmap.workspace = true
 smallvec.workspace = true
 bitflags.workspace = true
 portable-pty.workspace = true
-serde_json.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+cfonts = { version = "1.3", default-features = false }
 
 # Tree-sitter for syntax highlighting
 tree-sitter = "0.25"
@@ -40,8 +48,13 @@ tree-sitter-html = "0.23"
 tree-sitter-css = "0.25"
 tree-sitter-bash = "0.25"
 
+# napi-rs for Node.js bindings
+napi = { version = "3", optional = true }
+napi-derive = { version = "3", optional = true }
+
 [build-dependencies]
 serde_json = { workspace = true }
+napi-build = "2"
 
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }

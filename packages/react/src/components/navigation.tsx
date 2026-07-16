@@ -1,32 +1,12 @@
-import { createElement } from "react";
-import type { JSX, ReactNode } from "react";
+import type { JSX } from "react";
 
-export interface TabItem {
-  label: string;
-  id?: string;
-}
-
-export interface TabsProps {
-  tabs: TabItem[];
+export interface TabSelectProps {
+  tabs?: Array<{ label: string; value: string }>;
   activeIndex?: number;
-  disabled?: boolean;
-  onChange?: (index: number) => void;
+  onChange?: (value: string) => void;
   style?: Record<string, unknown> | undefined;
 }
 
-export function Tabs(props: TabsProps): JSX.Element {
-  return createElement("Tabs", props);
-}
-
-export interface AccordionProps {
-  children?: ReactNode;
-  title?: string;
-  expanded?: boolean;
-  onToggle?: () => void;
-  style?: Record<string, unknown> | undefined;
-}
-
-export function Accordion(props: AccordionProps): JSX.Element {
-  const { children, style: userStyle, ...rest } = props;
-  return createElement("Accordion", { style: userStyle, ...rest }, children);
+export function TabSelect(_props: TabSelectProps): JSX.Element {
+  return <div />;
 }

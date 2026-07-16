@@ -1,0 +1,29 @@
+{
+  "name": "@bettertui/examples",
+  "version": "0.0.0",
+  "private": true,
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
+  "description": "BetterTUI examples powered by the native Rust engine",
+  "type": "module",
+  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "node scripts/build.ts",
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@bettertui/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsx": "^4.19.0",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}

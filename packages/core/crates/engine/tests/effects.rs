@@ -2,9 +2,8 @@ use bettertui_engine::framebuffer::{Cell, FrameBuffer};
 use bettertui_engine::render::{
     PassResult, RenderPass, RenderPassContext,
     effects::{
-        BloomPass, ChromaticAberrationPass, ColorMatrixPass, ContrastPass, CrtPass,
-        GRAYSCALE_MATRIX, INVERT_MATRIX, IdentityPass, NoisePass, RainbowPass, SEPIA_MATRIX,
-        SaturationPass, ScanlineMode, ScanlinesPass, VignettePass,
+        BloomPass, ChromaticAberrationPass, ColorMatrixPass, ContrastPass, CrtPass, GRAYSCALE_MATRIX, INVERT_MATRIX,
+        IdentityPass, NoisePass, RainbowPass, SEPIA_MATRIX, SaturationPass, ScanlineMode, ScanlinesPass, VignettePass,
     },
 };
 use bettertui_engine::tree::Color;
@@ -16,11 +15,7 @@ use bettertui_engine::tree::Color;
 #[test]
 fn identity_does_not_modify() {
     let mut fb = FrameBuffer::new(10, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 128,
-        g: 64,
-        b: 32,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 128, g: 64, b: 32 });
     fb.set(5, 5, cell);
     let mut pass = IdentityPass::default();
     let ctx = RenderPassContext::new(10, 10);
@@ -31,35 +26,20 @@ fn identity_does_not_modify() {
 #[test]
 fn invert_modifies_colors() {
     let mut fb = FrameBuffer::new(10, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 128,
-        g: 64,
-        b: 32,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 128, g: 64, b: 32 });
     fb.set(5, 5, cell);
     let mut pass = ColorMatrixPass::new(INVERT_MATRIX);
     let ctx = RenderPassContext::new(10, 10);
     assert_eq!(pass.execute(&mut fb, &ctx), PassResult::Modified);
     let result = fb.get(5, 5);
     assert_ne!(result.fg, cell.fg);
-    assert_eq!(
-        result.fg,
-        Color::Rgb {
-            r: 126,
-            g: 191,
-            b: 223
-        }
-    );
+    assert_eq!(result.fg, Color::Rgb { r: 126, g: 191, b: 223 });
 }
 
 #[test]
 fn grayscale_preserves_luminance() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 100,
-        g: 150,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 100, g: 150, b: 200 });
     fb.set(2, 2, cell);
     let mut pass = ColorMatrixPass::new(GRAYSCALE_MATRIX);
     let ctx = RenderPassContext::new(5, 5);
@@ -71,11 +51,7 @@ fn grayscale_preserves_luminance() {
 #[test]
 fn brightness_increases_values() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 100,
-        g: 100,
-        b: 100,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 100, g: 100, b: 100 });
     fb.set(2, 2, cell);
     let mut pass = bettertui_engine::render::effects::BrightnessPass::new(0.5);
     let ctx = RenderPassContext::new(5, 5);
@@ -90,11 +66,7 @@ fn brightness_increases_values() {
 #[test]
 fn contrast_zero_makes_gray() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 100,
-        g: 50,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 100, g: 50, b: 200 });
     fb.set(2, 2, cell);
     let mut pass = ContrastPass::new(0.0);
     let ctx = RenderPassContext::new(5, 5);
@@ -112,11 +84,7 @@ fn contrast_zero_makes_gray() {
 #[test]
 fn rainbow_modifies_nonempty_cells() {
     let mut fb = FrameBuffer::new(10, 10);
-    let cell = Cell::new('A').with_fg(Color::Rgb {
-        r: 255,
-        g: 255,
-        b: 255,
-    });
+    let cell = Cell::new('A').with_fg(Color::Rgb { r: 255, g: 255, b: 255 });
     fb.set(5, 5, cell);
     let mut pass = RainbowPass::new();
     let ctx = RenderPassContext::new(10, 10);
@@ -136,11 +104,7 @@ fn rainbow_skips_empty_cells() {
 #[test]
 fn sepia_warms_colors() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('T').with_fg(Color::Rgb {
-        r: 100,
-        g: 100,
-        b: 200,
-    });
+    let cell = Cell::new('T').with_fg(Color::Rgb { r: 100, g: 100, b: 200 });
     fb.set(2, 2, cell);
     let mut pass = ColorMatrixPass::new(SEPIA_MATRIX);
     let ctx = RenderPassContext::new(5, 5);
@@ -157,11 +121,7 @@ fn sepia_warms_colors() {
 #[test]
 fn saturation_zero_equals_grayscale() {
     let mut fb1 = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 100,
-        g: 150,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 100, g: 150, b: 200 });
     fb1.set(2, 2, cell);
     let mut sat_pass = SaturationPass::new(0.0);
     let ctx = RenderPassContext::new(5, 5);
@@ -178,68 +138,39 @@ fn saturation_zero_equals_grayscale() {
 #[test]
 fn color_matrix_bg_only() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X')
-        .with_fg(Color::Rgb { r: 255, g: 0, b: 0 })
-        .with_bg(Color::Rgb { r: 0, g: 0, b: 255 });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 255, g: 0, b: 0 }).with_bg(Color::Rgb { r: 0, g: 0, b: 255 });
     fb.set(2, 2, cell);
     let mut pass = ColorMatrixPass::new(INVERT_MATRIX).with_bg_only();
     let ctx = RenderPassContext::new(5, 5);
     pass.execute(&mut fb, &ctx);
     let result = fb.get(2, 2);
     assert_eq!(result.fg, Color::Rgb { r: 255, g: 0, b: 0 });
-    assert_eq!(
-        result.bg,
-        Color::Rgb {
-            r: 255,
-            g: 255,
-            b: 0
-        }
-    );
+    assert_eq!(result.bg, Color::Rgb { r: 255, g: 255, b: 0 });
 }
 
 #[test]
 fn color_matrix_fg_only() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X')
-        .with_fg(Color::Rgb { r: 255, g: 0, b: 0 })
-        .with_bg(Color::Rgb { r: 0, g: 0, b: 255 });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 255, g: 0, b: 0 }).with_bg(Color::Rgb { r: 0, g: 0, b: 255 });
     fb.set(2, 2, cell);
     let mut pass = ColorMatrixPass::new(INVERT_MATRIX).with_fg_only();
     let ctx = RenderPassContext::new(5, 5);
     pass.execute(&mut fb, &ctx);
     let result = fb.get(2, 2);
-    assert_eq!(
-        result.fg,
-        Color::Rgb {
-            r: 0,
-            g: 255,
-            b: 255
-        }
-    );
+    assert_eq!(result.fg, Color::Rgb { r: 0, g: 255, b: 255 });
     assert_eq!(result.bg, Color::Rgb { r: 0, g: 0, b: 255 });
 }
 
 #[test]
 fn color_matrix_with_strength_blend() {
     let mut fb = FrameBuffer::new(5, 5);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 100,
-        g: 100,
-        b: 100,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 100, g: 100, b: 100 });
     fb.set(2, 2, cell);
     let mut pass = ColorMatrixPass::new(INVERT_MATRIX).with_strength(0.0);
     let ctx = RenderPassContext::new(5, 5);
     assert_eq!(pass.execute(&mut fb, &ctx), PassResult::Modified);
     let result = fb.get(2, 2);
-    assert_eq!(
-        result.fg,
-        Color::Rgb {
-            r: 100,
-            g: 100,
-            b: 100
-        }
-    );
+    assert_eq!(result.fg, Color::Rgb { r: 100, g: 100, b: 100 });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -249,11 +180,7 @@ fn color_matrix_with_strength_blend() {
 #[test]
 fn bloom_ignores_dark_cells() {
     let mut fb = FrameBuffer::new(10, 10);
-    let dark = Cell::new('.').with_fg(Color::Rgb {
-        r: 10,
-        g: 10,
-        b: 10,
-    });
+    let dark = Cell::new('.').with_fg(Color::Rgb { r: 10, g: 10, b: 10 });
     fb.set(5, 5, dark);
     let mut pass = BloomPass::new().with_threshold(0.5);
     let ctx = RenderPassContext::new(10, 10);
@@ -263,16 +190,8 @@ fn bloom_ignores_dark_cells() {
 #[test]
 fn bloom_affects_neighbors() {
     let mut fb = FrameBuffer::new(10, 10);
-    let bright = Cell::new('X').with_fg(Color::Rgb {
-        r: 255,
-        g: 255,
-        b: 255,
-    });
-    let dim = Cell::new('.').with_fg(Color::Rgb {
-        r: 50,
-        g: 50,
-        b: 50,
-    });
+    let bright = Cell::new('X').with_fg(Color::Rgb { r: 255, g: 255, b: 255 });
+    let dim = Cell::new('.').with_fg(Color::Rgb { r: 50, g: 50, b: 50 });
     fb.set(5, 5, bright);
     for y in 4..=6 {
         for x in 4..=6 {
@@ -307,11 +226,7 @@ fn bloom_skips_empty() {
 #[test]
 fn scanlines_darken_even_rows() {
     let mut fb = FrameBuffer::new(5, 4);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 200,
-        g: 200,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 200, g: 200, b: 200 });
     for y in 0..4 {
         for x in 0..5 {
             fb.set(x, y, cell);
@@ -324,51 +239,24 @@ fn scanlines_darken_even_rows() {
 
     assert_eq!(fb.get(0, 0).fg, Color::Rgb { r: 0, g: 0, b: 0 });
     assert_eq!(fb.get(0, 2).fg, Color::Rgb { r: 0, g: 0, b: 0 });
-    assert_eq!(
-        fb.get(0, 1).fg,
-        Color::Rgb {
-            r: 200,
-            g: 200,
-            b: 200
-        }
-    );
-    assert_eq!(
-        fb.get(0, 3).fg,
-        Color::Rgb {
-            r: 200,
-            g: 200,
-            b: 200
-        }
-    );
+    assert_eq!(fb.get(0, 1).fg, Color::Rgb { r: 200, g: 200, b: 200 });
+    assert_eq!(fb.get(0, 3).fg, Color::Rgb { r: 200, g: 200, b: 200 });
 }
 
 #[test]
 fn scanlines_odd_mode() {
     let mut fb = FrameBuffer::new(3, 3);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 200,
-        g: 200,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 200, g: 200, b: 200 });
     fb.set(0, 0, cell);
     fb.set(0, 1, cell);
     fb.set(0, 2, cell);
 
-    let mut pass = ScanlinesPass::new()
-        .with_intensity(1.0)
-        .with_mode(ScanlineMode::OddRows);
+    let mut pass = ScanlinesPass::new().with_intensity(1.0).with_mode(ScanlineMode::OddRows);
     let ctx = RenderPassContext::new(3, 3);
     pass.execute(&mut fb, &ctx);
 
     assert_eq!(fb.get(0, 1).fg, Color::Rgb { r: 0, g: 0, b: 0 });
-    assert_eq!(
-        fb.get(0, 0).fg,
-        Color::Rgb {
-            r: 200,
-            g: 200,
-            b: 200
-        }
-    );
+    assert_eq!(fb.get(0, 0).fg, Color::Rgb { r: 200, g: 200, b: 200 });
 }
 
 #[test]
@@ -386,11 +274,7 @@ fn scanlines_skips_empty() {
 #[test]
 fn noise_modifies_colors() {
     let mut fb = FrameBuffer::new(10, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 128,
-        g: 128,
-        b: 128,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 128, g: 128, b: 128 });
     fb.set(5, 5, cell);
     let mut pass = NoisePass::new().with_intensity(1.0);
     let ctx = RenderPassContext::new(10, 10);
@@ -403,11 +287,7 @@ fn noise_modifies_colors() {
 fn noise_is_deterministic() {
     let mut fb1 = FrameBuffer::new(10, 10);
     let mut fb2 = FrameBuffer::new(10, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 128,
-        g: 128,
-        b: 128,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 128, g: 128, b: 128 });
     for y in 0..10 {
         for x in 0..10 {
             fb1.set(x, y, cell);
@@ -423,11 +303,7 @@ fn noise_is_deterministic() {
 
     for y in 0..10 {
         for x in 0..10 {
-            assert_eq!(
-                fb1.get(x, y).fg,
-                fb2.get(x, y).fg,
-                "noise should be deterministic at ({x},{y})"
-            );
+            assert_eq!(fb1.get(x, y).fg, fb2.get(x, y).fg, "noise should be deterministic at ({x},{y})");
         }
     }
 }
@@ -447,11 +323,7 @@ fn noise_skips_empty() {
 #[test]
 fn vignette_darkens_corners() {
     let mut fb = FrameBuffer::new(20, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 200,
-        g: 200,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 200, g: 200, b: 200 });
     for y in 0..10 {
         for x in 0..20 {
             fb.set(x, y, cell);
@@ -465,18 +337,7 @@ fn vignette_darkens_corners() {
     let corner = fb.get(0, 0);
     let center = fb.get(10, 5);
     match (corner.fg, center.fg) {
-        (
-            Color::Rgb {
-                r: cr,
-                g: cg,
-                b: cb,
-            },
-            Color::Rgb {
-                r: ctr,
-                g: ctg,
-                b: ctb,
-            },
-        ) => {
+        (Color::Rgb { r: cr, g: cg, b: cb }, Color::Rgb { r: ctr, g: ctg, b: ctb }) => {
             assert!(
                 ctr > cr || ctg > cg || ctb > cb,
                 "center ({ctr},{ctg},{ctb}) should be brighter than corner ({cr},{cg},{cb})"
@@ -501,11 +362,7 @@ fn vignette_skips_empty() {
 #[test]
 fn crt_darkens_edges() {
     let mut fb = FrameBuffer::new(20, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 200,
-        g: 200,
-        b: 200,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 200, g: 200, b: 200 });
     fb.set(0, 0, cell);
     fb.set(10, 5, cell);
 
@@ -517,10 +374,7 @@ fn crt_darkens_edges() {
     let center = fb.get(10, 5);
     match (corner.fg, center.fg) {
         (Color::Rgb { r: cr, .. }, Color::Rgb { r: ctr, .. }) => {
-            assert!(
-                ctr > cr,
-                "center ({ctr}) should be brighter than corner ({cr})"
-            );
+            assert!(ctr > cr, "center ({ctr}) should be brighter than corner ({cr})");
         }
         _ => panic!("Expected RGB colors"),
     }
@@ -541,11 +395,7 @@ fn crt_skips_empty() {
 #[test]
 fn chromatic_aberration_shifts_edges() {
     let mut fb = FrameBuffer::new(20, 10);
-    let cell = Cell::new('X').with_fg(Color::Rgb {
-        r: 200,
-        g: 128,
-        b: 100,
-    });
+    let cell = Cell::new('X').with_fg(Color::Rgb { r: 200, g: 128, b: 100 });
     fb.set(0, 0, cell);
     fb.set(10, 5, cell);
 
@@ -557,10 +407,7 @@ fn chromatic_aberration_shifts_edges() {
     let center_fg = fb.get(10, 5).fg;
     match (corner_fg, center_fg) {
         (Color::Rgb { r: cr, b: cb, .. }, Color::Rgb { r: ctr, b: ctb, .. }) => {
-            assert!(
-                cr <= ctr || cb >= ctb,
-                "corner should show more chromatic shift"
-            );
+            assert!(cr <= ctr || cb >= ctb, "corner should show more chromatic shift");
         }
         _ => panic!("Expected RGB colors"),
     }

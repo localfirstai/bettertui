@@ -1,7 +1,7 @@
 //! Consolidated end-to-end benchmarks for the BetterTUI Rust crates.
 //!
 //! All Rust benchmarking lives in this crate. Public API surface of the
-//! `engine`, `widgets`, and `terminal` crates is exercised through
+//! `engine` and `terminal` crates is exercised through
 //! [`criterion`] benchmark targets under `benches/`.
 //!
 //! The `benchmark` module contains a lightweight timing/throughput harness

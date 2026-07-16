@@ -1,4 +1,4 @@
-import type { Command, CommandBuffer } from "../command-buffer";
+import type { Command, CommandBuffer } from "../command";
 import type { NapiEngine, NapiEventBus, NapiRenderResult, ProcessResult } from "./types";
 
 export interface RenderResult {

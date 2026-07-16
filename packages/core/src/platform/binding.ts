@@ -1,0 +1,430 @@
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+interface NativeModule {
+  NativeEngine: new (width: number, height: number) => NativeEngine;
+  NativeEventBus: new () => NativeEventBus;
+  NativeFocusManager: new () => NativeFocusManager;
+  NativeKeymap: new () => NativeKeymap;
+  NativeScheduler: new (fps?: number | null) => NativeScheduler;
+  NativeTextEngine: new (text?: string | null) => NativeTextEngine;
+  TerminalCapabilities: TerminalCapabilities;
+  detectCapabilities: () => TerminalCapabilities;
+  getVersion: () => string;
+}
+
+interface NativeEngine {
+  processCommands(commandsJson: string): string;
+  beginFrame(): void;
+  commitFrame(): void;
+  render(): string;
+  renderFull(): string;
+  resize(width: number, height: number): void;
+  nodeCount(): number;
+  frameCount(): number;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
+  root(): number;
+  validate(): boolean;
+  printTree(): string;
+  shutdown(): void;
+}
+
+interface NativeEventBus {
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
+  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+}
+
+interface NativeFocusManager {
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
+  traverse(direction: string): string;
+  focusOrder(): number[];
+}
+
+interface NativeTextEngine {
+  insertChar(ch: string): void;
+  insertStr(text: string): void;
+  deleteChar(): void;
+  cursorLeft(): void;
+  cursorRight(): void;
+  getText(): string;
+  cursorPosition(): number;
+  length(): number;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): boolean;
+  redo(): boolean;
+  clear(): void;
+  setCursorPosition(pos: number): void;
+}
+
+interface NativeScheduler {
+  requestFrame(): void;
+  beginFrame(): boolean;
+  endFrame(): void;
+  shouldRender(): string;
+  isIdle(): boolean;
+  frameCount(): number;
+  fps(): number;
+}
+
+interface NativeKeymap {
+  addBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description: string | null,
+    priority: number,
+  ): boolean;
+  setMode(mode: string): void;
+  currentMode(): string;
+  handleKey(key: string): string;
+  hasPending(): boolean;
+  clearPending(): void;
+}
+
+export interface TerminalCapabilities {
+  brand: string;
+  true_color: boolean;
+  kitty_keyboard: boolean;
+  csi_u: boolean;
+  bracketed_paste: boolean;
+  focus_events: boolean;
+  mouse: boolean;
+  osc52: boolean;
+  osc8: boolean;
+  sync: boolean;
+  sgr_pixel: boolean;
+  underline_color: boolean;
+  strikethrough: boolean;
+  cursor_style: boolean;
+  alternate_scroll: boolean;
+  inline_images: boolean;
+  sixel: boolean;
+  columns: number;
+  rows: number;
+}
+
+let native: NativeModule;
+
+try {
+  native = require("./bettertui_engine.node");
+} catch {
+  native = require("../../dist/bettertui_engine.node");
+}
+
+export interface CommandResult {
+  success: number;
+  errors: string[];
+  id_mappings: Array<{ temp: number; real: number }>;
+}
+
+export interface RenderResult {
+  output_data: string;
+  width: number;
+  height: number;
+  dirty_region_count: number;
+}
+
+export interface NapiEngine {
+  processCommands(commandsJson: string): CommandResult;
+  beginFrame(): void;
+  commitFrame(): void;
+  render(): RenderResult;
+  renderFull(): RenderResult;
+  resize(width: number, height: number): void;
+  nodeCount(): number;
+  frameCount(): number;
+  createNode(kind: string): number;
+  appendChild(parent: number, child: number): boolean;
+  removeNode(id: number): void;
+  setText(id: number, text: string): void;
+  root(): number;
+  validate(): boolean;
+  printTree(): string;
+  shutdown(): void;
+}
+
+export interface NapiEventBus {
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
+  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+}
+
+export interface NapiFocusManager {
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
+  traverse(direction: string): number;
+  focusOrder(): number[];
+}
+
+export interface NapiTextEngine {
+  insertChar(ch: string): void;
+  insertStr(text: string): void;
+  deleteChar(): void;
+  cursorLeft(): void;
+  cursorRight(): void;
+  getText(): string;
+  cursorPosition(): number;
+  length(): number;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): boolean;
+  redo(): boolean;
+  clear(): void;
+  setCursorPosition(pos: number): void;
+}
+
+export interface NapiScheduler {
+  requestFrame(): void;
+  beginFrame(): boolean;
+  endFrame(): void;
+  shouldRender(): string;
+  isIdle(): boolean;
+  frameCount(): number;
+  fps(): number;
+}
+
+export interface NapiKeymap {
+  addBinding(
+    layer: string,
+    id: string,
+    keys: string,
+    command: string,
+    description: string | null,
+    priority: number,
+  ): boolean;
+  setMode(mode: string): void;
+  currentMode(): string;
+  handleKey(key: string): string;
+  hasPending(): boolean;
+  clearPending(): void;
+}
+
+class EngineWrapper implements NapiEngine {
+  constructor(private engine: NativeEngine) {}
+  processCommands(commandsJson: string): CommandResult {
+    return JSON.parse(this.engine.processCommands(commandsJson));
+  }
+  beginFrame(): void {
+    this.engine.beginFrame();
+  }
+  commitFrame(): void {
+    this.engine.commitFrame();
+  }
+  render(): RenderResult {
+    return JSON.parse(this.engine.render());
+  }
+  renderFull(): RenderResult {
+    return JSON.parse(this.engine.renderFull());
+  }
+  resize(width: number, height: number): void {
+    this.engine.resize(width, height);
+  }
+  nodeCount(): number {
+    return this.engine.nodeCount();
+  }
+  frameCount(): number {
+    return this.engine.frameCount();
+  }
+  createNode(kind: string): number {
+    return this.engine.createNode(kind);
+  }
+  appendChild(parent: number, child: number): boolean {
+    return this.engine.appendChild(parent, child);
+  }
+  removeNode(id: number): void {
+    this.engine.removeNode(id);
+  }
+  setText(id: number, text: string): void {
+    this.engine.setText(id, text);
+  }
+  root(): number {
+    return this.engine.root();
+  }
+  validate(): boolean {
+    return this.engine.validate();
+  }
+  printTree(): string {
+    return this.engine.printTree();
+  }
+  shutdown(): void {
+    this.engine.shutdown();
+  }
+}
+
+export function createEngine(width = 80, height = 24): NapiEngine {
+  return new EngineWrapper(new native.NativeEngine(width, height));
+}
+
+export function createEventBus(): NapiEventBus {
+  const bus = new native.NativeEventBus();
+  return {
+    pushKey: (key, ctrl, shift, alt, target) => bus.pushKey(key, ctrl, shift, alt, target),
+    pushMouse: (button, x, y, target) => bus.pushMouse(button, x, y, target),
+    pushResize: (w, h, pw, ph) => bus.pushResize(w, h, pw, ph),
+    drain: () => bus.drain(),
+    len: () => bus.len(),
+    isEmpty: () => bus.isEmpty(),
+    clear: () => bus.clear(),
+  };
+}
+
+export function createFocusManager(): NapiFocusManager {
+  const fm = new native.NativeFocusManager();
+  return {
+    focus: (id) => fm.focus(id),
+    blur: (id) => fm.blur(id),
+    blurCurrent: () => fm.blurCurrent(),
+    focused: () => fm.focused(),
+    isFocused: (id) => fm.isFocused(id),
+    traverse: (dir) => {
+      const result = fm.traverse(dir);
+      return result === "null" ? 0 : Number.parseInt(result, 10);
+    },
+    focusOrder: () => fm.focusOrder(),
+  };
+}
+
+export function createTextEngine(text?: string): NapiTextEngine {
+  const te = new native.NativeTextEngine(text ?? null);
+  return {
+    insertChar: (ch) => te.insertChar(ch),
+    insertStr: (t) => te.insertStr(t),
+    deleteChar: () => te.deleteChar(),
+    cursorLeft: () => te.cursorLeft(),
+    cursorRight: () => te.cursorRight(),
+    getText: () => te.getText(),
+    cursorPosition: () => te.cursorPosition(),
+    length: () => te.length(),
+    canUndo: () => te.canUndo(),
+    canRedo: () => te.canRedo(),
+    undo: () => te.undo(),
+    redo: () => te.redo(),
+    clear: () => te.clear(),
+    setCursorPosition: (pos) => te.setCursorPosition(pos),
+  };
+}
+
+export function createScheduler(fps?: number): NapiScheduler {
+  const sched = new native.NativeScheduler(fps ?? null);
+  return {
+    requestFrame: () => sched.requestFrame(),
+    beginFrame: () => sched.beginFrame(),
+    endFrame: () => sched.endFrame(),
+    shouldRender: () => sched.shouldRender(),
+    isIdle: () => sched.isIdle(),
+    frameCount: () => sched.frameCount(),
+    fps: () => sched.fps(),
+  };
+}
+
+export function createKeymap(): NapiKeymap {
+  const km = new native.NativeKeymap();
+  return {
+    addBinding: (layer, id, keys, command, desc, priority) =>
+      km.addBinding(layer, id, keys, command, desc, priority),
+    setMode: (mode) => km.setMode(mode),
+    currentMode: () => km.currentMode(),
+    handleKey: (key) => km.handleKey(key),
+    hasPending: () => km.hasPending(),
+    clearPending: () => km.clearPending(),
+  };
+}
+
+export function detectCapabilities(): TerminalCapabilities {
+  return native.detectCapabilities();
+}
+
+export function getVersion(): string {
+  return native.getVersion();
+}
+
+export function getNativePackageName(): string {
+  return "bettertui_engine";
+}
+
+export interface HighlightSegment {
+  text: string;
+  fg: string | null;
+  bg: string | null;
+  bold: boolean | null;
+  italic: boolean | null;
+  underline: boolean | null;
+  dim: boolean | null;
+  strikethrough: boolean | null;
+}
+
+export function highlightCode(_code: string, _language: string): HighlightSegment[][] {
+  return [];
+}
+
+export interface NapiTheme {
+  name: string;
+  colors: Record<string, string>;
+  spacing: Record<string, number>;
+}
+
+export function createDefaultTheme(): NapiTheme {
+  return {
+    name: "default",
+    colors: {},
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export function createDarkTheme(): NapiTheme {
+  return {
+    name: "dark",
+    colors: {
+      background: "#1e1e2e",
+      surface: "#313244",
+      primary: "#cba6f7",
+      text: "#cdd6f4",
+    },
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export function createLightTheme(): NapiTheme {
+  return {
+    name: "light",
+    colors: {
+      background: "#eff1f5",
+      surface: "#e6e9ef",
+      primary: "#8839ef",
+      text: "#4c4f69",
+    },
+    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  };
+}
+
+export interface NapiWidgetHost {
+  widgetCount(): number;
+}
+
+export function createWidgetHost(): NapiWidgetHost {
+  return {
+    widgetCount: () => 0,
+  };
+}

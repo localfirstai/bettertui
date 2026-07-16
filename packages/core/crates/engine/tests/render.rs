@@ -2,13 +2,13 @@
 
 use bettertui_engine::dirty_diff::DirtyRegion;
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use bettertui_engine::layout::{LayoutEngine, PaintContext, Sizing, build_render_tree};
 use bettertui_engine::render::effects::ColorMatrixPass;
 use bettertui_engine::render::effects::INVERT_MATRIX;
 use bettertui_engine::render::{
-    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderObject, RenderPass,
-    RenderPassContext, RenderPipeline, RenderTree, Renderer,
+    AnsiBackend, PassPriority, PassResult, RenderBackend, RenderObject, RenderPass, RenderPassContext, RenderPipeline,
+    RenderTree, Renderer,
 };
+use bettertui_engine::taffy::{LayoutEngine, PaintContext, Sizing, build_render_tree};
 use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, RenderNode};
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -107,14 +107,8 @@ fn ansi_backend_run_length_coalescing() {
     assert!(s.contains("ABC"), "characters should be batched");
     // Count SGR sequences: should be 1 (shared for the run) not 3 (per-cell)
     let sgr_sequences = s.matches("\x1b[38").count(); // 38 = fg params typically
-    assert!(
-        sgr_sequences <= 1,
-        "should have at most 1 fg SGR for same-styled chars"
-    );
-    assert!(
-        s.contains("ABC"),
-        "characters should appear as a contiguous batch"
-    );
+    assert!(sgr_sequences <= 1, "should have at most 1 fg SGR for same-styled chars");
+    assert!(s.contains("ABC"), "characters should appear as a contiguous batch");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -450,24 +444,14 @@ fn pipeline_new() {
 #[test]
 fn pipeline_add_pass() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: false,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: false }));
     assert_eq!(p.len(), 1);
 }
 
 #[test]
 fn pipeline_get_pass() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: false,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: false }));
     assert!(p.get_pass("test").is_some());
     assert!(p.get_pass("nonexistent").is_none());
 }
@@ -475,12 +459,7 @@ fn pipeline_get_pass() {
 #[test]
 fn pipeline_execute_unmodified() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: false,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: false }));
     let mut fb = FrameBuffer::new(10, 10);
     let ctx = RenderPassContext::new(10, 10);
     assert_eq!(p.execute(&mut fb, &ctx), PassResult::Unchanged);
@@ -489,12 +468,7 @@ fn pipeline_execute_unmodified() {
 #[test]
 fn pipeline_execute_modified() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: true,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: true }));
     let mut fb = FrameBuffer::new(10, 10);
     let ctx = RenderPassContext::new(10, 10);
     assert_eq!(p.execute(&mut fb, &ctx), PassResult::Modified);
@@ -503,12 +477,7 @@ fn pipeline_execute_modified() {
 #[test]
 fn pipeline_disabled() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: true,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: true }));
     p.set_enabled(false);
     let mut fb = FrameBuffer::new(10, 10);
     let ctx = RenderPassContext::new(10, 10);
@@ -518,12 +487,7 @@ fn pipeline_disabled() {
 #[test]
 fn pipeline_pass_disabled() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: false,
-        priority: PassPriority::Normal,
-        modify: true,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: false, priority: PassPriority::Normal, modify: true }));
     let mut fb = FrameBuffer::new(10, 10);
     let ctx = RenderPassContext::new(10, 10);
     assert_eq!(p.execute(&mut fb, &ctx), PassResult::Unchanged);
@@ -532,18 +496,8 @@ fn pipeline_pass_disabled() {
 #[test]
 fn pipeline_priority_ordering() {
     let mut p = RenderPipeline::new();
-    let last = TestPass {
-        name: "last",
-        enabled: true,
-        priority: PassPriority::Last,
-        modify: false,
-    };
-    let first = TestPass {
-        name: "first",
-        enabled: true,
-        priority: PassPriority::First,
-        modify: false,
-    };
+    let last = TestPass { name: "last", enabled: true, priority: PassPriority::Last, modify: false };
+    let first = TestPass { name: "first", enabled: true, priority: PassPriority::First, modify: false };
     p.add_pass(Box::new(last));
     // Should still be ordered by priority after resort
     assert_eq!(p.passes()[0].priority(), PassPriority::Last);
@@ -556,12 +510,7 @@ fn pipeline_priority_ordering() {
 #[test]
 fn pipeline_remove_pass() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: false,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: false }));
     assert_eq!(p.len(), 1);
     p.remove_pass("test");
     assert!(p.is_empty());
@@ -570,12 +519,7 @@ fn pipeline_remove_pass() {
 #[test]
 fn pipeline_priority_get_pass_mut() {
     let mut p = RenderPipeline::new();
-    p.add_pass(Box::new(TestPass {
-        name: "test",
-        enabled: true,
-        priority: PassPriority::Normal,
-        modify: false,
-    }));
+    p.add_pass(Box::new(TestPass { name: "test", enabled: true, priority: PassPriority::Normal, modify: false }));
     {
         let pass = p.get_pass_mut("test").unwrap();
         pass.set_enabled(false);
@@ -647,10 +591,7 @@ fn renderer_frame_suppression() {
     assert!(!frame1.is_empty(), "first render should produce output");
     // Second render with no changes should be suppressed
     let frame2 = r.render(&mut arena);
-    assert!(
-        frame2.is_empty(),
-        "second render with no changes should be suppressed"
-    );
+    assert!(frame2.is_empty(), "second render with no changes should be suppressed");
 }
 
 #[test]
@@ -661,10 +602,7 @@ fn renderer_frame_suppression_released_on_change() {
     let _ = r.render(&mut arena);
     // Second render suppressed (no changes)
     let frame2 = r.render(&mut arena);
-    assert!(
-        frame2.is_empty(),
-        "second render with no changes should be suppressed"
-    );
+    assert!(frame2.is_empty(), "second render with no changes should be suppressed");
     // Mutate the arena to release suppression
     arena.mark_changed();
     // Third render should proceed (change_count check passes)
@@ -672,10 +610,7 @@ fn renderer_frame_suppression_released_on_change() {
     // After mutation, render proceeds - verify it doesn't early-return
     // by checking that last_change_count was updated
     let frame4 = r.render(&mut arena);
-    assert!(
-        frame4.is_empty(),
-        "fourth render with no new changes should be suppressed"
-    );
+    assert!(frame4.is_empty(), "fourth render with no new changes should be suppressed");
 }
 
 #[test]
@@ -729,10 +664,7 @@ fn renderer_viewport_culling_pipeline() {
     arena.mark_changed();
     let frame2 = r.render(&mut arena);
     // Content visually unchanged, so dirty regions should be empty
-    assert!(
-        frame2.dirty_regions.is_empty(),
-        "unchanged content should have no dirty regions"
-    );
+    assert!(frame2.dirty_regions.is_empty(), "unchanged content should have no dirty regions");
 
     // Render again — verify frame suppression
     let frame3 = r.render(&mut arena);
@@ -755,11 +687,7 @@ fn renderer_stress_large_tree_partial_visible() {
     let frame = r.render(&mut arena);
     assert!(!frame.is_empty());
     let tree = r.render_tree();
-    assert!(
-        tree.len() < 200,
-        "stress: large tree should be pruned, len={}",
-        tree.len()
-    );
+    assert!(tree.len() < 200, "stress: large tree should be pruned, len={}", tree.len());
 }
 
 #[test]
@@ -793,11 +721,7 @@ fn renderer_stress_nested_scroll() {
     let tree = r.render_tree();
     // With 80x24 viewport and 80x20 scroll container + 1000 children at 1px each,
     // culling should reduce tree. Exact count depends on layout direction.
-    assert!(
-        !tree.is_empty() && tree.len() < 1000,
-        "nested scroll should cull (len={})",
-        tree.len()
-    );
+    assert!(!tree.is_empty() && tree.len() < 1000, "nested scroll should cull (len={})", tree.len());
 }
 
 // Post-Processing Pipeline Integration Tests
@@ -807,11 +731,7 @@ fn make_arena_with_text() -> NodeArena {
     let child = arena.insert({
         let mut n = bettertui_engine::tree::RenderNode::new(NodeKind::Text);
         n.text = Some("Hello".into());
-        n.style.fg = Some(Color::Rgb {
-            r: 128,
-            g: 128,
-            b: 128,
-        });
+        n.style.fg = Some(Color::Rgb { r: 128, g: 128, b: 128 });
         n.layout.width = Some(Sizing::Points(10.0));
         n.layout.height = Some(Sizing::Points(1.0));
         n
@@ -836,22 +756,14 @@ fn renderer_pipeline_passthrough_empty() {
 #[test]
 fn renderer_pipeline_modifies_output() {
     let mut r = Renderer::new(40, 10);
-    r.pipeline_mut()
-        .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+    r.pipeline_mut().add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
     let mut arena = make_arena_with_text();
     let frame = r.render(&mut arena);
     assert!(!frame.is_empty());
     let cell = r.framebuffer().get(0, 0);
     assert_eq!(cell.ch, 'H');
     // 128 inverts to 126 via float math: (-128/255 + 1) * 255 = 126.999... → 126
-    assert_eq!(
-        cell.fg,
-        Color::Rgb {
-            r: 126,
-            g: 126,
-            b: 126
-        }
-    );
+    assert_eq!(cell.fg, Color::Rgb { r: 126, g: 126, b: 126 });
 }
 
 #[test]
@@ -862,42 +774,26 @@ fn renderer_pipeline_passthrough_no_modify() {
     let frame = r.render(&mut arena);
     assert!(!frame.is_empty());
     let cell = r.framebuffer().get(0, 0);
-    assert_eq!(
-        cell.fg,
-        Color::Rgb {
-            r: 128,
-            g: 128,
-            b: 128
-        }
-    );
+    assert_eq!(cell.fg, Color::Rgb { r: 128, g: 128, b: 128 });
 }
 
 #[test]
 fn renderer_pipeline_disabled_no_modify() {
     let mut r = Renderer::new(40, 10);
-    r.pipeline_mut()
-        .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+    r.pipeline_mut().add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
     r.pipeline_mut().set_enabled(false);
     let mut arena = make_arena_with_text();
     let frame = r.render(&mut arena);
     assert!(!frame.output_data.is_empty());
     // Buffer unchanged
     let cell = r.framebuffer().get(0, 0);
-    assert_eq!(
-        cell.fg,
-        Color::Rgb {
-            r: 128,
-            g: 128,
-            b: 128
-        }
-    );
+    assert_eq!(cell.fg, Color::Rgb { r: 128, g: 128, b: 128 });
 }
 
 #[test]
 fn renderer_pipeline_get_pass_mut() {
     let mut r = Renderer::new(40, 10);
-    r.pipeline_mut()
-        .add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
+    r.pipeline_mut().add_pass(Box::new(ColorMatrixPass::new(INVERT_MATRIX)));
     {
         let pass = r.pipeline_mut().get_pass_mut("color_matrix").unwrap();
         pass.set_enabled(false);

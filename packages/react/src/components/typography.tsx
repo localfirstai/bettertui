@@ -1,15 +1,9 @@
+import type { CodeOptions, TextOptions } from "@bettertui/core";
 import { createElement } from "react";
 import type { JSX, ReactNode } from "react";
 
-export interface TextProps {
+export interface TextProps extends TextOptions {
   children?: ReactNode;
-  bold?: boolean | undefined;
-  italic?: boolean | undefined;
-  underline?: boolean | undefined;
-  dim?: boolean | undefined;
-  strikethrough?: boolean | undefined;
-  color?: string | undefined;
-  bgColor?: string | undefined;
   style?: Record<string, unknown> | undefined;
 }
 
@@ -18,50 +12,29 @@ export function Text(props: TextProps): JSX.Element {
   return createElement("Text", { style: userStyle, ...rest }, children);
 }
 
+export interface CodeProps extends CodeOptions {
+  children?: ReactNode;
+  style?: Record<string, unknown> | undefined;
+}
+
+export function Code({ children, style, ...rest }: CodeProps): JSX.Element {
+  return createElement("Code", { style: { bg: "bright_black", ...style }, ...rest }, children);
+}
+
 export interface HeadingProps {
   children?: ReactNode;
   level?: 1 | 2 | 3 | 4 | 5 | 6;
   style?: Record<string, unknown> | undefined;
 }
 
-export function Heading(props: HeadingProps): JSX.Element {
-  const { children, style: userStyle, ...rest } = props;
-  const mergedStyle = { textAlign: "center" as const, ...userStyle };
-  return createElement("Heading", { style: mergedStyle, ...rest }, children);
-}
-
-export interface LabelProps {
-  children?: ReactNode;
-  htmlFor?: string;
-  style?: Record<string, unknown> | undefined;
-}
-
-export function Label(props: LabelProps): JSX.Element {
-  const { children, style: userStyle, ...rest } = props;
-  return createElement("Label", { style: userStyle, ...rest }, children);
-}
-
-export interface CodeProps {
-  children?: ReactNode;
-  inline?: boolean;
-  language?: string;
-  style?: Record<string, unknown> | undefined;
-}
-
-export function Code({ children, style, ...rest }: CodeProps): JSX.Element {
-  return createElement(
-    "Text",
-    { style: { bg: "bright_black", ...style }, ...rest },
-    ` ${children} `,
-  );
-}
-
-export interface BlockquoteProps {
-  children?: ReactNode;
-  style?: Record<string, unknown> | undefined;
-}
-
-export function Blockquote(props: BlockquoteProps): JSX.Element {
-  const { children, style: userStyle, ...rest } = props;
-  return createElement("Blockquote", { style: userStyle, ...rest }, children);
+export function Heading({ children, level = 1, style }: HeadingProps): JSX.Element {
+  const styles: Record<number, { bold?: boolean; underline?: boolean }> = {
+    1: { bold: true },
+    2: { bold: true },
+    3: { bold: true },
+    4: { bold: true },
+    5: { bold: true },
+    6: { bold: true, underline: true },
+  };
+  return createElement("Text", { style: { ...styles[level], ...style } }, children);
 }

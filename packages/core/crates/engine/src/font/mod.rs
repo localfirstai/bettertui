@@ -9,10 +9,12 @@ mod builtin {
 }
 
 pub use ascii::AsciiFontLayout;
-pub use ascii::AsciiFontRenderOutput;
 pub use ascii::AsciiFontSegment;
 pub use ascii::FONT_NAMES;
-pub use ascii::{get_character_positions, layout_text, measure_text};
+pub use ascii::{
+    coordinate_to_character_index, get_character_positions, layout_text, measure_text, render_font_to_frame_buffer,
+    render_text,
+};
 pub use loader::BundledFont;
 pub use loader::FontMetadata;
 pub use metrics::FontMetrics;

@@ -6,10 +6,7 @@ pub struct SelectionRange {
 
 impl SelectionRange {
     pub fn new(start: usize, end: usize) -> Self {
-        Self {
-            start: start.min(end),
-            end: start.max(end),
-        }
+        Self { start: start.min(end), end: start.max(end) }
     }
 
     pub fn contains(&self, pos: usize) -> bool {
@@ -40,11 +37,7 @@ impl Default for Selection {
 
 impl Selection {
     pub fn new() -> Self {
-        Self {
-            active: None,
-            anchor: None,
-            selecting: false,
-        }
+        Self { active: None, anchor: None, selecting: false }
     }
 
     pub fn start(&mut self, anchor: usize) {
@@ -98,8 +91,7 @@ impl Selection {
     }
 
     pub fn selected_text(&self, text: &str) -> Option<String> {
-        self.active
-            .map(|range| text[range.start..range.end].to_string())
+        self.active.map(|range| text[range.start..range.end].to_string())
     }
 }
 
@@ -188,9 +180,6 @@ mod tests {
         let mut selection = Selection::new();
         selection.start(0);
         selection.update(5);
-        assert_eq!(
-            selection.selected_text("hello world"),
-            Some("hello".to_string())
-        );
+        assert_eq!(selection.selected_text("hello world"), Some("hello".to_string()));
     }
 }

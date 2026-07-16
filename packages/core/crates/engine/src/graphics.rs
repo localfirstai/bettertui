@@ -30,12 +30,7 @@ pub struct Rect {
 
 impl Rect {
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     /// Returns `true` if `point` is inside this rectangle.
@@ -186,30 +181,13 @@ impl<'a> GraphicsContext<'a> {
             return;
         }
         self.draw_hline(rect.x, rect.y, rect.width, '-', style);
-        self.draw_hline(
-            rect.x,
-            rect.y.saturating_add(rect.height - 1),
-            rect.width,
-            '-',
-            style,
-        );
+        self.draw_hline(rect.x, rect.y.saturating_add(rect.height - 1), rect.width, '-', style);
         self.draw_vline(rect.x, rect.y, rect.height, '|', style);
-        self.draw_vline(
-            rect.x.saturating_add(rect.width - 1),
-            rect.y,
-            rect.height,
-            '|',
-            style,
-        );
+        self.draw_vline(rect.x.saturating_add(rect.width - 1), rect.y, rect.height, '|', style);
         self.draw_char(rect.x, rect.y, '+', style);
         self.draw_char(rect.x.saturating_add(rect.width - 1), rect.y, '+', style);
         self.draw_char(rect.x, rect.y.saturating_add(rect.height - 1), '+', style);
-        self.draw_char(
-            rect.x.saturating_add(rect.width - 1),
-            rect.y.saturating_add(rect.height - 1),
-            '+',
-            style,
-        );
+        self.draw_char(rect.x.saturating_add(rect.width - 1), rect.y.saturating_add(rect.height - 1), '+', style);
     }
 
     /// Fills a rectangle with the given character.
@@ -230,27 +208,10 @@ impl<'a> GraphicsContext<'a> {
         self.draw_hline(rect.x + 1, rect.y, rect.width - 2, '\u{2500}', style);
         self.draw_char(rect.x + rect.width - 1, rect.y, '\u{2510}', style);
         self.draw_char(rect.x, rect.y + rect.height - 1, '\u{2514}', style);
-        self.draw_hline(
-            rect.x + 1,
-            rect.y + rect.height - 1,
-            rect.width - 2,
-            '\u{2500}',
-            style,
-        );
-        self.draw_char(
-            rect.x + rect.width - 1,
-            rect.y + rect.height - 1,
-            '\u{2518}',
-            style,
-        );
+        self.draw_hline(rect.x + 1, rect.y + rect.height - 1, rect.width - 2, '\u{2500}', style);
+        self.draw_char(rect.x + rect.width - 1, rect.y + rect.height - 1, '\u{2518}', style);
         self.draw_vline(rect.x, rect.y + 1, rect.height - 2, '\u{2502}', style);
-        self.draw_vline(
-            rect.x + rect.width - 1,
-            rect.y + 1,
-            rect.height - 2,
-            '\u{2502}',
-            style,
-        );
+        self.draw_vline(rect.x + rect.width - 1, rect.y + 1, rect.height - 2, '\u{2502}', style);
     }
 
     /// Returns a reference to the underlying buffer.

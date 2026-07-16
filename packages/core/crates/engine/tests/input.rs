@@ -40,10 +40,7 @@ fn input_runtime_with_focus_events() {
 #[test]
 fn input_runtime_push_poll_event() {
     let mut runtime = InputRuntime::new();
-    let event = InputEvent {
-        event_type: InputEventType::Resize(80, 24),
-        timestamp: 0,
-    };
+    let event = InputEvent { event_type: InputEventType::Resize(80, 24), timestamp: 0 };
     runtime.push_event(event);
     assert!(!runtime.events().is_empty());
     let polled = runtime.poll_event();
@@ -78,10 +75,7 @@ fn input_runtime_handle_clipboard_input() {
 #[test]
 fn input_runtime_clear() {
     let mut runtime = InputRuntime::new();
-    let event = InputEvent {
-        event_type: InputEventType::Resize(80, 24),
-        timestamp: 0,
-    };
+    let event = InputEvent { event_type: InputEventType::Resize(80, 24), timestamp: 0 };
     runtime.push_event(event);
     runtime.clear();
     assert!(runtime.events().is_empty());

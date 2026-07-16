@@ -3,11 +3,13 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use tracing::{debug, info};
+
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
-use crate::layout::build_render_tree_with_viewport;
-use crate::layout::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
 use crate::scheduler::{FrameStatus, Scheduler};
+use crate::taffy::build_render_tree_with_viewport;
+use crate::taffy::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
 use crate::text::{TextAlign, ViewportConfig, layout_text};
 use crate::tree::NodeArena;
 use crate::tree::{Color, NamedColor, NodeId, Overflow, Rect, ResolvedStyle};
@@ -16,10 +18,11 @@ use crate::tree::{Color, NamedColor, NodeId, Overflow, Rect, ResolvedStyle};
 // === backend.rs ===
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub trait RenderBackend {
+pub trait RenderBackend: Send {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]);
     fn finish(&self) -> &[u8];
     fn reset(&mut self);
+    fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -40,11 +43,7 @@ impl Default for AnsiBackend {
 
 impl AnsiBackend {
     pub fn new() -> Self {
-        Self {
-            buffer: Vec::with_capacity(4096),
-            cursor_x: u16::MAX,
-            cursor_y: u16::MAX,
-        }
+        Self { buffer: Vec::with_capacity(4096), cursor_x: u16::MAX, cursor_y: u16::MAX }
     }
 
     fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
@@ -59,10 +58,7 @@ impl AnsiBackend {
                 x += 1;
                 while x < region.x + region.width {
                     let next = buffer.get(x, y);
-                    if next.fg == cell.fg
-                        && next.bg == cell.bg
-                        && next.attributes == cell.attributes
-                    {
+                    if next.fg == cell.fg && next.bg == cell.bg && next.attributes == cell.attributes {
                         x += 1;
                     } else {
                         break;
@@ -280,11 +276,13 @@ impl RenderBackend for AnsiBackend {
 
         self.hide_cursor();
 
+        // Reset all SGR attributes at frame start so stale state (e.g. DIM left
+        // active by a previous screen) cannot bleed into this frame's cells.
+        self.reset_sgr();
+
         for region in regions {
             self.encode_region(buffer, region);
         }
-
-        self.show_cursor();
     }
 
     fn finish(&self) -> &[u8] {
@@ -293,6 +291,15 @@ impl RenderBackend for AnsiBackend {
 
     fn reset(&mut self) {
         self.buffer.clear();
+    }
+
+    fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool) {
+        self.move_to(x, y);
+        if visible {
+            self.show_cursor();
+        } else {
+            self.hide_cursor();
+        }
     }
 }
 
@@ -366,12 +373,58 @@ impl RenderObject {
     }
 }
 
+/// Render commands for structured rendering pipeline.
+///
+/// This enum matches OpenTUI's render command pattern, allowing
+/// proper stacking of scissor rects and opacity values.
+#[derive(Debug, Clone)]
+pub enum RenderCommand {
+    /// Render a renderable object
+    Render { object: RenderObject },
+    /// Push a scissor rect for clipping
+    PushScissorRect { x: u16, y: u16, width: u16, height: u16 },
+    /// Pop the top scissor rect
+    PopScissorRect,
+    /// Push an opacity value (multiplied with current)
+    PushOpacity { opacity: f32 },
+    /// Pop the top opacity value
+    PopOpacity,
+}
+
+impl RenderCommand {
+    pub fn render(obj: RenderObject) -> Self {
+        Self::Render { object: obj }
+    }
+
+    pub fn push_scissor(x: u16, y: u16, width: u16, height: u16) -> Self {
+        Self::PushScissorRect { x, y, width, height }
+    }
+
+    pub fn pop_scissor() -> Self {
+        Self::PopScissorRect
+    }
+
+    pub fn push_opacity(opacity: f32) -> Self {
+        Self::PushOpacity { opacity }
+    }
+
+    pub fn pop_opacity() -> Self {
+        Self::PopOpacity
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderTree {
     objects: Vec<RenderObject>,
     index: HashMap<NodeId, usize>,
     root: Option<NodeId>,
     sorted_cache: RefCell<Option<Vec<usize>>>,
+    /// Cached render commands for reuse.
+    cached_commands: RefCell<Option<Vec<RenderCommand>>>,
+    /// Layout generation when commands were cached.
+    cached_generation: RefCell<u64>,
+    /// Render list revision when commands were cached.
+    cached_revision: RefCell<u64>,
 }
 
 impl Default for RenderTree {
@@ -387,6 +440,9 @@ impl RenderTree {
             index: HashMap::new(),
             root: None,
             sorted_cache: RefCell::new(None),
+            cached_commands: RefCell::new(None),
+            cached_generation: RefCell::new(0),
+            cached_revision: RefCell::new(0),
         }
     }
 
@@ -405,10 +461,7 @@ impl RenderTree {
     }
 
     pub fn get_mut(&mut self, id: NodeId) -> Option<&mut RenderObject> {
-        self.index
-            .get(&id)
-            .copied()
-            .and_then(|idx| self.objects.get_mut(idx))
+        self.index.get(&id).copied().and_then(|idx| self.objects.get_mut(idx))
     }
 
     pub fn root(&self) -> Option<NodeId> {
@@ -455,6 +508,81 @@ impl RenderTree {
         self.index.clear();
         self.root = None;
         *self.sorted_cache.borrow_mut() = None;
+        *self.cached_commands.borrow_mut() = None;
+    }
+
+    /// Invalidate the cached commands (call when render tree changes).
+    pub fn invalidate_cache(&self) {
+        *self.cached_commands.borrow_mut() = None;
+    }
+
+    /// Collect render commands with caching.
+    ///
+    /// If generation and revision match the cached values, returns cached commands.
+    /// Otherwise, rebuilds commands and updates cache.
+    pub fn collect_commands_cached(&self, generation: u64, revision: u64) -> Vec<RenderCommand> {
+        let cached_gen = self.cached_generation.borrow();
+        let cached_rev = self.cached_revision.borrow();
+
+        if *cached_gen == generation
+            && *cached_rev == revision
+            && let Some(ref commands) = *self.cached_commands.borrow()
+        {
+            return commands.clone();
+        }
+
+        drop(cached_gen);
+        drop(cached_rev);
+
+        let commands = self.collect_commands();
+        *self.cached_commands.borrow_mut() = Some(commands.clone());
+        *self.cached_generation.borrow_mut() = generation;
+        *self.cached_revision.borrow_mut() = revision;
+        commands
+    }
+
+    /// Collect render commands with proper scissor/opacity stacking.
+    ///
+    /// This follows OpenTUI's pattern:
+    /// 1. Push opacity if < 1.0
+    /// 2. Push render command
+    /// 3. Push scissor rect if overflow !== visible
+    /// 4. Process children
+    /// 5. Pop scissor rect
+    /// 6. Pop opacity
+    pub fn collect_commands(&self) -> Vec<RenderCommand> {
+        let mut commands = Vec::with_capacity(self.objects.len() * 2);
+        let sorted = self.sorted_by_z_index();
+
+        for &idx in &sorted {
+            let obj = &self.objects[idx];
+            if !obj.is_visible() {
+                continue;
+            }
+
+            let needs_opacity = obj.opacity < 1.0;
+            let needs_scissor = obj.clip.is_some();
+
+            if needs_opacity {
+                commands.push(RenderCommand::push_opacity(obj.opacity));
+            }
+
+            commands.push(RenderCommand::render(obj.clone()));
+
+            if let Some(clip) = &obj.clip {
+                commands.push(RenderCommand::push_scissor(clip.x, clip.y, clip.width, clip.height));
+            }
+
+            if needs_scissor {
+                commands.push(RenderCommand::pop_scissor());
+            }
+
+            if needs_opacity {
+                commands.push(RenderCommand::pop_opacity());
+            }
+        }
+
+        commands
     }
 }
 
@@ -464,6 +592,8 @@ impl RenderTree {
 
 pub struct Painter {
     buffer: FrameBuffer,
+    opacity_stack: Vec<f32>,
+    scissor_stack: Vec<ClipBounds>,
 }
 
 impl Default for Painter {
@@ -476,6 +606,8 @@ impl Painter {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             buffer: FrameBuffer::new(width, height),
+            opacity_stack: Vec::with_capacity(8),
+            scissor_stack: Vec::with_capacity(8),
         }
     }
 
@@ -491,6 +623,48 @@ impl Painter {
         &mut self.buffer
     }
 
+    /// Get current effective opacity (product of all stacked values).
+    pub fn current_opacity(&self) -> f32 {
+        self.opacity_stack.last().copied().unwrap_or(1.0)
+    }
+
+    /// Push an opacity value onto the stack.
+    pub fn push_opacity(&mut self, opacity: f32) {
+        let current = self.current_opacity();
+        let effective = (current * opacity).clamp(0.0, 1.0);
+        self.opacity_stack.push(effective);
+    }
+
+    /// Pop an opacity value from the stack.
+    pub fn pop_opacity(&mut self) {
+        self.opacity_stack.pop();
+    }
+
+    /// Push a scissor rect onto the stack.
+    /// Intersects with current scissor if any.
+    pub fn push_scissor(&mut self, x: u16, y: u16, width: u16, height: u16) {
+        let new_clip = ClipBounds::new(x, y, width, height);
+        if let Some(current) = self.scissor_stack.last() {
+            if let Some(intersected) = current.intersect(&new_clip) {
+                self.scissor_stack.push(intersected);
+            } else {
+                self.scissor_stack.push(ClipBounds::new(0, 0, 0, 0));
+            }
+        } else {
+            self.scissor_stack.push(new_clip);
+        }
+    }
+
+    /// Pop a scissor rect from the stack.
+    pub fn pop_scissor(&mut self) {
+        self.scissor_stack.pop();
+    }
+
+    /// Get current scissor rect if any.
+    pub fn current_scissor(&self) -> Option<&ClipBounds> {
+        self.scissor_stack.last()
+    }
+
     pub fn paint(&mut self, tree: &RenderTree, ctx: &PaintContext) {
         self.paint_with_clear(tree, ctx, true);
     }
@@ -503,6 +677,66 @@ impl Painter {
         for idx in &sorted {
             let obj = &tree.objects()[*idx];
             self.paint_object(obj, ctx);
+        }
+    }
+
+    /// Paint from render commands with proper stacking.
+    pub fn paint_commands(&mut self, commands: &[RenderCommand], ctx: &PaintContext) {
+        self.buffer.clear();
+        self.opacity_stack.clear();
+        self.scissor_stack.clear();
+
+        for command in commands {
+            match command {
+                RenderCommand::Render { object } => {
+                    self.paint_object_with_scissor(object, ctx);
+                }
+                RenderCommand::PushScissorRect { x, y, width, height } => {
+                    self.push_scissor(*x, *y, *width, *height);
+                }
+                RenderCommand::PopScissorRect => {
+                    self.pop_scissor();
+                }
+                RenderCommand::PushOpacity { opacity } => {
+                    self.push_opacity(*opacity);
+                }
+                RenderCommand::PopOpacity => {
+                    self.pop_opacity();
+                }
+            }
+        }
+    }
+
+    fn paint_object_with_scissor(&mut self, obj: &RenderObject, ctx: &PaintContext) {
+        if !obj.is_visible() {
+            return;
+        }
+
+        let translated = obj.translated_bounds();
+        let bounds = &translated;
+
+        let effective_bounds = if let Some(scissor) = self.current_scissor() {
+            if let Some(intersected) =
+                scissor.intersect(&ClipBounds::new(bounds.x, bounds.y, bounds.width, bounds.height))
+            {
+                PaintBounds::new(intersected.x, intersected.y, intersected.width, intersected.height)
+                    .with_padding(bounds.padding_left, bounds.padding_right, bounds.padding_top, bounds.padding_bottom)
+                    .with_border(bounds.border_top, bounds.border_right, bounds.border_bottom, bounds.border_left)
+            } else {
+                return;
+            }
+        } else {
+            translated
+        };
+
+        if !ctx.is_visible(&effective_bounds) {
+            return;
+        }
+
+        if let Some(clipped) = ctx.clipped_bounds(&effective_bounds) {
+            self.paint_background(obj, &clipped);
+            self.paint_border(obj, &clipped);
+            self.paint_text(obj, &clipped);
         }
     }
 
@@ -546,11 +780,18 @@ impl Painter {
         }
 
         let cell = Cell::new(' ').with_bg(bg);
-        self.buffer
-            .fill_rect(bounds.x, bounds.y, bounds.width, bounds.height, cell);
+        self.buffer.fill_rect(bounds.x, bounds.y, bounds.width, bounds.height, cell);
     }
 
     fn paint_text(&mut self, obj: &RenderObject, bounds: &PaintBounds) {
+        // If node has a border, the text is used as the border title, so don't draw it inside
+        let has_border =
+            bounds.border_top > 0 || bounds.border_right > 0 || bounds.border_bottom > 0 || bounds.border_left > 0;
+
+        if has_border && obj.style.border_style != crate::tree::BorderStyle::None {
+            return;
+        }
+
         let text = match &obj.text {
             Some(t) => t.as_ref(),
             None => return,
@@ -583,8 +824,7 @@ impl Painter {
                 break;
             }
             let mut col = line.x;
-            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true)
-            {
+            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true) {
                 if col >= content.x + content.width {
                     break;
                 }
@@ -611,18 +851,13 @@ impl Painter {
             return;
         }
 
-        let has_border = bounds.border_top > 0
-            || bounds.border_right > 0
-            || bounds.border_bottom > 0
-            || bounds.border_left > 0;
+        let has_border =
+            bounds.border_top > 0 || bounds.border_right > 0 || bounds.border_bottom > 0 || bounds.border_left > 0;
         if !has_border {
             return;
         }
 
-        let fg = obj
-            .style
-            .border_color
-            .unwrap_or(obj.style.fg.unwrap_or(Color::Default));
+        let fg = obj.style.border_color.unwrap_or(obj.style.fg.unwrap_or(Color::Default));
         let bg = obj.style.bg.unwrap_or(Color::Default);
         let attrs = style_to_attrs(&obj.style);
 
@@ -656,6 +891,7 @@ impl Painter {
                     } else {
                         ' '
                     };
+
                     if col < self.buffer.width() && y + row < self.buffer.height() {
                         let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
                         self.buffer.set(x + col, y + row, cell);
@@ -802,13 +1038,7 @@ pub struct RenderPassContext {
 
 impl RenderPassContext {
     pub fn new(width: u16, height: u16) -> Self {
-        Self {
-            width,
-            height,
-            delta_time: 0.0,
-            frame_count: 0,
-            generation: 0,
-        }
+        Self { width, height, delta_time: 0.0, frame_count: 0, generation: 0 }
     }
 }
 
@@ -839,10 +1069,7 @@ impl Default for RenderPipeline {
 
 impl RenderPipeline {
     pub fn new() -> Self {
-        Self {
-            passes: Vec::new(),
-            enabled: true,
-        }
+        Self { passes: Vec::new(), enabled: true }
     }
 
     pub fn add_pass(&mut self, pass: Box<dyn RenderPass>) {
@@ -855,17 +1082,11 @@ impl RenderPipeline {
     }
 
     pub fn get_pass(&self, name: &str) -> Option<&dyn RenderPass> {
-        self.passes
-            .iter()
-            .find(|p| p.name() == name)
-            .map(|p| p.as_ref())
+        self.passes.iter().find(|p| p.name() == name).map(|p| p.as_ref())
     }
 
     pub fn get_pass_mut(&mut self, name: &str) -> Option<&mut dyn RenderPass> {
-        self.passes
-            .iter_mut()
-            .find(|p| p.name() == name)
-            .map(|p| p.as_mut() as &mut dyn RenderPass)
+        self.passes.iter_mut().find(|p| p.name() == name).map(|p| p.as_mut() as &mut dyn RenderPass)
     }
 
     pub fn enabled(&self) -> bool {
@@ -908,11 +1129,7 @@ impl RenderPipeline {
             }
         }
 
-        if any_modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if any_modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn resort(&mut self) {
@@ -943,17 +1160,19 @@ pub struct RenderFrame {
 
 impl RenderFrame {
     pub fn new_empty(width: u16, height: u16) -> Self {
-        Self {
-            output_data: Vec::new(),
-            dirty_regions: Vec::new(),
-            width,
-            height,
-        }
+        Self { output_data: Vec::new(), dirty_regions: Vec::new(), width, height }
     }
 
     pub fn is_empty(&self) -> bool {
         self.output_data.is_empty() && self.dirty_regions.is_empty()
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct CursorState {
+    pub x: u16,
+    pub y: u16,
+    pub visible: bool,
 }
 
 pub struct Renderer {
@@ -970,6 +1189,7 @@ pub struct Renderer {
     needs_full_repaint: bool,
     generation: u64,
     last_change_count: u64,
+    cursor_state: CursorState,
 }
 
 impl Default for Renderer {
@@ -980,6 +1200,7 @@ impl Default for Renderer {
 
 impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
+        info!(width, height, "Renderer::new() - creating renderer");
         Self {
             width,
             height,
@@ -994,10 +1215,12 @@ impl Renderer {
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
+            cursor_state: CursorState::default(),
         }
     }
 
     pub fn with_backend(width: u16, height: u16, backend: Box<dyn RenderBackend>) -> Self {
+        info!(width, height, "Renderer::with_backend() - creating renderer with custom backend");
         Self {
             width,
             height,
@@ -1012,22 +1235,37 @@ impl Renderer {
             needs_full_repaint: true,
             generation: 0,
             last_change_count: 0,
+            cursor_state: CursorState::default(),
         }
     }
 
     pub fn with_fps(fps: u32) -> Self {
-        Self {
-            scheduler: Scheduler::with_fps(fps),
-            ..Self::new(80, 24)
-        }
+        Self { scheduler: Scheduler::with_fps(fps), ..Self::new(80, 24) }
+    }
+
+    pub fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool) {
+        self.cursor_state = CursorState { x, y, visible };
+    }
+
+    pub fn cursor_state(&self) -> &CursorState {
+        &self.cursor_state
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
+        let old_w = self.width;
+        let old_h = self.height;
         self.width = width;
         self.height = height;
         self.painter.resize(width, height);
         self.snapshot.resize(width, height);
         self.needs_full_repaint = true;
+        debug!(
+            old_width = old_w,
+            old_height = old_h,
+            new_width = width,
+            new_height = height,
+            "Renderer::resize() - framebuffer resized"
+        );
     }
 
     pub fn request_frame(&mut self) {
@@ -1041,12 +1279,19 @@ impl Renderer {
     pub fn render(&mut self, arena: &mut NodeArena) -> RenderFrame {
         self.generation += 1;
 
-        // Frame suppression: if nothing changed and no full repaint needed, skip
         let change_count = arena.change_count();
         if !self.needs_full_repaint && change_count == self.last_change_count {
+            debug!(generation = self.generation, "Renderer::render() - skipping frame (no changes)");
             return RenderFrame::new_empty(self.width, self.height);
         }
         self.last_change_count = change_count;
+
+        debug!(
+            generation = self.generation,
+            node_count = arena.len(),
+            needs_full_repaint = self.needs_full_repaint,
+            "Renderer::render() - rendering frame"
+        );
 
         self.layout_sync.sync_full(arena);
 
@@ -1060,14 +1305,9 @@ impl Renderer {
         let _ = self.layout_sync.compute(root_id, self.width, self.height);
 
         let vp = Viewport::new(0, 0, self.width, self.height);
-        build_render_tree_with_viewport(
-            arena,
-            self.layout_sync.results(),
-            Some(&vp),
-            &mut self.render_tree,
-        );
+        build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp), &mut self.render_tree);
 
-        let ctx = crate::layout::PaintContext::new(self.width, self.height);
+        let ctx = crate::taffy::PaintContext::new(self.width, self.height);
         self.painter.paint(&self.render_tree, &ctx);
 
         // Post-processing: execute render passes on the painter's framebuffer
@@ -1082,28 +1322,35 @@ impl Renderer {
 
         let dirty_regions = if pp_result == PassResult::Modified {
             // Post-processing modified the buffer — re-diff from snapshot
-            self.dirty_diff
-                .compute(self.painter.buffer(), &self.snapshot, self.generation);
+            self.dirty_diff.compute(self.painter.buffer(), &self.snapshot, self.generation);
             self.dirty_diff.regions().to_vec()
         } else if self.needs_full_repaint {
-            self.dirty_diff
-                .compute_full_repaint(self.width, self.height);
+            self.dirty_diff.compute_full_repaint(self.width, self.height);
             self.needs_full_repaint = false;
             self.dirty_diff.regions().to_vec()
         } else {
-            self.dirty_diff
-                .compute(self.painter.buffer(), &self.snapshot, self.generation);
+            self.dirty_diff.compute(self.painter.buffer(), &self.snapshot, self.generation);
             self.dirty_diff.regions().to_vec()
         };
 
         self.backend.encode(self.painter.buffer(), &dirty_regions);
 
+        if self.cursor_state.visible {
+            self.backend.set_cursor_position(self.cursor_state.x, self.cursor_state.y, true);
+        }
+
         self.snapshot.copy_from(self.painter.buffer());
 
         self.scheduler.end_frame();
 
-        // Clear dirty flags so next frame only updates changed nodes
         arena.clear_dirty_flags();
+
+        debug!(
+            generation = self.generation,
+            dirty_region_count = dirty_regions.len(),
+            output_bytes = self.backend.finish().len(),
+            "Renderer::render() - frame complete"
+        );
 
         RenderFrame {
             output_data: self.backend.finish().to_vec(),
@@ -1152,5 +1399,124 @@ impl Renderer {
 
     pub fn pipeline_mut(&mut self) -> &mut RenderPipeline {
         &mut self.pipeline
+    }
+}
+
+#[cfg(test)]
+mod render_command_tests {
+    use super::*;
+
+    #[test]
+    fn render_command_variants() {
+        let obj = RenderObject::new(NodeId::default());
+        let cmd1 = RenderCommand::render(obj);
+        assert!(matches!(cmd1, RenderCommand::Render { .. }));
+
+        let cmd2 = RenderCommand::push_scissor(0, 0, 10, 10);
+        assert!(matches!(cmd2, RenderCommand::PushScissorRect { .. }));
+
+        let cmd3 = RenderCommand::pop_scissor();
+        assert!(matches!(cmd3, RenderCommand::PopScissorRect));
+
+        let cmd4 = RenderCommand::push_opacity(0.5);
+        assert!(matches!(cmd4, RenderCommand::PushOpacity { .. }));
+
+        let cmd5 = RenderCommand::pop_opacity();
+        assert!(matches!(cmd5, RenderCommand::PopOpacity));
+    }
+
+    #[test]
+    fn painter_opacity_stack() {
+        let mut painter = Painter::new(10, 10);
+
+        assert_eq!(painter.current_opacity(), 1.0);
+
+        painter.push_opacity(0.5);
+        assert_eq!(painter.current_opacity(), 0.5);
+
+        painter.push_opacity(0.5);
+        assert_eq!(painter.current_opacity(), 0.25);
+
+        painter.pop_opacity();
+        assert_eq!(painter.current_opacity(), 0.5);
+
+        painter.pop_opacity();
+        assert_eq!(painter.current_opacity(), 1.0);
+    }
+
+    #[test]
+    fn painter_scissor_stack() {
+        let mut painter = Painter::new(20, 20);
+
+        assert!(painter.current_scissor().is_none());
+
+        painter.push_scissor(0, 0, 10, 10);
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 0);
+        assert_eq!(clip.width, 10);
+
+        painter.push_scissor(5, 5, 10, 10);
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 5);
+        assert_eq!(clip.width, 5);
+
+        painter.pop_scissor();
+        let clip = painter.current_scissor().unwrap();
+        assert_eq!(clip.x, 0);
+
+        painter.pop_scissor();
+        assert!(painter.current_scissor().is_none());
+    }
+
+    #[test]
+    fn render_tree_collect_commands() {
+        let mut tree = RenderTree::new();
+
+        let mut obj1 = RenderObject::new(NodeId::default());
+        obj1.opacity = 0.8;
+        obj1.z_index = 1;
+        tree.push(obj1);
+
+        let mut obj2 = RenderObject::new(NodeId::default());
+        obj2.opacity = 1.0;
+        obj2.clip = Some(ClipBounds::new(0, 0, 10, 10));
+        obj2.z_index = 0;
+        tree.push(obj2);
+
+        let commands = tree.collect_commands();
+        assert!(!commands.is_empty());
+    }
+
+    #[test]
+    fn render_tree_command_caching() {
+        let mut tree = RenderTree::new();
+
+        let mut obj = RenderObject::new(NodeId::default());
+        obj.opacity = 0.8;
+        tree.push(obj);
+
+        let commands1 = tree.collect_commands_cached(1, 1);
+        let commands2 = tree.collect_commands_cached(1, 1);
+        assert_eq!(commands1.len(), commands2.len());
+
+        let commands3 = tree.collect_commands_cached(2, 1);
+        assert!(!commands3.is_empty());
+
+        let commands4 = tree.collect_commands_cached(2, 2);
+        assert!(!commands4.is_empty());
+    }
+
+    #[test]
+    fn render_tree_invalidate_cache() {
+        let mut tree = RenderTree::new();
+
+        let obj = RenderObject::new(NodeId::default());
+        tree.push(obj);
+
+        let _ = tree.collect_commands_cached(1, 1);
+        tree.invalidate_cache();
+
+        let commands = tree.collect_commands_cached(1, 1);
+        assert!(!commands.is_empty());
     }
 }

@@ -329,19 +329,13 @@ fn csi_cursor_up() {
 #[test]
 fn csi_cursor_down() {
     let cmd = CsiCommand::parse(b'B', &[3], &[]);
-    assert_eq!(
-        cmd,
-        Some(CsiCommand::CursorMovement(CursorMovement::Down(3)))
-    );
+    assert_eq!(cmd, Some(CsiCommand::CursorMovement(CursorMovement::Down(3))));
 }
 
 #[test]
 fn csi_cursor_position() {
     let cmd = CsiCommand::parse(b'H', &[10, 20], &[]);
-    assert_eq!(
-        cmd,
-        Some(CsiCommand::CursorMovement(CursorMovement::Position(10, 20)))
-    );
+    assert_eq!(cmd, Some(CsiCommand::CursorMovement(CursorMovement::Position(10, 20))));
 }
 
 #[test]
@@ -371,10 +365,7 @@ fn csi_sgr_reset() {
 #[test]
 fn csi_device_status() {
     let cmd = CsiCommand::parse(b'n', &[6], &[]);
-    assert_eq!(
-        cmd,
-        Some(CsiCommand::DeviceStatus(DeviceStatus::ReportCursorPosition))
-    );
+    assert_eq!(cmd, Some(CsiCommand::DeviceStatus(DeviceStatus::ReportCursorPosition)));
 }
 
 #[test]
@@ -431,23 +422,14 @@ fn osc_set_clipboard() {
     let cmd = OscCommand::parse(b"52;c;SGVsbG8=");
     assert!(matches!(
         cmd,
-        Some(OscCommand::SetClipboard(ClipboardData {
-            selection: ClipboardSelection::Clipboard,
-            ..
-        }))
+        Some(OscCommand::SetClipboard(ClipboardData { selection: ClipboardSelection::Clipboard, .. }))
     ));
 }
 
 #[test]
 fn osc_set_hyperlink() {
     let cmd = OscCommand::parse(b"8;;https://example.com");
-    assert_eq!(
-        cmd,
-        Some(OscCommand::SetHyperlink(Hyperlink {
-            id: None,
-            uri: "https://example.com".to_string(),
-        }))
-    );
+    assert_eq!(cmd, Some(OscCommand::SetHyperlink(Hyperlink { id: None, uri: "https://example.com".to_string() })));
 }
 
 #[test]

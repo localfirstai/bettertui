@@ -3,14 +3,15 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
+    napi_build::setup();
+
     println!("cargo::rerun-if-changed=fonts/glyphnames.json");
 
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let json_path = Path::new(&manifest_dir).join("fonts/glyphnames.json");
     let json_data = fs::read_to_string(&json_path).expect("Failed to read glyphnames.json");
 
-    let raw: serde_json::Value =
-        serde_json::from_str(&json_data).expect("Failed to parse glyphnames.json");
+    let raw: serde_json::Value = serde_json::from_str(&json_data).expect("Failed to parse glyphnames.json");
 
     let mut icons: Vec<(u32, String, String)> = Vec::new();
     let mut unknown_names: Vec<String> = Vec::new();
@@ -55,10 +56,7 @@ fn main() {
     output.push_str("    pub category: &'static str,\n");
     output.push_str("}\n\n");
     output.push_str("#[allow(dead_code)]\n");
-    output.push_str(&format!(
-        "pub(crate) const BUILTIN_ICON_COUNT: usize = {};\n\n",
-        icons.len()
-    ));
+    output.push_str(&format!("pub(crate) const BUILTIN_ICON_COUNT: usize = {};\n\n", icons.len()));
     output.push_str("#[allow(dead_code)]\n");
     output.push_str("pub(crate) static BUILTIN_ICONS: &[BuiltinIcon] = &[\n");
 
@@ -73,7 +71,6 @@ fn main() {
 
     output.push_str("];\n");
 
-    // Also generate a sorted list of codepoints for binary search
     output.push_str("\n#[allow(dead_code)]\n");
     output.push_str("pub(crate) static BUILTIN_CODEPOINTS: &[u32] = &[\n");
     for (cp, _, _) in &icons {
@@ -84,19 +81,12 @@ fn main() {
     fs::write(&out_path, &output).expect("Failed to write builtin.rs");
 
     let icon_count = icons.len();
-    println!(
-        "cargo::warning=Generated {} built-in NerdFont icon entries",
-        icon_count
-    );
+    println!("cargo::warning=Generated {} built-in NerdFont icon entries", icon_count);
 }
 
 fn classify_icon(key: &str) -> (String, String) {
     let parts: Vec<&str> = key.splitn(2, '-').collect();
-    let category = if parts.len() >= 2 {
-        parts[0].to_string()
-    } else {
-        "unknown".to_string()
-    };
+    let category = if parts.len() >= 2 { parts[0].to_string() } else { "unknown".to_string() };
 
     (key.to_string(), category)
 }

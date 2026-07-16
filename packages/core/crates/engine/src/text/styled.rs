@@ -10,17 +10,11 @@ pub struct StyledSpan {
 
 impl StyledSpan {
     pub fn new(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            style: Style::default(),
-        }
+        Self { text: text.into(), style: Style::default() }
     }
 
     pub fn styled(text: impl Into<String>, style: Style) -> Self {
-        Self {
-            text: text.into(),
-            style,
-        }
+        Self { text: text.into(), style }
     }
 
     pub fn display_width(&self) -> usize {
@@ -39,9 +33,7 @@ impl StyledText {
     }
 
     pub fn with_capacity(cap: usize) -> Self {
-        Self {
-            spans: Vec::with_capacity(cap),
-        }
+        Self { spans: Vec::with_capacity(cap) }
     }
 
     pub fn push(&mut self, span: StyledSpan) {
@@ -120,11 +112,8 @@ impl StyledText {
             } else {
                 let split_point = byte_offset - pos;
                 let (l, r) = span.text.split_at(split_point);
-                left.spans
-                    .push(StyledSpan::styled(l.to_string(), span.style));
-                right
-                    .spans
-                    .push(StyledSpan::styled(r.to_string(), span.style));
+                left.spans.push(StyledSpan::styled(l.to_string(), span.style));
+                right.spans.push(StyledSpan::styled(r.to_string(), span.style));
             }
             pos = span_end;
         }
@@ -191,10 +180,7 @@ mod tests {
 
     #[test]
     fn styled_span_styled() {
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         let span = StyledSpan::styled("bold", style);
         assert!(span.style.bold.unwrap());
     }
@@ -211,13 +197,7 @@ mod tests {
     #[test]
     fn styled_string_push_no_merge_different_style() {
         let mut ss = StyledText::new();
-        ss.push_styled(
-            "bold",
-            Style {
-                bold: Some(true),
-                ..Style::default()
-            },
-        );
+        ss.push_styled("bold", Style { bold: Some(true), ..Style::default() });
         ss.push_text("normal");
         assert_eq!(ss.spans.len(), 2);
     }
@@ -225,13 +205,7 @@ mod tests {
     #[test]
     fn styled_string_plain_text() {
         let mut ss = StyledText::new();
-        ss.push_styled(
-            "hello",
-            Style {
-                fg: Some(Color::Named(NamedColor::Red)),
-                ..Style::default()
-            },
-        );
+        ss.push_styled("hello", Style { fg: Some(Color::Named(NamedColor::Red)), ..Style::default() });
         ss.push_text(" world");
         assert_eq!(ss.plain_text(), "hello world");
     }
@@ -253,18 +227,9 @@ mod tests {
     #[test]
     fn styled_string_merge_adjacent() {
         let mut ss = StyledText::new();
-        let style = Style {
-            bold: Some(true),
-            ..Style::default()
-        };
+        let style = Style { bold: Some(true), ..Style::default() };
         ss.push_styled("hello", style);
-        ss.push_styled(
-            " world",
-            Style {
-                bold: Some(true),
-                ..Style::default()
-            },
-        );
+        ss.push_styled(" world", Style { bold: Some(true), ..Style::default() });
         ss.merge_adjacent_with_same_style();
         assert_eq!(ss.spans.len(), 1);
         assert_eq!(ss.plain_text(), "hello world");
@@ -273,13 +238,7 @@ mod tests {
     #[test]
     fn styled_string_split_at() {
         let mut ss = StyledText::new();
-        ss.push_styled(
-            "hello",
-            Style {
-                bold: Some(true),
-                ..Style::default()
-            },
-        );
+        ss.push_styled("hello", Style { bold: Some(true), ..Style::default() });
         ss.push_text(" world");
         let (left, right) = ss.split_at(5);
         assert_eq!(left.plain_text(), "hello");

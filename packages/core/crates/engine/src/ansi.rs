@@ -5,6 +5,7 @@ use std::collections::VecDeque;
 use crate::dirty_diff::DirtyRegion;
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use crate::tree::{Color, NamedColor};
+use tracing::trace;
 
 // === encoder.rs ===
 
@@ -18,15 +19,23 @@ impl Default for AnsiEncoder {
     }
 }
 
+pub const SYNC_SET: &[u8] = b"\x1b[?2026h";
+pub const SYNC_RESET: &[u8] = b"\x1b[?2026l";
+
 impl AnsiEncoder {
     pub fn new() -> Self {
-        Self {
-            buffer: Vec::with_capacity(4096),
-        }
+        Self { buffer: Vec::with_capacity(4096) }
     }
 
     pub fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
+        trace!(
+            region_count = regions.len(),
+            buffer_width = buffer.width(),
+            buffer_height = buffer.height(),
+            "AnsiEncoder::encode() - encoding frame with DECSET 2026 sync mode"
+        );
         self.buffer.clear();
+        self.buffer.extend_from_slice(SYNC_SET);
         self.hide_cursor();
 
         for region in regions {
@@ -34,6 +43,7 @@ impl AnsiEncoder {
         }
 
         self.show_cursor();
+        self.buffer.extend_from_slice(SYNC_RESET);
     }
 
     pub fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
@@ -292,13 +302,7 @@ pub struct PaletteCommand {
 impl PaletteCommand {
     /// Creates a new palette command.
     pub fn new(label: impl Into<String>) -> Self {
-        Self {
-            label: label.into(),
-            description: String::new(),
-            category: String::new(),
-            shortcut: None,
-            enabled: true,
-        }
+        Self { label: label.into(), description: String::new(), category: String::new(), shortcut: None, enabled: true }
     }
 
     /// Adds a description.
@@ -359,11 +363,7 @@ pub fn fuzzy_score(query: &str, target: &str) -> Option<(i64, Vec<usize>)> {
 
     // Bonus for matches at word boundaries
     for &mi in &matches {
-        if mi == 0
-            || target_lower[mi - 1] == ' '
-            || target_lower[mi - 1] == '_'
-            || target_lower[mi - 1] == '-'
-        {
+        if mi == 0 || target_lower[mi - 1] == ' ' || target_lower[mi - 1] == '_' || target_lower[mi - 1] == '-' {
             score += 10;
         }
     }
@@ -411,12 +411,7 @@ impl Default for CommandPalette {
 impl CommandPalette {
     /// Creates a new empty palette.
     pub fn new() -> Self {
-        Self {
-            commands: Vec::new(),
-            query: String::new(),
-            selected: 0,
-            results: Vec::new(),
-        }
+        Self { commands: Vec::new(), query: String::new(), selected: 0, results: Vec::new() }
     }
 
     /// Adds a command to the palette.
@@ -508,11 +503,7 @@ impl CommandPalette {
                 .iter()
                 .filter(|c| c.enabled)
                 .cloned()
-                .map(|c| SearchResult {
-                    command: c,
-                    score: 0,
-                    matches: vec![],
-                })
+                .map(|c| SearchResult { command: c, score: 0, matches: vec![] })
                 .collect();
         } else {
             let mut scored: Vec<SearchResult> = self
@@ -675,8 +666,7 @@ impl AnsiParser {
             }
             ParserState::DcsTerminator => {
                 if byte == b'\\' {
-                    self.events
-                        .push_back(ParserEvent::Dcs(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Dcs(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -686,8 +676,7 @@ impl AnsiParser {
             }
             ParserState::Pm => {
                 if byte == 0x07 {
-                    self.events
-                        .push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::PmTerminator;
@@ -697,8 +686,7 @@ impl AnsiParser {
             }
             ParserState::PmTerminator => {
                 if byte == b'\\' {
-                    self.events
-                        .push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Pm(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -708,8 +696,7 @@ impl AnsiParser {
             }
             ParserState::Sos => {
                 if byte == 0x07 {
-                    self.events
-                        .push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::SosTerminator;
@@ -719,8 +706,7 @@ impl AnsiParser {
             }
             ParserState::SosTerminator => {
                 if byte == b'\\' {
-                    self.events
-                        .push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Sos(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -730,8 +716,7 @@ impl AnsiParser {
             }
             ParserState::Apc => {
                 if byte == 0x07 {
-                    self.events
-                        .push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else if byte == 0x1b {
                     self.state = ParserState::ApcTerminator;
@@ -741,8 +726,7 @@ impl AnsiParser {
             }
             ParserState::ApcTerminator => {
                 if byte == b'\\' {
-                    self.events
-                        .push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
+                    self.events.push_back(ParserEvent::Apc(std::mem::take(&mut self.buffer)));
                     self.state = ParserState::Ground;
                 } else {
                     self.buffer.push(0x1b);
@@ -817,19 +801,14 @@ pub enum ParserEvent {
 
 impl ParserEvent {
     pub fn is_printable(&self) -> bool {
-        matches!(
-            self,
-            Self::Char(_) | Self::Tab | Self::LineFeed | Self::CarriageReturn
-        )
+        matches!(self, Self::Char(_) | Self::Tab | Self::LineFeed | Self::CarriageReturn)
     }
 
     pub fn is_cursor_movement(&self) -> bool {
         if let Self::Csi(cmd) = self {
             matches!(
                 cmd,
-                CsiCommand::CursorMovement(_)
-                    | CsiCommand::CursorPositionSave
-                    | CsiCommand::CursorPositionRestore
+                CsiCommand::CursorMovement(_) | CsiCommand::CursorPositionSave | CsiCommand::CursorPositionRestore
             )
         } else {
             false
@@ -879,16 +858,8 @@ pub enum CsiCommand {
     DeviceAttributes(Vec<u32>),
     SecondaryDeviceAttributes(Vec<u32>),
     TertiaryDeviceAttributes(String),
-    KittyKeyEvent {
-        keycode: u32,
-        modifiers: u32,
-        event_type: KittyEventType,
-        associated_text: Option<String>,
-    },
-    KittyEnhancementLevel {
-        level: u8,
-        action: ModeAction,
-    },
+    KittyKeyEvent { keycode: u32, modifiers: u32, event_type: KittyEventType, associated_text: Option<String> },
+    KittyEnhancementLevel { level: u8, action: ModeAction },
     KittyKeyboardQuery(Vec<u32>),
     Unknown(u8, Vec<u32>),
 }
@@ -1055,27 +1026,13 @@ pub enum UnderlineColor {
 impl CsiCommand {
     pub fn parse(final_byte: u8, params: &[u32], intermediate: &[u8]) -> Option<Self> {
         match final_byte {
-            b'A' => Some(Self::CursorMovement(CursorMovement::Up(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'B' => Some(Self::CursorMovement(CursorMovement::Down(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'C' => Some(Self::CursorMovement(CursorMovement::Forward(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'D' => Some(Self::CursorMovement(CursorMovement::Backward(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'E' => Some(Self::CursorMovement(CursorMovement::NextLine(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'F' => Some(Self::CursorMovement(CursorMovement::PreviousLine(
-                params.first().copied().unwrap_or(1),
-            ))),
-            b'G' => Some(Self::CursorMovement(CursorMovement::ColumnAbsolute(
-                params.first().copied().unwrap_or(1),
-            ))),
+            b'A' => Some(Self::CursorMovement(CursorMovement::Up(params.first().copied().unwrap_or(1)))),
+            b'B' => Some(Self::CursorMovement(CursorMovement::Down(params.first().copied().unwrap_or(1)))),
+            b'C' => Some(Self::CursorMovement(CursorMovement::Forward(params.first().copied().unwrap_or(1)))),
+            b'D' => Some(Self::CursorMovement(CursorMovement::Backward(params.first().copied().unwrap_or(1)))),
+            b'E' => Some(Self::CursorMovement(CursorMovement::NextLine(params.first().copied().unwrap_or(1)))),
+            b'F' => Some(Self::CursorMovement(CursorMovement::PreviousLine(params.first().copied().unwrap_or(1)))),
+            b'G' => Some(Self::CursorMovement(CursorMovement::ColumnAbsolute(params.first().copied().unwrap_or(1)))),
             b'H' | b'f' => {
                 let row = params.first().copied().unwrap_or(1);
                 let col = params.get(1).copied().unwrap_or(1);
@@ -1105,14 +1062,8 @@ impl CsiCommand {
             b'P' => Some(Self::DeleteChar(params.first().copied().unwrap_or(1))),
             b'@' => Some(Self::InsertChar(params.first().copied().unwrap_or(1))),
             b'X' => Some(Self::EraseChar(params.first().copied().unwrap_or(1))),
-            b'S' => Some(Self::Scroll(
-                ScrollDirection::Up,
-                params.first().copied().unwrap_or(1),
-            )),
-            b'T' => Some(Self::Scroll(
-                ScrollDirection::Down,
-                params.first().copied().unwrap_or(1),
-            )),
+            b'S' => Some(Self::Scroll(ScrollDirection::Up, params.first().copied().unwrap_or(1))),
+            b'T' => Some(Self::Scroll(ScrollDirection::Down, params.first().copied().unwrap_or(1))),
             b'n' => {
                 if params.first() == Some(&6) {
                     Some(Self::DeviceStatus(DeviceStatus::ReportCursorPosition))
@@ -1143,10 +1094,7 @@ impl CsiCommand {
                     let mode = params.first().copied().unwrap_or(0);
                     if mode == 27127 {
                         let level = params.get(1).copied().unwrap_or(1) as u8;
-                        Some(Self::KittyEnhancementLevel {
-                            level,
-                            action: ModeAction::Set,
-                        })
+                        Some(Self::KittyEnhancementLevel { level, action: ModeAction::Set })
                     } else {
                         Some(Self::Mode(ModeAction::Set, ModeType::Private(mode)))
                     }
@@ -1160,10 +1108,7 @@ impl CsiCommand {
                     let mode = params.first().copied().unwrap_or(0);
                     if mode == 27127 {
                         let level = params.get(1).copied().unwrap_or(1) as u8;
-                        Some(Self::KittyEnhancementLevel {
-                            level,
-                            action: ModeAction::Reset,
-                        })
+                        Some(Self::KittyEnhancementLevel { level, action: ModeAction::Reset })
                     } else {
                         Some(Self::Mode(ModeAction::Reset, ModeType::Private(mode)))
                     }
@@ -1176,10 +1121,7 @@ impl CsiCommand {
             b'u' => {
                 if intermediate.first() == Some(&b'?') {
                     Some(Self::KittyKeyboardQuery(params.to_vec()))
-                } else if params.is_empty()
-                    || params.first() == Some(&0)
-                    || params.first() == Some(&1)
-                {
+                } else if params.is_empty() || params.first() == Some(&0) || params.first() == Some(&1) {
                     Some(Self::CursorPositionRestore)
                 } else {
                     let keycode = params[0];
@@ -1187,12 +1129,7 @@ impl CsiCommand {
                     let event_type_value = params.get(2).copied().unwrap_or(1);
                     let event_type = KittyEventType::from_flag(event_type_value);
                     let associated_text = None;
-                    Some(Self::KittyKeyEvent {
-                        keycode,
-                        modifiers,
-                        event_type,
-                        associated_text,
-                    })
+                    Some(Self::KittyKeyEvent { keycode, modifiers, event_type, associated_text })
                 }
             }
             b'm' => Some(Self::Sgr(parse_sgr(params))),
@@ -1318,11 +1255,7 @@ fn parse_extended_color(params: &[u32], i: &mut usize) -> Option<ForegroundColor
         2 => {
             if *i + 4 < params.len() {
                 *i += 4;
-                Some(ForegroundColor::Rgb(
-                    params[*i - 2] as u8,
-                    params[*i - 1] as u8,
-                    params[*i] as u8,
-                ))
+                Some(ForegroundColor::Rgb(params[*i - 2] as u8, params[*i - 1] as u8, params[*i] as u8))
             } else {
                 None
             }
@@ -1348,11 +1281,7 @@ fn parse_extended_bg_color(params: &[u32], i: &mut usize) -> Option<BackgroundCo
         2 => {
             if *i + 4 < params.len() {
                 *i += 4;
-                Some(BackgroundColor::Rgb(
-                    params[*i - 2] as u8,
-                    params[*i - 1] as u8,
-                    params[*i] as u8,
-                ))
+                Some(BackgroundColor::Rgb(params[*i - 2] as u8, params[*i - 1] as u8, params[*i] as u8))
             } else {
                 None
             }
@@ -1506,11 +1435,7 @@ impl OscCommand {
             }
             8 => {
                 let link_parts: Vec<&str> = value.splitn(2, ';').collect();
-                let id = if link_parts[0].is_empty() {
-                    None
-                } else {
-                    Some(link_parts[0].to_string())
-                };
+                let id = if link_parts[0].is_empty() { None } else { Some(link_parts[0].to_string()) };
                 let uri = link_parts.get(1).unwrap_or(&"").to_string();
                 Some(Self::SetHyperlink(Hyperlink { id, uri }))
             }

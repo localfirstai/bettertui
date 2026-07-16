@@ -17,14 +17,8 @@ fn default_color() {
 #[test]
 fn color_equality() {
     assert_eq!(Color::Named(NamedColor::Red), Color::Named(NamedColor::Red));
-    assert_ne!(
-        Color::Named(NamedColor::Red),
-        Color::Named(NamedColor::Blue)
-    );
-    assert_eq!(
-        Color::Rgb { r: 255, g: 0, b: 0 },
-        Color::Rgb { r: 255, g: 0, b: 0 }
-    );
+    assert_ne!(Color::Named(NamedColor::Red), Color::Named(NamedColor::Blue));
+    assert_eq!(Color::Rgb { r: 255, g: 0, b: 0 }, Color::Rgb { r: 255, g: 0, b: 0 });
 }
 
 #[test]
@@ -71,11 +65,7 @@ fn color_parse_named() {
 #[test]
 fn color_lerp() {
     let c1 = Color::Rgb { r: 0, g: 0, b: 0 };
-    let c2 = Color::Rgb {
-        r: 255,
-        g: 255,
-        b: 255,
-    };
+    let c2 = Color::Rgb { r: 255, g: 255, b: 255 };
     let blended = c1.lerp(&c2, 0.5);
     match blended {
         Color::Rgb { r, g, b } => {
@@ -158,10 +148,7 @@ fn named_color_to_rgb() {
 fn named_color_from_index() {
     assert_eq!(NamedColor::from_ansi_index(0), Some(NamedColor::Black));
     assert_eq!(NamedColor::from_ansi_index(1), Some(NamedColor::Red));
-    assert_eq!(
-        NamedColor::from_ansi_index(15),
-        Some(NamedColor::BrightWhite)
-    );
+    assert_eq!(NamedColor::from_ansi_index(15), Some(NamedColor::BrightWhite));
     assert_eq!(NamedColor::from_ansi_index(16), None);
 }
 
@@ -204,15 +191,8 @@ fn default_style_is_empty() {
 
 #[test]
 fn style_resolve_inherits_parent() {
-    let parent = Style {
-        bold: Some(true),
-        fg: Some(Color::Named(NamedColor::Red)),
-        ..Default::default()
-    };
-    let child = Style {
-        italic: Some(true),
-        ..Default::default()
-    };
+    let parent = Style { bold: Some(true), fg: Some(Color::Named(NamedColor::Red)), ..Default::default() };
+    let child = Style { italic: Some(true), ..Default::default() };
 
     let resolved = child.resolve(&parent);
     assert!(resolved.bold);
@@ -222,16 +202,8 @@ fn style_resolve_inherits_parent() {
 
 #[test]
 fn style_resolve_child_overrides_parent() {
-    let parent = Style {
-        bold: Some(true),
-        fg: Some(Color::Named(NamedColor::Red)),
-        ..Default::default()
-    };
-    let child = Style {
-        bold: Some(false),
-        fg: Some(Color::Named(NamedColor::Blue)),
-        ..Default::default()
-    };
+    let parent = Style { bold: Some(true), fg: Some(Color::Named(NamedColor::Red)), ..Default::default() };
+    let child = Style { bold: Some(false), fg: Some(Color::Named(NamedColor::Blue)), ..Default::default() };
 
     let resolved = child.resolve(&parent);
     assert!(!resolved.bold);
@@ -310,10 +282,7 @@ fn style_resolve_border() {
 
 #[test]
 fn style_resolve_opacity() {
-    let parent = Style {
-        opacity: Some(128),
-        ..Default::default()
-    };
+    let parent = Style { opacity: Some(128), ..Default::default() };
     let child = Style::default();
     let resolved = child.resolve(&parent);
     assert_eq!(resolved.opacity, 128);
@@ -478,11 +447,7 @@ fn keyboard_info_default() {
 fn accessibility_with_properties() {
     let acc = Accessibility {
         role: AriaRole::Button,
-        properties: AriaProperties {
-            expanded: Some(true),
-            pressed: Some(AriaPressed::True),
-            ..Default::default()
-        },
+        properties: AriaProperties { expanded: Some(true), pressed: Some(AriaPressed::True), ..Default::default() },
         ..Default::default()
     };
     assert_eq!(acc.role, AriaRole::Button);

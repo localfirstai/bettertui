@@ -45,9 +45,7 @@ impl Default for BundledFont {
 
 impl BundledFont {
     pub fn new() -> Self {
-        Self {
-            metadata: FontMetadata::default(),
-        }
+        Self { metadata: FontMetadata::default() }
     }
 
     pub fn bytes(&self) -> &'static [u8] {

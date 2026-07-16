@@ -24,10 +24,7 @@ fn ffi_null_safety() {
         assert_eq!(ffi_engine_frame_count(std::ptr::null()), 0);
         assert!(ffi_engine_print_tree(std::ptr::null()).is_null());
         assert!(ffi_engine_tree_summary(std::ptr::null()).is_null());
-        assert_eq!(
-            ffi_engine_validate(std::ptr::null()),
-            FfiResult::InvalidArgument
-        );
+        assert_eq!(ffi_engine_validate(std::ptr::null()), FfiResult::InvalidArgument);
     }
 }
 

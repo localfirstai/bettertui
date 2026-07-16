@@ -11,12 +11,7 @@ pub struct SearchOptions {
 
 impl Default for SearchOptions {
     fn default() -> Self {
-        Self {
-            case_sensitive: false,
-            whole_word: false,
-            regex: false,
-            wrap_around: true,
-        }
+        Self { case_sensitive: false, whole_word: false, regex: false, wrap_around: true }
     }
 }
 
@@ -38,13 +33,7 @@ pub struct SearchResultIterator {
 
 impl SearchResultIterator {
     pub fn new(text: String, pattern: String, options: SearchOptions) -> Self {
-        Self {
-            text,
-            pattern,
-            options,
-            current_pos: 0,
-            finished: false,
-        }
+        Self { text, pattern, options, current_pos: 0, finished: false }
     }
 }
 
@@ -77,11 +66,7 @@ impl Iterator for SearchResultIterator {
                     self.finished = true;
                 }
 
-                Some(SearchResult {
-                    range: SelectionRange::new(start, end),
-                    line,
-                    column,
-                })
+                Some(SearchResult { range: SelectionRange::new(start, end), line, column })
             }
             None => {
                 self.finished = true;
@@ -107,18 +92,10 @@ impl Default for SearchEngine {
 
 impl SearchEngine {
     pub fn new() -> Self {
-        Self {
-            last_pattern: None,
-            last_options: None,
-        }
+        Self { last_pattern: None, last_options: None }
     }
 
-    pub fn search(
-        &self,
-        buffer: &TextBuffer,
-        pattern: &str,
-        options: SearchOptions,
-    ) -> Vec<SearchResult> {
+    pub fn search(&self, buffer: &TextBuffer, pattern: &str, options: SearchOptions) -> Vec<SearchResult> {
         if pattern.is_empty() {
             return Vec::new();
         }
@@ -158,11 +135,7 @@ impl SearchEngine {
             let last_newline = text[..absolute_start].rfind('\n').map_or(0, |p| p + 1);
             let column = absolute_start - last_newline;
 
-            SearchResult {
-                range: SelectionRange::new(absolute_start, absolute_end),
-                line,
-                column,
-            }
+            SearchResult { range: SelectionRange::new(absolute_start, absolute_end), line, column }
         })
     }
 
@@ -196,11 +169,7 @@ impl SearchEngine {
             let last_newline = text[..absolute_start].rfind('\n').map_or(0, |p| p + 1);
             let column = absolute_start - last_newline;
 
-            SearchResult {
-                range: SelectionRange::new(absolute_start, absolute_end),
-                line,
-                column,
-            }
+            SearchResult { range: SelectionRange::new(absolute_start, absolute_end), line, column }
         })
     }
 
@@ -242,11 +211,7 @@ mod tests {
 
     #[test]
     fn search_result_new() {
-        let result = SearchResult {
-            range: SelectionRange::new(0, 5),
-            line: 0,
-            column: 0,
-        };
+        let result = SearchResult { range: SelectionRange::new(0, 5), line: 0, column: 0 };
         assert_eq!(result.range.start, 0);
         assert_eq!(result.range.end, 5);
     }

@@ -188,11 +188,7 @@ impl EditBuffer {
         let pos = self.engine.cursor().position();
         let text = self.engine.buffer().to_string();
         let chars: Vec<char> = text.chars().collect();
-        let char_idx = chars
-            .iter()
-            .take(pos)
-            .filter(|c| !c.is_whitespace())
-            .count();
+        let char_idx = chars.iter().take(pos).filter(|c| !c.is_whitespace()).count();
         if char_idx > 0 {
             let range = SelectionRange::new(char_idx.saturating_sub(1), pos);
             self.engine.delete_range(range);
@@ -293,10 +289,7 @@ mod tests {
 
     #[test]
     fn read_only() {
-        let mut editor = EditBuffer::with_config(EditBufferConfig {
-            read_only: true,
-            ..Default::default()
-        });
+        let mut editor = EditBuffer::with_config(EditBufferConfig { read_only: true, ..Default::default() });
         editor.insert_str("hello");
         assert_eq!(editor.content(), "");
     }
@@ -330,10 +323,7 @@ mod tests {
 
     #[test]
     fn tab_as_character() {
-        let mut editor = EditBuffer::with_config(EditBufferConfig {
-            spaces_for_tabs: false,
-            ..Default::default()
-        });
+        let mut editor = EditBuffer::with_config(EditBufferConfig { spaces_for_tabs: false, ..Default::default() });
         editor.insert_tab();
         assert_eq!(editor.content(), "\t");
     }

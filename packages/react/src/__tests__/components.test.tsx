@@ -1,6 +1,6 @@
 import type React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Box, Button, Flex, Input, Text } from "../index";
+import { Box, Input, Text } from "../index";
 
 describe("Box component", () => {
   it("renders with children", () => {
@@ -22,46 +22,6 @@ describe("Box component", () => {
       <Box padding={2} margin={1} width={100}>
         content
       </Box>,
-    );
-    expect(container).toBeDefined();
-  });
-});
-
-describe("Flex component", () => {
-  it("renders with flexDirection column", () => {
-    const { container } = renderToContainer(
-      <Flex flexDirection="column">
-        <Text>item 1</Text>
-        <Text>item 2</Text>
-      </Flex>,
-    );
-    expect(container).toBeDefined();
-  });
-
-  it("renders with justifyContent center", () => {
-    const { container } = renderToContainer(
-      <Flex justifyContent="center">
-        <Text>centered</Text>
-      </Flex>,
-    );
-    expect(container).toBeDefined();
-  });
-
-  it("renders with alignItems stretch", () => {
-    const { container } = renderToContainer(
-      <Flex alignItems="stretch">
-        <Text>stretched</Text>
-      </Flex>,
-    );
-    expect(container).toBeDefined();
-  });
-
-  it("renders with gap", () => {
-    const { container } = renderToContainer(
-      <Flex gap={4}>
-        <Text>a</Text>
-        <Text>b</Text>
-      </Flex>,
     );
     expect(container).toBeDefined();
   });
@@ -93,29 +53,6 @@ describe("Text component", () => {
   });
 });
 
-describe("Button component", () => {
-  it("renders with children", () => {
-    const { container } = renderToContainer(<Button>click me</Button>);
-    expect(container).toBeDefined();
-  });
-
-  it("renders with variant", () => {
-    const { container } = renderToContainer(<Button variant="primary">primary</Button>);
-    expect(container).toBeDefined();
-  });
-
-  it("renders disabled", () => {
-    const { container } = renderToContainer(<Button disabled>disabled</Button>);
-    expect(container).toBeDefined();
-  });
-
-  it("renders with onPress", () => {
-    const onPress = vi.fn();
-    const { container } = renderToContainer(<Button onPress={onPress}>press</Button>);
-    expect(container).toBeDefined();
-  });
-});
-
 describe("Input component", () => {
   it("renders with value", () => {
     const { container } = renderToContainer(<Input value="hello" />);
@@ -143,11 +80,10 @@ describe("Component composition", () => {
   it("renders deeply nested components", () => {
     const { container } = renderToContainer(
       <Box padding={1}>
-        <Flex flexDirection="column" gap={2}>
+        <Box flexDirection="column">
           <Text bold>Title</Text>
-          <Text color="muted">Description</Text>
-          <Button variant="primary">Action</Button>
-        </Flex>
+          <Text dim>Description</Text>
+        </Box>
       </Box>,
     );
     expect(container).toBeDefined();

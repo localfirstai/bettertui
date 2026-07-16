@@ -90,11 +90,7 @@ impl BenchmarkHarness {
     pub fn result(&self) -> BenchmarkResult {
         assert!(self.ran, "must call run() before result()");
         let per_iter = self.duration / self.iterations as u32;
-        let throughput = if self.ops > 0 {
-            self.ops as f64 / self.duration.as_secs_f64()
-        } else {
-            0.0
-        };
+        let throughput = if self.ops > 0 { self.ops as f64 / self.duration.as_secs_f64() } else { 0.0 };
         BenchmarkResult {
             name: self.name.clone(),
             total_iterations: self.iterations,
@@ -137,11 +133,7 @@ pub struct BenchmarkResult {
 impl BenchmarkResult {
     pub fn format(&self) -> String {
         let throughput_str = if self.throughput > 0.0 {
-            format!(
-                ", throughput: {:.2} ops/s ({:.2} Mops/s)",
-                self.throughput,
-                self.throughput / 1_000_000.0
-            )
+            format!(", throughput: {:.2} ops/s ({:.2} Mops/s)", self.throughput, self.throughput / 1_000_000.0)
         } else {
             String::new()
         };

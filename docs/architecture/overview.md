@@ -31,8 +31,6 @@ graph LR
   - `packages/core/crates/terminal` → `bettertui-terminal` (terminal I/O, VT emulation, PTY process, capabilities)
   - `packages/core/crates/bindings` → `bettertui-bindings` (the napi-rs cdylib)
   - `packages/core/crates/benchmark` → `bettertui-benchmark` (Rust bench harness)
-  - `packages/core/crates/examples` → `bettertui-examples` (standalone bin, its own `[workspace]`)
-
 > Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
 
 > Note: `packages/core/crates/engine` is **not** in `pnpm-workspace.yaml` (it is pure Rust). `apps/website` is TypeScript but is a docs site, not part of the framework.
@@ -101,7 +99,6 @@ graph TD
 | `bettertui-terminal` | `lib` | Terminal interaction: raw mode, VT emulation, PTY process management, neovim, capability detection. Depends on `bettertui-engine`. |
 | `bettertui-bindings` | `cdylib` | napi-rs FFI surface exposing engine + widgets + terminal to Node.js. Translation layer only. |
 | `bettertui-benchmark` | `lib` | Rust benchmark harness (publish = false). |
-| `bettertui-examples` | `bin` | Standalone Rust example runner (its own workspace). |
 
 The bindings crate depends on `bettertui-engine`, `bettertui-widgets`, and `bettertui-terminal` and contains **no** Rust unit tests — verification lives in the engine, widgets, and terminal crates plus the TS layer above. The engine's source is mostly flat files (`tree.rs`, `input.rs`, `layout.rs`, …) with three subdirectories: `render/` (`mod.rs`, `render.rs`, `effects.rs`), `text/`, and `font/`. There is no `renderer/`, `events/`, `compositor/`, `screen/`, or `capabilities/` directory — event dispatch, compositor primitives, screen state, and capability detection live inside `input.rs`, `tree.rs`, `graphics.rs`, and the `bettertui-terminal` crate respectively.
 

@@ -3,7 +3,7 @@
 
 use std::collections::VecDeque;
 
-use crate::layout::{FlexDirection, FlexWrap, LayoutProps};
+use crate::taffy::{FlexDirection, FlexWrap, LayoutProps};
 use crate::tree::{Color, NodeArena, NodeId, NodeKind, RenderNode, Style};
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -77,85 +77,46 @@ pub enum Command {
     SetLayout { id: NodeId, layout: LayoutProps },
 
     /// Set flex direction.
-    SetFlexDirection {
-        id: NodeId,
-        direction: FlexDirection,
-    },
+    SetFlexDirection { id: NodeId, direction: FlexDirection },
 
     /// Set flex wrap.
     SetFlexWrap { id: NodeId, value: FlexWrap },
 
     /// Set justify content.
-    SetJustifyContent {
-        id: NodeId,
-        value: crate::layout::JustifyContent,
-    },
+    SetJustifyContent { id: NodeId, value: crate::taffy::JustifyContent },
 
     /// Set align items.
-    SetAlignItems {
-        id: NodeId,
-        value: crate::layout::AlignItems,
-    },
+    SetAlignItems { id: NodeId, value: crate::taffy::AlignItems },
 
     /// Set align self.
-    SetAlignSelf {
-        id: NodeId,
-        value: crate::layout::AlignSelf,
-    },
+    SetAlignSelf { id: NodeId, value: crate::taffy::AlignSelf },
 
     /// Set width.
-    SetWidth {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetWidth { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set height.
-    SetHeight {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetHeight { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set min width.
-    SetMinWidth {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetMinWidth { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set min height.
-    SetMinHeight {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetMinHeight { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set max width.
-    SetMaxWidth {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetMaxWidth { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set max height.
-    SetMaxHeight {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetMaxHeight { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set padding.
-    SetPadding {
-        id: NodeId,
-        value: crate::layout::RectValues,
-    },
+    SetPadding { id: NodeId, value: crate::taffy::RectValues },
 
     /// Set margin.
-    SetMargin {
-        id: NodeId,
-        value: crate::layout::RectValues,
-    },
+    SetMargin { id: NodeId, value: crate::taffy::RectValues },
 
     /// Set gap.
-    SetGap {
-        id: NodeId,
-        value: crate::layout::Gap,
-    },
+    SetGap { id: NodeId, value: crate::taffy::Gap },
 
     /// Set flex grow.
     SetFlexGrow { id: NodeId, value: f32 },
@@ -164,43 +125,27 @@ pub enum Command {
     SetFlexShrink { id: NodeId, value: f32 },
 
     /// Set flex basis.
-    SetFlexBasis {
-        id: NodeId,
-        value: crate::layout::Sizing,
-    },
+    SetFlexBasis { id: NodeId, value: crate::taffy::Sizing },
 
     /// Set position.
-    SetPosition {
-        id: NodeId,
-        value: crate::layout::Position,
-    },
+    SetPosition { id: NodeId, value: crate::taffy::Position },
 
     /// Set inset.
-    SetInset {
-        id: NodeId,
-        value: crate::layout::RectValues,
-    },
+    SetInset { id: NodeId, value: crate::taffy::RectValues },
 
     // ─── Content Commands ─────────────────────────────────────────
     /// Set text content of a node.
     SetText { id: NodeId, text: String },
 
     /// Set an attribute on a node.
-    SetAttribute {
-        id: NodeId,
-        key: String,
-        value: String,
-    },
+    SetAttribute { id: NodeId, key: String, value: String },
 
     /// Remove an attribute from a node.
     RemoveAttribute { id: NodeId, key: String },
 
     // ─── Visibility Commands ──────────────────────────────────────
     /// Set display mode.
-    SetDisplay {
-        id: NodeId,
-        value: crate::tree::VisibilityDisplay,
-    },
+    SetDisplay { id: NodeId, value: crate::tree::VisibilityDisplay },
 
     /// Set opacity.
     SetOpacity { id: NodeId, value: f32 },
@@ -220,10 +165,7 @@ pub enum Command {
 
     // ─── Overflow Commands ────────────────────────────────────────
     /// Set overflow.
-    SetOverflow {
-        id: NodeId,
-        value: crate::tree::Overflow,
-    },
+    SetOverflow { id: NodeId, value: crate::tree::Overflow },
 
     // ─── Focus Commands ───────────────────────────────────────────
     /// Focus a node.
@@ -500,12 +442,7 @@ pub struct CommandEntry {
 impl CommandEntry {
     /// Creates a new command entry.
     pub fn new(name: impl Into<String>, data: impl Into<String>, undoable: bool) -> Self {
-        Self {
-            name: name.into(),
-            data: data.into(),
-            undoable,
-            timestamp: 0,
-        }
+        Self { name: name.into(), data: data.into(), undoable, timestamp: 0 }
     }
 
     /// Sets the timestamp.
@@ -673,10 +610,7 @@ impl CommandBuffer {
 
     /// Create a new buffer with a specific capacity.
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            commands: Vec::with_capacity(capacity),
-            capacity,
-        }
+        Self { commands: Vec::with_capacity(capacity), capacity }
     }
 
     /// Push a command into the buffer.
@@ -766,10 +700,7 @@ impl std::fmt::Display for CommandError {
         match self {
             Self::NodeNotFound(id) => write!(f, "Node not found: {id:?}"),
             Self::CycleDetected { node, ancestor } => {
-                write!(
-                    f,
-                    "Cycle detected: node {node:?} is ancestor of {ancestor:?}"
-                )
+                write!(f, "Cycle detected: node {node:?} is ancestor of {ancestor:?}")
             }
             Self::InvalidOperation(msg) => write!(f, "Invalid operation: {msg}"),
             Self::InvalidState(msg) => write!(f, "Invalid state: {msg}"),
@@ -784,9 +715,7 @@ impl From<crate::tree::TreeError> for CommandError {
     fn from(err: crate::tree::TreeError) -> Self {
         match err {
             crate::tree::TreeError::NodeNotFound(id) => Self::NodeNotFound(id),
-            crate::tree::TreeError::CycleDetected { node, ancestor } => {
-                Self::CycleDetected { node, ancestor }
-            }
+            crate::tree::TreeError::CycleDetected { node, ancestor } => Self::CycleDetected { node, ancestor },
             crate::tree::TreeError::InvalidOperation(msg) => Self::InvalidOperation(msg),
         }
     }
@@ -843,19 +772,12 @@ impl CommandResult {
 
     /// Create a result for a single successful command.
     pub fn success() -> Self {
-        Self {
-            processed: 1,
-            ..Default::default()
-        }
+        Self { processed: 1, ..Default::default() }
     }
 
     /// Create a result for a single failed command.
     pub fn error(err: CommandError) -> Self {
-        Self {
-            failed: 1,
-            errors: vec![err],
-            ..Default::default()
-        }
+        Self { failed: 1, errors: vec![err], ..Default::default() }
     }
 
     /// Add a success to the result.
@@ -932,10 +854,7 @@ impl Default for CommandProcessor {
 impl CommandProcessor {
     /// Create a new processor with a fresh arena.
     pub fn new() -> Self {
-        Self {
-            arena: NodeArena::new(),
-            frame_id: 0,
-        }
+        Self { arena: NodeArena::new(), frame_id: 0 }
     }
 
     /// Create a processor with an existing arena.

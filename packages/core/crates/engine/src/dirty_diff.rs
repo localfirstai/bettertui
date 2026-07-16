@@ -21,12 +21,7 @@ pub struct DirtyRegion {
 impl DirtyRegion {
     /// Creates a new dirty region at `(x, y)` with the given dimensions.
     pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     /// Returns the right edge (exclusive).
@@ -51,10 +46,7 @@ impl DirtyRegion {
 
     /// Returns `true` if this region overlaps `other`.
     pub fn intersects(&self, other: &DirtyRegion) -> bool {
-        self.x < other.right()
-            && self.right() > other.x
-            && self.y < other.bottom()
-            && self.bottom() > other.y
+        self.x < other.right() && self.right() > other.x && self.y < other.bottom() && self.bottom() > other.y
     }
 
     /// Returns the smallest region that contains both `self` and `other`.
@@ -69,17 +61,13 @@ impl DirtyRegion {
     /// Returns `true` if `self` and `other` can be merged horizontally
     /// (same row span, adjacent columns).
     pub fn can_merge_horizontal(&self, other: &DirtyRegion) -> bool {
-        self.y == other.y
-            && self.height == other.height
-            && (self.right() == other.x || other.right() == self.x)
+        self.y == other.y && self.height == other.height && (self.right() == other.x || other.right() == self.x)
     }
 
     /// Returns `true` if `self` and `other` can be merged vertically
     /// (same column span, adjacent rows).
     pub fn can_merge_vertical(&self, other: &DirtyRegion) -> bool {
-        self.x == other.x
-            && self.width == other.width
-            && (self.bottom() == other.y || other.bottom() == self.y)
+        self.x == other.x && self.width == other.width && (self.bottom() == other.y || other.bottom() == self.y)
     }
 }
 
@@ -102,10 +90,7 @@ impl Default for DirtyDiff {
 impl DirtyDiff {
     /// Creates a new DirtyDiff with no regions.
     pub fn new() -> Self {
-        Self {
-            regions: Vec::new(),
-            last_generation: 0,
-        }
+        Self { regions: Vec::new(), last_generation: 0 }
     }
 
     /// Computes dirty regions by diffing `current` against `previous`.
@@ -113,12 +98,7 @@ impl DirtyDiff {
     /// Returns a slice of [`DirtyRegion`]s representing the changed areas.
     /// Results are cached per generation: repeated calls with the same generation
     /// return the cached result.
-    pub fn compute(
-        &mut self,
-        current: &FrameBuffer,
-        previous: &FrameBuffer,
-        generation: u64,
-    ) -> &[DirtyRegion] {
+    pub fn compute(&mut self, current: &FrameBuffer, previous: &FrameBuffer, generation: u64) -> &[DirtyRegion] {
         if generation == self.last_generation && !self.regions.is_empty() {
             return &self.regions;
         }
@@ -175,10 +155,7 @@ impl DirtyDiff {
 
                     let mut merged = false;
                     for r in regions.iter_mut().rev() {
-                        if r.y + r.height == y
-                            && start_x >= r.x
-                            && start_x + span_width <= r.x + r.width
-                        {
+                        if r.y + r.height == y && start_x >= r.x && start_x + span_width <= r.x + r.width {
                             r.height += 1;
                             merged = true;
                             break;

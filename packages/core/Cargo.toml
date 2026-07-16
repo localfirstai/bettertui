@@ -2,10 +2,8 @@
 resolver = "2"
 members = [
   "crates/engine",
-  "crates/widgets",
-  "crates/bindings",
-  "crates/terminal",
   "crates/benchmark",
+  "crates/logger",
 ]
 
 [workspace.package]
@@ -16,8 +14,6 @@ repository = "https://github.com/bettertui/bettertui.git"
 description = "High-performance terminal UI framework"
 
 [workspace.dependencies]
-napi = { version = "3", features = ["async"] }
-napi-derive = "3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 taffy = "0.7"
@@ -32,3 +28,4 @@ slotmap = "1.0"
 smallvec = "1.13"
 bitflags = "2"
 portable-pty = "0.8"
+tempfile = "3"

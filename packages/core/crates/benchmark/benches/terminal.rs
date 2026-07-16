@@ -2,12 +2,10 @@ use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
-use bettertui_engine::ansi::{
-    CsiCommand, CursorMovement, EraseMode, ForegroundColor, ParserEvent, SgrAttribute,
-};
+use bettertui_engine::ansi::{CsiCommand, CursorMovement, EraseMode, ForegroundColor, ParserEvent, SgrAttribute};
 use bettertui_engine::framebuffer::Cell;
-use bettertui_terminal::ScrollbackBuffer;
-use bettertui_terminal::{Cursor, CursorState, ScreenState, Terminal, TerminalMode, VtMachine};
+use bettertui_engine::terminal::ScrollbackBuffer;
+use bettertui_engine::terminal::{Cursor, CursorState, ScreenState, Terminal, TerminalMode, VtMachine};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,9 +24,7 @@ fn make_scrollback(capacity: usize) -> ScrollbackBuffer {
 }
 
 fn make_csi_position(col: u32, row: u32) -> ParserEvent {
-    ParserEvent::Csi(CsiCommand::CursorMovement(CursorMovement::Position(
-        col, row,
-    )))
+    ParserEvent::Csi(CsiCommand::CursorMovement(CursorMovement::Position(col, row)))
 }
 
 fn make_csi_sgr(fg: ForegroundColor) -> ParserEvent {
@@ -194,7 +190,7 @@ fn bench_cursor(c: &mut Criterion) {
             cs.set_position(15, 30);
             cs.hide();
             cs.show();
-            cs.set_style(bettertui_terminal::screen::CursorStyle::Bar);
+            cs.set_style(bettertui_engine::terminal::screen::CursorStyle::Bar);
             black_box(cs.visible());
         });
     });
@@ -274,10 +270,7 @@ fn bench_scrollback(c: &mut Criterion) {
 
     group.bench_function("push_line_small", |b| {
         let mut sb = ScrollbackBuffer::new();
-        let cells: Vec<Cell> = b"Hello, World!"
-            .iter()
-            .map(|&b| Cell::new(b as char))
-            .collect();
+        let cells: Vec<Cell> = b"Hello, World!".iter().map(|&b| Cell::new(b as char)).collect();
         b.iter(|| {
             sb.push_line(cells.clone(), 80, true);
             black_box(sb.len());
@@ -369,7 +362,7 @@ fn bench_terminal_mode(c: &mut Criterion) {
 // ─── TerminalState Benchmarks ─────────────────────────────────────────────────
 
 fn bench_terminal_state(c: &mut Criterion) {
-    use bettertui_terminal::{ProcessStatus, TerminalState};
+    use bettertui_engine::terminal::{ProcessStatus, TerminalState};
 
     let mut group = c.benchmark_group("terminal/state");
 

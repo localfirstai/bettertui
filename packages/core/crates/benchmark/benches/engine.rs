@@ -12,19 +12,13 @@ use bettertui_engine::font::{FontMetrics, FontMetricsCache, FontProvider, measur
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::graphics::{DrawStyle, GraphicsContext, Rect};
 use bettertui_engine::input::{Event, FocusManager, Key, KeyEvent};
-use bettertui_engine::layout::{
-    LayoutEngine, LayoutProps, LayoutTreeSync, Sizing, build_render_tree,
-};
 use bettertui_engine::protocol::{Command, CommandProcessor};
 use bettertui_engine::pty::{PtyConfig, PtyReader, PtySize, PtyWriter};
-use bettertui_engine::render::effects::{
-    BrightnessPass, GrayscalePass, InvertPass, RainbowPass, VignettePass,
-};
-use bettertui_engine::render::{
-    AnsiBackend, RenderBackend, RenderPass, RenderPassContext, RenderPipeline,
-};
+use bettertui_engine::render::effects::{BrightnessPass, GrayscalePass, InvertPass, RainbowPass, VignettePass};
+use bettertui_engine::render::{AnsiBackend, RenderBackend, RenderPass, RenderPassContext, RenderPipeline};
 use bettertui_engine::scheduler::{FrameBudget, Scheduler};
 use bettertui_engine::syntax::SyntaxHighlighter;
+use bettertui_engine::taffy::{LayoutEngine, LayoutProps, LayoutTreeSync, Sizing, build_render_tree};
 use bettertui_engine::text::{
     EditBuffer, SelectionRange, StyledText, TextAlign, TextEngine, ViewportConfig, layout_text,
 };
@@ -93,10 +87,7 @@ fn bench_text_engine(c: &mut Criterion) {
         let haystack = "needle in a haystack\nneedle again\n".repeat(200);
         let mut engine = TextEngine::with_text(&haystack);
         b.iter(|| {
-            let results = engine.search(
-                black_box("needle"),
-                bettertui_engine::text::SearchOptions::default(),
-            );
+            let results = engine.search(black_box("needle"), bettertui_engine::text::SearchOptions::default());
             black_box(results.len())
         })
     });
@@ -105,11 +96,7 @@ fn bench_text_engine(c: &mut Criterion) {
         let haystack = "alpha beta alpha gamma alpha\n".repeat(300);
         b.iter(|| {
             let mut engine = TextEngine::with_text(black_box(&haystack));
-            let count = engine.replace(
-                "alpha",
-                "X",
-                bettertui_engine::text::SearchOptions::default(),
-            );
+            let count = engine.replace("alpha", "X", bettertui_engine::text::SearchOptions::default());
             black_box(count)
         })
     });
@@ -134,10 +121,7 @@ fn bench_text_engine(c: &mut Criterion) {
         b.iter(|| {
             let mut st = StyledText::new();
             for i in 0..50 {
-                st.push_styled(
-                    format!("word{i} "),
-                    Style::default().fg(Color::Named(NamedColor::Red)),
-                );
+                st.push_styled(format!("word{i} "), Style::default().fg(Color::Named(NamedColor::Red)));
             }
             st.merge_adjacent_with_same_style();
             black_box(st.spans.len())
@@ -189,21 +173,9 @@ fn bench_framebuffer(c: &mut Criterion) {
 
     group.bench_function("diff_full_screen", |b| {
         let mut fb = FrameBuffer::new(80, 24);
-        fb.write_str(
-            0,
-            0,
-            "baseline content for diffing",
-            Color::Default,
-            Color::Default,
-        );
+        fb.write_str(0, 0, "baseline content for diffing", Color::Default, Color::Default);
         let mut other = FrameBuffer::new(80, 24);
-        other.write_str(
-            0,
-            0,
-            "baseline content for diffing!",
-            Color::Default,
-            Color::Default,
-        );
+        other.write_str(0, 0, "baseline content for diffing!", Color::Default, Color::Default);
         b.iter(|| black_box(fb.diff()))
     });
 
@@ -221,13 +193,7 @@ fn bench_framebuffer(c: &mut Criterion) {
     group.bench_function("fill_rect", |b| {
         b.iter(|| {
             let mut fb = FrameBuffer::new(80, 24);
-            fb.fill_rect(
-                0,
-                0,
-                80,
-                24,
-                Cell::new('#').with_fg(Color::Named(NamedColor::Red)),
-            );
+            fb.fill_rect(0, 0, 80, 24, Cell::new('#').with_fg(Color::Named(NamedColor::Red)));
             black_box(fb.get(40, 12).ch)
         })
     });
@@ -238,8 +204,7 @@ fn bench_framebuffer(c: &mut Criterion) {
 fn bench_vt(c: &mut Criterion) {
     let mut group = c.benchmark_group("engine_vt");
 
-    let csi_stream =
-        b"\x1b[2J\x1b[1;1H\x1b[31mHello\x1b[0m\x1b[2;1HWorld\x1b[?25h\x1b[3;3HXY\x1b[1;1H";
+    let csi_stream = b"\x1b[2J\x1b[1;1H\x1b[31mHello\x1b[0m\x1b[2;1HWorld\x1b[?25h\x1b[3;3HXY\x1b[1;1H";
 
     group.bench_function("parse_csi_stream", |b| {
         b.iter(|| {
@@ -256,34 +221,16 @@ fn bench_vt(c: &mut Criterion) {
     group.bench_function("framebuffer_write_str", |b| {
         let mut fb = FrameBuffer::new(80, 24);
         b.iter(|| {
-            fb.write_str(
-                5,
-                5,
-                black_box("Hello, world!"),
-                Color::Named(NamedColor::Green),
-                Color::Default,
-            );
+            fb.write_str(5, 5, black_box("Hello, world!"), Color::Named(NamedColor::Green), Color::Default);
             black_box(fb.get(5, 5).ch)
         })
     });
 
     group.bench_function("framebuffer_diff", |b| {
         let mut fb = FrameBuffer::new(80, 24);
-        fb.write_str(
-            0,
-            0,
-            "the quick brown fox",
-            Color::Named(NamedColor::White),
-            Color::Default,
-        );
+        fb.write_str(0, 0, "the quick brown fox", Color::Named(NamedColor::White), Color::Default);
         fb.swap();
-        fb.write_str(
-            0,
-            0,
-            "the quick brown dog",
-            Color::Named(NamedColor::White),
-            Color::Default,
-        );
+        fb.write_str(0, 0, "the quick brown dog", Color::Named(NamedColor::White), Color::Default);
         b.iter(|| black_box(fb.diff().len()))
     });
 
@@ -298,13 +245,7 @@ fn bench_vt(c: &mut Criterion) {
     group.bench_function("framebuffer_fill_rect", |b| {
         b.iter(|| {
             let mut fb = FrameBuffer::new(80, 24);
-            fb.fill_rect(
-                0,
-                0,
-                80,
-                24,
-                Cell::new('#').with_fg(Color::Named(NamedColor::Red)),
-            );
+            fb.fill_rect(0, 0, 80, 24, Cell::new('#').with_fg(Color::Named(NamedColor::Red)));
             black_box(fb.get(40, 12).ch)
         })
     });
@@ -312,13 +253,7 @@ fn bench_vt(c: &mut Criterion) {
     group.bench_function("framebuffer_clear", |b| {
         b.iter(|| {
             let mut fb = FrameBuffer::new(80, 24);
-            fb.fill_rect(
-                0,
-                0,
-                80,
-                24,
-                Cell::new('#').with_fg(Color::Named(NamedColor::Red)),
-            );
+            fb.fill_rect(0, 0, 80, 24, Cell::new('#').with_fg(Color::Named(NamedColor::Red)));
             fb.swap();
             fb.clear();
             black_box(fb.get(0, 0).ch)
@@ -335,14 +270,14 @@ fn bench_render(c: &mut Criterion) {
         let mut arena = NodeArena::new();
         let ids = build_sample_tree(&mut arena, 2, 10);
         let _ = ids;
-        let mut layout = bettertui_engine::layout::LayoutTreeSync::new();
+        let mut layout = bettertui_engine::taffy::LayoutTreeSync::new();
         layout.sync_full(&arena);
         let _ = layout.compute(arena.root(), 80, 24);
         let mut tree = bettertui_engine::render::RenderTree::new();
-        bettertui_engine::layout::build_render_tree(&arena, layout.results(), &mut tree);
+        bettertui_engine::taffy::build_render_tree(&arena, layout.results(), &mut tree);
         b.iter(|| {
             let mut painter = bettertui_engine::render::Painter::new(80, 24);
-            let ctx = bettertui_engine::layout::PaintContext::new(80, 24);
+            let ctx = bettertui_engine::taffy::PaintContext::new(80, 24);
             painter.paint(&tree, &ctx);
             black_box(painter.diff().len())
         })
@@ -351,13 +286,7 @@ fn bench_render(c: &mut Criterion) {
     group.bench_function("ansi_backend_encode", |b| {
         let mut fb = FrameBuffer::new(80, 24);
         for y in 0..24u16 {
-            fb.write_str(
-                0,
-                y,
-                "rendered line with color",
-                Color::Named(NamedColor::Green),
-                Color::Default,
-            );
+            fb.write_str(0, y, "rendered line with color", Color::Named(NamedColor::Green), Color::Default);
         }
         let empty = FrameBuffer::new(80, 24);
         let mut dirty = bettertui_engine::dirty_diff::DirtyDiff::new();
@@ -372,23 +301,13 @@ fn bench_render(c: &mut Criterion) {
     group.bench_function("pipeline_execute_passes", |b| {
         let mut fb = FrameBuffer::new(80, 24);
         for y in 0..24u16 {
-            fb.write_str(
-                0,
-                y,
-                "colored content here",
-                Color::Named(NamedColor::Yellow),
-                Color::Default,
-            );
+            fb.write_str(0, y, "colored content here", Color::Named(NamedColor::Yellow), Color::Default);
         }
         let ctx = RenderPassContext::new(80, 24);
         let mut pipeline = RenderPipeline::new();
-        pipeline.add_pass(Box::new(InvertPass::new(
-            bettertui_engine::render::effects::INVERT_MATRIX,
-        )));
+        pipeline.add_pass(Box::new(InvertPass::new(bettertui_engine::render::effects::INVERT_MATRIX)));
         pipeline.add_pass(Box::new(BrightnessPass::new(0.2)));
-        pipeline.add_pass(Box::new(GrayscalePass::new(
-            bettertui_engine::render::effects::GRAYSCALE_MATRIX,
-        )));
+        pipeline.add_pass(Box::new(GrayscalePass::new(bettertui_engine::render::effects::GRAYSCALE_MATRIX)));
         pipeline.add_pass(Box::new(VignettePass::new()));
         b.iter(|| black_box(pipeline.execute(black_box(&mut fb.clone()), &ctx)))
     });
@@ -396,13 +315,7 @@ fn bench_render(c: &mut Criterion) {
     group.bench_function("rainbow_pass", |b| {
         let mut fb = FrameBuffer::new(80, 24);
         for y in 0..24u16 {
-            fb.write_str(
-                0,
-                y,
-                "rainbow colored text content",
-                Color::Named(NamedColor::Magenta),
-                Color::Default,
-            );
+            fb.write_str(0, y, "rainbow colored text content", Color::Named(NamedColor::Magenta), Color::Default);
         }
         let ctx = RenderPassContext::new(80, 24);
         let mut pass = RainbowPass::new();
@@ -419,10 +332,7 @@ fn bench_graphics(c: &mut Criterion) {
         b.iter(|| {
             let mut fb = FrameBuffer::new(100, 40);
             let mut ctx = GraphicsContext::new(&mut fb);
-            ctx.draw_box(
-                Rect::new(1, 1, 60, 20),
-                &DrawStyle::new().fg(Color::Named(NamedColor::Cyan)),
-            );
+            ctx.draw_box(Rect::new(1, 1, 60, 20), &DrawStyle::new().fg(Color::Named(NamedColor::Cyan)));
             black_box(ctx.buffer().get(1, 1).ch)
         })
     });
@@ -431,11 +341,7 @@ fn bench_graphics(c: &mut Criterion) {
         b.iter(|| {
             let mut fb = FrameBuffer::new(100, 40);
             let mut ctx = GraphicsContext::new(&mut fb);
-            ctx.fill_rect(
-                Rect::new(0, 0, 100, 40),
-                '#',
-                &DrawStyle::new().bg(Color::Named(NamedColor::Blue)),
-            );
+            ctx.fill_rect(Rect::new(0, 0, 100, 40), '#', &DrawStyle::new().bg(Color::Named(NamedColor::Blue)));
             black_box(ctx.buffer().get(50, 20).ch)
         })
     });
@@ -445,12 +351,7 @@ fn bench_graphics(c: &mut Criterion) {
             let mut fb = FrameBuffer::new(100, 40);
             let mut ctx = GraphicsContext::new(&mut fb);
             for y in 0..40u16 {
-                ctx.draw_str(
-                    0,
-                    y,
-                    "gradient line",
-                    &DrawStyle::new().fg(Color::rgb((y * 6) as u8, 0, 0)),
-                );
+                ctx.draw_str(0, y, "gradient line", &DrawStyle::new().fg(Color::rgb((y * 6) as u8, 0, 0)));
             }
             black_box(ctx.buffer().get(0, 39).ch)
         })
@@ -524,7 +425,8 @@ fn bench_font(c: &mut Criterion) {
 fn bench_syntax(c: &mut Criterion) {
     let mut group = c.benchmark_group("engine_syntax");
 
-    let rust_src = "fn main() {\n    let x: u32 = 42;\n    if x > 0 {\n        println!(\"{}\", x);\n    }\n}\n".repeat(40);
+    let rust_src =
+        "fn main() {\n    let x: u32 = 42;\n    if x > 0 {\n        println!(\"{}\", x);\n    }\n}\n".repeat(40);
 
     group.bench_function("highlight_rust", |b| {
         let mut highlighter = SyntaxHighlighter::new();
@@ -534,9 +436,7 @@ fn bench_syntax(c: &mut Criterion) {
         })
     });
 
-    let ts_src =
-        "const x: number = 1;\nfunction add(a: number, b: number): number {\n  return a + b;\n}\n"
-            .repeat(40);
+    let ts_src = "const x: number = 1;\nfunction add(a: number, b: number): number {\n  return a + b;\n}\n".repeat(40);
 
     group.bench_function("highlight_typescript", |b| {
         let mut highlighter = SyntaxHighlighter::new();
@@ -561,10 +461,7 @@ fn bench_engine_api(c: &mut Criterion) {
         b.iter(|| {
             let mut engine = Engine::new();
             let id = engine.create_node(NodeKind::Text);
-            let _ = engine.process_command(Command::SetText {
-                id,
-                text: "hello".into(),
-            });
+            let _ = engine.process_command(Command::SetText { id, text: "hello".into() });
             black_box(engine.node_count())
         })
     });
@@ -577,19 +474,13 @@ fn bench_engine_api(c: &mut Criterion) {
             let mut ids = Vec::new();
             for _ in 0..50 {
                 let id = NodeId::default();
-                cmds.push(Command::CreateNode {
-                    id,
-                    kind: NodeKind::Box,
-                });
+                cmds.push(Command::CreateNode { id, kind: NodeKind::Box });
                 ids.push(id);
             }
             let _ = engine.process_commands(cmds);
             let mut link_cmds = Vec::new();
             for id in ids {
-                link_cmds.push(Command::AppendChild {
-                    parent: root,
-                    child: id,
-                });
+                link_cmds.push(Command::AppendChild { parent: root, child: id });
             }
             let result = engine.process_commands(link_cmds);
             black_box(result.is_success())
@@ -610,10 +501,7 @@ fn bench_engine_api(c: &mut Criterion) {
             let mut engine = Engine::new();
             for _ in 0..20 {
                 let id = engine.create_node(NodeKind::Box);
-                let _ = engine.process_command(Command::AppendChild {
-                    parent: engine.arena().root(),
-                    child: id,
-                });
+                let _ = engine.process_command(Command::AppendChild { parent: engine.arena().root(), child: id });
             }
             let inspector = Inspector::new();
             let summary = inspector.tree_summary(engine.arena());
@@ -629,9 +517,7 @@ fn bench_pty(c: &mut Criterion) {
 
     group.bench_function("config_build", |b| {
         b.iter(|| {
-            let cfg = PtyConfig::new("bash")
-                .with_args(vec!["-l".into()])
-                .with_size(PtySize::new(120, 40));
+            let cfg = PtyConfig::new("bash").with_args(vec!["-l".into()]).with_size(PtySize::new(120, 40));
             black_box(cfg.size)
         })
     });
@@ -686,24 +572,20 @@ fn bench_layout(c: &mut Criterion) {
     });
 
     for count in [10, 100, 500] {
-        group.bench_with_input(
-            BenchmarkId::new("register_batch", count),
-            &count,
-            |b, &count| {
-                let mut ids = Vec::with_capacity(count);
-                let mut arena = NodeArena::new();
-                for _ in 0..count {
-                    ids.push(arena.insert(RenderNode::new(NodeKind::Box)));
+        group.bench_with_input(BenchmarkId::new("register_batch", count), &count, |b, &count| {
+            let mut ids = Vec::with_capacity(count);
+            let mut arena = NodeArena::new();
+            for _ in 0..count {
+                ids.push(arena.insert(RenderNode::new(NodeKind::Box)));
+            }
+            b.iter(|| {
+                let mut le = LayoutEngine::new();
+                for id in &ids {
+                    le.register_container(*id, &LayoutProps::default());
                 }
-                b.iter(|| {
-                    let mut le = LayoutEngine::new();
-                    for id in &ids {
-                        le.register_container(*id, &LayoutProps::default());
-                    }
-                    black_box(le.node_count());
-                });
-            },
-        );
+                black_box(le.node_count());
+            });
+        });
     }
 
     group.bench_function("compute_simple", |b| {
@@ -724,35 +606,25 @@ fn bench_layout(c: &mut Criterion) {
     });
 
     for node_count in [10, 100, 500] {
-        group.bench_with_input(
-            BenchmarkId::new("compute_deep_tree", node_count),
-            &node_count,
-            |b, &count| {
-                let mut arena = NodeArena::new();
-                let root = arena.root();
-                let mut le = LayoutEngine::new();
-                le.register_container(
-                    root,
-                    &LayoutProps {
-                        width: Some(Sizing::Percent(1.0)),
-                        ..LayoutProps::default()
-                    },
-                );
+        group.bench_with_input(BenchmarkId::new("compute_deep_tree", node_count), &node_count, |b, &count| {
+            let mut arena = NodeArena::new();
+            let root = arena.root();
+            let mut le = LayoutEngine::new();
+            le.register_container(root, &LayoutProps { width: Some(Sizing::Percent(1.0)), ..LayoutProps::default() });
 
-                let mut prev = root;
-                for _ in 0..count {
-                    let id = arena.insert(RenderNode::new(NodeKind::Box));
-                    le.register_container(id, &LayoutProps::default());
-                    le.add_child(prev, id);
-                    prev = id;
-                }
+            let mut prev = root;
+            for _ in 0..count {
+                let id = arena.insert(RenderNode::new(NodeKind::Box));
+                le.register_container(id, &LayoutProps::default());
+                le.add_child(prev, id);
+                prev = id;
+            }
 
-                b.iter(|| {
-                    let result = le.compute_layout(root, 80.0, 2400.0);
-                    black_box(result.is_ok());
-                });
-            },
-        );
+            b.iter(|| {
+                let result = le.compute_layout(root, 80.0, 2400.0);
+                black_box(result.is_ok());
+            });
+        });
     }
 
     group.bench_function("collect_results", |b| {
@@ -943,18 +815,14 @@ fn bench_tree(c: &mut Criterion) {
     });
 
     for count in [10, 100, 1000, 10_000] {
-        group.bench_with_input(
-            BenchmarkId::new("insert_sequential", count),
-            &count,
-            |b, &count| {
-                b.iter_with_setup(NodeArena::new, |mut arena| {
-                    for _ in 0..count {
-                        let id = arena.insert(RenderNode::new(NodeKind::Box));
-                        black_box(id);
-                    }
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("insert_sequential", count), &count, |b, &count| {
+            b.iter_with_setup(NodeArena::new, |mut arena| {
+                for _ in 0..count {
+                    let id = arena.insert(RenderNode::new(NodeKind::Box));
+                    black_box(id);
+                }
+            });
+        });
     }
 
     group.bench_function("append_child", |b| {
@@ -968,39 +836,31 @@ fn bench_tree(c: &mut Criterion) {
     });
 
     for count in [10, 100, 500] {
-        group.bench_with_input(
-            BenchmarkId::new("build_deep_tree", count),
-            &count,
-            |b, &count| {
-                b.iter_with_setup(NodeArena::new, |mut arena| {
-                    let root = arena.root();
-                    let mut prev = root;
-                    for _ in 0..count {
-                        let id = arena.insert(RenderNode::new(NodeKind::Box));
-                        let _ = arena.append_child(prev, id);
-                        prev = id;
-                    }
-                    black_box(arena.len());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("build_deep_tree", count), &count, |b, &count| {
+            b.iter_with_setup(NodeArena::new, |mut arena| {
+                let root = arena.root();
+                let mut prev = root;
+                for _ in 0..count {
+                    let id = arena.insert(RenderNode::new(NodeKind::Box));
+                    let _ = arena.append_child(prev, id);
+                    prev = id;
+                }
+                black_box(arena.len());
+            });
+        });
     }
 
     for count in [10, 100, 500] {
-        group.bench_with_input(
-            BenchmarkId::new("build_wide_tree", count),
-            &count,
-            |b, &count| {
-                b.iter_with_setup(NodeArena::new, |mut arena| {
-                    let root = arena.root();
-                    for _ in 0..count {
-                        let id = arena.insert(RenderNode::new(NodeKind::Box));
-                        let _ = arena.append_child(root, id);
-                    }
-                    black_box(arena.len());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("build_wide_tree", count), &count, |b, &count| {
+            b.iter_with_setup(NodeArena::new, |mut arena| {
+                let root = arena.root();
+                for _ in 0..count {
+                    let id = arena.insert(RenderNode::new(NodeKind::Box));
+                    let _ = arena.append_child(root, id);
+                }
+                black_box(arena.len());
+            });
+        });
     }
 
     group.bench_function("traverse_all_nodes", |b| {
@@ -1058,20 +918,14 @@ fn bench_protocol(c: &mut Criterion) {
 
     group.bench_function("command_create_node", |b| {
         b.iter(|| {
-            let cmd = Command::CreateNode {
-                id: NodeId::default(),
-                kind: NodeKind::Box,
-            };
+            let cmd = Command::CreateNode { id: NodeId::default(), kind: NodeKind::Box };
             black_box(cmd);
         });
     });
 
     group.bench_function("command_set_text", |b| {
         b.iter(|| {
-            let cmd = Command::SetText {
-                id: NodeId::default(),
-                text: black_box("Hello, BetterTUI!".to_string()),
-            };
+            let cmd = Command::SetText { id: NodeId::default(), text: black_box("Hello, BetterTUI!".to_string()) };
             black_box(cmd);
         });
     });
@@ -1093,11 +947,7 @@ fn bench_protocol(c: &mut Criterion) {
         let cmds: Vec<Command> = (0..100)
             .map(|i| Command::CreateNode {
                 id: NodeId::default(),
-                kind: if i % 2 == 0 {
-                    NodeKind::Box
-                } else {
-                    NodeKind::Text
-                },
+                kind: if i % 2 == 0 { NodeKind::Box } else { NodeKind::Text },
             })
             .collect();
         b.iter(|| {
@@ -1114,20 +964,8 @@ fn bench_protocol(c: &mut Criterion) {
         for _ in 0..10 {
             ids.push(NodeId::default());
         }
-        let cmds: Vec<Command> = ids
-            .iter()
-            .map(|&id| Command::CreateNode {
-                id,
-                kind: NodeKind::Box,
-            })
-            .collect();
-        let link_cmds: Vec<Command> = ids
-            .iter()
-            .map(|&id| Command::AppendChild {
-                parent: root,
-                child: id,
-            })
-            .collect();
+        let cmds: Vec<Command> = ids.iter().map(|&id| Command::CreateNode { id, kind: NodeKind::Box }).collect();
+        let link_cmds: Vec<Command> = ids.iter().map(|&id| Command::AppendChild { parent: root, child: id }).collect();
         b.iter(|| {
             let _ = processor.process_batch(cmds.clone());
             let _ = processor.process_batch(link_cmds.clone());
@@ -1140,14 +978,8 @@ fn bench_protocol(c: &mut Criterion) {
         let root = processor.arena().root();
         for _ in 0..20 {
             let id = NodeId::default();
-            let _ = processor.process_single(Command::CreateNode {
-                id,
-                kind: NodeKind::Box,
-            });
-            let _ = processor.process_single(Command::AppendChild {
-                parent: root,
-                child: id,
-            });
+            let _ = processor.process_single(Command::CreateNode { id, kind: NodeKind::Box });
+            let _ = processor.process_single(Command::AppendChild { parent: root, child: id });
         }
         b.iter(|| {
             let result = processor.validate();

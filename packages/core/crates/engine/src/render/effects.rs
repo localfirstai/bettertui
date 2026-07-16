@@ -14,21 +14,12 @@ use crate::tree::Color;
 
 fn color_to_float(color: &Color) -> (f32, f32, f32, f32) {
     let rgba = color.to_rgba(255);
-    (
-        rgba.r as f32 / 255.0,
-        rgba.g as f32 / 255.0,
-        rgba.b as f32 / 255.0,
-        rgba.a as f32 / 255.0,
-    )
+    (rgba.r as f32 / 255.0, rgba.g as f32 / 255.0, rgba.b as f32 / 255.0, rgba.a as f32 / 255.0)
 }
 
 fn float_to_color(r: f32, g: f32, b: f32, _a: f32) -> Color {
     let clamp = |v: f32| (v * 255.0).clamp(0.0, 255.0) as u8;
-    Color::Rgb {
-        r: clamp(r),
-        g: clamp(g),
-        b: clamp(b),
-    }
+    Color::Rgb { r: clamp(r), g: clamp(g), b: clamp(b) }
 }
 
 fn apply_color_matrix(r: f32, g: f32, b: f32, a: f32, m: &[f32; 16]) -> (f32, f32, f32, f32) {
@@ -122,12 +113,7 @@ impl RenderPass for ColorMatrixPass {
                         continue;
                     }
                     let mut new_cell = cell;
-                    transform_cell_color(
-                        &mut new_cell,
-                        &self.matrix,
-                        self.target_fg,
-                        self.target_bg,
-                    );
+                    transform_cell_color(&mut new_cell, &self.matrix, self.target_fg, self.target_bg);
                     if self.target_fg && cell.fg != Color::Default {
                         let (r1, g1, b1, a1) = color_to_float(&cell.fg);
                         let (r2, g2, b2, a2) = color_to_float(&new_cell.fg);
@@ -168,11 +154,7 @@ impl RenderPass for ColorMatrixPass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -188,23 +170,16 @@ impl RenderPass for ColorMatrixPass {
     }
 }
 
-pub const IDENTITY_MATRIX: [f32; 16] = [
-    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-];
+pub const IDENTITY_MATRIX: [f32; 16] = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0];
 
-pub const INVERT_MATRIX: [f32; 16] = [
-    -1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-];
+pub const INVERT_MATRIX: [f32; 16] =
+    [-1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0];
 
-pub const GRAYSCALE_MATRIX: [f32; 16] = [
-    0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0, 0.0,
-    0.0, 0.0, 1.0,
-];
+pub const GRAYSCALE_MATRIX: [f32; 16] =
+    [0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0, 0.0, 0.0, 0.0, 1.0];
 
-pub const SEPIA_MATRIX: [f32; 16] = [
-    0.393, 0.769, 0.189, 0.0, 0.349, 0.686, 0.168, 0.0, 0.272, 0.534, 0.131, 0.0, 0.0, 0.0, 0.0,
-    1.0,
-];
+pub const SEPIA_MATRIX: [f32; 16] =
+    [0.393, 0.769, 0.189, 0.0, 0.349, 0.686, 0.168, 0.0, 0.272, 0.534, 0.131, 0.0, 0.0, 0.0, 0.0, 1.0];
 
 pub struct IdentityPass {
     enabled: bool,
@@ -248,19 +223,12 @@ impl BrightnessPass {
     pub fn new(amount: f32) -> Self {
         let clamped = amount.clamp(-1.0, 1.0);
         let m = if clamped >= 0.0 {
-            [
-                1.0, 0.0, 0.0, clamped, 0.0, 1.0, 0.0, clamped, 0.0, 0.0, 1.0, clamped, 0.0, 0.0,
-                0.0, 1.0,
-            ]
+            [1.0, 0.0, 0.0, clamped, 0.0, 1.0, 0.0, clamped, 0.0, 0.0, 1.0, clamped, 0.0, 0.0, 0.0, 1.0]
         } else {
             let f = 1.0 + clamped;
-            [
-                f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, 1.0,
-            ]
+            [f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, 1.0]
         };
-        Self {
-            inner: ColorMatrixPass::new(m),
-        }
+        Self { inner: ColorMatrixPass::new(m) }
     }
 }
 
@@ -290,11 +258,7 @@ impl ContrastPass {
     pub fn new(amount: f32) -> Self {
         let f = amount.clamp(0.0, 2.0);
         let t = (1.0 - f) / 2.0;
-        Self {
-            inner: ColorMatrixPass::new([
-                f, 0.0, 0.0, t, 0.0, f, 0.0, t, 0.0, 0.0, f, t, 0.0, 0.0, 0.0, 1.0,
-            ]),
-        }
+        Self { inner: ColorMatrixPass::new([f, 0.0, 0.0, t, 0.0, f, 0.0, t, 0.0, 0.0, f, t, 0.0, 0.0, 0.0, 1.0]) }
     }
 }
 
@@ -381,11 +345,7 @@ pub struct RainbowPass {
 
 impl RainbowPass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            speed: 1.0,
-            saturation: 1.0,
-        }
+        Self { enabled: true, speed: 1.0, saturation: 1.0 }
     }
 
     pub fn with_speed(mut self, speed: f32) -> Self {
@@ -439,11 +399,7 @@ impl RenderPass for RainbowPass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -488,12 +444,7 @@ pub struct BloomPass {
 
 impl BloomPass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            threshold: 0.7,
-            strength: 0.3,
-            radius: 1,
-        }
+        Self { enabled: true, threshold: 0.7, strength: 0.3, radius: 1 }
     }
 
     pub fn with_threshold(mut self, threshold: f32) -> Self {
@@ -541,8 +492,7 @@ impl RenderPass for BloomPass {
                     continue;
                 }
 
-                let intensity =
-                    (brightness - self.threshold) / (1.0 - self.threshold) * self.strength;
+                let intensity = (brightness - self.threshold) / (1.0 - self.threshold) * self.strength;
 
                 if intensity < 0.01 {
                     continue;
@@ -579,12 +529,7 @@ impl RenderPass for BloomPass {
                                     let bloom_r = tr * bloom_amount;
                                     let bloom_g = tg * bloom_amount;
                                     let bloom_b = tb * bloom_amount;
-                                    bloom_cell.fg = float_to_color(
-                                        br + bloom_r,
-                                        bg + bloom_g,
-                                        bb + bloom_b,
-                                        ta,
-                                    );
+                                    bloom_cell.fg = float_to_color(br + bloom_r, bg + bloom_g, bb + bloom_b, ta);
                                 }
                                 if target.bg != Color::Default {
                                     let (tr, tg, tb, ta) = color_to_float(&target.bg);
@@ -592,12 +537,7 @@ impl RenderPass for BloomPass {
                                     let bloom_r = tr * bloom_amount;
                                     let bloom_g = tg * bloom_amount;
                                     let bloom_b = tb * bloom_amount;
-                                    bloom_cell.bg = float_to_color(
-                                        br + bloom_r,
-                                        bg + bloom_g,
-                                        bb + bloom_b,
-                                        ta,
-                                    );
+                                    bloom_cell.bg = float_to_color(br + bloom_r, bg + bloom_g, bb + bloom_b, ta);
                                 }
                                 bloom_buffer.set(nx, ny, bloom_cell);
                             }
@@ -619,33 +559,21 @@ impl RenderPass for BloomPass {
                 if cell.fg != Color::Default && bloom.fg != Color::Default {
                     let (r, g, b, a) = color_to_float(&cell.fg);
                     let (br, bg, bb, _) = color_to_float(&bloom.fg);
-                    cell.fg = float_to_color(
-                        (r + br).clamp(0.0, 1.0),
-                        (g + bg).clamp(0.0, 1.0),
-                        (b + bb).clamp(0.0, 1.0),
-                        a,
-                    );
+                    cell.fg =
+                        float_to_color((r + br).clamp(0.0, 1.0), (g + bg).clamp(0.0, 1.0), (b + bb).clamp(0.0, 1.0), a);
                 }
                 if cell.bg != Color::Default && bloom.bg != Color::Default {
                     let (r, g, b, a) = color_to_float(&cell.bg);
                     let (br, bg, bb, _) = color_to_float(&bloom.bg);
-                    cell.bg = float_to_color(
-                        (r + br).clamp(0.0, 1.0),
-                        (g + bg).clamp(0.0, 1.0),
-                        (b + bb).clamp(0.0, 1.0),
-                        a,
-                    );
+                    cell.bg =
+                        float_to_color((r + br).clamp(0.0, 1.0), (g + bg).clamp(0.0, 1.0), (b + bb).clamp(0.0, 1.0), a);
                 }
                 buffer.set(x, y, cell);
                 modified = true;
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -687,11 +615,7 @@ pub struct ScanlinesPass {
 
 impl ScanlinesPass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            intensity: 0.3,
-            mode: ScanlineMode::EvenRows,
-        }
+        Self { enabled: true, intensity: 0.3, mode: ScanlineMode::EvenRows }
     }
 
     pub fn with_intensity(mut self, intensity: f32) -> Self {
@@ -749,11 +673,7 @@ impl RenderPass for ScanlinesPass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -771,11 +691,7 @@ impl RenderPass for ScanlinesPass {
 
 fn clamp_u8(color: &mut Color, r: f32, g: f32, b: f32, _a: f32) {
     let clamp = |v: f32| (v * 255.0).clamp(0.0, 255.0) as u8;
-    *color = Color::Rgb {
-        r: clamp(r),
-        g: clamp(g),
-        b: clamp(b),
-    };
+    *color = Color::Rgb { r: clamp(r), g: clamp(g), b: clamp(b) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -790,11 +706,7 @@ pub struct NoisePass {
 
 impl NoisePass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            intensity: 0.1,
-            seed: 42,
-        }
+        Self { enabled: true, intensity: 0.1, seed: 42 }
     }
 
     pub fn with_intensity(mut self, intensity: f32) -> Self {
@@ -859,11 +771,7 @@ impl RenderPass for NoisePass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -904,12 +812,7 @@ pub struct VignettePass {
 
 impl VignettePass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            strength: 0.4,
-            radius: 0.5,
-            falloff: 2.0,
-        }
+        Self { enabled: true, strength: 0.4, radius: 0.5, falloff: 2.0 }
     }
 
     pub fn with_strength(mut self, strength: f32) -> Self {
@@ -961,9 +864,7 @@ impl RenderPass for VignettePass {
                 let attenuation = if dist <= inner_radius {
                     1.0
                 } else {
-                    let t = ((dist - inner_radius) / (max_dist - inner_radius))
-                        .clamp(0.0, 1.0)
-                        .powf(self.falloff);
+                    let t = ((dist - inner_radius) / (max_dist - inner_radius)).clamp(0.0, 1.0).powf(self.falloff);
                     1.0 - t * self.strength
                 };
 
@@ -985,11 +886,7 @@ impl RenderPass for VignettePass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -1017,11 +914,7 @@ pub struct CrtPass {
 
 impl CrtPass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            glow_strength: 0.15,
-            curvature: 0.2,
-        }
+        Self { enabled: true, glow_strength: 0.15, curvature: 0.2 }
     }
 
     pub fn with_glow(mut self, strength: f32) -> Self {
@@ -1076,11 +969,7 @@ impl RenderPass for CrtPass {
                 let new_b = (b * darken + glow).clamp(0.0, 1.0);
 
                 let clamp_u8 = |v: f32| (v * 255.0) as u8;
-                cell.fg = Color::Rgb {
-                    r: clamp_u8(new_r),
-                    g: clamp_u8(new_g),
-                    b: clamp_u8(new_b),
-                };
+                cell.fg = Color::Rgb { r: clamp_u8(new_r), g: clamp_u8(new_g), b: clamp_u8(new_b) };
 
                 if cell.bg != Color::Default {
                     let (br, bg, bb, _) = color_to_float(&cell.bg);
@@ -1096,11 +985,7 @@ impl RenderPass for CrtPass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {
@@ -1127,10 +1012,7 @@ pub struct ChromaticAberrationPass {
 
 impl ChromaticAberrationPass {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            strength: 0.5,
-        }
+        Self { enabled: true, strength: 0.5 }
     }
 
     pub fn with_strength(mut self, strength: f32) -> Self {
@@ -1178,23 +1060,13 @@ impl RenderPass for ChromaticAberrationPass {
                     let (r, g, b, a) = color_to_float(&cell.fg);
                     let r_factor = 1.0 - shift * 0.1;
                     let b_factor = 1.0 + shift * 0.1;
-                    cell.fg = float_to_color(
-                        (r * r_factor).clamp(0.0, 1.0),
-                        g,
-                        (b * b_factor).clamp(0.0, 1.0),
-                        a,
-                    );
+                    cell.fg = float_to_color((r * r_factor).clamp(0.0, 1.0), g, (b * b_factor).clamp(0.0, 1.0), a);
                 }
                 if cell.bg != Color::Default {
                     let (r, g, b, a) = color_to_float(&cell.bg);
                     let r_factor = 1.0 - shift * 0.1;
                     let b_factor = 1.0 + shift * 0.1;
-                    cell.bg = float_to_color(
-                        (r * r_factor).clamp(0.0, 1.0),
-                        g,
-                        (b * b_factor).clamp(0.0, 1.0),
-                        a,
-                    );
+                    cell.bg = float_to_color((r * r_factor).clamp(0.0, 1.0), g, (b * b_factor).clamp(0.0, 1.0), a);
                 }
 
                 buffer.set(x, y, cell);
@@ -1202,11 +1074,7 @@ impl RenderPass for ChromaticAberrationPass {
             }
         }
 
-        if modified {
-            PassResult::Modified
-        } else {
-            PassResult::Unchanged
-        }
+        if modified { PassResult::Modified } else { PassResult::Unchanged }
     }
 
     fn enabled(&self) -> bool {

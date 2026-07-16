@@ -19,11 +19,7 @@ mod platform {
 
     pub fn send_signal(pid: u32, sig: i32) -> Result<(), String> {
         let ret = unsafe { kill(pid as i32, sig) };
-        if ret != 0 {
-            Err(std::io::Error::last_os_error().to_string())
-        } else {
-            Ok(())
-        }
+        if ret != 0 { Err(std::io::Error::last_os_error().to_string()) } else { Ok(()) }
     }
 
     pub fn terminate(pid: u32) -> Result<(), String> {
@@ -65,10 +61,7 @@ impl Default for PtyConfig {
 
 impl PtyConfig {
     pub fn new(program: &str) -> Self {
-        Self {
-            program: program.to_string(),
-            ..Default::default()
-        }
+        Self { program: program.to_string(), ..Default::default() }
     }
 
     pub fn with_args(mut self, args: Vec<String>) -> Self {
@@ -106,23 +99,13 @@ pub struct PtySize {
 
 impl Default for PtySize {
     fn default() -> Self {
-        Self {
-            cols: 80,
-            rows: 24,
-            pixel_width: 0,
-            pixel_height: 0,
-        }
+        Self { cols: 80, rows: 24, pixel_width: 0, pixel_height: 0 }
     }
 }
 
 impl PtySize {
     pub fn new(cols: u16, rows: u16) -> Self {
-        Self {
-            cols,
-            rows,
-            pixel_width: 0,
-            pixel_height: 0,
-        }
+        Self { cols, rows, pixel_width: 0, pixel_height: 0 }
     }
 
     pub fn with_pixel_size(mut self, width: u32, height: u32) -> Self {
@@ -158,9 +141,7 @@ pub struct PtyProcess {
 impl PtyProcess {
     pub fn spawn(config: PtyConfig) -> Result<Self, PtyError> {
         let system = portable_pty::native_pty_system();
-        let pair = system
-            .openpty(config.size.to_portable())
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let pair = system.openpty(config.size.to_portable()).map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
 
         let mut cmd = CommandBuilder::new(&config.program);
         for arg in &config.args {
@@ -173,20 +154,11 @@ impl PtyProcess {
             cmd.cwd(dir);
         }
 
-        let child = pair
-            .slave
-            .spawn_command(cmd)
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let child = pair.slave.spawn_command(cmd).map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
         let pid = child.process_id();
 
-        let reader = pair
-            .master
-            .try_clone_reader()
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
-        let writer = pair
-            .master
-            .take_writer()
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let reader = pair.master.try_clone_reader().map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+        let writer = pair.master.take_writer().map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
 
         Ok(Self {
             child: Some(child),
@@ -200,9 +172,7 @@ impl PtyProcess {
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, PtyError> {
         if let Some(ref mut reader) = self.reader {
-            reader
-                .read(buf)
-                .map_err(|e| PtyError::ReadFailed(e.to_string()))
+            reader.read(buf).map_err(|e| PtyError::ReadFailed(e.to_string()))
         } else {
             Err(PtyError::ReadFailed("No reader".to_string()))
         }
@@ -210,9 +180,7 @@ impl PtyProcess {
 
     pub fn write(&mut self, data: &[u8]) -> Result<usize, PtyError> {
         if let Some(ref mut writer) = self.writer {
-            writer
-                .write(data)
-                .map_err(|e| PtyError::WriteFailed(e.to_string()))
+            writer.write(data).map_err(|e| PtyError::WriteFailed(e.to_string()))
         } else {
             Err(PtyError::WriteFailed("No writer".to_string()))
         }
@@ -221,28 +189,18 @@ impl PtyProcess {
     pub fn resize(&mut self, size: PtySize) -> Result<(), PtyError> {
         self.size = size;
         if let Some(ref master) = self.master {
-            master
-                .resize(size.to_portable())
-                .map_err(|e| PtyError::ResizeFailed(e.to_string()))?;
+            master.resize(size.to_portable()).map_err(|e| PtyError::ResizeFailed(e.to_string()))?;
         }
         Ok(())
     }
 
     pub fn is_running(&mut self) -> bool {
-        if let Some(ref mut child) = self.child {
-            child.try_wait().is_ok_and(|status| status.is_none())
-        } else {
-            false
-        }
+        if let Some(ref mut child) = self.child { child.try_wait().is_ok_and(|status| status.is_none()) } else { false }
     }
 
     pub fn exit_status(&mut self) -> Option<i32> {
         if let Some(ref mut child) = self.child {
-            child
-                .try_wait()
-                .ok()
-                .flatten()
-                .map(|status| status.exit_code() as i32)
+            child.try_wait().ok().flatten().map(|status| status.exit_code() as i32)
         } else {
             None
         }
@@ -261,9 +219,7 @@ impl PtyProcess {
 
     pub fn wait(&mut self) -> Result<Option<i32>, PtyError> {
         if let Some(ref mut child) = self.child {
-            let status = child
-                .wait()
-                .map_err(|e| PtyError::KillFailed(e.to_string()))?;
+            let status = child.wait().map_err(|e| PtyError::KillFailed(e.to_string()))?;
             Ok(Some(status.exit_code() as i32))
         } else {
             Err(PtyError::NotRunning)
@@ -306,17 +262,12 @@ pub struct PtyReader {
 
 impl PtyReader {
     pub fn new() -> Self {
-        Self {
-            buffer: Vec::with_capacity(4096),
-            position: 0,
-        }
+        Self { buffer: Vec::with_capacity(4096), position: 0 }
     }
 
     pub fn read_from(&mut self, reader: &mut dyn Read) -> Result<usize, PtyError> {
         let mut temp = [0u8; 4096];
-        let n = reader
-            .read(&mut temp)
-            .map_err(|e| PtyError::ReadFailed(e.to_string()))?;
+        let n = reader.read(&mut temp).map_err(|e| PtyError::ReadFailed(e.to_string()))?;
         if n > 0 {
             self.buffer.extend_from_slice(&temp[..n]);
         }
@@ -324,10 +275,7 @@ impl PtyReader {
     }
 
     pub fn read_line(&mut self) -> Option<String> {
-        if let Some(pos) = self.buffer[self.position..]
-            .iter()
-            .position(|&b| b == b'\n')
-        {
+        if let Some(pos) = self.buffer[self.position..].iter().position(|&b| b == b'\n') {
             let end = self.position + pos + 1;
             let line = String::from_utf8_lossy(&self.buffer[self.position..end]).to_string();
             self.position = end;
@@ -382,10 +330,7 @@ pub struct PtyWriter {
 
 impl PtyWriter {
     pub fn new() -> Self {
-        Self {
-            buffer: Vec::with_capacity(4096),
-            flushed: true,
-        }
+        Self { buffer: Vec::with_capacity(4096), flushed: true }
     }
 
     pub fn write(&mut self, data: &[u8]) {
@@ -404,12 +349,8 @@ impl PtyWriter {
 
     pub fn flush(&mut self, writer: &mut dyn Write) -> Result<(), PtyError> {
         if !self.flushed && !self.buffer.is_empty() {
-            writer
-                .write_all(&self.buffer)
-                .map_err(|e| PtyError::WriteFailed(e.to_string()))?;
-            writer
-                .flush()
-                .map_err(|e| PtyError::WriteFailed(e.to_string()))?;
+            writer.write_all(&self.buffer).map_err(|e| PtyError::WriteFailed(e.to_string()))?;
+            writer.flush().map_err(|e| PtyError::WriteFailed(e.to_string()))?;
             self.buffer.clear();
             self.flushed = true;
         }
@@ -462,27 +403,15 @@ impl PtyRuntime {
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, PtyError> {
-        if let Some(ref mut process) = self.process {
-            process.read(buf)
-        } else {
-            Err(PtyError::NotRunning)
-        }
+        if let Some(ref mut process) = self.process { process.read(buf) } else { Err(PtyError::NotRunning) }
     }
 
     pub fn write(&mut self, data: &[u8]) -> Result<usize, PtyError> {
-        if let Some(ref mut process) = self.process {
-            process.write(data)
-        } else {
-            Err(PtyError::NotRunning)
-        }
+        if let Some(ref mut process) = self.process { process.write(data) } else { Err(PtyError::NotRunning) }
     }
 
     pub fn resize(&mut self, size: PtySize) -> Result<(), PtyError> {
-        if let Some(ref mut process) = self.process {
-            process.resize(size)
-        } else {
-            Err(PtyError::NotRunning)
-        }
+        if let Some(ref mut process) = self.process { process.resize(size) } else { Err(PtyError::NotRunning) }
     }
 
     pub fn is_running(&mut self) -> bool {
@@ -494,19 +423,11 @@ impl PtyRuntime {
     }
 
     pub fn kill(&mut self) -> Result<(), PtyError> {
-        if let Some(ref mut process) = self.process {
-            process.kill()
-        } else {
-            Err(PtyError::NotRunning)
-        }
+        if let Some(ref mut process) = self.process { process.kill() } else { Err(PtyError::NotRunning) }
     }
 
     pub fn wait(&mut self) -> Result<Option<i32>, PtyError> {
-        if let Some(ref mut process) = self.process {
-            process.wait()
-        } else {
-            Err(PtyError::NotRunning)
-        }
+        if let Some(ref mut process) = self.process { process.wait() } else { Err(PtyError::NotRunning) }
     }
 }
 
@@ -728,31 +649,13 @@ mod tests {
 
     #[test]
     fn pty_error_display() {
-        assert_eq!(
-            format!("{}", PtyError::SpawnFailed("bad".into())),
-            "Failed to spawn PTY: bad"
-        );
-        assert_eq!(
-            format!("{}", PtyError::ReadFailed("eof".into())),
-            "Failed to read from PTY: eof"
-        );
-        assert_eq!(
-            format!("{}", PtyError::WriteFailed("full".into())),
-            "Failed to write to PTY: full"
-        );
-        assert_eq!(
-            format!("{}", PtyError::KillFailed("sig".into())),
-            "Failed to kill PTY process: sig"
-        );
+        assert_eq!(format!("{}", PtyError::SpawnFailed("bad".into())), "Failed to spawn PTY: bad");
+        assert_eq!(format!("{}", PtyError::ReadFailed("eof".into())), "Failed to read from PTY: eof");
+        assert_eq!(format!("{}", PtyError::WriteFailed("full".into())), "Failed to write to PTY: full");
+        assert_eq!(format!("{}", PtyError::KillFailed("sig".into())), "Failed to kill PTY process: sig");
         assert_eq!(format!("{}", PtyError::NotRunning), "PTY is not running");
-        assert_eq!(
-            format!("{}", PtyError::ProcessExited(1)),
-            "PTY process exited with code: 1"
-        );
-        assert_eq!(
-            format!("{}", PtyError::ResizeFailed("dim".into())),
-            "Failed to resize PTY: dim"
-        );
+        assert_eq!(format!("{}", PtyError::ProcessExited(1)), "PTY process exited with code: 1");
+        assert_eq!(format!("{}", PtyError::ResizeFailed("dim".into())), "Failed to resize PTY: dim");
     }
 
     #[test]

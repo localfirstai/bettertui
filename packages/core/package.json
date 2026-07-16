@@ -14,11 +14,11 @@
       "types": "./dist/index.d.mts"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "bettertui_engine.node"],
   "scripts": {
-    "build": "tsdown",
-    "build:native": "node scripts/build-native.ts",
-    "build:native:all": "node scripts/build-native.ts --all",
+    "build": "tsdown && pnpm run build:native",
+    "build:native": "napi build --manifest-path crates/engine/Cargo.toml --features napi --release --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
+    "build:native:debug": "napi build --manifest-path crates/engine/Cargo.toml --features napi --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "dev": "tsdown --watch",
     "lint": "biome check src/",
     "format": "biome format --write src/",
@@ -35,20 +35,14 @@
   "dependencies": {
     "@bettertui/shared": "workspace:*"
   },
-  "optionalDependencies": {
-    "@bettertui/core-darwin-x64": "0.0.0",
-    "@bettertui/core-darwin-arm64": "0.0.0",
-    "@bettertui/core-linux-x64-gnu": "0.0.0",
-    "@bettertui/core-linux-arm64-gnu": "0.0.0",
-    "@bettertui/core-linux-x64-musl": "0.0.0",
-    "@bettertui/core-linux-arm64-musl": "0.0.0",
-    "@bettertui/core-win32-x64": "0.0.0",
-    "@bettertui/core-win32-arm64": "0.0.0"
-  },
   "devDependencies": {
+    "@napi-rs/cli": "^3.0.0",
     "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "napi": {
+    "binaryName": "bettertui_engine"
   }
 }
