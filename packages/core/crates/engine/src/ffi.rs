@@ -1169,6 +1169,42 @@ pub unsafe extern "C" fn ffi_scheduler_is_idle(handle: u64) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_request_render_coalesced(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.request_render_coalesced();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_request_render_immediate(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.request_render_immediate();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_has_scheduled_frame(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get(handle).map_or(0, |s| s.has_scheduled_frame() as i32)
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_is_rendering(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get(handle).map_or(0, |s| s.is_rendering() as i32)
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_begin_render(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.begin_render();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_end_render(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get_mut(handle).map_or(0, |s| s.end_render() as i32)
+}
+
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn ffi_scheduler_frame_count(handle: u64) -> u64 {
     SCHEDULERS.lock().unwrap().get(handle).map_or(0, |s| s.frame_count())
 }

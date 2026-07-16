@@ -9,6 +9,7 @@ use napi_derive::napi;
 use crate::VERSION;
 use crate::engine::Engine;
 use crate::hit_grid::HitGrid;
+// use crate::span_feed::SpanFeed;
 use crate::input::{
     EventBus, FocusDirection, FocusManager, FocusTraversal, Key, KeyBinding, KeyEvent, KeyParser, Keymap, Modifiers,
     MouseButton,
@@ -16,8 +17,8 @@ use crate::input::{
 use crate::protocol::{Command, ScreenMode};
 use crate::render::Renderer;
 use crate::scheduler::{FrameStatus, Scheduler};
-use crate::span_feed::SpanFeed;
 use crate::text::TextEngine;
+use crate::theme::Theme;
 use crate::tree::{NodeId, NodeKind, Point};
 
 fn node_id(val: u64) -> NodeId {
@@ -273,6 +274,44 @@ impl NativeEngine {
     }
 
     #[napi]
+    pub fn set_style(&self, id: i64, style_json: String) {
+        if let Ok(mut state) = self.state.lock() {
+            if let Ok(style) = serde_json::from_str::<StyleJson>(&style_json) {
+                state.engine.set_style(node_id(id as u64), style.into_style());
+            }
+        }
+    }
+
+    #[napi]
+    pub fn set_layout(&self, id: i64, layout_json: String) {
+        if let Ok(mut state) = self.state.lock() {
+            if let Ok(layout) = serde_json::from_str::<LayoutJson>(&layout_json) {
+                state.engine.set_layout(node_id(id as u64), layout.into_layout());
+            }
+        }
+    }
+
+    #[napi]
+    pub fn get_node(&self, id: i64) -> String {
+        self.state.lock().map_or("{}".to_string(), |s| {
+            s.engine.get_node(node_id(id as u64)).map_or("null".to_string(), |node| {
+                serde_json::to_string(&serde_json::json!({
+                    "kind": node.kind.name(),
+                    "text": node.text,
+                    "has_children": !node.children.is_empty(),
+                    "child_count": node.children.len(),
+                }))
+                .unwrap_or_default()
+            })
+        })
+    }
+
+    #[napi]
+    pub fn tree_summary(&self) -> String {
+        self.state.lock().map_or(String::new(), |s| s.engine.tree_summary())
+    }
+
+    #[napi]
     pub fn root(&self) -> i64 {
         self.state.lock().map_or(0, |s| node_id_u64(s.engine.arena().root()) as i64)
     }
@@ -393,23 +432,28 @@ impl NativeEventBus {
                 "scroll_down" => MouseButton::ScrollDown,
                 _ => MouseButton::None,
             };
-            bus.push_mouse(
-                btn,
-                Point::new(x.min(u16::MAX as u32) as u16, y.min(u16::MAX as u32) as u16),
-                NodeId::default(),
-            );
+            bus.push_mouse(btn, Point::new(x as u16, y as u16), NodeId::default());
+        }
+    }
+
+    #[napi]
+    pub fn push_mouse_motion(&self, x: u32, y: u32) {
+        if let Ok(mut bus) = self.bus.lock() {
+            bus.push_mouse(MouseButton::None, Point::new(x as u16, y as u16), NodeId::default());
+        }
+    }
+
+    #[napi]
+    pub fn push_paste(&self, text: String) {
+        if let Ok(mut bus) = self.bus.lock() {
+            bus.push_paste(text, NodeId::default());
         }
     }
 
     #[napi]
     pub fn push_resize(&self, width: u32, height: u32, prev_width: u32, prev_height: u32) {
         if let Ok(mut bus) = self.bus.lock() {
-            bus.push_resize(
-                width.min(u16::MAX as u32) as u16,
-                height.min(u16::MAX as u32) as u16,
-                prev_width.min(u16::MAX as u32) as u16,
-                prev_height.min(u16::MAX as u32) as u16,
-            );
+            bus.push_resize(width as u16, height as u16, prev_width as u16, prev_height as u16);
         }
     }
 
@@ -454,6 +498,33 @@ impl NativeFocusManager {
     }
 
     #[napi]
+    pub fn focus(&self, id: i64) -> bool {
+        self.manager.lock().map_or(false, |mut m| m.focus(node_id(id as u64)).is_some())
+    }
+
+    #[napi]
+    pub fn blur(&self, id: i64) -> bool {
+        self.manager.lock().map_or(false, |mut m| m.blur(node_id(id as u64)).is_some())
+    }
+
+    #[napi]
+    pub fn blur_current(&self) -> bool {
+        self.manager
+            .lock()
+            .map_or(false, |mut m| if let Some(focused) = m.focused() { m.blur(focused).is_some() } else { false })
+    }
+
+    #[napi]
+    pub fn focused(&self) -> i64 {
+        self.manager.lock().map_or(0, |m| m.focused().map_or(0, |id| node_id_u64(id) as i64))
+    }
+
+    #[napi]
+    pub fn is_focused(&self, id: i64) -> bool {
+        self.manager.lock().map_or(false, |m| m.is_focused(node_id(id as u64)))
+    }
+
+    #[napi]
     pub fn traverse(&self, direction: String) -> String {
         self.manager.lock().map_or("null".to_string(), |mut m| {
             let dir = match direction.as_str() {
@@ -465,6 +536,20 @@ impl NativeFocusManager {
             };
             FocusTraversal::traverse(&mut m, dir).map(|id| node_id_u64(id).to_string()).unwrap_or("null".to_string())
         })
+    }
+
+    #[napi]
+    pub fn focus_order(&self) -> Vec<i64> {
+        self.manager
+            .lock()
+            .map_or(Vec::new(), |m| m.focusable_nodes().iter().map(|id| node_id_u64(*id) as i64).collect())
+    }
+
+    #[napi]
+    pub fn clear(&self) {
+        if let Ok(mut m) = self.manager.lock() {
+            m.clear();
+        }
     }
 }
 
@@ -511,10 +596,7 @@ impl NativeTextEngine {
 
     #[napi]
     pub fn get_text(&self) -> String {
-        self.engine.lock().map_or(String::new(), |te| {
-            let lines: Vec<String> = (0..te.line_count()).filter_map(|i| te.line(i)).collect();
-            lines.join("\n")
-        })
+        self.engine.lock().map_or(String::new(), |te| te.text())
     }
 
     #[napi]
@@ -542,6 +624,52 @@ impl NativeTextEngine {
     #[napi]
     pub fn redo(&self) -> bool {
         self.engine.lock().map_or(false, |mut te| te.redo())
+    }
+
+    #[napi]
+    pub fn cursor_left(&self) {
+        if let Ok(mut te) = self.engine.lock() {
+            te.cursor_mut().move_left();
+        }
+    }
+
+    #[napi]
+    pub fn cursor_right(&self) {
+        if let Ok(mut te) = self.engine.lock() {
+            te.cursor_mut().move_right();
+        }
+    }
+
+    #[napi]
+    pub fn cursor_position(&self) -> u32 {
+        self.engine.lock().map_or(0, |te| te.cursor().position() as u32)
+    }
+
+    #[napi]
+    pub fn set_cursor_position(&self, pos: u32) {
+        if let Ok(mut te) = self.engine.lock() {
+            te.cursor_mut().set_position(pos as usize);
+        }
+    }
+
+    #[napi]
+    pub fn length(&self) -> u32 {
+        self.engine.lock().map_or(0, |te| te.char_count() as u32)
+    }
+
+    #[napi]
+    pub fn line_count(&self) -> u32 {
+        self.engine.lock().map_or(0, |te| te.line_count() as u32)
+    }
+
+    #[napi]
+    pub fn is_empty(&self) -> bool {
+        self.engine.lock().map_or(true, |te| te.is_empty())
+    }
+
+    #[napi]
+    pub fn word_count(&self) -> u32 {
+        self.engine.lock().map_or(0, |te| te.word_count() as u32)
     }
 }
 
@@ -590,6 +718,55 @@ impl NativeScheduler {
     #[napi]
     pub fn frame_count(&self) -> u32 {
         self.scheduler.lock().map_or(0, |s| s.frame_count() as u32)
+    }
+
+    #[napi]
+    pub fn fps(&self) -> f64 {
+        self.scheduler.lock().map_or(0.0, |s| {
+            let interval = s.frame_interval;
+            if interval.is_zero() { 0.0 } else { 1000.0 / interval.as_millis() as f64 }
+        })
+    }
+
+    #[napi]
+    pub fn should_render(&self) -> bool {
+        self.scheduler.lock().map_or(false, |s| matches!(s.status(), FrameStatus::Due | FrameStatus::Overdue))
+    }
+
+    #[napi]
+    pub fn request_render_coalesced(&self) {
+        if let Ok(mut s) = self.scheduler.lock() {
+            s.request_render_coalesced();
+        }
+    }
+
+    #[napi]
+    pub fn request_render_immediate(&self) {
+        if let Ok(mut s) = self.scheduler.lock() {
+            s.request_render_immediate();
+        }
+    }
+
+    #[napi]
+    pub fn has_scheduled_frame(&self) -> bool {
+        self.scheduler.lock().map_or(false, |s| s.has_scheduled_frame())
+    }
+
+    #[napi]
+    pub fn is_rendering(&self) -> bool {
+        self.scheduler.lock().map_or(false, |s| s.is_rendering())
+    }
+
+    #[napi]
+    pub fn begin_render(&self) {
+        if let Ok(mut s) = self.scheduler.lock() {
+            s.begin_render();
+        }
+    }
+
+    #[napi]
+    pub fn end_render(&self) -> bool {
+        self.scheduler.lock().map_or(false, |mut s| s.end_render())
     }
 }
 
@@ -747,6 +924,125 @@ impl NativeKeymap {
     pub fn clear_pending(&self) {
         if let Ok(mut km) = self.keymap.lock() {
             km.clear_pending_sequence();
+        }
+    }
+
+    #[napi]
+    pub fn set_mode(&self, mode: String) {
+        if let Ok(mut km) = self.keymap.lock() {
+            km.set_mode(mode);
+        }
+    }
+
+    #[napi]
+    pub fn current_mode(&self) -> String {
+        self.keymap.lock().map_or(String::new(), |km| km.current_mode().unwrap_or("").to_string())
+    }
+
+    #[napi]
+    pub fn clear_mode(&self) {
+        if let Ok(mut km) = self.keymap.lock() {
+            km.clear_mode();
+        }
+    }
+
+    #[napi]
+    pub fn remove_layer(&self, name: String) -> bool {
+        self.keymap.lock().map_or(false, |mut km| km.remove_layer(&name))
+    }
+
+    #[napi]
+    pub fn set_chord_timeout(&self, ms: i64) {
+        if let Ok(mut km) = self.keymap.lock() {
+            km.set_chord_timeout(ms as u64);
+        }
+    }
+
+    #[napi]
+    pub fn chord_timeout(&self) -> i64 {
+        self.keymap.lock().map_or(0, |km| km.chord_timeout_ms() as i64)
+    }
+
+    #[napi]
+    pub fn pending_keys(&self) -> Vec<String> {
+        self.keymap.lock().map_or(Vec::new(), |km| {
+            km.pending_keys().iter().map(|combo| format!("{:?}", combo.key).to_lowercase()).collect()
+        })
+    }
+
+    #[napi]
+    pub fn active_bindings(&self) -> String {
+        self.keymap.lock().map_or("[]".to_string(), |km| {
+            let bindings: Vec<serde_json::Value> = km
+                .active_bindings()
+                .iter()
+                .map(|(b, layer)| {
+                    serde_json::json!({
+                        "id": b.id,
+                        "keys": format!("{:?}", b.sequence),
+                        "command": b.command,
+                        "description": b.description,
+                        "enabled": b.enabled,
+                        "layer": layer,
+                    })
+                })
+                .collect();
+            serde_json::to_string(&bindings).unwrap_or_default()
+        })
+    }
+
+    #[napi]
+    pub fn all_bindings(&self) -> String {
+        self.keymap.lock().map_or("[]".to_string(), |km| {
+            let bindings: Vec<serde_json::Value> = km
+                .all_bindings()
+                .iter()
+                .map(|(b, layer)| {
+                    serde_json::json!({
+                        "id": b.id,
+                        "keys": format!("{:?}", b.sequence),
+                        "command": b.command,
+                        "description": b.description,
+                        "enabled": b.enabled,
+                        "layer": layer,
+                    })
+                })
+                .collect();
+            serde_json::to_string(&bindings).unwrap_or_default()
+        })
+    }
+
+    #[napi]
+    pub fn command_history(&self) -> Vec<String> {
+        self.keymap.lock().map_or(Vec::new(), |km| km.command_history().to_vec())
+    }
+
+    #[napi]
+    pub fn clear_history(&self) {
+        if let Ok(mut km) = self.keymap.lock() {
+            km.clear_history();
+        }
+    }
+
+    #[napi]
+    pub fn parse_key(&self, key_str: String) -> String {
+        match KeyParser::parse_combo(&key_str) {
+            Ok(combo) => serde_json::to_string(&serde_json::json!({
+                "key": format!("{:?}", combo.key).to_lowercase(),
+                "ctrl": combo.modifiers.ctrl,
+                "shift": combo.modifiers.shift,
+                "alt": combo.modifiers.alt,
+            }))
+            .unwrap_or_default(),
+            Err(_) => "{}".to_string(),
+        }
+    }
+
+    #[napi]
+    pub fn parse_sequence(&self, key_str: String) -> Vec<String> {
+        match KeyParser::parse_sequence(&key_str) {
+            Ok(seq) => seq.keys.iter().map(|combo| format!("{:?}", combo.key).to_lowercase()).collect(),
+            Err(_) => Vec::new(),
         }
     }
 }
@@ -1005,7 +1301,7 @@ enum CommandJson {
     SetMaxHeight { id: String, value: String },
     SetPadding { id: String, top: f32, right: f32, bottom: f32, left: f32 },
     SetMargin { id: String, top: f32, right: f32, bottom: f32, left: f32 },
-    SetGap { id: String, width: f32, height: f32 },
+    SetGap { id: String, row: f32, column: f32 },
     SetFlexGrow { id: String, value: f32 },
     SetFlexShrink { id: String, value: f32 },
     SetFlexBasis { id: String, value: String },
@@ -1038,6 +1334,42 @@ enum CommandJson {
     Shutdown,
 }
 
+fn parse_color(s: &str) -> crate::tree::Color {
+    if let Some(rgba) = crate::tree::Rgba::from_hex(s) {
+        return rgba.into();
+    }
+    match s.to_lowercase().as_str() {
+        "black" => crate::tree::Color::Named(crate::tree::NamedColor::Black),
+        "red" => crate::tree::Color::Named(crate::tree::NamedColor::Red),
+        "green" => crate::tree::Color::Named(crate::tree::NamedColor::Green),
+        "yellow" => crate::tree::Color::Named(crate::tree::NamedColor::Yellow),
+        "blue" => crate::tree::Color::Named(crate::tree::NamedColor::Blue),
+        "magenta" | "purple" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
+        "cyan" | "teal" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
+        "white" | "default" => crate::tree::Color::Named(crate::tree::NamedColor::White),
+        _ => crate::tree::Color::Default,
+    }
+}
+
+fn parse_sizing(s: &str) -> crate::taffy::Sizing {
+    if let Ok(px) = s.trim_end_matches("px").parse::<f32>() {
+        return crate::taffy::Sizing::Points(px);
+    }
+    if let Some(pct) = s.strip_suffix('%') {
+        if let Ok(val) = pct.parse::<f32>() {
+            return crate::taffy::Sizing::Percent(val / 100.0);
+        }
+    }
+    match s {
+        "auto" => crate::taffy::Sizing::Auto,
+        _ => crate::taffy::Sizing::Auto,
+    }
+}
+
+fn parse_rect_values(top: f32, right: f32, bottom: f32, left: f32) -> crate::taffy::RectValues {
+    crate::taffy::RectValues { top: Some(top), right: Some(right), bottom: Some(bottom), left: Some(left) }
+}
+
 fn convert_command(cj: CommandJson, id_map: &HashMap<u32, u64>) -> Option<Command> {
     let resolve = |s: &str| -> NodeId {
         s.parse::<u32>()
@@ -1048,14 +1380,453 @@ fn convert_command(cj: CommandJson, id_map: &HashMap<u32, u64>) -> Option<Comman
     };
 
     match cj {
+        // Tree commands
         CommandJson::CreateNode { .. } => None,
         CommandJson::RemoveNode { id } => Some(Command::RemoveNode { id: resolve(&id) }),
         CommandJson::AppendChild { parent, child } => {
             Some(Command::AppendChild { parent: resolve(&parent), child: resolve(&child) })
         }
+        CommandJson::InsertBefore { reference, child } => {
+            Some(Command::InsertBefore { reference: resolve(&reference), child: resolve(&child) })
+        }
+        CommandJson::MoveNode { node, new_parent } => {
+            Some(Command::MoveNode { node: resolve(&node), new_parent: resolve(&new_parent) })
+        }
+        CommandJson::ReplaceNode { old, new } => Some(Command::ReplaceNode { old: resolve(&old), new: resolve(&new) }),
+        CommandJson::DetachNode { id } => Some(Command::DetachNode { id: resolve(&id) }),
+        // Style commands
         CommandJson::SetText { id, text } => Some(Command::SetText { id: resolve(&id), text }),
+        CommandJson::SetStyle { id, style_json } => {
+            if let Ok(style) = serde_json::from_str::<StyleJson>(&style_json) {
+                Some(Command::SetStyle { id: resolve(&id), style: style.into_style() })
+            } else {
+                None
+            }
+        }
+        CommandJson::SetForeground { id, color } => {
+            Some(Command::SetForeground { id: resolve(&id), color: parse_color(&color) })
+        }
+        CommandJson::SetBackground { id, color } => {
+            Some(Command::SetBackground { id: resolve(&id), color: parse_color(&color) })
+        }
         CommandJson::SetBold { id, value } => Some(Command::SetBold { id: resolve(&id), value }),
         CommandJson::SetItalic { id, value } => Some(Command::SetItalic { id: resolve(&id), value }),
+        CommandJson::SetUnderline { id, value } => Some(Command::SetUnderline { id: resolve(&id), value }),
+        CommandJson::SetStrikethrough { id, value } => Some(Command::SetStrikethrough { id: resolve(&id), value }),
+        CommandJson::SetDim { id, value } => Some(Command::SetDim { id: resolve(&id), value }),
+        CommandJson::SetInverse { id, value } => Some(Command::SetInverse { id: resolve(&id), value }),
+        CommandJson::SetHidden { id, value } => Some(Command::SetHidden { id: resolve(&id), value }),
+        // Layout commands
+        CommandJson::SetFlexDirection { id, value } => {
+            let dir = match value.as_str() {
+                "column" => crate::taffy::FlexDirection::Column,
+                "column-reverse" => crate::taffy::FlexDirection::ColumnReverse,
+                "row-reverse" => crate::taffy::FlexDirection::RowReverse,
+                _ => crate::taffy::FlexDirection::Row,
+            };
+            Some(Command::SetFlexDirection { id: resolve(&id), direction: dir })
+        }
+        CommandJson::SetFlexWrap { id, value } => {
+            let wrap = match value.as_str() {
+                "wrap" => crate::taffy::FlexWrap::Wrap,
+                "wrap-reverse" => crate::taffy::FlexWrap::WrapReverse,
+                _ => crate::taffy::FlexWrap::NoWrap,
+            };
+            Some(Command::SetFlexWrap { id: resolve(&id), value: wrap })
+        }
+        CommandJson::SetJustifyContent { id, value } => {
+            let jc = match value.as_str() {
+                "flex-start" => crate::taffy::JustifyContent::FlexStart,
+                "flex-end" => crate::taffy::JustifyContent::FlexEnd,
+                "center" => crate::taffy::JustifyContent::Center,
+                "space-between" => crate::taffy::JustifyContent::SpaceBetween,
+                "space-around" => crate::taffy::JustifyContent::SpaceAround,
+                "space-evenly" => crate::taffy::JustifyContent::SpaceEvenly,
+                _ => crate::taffy::JustifyContent::FlexStart,
+            };
+            Some(Command::SetJustifyContent { id: resolve(&id), value: jc })
+        }
+        CommandJson::SetAlignItems { id, value } => {
+            let ai = match value.as_str() {
+                "flex-start" => crate::taffy::AlignItems::FlexStart,
+                "flex-end" => crate::taffy::AlignItems::FlexEnd,
+                "center" => crate::taffy::AlignItems::Center,
+                "stretch" => crate::taffy::AlignItems::Stretch,
+                "baseline" => crate::taffy::AlignItems::Baseline,
+                _ => crate::taffy::AlignItems::Stretch,
+            };
+            Some(Command::SetAlignItems { id: resolve(&id), value: ai })
+        }
+        CommandJson::SetAlignSelf { id, value } => {
+            let as_ = match value.as_str() {
+                "flex-start" => crate::taffy::AlignSelf::FlexStart,
+                "flex-end" => crate::taffy::AlignSelf::FlexEnd,
+                "center" => crate::taffy::AlignSelf::Center,
+                "stretch" => crate::taffy::AlignSelf::Stretch,
+                "baseline" => crate::taffy::AlignSelf::Baseline,
+                _ => crate::taffy::AlignSelf::Stretch,
+            };
+            Some(Command::SetAlignSelf { id: resolve(&id), value: as_ })
+        }
+        CommandJson::SetWidth { id, value } => {
+            Some(Command::SetWidth { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetHeight { id, value } => {
+            Some(Command::SetHeight { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetMinWidth { id, value } => {
+            Some(Command::SetMinWidth { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetMinHeight { id, value } => {
+            Some(Command::SetMinHeight { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetMaxWidth { id, value } => {
+            Some(Command::SetMaxWidth { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetMaxHeight { id, value } => {
+            Some(Command::SetMaxHeight { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetPadding { id, top, right, bottom, left } => {
+            Some(Command::SetPadding { id: resolve(&id), value: parse_rect_values(top, right, bottom, left) })
+        }
+        CommandJson::SetMargin { id, top, right, bottom, left } => {
+            Some(Command::SetMargin { id: resolve(&id), value: parse_rect_values(top, right, bottom, left) })
+        }
+        CommandJson::SetGap { id, row, column } => {
+            Some(Command::SetGap { id: resolve(&id), value: crate::taffy::Gap { row, column } })
+        }
+        CommandJson::SetFlexGrow { id, value } => Some(Command::SetFlexGrow { id: resolve(&id), value }),
+        CommandJson::SetFlexShrink { id, value } => Some(Command::SetFlexShrink { id: resolve(&id), value }),
+        CommandJson::SetFlexBasis { id, value } => {
+            Some(Command::SetFlexBasis { id: resolve(&id), value: parse_sizing(&value) })
+        }
+        CommandJson::SetPosition { id, value } => {
+            let pos = match value.as_str() {
+                "relative" => crate::taffy::Position::Relative,
+                _ => crate::taffy::Position::Absolute,
+            };
+            Some(Command::SetPosition { id: resolve(&id), value: pos })
+        }
+        CommandJson::SetInset { id, top, right, bottom, left } => {
+            Some(Command::SetInset { id: resolve(&id), value: parse_rect_values(top, right, bottom, left) })
+        }
+        // Content commands
+        CommandJson::SetAttribute { id, key, value } => Some(Command::SetAttribute { id: resolve(&id), key, value }),
+        CommandJson::RemoveAttribute { id, key } => Some(Command::RemoveAttribute { id: resolve(&id), key }),
+        // Visibility commands
+        CommandJson::SetDisplay { id, value } => {
+            let display = match value.as_str() {
+                "none" => crate::tree::VisibilityDisplay::None,
+                _ => crate::tree::VisibilityDisplay::Flex,
+            };
+            Some(Command::SetDisplay { id: resolve(&id), value: display })
+        }
+        CommandJson::SetOpacity { id, value } => Some(Command::SetOpacity { id: resolve(&id), value }),
+        CommandJson::SetClip { id, value } => Some(Command::SetClip { id: resolve(&id), value }),
+        // Transform commands
+        CommandJson::SetTranslateX { id, value } => Some(Command::SetTranslateX { id: resolve(&id), value }),
+        CommandJson::SetTranslateY { id, value } => Some(Command::SetTranslateY { id: resolve(&id), value }),
+        CommandJson::SetZIndex { id, value } => Some(Command::SetZIndex { id: resolve(&id), value }),
+        // Overflow commands
+        CommandJson::SetOverflow { id, value } => {
+            let overflow = match value.as_str() {
+                "hidden" => crate::tree::Overflow::Hidden,
+                "scroll" => crate::tree::Overflow::Scroll,
+                _ => crate::tree::Overflow::Visible,
+            };
+            Some(Command::SetOverflow { id: resolve(&id), value: overflow })
+        }
+        // Focus commands
+        CommandJson::FocusNode { id } => Some(Command::FocusNode { id: resolve(&id) }),
+        CommandJson::BlurNode { id } => Some(Command::BlurNode { id: resolve(&id) }),
+        CommandJson::SetTabIndex { id, value } => Some(Command::SetTabIndex { id: resolve(&id), value }),
+        // Frame commands
+        CommandJson::BeginFrame { frame_id } => Some(Command::BeginFrame { frame_id }),
+        CommandJson::CommitFrame { frame_id } => Some(Command::CommitFrame { frame_id }),
+        CommandJson::Invalidate { id } => Some(Command::Invalidate { id: resolve(&id) }),
+        // Screen commands
+        CommandJson::SetScreenMode { mode, footer_height } => {
+            let screen_mode = match mode.as_str() {
+                "split-footer" => {
+                    crate::protocol::ScreenMode::SplitFooter { height: footer_height.unwrap_or(0) as u16 }
+                }
+                "main-screen" => crate::protocol::ScreenMode::MainScreen,
+                _ => crate::protocol::ScreenMode::AlternateScreen,
+            };
+            Some(Command::SetScreenMode { mode: screen_mode })
+        }
+        // Lifecycle
         CommandJson::Shutdown => Some(Command::Shutdown),
     }
+}
+
+#[derive(serde::Deserialize)]
+struct StyleJson {
+    #[serde(default)]
+    fg: Option<String>,
+    #[serde(default)]
+    bg: Option<String>,
+    #[serde(default)]
+    bold: Option<bool>,
+    #[serde(default)]
+    italic: Option<bool>,
+    #[serde(default)]
+    underline: Option<bool>,
+    #[serde(default)]
+    strikethrough: Option<bool>,
+    #[serde(default)]
+    dim: Option<bool>,
+    #[serde(default)]
+    inverse: Option<bool>,
+    #[serde(default)]
+    hidden: Option<bool>,
+}
+
+impl StyleJson {
+    fn into_style(self) -> crate::tree::Style {
+        crate::tree::Style {
+            fg: self.fg.map(|c| parse_color(&c)),
+            bg: self.bg.map(|c| parse_color(&c)),
+            bold: self.bold,
+            italic: self.italic,
+            underline: self.underline,
+            strikethrough: self.strikethrough,
+            dim: self.dim,
+            inverse: self.inverse,
+            hidden: self.hidden,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct LayoutJson {
+    #[serde(default)]
+    direction: Option<String>,
+    #[serde(default)]
+    flex_wrap: Option<String>,
+    #[serde(default)]
+    justify: Option<String>,
+    #[serde(default)]
+    align: Option<String>,
+    #[serde(default)]
+    width: Option<String>,
+    #[serde(default)]
+    height: Option<String>,
+    #[serde(default)]
+    padding_top: Option<f32>,
+    #[serde(default)]
+    padding_right: Option<f32>,
+    #[serde(default)]
+    padding_bottom: Option<f32>,
+    #[serde(default)]
+    padding_left: Option<f32>,
+    #[serde(default)]
+    margin_top: Option<f32>,
+    #[serde(default)]
+    margin_right: Option<f32>,
+    #[serde(default)]
+    margin_bottom: Option<f32>,
+    #[serde(default)]
+    margin_left: Option<f32>,
+    #[serde(default)]
+    gap_row: Option<f32>,
+    #[serde(default)]
+    gap_column: Option<f32>,
+    #[serde(default)]
+    flex_grow: Option<f32>,
+    #[serde(default)]
+    flex_shrink: Option<f32>,
+}
+
+impl LayoutJson {
+    fn into_layout(self) -> crate::taffy::LayoutProps {
+        let direction = match self.direction.as_deref() {
+            Some("column") => crate::taffy::FlexDirection::Column,
+            Some("column-reverse") => crate::taffy::FlexDirection::ColumnReverse,
+            Some("row-reverse") => crate::taffy::FlexDirection::RowReverse,
+            _ => crate::taffy::FlexDirection::Row,
+        };
+
+        let flex_wrap = match self.flex_wrap.as_deref() {
+            Some("wrap") => crate::taffy::FlexWrap::Wrap,
+            Some("wrap-reverse") => crate::taffy::FlexWrap::WrapReverse,
+            _ => crate::taffy::FlexWrap::NoWrap,
+        };
+
+        let justify = match self.justify.as_deref() {
+            Some("flex-end") => crate::taffy::JustifyContent::FlexEnd,
+            Some("center") => crate::taffy::JustifyContent::Center,
+            Some("space-between") => crate::taffy::JustifyContent::SpaceBetween,
+            Some("space-around") => crate::taffy::JustifyContent::SpaceAround,
+            Some("space-evenly") => crate::taffy::JustifyContent::SpaceEvenly,
+            _ => crate::taffy::JustifyContent::FlexStart,
+        };
+
+        let align = match self.align.as_deref() {
+            Some("flex-end") => crate::taffy::AlignItems::FlexEnd,
+            Some("center") => crate::taffy::AlignItems::Center,
+            Some("stretch") => crate::taffy::AlignItems::Stretch,
+            Some("baseline") => crate::taffy::AlignItems::Baseline,
+            _ => crate::taffy::AlignItems::Stretch,
+        };
+
+        crate::taffy::LayoutProps {
+            display: crate::taffy::types::Display::Flex,
+            direction,
+            flex_wrap,
+            justify,
+            align,
+            align_content: None,
+            align_self: None,
+            flex_grow: self.flex_grow.unwrap_or(0.0),
+            flex_shrink: self.flex_shrink.unwrap_or(1.0),
+            flex_basis: None,
+            gap: Some(crate::taffy::Gap { row: self.gap_row.unwrap_or(0.0), column: self.gap_column.unwrap_or(0.0) }),
+            padding: Some(parse_rect_values(
+                self.padding_top.unwrap_or(0.0),
+                self.padding_right.unwrap_or(0.0),
+                self.padding_bottom.unwrap_or(0.0),
+                self.padding_left.unwrap_or(0.0),
+            )),
+            margin: Some(parse_rect_values(
+                self.margin_top.unwrap_or(0.0),
+                self.margin_right.unwrap_or(0.0),
+                self.margin_bottom.unwrap_or(0.0),
+                self.margin_left.unwrap_or(0.0),
+            )),
+            border: None,
+            width: self.width.map(|w| parse_sizing(&w)),
+            height: self.height.map(|h| parse_sizing(&h)),
+            min_width: None,
+            min_height: None,
+            max_width: None,
+            max_height: None,
+            position: crate::taffy::Position::Relative,
+            inset: None,
+            aspect_ratio: None,
+            overflow: None,
+            box_sizing: None,
+        }
+    }
+}
+
+// ─── Theme Napi Bindings ─────────────────────────────────────────────────────────
+
+fn color_to_hex(c: crate::tree::Color) -> String {
+    match c {
+        crate::tree::Color::Rgb { r, g, b } => format!("#{:02x}{:02x}{:02x}", r, g, b),
+        crate::tree::Color::Named(n) => {
+            let (r, g, b) = n.to_rgb();
+            format!("#{:02x}{:02x}{:02x}", r, g, b)
+        }
+        crate::tree::Color::Indexed(i) => {
+            let (r, g, b) = crate::tree::indexed_to_rgb(i);
+            format!("#{:02x}{:02x}{:02x}", r, g, b)
+        }
+        crate::tree::Color::Default => "#000000".to_string(),
+    }
+}
+
+#[napi(object)]
+pub struct NapiThemeColors {
+    pub background: String,
+    pub surface: String,
+    pub surface_high: String,
+    pub surface_low: String,
+    pub primary: String,
+    pub primary_foreground: String,
+    pub secondary: String,
+    pub secondary_foreground: String,
+    pub text: String,
+    pub text_muted: String,
+    pub text_dim: String,
+    pub border: String,
+    pub border_focused: String,
+    pub accent: String,
+    pub accent_foreground: String,
+    pub error: String,
+    pub warning: String,
+    pub success: String,
+    pub info: String,
+    pub scrollbar: String,
+    pub scrollbar_thumb: String,
+}
+
+#[napi(object)]
+pub struct NapiThemeSpacing {
+    pub none: u32,
+    pub xxs: u32,
+    pub xs: u32,
+    pub sm: u32,
+    pub md: u32,
+    pub lg: u32,
+    pub xl: u32,
+    pub xxl: u32,
+}
+
+#[napi(object)]
+pub struct NapiThemeBorders {
+    pub style: String,
+    pub fg: String,
+}
+
+#[napi(object)]
+pub struct NapiTheme {
+    pub name: String,
+    pub colors: NapiThemeColors,
+    pub spacing: NapiThemeSpacing,
+    pub borders: NapiThemeBorders,
+}
+
+impl From<Theme> for NapiTheme {
+    fn from(t: Theme) -> Self {
+        NapiTheme {
+            name: t.name.to_string(),
+            colors: NapiThemeColors {
+                background: color_to_hex(t.colors.background),
+                surface: color_to_hex(t.colors.surface),
+                surface_high: color_to_hex(t.colors.surface_high),
+                surface_low: color_to_hex(t.colors.surface_low),
+                primary: color_to_hex(t.colors.primary),
+                primary_foreground: color_to_hex(t.colors.primary_foreground),
+                secondary: color_to_hex(t.colors.secondary),
+                secondary_foreground: color_to_hex(t.colors.secondary_foreground),
+                text: color_to_hex(t.colors.text),
+                text_muted: color_to_hex(t.colors.text_muted),
+                text_dim: color_to_hex(t.colors.text_dim),
+                border: color_to_hex(t.colors.border),
+                border_focused: color_to_hex(t.colors.border_focused),
+                accent: color_to_hex(t.colors.accent),
+                accent_foreground: color_to_hex(t.colors.accent_foreground),
+                error: color_to_hex(t.colors.error),
+                warning: color_to_hex(t.colors.warning),
+                success: color_to_hex(t.colors.success),
+                info: color_to_hex(t.colors.info),
+                scrollbar: color_to_hex(t.colors.scrollbar),
+                scrollbar_thumb: color_to_hex(t.colors.scrollbar_thumb),
+            },
+            spacing: NapiThemeSpacing {
+                none: t.spacing.none as u32,
+                xxs: t.spacing.xxs as u32,
+                xs: t.spacing.xs as u32,
+                sm: t.spacing.sm as u32,
+                md: t.spacing.md as u32,
+                lg: t.spacing.lg as u32,
+                xl: t.spacing.xl as u32,
+                xxl: t.spacing.xxl as u32,
+            },
+            borders: NapiThemeBorders { style: format!("{:?}", t.borders.style), fg: color_to_hex(t.borders.fg) },
+        }
+    }
+}
+
+#[napi]
+pub fn create_dark_theme() -> NapiTheme {
+    Theme::dark().into()
+}
+
+#[napi]
+pub fn create_light_theme() -> NapiTheme {
+    Theme::light().into()
 }
