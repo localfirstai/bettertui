@@ -7,6 +7,7 @@ pub mod ansi;
 pub mod clock;
 pub mod dirty_diff;
 pub mod engine;
+pub mod event_pipeline;
 pub mod ffi;
 pub mod font;
 pub mod framebuffer;

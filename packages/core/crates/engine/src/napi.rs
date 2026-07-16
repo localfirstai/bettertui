@@ -1830,3 +1830,137 @@ pub fn create_dark_theme() -> NapiTheme {
 pub fn create_light_theme() -> NapiTheme {
     Theme::light().into()
 }
+
+// ─── EventPipeline Class (Wrapper Pattern) ───────────────────────────────────────
+
+#[napi(object)]
+pub struct NativeEventPipelineConfig {
+    pub kitty_keyboard: Option<bool>,
+    pub bracketed_paste: Option<bool>,
+    pub focus_events: Option<bool>,
+    pub mouse_tracking: Option<bool>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+}
+
+impl Default for NativeEventPipelineConfig {
+    fn default() -> Self {
+        Self {
+            kitty_keyboard: Some(false),
+            bracketed_paste: Some(false),
+            focus_events: Some(false),
+            mouse_tracking: Some(false),
+            width: Some(80),
+            height: Some(24),
+        }
+    }
+}
+
+impl From<NativeEventPipelineConfig> for crate::event_pipeline::EventPipelineConfig {
+    fn from(c: NativeEventPipelineConfig) -> Self {
+        Self {
+            kitty_keyboard: c.kitty_keyboard.unwrap_or(false),
+            bracketed_paste: c.bracketed_paste.unwrap_or(false),
+            focus_events: c.focus_events.unwrap_or(false),
+            mouse_tracking: c.mouse_tracking.unwrap_or(false),
+            width: c.width.unwrap_or(80) as u16,
+            height: c.height.unwrap_or(24) as u16,
+        }
+    }
+}
+
+#[napi]
+pub struct NativeEventPipeline {
+    pipeline: Mutex<crate::event_pipeline::EventPipeline>,
+}
+
+#[napi]
+impl NativeEventPipeline {
+    #[napi(constructor)]
+    pub fn new(config: Option<NativeEventPipelineConfig>) -> Self {
+        let cfg = config.unwrap_or_default();
+        Self { pipeline: Mutex::new(crate::event_pipeline::EventPipeline::new(cfg.into())) }
+    }
+
+    #[napi]
+    pub fn feed(&self, data: napi::bindgen_prelude::Buffer) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.feed(&data);
+        }
+    }
+
+    #[napi]
+    pub fn push_key(&self, key: String, ctrl: bool, shift: bool, alt: bool) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.push_key(parse_key_str(&key), Modifiers { ctrl, shift, alt, meta: false }, NodeId::default());
+        }
+    }
+
+    #[napi]
+    pub fn push_mouse(&self, button: String, x: u32, y: u32) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            let btn = match button.as_str() {
+                "left" => MouseButton::Left,
+                "right" => MouseButton::Right,
+                "middle" => MouseButton::Middle,
+                "scroll_up" => MouseButton::ScrollUp,
+                "scroll_down" => MouseButton::ScrollDown,
+                _ => MouseButton::None,
+            };
+            pipeline.push_mouse(btn, Point::new(x as u16, y as u16), NodeId::default());
+        }
+    }
+
+    #[napi]
+    pub fn push_paste(&self, text: String) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.push_paste(text, NodeId::default());
+        }
+    }
+
+    #[napi]
+    pub fn push_resize(&self, width: u32, height: u32, prev_width: u32, prev_height: u32) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.push_resize(width as u16, height as u16, prev_width as u16, prev_height as u16);
+        }
+    }
+
+    #[napi]
+    pub fn drain(&self) -> String {
+        self.pipeline.lock().map_or("[]".to_string(), |mut pipeline| {
+            let events: Vec<serde_json::Value> = pipeline.drain().iter().map(event_to_json).collect();
+            serde_json::to_string(&events).unwrap_or_default()
+        })
+    }
+
+    #[napi]
+    pub fn len(&self) -> u32 {
+        self.pipeline.lock().map_or(0, |pipeline| pipeline.len() as u32)
+    }
+
+    #[napi]
+    pub fn is_empty(&self) -> bool {
+        self.pipeline.lock().map_or(true, |pipeline| pipeline.is_empty())
+    }
+
+    #[napi]
+    pub fn clear(&self) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.clear();
+        }
+    }
+
+    #[napi]
+    pub fn resize(&self, width: u32, height: u32) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.resize(width as u16, height as u16);
+        }
+    }
+
+    #[napi]
+    pub fn reset(&self) {
+        if let Ok(mut pipeline) = self.pipeline.lock() {
+            pipeline.reset();
+        }
+    }
+}

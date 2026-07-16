@@ -14,6 +14,10 @@ export declare class NativeEngine {
   printTree(): string;
   validate(): boolean;
   shutdown(): void;
+  setStyle(id: number, styleJson: string): void;
+  setLayout(id: number, layoutJson: string): void;
+  getNode(id: number): string;
+  treeSummary(): string;
   root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
@@ -32,6 +36,8 @@ export declare class NativeEventBus {
   constructor();
   pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
   pushMouse(button: string, x: number, y: number): void;
+  pushMouseMotion(x: number, y: number): void;
+  pushPaste(text: string): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -41,7 +47,14 @@ export declare class NativeEventBus {
 
 export declare class NativeFocusManager {
   constructor();
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
   traverse(direction: string): string;
+  focusOrder(): Array<number>;
+  clear(): void;
 }
 
 export declare class NativeHitGrid {
@@ -72,6 +85,19 @@ export declare class NativeKeymap {
   handleKey(key: string): string;
   hasPending(): boolean;
   clearPending(): void;
+  setMode(mode: string): void;
+  currentMode(): string;
+  clearMode(): void;
+  removeLayer(name: string): boolean;
+  setChordTimeout(ms: number): void;
+  chordTimeout(): number;
+  pendingKeys(): Array<string>;
+  activeBindings(): string;
+  allBindings(): string;
+  commandHistory(): Array<string>;
+  clearHistory(): void;
+  parseKey(keyStr: string): string;
+  parseSequence(keyStr: string): Array<string>;
 }
 
 export declare class NativeScheduler {
@@ -81,6 +107,14 @@ export declare class NativeScheduler {
   endFrame(): void;
   isIdle(): boolean;
   frameCount(): number;
+  fps(): number;
+  shouldRender(): boolean;
+  requestRenderCoalesced(): void;
+  requestRenderImmediate(): void;
+  hasScheduledFrame(): boolean;
+  isRendering(): boolean;
+  beginRender(): void;
+  endRender(): boolean;
 }
 
 export declare class NativeSpanFeed {
@@ -108,11 +142,70 @@ export declare class NativeTextEngine {
   canRedo(): boolean;
   undo(): boolean;
   redo(): boolean;
+  cursorLeft(): void;
+  cursorRight(): void;
+  cursorPosition(): number;
+  setCursorPosition(pos: number): void;
+  length(): number;
+  lineCount(): number;
+  isEmpty(): boolean;
+  wordCount(): number;
 }
+
+export declare function createDarkTheme(): NapiTheme;
+
+export declare function createLightTheme(): NapiTheme;
 
 export declare function detectCapabilities(): TerminalCapabilities;
 
 export declare function getVersion(): string;
+
+export interface NapiTheme {
+  name: string;
+  colors: NapiThemeColors;
+  spacing: NapiThemeSpacing;
+  borders: NapiThemeBorders;
+}
+
+export interface NapiThemeBorders {
+  style: string;
+  fg: string;
+}
+
+export interface NapiThemeColors {
+  background: string;
+  surface: string;
+  surfaceHigh: string;
+  surfaceLow: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  text: string;
+  textMuted: string;
+  textDim: string;
+  border: string;
+  borderFocused: string;
+  accent: string;
+  accentForeground: string;
+  error: string;
+  warning: string;
+  success: string;
+  info: string;
+  scrollbar: string;
+  scrollbarThumb: string;
+}
+
+export interface NapiThemeSpacing {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+}
 
 export interface NativeSpanFeedOptions {
   chunkSize: number;

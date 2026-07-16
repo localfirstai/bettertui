@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { StdinParser } from "../lib/stdin-parser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import { createEngine, createKeymap, detectCapabilities, getVersion } from "./binding";
 import type { ExternalOutputMode, ScreenMode } from "./types";
@@ -22,34 +23,25 @@ export interface CliRendererOptions {
   externalOutputMode?: ExternalOutputMode;
 }
 
-const NAMED_KEYS: Record<string, string> = {
-  "\x1b[A": "up",
-  "\x1b[B": "down",
-  "\x1b[C": "right",
-  "\x1b[D": "left",
-  "\x1b[5~": "pageup",
-  "\x1b[6~": "pagedown",
-  "\x1b[H": "home",
-  "\x1b[F": "end",
-  "\x1b[3~": "delete",
-  "\x1b[Z": "tab",
-  "\x1b": "escape",
-  "\r": "enter",
-  "\n": "enter",
-  "\t": "tab",
-  " ": "space",
-  "\x7f": "backspace",
-  "\x08": "backspace",
-};
-
 type KeyInputEvents = {
   keypress: [KeyEvent];
 };
 
 export class KeyInput extends EventEmitter<KeyInputEvents> {
-  private buffer = "";
-  private timeout: ReturnType<typeof setTimeout> | null = null;
+  private stdinParser: StdinParser;
   private rawMode = false;
+  private readonly onDataBound: (data: Buffer) => void;
+
+  constructor() {
+    super();
+    this.stdinParser = new StdinParser({
+      useKittyKeyboard: false, // Keep disabled to match old behavior
+      onTimeoutFlush: () => {
+        this.drain();
+      },
+    });
+    this.onDataBound = this.onData.bind(this);
+  }
 
   start(): void {
     const stdin = process.stdin;
@@ -58,74 +50,36 @@ export class KeyInput extends EventEmitter<KeyInputEvents> {
       this.rawMode = true;
     }
     stdin.resume();
-    stdin.on("data", this.onData);
+    stdin.on("data", this.onDataBound);
   }
 
   stop(): void {
-    process.stdin.off("data", this.onData);
+    process.stdin.off("data", this.onDataBound);
     if (this.rawMode && process.stdin.setRawMode) {
       process.stdin.setRawMode(false);
       this.rawMode = false;
     }
     process.stdin.pause();
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
-    }
+    this.stdinParser.reset();
   }
 
-  private onData = (data: Buffer): void => {
-    this.buffer += data.toString("latin1");
-    if (this.timeout) clearTimeout(this.timeout);
+  private onData(data: Buffer): void {
+    this.stdinParser.push(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+    this.drain();
+  }
 
-    const flush = () => {
-      this.timeout = null;
-      const data = this.buffer;
-      this.buffer = "";
-      this.dispatch(data);
-    };
-
-    if (this.buffer === "\x1b") {
-      this.timeout = setTimeout(flush, 20);
-      return;
-    }
-    flush();
-  };
-
-  private dispatch(data: string): void {
-    const trimmed = data.replace(/\r?\n+$/u, "");
-    const payload = trimmed.length > 0 ? trimmed : data;
-
-    const isNamed = NAMED_KEYS[payload] !== undefined;
-    const ctrl = !isNamed && payload.length === 1 && payload.charCodeAt(0) < 32;
-    const alt = payload.startsWith("\x1b") && payload.length > 1;
-    const shift = payload === "\x1b[Z";
-
-    const known =
-      NAMED_KEYS[payload] !== undefined ||
-      (payload.length === 1 && payload.charCodeAt(0) >= 32) ||
-      ctrl;
-
-    if (!known) return;
-
-    let key: string;
-    if (NAMED_KEYS[payload]) {
-      key = NAMED_KEYS[payload] ?? payload;
-    } else if (ctrl && payload.length === 1 && payload.charCodeAt(0) < 32) {
-      key = String.fromCharCode(payload.charCodeAt(0) + 96);
-    } else if (payload.length === 1) {
-      key = payload;
-    } else {
-      key = payload;
-    }
-
-    this.emit("keypress", {
-      name: key,
-      ctrl,
-      shift,
-      alt,
-      meta: false,
-      sequence: payload,
+  private drain(): void {
+    this.stdinParser.drain((event) => {
+      if (event.type === "key") {
+        this.emit("keypress", {
+          name: event.key.name,
+          ctrl: event.key.ctrl,
+          shift: event.key.shift,
+          alt: event.key.option, // option acts as alt
+          meta: event.key.meta,
+          sequence: event.key.sequence,
+        });
+      }
     });
   }
 }

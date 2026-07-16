@@ -772,6 +772,7 @@ impl EventDispatcher {
 
 // === event_bus.rs ===
 
+#[derive(Debug)]
 pub struct EventBus {
     queue: VecDeque<Event>,
     pub max_queue_size: usize,
