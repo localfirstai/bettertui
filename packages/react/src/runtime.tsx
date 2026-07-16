@@ -187,7 +187,7 @@ function getOrCreateNativeSession(width: number, height: number): NativeSession 
     return null;
   }
   const buffer = new CommandBuffer();
-  const rootId = engine.root();
+  const rootId = String(engine.root());
   const reconciler = createBetterTUIReconciler({
     push(command) {
       buffer.push(command);

@@ -16,7 +16,7 @@ export async function renderToStringAsync(
   const height = options?.height ?? 24;
   const engine = createEngine(width, height);
   const buffer = new CommandBuffer();
-  const rootId = engine.root();
+  const rootId = String(engine.root());
 
   let resolveRender: () => void;
   const renderPromise = new Promise<void>((resolve) => {
@@ -90,13 +90,11 @@ export async function renderToStringAsync(
   const frame = engine.renderFull();
   engine.commitFrame();
 
-  if (!frame || !frame.outputData) {
+  if (!frame || !frame.output_data) {
     return "";
   }
 
   const decoder = new TextDecoder();
-  const data = frame.outputData;
-  return decoder.decode(
-    Buffer.isBuffer(data) || ArrayBuffer.isView(data) ? data : new Uint8Array(data),
-  );
+  const data = Uint8Array.from(atob(frame.output_data), (c) => c.charCodeAt(0));
+  return decoder.decode(data);
 }

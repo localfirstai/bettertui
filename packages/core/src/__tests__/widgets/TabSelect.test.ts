@@ -48,6 +48,8 @@ describe("TabSelect", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe("t2");
   });
@@ -68,6 +70,8 @@ describe("TabSelect", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe("t1");
   });
@@ -81,6 +85,8 @@ describe("TabSelect", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(ts.options.activeIndex).toBe(0);
   });
@@ -95,6 +101,8 @@ describe("TabSelect", () => {
         shift: false,
         alt: false,
         meta: false,
+        eventType: "press",
+        source: "raw",
       }),
     ).toBe(false);
   });

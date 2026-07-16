@@ -128,6 +128,8 @@ export function useKeyboard(handler: (event: SharedKeyEvent) => boolean) {
         shift: ke.shiftKey,
         alt: ke.altKey,
         meta: ke.metaKey,
+        eventType: "press",
+        source: "raw",
       };
 
       if (handlerRef.current(keyEvent)) {

@@ -55,6 +55,8 @@ describe("Input", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(false);
     expect(input.value).toBe("test");
@@ -69,6 +71,8 @@ describe("Input", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(true);
     expect(input.value).toBe("hel");
@@ -83,6 +87,8 @@ describe("Input", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(true);
     expect(input.value).toBe("hell");
@@ -103,6 +109,8 @@ describe("Input", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(true);
     expect(submitted).toBe("test");
@@ -117,6 +125,8 @@ describe("Input", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(false);
     expect(input.value).toBe("hi");

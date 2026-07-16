@@ -48,6 +48,8 @@ describe("Select", () => {
         shift: false,
         alt: false,
         meta: false,
+        eventType: "press",
+        source: "raw",
       }),
     ).toBe(true);
     expect(changed).toBe("apple");
@@ -69,6 +71,8 @@ describe("Select", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(changed).toBe("banana");
   });
@@ -83,6 +87,8 @@ describe("Select", () => {
         shift: false,
         alt: false,
         meta: false,
+        eventType: "press",
+        source: "raw",
       }),
     ).toBe(false);
   });
@@ -97,6 +103,8 @@ describe("Select", () => {
         shift: false,
         alt: false,
         meta: false,
+        eventType: "press",
+        source: "raw",
       }),
     ).toBe(false);
   });

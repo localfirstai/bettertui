@@ -16,8 +16,8 @@ export interface EventLoopOptions {
 export interface EventLoop {
   start(): void;
   stop(): void;
-  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, targetId: number): void;
-  pushMouse(button: string, x: number, y: number, targetId: number): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
   drain(): string;
   onEvent(callback: EventCallback): void;
 }
@@ -66,6 +66,8 @@ export function createEventLoop(eventBus: NapiEventBus, options?: EventLoopOptio
       shift,
       alt,
       meta: false,
+      eventType: "press",
+      source: "raw",
     };
     eventBus.pushKey(key, ctrl, shift, alt);
     for (const cb of callbacks) {

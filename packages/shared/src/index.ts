@@ -4,7 +4,9 @@ export type {
   BorderStyle,
   BorderStyleKind,
   ColorValue,
+  Display,
   FlexDirection,
+  FlexWrap,
   Gap,
   Inset,
   JustifyContent,
@@ -26,7 +28,7 @@ export type {
   ThemeSpacing,
   ValidationError,
   ValidationResult,
-} from "./types";
+} from "./types/index";
 
 export {
   COLOR_REGEX,
