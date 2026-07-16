@@ -4,6 +4,8 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 
+use crate::clock::Clock;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Idle = 0,
@@ -37,8 +39,12 @@ impl FrameRequest {
         self
     }
 
+    pub fn is_overdue_at(&self, now: Instant) -> bool {
+        self.deadline.is_some_and(|d| now > d)
+    }
+
     pub fn is_overdue(&self) -> bool {
-        self.deadline.is_some_and(|d| Instant::now() > d)
+        self.is_overdue_at(Instant::now())
     }
 }
 
@@ -157,6 +163,8 @@ pub struct Scheduler {
     #[doc(hidden)]
     pub frame_budget: FrameBudget,
     stats: SchedulerStats,
+    clock: Option<Box<dyn Clock + Send>>,
+    clock_base: Option<(Instant, Duration)>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -197,10 +205,11 @@ impl Scheduler {
         let min_interval =
             if max_fps > 0 { Duration::from_millis(1000 / max_fps as u64) } else { Duration::from_millis(8) };
 
+        let now = Instant::now();
         Self {
             frame_interval: interval,
             min_frame_interval: min_interval,
-            last_frame: Instant::now(),
+            last_frame: now,
             pending: false,
             immediate_mode: false,
             frame_count: 0,
@@ -211,6 +220,29 @@ impl Scheduler {
             animation_frame_id: 0,
             frame_budget: FrameBudget::with_fps_range(target_fps, max_fps),
             stats: SchedulerStats::default(),
+            clock: None,
+            clock_base: None,
+        }
+    }
+
+    /// Create scheduler with an external clock source (for testing).
+    pub fn with_clock(target_fps: u32, clock: Box<dyn Clock + Send>) -> Self {
+        let mut s = Self::with_fps(target_fps);
+        let now_dur = clock.now();
+        s.clock = Some(clock);
+        s.clock_base = Some((Instant::now(), now_dur));
+        s.last_frame = s.now();
+        s
+    }
+
+    /// Get the current `Instant`, using the injected clock if available.
+    fn now(&self) -> Instant {
+        match (&self.clock, &self.clock_base) {
+            (Some(clock), Some((base_instant, base_dur))) => {
+                let elapsed = clock.now().saturating_sub(*base_dur);
+                *base_instant + elapsed
+            }
+            _ => Instant::now(),
         }
     }
 
@@ -271,7 +303,8 @@ impl Scheduler {
 
         let effective_interval = if self.immediate_mode { self.min_frame_interval } else { self.frame_interval };
 
-        let elapsed = self.last_frame.elapsed();
+        let now = self.now();
+        let elapsed = now.saturating_duration_since(self.last_frame);
         if elapsed >= effective_interval {
             if elapsed >= effective_interval * 2 { FrameStatus::Overdue } else { FrameStatus::Due }
         } else {
@@ -286,7 +319,7 @@ impl Scheduler {
 
         self.pending = false;
         self.priority_queue.clear();
-        self.last_frame = Instant::now();
+        self.last_frame = self.now();
         self.frame_count += 1;
         self.frame_budget.start_frame();
         self.stats.total_frames = self.frame_count;
@@ -390,7 +423,7 @@ impl Scheduler {
     }
 
     pub fn reset(&mut self) {
-        self.last_frame = Instant::now();
+        self.last_frame = self.now();
         self.pending = false;
         self.immediate_mode = false;
         self.frame_count = 0;
@@ -452,5 +485,43 @@ mod tests {
         scheduler.set_fps_range(30, 120);
         assert_eq!(scheduler.target_fps(), 30);
         assert!(scheduler.max_fps() >= 120);
+    }
+
+    #[test]
+    fn scheduler_with_clock_tracks_time() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        let t0 = scheduler.now();
+        clock.advance(100);
+        let t1 = scheduler.now();
+        assert!(t1 >= t0);
+    }
+
+    #[test]
+    fn scheduler_with_clock_advances_frame_time() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        scheduler.request_frame();
+        // Advance clock past frame interval so frame is due
+        clock.advance(200);
+        assert!(scheduler.begin_frame());
+        scheduler.end_frame();
+        assert_eq!(scheduler.frame_count(), 1);
+    }
+
+    #[test]
+    fn scheduler_clock_controls_status() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        assert_eq!(scheduler.status(), FrameStatus::Idle);
+        scheduler.request_frame();
+        // No time elapsed — frame should be pending
+        assert_eq!(scheduler.status(), FrameStatus::Pending);
+        clock.advance(20);
+        // Enough time for 60fps (16ms) — should be due
+        assert_eq!(scheduler.status(), FrameStatus::Due);
+        clock.advance(100);
+        // More than 2x frame interval — should be overdue
+        assert_eq!(scheduler.status(), FrameStatus::Overdue);
     }
 }

@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import { createEngine, createKeymap, detectCapabilities, getVersion } from "./binding";
+import type { ExternalOutputMode, ScreenMode } from "./types";
 
 export interface KeyEvent {
   name: string;
@@ -16,6 +17,9 @@ export interface CliRendererOptions {
   height?: number;
   exitOnCtrlC?: boolean;
   targetFps?: number;
+  screenMode?: ScreenMode;
+  footerHeight?: number;
+  externalOutputMode?: ExternalOutputMode;
 }
 
 const NAMED_KEYS: Record<string, string> = {
@@ -133,6 +137,10 @@ export class CliRenderer {
   private capabilities: TerminalCapabilities;
   private width: number;
   private height: number;
+  private renderOffset: number;
+  private _screenMode: ScreenMode;
+  private _externalOutputMode: ExternalOutputMode;
+  private externalOutputBuffer: string[] = [];
   private nodes: Map<number, { parent: number | null; children: number[] }> = new Map();
   private running = false;
 
@@ -140,6 +148,14 @@ export class CliRenderer {
     this.capabilities = detectCapabilities();
     this.width = options.width ?? this.capabilities.columns;
     this.height = options.height ?? this.capabilities.rows;
+
+    this._screenMode = options.screenMode ?? "alternate-screen";
+    this._externalOutputMode =
+      options.externalOutputMode ??
+      (this._screenMode === "split-footer" ? "capture-stdout" : "passthrough");
+    const footerHeight = options.footerHeight ?? 0;
+    this.renderOffset =
+      this._screenMode === "split-footer" ? Math.max(0, this.height - footerHeight) : 0;
 
     this.engine = createEngine(this.width, this.height);
     this.keymap = createKeymap();
@@ -155,6 +171,18 @@ export class CliRenderer {
 
   get terminalHeight(): number {
     return this.height;
+  }
+
+  get viewportHeight(): number {
+    return this._screenMode === "split-footer" ? this.renderOffset : this.height;
+  }
+
+  get screenMode(): ScreenMode {
+    return this._screenMode;
+  }
+
+  get externalOutputMode(): ExternalOutputMode {
+    return this._externalOutputMode;
   }
 
   get keyInput(): KeyInput {
@@ -176,7 +204,10 @@ export class CliRenderer {
   start(): void {
     if (this.running) return;
     this.running = true;
-    this.enterAlternateScreen();
+
+    if (this._screenMode === "alternate-screen") {
+      this.enterAlternateScreen();
+    }
     this._keyInput.start();
   }
 
@@ -184,9 +215,34 @@ export class CliRenderer {
     if (!this.running) return;
     this.running = false;
     this._keyInput.stop();
-    this.exitAlternateScreen();
+
+    if (this._screenMode === "split-footer") {
+      this.flushExternalOutput();
+    } else {
+      this.exitAlternateScreen();
+    }
     this.engine.shutdown();
   }
+
+  /** Flush captured external output above the footer region. */
+  private flushExternalOutput(): void {
+    if (this.externalOutputBuffer.length === 0) return;
+    // Move cursor above footer, replay output, restore footer position
+    const output = this.externalOutputBuffer.join("");
+    this.externalOutputBuffer = [];
+    process.stdout.write(`\x1b[${this.renderOffset + 1};1H${output}`);
+  }
+
+  /** Capture or passthrough stdout writes depending on mode. */
+  interceptStdoutWrite = (chunk: string | Uint8Array): boolean => {
+    if (this._externalOutputMode === "capture-stdout") {
+      this.externalOutputBuffer.push(
+        typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"),
+      );
+      return true;
+    }
+    return false;
+  };
 
   createNode(kind: string): number {
     const id = this.engine.createNode(kind);
@@ -238,6 +294,33 @@ export class CliRenderer {
     }
   }
 
+  /** Switch screen mode at runtime. */
+  setScreenMode(mode: ScreenMode, footerHeight?: number): void {
+    const oldMode = this._screenMode;
+    this._screenMode = mode;
+
+    if (mode === "split-footer") {
+      this._externalOutputMode = "capture-stdout";
+      this.renderOffset = Math.max(0, this.height - (footerHeight ?? 0));
+      this.engine.setScreenMode("split-footer", footerHeight ?? 0);
+      if (oldMode === "alternate-screen") {
+        this.exitAlternateScreen();
+      }
+    } else if (mode === "alternate-screen") {
+      this._externalOutputMode = "passthrough";
+      this.renderOffset = 0;
+      this.engine.setScreenMode("alternate-screen");
+      this.enterAlternateScreen();
+    } else {
+      this._externalOutputMode = "passthrough";
+      this.renderOffset = 0;
+      this.engine.setScreenMode("main-screen");
+      if (oldMode === "alternate-screen") {
+        this.exitAlternateScreen();
+      }
+    }
+  }
+
   render(): void {
     this.engine.beginFrame();
     const frame = this.engine.render();
@@ -245,7 +328,16 @@ export class CliRenderer {
 
     if (frame.output_data) {
       const decoded = Buffer.from(frame.output_data, "base64");
-      process.stdout.write(decoded);
+      if (this._screenMode === "split-footer") {
+        // Paint only in the viewport region (above footer)
+        process.stdout.write(`\x1b[1;1H${decoded.toString()}`);
+      } else {
+        process.stdout.write(decoded);
+      }
+    }
+
+    if (this._screenMode === "split-footer" && this.externalOutputBuffer.length > 0) {
+      this.flushExternalOutput();
     }
   }
 
@@ -256,7 +348,15 @@ export class CliRenderer {
 
     if (frame.output_data) {
       const decoded = Buffer.from(frame.output_data, "base64");
-      process.stdout.write(decoded);
+      if (this._screenMode === "split-footer") {
+        process.stdout.write(`\x1b[1;1H${decoded.toString()}`);
+      } else {
+        process.stdout.write(decoded);
+      }
+    }
+
+    if (this._screenMode === "split-footer" && this.externalOutputBuffer.length > 0) {
+      this.flushExternalOutput();
     }
   }
 
@@ -271,7 +371,12 @@ export class CliRenderer {
   resize(width: number, height: number): void {
     this.width = width;
     this.height = height;
-    this.engine.resize(width, height);
+    if (this._screenMode === "split-footer") {
+      // Keep footer height stable, adjust viewport
+      this.engine.resize(width, this.viewportHeight);
+    } else {
+      this.engine.resize(width, height);
+    }
   }
 
   private enterAlternateScreen(): void {

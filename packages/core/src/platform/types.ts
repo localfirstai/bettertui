@@ -136,6 +136,9 @@ export interface NapiScheduler {
   isIdle(): boolean;
 }
 
+export type ScreenMode = "alternate-screen" | "main-screen" | "split-footer";
+export type ExternalOutputMode = "capture-stdout" | "passthrough";
+
 export interface BindingInfo {
   id: string;
   keys: string;

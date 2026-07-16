@@ -8,21 +8,29 @@ use napi_derive::napi;
 
 use crate::VERSION;
 use crate::engine::Engine;
+use crate::hit_grid::HitGrid;
 use crate::input::{
     EventBus, FocusDirection, FocusManager, FocusTraversal, Key, KeyBinding, KeyEvent, KeyParser, Keymap, Modifiers,
     MouseButton,
 };
-use crate::protocol::Command;
+use crate::protocol::{Command, ScreenMode};
 use crate::render::Renderer;
 use crate::scheduler::{FrameStatus, Scheduler};
+use crate::span_feed::SpanFeed;
 use crate::text::TextEngine;
 use crate::tree::{NodeId, NodeKind, Point};
 
 fn node_id(val: u64) -> NodeId {
+    // SAFETY: NodeId is slotmap::DefaultKey, which is a transparent newtype
+    // around a 64-bit value (generational index). The transmute is safe because
+    // both types have the same size and layout.
     unsafe { std::mem::transmute(val) }
 }
 
 fn node_id_u64(id: NodeId) -> u64 {
+    // SAFETY: NodeId is slotmap::DefaultKey, which is a transparent newtype
+    // around a 64-bit value. The transmute is safe because both types have
+    // the same size and layout.
     unsafe { std::mem::transmute(id) }
 }
 
@@ -217,6 +225,20 @@ impl NativeEngine {
     }
 
     #[napi]
+    pub fn set_screen_mode(&self, mode: String, footer_height: Option<u32>) {
+        if let Ok(mut state) = self.state.lock() {
+            let screen_mode = match mode.as_str() {
+                "split-footer" => {
+                    ScreenMode::SplitFooter { height: footer_height.unwrap_or(0).min(u16::MAX as u32) as u16 }
+                }
+                "main-screen" => ScreenMode::MainScreen,
+                _ => ScreenMode::AlternateScreen,
+            };
+            state.renderer.set_screen_mode(screen_mode);
+        }
+    }
+
+    #[napi]
     pub fn resize(&self, width: u32, height: u32) {
         if let Ok(mut state) = self.state.lock() {
             state.renderer.resize(width.max(1).min(9999) as u16, height.max(1).min(9999) as u16);
@@ -288,6 +310,55 @@ impl NativeEngine {
             state.engine.set_text(node_id(id as u64), text);
         }
     }
+
+    // ─── Hit Grid Methods ───────────────────────────────────────────
+
+    #[napi]
+    pub fn hit_grid_check(&self, x: u32, y: u32) -> i64 {
+        self.state.lock().map_or(0, |s| s.renderer.hit_grid_check(x, y) as i64)
+    }
+
+    #[napi]
+    pub fn hit_grid_is_dirty(&self) -> bool {
+        self.state.lock().map_or(false, |s| s.renderer.hit_grid_dirty())
+    }
+
+    #[napi]
+    pub fn hit_grid_clear_current(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.renderer.hit_grid_clear_current();
+        }
+    }
+
+    #[napi]
+    pub fn hit_grid_push_scissor(&self, x: i32, y: i32, width: u32, height: u32) {
+        if let Ok(mut state) = self.state.lock() {
+            state.renderer.hit_grid_push_scissor(x, y, width, height);
+        }
+    }
+
+    #[napi]
+    pub fn hit_grid_pop_scissor(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.renderer.hit_grid_pop_scissor();
+        }
+    }
+
+    #[napi]
+    pub fn hit_grid_add_current_clipped(&self, x: u32, y: u32, width: u32, height: u32, id: i64) {
+        if let Ok(mut state) = self.state.lock() {
+            let x = x.min(u16::MAX as u32) as u16;
+            let y = y.min(u16::MAX as u32) as u16;
+            let width = width.min(u16::MAX as u32) as u16;
+            let height = height.min(u16::MAX as u32) as u16;
+            state.renderer.hit_grid_add_current_clipped(x, y, width, height, id as u64);
+        }
+    }
+
+    #[napi]
+    pub fn hit_grid_dump(&self) -> String {
+        self.state.lock().map_or(String::new(), |s| s.renderer.hit_grid_dump())
+    }
 }
 
 // ─── EventBus Class (Wrapper Pattern) ─────────────────────────────────────────────
@@ -322,14 +393,23 @@ impl NativeEventBus {
                 "scroll_down" => MouseButton::ScrollDown,
                 _ => MouseButton::None,
             };
-            bus.push_mouse(btn, Point::new(x as u16, y as u16), NodeId::default());
+            bus.push_mouse(
+                btn,
+                Point::new(x.min(u16::MAX as u32) as u16, y.min(u16::MAX as u32) as u16),
+                NodeId::default(),
+            );
         }
     }
 
     #[napi]
     pub fn push_resize(&self, width: u32, height: u32, prev_width: u32, prev_height: u32) {
         if let Ok(mut bus) = self.bus.lock() {
-            bus.push_resize(width as u16, height as u16, prev_width as u16, prev_height as u16);
+            bus.push_resize(
+                width.min(u16::MAX as u32) as u16,
+                height.min(u16::MAX as u32) as u16,
+                prev_width.min(u16::MAX as u32) as u16,
+                prev_height.min(u16::MAX as u32) as u16,
+            );
         }
     }
 
@@ -513,6 +593,97 @@ impl NativeScheduler {
     }
 }
 
+// ─── SpanFeed Class (Wrapper Pattern) ──────────────────────────────────────────────
+
+// ─── NativeSpanFeed ───────────────────────────────────────────────────────────────
+
+// ─── HitGrid Class (Wrapper Pattern) ───────────────────────────────────────────────
+
+#[napi]
+pub struct NativeHitGrid {
+    grid: Mutex<HitGrid>,
+}
+
+#[napi]
+impl NativeHitGrid {
+    #[napi(constructor)]
+    pub fn new(width: u32, height: u32) -> Self {
+        Self { grid: Mutex::new(HitGrid::new(width, height)) }
+    }
+
+    #[napi]
+    pub fn resize(&self, width: u32, height: u32) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.resize(width, height);
+        }
+    }
+
+    #[napi]
+    pub fn add(&self, x: i32, y: i32, width: u32, height: u32, id: f64) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.add(x, y, width, height, id as u64);
+        }
+    }
+
+    #[napi]
+    pub fn check(&self, x: u32, y: u32) -> f64 {
+        self.grid.lock().map_or(0.0, |g| g.check(x, y) as f64)
+    }
+
+    #[napi]
+    pub fn clear_next(&self) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.clear_next();
+        }
+    }
+
+    #[napi]
+    pub fn clear_current(&self) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.clear_current();
+        }
+    }
+
+    #[napi]
+    pub fn swap(&self) -> bool {
+        self.grid.lock().map_or(false, |mut g| g.swap())
+    }
+
+    #[napi]
+    pub fn is_dirty(&self) -> bool {
+        self.grid.lock().map_or(false, |g| g.is_dirty())
+    }
+
+    #[napi]
+    pub fn dimensions(&self) -> String {
+        self.grid.lock().map_or("[]".to_string(), |g| {
+            let (w, h) = g.dimensions();
+            format!("[{}, {}]", w, h)
+        })
+    }
+
+    #[napi]
+    pub fn push_scissor(&self, x: i32, y: i32, width: u32, height: u32) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.push_scissor(x, y, width, height);
+        }
+    }
+
+    #[napi]
+    pub fn pop_scissor(&self) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.pop_scissor();
+        }
+    }
+
+    #[napi]
+    pub fn clear_scissors(&self) {
+        if let Ok(mut g) = self.grid.lock() {
+            g.clear_scissors();
+        }
+    }
+}
+
 // ─── Keymap Class (Wrapper Pattern) ───────────────────────────────────────────────
 
 #[napi]
@@ -576,6 +747,152 @@ impl NativeKeymap {
     pub fn clear_pending(&self) {
         if let Ok(mut km) = self.keymap.lock() {
             km.clear_pending_sequence();
+        }
+    }
+}
+
+// ─── NativeSpanFeed Class (Wrapper Pattern) ─────────────────────────────────────
+
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct NativeSpanFeedOptions {
+    pub chunk_size: u32,
+    pub initial_chunks: u32,
+    pub max_bytes: f64,
+    pub growth_policy: u8,
+    pub auto_commit_on_full: u8,
+    pub span_queue_capacity: u32,
+}
+
+impl Default for NativeSpanFeedOptions {
+    fn default() -> Self {
+        Self {
+            chunk_size: 65536,
+            initial_chunks: 2,
+            max_bytes: 0.0,
+            growth_policy: 0,
+            auto_commit_on_full: 1,
+            span_queue_capacity: 4096,
+        }
+    }
+}
+
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct NativeSpanFeedStats {
+    pub bytes_written: f64,
+    pub spans_committed: f64,
+    pub chunks: u32,
+    pub pending_spans: u32,
+}
+
+#[napi]
+pub struct NativeSpanFeed {
+    inner: std::sync::Mutex<crate::span_feed::SpanFeed>,
+}
+
+#[napi]
+impl NativeSpanFeed {
+    #[napi(constructor)]
+    pub fn new(options: Option<NativeSpanFeedOptions>) -> Self {
+        match options {
+            Some(opts) => Self {
+                inner: std::sync::Mutex::new(crate::span_feed::SpanFeed::with_options(
+                    crate::span_feed::SpanFeedOptions {
+                        chunk_size: opts.chunk_size,
+                        initial_chunks: opts.initial_chunks,
+                        max_bytes: opts.max_bytes as u64,
+                        growth_policy: if opts.growth_policy == 0 {
+                            crate::span_feed::GrowthPolicy::Grow
+                        } else {
+                            crate::span_feed::GrowthPolicy::Block
+                        },
+                        auto_commit_on_full: opts.auto_commit_on_full != 0,
+                        span_queue_capacity: opts.span_queue_capacity,
+                    },
+                )),
+            },
+            None => Self { inner: std::sync::Mutex::new(crate::span_feed::SpanFeed::new()) },
+        }
+    }
+
+    #[napi]
+    pub fn write(&self, data: napi::bindgen_prelude::Buffer) -> u32 {
+        if let Ok(mut feed) = self.inner.lock() { feed.write(&data) as u32 } else { 0 }
+    }
+
+    #[napi]
+    pub fn drain_spans(&self, out: napi::bindgen_prelude::Buffer) -> u32 {
+        if let Ok(mut feed) = self.inner.lock() {
+            // Safety: the buffer must be big enough for SpanInfo structs
+            let capacity = out.len() / std::mem::size_of::<crate::span_feed::SpanInfo>();
+            let mut buf: Vec<crate::span_feed::SpanInfo> = Vec::with_capacity(capacity);
+            let count = feed.drain_spans(&mut buf);
+            // Copy span info into the output buffer as raw bytes
+            let dst = out.as_ptr() as *mut crate::span_feed::SpanInfo;
+            // SAFETY: dst is a mutable pointer to the JS-allocated buffer. The buffer
+            // capacity was checked above (capacity >= count). Both src and dst are
+            // properly aligned for SpanInfo. count items are copied, which is within bounds.
+            unsafe {
+                std::ptr::copy_nonoverlapping(buf.as_ptr(), dst, count as usize);
+            }
+            count
+        } else {
+            0
+        }
+    }
+
+    #[napi]
+    pub fn close(&self) {
+        if let Ok(mut feed) = self.inner.lock() {
+            feed.close();
+        }
+    }
+
+    #[napi]
+    pub fn reset(&self) {
+        if let Ok(mut feed) = self.inner.lock() {
+            feed.reset();
+        }
+    }
+
+    #[napi]
+    pub fn pending_spans(&self) -> u32 {
+        self.inner.lock().map_or(0, |f| f.pending_spans())
+    }
+
+    #[napi]
+    pub fn pending_bytes(&self) -> u32 {
+        self.inner.lock().map_or(0, |f| f.pending_bytes())
+    }
+
+    #[napi]
+    pub fn is_closed(&self) -> bool {
+        self.inner.lock().map_or(true, |f| f.is_closed())
+    }
+
+    #[napi]
+    pub fn is_backpressured(&self) -> bool {
+        self.inner.lock().map_or(true, |f| f.is_backpressured())
+    }
+
+    #[napi]
+    pub fn stats(&self) -> NativeSpanFeedStats {
+        self.inner.lock().map_or(
+            NativeSpanFeedStats { bytes_written: 0.0, spans_committed: 0.0, chunks: 0, pending_spans: 0 },
+            |f| NativeSpanFeedStats {
+                bytes_written: f.bytes_written() as f64,
+                spans_committed: f.spans_committed() as f64,
+                chunks: f.chunk_count(),
+                pending_spans: f.pending_spans(),
+            },
+        )
+    }
+
+    #[napi]
+    pub fn mark_consumed(&self, chunk_index: u32) {
+        if let Ok(mut feed) = self.inner.lock() {
+            feed.mark_consumed(chunk_index);
         }
     }
 }
@@ -654,12 +971,70 @@ fn parse_node_kind(kind: &str) -> NodeKind {
 #[derive(serde::Deserialize)]
 #[serde(tag = "type")]
 enum CommandJson {
+    // Tree commands
     CreateNode { id: u32, kind: String },
     RemoveNode { id: String },
     AppendChild { parent: String, child: String },
+    InsertBefore { reference: String, child: String },
+    MoveNode { node: String, new_parent: String },
+    ReplaceNode { old: String, new: String },
+    DetachNode { id: String },
+    // Style commands
     SetText { id: String, text: String },
+    SetStyle { id: String, style_json: String },
+    SetForeground { id: String, color: String },
+    SetBackground { id: String, color: String },
     SetBold { id: String, value: bool },
     SetItalic { id: String, value: bool },
+    SetUnderline { id: String, value: bool },
+    SetStrikethrough { id: String, value: bool },
+    SetDim { id: String, value: bool },
+    SetInverse { id: String, value: bool },
+    SetHidden { id: String, value: bool },
+    // Layout commands
+    SetFlexDirection { id: String, value: String },
+    SetFlexWrap { id: String, value: String },
+    SetJustifyContent { id: String, value: String },
+    SetAlignItems { id: String, value: String },
+    SetAlignSelf { id: String, value: String },
+    SetWidth { id: String, value: String },
+    SetHeight { id: String, value: String },
+    SetMinWidth { id: String, value: String },
+    SetMinHeight { id: String, value: String },
+    SetMaxWidth { id: String, value: String },
+    SetMaxHeight { id: String, value: String },
+    SetPadding { id: String, top: f32, right: f32, bottom: f32, left: f32 },
+    SetMargin { id: String, top: f32, right: f32, bottom: f32, left: f32 },
+    SetGap { id: String, width: f32, height: f32 },
+    SetFlexGrow { id: String, value: f32 },
+    SetFlexShrink { id: String, value: f32 },
+    SetFlexBasis { id: String, value: String },
+    SetPosition { id: String, value: String },
+    SetInset { id: String, top: f32, right: f32, bottom: f32, left: f32 },
+    // Content commands
+    SetAttribute { id: String, key: String, value: String },
+    RemoveAttribute { id: String, key: String },
+    // Visibility commands
+    SetDisplay { id: String, value: String },
+    SetOpacity { id: String, value: f32 },
+    SetClip { id: String, value: bool },
+    // Transform commands
+    SetTranslateX { id: String, value: i32 },
+    SetTranslateY { id: String, value: i32 },
+    SetZIndex { id: String, value: i32 },
+    // Overflow commands
+    SetOverflow { id: String, value: String },
+    // Focus commands
+    FocusNode { id: String },
+    BlurNode { id: String },
+    SetTabIndex { id: String, value: i32 },
+    // Frame commands
+    BeginFrame { frame_id: u64 },
+    CommitFrame { frame_id: u64 },
+    Invalidate { id: String },
+    // Screen commands
+    SetScreenMode { mode: String, footer_height: Option<u32> },
+    // Lifecycle
     Shutdown,
 }
 

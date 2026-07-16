@@ -9,6 +9,8 @@ interface NativeModule {
   NativeKeymap: new () => NativeKeymap;
   NativeScheduler: new (fps?: number | null) => NativeScheduler;
   NativeTextEngine: new (text?: string | null) => NativeTextEngine;
+  NativeSpanFeed: new (options?: NativeSpanFeedOptions | null) => NativeSpanFeed;
+  NativeHitGrid: new (width: number, height: number) => NativeHitGrid;
   TerminalCapabilities: TerminalCapabilities;
   detectCapabilities: () => TerminalCapabilities;
   getVersion: () => string;
@@ -21,6 +23,7 @@ interface NativeEngine {
   render(): string;
   renderFull(): string;
   resize(width: number, height: number): void;
+  setScreenMode(mode: string, footerHeight?: number | null): void;
   nodeCount(): number;
   frameCount(): number;
   createNode(kind: string): number;
@@ -31,6 +34,13 @@ interface NativeEngine {
   validate(): boolean;
   printTree(): string;
   shutdown(): void;
+  hitGridCheck(x: number, y: number): number;
+  hitGridIsDirty(): boolean;
+  hitGridClearCurrent(): void;
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void;
+  hitGridPopScissor(): void;
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void;
+  hitGridDump(): string;
 }
 
 interface NativeEventBus {
@@ -146,6 +156,7 @@ export interface NapiEngine {
   render(): RenderResult;
   renderFull(): RenderResult;
   resize(width: number, height: number): void;
+  setScreenMode(mode: string, footerHeight?: number | null): void;
   nodeCount(): number;
   frameCount(): number;
   createNode(kind: string): number;
@@ -156,6 +167,13 @@ export interface NapiEngine {
   validate(): boolean;
   printTree(): string;
   shutdown(): void;
+  hitGridCheck(x: number, y: number): number;
+  hitGridIsDirty(): boolean;
+  hitGridClearCurrent(): void;
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void;
+  hitGridPopScissor(): void;
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void;
+  hitGridDump(): string;
 }
 
 export interface NapiEventBus {
@@ -241,6 +259,9 @@ class EngineWrapper implements NapiEngine {
   resize(width: number, height: number): void {
     this.engine.resize(width, height);
   }
+  setScreenMode(mode: string, footerHeight?: number | null): void {
+    this.engine.setScreenMode(mode, footerHeight ?? null);
+  }
   nodeCount(): number {
     return this.engine.nodeCount();
   }
@@ -270,6 +291,27 @@ class EngineWrapper implements NapiEngine {
   }
   shutdown(): void {
     this.engine.shutdown();
+  }
+  hitGridCheck(x: number, y: number): number {
+    return this.engine.hitGridCheck(x, y);
+  }
+  hitGridIsDirty(): boolean {
+    return this.engine.hitGridIsDirty();
+  }
+  hitGridClearCurrent(): void {
+    this.engine.hitGridClearCurrent();
+  }
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void {
+    this.engine.hitGridPushScissor(x, y, width, height);
+  }
+  hitGridPopScissor(): void {
+    this.engine.hitGridPopScissor();
+  }
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void {
+    this.engine.hitGridAddCurrentClipped(x, y, width, height, id);
+  }
+  hitGridDump(): string {
+    return this.engine.hitGridDump();
   }
 }
 
@@ -427,4 +469,161 @@ export function createWidgetHost(): NapiWidgetHost {
   return {
     widgetCount: () => 0,
   };
+}
+
+// ─── NativeSpanFeed ─────────────────────────────────────────────────────────────
+
+export interface NativeSpanFeedOptions {
+  chunkSize?: number;
+  initialChunks?: number;
+  maxBytes?: number;
+  /** 0 = grow, 1 = block */
+  growthPolicy?: number;
+  autoCommitOnFull?: boolean;
+  spanQueueCapacity?: number;
+}
+
+interface NativeSpanFeed {
+  write(data: Buffer): number;
+  commit(): boolean;
+  close(): void;
+  reset(): void;
+  pendingSpans(): number;
+  pendingBytes(): number;
+  bytesWritten(): number;
+  isClosed(): boolean;
+  isBackpressured(): boolean;
+  stats(): NapiSpanFeedStats;
+  markConsumed(chunkIndex: number): void;
+}
+
+interface NativeHitGrid {
+  resize(width: number, height: number): void;
+  add(x: number, y: number, width: number, height: number, id: number): void;
+  check(x: number, y: number): number;
+  clearNext(): void;
+  clearCurrent(): void;
+  swap(): boolean;
+  isDirty(): boolean;
+  dimensions(): string;
+  pushScissor(x: number, y: number, width: number, height: number): void;
+  popScissor(): void;
+  clearScissors(): void;
+}
+
+export interface NapiSpanFeedStats {
+  bytesWritten: number;
+  spansCommitted: number;
+  chunks: number;
+  pendingSpans: number;
+}
+
+export class NapiSpanFeed {
+  constructor(private feed: NativeSpanFeed) {}
+
+  write(data: Buffer): number {
+    return this.feed.write(data);
+  }
+
+  commit(): boolean {
+    return this.feed.commit();
+  }
+
+  close(): void {
+    this.feed.close();
+  }
+
+  reset(): void {
+    this.feed.reset();
+  }
+
+  get pendingSpans(): number {
+    return this.feed.pendingSpans();
+  }
+
+  get pendingBytes(): number {
+    return this.feed.pendingBytes();
+  }
+
+  get bytesWritten(): number {
+    return this.feed.bytesWritten();
+  }
+
+  get isClosed(): boolean {
+    return this.feed.isClosed();
+  }
+
+  get isBackpressured(): boolean {
+    return this.feed.isBackpressured();
+  }
+
+  stats(): NapiSpanFeedStats {
+    return this.feed.stats();
+  }
+
+  markConsumed(chunkIndex: number): void {
+    this.feed.markConsumed(chunkIndex);
+  }
+}
+
+export function createSpanFeed(options?: NativeSpanFeedOptions): NapiSpanFeed {
+  const nativeOptions = options
+    ? {
+        chunkSize: options.chunkSize ?? 65536,
+        initialChunks: options.initialChunks ?? 2,
+        maxBytes: options.maxBytes ?? 0,
+        growthPolicy: options.growthPolicy ?? 0,
+        autoCommitOnFull: options.autoCommitOnFull ?? true,
+        spanQueueCapacity: options.spanQueueCapacity ?? 4096,
+      }
+    : null;
+  return new NapiSpanFeed(new native.NativeSpanFeed(nativeOptions));
+}
+
+export class NapiHitGrid {
+  constructor(private grid: NativeHitGrid) {}
+
+  resize(width: number, height: number): void {
+    this.grid.resize(width, height);
+  }
+
+  add(x: number, y: number, width: number, height: number, id: number): void {
+    this.grid.add(x, y, width, height, id);
+  }
+
+  check(x: number, y: number): number {
+    return this.grid.check(x, y);
+  }
+
+  clearNext(): void {
+    this.grid.clearNext();
+  }
+
+  clearCurrent(): void {
+    this.grid.clearCurrent();
+  }
+
+  swap(): boolean {
+    return this.grid.swap();
+  }
+
+  get isDirty(): boolean {
+    return this.grid.isDirty();
+  }
+
+  pushScissor(x: number, y: number, width: number, height: number): void {
+    this.grid.pushScissor(x, y, width, height);
+  }
+
+  popScissor(): void {
+    this.grid.popScissor();
+  }
+
+  clearScissors(): void {
+    this.grid.clearScissors();
+  }
+}
+
+export function createHitGrid(width: number, height: number): NapiHitGrid {
+  return new NapiHitGrid(new native.NativeHitGrid(width, height));
 }

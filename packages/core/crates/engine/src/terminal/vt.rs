@@ -1580,8 +1580,8 @@ mod proptests {
             Just(SgrAttribute::Inverse),
             Just(SgrAttribute::Hidden),
             Just(SgrAttribute::Strikethrough),
-            Just(SgrAttribute::Foreground(bettertui_engine::ansi::ForegroundColor::Default,)),
-            Just(SgrAttribute::Background(bettertui_engine::ansi::BackgroundColor::Default,)),
+            Just(SgrAttribute::Foreground(crate::ansi::ForegroundColor::Default,)),
+            Just(SgrAttribute::Background(crate::ansi::BackgroundColor::Default,)),
         ]
     }
 
@@ -1603,18 +1603,18 @@ mod proptests {
 
     fn arb_csi() -> impl Strategy<Value = ParserEvent> {
         prop_oneof![
-            arb_cursor_movement().prop_map(|m| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorMovement(m))),
-            arb_erase_mode().prop_map(|e| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Erase(e))),
-            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteLine(n))),
-            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertLine(n))),
-            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::DeleteChar(n))),
-            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::InsertChar(n))),
-            (0u32..5).prop_map(|n| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::EraseChar(n))),
-            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorPositionSave)),
-            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::CursorPositionRestore)),
-            Just(ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::AttributeReset)),
+            arb_cursor_movement().prop_map(|m| ParserEvent::Csi(crate::ansi::CsiCommand::CursorMovement(m))),
+            arb_erase_mode().prop_map(|e| ParserEvent::Csi(crate::ansi::CsiCommand::Erase(e))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(crate::ansi::CsiCommand::DeleteLine(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(crate::ansi::CsiCommand::InsertLine(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(crate::ansi::CsiCommand::DeleteChar(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(crate::ansi::CsiCommand::InsertChar(n))),
+            (0u32..5).prop_map(|n| ParserEvent::Csi(crate::ansi::CsiCommand::EraseChar(n))),
+            Just(ParserEvent::Csi(crate::ansi::CsiCommand::CursorPositionSave)),
+            Just(ParserEvent::Csi(crate::ansi::CsiCommand::CursorPositionRestore)),
+            Just(ParserEvent::Csi(crate::ansi::CsiCommand::AttributeReset)),
             (prop::collection::vec(arb_sgr_attribute(), 0..10))
-                .prop_map(|attrs| ParserEvent::Csi(bettertui_engine::ansi::CsiCommand::Sgr(attrs))),
+                .prop_map(|attrs| ParserEvent::Csi(crate::ansi::CsiCommand::Sgr(attrs))),
         ]
     }
 

@@ -1,10 +1,17 @@
 import type { KeyEvent as SharedKeyEvent, MouseEvent as SharedMouseEvent } from "@bettertui/shared";
+import { SystemClock } from "../lib/clock";
+import type { Clock, TimerHandle } from "../lib/clock";
 import type { NapiEventBus } from "./types";
 
 export type KeyEvent = SharedKeyEvent;
 export type MouseEvent = SharedMouseEvent;
 
 export type EventCallback = (event: SharedKeyEvent | SharedMouseEvent) => void;
+
+export interface EventLoopOptions {
+  pollIntervalMs?: number;
+  clock?: Clock;
+}
 
 export interface EventLoop {
   start(): void;
@@ -15,15 +22,18 @@ export interface EventLoop {
   onEvent(callback: EventCallback): void;
 }
 
-export function createEventLoop(eventBus: NapiEventBus): EventLoop {
+export function createEventLoop(eventBus: NapiEventBus, options?: EventLoopOptions): EventLoop {
   const callbacks: EventCallback[] = [];
   let running = false;
-  let drainInterval: ReturnType<typeof setInterval> | null = null;
+  let drainInterval: TimerHandle | null = null;
+  const clock = options?.clock ?? new SystemClock();
+  const pollIntervalMs = options?.pollIntervalMs ?? 16;
 
   function start(): void {
     if (running) return;
     running = true;
-    drainInterval = setInterval(() => {
+    const poll = () => {
+      if (!running) return;
       const raw = eventBus.drain();
       if (raw) {
         try {
@@ -35,13 +45,15 @@ export function createEventLoop(eventBus: NapiEventBus): EventLoop {
           }
         } catch {}
       }
-    }, 16);
+      drainInterval = clock.setTimeout(poll, pollIntervalMs);
+    };
+    poll();
   }
 
   function stop(): void {
     running = false;
     if (drainInterval !== null) {
-      clearInterval(drainInterval);
+      clock.clearTimeout(drainInterval);
       drainInterval = null;
     }
   }
