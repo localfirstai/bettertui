@@ -17,7 +17,7 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 | Gate | Result |
 |------|--------|
-| Rust engine unit tests | 720 Rust lib tests passing (verified via `cargo test --lib`) across the engine, terminal, and widgets crates |
+| Rust engine unit tests | Co-located in `bettertui-engine` (`packages/core/crates/engine`); run with `cargo test --manifest-path packages/core/Cargo.toml --lib` |
 | Clippy `-D warnings` | clean |
 | rustfmt | clean |
 | `pnpm build` (turbo) | all buildable TS packages |
@@ -38,6 +38,6 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 
 ## Notes
 
-- `cargo test -p bettertui-engine --lib` excludes `packages/core/crates/engine/tests/` (pre-existing integration failures would otherwise block CI). The CI job separates the lib-target run from `cargo test --workspace`.
+- The Rust test build currently has a compilation issue in `terminal/vt.rs` (missing `proptest`/`Strategy` import in test code) that must be fixed before the engine test suite is green. Run the library tests with `cargo test --manifest-path packages/core/Cargo.toml --lib`.
 - Biome is the only TS formatter/linter (no Prettier/ESLint).
 - There is no snapshot/headless harness package and no `benchmarks/` crate. Benchmarks live in `@bettertui/benchmark` via Vitest `bench`.

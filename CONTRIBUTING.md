@@ -25,7 +25,7 @@ pnpm install
 pnpm build
 
 # Build the native Rust addon (required before running anything native)
-cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml
+pnpm --filter @bettertui/core build:native
 
 # Run linting
 pnpm lint
@@ -38,25 +38,30 @@ pnpm typecheck
 
 ```bash
 # Check the engine compiles
-cargo check --workspace
+cargo check --manifest-path packages/core/Cargo.toml
 
-# Run tests (720 Rust lib tests across engine/terminal/widgets crates, use --lib to skip integration tests)
-cargo test -p bettertui-engine --lib
+# Run tests (library tests are co-located in the engine crate)
+cargo test --manifest-path packages/core/Cargo.toml --lib
 
 # Format code
 cargo fmt --all
 
 # Lint
-cargo clippy --workspace -- -D warnings
+cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 ```
 
 ## Project Structure
 
-- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, library)
-- `packages/core/crates/bindings/` — napi-rs Node.js bindings (`bettertui-bindings`, cdylib)
-- `packages/` — TypeScript packages (`shared`, `core`, `react`, `devtools`, `benchmark`).
+- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, lib + cdylib; the `bettertui_engine.node` addon)
+- `packages/core/crates/logger/` — tracing logger for native code (`bettertui-logger`)
+- `packages/core/crates/benchmark/` — Rust benchmarks (`bettertui-benchmark`)
+- `packages/` — TypeScript packages (all currently `private`):
+  - `@bettertui/core` — framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge)
+  - `@bettertui/react` — React adapter (install **only** this for React apps; depends on core)
+  - `@bettertui/shared` — **internal** type-only foundation (re-exported by core and react)
+  - `@bettertui/devtools`, `@bettertui/benchmark` — tooling
 - `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
-- `examples/` — 15 example apps (built on `@bettertui/core` + `@bettertui/react`, launched via the interactive launcher)
+- `examples/` — `vanila/` holds the vanilla / native TypeScript examples (run on `@bettertui/core`); `react/`, `rust/`, `solid/` are reserved
 - `docs/` — the documentation you are reading (canonical source of truth)
 
 ## Test-Driven Development
@@ -64,9 +69,9 @@ cargo clippy --workspace -- -D warnings
 BetterTUI is built test-first. Tests describe behavior before or alongside implementation, and every change is gated by automated checks. There is **no `@bettertui/testing` package** and no snapshot/headless harness — tests use [Vitest](https://vitest.dev/) directly, and React output is verified through `renderToStringAsync` in `packages/react/src/testing.ts`.
 
 - **Write the test first.** For an engine change or a new API, add a failing test that pins the expected behavior.
-- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` within the engine, terminal, and widgets crates (720 lib tests in total, verified via `cargo test --lib`).
+- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` within the engine crate (`packages/core/crates/engine`), plus `tests/`. Run them with `cargo test --manifest-path packages/core/Cargo.toml --lib`.
 - **TypeScript:** co-locate tests as `src/**/*.test.ts` / `*.test.tsx` (see `vitest.shared.ts`); run them with `pnpm test`.
-- **Keep the suite green.** Run `pnpm lint && pnpm typecheck && pnpm build && pnpm test` and `cargo test -p bettertui-engine --lib` before opening a PR.
+- **Keep the suite green.** Run `pnpm lint && pnpm typecheck && pnpm build && pnpm test` and `cargo test --manifest-path packages/core/Cargo.toml --lib` before opening a PR.
 - **No dead code or TODOs in committed source.** Track planned work in `tasks/`.
 
 For commands and the full testing workflow, see [docs/guides/testing.md](docs/guides/testing.md) and [docs/testing.md](docs/testing.md).
@@ -140,7 +145,7 @@ Configure format on save in `.vscode/settings.json`:
 1. Create a feature branch from `main`
 2. Make your changes following the code standards
 3. Ensure all checks pass: `pnpm lint && pnpm typecheck && pnpm build`
-4. Ensure Rust checks pass: `cargo check --workspace && cargo test -p bettertui-engine --lib`
+4. Ensure Rust checks pass: `cargo check --manifest-path packages/core/Cargo.toml && cargo test --manifest-path packages/core/Cargo.toml --lib`
 5. Submit a pull request with a clear description
 
 ## Reporting Issues

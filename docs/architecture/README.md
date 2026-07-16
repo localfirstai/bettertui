@@ -5,16 +5,22 @@
 
 BetterTUI is a **framework-agnostic terminal UI rendering engine**. Rust owns all performance-critical work (rendering, layout, input, animation, text editing, terminal emulation). TypeScript owns the developer experience (typed APIs, framework bindings, theming). A napi-rs FFI boundary is the only coupling point between the two, and it carries **commands** — never framework concepts.
 
-```mermaid
-graph TD
-    A[Application] --> B[@bettertui/react]
-    B --> C[@bettertui/core]
-    C -->|napi-rs FFI| E[Rust Engine bettertui-bindings]
-    E --> F[bettertui-engine]
-    F -->|crossterm + portable-pty| G[(Terminal / PTY)]
-    C --> J[Internal: @bettertui/shared]
-    B --> J
 ```
+Vanilla / Native TS App ─┐
+                         ├─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine (bettertui-engine cdylib)
+React App ─▶ @bettertui/react ───────────────┘                       │
+         │                                                            ▼
+         └─────────────────────────────────────▶ bettertui-engine ──▶ (Terminal / PTY)
+                                                                        via crossterm + portable-pty
+Both @bettertui/core and @bettertui/react re-export the internal @bettertui/shared types.
+```
+
+## Two first-class packages
+
+- **`@bettertui/core`** is a fully public, framework-agnostic package for vanilla / native TypeScript. It is the recommended entry point when you don't use React.
+- **`@bettertui/react`** is the React adapter. React apps install **only** `@bettertui/react` — it depends on `@bettertui/core` and resolves it automatically.
+
+`@bettertui/shared` is **internal** (re-exported by core and react) and must not be installed directly.
 
 ## Document Index
 
@@ -29,11 +35,11 @@ graph TD
 | [Event System](event-system.md) | Event dispatch and bubbling (`input` module) |
 | [Input System](input-system.md) | Keyboard, mouse, paste, Kitty/C SI-u parsing (`input`, `ansi`) |
 | [Animation](animation.md) | Tween/spring/keyframe engine (`animation` module) |
-| [Widget Model](widget-model.md) | Trait-based widget framework on the arena (`widgets` crate) |
-| [Terminal](terminal.md) | Raw mode, VT emulation, screen buffers (`bettertui-terminal` crate) |
-| [PTY](pty.md) | Embedded process spawning (`pty`, `process`) |
-| [Compositor](compositor.md) | Layered compositing and screen state (`tree`/`graphics`, `bettertui-terminal`) |
-| [Capabilities](capabilities.md) | Terminal feature detection (`bettertui-terminal` crate) |
+| [Widget Model](widget-model.md) | Widget host on the arena (engine `createWidgetHost` / native bridge) |
+| [Terminal](terminal.md) | Raw mode, VT emulation, screen buffers (engine `terminal/` modules) |
+| [PTY](pty.md) | Embedded process spawning (`pty`, `terminal/process.rs`) |
+| [Compositor](compositor.md) | Layered compositing and screen state (`tree`/`graphics`, engine `terminal/`) |
+| [Capabilities](capabilities.md) | Terminal feature detection (engine `terminal/capabilities.rs`) |
 | [Text Editing](text-editing.md) | Rope-based editor (`text` module, exposed as `NapiTextEngine`) |
 | [Scheduler](scheduler.md) | Frame timing and priority scheduling (`scheduler` module) |
 
@@ -48,12 +54,24 @@ graph TD
 ## Principles (non-negotiable)
 
 - **BetterTUI is a framework.** Never an application, IDE, AI framework, or editor.
+- **Two first-class packages.** `@bettertui/core` is the public entry point for vanilla / native TypeScript; `@bettertui/react` is the public entry point for React and depends on core (React users install only `@bettertui/react`).
 - **Rust owns rendering.** TypeScript never renders; it emits commands.
 - **Framework adapters are optional.** React is the first adapter. Vue, Solid, Svelte, vanilla TS must be addable without touching Rust.
 - **No business logic in the engine.** It is a rendering/layout/input framework only.
 
 ## Status Reality Check
 
-The Rust engine (`bettertui-engine`, **720 passing Rust lib tests** across the engine, terminal, and widgets crates, verified via `cargo test --lib`) and its napi bindings (`bettertui-bindings`) are the most complete parts: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, and Nerd Font support are implemented and tested.
+The Rust engine (`bettertui-engine`) is the most complete part: rendering, layout (Taffy), frame
+buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd
+Font support are implemented. Terminal I/O, VT emulation, PTY, capabilities, and the widget host
+are **modules inside `bettertui-engine`** — there is no separate `bettertui-widgets`,
+`bettertui-terminal`, or `bettertui-bindings` crate. The crate is built as a `cdylib` with the
+`napi` feature to produce the Node.js addon (`bettertui_engine.node`).
 
-The TypeScript side: `@bettertui/core` (command buffer, reconciler wrapper, runtime, native bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — the reconciler and hooks are fully wired, but the component functions are thin wrappers that emit element descriptors and are not yet connected to a live native render loop. `@bettertui/themes` was removed (theme system moved to Rust engine + `@bettertui/shared` — internal package, re-exported by `@bettertui/core`/`@bettertui/react`); `@bettertui/devtools` is implemented. 15 example apps in `@bettertui/examples` demonstrate the API. See [ROADMAP.md](../../ROADMAP.md) at the repo root for the current code-accurate status.
+The TypeScript side is implemented: `@bettertui/core` (command buffer, reconciler wrapper,
+`CommandRuntime`, native bridge, testing utilities) and `@bettertui/react` (a real
+`react-reconciler` host config, hooks, and 13 components). `@bettertui/themes` was removed; theme
+types live in `@bettertui/shared` (internal, re-exported by core/react) and theme presets are
+created in the native bridge. `@bettertui/devtools` is implemented. Vanilla examples under
+`examples/vanila/` demonstrate the `@bettertui/core` API. See [ROADMAP.md](../../ROADMAP.md) for
+the current code-accurate status.

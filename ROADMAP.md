@@ -6,24 +6,23 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 
 | Layer | State | Notes |
 |-------|-------|-------|
-| Rust engine (`bettertui-engine`) | ✅ Implemented | 720 passing Rust lib tests (verified via `cargo test --lib`) across the engine, terminal, and widgets crates; rendering, layout, input, events, animation, text, PTY, VT, capabilities |
-| napi-rs bindings (`bettertui-bindings`) | ✅ Implemented | `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiCapabilities`, `getVersion`, `detectCapabilities` |
+| Rust engine (`bettertui-engine`) | ✅ Implemented | rendering, layout (Taffy), frame buffer, events, input, animation, text, PTY, VT, capabilities. Terminal I/O, VT, PTY, capabilities, and the widget host are modules inside this single crate (no separate `bettertui-widgets`/`bettertui-terminal`/`bettertui-bindings` crates). |
+| napi-rs bindings | ✅ Implemented | The `napi` module of `bettertui-engine` (built with the `napi` feature) exposes `NapiEngine`, `NapiEventBus`, `NapiFocusManager`, `NapiTextEngine`, `NapiScheduler`, `NapiKeymap`, `NapiCapabilities`, `getVersion`, `detectCapabilities` via the `bettertui_engine.node` addon. |
 | `@bettertui/shared` | ✅ Implemented | Type-only foundation |
-| `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, runtime, native bridge |
+| `@bettertui/core` | ✅ Implemented | Command buffer, tree ops, reconciler wrapper, `CommandRuntime`, native bridge |
 | `@bettertui/core` (testing utilities) | ✅ Implemented | `createTestRenderer`, `createMockKeys`, `createMockMouse`, test streams, terminal capabilities mocks |
 | `@bettertui/react` (reconciler/hooks) | ✅ Implemented | Host config + `render()` + hooks |
-| `@bettertui/react` (components) | 🟡 Thin wrappers | 53 component functions exported; emit element descriptors, not yet wired to live native render loop |
+| `@bettertui/react` (components) | ✅ Implemented | 13 component functions (`Box`, `Text`, `Code`, `Input`, `Textarea`, `Select`, `Slider`, `TabSelect`, `ScrollBar`, `ScrollBox`, `Markdown`, `Diff`, `TextTable`) |
 | `@bettertui/devtools` | ✅ Implemented | `createDevTools()` factory (inspectors, logger, export helpers) |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
 | `examples/vanila` | ✅ Implemented | Interactive CLI example browser using native Rust engine directly via `@bettertui/core` (no React) |
-| Examples (React) | ✅ Wired | 15 example apps in `@bettertui/examples` (`examples/src/examples/<category>/<slug>.tsx`), launched via `node dist/index.mjs <slug>`) |
 | Benchmarks | ✅ Implemented | `packages/benchmark` (Vitest `bench` harness) |
 
 ## Completed
 
 - [x] Repository scaffolding (TurboRepo + pnpm workspace, Cargo workspace)
-- [x] Rust engine modules: tree (arena + generational indices), layout (Taffy), render pipeline, framebuffer, dirty diff, input (keyboard/mouse/paste), ansi parser, capabilities (terminal crate), animation, scheduler, compositor/screen (tree/graphics + terminal crate), pty, terminal process, vt emulation, text (rope), widgets
-- [x] napi-rs bindings exposing the engine to Node.js (`bettertui_bindings`)
+- [x] Rust engine modules: tree (arena + generational indices), layout (Taffy), render pipeline, framebuffer, dirty diff, input (keyboard/mouse/paste), ansi parser, capabilities (engine `terminal/` modules), animation, scheduler, compositor/screen (tree/graphics + engine `terminal/`), pty, terminal process, vt emulation, text (rope), widget host
+- [x] napi-rs bindings exposing the engine to Node.js (the engine's `napi` module, built as `bettertui_engine.node`)
 - [x] Node arena with generational indices (`NodeId = slotmap::DefaultKey`, 8 bytes)
 - [x] Taffy-based flexbox layout adapted to terminal cells
 - [x] Double-buffered frame buffer with dirty-region diffing

@@ -44,9 +44,7 @@ println!("{}", harness.report());
 
 ## Dependencies
 
-- `bettertui-engine` — rendering engine under test
-- `bettertui-widgets` — widget framework under test
-- `bettertui-terminal` — terminal layer under test
+- `bettertui-engine` — rendering engine under test (terminal I/O, VT, PTY, capabilities, and the widget host are modules within this crate)
 - `criterion` (dev) — criterion harness with `html_reports`
 
 ## Consumers

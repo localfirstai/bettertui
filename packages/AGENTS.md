@@ -20,9 +20,10 @@
 
 ## Package Dependencies
 
-- `@bettertui/react` depends on `@bettertui/core` and `react-reconciler`. Peers `react@^19.0.0`.
-- `@bettertui/core` depends on `@bettertui/shared` **(internal package — do not install directly)**. No React dependency. Framework-agnostic.
-- `@bettertui/themes` — **REMOVED.** Theme types (`Theme`, `ThemeColors`, `ThemeSpacing`) live in `@bettertui/shared` **(internal — re-exported via `@bettertui/core` and `@bettertui/react`)**. The Rust engine (`packages/core/crates/widgets/src/theme.rs`) owns the canonical Theme struct. The React `Provider` in `@bettertui/react` accepts `Partial<Theme>` directly.
+- **`@bettertui/core` is the framework package for vanilla / native TypeScript** — install it directly when not using React. No React dependency. Framework-agnostic. (All packages are currently `private`; not published to npm.)
+- **`@bettertui/react` is the framework package for React.** React apps install **only** `@bettertui/react`; it depends on `@bettertui/core` and resolves it automatically. Never ask a React user to install core by hand.
+- `@bettertui/core` depends on `@bettertui/shared` **(internal package — do not install directly)**.
+- `@bettertui/themes` — **REMOVED.** Theme types (`Theme`, `ThemeColors`, `ThemeSpacing`) live in `@bettertui/shared` **(internal — re-exported via `@bettertui/core` and `@bettertui/react`)**. The Rust engine (`packages/core/crates/engine/src/theme.rs`) owns the canonical Theme struct. The React `Provider` in `@bettertui/react` accepts `Partial<Theme>` directly.
 - `@bettertui/devtools` has no dependencies.
 - All example projects depend on `@bettertui/react` and `@bettertui/core`.
 

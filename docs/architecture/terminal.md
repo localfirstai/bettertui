@@ -1,6 +1,6 @@
 # Terminal
 
-This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/terminal/src/` (the `bettertui-terminal` crate). The crate is a flat set of files: `lib.rs`, `capabilities.rs`, `neovim.rs`, `process.rs`, `query.rs`, `screen.rs`, `scrollback.rs`, `vt.rs`.
+This document covers host-terminal I/O (raw mode, alternate screen, queries) and the embedded VT state machine. Code: `packages/core/crates/engine/src/terminal/` (modules of `bettertui-engine`). The files are: `mod.rs`, `capabilities.rs`, `neovim.rs`, `process.rs`, `query.rs`, `screen.rs`, `scrollback.rs`, `vt.rs`.
 
 ## Two layers
 

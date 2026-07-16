@@ -116,7 +116,7 @@ assert_eq!(screen.cell(0, 0).unwrap().fgcolor(), expected_color);
 
 - **Test-first**: Write the test before the implementation. Red → Green → Refactor.
 - **Every feature must have tests**: No exception. A feature without tests is incomplete.
-- **E2E tests for all terminal interactions**: Any code path that produces ANSI output, handles input, or manages terminal state must have a PTY + vt100 e2e test. Terminal-specific tests live in `bettertui-terminal`.
+- **E2E tests for all terminal interactions**: Any code path that produces ANSI output, handles input, or manages terminal state must have a PTY + vt100 e2e test. Terminal-specific tests live in the engine's `terminal/` module and `tests/`.
 - **Snapshots for complex data structures**: Use `insta::assert_debug_snapshot!` for FrameBuffer, Cell, Color, and any other structured data that is expensive to assert field-by-field.
 - **No binary targets for testing**: E2E tests use `portable-pty` directly to spawn processes — do NOT add `trycmd` or binary-only testing harnesses.
 - **Coverage gate**: All new code must maintain or improve line coverage. Do not merge code that drops coverage.

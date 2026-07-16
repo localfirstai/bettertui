@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> `@bettertui/core` is the **framework package for vanilla / native TypeScript** (no React). React apps install only `@bettertui/react`, which depends on core. (All packages are currently `private`.)
+
 ## Cross-Framework Boundary
 
 - **`CommandBufferConsumer` (`{ push(command: Command): void }`) is the sole API contract between core and framework adapters.** Every framework adapter (React, Vue, Solid, Svelte) implements its own consumer. Keep this interface minimal — adding framework-specific concerns here breaks multi-framework architecture.
@@ -19,7 +21,7 @@
 
 ## Native Bridge (napi-rs)
 
-- **tsdown must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_bindings"] }` in `tsdown.config.ts`.
+- **tsdown must externalize `bettertui_engine`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_engine"] }` in `tsdown.config.ts`.
 - **Runtime name collision:** Engine bridge exports a `Runtime` interface (napi Rust engine wrapper). Core also has a `Runtime` class (framework-agnostic runtime). In `packages/core/src/index.ts`, rename the engine import: `import { Runtime as NativeRuntime } from "./engine/runtime"` to avoid collision.
 - **Packages/core/src/index.ts must explicitly re-export engine bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/platform/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
 

@@ -1,8 +1,11 @@
-# @bettertui/examples — Generated Docs
+# BetterTUI Vanilla Examples — Generated Docs
 
-Auto-generated per-example documentation.
+Auto-generated per-example documentation. See `examples/vanila/src/examples/` for the canonical
+example source (hello-world, flex-layout, colors, capabilities, input-demo, keyboard,
+performance, select-demo).
 
-Total: 15 examples
+> Note: this generated set still lists the older React example catalogue. Regenerate from the
+> current `examples/vanila` registry to match the live examples.
 
 ## Index
 

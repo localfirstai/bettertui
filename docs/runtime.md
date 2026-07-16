@@ -1,19 +1,19 @@
 # Runtime
 
-"Runtime" refers to the frame loop and command drain that tie the TypeScript command buffer to the Rust engine. There are two runtime constructs: one framework-agnostic in `@bettertui/core`, and one React-specific in `@bettertui/react`.
+"Runtime" refers to the frame loop and command drain that tie the TypeScript command buffer to the Rust engine. There are two runtime constructs: one framework-agnostic in `@bettertui/core` (the public package for vanilla / native TypeScript), and one React-specific in `@bettertui/react`.
 
 ## Core Runtime (`@bettertui/core`)
 
 ```mermaid
 flowchart TD
-    A[CommandBuffer] --> B[Runtime]
+    A[CommandBuffer] --> B[CommandRuntime]
     B --> C[subscribe consumer]
     B --> D[drain -> flush]
     B --> E[startFrameLoop 16ms]
     E --> F[on interval: drain + notify]
 ```
 
-`Runtime` owns a `CommandBuffer` and:
+`CommandRuntime` (exported from `@bettertui/core`) owns a `CommandBuffer` and:
 - `subscribe(consumer)` — register a sink for drained commands
 - `drain()` — pull accumulated commands
 - `flush()` — notify subscribers
@@ -22,12 +22,12 @@ flowchart TD
 
 ## React Runtime (`@bettertui/react`)
 
-`render(element)` creates a `Runtime`, a reconciler, and a container, then returns `{ root, runtime, dispose() }`. `RuntimeProvider` + `useRuntime()` expose the runtime to components for key handlers and frame control.
+`render(element)` creates a `CommandRuntime`, a reconciler, and a container, then returns `{ root, runtime, dispose() }`. `RuntimeProvider` + `useRuntime()` expose the runtime to components for key handlers and frame control.
 
-## Native Runtime (inside `@bettertui/core`)
+## Native bridge (`@bettertui/core`)
 
-`createRuntime(engine, eventBus, buffer)` returns `{ engine, eventBus, buffer, processCommands(), renderFrame(), resize(), shutdown() }` — the actual bridge that drives the Rust engine each frame.
+The native bridge (`packages/core/src/platform/`) loads the `bettertui_engine` addon and exposes `createEngine`, `createEventBus`, `createFocusManager`, `createTextEngine`, `createScheduler`, `createKeymap`, `detectCapabilities`, `getVersion`, plus `CliRenderer` / `KeyInput` for CLI rendering. These factories drive the Rust engine each frame.
 
 ## Status
 
-All three runtime constructs are implemented; the engine is driven correctly at the native layer. (See the Scheduler architecture doc for known frame-timing issues.)
+The core `CommandRuntime` and the React `render()`/runtime are implemented; the native bridge drives the Rust engine. (See the Scheduler architecture doc for known frame-timing issues.)

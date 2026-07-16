@@ -64,4 +64,4 @@ flowchart TD
 
 ## Status
 
-Renderer + hooks + runtime are real and wired. 53 component functions are exported but are currently thin wrappers (they emit element descriptors, not yet connected to a live native render loop). Do not document components as painting pixels yet.
+Renderer + hooks + runtime are real and wired. 13 component functions are exported (`Box`, `Text`, `Code`, `Input`, `Textarea`, `Select`, `Slider`, `TabSelect`, `ScrollBar`, `ScrollBox`, `Markdown`, `Diff`, `TextTable`) and emit element descriptors consumed by the reconciler.

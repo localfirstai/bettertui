@@ -1,6 +1,6 @@
 # Compositor & Screen
 
-Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Compositing primitives (`Rgba`, `blend_over`, `PaintFlags`) live in the engine's `tree.rs` / `graphics.rs`; the screen state and `ScreenBuffer` live in the `bettertui-terminal` crate (`screen` and `vt` modules).
+Layered compositing builds the final frame buffer from stacked layers; the screen module manages viewport, alternate screen, scrollback, and selection. Compositing primitives (`Rgba`, `blend_over`, `PaintFlags`) live in the engine's `tree.rs` / `graphics.rs`; the screen state and `ScreenBuffer` live in the engine's `terminal/` modules (`screen.rs` and `vt.rs`).
 
 ## Layers
 
