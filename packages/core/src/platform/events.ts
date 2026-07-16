@@ -58,13 +58,7 @@ export function createEventLoop(eventBus: NapiEventBus, options?: EventLoopOptio
     }
   }
 
-  function pushKey(
-    key: string,
-    ctrl: boolean,
-    shift: boolean,
-    alt: boolean,
-    targetId: number,
-  ): void {
+  function pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void {
     const keyEvent: SharedKeyEvent = {
       key,
       code: "",
@@ -73,13 +67,13 @@ export function createEventLoop(eventBus: NapiEventBus, options?: EventLoopOptio
       alt,
       meta: false,
     };
-    eventBus.pushKey(key, ctrl, shift, alt, targetId);
+    eventBus.pushKey(key, ctrl, shift, alt);
     for (const cb of callbacks) {
       cb(keyEvent);
     }
   }
 
-  function pushMouse(button: string, x: number, y: number, targetId: number): void {
+  function pushMouse(button: string, x: number, y: number): void {
     const mouseEvent: SharedMouseEvent = {
       button: button as "left" | "right" | "middle" | "none",
       position: { x, y },
@@ -87,7 +81,7 @@ export function createEventLoop(eventBus: NapiEventBus, options?: EventLoopOptio
       shift: false,
       alt: false,
     };
-    eventBus.pushMouse(button, x, y, targetId);
+    eventBus.pushMouse(button, x, y);
     for (const cb of callbacks) {
       cb(mouseEvent);
     }

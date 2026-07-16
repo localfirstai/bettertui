@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import type { BindingInfo } from "./types.js";
 
 const require = createRequire(import.meta.url);
 
@@ -14,6 +15,8 @@ interface NativeModule {
   TerminalCapabilities: TerminalCapabilities;
   detectCapabilities: () => TerminalCapabilities;
   getVersion: () => string;
+  createDarkTheme: () => NapiTheme;
+  createLightTheme: () => NapiTheme;
 }
 
 interface NativeEngine {
@@ -22,18 +25,22 @@ interface NativeEngine {
   commitFrame(): void;
   render(): string;
   renderFull(): string;
-  resize(width: number, height: number): void;
   setScreenMode(mode: string, footerHeight?: number | null): void;
+  resize(width: number, height: number): void;
   nodeCount(): number;
   frameCount(): number;
+  printTree(): string;
+  validate(): boolean;
+  shutdown(): void;
+  setStyle(id: number, styleJson: string): void;
+  setLayout(id: number, layoutJson: string): void;
+  getNode(id: number): string;
+  treeSummary(): string;
+  root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
-  root(): number;
-  validate(): boolean;
-  printTree(): string;
-  shutdown(): void;
   hitGridCheck(x: number, y: number): number;
   hitGridIsDirty(): boolean;
   hitGridClearCurrent(): void;
@@ -44,8 +51,10 @@ interface NativeEngine {
 }
 
 interface NativeEventBus {
-  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
-  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
+  pushMouseMotion(x: number, y: number): void;
+  pushPaste(text: string): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -61,33 +70,43 @@ interface NativeFocusManager {
   isFocused(id: number): boolean;
   traverse(direction: string): string;
   focusOrder(): number[];
+  clear(): void;
 }
 
 interface NativeTextEngine {
   insertChar(ch: string): void;
   insertStr(text: string): void;
   deleteChar(): void;
-  cursorLeft(): void;
-  cursorRight(): void;
   getText(): string;
-  cursorPosition(): number;
-  length(): number;
+  clear(): void;
   canUndo(): boolean;
   canRedo(): boolean;
   undo(): boolean;
   redo(): boolean;
-  clear(): void;
+  cursorLeft(): void;
+  cursorRight(): void;
+  cursorPosition(): number;
   setCursorPosition(pos: number): void;
+  length(): number;
+  lineCount(): number;
+  isEmpty(): boolean;
+  wordCount(): number;
 }
 
 interface NativeScheduler {
   requestFrame(): void;
   beginFrame(): boolean;
   endFrame(): void;
-  shouldRender(): string;
   isIdle(): boolean;
   frameCount(): number;
   fps(): number;
+  shouldRender(): boolean;
+  requestRenderCoalesced(): void;
+  requestRenderImmediate(): void;
+  hasScheduledFrame(): boolean;
+  isRendering(): boolean;
+  beginRender(): void;
+  endRender(): boolean;
 }
 
 interface NativeKeymap {
@@ -99,11 +118,22 @@ interface NativeKeymap {
     description: string | null,
     priority: number,
   ): boolean;
-  setMode(mode: string): void;
-  currentMode(): string;
   handleKey(key: string): string;
   hasPending(): boolean;
   clearPending(): void;
+  setMode(mode: string): void;
+  currentMode(): string;
+  clearMode(): void;
+  removeLayer(name: string): boolean;
+  setChordTimeout(ms: number): void;
+  chordTimeout(): number;
+  pendingKeys(): string[];
+  activeBindings(): string;
+  allBindings(): string;
+  commandHistory(): string[];
+  clearHistory(): void;
+  parseKey(keyStr: string): string;
+  parseSequence(keyStr: string): string[];
 }
 
 export interface TerminalCapabilities {
@@ -157,6 +187,10 @@ export interface NapiEngine {
   renderFull(): RenderResult;
   resize(width: number, height: number): void;
   setScreenMode(mode: string, footerHeight?: number | null): void;
+  setStyle(id: number, styleJson: string): void;
+  setLayout(id: number, layoutJson: string): void;
+  getNode(id: number): string;
+  treeSummary(): string;
   nodeCount(): number;
   frameCount(): number;
   createNode(kind: string): number;
@@ -177,8 +211,10 @@ export interface NapiEngine {
 }
 
 export interface NapiEventBus {
-  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, target: number): void;
-  pushMouse(button: string, x: number, y: number, target: number): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
+  pushMouseMotion(x: number, y: number): void;
+  pushPaste(text: string): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -194,6 +230,7 @@ export interface NapiFocusManager {
   isFocused(id: number): boolean;
   traverse(direction: string): number;
   focusOrder(): number[];
+  clear(): void;
 }
 
 export interface NapiTextEngine {
@@ -204,23 +241,32 @@ export interface NapiTextEngine {
   cursorRight(): void;
   getText(): string;
   cursorPosition(): number;
+  setCursorPosition(pos: number): void;
   length(): number;
+  lineCount(): number;
+  isEmpty(): boolean;
+  wordCount(): number;
   canUndo(): boolean;
   canRedo(): boolean;
   undo(): boolean;
   redo(): boolean;
   clear(): void;
-  setCursorPosition(pos: number): void;
 }
 
 export interface NapiScheduler {
   requestFrame(): void;
   beginFrame(): boolean;
   endFrame(): void;
-  shouldRender(): string;
+  shouldRender(): boolean;
   isIdle(): boolean;
   frameCount(): number;
   fps(): number;
+  requestRenderCoalesced(): void;
+  requestRenderImmediate(): void;
+  hasScheduledFrame(): boolean;
+  isRendering(): boolean;
+  beginRender(): void;
+  endRender(): boolean;
 }
 
 export interface NapiKeymap {
@@ -232,11 +278,22 @@ export interface NapiKeymap {
     description: string | null,
     priority: number,
   ): boolean;
-  setMode(mode: string): void;
-  currentMode(): string;
   handleKey(key: string): string;
   hasPending(): boolean;
   clearPending(): void;
+  setMode(mode: string): void;
+  currentMode(): string;
+  clearMode(): void;
+  removeLayer(name: string): boolean;
+  setChordTimeout(ms: number): void;
+  chordTimeout(): number;
+  pendingKeys(): string[];
+  activeBindings(): BindingInfo[];
+  allBindings(): BindingInfo[];
+  commandHistory(): string[];
+  clearHistory(): void;
+  parseKey(keyStr: string): string;
+  parseSequence(keyStr: string): string[];
 }
 
 class EngineWrapper implements NapiEngine {
@@ -261,6 +318,18 @@ class EngineWrapper implements NapiEngine {
   }
   setScreenMode(mode: string, footerHeight?: number | null): void {
     this.engine.setScreenMode(mode, footerHeight ?? null);
+  }
+  setStyle(id: number, styleJson: string): void {
+    this.engine.setStyle(id, styleJson);
+  }
+  setLayout(id: number, layoutJson: string): void {
+    this.engine.setLayout(id, layoutJson);
+  }
+  getNode(id: number): string {
+    return this.engine.getNode(id);
+  }
+  treeSummary(): string {
+    return this.engine.treeSummary();
   }
   nodeCount(): number {
     return this.engine.nodeCount();
@@ -322,8 +391,10 @@ export function createEngine(width = 80, height = 24): NapiEngine {
 export function createEventBus(): NapiEventBus {
   const bus = new native.NativeEventBus();
   return {
-    pushKey: (key, ctrl, shift, alt, target) => bus.pushKey(key, ctrl, shift, alt, target),
-    pushMouse: (button, x, y, target) => bus.pushMouse(button, x, y, target),
+    pushKey: (key, ctrl, shift, alt) => bus.pushKey(key, ctrl, shift, alt),
+    pushMouse: (button, x, y) => bus.pushMouse(button, x, y),
+    pushMouseMotion: (x, y) => bus.pushMouseMotion(x, y),
+    pushPaste: (text) => bus.pushPaste(text),
     pushResize: (w, h, pw, ph) => bus.pushResize(w, h, pw, ph),
     drain: () => bus.drain(),
     len: () => bus.len(),
@@ -345,6 +416,7 @@ export function createFocusManager(): NapiFocusManager {
       return result === "null" ? 0 : Number.parseInt(result, 10);
     },
     focusOrder: () => fm.focusOrder(),
+    clear: () => fm.clear(),
   };
 }
 
@@ -354,17 +426,20 @@ export function createTextEngine(text?: string): NapiTextEngine {
     insertChar: (ch) => te.insertChar(ch),
     insertStr: (t) => te.insertStr(t),
     deleteChar: () => te.deleteChar(),
-    cursorLeft: () => te.cursorLeft(),
-    cursorRight: () => te.cursorRight(),
     getText: () => te.getText(),
-    cursorPosition: () => te.cursorPosition(),
-    length: () => te.length(),
+    clear: () => te.clear(),
     canUndo: () => te.canUndo(),
     canRedo: () => te.canRedo(),
     undo: () => te.undo(),
     redo: () => te.redo(),
-    clear: () => te.clear(),
+    cursorLeft: () => te.cursorLeft(),
+    cursorRight: () => te.cursorRight(),
+    cursorPosition: () => te.cursorPosition(),
     setCursorPosition: (pos) => te.setCursorPosition(pos),
+    length: () => te.length(),
+    lineCount: () => te.lineCount(),
+    isEmpty: () => te.isEmpty(),
+    wordCount: () => te.wordCount(),
   };
 }
 
@@ -374,10 +449,16 @@ export function createScheduler(fps?: number): NapiScheduler {
     requestFrame: () => sched.requestFrame(),
     beginFrame: () => sched.beginFrame(),
     endFrame: () => sched.endFrame(),
-    shouldRender: () => sched.shouldRender(),
     isIdle: () => sched.isIdle(),
     frameCount: () => sched.frameCount(),
     fps: () => sched.fps(),
+    shouldRender: () => sched.shouldRender(),
+    requestRenderCoalesced: () => sched.requestRenderCoalesced(),
+    requestRenderImmediate: () => sched.requestRenderImmediate(),
+    hasScheduledFrame: () => sched.hasScheduledFrame(),
+    isRendering: () => sched.isRendering(),
+    beginRender: () => sched.beginRender(),
+    endRender: () => sched.endRender(),
   };
 }
 
@@ -386,11 +467,22 @@ export function createKeymap(): NapiKeymap {
   return {
     addBinding: (layer, id, keys, command, desc, priority) =>
       km.addBinding(layer, id, keys, command, desc, priority),
-    setMode: (mode) => km.setMode(mode),
-    currentMode: () => km.currentMode(),
     handleKey: (key) => km.handleKey(key),
     hasPending: () => km.hasPending(),
     clearPending: () => km.clearPending(),
+    setMode: (mode) => km.setMode(mode),
+    currentMode: () => km.currentMode(),
+    clearMode: () => km.clearMode(),
+    removeLayer: (name) => km.removeLayer(name),
+    setChordTimeout: (ms) => km.setChordTimeout(ms),
+    chordTimeout: () => km.chordTimeout(),
+    pendingKeys: () => km.pendingKeys(),
+    activeBindings: () => JSON.parse(km.activeBindings()),
+    allBindings: () => JSON.parse(km.allBindings()),
+    commandHistory: () => km.commandHistory(),
+    clearHistory: () => km.clearHistory(),
+    parseKey: (keyStr) => km.parseKey(keyStr),
+    parseSequence: (keyStr) => km.parseSequence(keyStr),
   };
 }
 
@@ -421,46 +513,6 @@ export function highlightCode(_code: string, _language: string): HighlightSegmen
   return [];
 }
 
-export interface NapiTheme {
-  name: string;
-  colors: Record<string, string>;
-  spacing: Record<string, number>;
-}
-
-export function createDefaultTheme(): NapiTheme {
-  return {
-    name: "default",
-    colors: {},
-    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
-  };
-}
-
-export function createDarkTheme(): NapiTheme {
-  return {
-    name: "dark",
-    colors: {
-      background: "#1e1e2e",
-      surface: "#313244",
-      primary: "#cba6f7",
-      text: "#cdd6f4",
-    },
-    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
-  };
-}
-
-export function createLightTheme(): NapiTheme {
-  return {
-    name: "light",
-    colors: {
-      background: "#eff1f5",
-      surface: "#e6e9ef",
-      primary: "#8839ef",
-      text: "#4c4f69",
-    },
-    spacing: { none: 0, xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
-  };
-}
-
 export interface NapiWidgetHost {
   widgetCount(): number;
 }
@@ -485,12 +537,11 @@ export interface NativeSpanFeedOptions {
 
 interface NativeSpanFeed {
   write(data: Buffer): number;
-  commit(): boolean;
+  drainSpans(out: Buffer): number;
   close(): void;
   reset(): void;
   pendingSpans(): number;
   pendingBytes(): number;
-  bytesWritten(): number;
   isClosed(): boolean;
   isBackpressured(): boolean;
   stats(): NapiSpanFeedStats;
@@ -525,8 +576,8 @@ export class NapiSpanFeed {
     return this.feed.write(data);
   }
 
-  commit(): boolean {
-    return this.feed.commit();
+  drainSpans(out: Buffer): number {
+    return this.feed.drainSpans(out);
   }
 
   close(): void {
@@ -543,10 +594,6 @@ export class NapiSpanFeed {
 
   get pendingBytes(): number {
     return this.feed.pendingBytes();
-  }
-
-  get bytesWritten(): number {
-    return this.feed.bytesWritten();
   }
 
   get isClosed(): boolean {
@@ -626,4 +673,61 @@ export class NapiHitGrid {
 
 export function createHitGrid(width: number, height: number): NapiHitGrid {
   return new NapiHitGrid(new native.NativeHitGrid(width, height));
+}
+
+// ─── Theme Functions ─────────────────────────────────────────────────────────────
+
+export interface NapiThemeColors {
+  background: string;
+  surface: string;
+  surfaceHigh: string;
+  surfaceLow: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  text: string;
+  textMuted: string;
+  textDim: string;
+  border: string;
+  borderFocused: string;
+  accent: string;
+  accentForeground: string;
+  error: string;
+  warning: string;
+  success: string;
+  info: string;
+  scrollbar: string;
+  scrollbarThumb: string;
+}
+
+export interface NapiThemeSpacing {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+}
+
+export interface NapiThemeBorders {
+  style: string;
+  fg: string;
+}
+
+export interface NapiTheme {
+  name: string;
+  colors: NapiThemeColors;
+  spacing: NapiThemeSpacing;
+  borders: NapiThemeBorders;
+}
+
+export function createDarkTheme(): NapiTheme {
+  return native.createDarkTheme();
+}
+
+export function createLightTheme(): NapiTheme {
+  return native.createLightTheme();
 }

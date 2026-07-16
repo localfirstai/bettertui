@@ -7,6 +7,7 @@ export declare class NativeEngine {
   commitFrame(): void;
   render(): string;
   renderFull(): string;
+  setScreenMode(mode: string, footerHeight?: number | undefined | null): void;
   resize(width: number, height: number): void;
   nodeCount(): number;
   frameCount(): number;
@@ -18,6 +19,13 @@ export declare class NativeEngine {
   appendChild(parent: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
+  hitGridCheck(x: number, y: number): number;
+  hitGridIsDirty(): boolean;
+  hitGridClearCurrent(): void;
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void;
+  hitGridPopScissor(): void;
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void;
+  hitGridDump(): string;
 }
 
 export declare class NativeEventBus {
@@ -34,6 +42,21 @@ export declare class NativeEventBus {
 export declare class NativeFocusManager {
   constructor();
   traverse(direction: string): string;
+}
+
+export declare class NativeHitGrid {
+  constructor(width: number, height: number);
+  resize(width: number, height: number): void;
+  add(x: number, y: number, width: number, height: number, id: number): void;
+  check(x: number, y: number): number;
+  clearNext(): void;
+  clearCurrent(): void;
+  swap(): boolean;
+  isDirty(): boolean;
+  dimensions(): string;
+  pushScissor(x: number, y: number, width: number, height: number): void;
+  popScissor(): void;
+  clearScissors(): void;
 }
 
 export declare class NativeKeymap {
@@ -60,6 +83,20 @@ export declare class NativeScheduler {
   frameCount(): number;
 }
 
+export declare class NativeSpanFeed {
+  constructor(options?: NativeSpanFeedOptions | undefined | null);
+  write(data: Buffer): number;
+  drainSpans(out: Buffer): number;
+  close(): void;
+  reset(): void;
+  pendingSpans(): number;
+  pendingBytes(): number;
+  isClosed(): boolean;
+  isBackpressured(): boolean;
+  stats(): NativeSpanFeedStats;
+  markConsumed(chunkIndex: number): void;
+}
+
 export declare class NativeTextEngine {
   constructor(text?: string | undefined | null);
   insertChar(ch: string): void;
@@ -76,6 +113,22 @@ export declare class NativeTextEngine {
 export declare function detectCapabilities(): TerminalCapabilities;
 
 export declare function getVersion(): string;
+
+export interface NativeSpanFeedOptions {
+  chunkSize: number;
+  initialChunks: number;
+  maxBytes: number;
+  growthPolicy: number;
+  autoCommitOnFull: number;
+  spanQueueCapacity: number;
+}
+
+export interface NativeSpanFeedStats {
+  bytesWritten: number;
+  spansCommitted: number;
+  chunks: number;
+  pendingSpans: number;
+}
 
 export interface TerminalCapabilities {
   brand: string;

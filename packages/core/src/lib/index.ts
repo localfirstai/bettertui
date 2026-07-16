@@ -12,6 +12,9 @@ export type {
   BindingInfo,
 } from "./keybinding";
 
+export { SystemClock } from "./clock";
+export type { Clock, TimerHandle } from "./clock";
+
 export {
   isValidColor,
   validateLayoutConstraints,

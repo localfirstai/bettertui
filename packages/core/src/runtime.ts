@@ -1,5 +1,7 @@
 import type { Command } from "./command";
 import { CommandBuffer } from "./command";
+import { SystemClock } from "./lib/clock";
+import type { Clock, TimerHandle } from "./lib/clock";
 import type { NapiEngine } from "./platform/binding";
 import { detectCapabilities } from "./platform/binding";
 
@@ -7,12 +9,13 @@ export interface CommandRuntimeOptions {
   frameIntervalMs?: number;
   autoStart?: boolean;
   engine?: NapiEngine;
+  clock?: Clock;
 }
 
 export class CommandRuntime {
   private buffer: CommandBuffer;
   private running = false;
-  private frameHandle: ReturnType<typeof setTimeout> | null = null;
+  private frameHandle: TimerHandle | null = null;
   private subscribers: Array<(commands: Command[]) => void> = [];
   private frameCallbacks: Array<(deltaMs: number) => void> = [];
   private lastFrameTime = 0;
@@ -20,8 +23,10 @@ export class CommandRuntime {
   private engine: NapiEngine | undefined;
   private width: number;
   private height: number;
+  private clock: Clock;
 
   constructor(bufferOrOptions?: CommandBuffer | CommandRuntimeOptions) {
+    this.clock = new SystemClock();
     if (bufferOrOptions instanceof CommandBuffer) {
       this.buffer = bufferOrOptions;
       this.frameIntervalMs = 16;
@@ -31,6 +36,9 @@ export class CommandRuntime {
       this.buffer = new CommandBuffer();
       this.frameIntervalMs = bufferOrOptions?.frameIntervalMs ?? 16;
       this.engine = bufferOrOptions?.engine;
+      if (bufferOrOptions?.clock) {
+        this.clock = bufferOrOptions.clock;
+      }
       const caps = detectCapabilities();
       this.width = caps.columns;
       this.height = caps.rows;
@@ -89,17 +97,17 @@ export class CommandRuntime {
     if (intervalMs !== undefined) {
       this.frameIntervalMs = intervalMs;
     }
-    this.lastFrameTime = performance.now();
+    this.lastFrameTime = this.clock.now();
     const tick = () => {
       if (!this.running) return;
-      const now = performance.now();
+      const now = this.clock.now();
       const delta = now - this.lastFrameTime;
       this.lastFrameTime = now;
       for (const cb of this.frameCallbacks) {
         cb(delta);
       }
       this.flush();
-      this.frameHandle = setTimeout(tick, this.frameIntervalMs);
+      this.frameHandle = this.clock.setTimeout(tick, this.frameIntervalMs);
     };
     tick();
   }
@@ -107,7 +115,7 @@ export class CommandRuntime {
   stopFrameLoop(): void {
     this.running = false;
     if (this.frameHandle !== null) {
-      clearTimeout(this.frameHandle);
+      this.clock.clearTimeout(this.frameHandle);
       this.frameHandle = null;
     }
   }

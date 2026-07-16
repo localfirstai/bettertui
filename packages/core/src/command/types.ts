@@ -97,7 +97,12 @@ export type Command =
   | { type: "SetStrikethrough"; id: string; value: boolean }
   | { type: "SetInverse"; id: string; value: boolean }
   | { type: "SetHidden"; id: string; value: boolean }
-  | { type: "SetBlink"; id: string; value: boolean };
+  | { type: "SetBlink"; id: string; value: boolean }
+  | {
+      type: "SetScreenMode";
+      mode: "alternate-screen" | "main-screen" | "split-footer";
+      footerHeight?: number;
+    };
 
 export interface CommandBufferConsumer {
   push(command: Command): void;

@@ -59,3 +59,4 @@ napi-build = "2"
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }
 vt100 = "0.16"
+proptest = "1"
