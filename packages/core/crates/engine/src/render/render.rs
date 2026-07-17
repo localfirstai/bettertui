@@ -41,6 +41,8 @@ pub struct AnsiBackend {
     cursor_y: u16,
     previous_mode: ScreenMode,
     entered_alternate: bool,
+    /// Link id of the currently-open OSC 8 hyperlink (`0` = none open).
+    current_link: u16,
 }
 
 impl Default for AnsiBackend {
@@ -57,6 +59,7 @@ impl AnsiBackend {
             cursor_y: u16::MAX,
             previous_mode: ScreenMode::AlternateScreen,
             entered_alternate: false,
+            current_link: 0,
         }
     }
 
@@ -72,13 +75,20 @@ impl AnsiBackend {
                 x += 1;
                 while x < region.x + region.width {
                     let next = buffer.get(x, y);
-                    if next.fg == cell.fg && next.bg == cell.bg && next.attributes == cell.attributes {
+                    if next.fg == cell.fg
+                        && next.bg == cell.bg
+                        && next.attributes == cell.attributes
+                        && next.link_id == cell.link_id
+                    {
                         x += 1;
                     } else {
                         break;
                     }
                 }
                 let run_len = x - run_start;
+
+                // Open/close OSC 8 hyperlink when the run's link changes.
+                self.sync_link(cell.link_id, buffer);
 
                 // Emit SGR once for entire run
                 self.encode_cell(&cell);
@@ -88,6 +98,28 @@ impl AnsiBackend {
                     self.push_char(buffer.get(cx, y).ch);
                 }
                 self.cursor_x += run_len;
+            }
+        }
+    }
+
+    /// Emits the OSC 8 sequence needed to transition the open hyperlink to
+    /// `link_id` (0 closes any open link). No-op when already in that state.
+    fn sync_link(&mut self, link_id: u16, buffer: &FrameBuffer) {
+        if link_id == self.current_link {
+            return;
+        }
+        match buffer.link_url(link_id) {
+            Some(url) => {
+                // OSC 8 ; params ; URI ST — params left empty (no id needed on emit).
+                self.buffer.extend_from_slice(b"\x1b]8;;");
+                self.buffer.extend_from_slice(url.as_bytes());
+                self.buffer.extend_from_slice(b"\x1b\\");
+                self.current_link = link_id;
+            }
+            None => {
+                // Close the currently open link (empty URI).
+                self.buffer.extend_from_slice(b"\x1b]8;;\x1b\\");
+                self.current_link = 0;
             }
         }
     }
@@ -322,6 +354,7 @@ impl RenderBackend for AnsiBackend {
         self.buffer.clear();
         self.cursor_x = u16::MAX;
         self.cursor_y = u16::MAX;
+        self.current_link = 0;
 
         if regions.is_empty() {
             return;
@@ -335,6 +368,13 @@ impl RenderBackend for AnsiBackend {
 
         for region in regions {
             self.encode_region(buffer, region);
+        }
+
+        // Close any hyperlink left open by the final run so it does not bleed
+        // into subsequent output.
+        if self.current_link != 0 {
+            self.buffer.extend_from_slice(b"\x1b]8;;\x1b\\");
+            self.current_link = 0;
         }
     }
 
@@ -1795,6 +1835,36 @@ mod render_tests {
         backend.begin_frame(&ScreenMode::AlternateScreen, 80, 24);
         let output = String::from_utf8_lossy(backend.finish());
         assert!(output.contains("?2026h"), "should begin sync");
+    }
+
+    #[test]
+    fn ansi_backend_emits_osc8_hyperlink() {
+        let mut fb = FrameBuffer::new(3, 1);
+        let id = fb.alloc_link("https://example.com", None);
+        fb.set(0, 0, Cell::new('A').with_link(id));
+        fb.set(1, 0, Cell::new('B').with_link(id));
+        fb.set(2, 0, Cell::new('C')); // no link
+
+        let mut backend = AnsiBackend::new();
+        backend.encode(&fb, &[DirtyRegion::new(0, 0, 3, 1)]);
+        let output = String::from_utf8_lossy(backend.finish());
+
+        // Opens the link before the linked run...
+        assert!(output.contains("\x1b]8;;https://example.com\x1b\\"), "should open OSC 8: {output:?}");
+        // ...and closes it (empty URI) before the unlinked cell.
+        assert!(output.contains("\x1b]8;;\x1b\\"), "should close OSC 8: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_no_osc8_without_links() {
+        let mut fb = FrameBuffer::new(2, 1);
+        fb.set(0, 0, Cell::new('A'));
+        fb.set(1, 0, Cell::new('B'));
+
+        let mut backend = AnsiBackend::new();
+        backend.encode(&fb, &[DirtyRegion::new(0, 0, 2, 1)]);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(!output.contains("\x1b]8;"), "no OSC 8 when no links: {output:?}");
     }
 
     #[test]
