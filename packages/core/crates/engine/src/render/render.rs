@@ -1868,6 +1868,25 @@ mod render_tests {
     }
 
     #[test]
+    fn ansi_backend_split_footer_sets_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        // previous_mode starts as AlternateScreen, so a SplitFooter is a change.
+        backend.begin_frame(&ScreenMode::SplitFooter { height: 3 }, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        // Footer starts at row 24-3 = 21; scroll region is DECSTBM 1;21r.
+        assert!(output.contains("1;21r"), "should reserve footer scroll region: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_main_screen_resets_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        // Transition away from the default alternate screen to main screen.
+        backend.begin_frame(&ScreenMode::MainScreen, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("1;24r"), "main screen resets full scroll region: {output:?}");
+    }
+
+    #[test]
     fn ansi_backend_enter_alternate_screen() {
         let mut backend = AnsiBackend::new();
         // Simulate transition from main to alternate screen
