@@ -16,6 +16,7 @@ pub mod framebuffer;
 pub mod glyph;
 pub mod graphics;
 pub mod hit_grid;
+pub mod logger;
 pub mod plugin;
 pub mod protocol;
 pub mod pty;

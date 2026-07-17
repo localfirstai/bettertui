@@ -12,6 +12,7 @@ use crate::hit_grid::HitGrid;
 // use crate::span_feed::SpanFeed;
 use crate::event_bus::{EventQueue, Key, KeyEvent, Modifiers, MouseButton};
 use crate::input::{FocusDirection, FocusManager, FocusTraversal, KeyBinding, KeyParser, Keymap};
+use crate::logger::{Level, Logger, LoggerConfig, ModuleFilter};
 use crate::protocol::{Command, ScreenMode};
 use crate::render::Renderer;
 use crate::scheduler::{FrameStatus, Scheduler};
@@ -1976,4 +1977,138 @@ impl NativeEventPipeline {
             pipeline.reset();
         }
     }
+}
+
+// ─── Logger Bindings ─────────────────────────────────────────────────────────────
+
+/// Logger configuration for TypeScript
+#[napi(object)]
+pub struct NapiLoggerConfig {
+    pub level: Option<String>,
+    pub color: Option<bool>,
+    pub timestamp: Option<bool>,
+    pub module: Option<bool>,
+    pub thread: Option<bool>,
+    pub file: Option<String>,
+    pub max_file_size: Option<i64>,
+    pub max_files: Option<u32>,
+}
+
+impl From<NapiLoggerConfig> for LoggerConfig {
+    fn from(config: NapiLoggerConfig) -> Self {
+        let mut logger_config = LoggerConfig::default();
+
+        if let Some(level_str) = config.level {
+            if let Some(level) = Level::from_str(&level_str) {
+                logger_config.level = level;
+            }
+        }
+
+        if let Some(color) = config.color {
+            logger_config.color = color;
+        }
+
+        if let Some(timestamp) = config.timestamp {
+            logger_config.timestamp = timestamp;
+        }
+
+        if let Some(module) = config.module {
+            logger_config.module = module;
+        }
+
+        if let Some(thread) = config.thread {
+            logger_config.thread = thread;
+        }
+
+        if let Some(file) = config.file {
+            logger_config.file = Some(file);
+        }
+
+        if let Some(max_file_size) = config.max_file_size {
+            logger_config.max_file_size = Some(max_file_size as u64);
+        }
+
+        if let Some(max_files) = config.max_files {
+            logger_config.max_files = Some(max_files as usize);
+        }
+
+        logger_config
+    }
+}
+
+/// Diagnostic snapshot for TypeScript
+#[napi(object)]
+pub struct NapiDiagnosticSnapshot {
+    pub render_calls: f64,
+    pub render_bytes: f64,
+    pub event_dispatches: f64,
+    pub layout_computations: f64,
+    pub cache_hits: f64,
+    pub cache_misses: f64,
+    pub allocations: f64,
+    pub average_frame_time: f64,
+    pub fps: f64,
+}
+
+/// Initialize the logger with the given configuration
+#[napi]
+pub fn logger_init(config: NapiLoggerConfig) -> Result<(), napi::Error> {
+    let logger_config = LoggerConfig::from(config);
+    Logger::init(logger_config).map_err(|e| napi::Error::from_reason(format!("Logger initialization failed: {}", e)))
+}
+
+/// Set the global log level
+#[napi]
+pub fn logger_set_level(level: String) -> Result<(), napi::Error> {
+    Level::from_str(&level)
+        .map(|l| {
+            Logger::set_level(l);
+            Ok(())
+        })
+        .unwrap_or_else(|| Err(napi::Error::from_reason(format!("Invalid log level: {}", level))))
+}
+
+/// Get the current log level
+#[napi]
+pub fn logger_get_level() -> String {
+    Logger::get_level().as_str().to_string()
+}
+
+/// Set the module filter
+#[napi]
+pub fn logger_set_module_filter(include: Option<Vec<String>>, exclude: Option<Vec<String>>) {
+    let mut filter = ModuleFilter::default();
+
+    if let Some(inc) = include {
+        filter = filter.include_many(inc);
+    }
+
+    if let Some(exc) = exclude {
+        filter = filter.exclude_many(exc);
+    }
+
+    Logger::set_module_filter(filter);
+}
+
+/// Get a snapshot of diagnostic counters
+#[napi]
+pub fn logger_get_diagnostics() -> NapiDiagnosticSnapshot {
+    let snapshot = Logger::snapshot_diagnostics();
+    NapiDiagnosticSnapshot {
+        render_calls: snapshot.render_calls as f64,
+        render_bytes: snapshot.render_bytes as f64,
+        event_dispatches: snapshot.event_dispatches as f64,
+        layout_computations: snapshot.layout_computations as f64,
+        cache_hits: snapshot.cache_hits as f64,
+        cache_misses: snapshot.cache_misses as f64,
+        allocations: snapshot.allocations as f64,
+        average_frame_time: snapshot.average_frame_time,
+        fps: snapshot.fps,
+    }
+}
+
+/// Flush the logger
+#[napi]
+pub fn logger_flush() {
+    Logger::flush();
 }

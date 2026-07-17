@@ -22,7 +22,7 @@ ropey = "1.1"
 unicode-width = "0.2"
 unicode-segmentation = "1.12"
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 parking_lot = "0.12"
 slotmap = "1.0"
 smallvec = "1.13"
