@@ -1,5 +1,16 @@
 # AGENTS.md
 
+## Naming Conventions
+
+**When creating any new file, always follow `.claude/rules/naming-convension.md`.** Summary:
+
+- **Rust:** standard Rust nomenclature — `snake_case` files/modules, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
+- **TypeScript:** camelCase identifiers and camelCase file names for services, utils, and plain modules (e.g. `userService.ts`).
+  - Types: `*.types.ts` (e.g. `demo.types.ts`).
+  - Examples: `*.example.ts` (e.g. `demo.example.ts`).
+  - TS widgets (non-React): `PascalCase.ts` (e.g. `Button.ts`).
+- **React:** components are `kebab-case.tsx` (e.g. `text-input.tsx`); hooks are `useHookName.ts` (e.g. `useFocus.ts`).
+
 ## TurboRepo
 
 - Build outputs must be `["dist/**"]`, not `[".next/**"]` — the default starter is Next.js-specific.
