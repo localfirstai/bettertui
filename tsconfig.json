@@ -2,16 +2,15 @@
   "compilerOptions": {
     // Features
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "Preserve",
     "moduleDetection": "force",
     "lib": ["ESNext"],
     "allowJs": false,
     "types": ["node"],
-
-    // NodeNext Module
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
 
     // Best Practices
     "strict": true,
@@ -21,7 +20,7 @@
     // Strict flags (disabled)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false,
+    "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": ["node_modules", "dist", "build"]
 }
