@@ -41,6 +41,7 @@ path = "src/bin/layout_e2e.rs"
 taffy.workspace = true
 crossterm.workspace = true
 ropey.workspace = true
+regex.workspace = true
 unicode-width.workspace = true
 unicode-segmentation.workspace = true
 tracing.workspace = true
