@@ -12,8 +12,26 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "lib"]
 
 [features]
-default = []
+default = ["diagnostics"]
 napi = ["dep:napi", "dep:napi-derive"]
+
+# Diagnostic counters (render calls, frame times, cache hit/miss, ...). Enabled
+# by default. Build with `--no-default-features` (or omit this from your feature
+# set) to compile out every counter increment on the render/event hot paths for
+# a zero-overhead release build; `loggerGetDiagnostics()` then reports zeros.
+diagnostics = []
+
+# Compile-time log gating. Enabling one of these statically removes any
+# `tracing` event below the chosen level from RELEASE builds (debug builds are
+# unaffected, so development still sees everything). These forward to
+# `tracing`'s `release_max_level_*` features. Pick at most one.
+release-logs-off = ["tracing/release_max_level_off"]
+release-logs-error = ["tracing/release_max_level_error"]
+release-logs-warn = ["tracing/release_max_level_warn"]
+release-logs-info = ["tracing/release_max_level_info"]
+release-logs-debug = ["tracing/release_max_level_debug"]
+# Convenience: the recommended production default (warn and above).
+production = ["release-logs-warn"]
 
 [[bin]]
 name = "layout_e2e"

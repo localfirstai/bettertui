@@ -45,6 +45,21 @@ export declare class NativeEventBus {
   clear(): void;
 }
 
+export declare class NativeEventPipeline {
+  constructor(config?: NativeEventPipelineConfig | undefined | null);
+  feed(data: Buffer): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
+  pushPaste(text: string): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+  resize(width: number, height: number): void;
+  reset(): void;
+}
+
 export declare class NativeFocusManager {
   constructor();
   focus(id: number): boolean;
@@ -160,6 +175,53 @@ export declare function detectCapabilities(): TerminalCapabilities;
 
 export declare function getVersion(): string;
 
+/** Flush the logger */
+export declare function loggerFlush(): void;
+
+/** Get a snapshot of diagnostic counters */
+export declare function loggerGetDiagnostics(): NapiDiagnosticSnapshot;
+
+/** Get the current log level */
+export declare function loggerGetLevel(): string;
+
+/** Initialize the logger with the given configuration */
+export declare function loggerInit(config: NapiLoggerConfig): void;
+
+/** Set the global log level */
+export declare function loggerSetLevel(level: string): void;
+
+/** Set the module filter */
+export declare function loggerSetModuleFilter(
+  include?: Array<string> | undefined | null,
+  exclude?: Array<string> | undefined | null,
+): void;
+
+/** Diagnostic snapshot for TypeScript */
+export interface NapiDiagnosticSnapshot {
+  renderCalls: number;
+  renderBytes: number;
+  eventDispatches: number;
+  layoutComputations: number;
+  cacheHits: number;
+  cacheMisses: number;
+  allocations: number;
+  averageFrameTime: number;
+  fps: number;
+}
+
+/** Logger configuration for TypeScript */
+export interface NapiLoggerConfig {
+  level?: string;
+  color?: boolean;
+  timestamp?: boolean;
+  module?: boolean;
+  thread?: boolean;
+  file?: string;
+  maxFileSize?: number;
+  maxFiles?: number;
+  dev?: boolean;
+}
+
 export interface NapiTheme {
   name: string;
   colors: NapiThemeColors;
@@ -205,6 +267,15 @@ export interface NapiThemeSpacing {
   lg: number;
   xl: number;
   xxl: number;
+}
+
+export interface NativeEventPipelineConfig {
+  kittyKeyboard?: boolean;
+  bracketedPaste?: boolean;
+  focusEvents?: boolean;
+  mouseTracking?: boolean;
+  width?: number;
+  height?: number;
 }
 
 export interface NativeSpanFeedOptions {

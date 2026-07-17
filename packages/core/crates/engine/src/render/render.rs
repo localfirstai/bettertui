@@ -621,12 +621,14 @@ impl RenderTree {
             && *cached_rev == revision
             && let Some(ref commands) = *self.cached_commands.borrow()
         {
+            crate::diag!(|d| d.inc_cache_hits());
             return commands.clone();
         }
 
         drop(cached_gen);
         drop(cached_rev);
 
+        crate::diag!(|d| d.inc_cache_misses());
         let commands = self.collect_commands();
         *self.cached_commands.borrow_mut() = Some(commands.clone());
         *self.cached_generation.borrow_mut() = generation;
@@ -1511,6 +1513,7 @@ impl Renderer {
         }
         let vp_height = self.viewport_height();
         let _ = self.layout_sync.compute(root_id, self.width, vp_height);
+        crate::diag!(|d| d.inc_layout_computations());
 
         let vp = Viewport::new(0, 0, self.width, vp_height);
         build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp), &mut self.render_tree);

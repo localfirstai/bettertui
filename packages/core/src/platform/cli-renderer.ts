@@ -1,7 +1,15 @@
 import { EventEmitter } from "node:events";
 import { StdinParser } from "../lib/stdin-parser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
-import { createEngine, createKeymap, detectCapabilities, getVersion } from "./binding";
+import {
+  createEngine,
+  createKeymap,
+  detectCapabilities,
+  getVersion,
+  loggerGetDiagnostics,
+  loggerInit,
+} from "./binding";
+import type { DiagnosticSnapshot, LoggerConfig } from "./logger";
 import type { ExternalOutputMode, ScreenMode } from "./types";
 
 export interface KeyEvent {
@@ -21,6 +29,7 @@ export interface CliRendererOptions {
   screenMode?: ScreenMode;
   footerHeight?: number;
   externalOutputMode?: ExternalOutputMode;
+  logger?: LoggerConfig;
 }
 
 type KeyInputEvents = {
@@ -99,6 +108,12 @@ export class CliRenderer {
   private running = false;
 
   constructor(options: CliRendererOptions = {}) {
+    if (options.logger) {
+      // Default `dev` from NODE_ENV so file logging lands in the repo-root
+      // `logs/` dir during development but stays off in production unless the
+      // caller passes an explicit `file` path. An explicit `dev` still wins.
+      loggerInit({ dev: process.env.NODE_ENV !== "production", ...options.logger });
+    }
     this.capabilities = detectCapabilities();
     this.width = options.width ?? this.capabilities.columns;
     this.height = options.height ?? this.capabilities.rows;
@@ -153,6 +168,14 @@ export class CliRenderer {
 
   get isRunning(): boolean {
     return this.running;
+  }
+
+  /**
+   * Snapshot the engine's diagnostic counters (render calls, frame times, cache
+   * hit/miss, etc.). Returns zeroed counters if the logger was never initialized.
+   */
+  getDiagnostics(): DiagnosticSnapshot {
+    return loggerGetDiagnostics();
   }
 
   start(): void {

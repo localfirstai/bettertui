@@ -193,7 +193,16 @@ impl NativeEngine {
             Err(_) => return "{}".to_string(),
         };
         let EngineState { engine, renderer, id_map: _ } = &mut *state;
+        let start = std::time::Instant::now();
         let frame = renderer.render(engine.arena_mut());
+        #[cfg(feature = "diagnostics")]
+        if let Some(d) = Logger::diagnostics() {
+            d.inc_render_calls();
+            d.add_render_bytes(frame.output_data.len() as u64);
+            d.record_frame_time(start.elapsed());
+        }
+        #[cfg(not(feature = "diagnostics"))]
+        let _ = start;
         use base64::Engine;
         let data_b64 = base64::engine::general_purpose::STANDARD.encode(&frame.output_data);
         serde_json::to_string(&serde_json::json!({
@@ -212,7 +221,16 @@ impl NativeEngine {
             Err(_) => return "{}".to_string(),
         };
         let EngineState { engine, renderer, id_map: _ } = &mut *state;
+        let start = std::time::Instant::now();
         let frame = renderer.render_full(engine.arena_mut());
+        #[cfg(feature = "diagnostics")]
+        if let Some(d) = Logger::diagnostics() {
+            d.inc_render_calls();
+            d.add_render_bytes(frame.output_data.len() as u64);
+            d.record_frame_time(start.elapsed());
+        }
+        #[cfg(not(feature = "diagnostics"))]
+        let _ = start;
         use base64::Engine;
         let data_b64 = base64::engine::general_purpose::STANDARD.encode(&frame.output_data);
         serde_json::to_string(&serde_json::json!({
@@ -1992,6 +2010,7 @@ pub struct NapiLoggerConfig {
     pub file: Option<String>,
     pub max_file_size: Option<i64>,
     pub max_files: Option<u32>,
+    pub dev: Option<bool>,
 }
 
 impl From<NapiLoggerConfig> for LoggerConfig {
@@ -2030,6 +2049,10 @@ impl From<NapiLoggerConfig> for LoggerConfig {
 
         if let Some(max_files) = config.max_files {
             logger_config.max_files = Some(max_files as usize);
+        }
+
+        if let Some(dev) = config.dev {
+            logger_config.dev = dev;
         }
 
         logger_config

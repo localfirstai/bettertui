@@ -55,6 +55,28 @@ use tracing::Level as TracingLevel;
 /// Global logger instance
 static LOGGER: OnceLock<Logger> = OnceLock::new();
 
+/// Run a diagnostic-counter update against the global counters, but ONLY when
+/// the `diagnostics` feature is enabled. When the feature is off this expands to
+/// nothing, so counter maintenance imposes zero cost on the render/event hot
+/// paths in a maximally-optimized build.
+///
+/// The closure receives `&DiagnosticCounters`:
+/// ```ignore
+/// diag!(|d| d.inc_render_calls());
+/// ```
+#[macro_export]
+macro_rules! diag {
+    ($f:expr) => {
+        #[cfg(feature = "diagnostics")]
+        {
+            if let Some(__d) = $crate::logger::Logger::diagnostics() {
+                let __f: fn(&$crate::logger::DiagnosticCounters) = $f;
+                __f(__d);
+            }
+        }
+    };
+}
+
 /// Log level enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
@@ -107,9 +129,17 @@ pub struct LoggerConfig {
     pub timestamp: bool,
     pub module: bool,
     pub thread: bool,
+    /// Explicit log file path. When set (in any mode) file logging is enabled and
+    /// writes to exactly this path. Takes precedence over the `dev` default dir,
+    /// but is itself overridden by the `BETTERTUI_LOG_DIR` env var.
     pub file: Option<String>,
     pub max_file_size: Option<u64>,
     pub max_files: Option<usize>,
+    /// Development mode. When `true` and no explicit `file` is given, logs are
+    /// written to a daily file under the repo-root `logs/` directory. When
+    /// `false` (production) file logging stays OFF unless an explicit `file`
+    /// path (or `BETTERTUI_LOG_DIR`) is provided.
+    pub dev: bool,
 }
 
 impl Default for LoggerConfig {
@@ -123,7 +153,53 @@ impl Default for LoggerConfig {
             file: None,
             max_file_size: Some(10 * 1024 * 1024), // 10 MB
             max_files: Some(5),
+            dev: false,
         }
+    }
+}
+
+/// A resolved destination for file logging.
+pub struct FileLogTarget {
+    /// Directory that must exist (created if necessary).
+    pub dir: std::path::PathBuf,
+    /// Full path of the log file to open.
+    pub file: std::path::PathBuf,
+}
+
+impl LoggerConfig {
+    /// Resolve where file logs should be written, if anywhere.
+    ///
+    /// Precedence:
+    /// 1. `BETTERTUI_LOG_DIR` env var → `<dir>/bettertui-YYYY-MM-DD.log`
+    /// 2. explicit `self.file` → that exact path (its parent is the dir)
+    /// 3. `self.dev == true` → `<repo-root>/logs/bettertui-YYYY-MM-DD.log`
+    /// 4. otherwise (production, no path) → `None` (file logging disabled)
+    pub fn resolve_file_target(&self) -> Option<FileLogTarget> {
+        use std::path::PathBuf;
+
+        if let Ok(dir) = std::env::var("BETTERTUI_LOG_DIR") {
+            if !dir.is_empty() {
+                let dir = PathBuf::from(dir);
+                let file = subscriber::daily_log_path(&dir);
+                return Some(FileLogTarget { dir, file });
+            }
+        }
+
+        if let Some(explicit) = &self.file {
+            if !explicit.is_empty() {
+                let file = PathBuf::from(explicit);
+                let dir = file.parent().map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
+                return Some(FileLogTarget { dir, file });
+            }
+        }
+
+        if self.dev {
+            let dir = subscriber::default_dev_log_dir();
+            let file = subscriber::daily_log_path(&dir);
+            return Some(FileLogTarget { dir, file });
+        }
+
+        None
     }
 }
 
@@ -275,5 +351,34 @@ mod tests {
         assert!(config.timestamp);
         assert!(config.module);
         assert!(!config.thread);
+        assert!(!config.dev);
+        assert!(config.file.is_none());
+    }
+
+    #[test]
+    fn resolve_target_prod_no_path_is_none() {
+        // SAFETY: single-threaded test; we restore the env immediately.
+        unsafe { std::env::remove_var("BETTERTUI_LOG_DIR") };
+        let config = LoggerConfig { dev: false, file: None, ..Default::default() };
+        assert!(config.resolve_file_target().is_none());
+    }
+
+    #[test]
+    fn resolve_target_explicit_file_wins() {
+        unsafe { std::env::remove_var("BETTERTUI_LOG_DIR") };
+        let config = LoggerConfig { dev: false, file: Some("/tmp/btui/custom.log".into()), ..Default::default() };
+        let target = config.resolve_file_target().expect("explicit file → Some");
+        assert_eq!(target.file, std::path::PathBuf::from("/tmp/btui/custom.log"));
+        assert_eq!(target.dir, std::path::PathBuf::from("/tmp/btui"));
+    }
+
+    #[test]
+    fn resolve_target_dev_uses_repo_logs_dir() {
+        unsafe { std::env::remove_var("BETTERTUI_LOG_DIR") };
+        let config = LoggerConfig { dev: true, file: None, ..Default::default() };
+        let target = config.resolve_file_target().expect("dev → Some");
+        assert!(target.dir.ends_with("logs"), "dev dir should end with logs, got {:?}", target.dir);
+        let name = target.file.file_name().unwrap().to_str().unwrap();
+        assert!(name.starts_with("bettertui-") && name.ends_with(".log"));
     }
 }

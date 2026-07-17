@@ -573,6 +573,7 @@ impl EventEmitterHub {
     /// 5. Bubble phase (target → root ancestors) — stops if consumed
     /// 6. Emit to FFI sink
     pub fn dispatch(&mut self, event: &mut Event, arena: &NodeArena) -> EventResult {
+        crate::diag!(|d| d.inc_event_dispatches());
         // 1. Typed global listeners
         let consumed = match event {
             Event::Key(e) => self.key.emit(e),

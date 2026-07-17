@@ -17,6 +17,12 @@ interface NativeModule {
   getVersion: () => string;
   createDarkTheme: () => NapiTheme;
   createLightTheme: () => NapiTheme;
+  loggerInit: (config: NapiLoggerConfig) => void;
+  loggerSetLevel: (level: string) => void;
+  loggerGetLevel: () => string;
+  loggerSetModuleFilter: (include?: string[] | null, exclude?: string[] | null) => void;
+  loggerGetDiagnostics: () => NapiDiagnosticSnapshot;
+  loggerFlush: () => void;
 }
 
 interface NativeEngine {
@@ -730,4 +736,54 @@ export function createDarkTheme(): NapiTheme {
 
 export function createLightTheme(): NapiTheme {
   return native.createLightTheme();
+}
+
+// ─── Logger Functions ─────────────────────────────────────────────────────────────
+
+export interface NapiLoggerConfig {
+  level?: string;
+  color?: boolean;
+  timestamp?: boolean;
+  module?: boolean;
+  thread?: boolean;
+  file?: string;
+  maxFileSize?: number;
+  maxFiles?: number;
+  dev?: boolean;
+}
+
+export interface NapiDiagnosticSnapshot {
+  renderCalls: number;
+  renderBytes: number;
+  eventDispatches: number;
+  layoutComputations: number;
+  cacheHits: number;
+  cacheMisses: number;
+  allocations: number;
+  averageFrameTime: number;
+  fps: number;
+}
+
+export function loggerInit(config: NapiLoggerConfig = {}): void {
+  native.loggerInit(config);
+}
+
+export function loggerSetLevel(level: string): void {
+  native.loggerSetLevel(level);
+}
+
+export function loggerGetLevel(): string {
+  return native.loggerGetLevel();
+}
+
+export function loggerSetModuleFilter(include?: string[], exclude?: string[]): void {
+  native.loggerSetModuleFilter(include ?? null, exclude ?? null);
+}
+
+export function loggerGetDiagnostics(): NapiDiagnosticSnapshot {
+  return native.loggerGetDiagnostics();
+}
+
+export function loggerFlush(): void {
+  native.loggerFlush();
 }
