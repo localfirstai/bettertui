@@ -1,4 +1,4 @@
-//! Unified event pipeline: raw bytes → AnsiParser → VtMachine → EventBus.
+//! Unified event pipeline: raw bytes → AnsiParser → VtMachine → EventQueue.
 //!
 //! This module provides a single entry point for terminal input processing,
 //! wiring together the ANSI parser, VT state machine, and event bus.
@@ -6,7 +6,7 @@
 use std::collections::VecDeque;
 
 use crate::ansi::{AnsiParser, ParserEvent};
-use crate::input::{Event, EventBus, Key, KeyEvent, Modifiers, MouseButton};
+use crate::event_bus::{Event, EventQueue, Key, KeyEvent, Modifiers, MouseButton};
 use crate::terminal::{KittyKeyEvent, VtMachine};
 use crate::tree::{NodeId, Point};
 
@@ -45,12 +45,12 @@ impl Default for EventPipelineConfig {
 /// Processes raw terminal input through:
 /// 1. `AnsiParser` - parses escape sequences
 /// 2. `VtMachine` - maintains terminal state
-/// 3. `EventBus` - queues events for dispatch
+/// 3. `EventQueue` - queues events for dispatch
 #[derive(Debug)]
 pub struct EventPipeline {
     parser: AnsiParser,
     vt: VtMachine,
-    bus: EventBus,
+    bus: EventQueue,
     config: EventPipelineConfig,
     pending_text: Vec<u8>,
 }
@@ -66,7 +66,7 @@ impl EventPipeline {
         Self {
             parser: AnsiParser::new(),
             vt: VtMachine::new(config.width, config.height),
-            bus: EventBus::new(),
+            bus: EventQueue::new(),
             config,
             pending_text: Vec::new(),
         }
@@ -134,7 +134,7 @@ impl EventPipeline {
         self.pending_text.clear();
     }
 
-    /// Handle CSI events, converting to EventBus events.
+    /// Handle CSI events, converting to EventQueue events.
     fn handle_csi_event(&mut self, _cmd: &crate::ansi::CsiCommand, _event: &ParserEvent) {
         if let Some(kitty_key) = self.vt.last_kitty_key() {
             let key_event = self.kitty_key_to_event(kitty_key);
@@ -236,13 +236,13 @@ impl EventPipeline {
         &mut self.vt
     }
 
-    /// Get the underlying EventBus.
-    pub fn bus(&self) -> &EventBus {
+    /// Get the underlying EventQueue.
+    pub fn bus(&self) -> &EventQueue {
         &self.bus
     }
 
-    /// Get mutable access to the EventBus.
-    pub fn bus_mut(&mut self) -> &mut EventBus {
+    /// Get mutable access to the EventQueue.
+    pub fn bus_mut(&mut self) -> &mut EventQueue {
         &mut self.bus
     }
 
@@ -261,6 +261,27 @@ impl EventPipeline {
         self.parser.reset();
         self.bus.clear();
         self.pending_text.clear();
+    }
+
+    /// Drain all queued events and dispatch them through an `EventEmitterHub`.
+    ///
+    /// This is the main integration point: feeds raw terminal input through
+    /// the parser → VT state → queue → hub (global listeners, capture/target/bubble, FFI sink).
+    pub fn process_through_hub(
+        &mut self,
+        hub: &mut crate::event_emitter::EventEmitterHub,
+        arena: &crate::tree::NodeArena,
+    ) {
+        self.bus.process_all(hub, arena);
+    }
+
+    /// Dispatch events until one is consumed by a handler.
+    pub fn process_until_consumed(
+        &mut self,
+        hub: &mut crate::event_emitter::EventEmitterHub,
+        arena: &crate::tree::NodeArena,
+    ) -> Option<crate::event_bus::EventResult> {
+        self.bus.process_until_consumed(hub, arena)
     }
 }
 
@@ -366,5 +387,51 @@ mod tests {
 
         pipeline.reset();
         assert!(pipeline.is_empty());
+    }
+
+    #[test]
+    fn pipeline_process_through_hub() {
+        use crate::event_emitter::{EventEmitterHub, ListenerResult};
+        use std::sync::{Arc, Mutex};
+
+        let mut pipeline = EventPipeline::default();
+        pipeline.push_key(Key::Enter, Modifiers::default(), NodeId::default());
+        pipeline.push_key(Key::Escape, Modifiers::default(), NodeId::default());
+        assert_eq!(pipeline.len(), 2);
+
+        let mut hub = EventEmitterHub::new();
+        let count = Arc::new(Mutex::new(0u32));
+        let count_clone = count.clone();
+        hub.on_key(move |_: &crate::event_bus::KeyEvent| {
+            *count_clone.lock().unwrap() += 1;
+            ListenerResult::Continue
+        });
+
+        let arena = crate::tree::NodeArena::new();
+        pipeline.process_through_hub(&mut hub, &arena);
+
+        assert!(pipeline.is_empty());
+        assert_eq!(*count.lock().unwrap(), 2);
+    }
+
+    #[test]
+    fn pipeline_process_until_consumed() {
+        use crate::event_emitter::{EventEmitterHub, ListenerResult};
+
+        let mut pipeline = EventPipeline::default();
+        pipeline.push_key(Key::Enter, Modifiers::default(), NodeId::default());
+        pipeline.push_key(Key::Escape, Modifiers::default(), NodeId::default());
+
+        let mut hub = EventEmitterHub::new();
+        hub.on_key(
+            |ev: &crate::event_bus::KeyEvent| {
+                if ev.key == Key::Enter { ListenerResult::Consumed } else { ListenerResult::Continue }
+            },
+        );
+
+        let arena = crate::tree::NodeArena::new();
+        let result = pipeline.process_until_consumed(&mut hub, &arena);
+
+        assert!(result.is_some());
     }
 }

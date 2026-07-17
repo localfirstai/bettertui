@@ -10,10 +10,8 @@ use crate::VERSION;
 use crate::engine::Engine;
 use crate::hit_grid::HitGrid;
 // use crate::span_feed::SpanFeed;
-use crate::input::{
-    EventBus, FocusDirection, FocusManager, FocusTraversal, Key, KeyBinding, KeyEvent, KeyParser, Keymap, Modifiers,
-    MouseButton,
-};
+use crate::event_bus::{EventQueue, Key, KeyEvent, Modifiers, MouseButton};
+use crate::input::{FocusDirection, FocusManager, FocusTraversal, KeyBinding, KeyParser, Keymap};
 use crate::protocol::{Command, ScreenMode};
 use crate::render::Renderer;
 use crate::scheduler::{FrameStatus, Scheduler};
@@ -400,18 +398,18 @@ impl NativeEngine {
     }
 }
 
-// ─── EventBus Class (Wrapper Pattern) ─────────────────────────────────────────────
+// ─── EventQueue Class (Wrapper Pattern) ─────────────────────────────────────────────
 
 #[napi]
 pub struct NativeEventBus {
-    bus: Mutex<EventBus>,
+    bus: Mutex<EventQueue>,
 }
 
 #[napi]
 impl NativeEventBus {
     #[napi(constructor)]
     pub fn new() -> Self {
-        Self { bus: Mutex::new(EventBus::new()) }
+        Self { bus: Mutex::new(EventQueue::new()) }
     }
 
     #[napi]
@@ -904,7 +902,7 @@ impl NativeKeymap {
                     modifiers: combo.modifiers,
                     target: NodeId::default(),
                     default_prevented: false,
-                    phase: crate::input::EventPhase::Target,
+                    phase: crate::event_bus::EventPhase::Target,
                 };
                 match km.handle_event(&event) {
                     Some(cmd) => cmd,
@@ -1218,22 +1216,37 @@ fn parse_key_str(s: &str) -> Key {
     }
 }
 
-fn event_to_json(e: &crate::input::Event) -> serde_json::Value {
+fn event_to_json(e: &crate::event_bus::Event) -> serde_json::Value {
     match e {
-        crate::input::Event::Key(ke) => serde_json::json!({
+        crate::event_bus::Event::Key(ke) => serde_json::json!({
             "type": "key",
-            "key": format!("{:?}", ke.key).to_lowercase(),
+            "key": format!("{:?}", ke.key),
             "ctrl": ke.modifiers.ctrl,
             "shift": ke.modifiers.shift,
             "alt": ke.modifiers.alt,
+            "target": node_id_u64(ke.target),
         }),
-        crate::input::Event::Mouse(me) => serde_json::json!({
+        crate::event_bus::Event::Mouse(me) => serde_json::json!({
+            "type": "mouse",
+            "button": format!("{:?}", me.button).to_lowercase(),
+            "x": me.position.x,
+            "y": me.position.y,
+            "target": node_id_u64(me.target),
+        }),
+        crate::event_bus::Event::Resize(re) => serde_json::json!({
+            "type": "resize",
+            "width": re.width,
+            "height": re.height,
+            "prev_width": re.previous_width,
+            "prev_height": re.previous_height,
+        }),
+        crate::event_bus::Event::Mouse(me) => serde_json::json!({
             "type": "mouse",
             "button": format!("{:?}", me.button).to_lowercase(),
             "x": me.position.x,
             "y": me.position.y,
         }),
-        crate::input::Event::Resize(re) => serde_json::json!({
+        crate::event_bus::Event::Resize(re) => serde_json::json!({
             "type": "resize",
             "width": re.width,
             "height": re.height,
