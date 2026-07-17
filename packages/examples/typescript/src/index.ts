@@ -3,75 +3,75 @@
 import {
   ASCIIFontRenderable,
   BoxRenderable,
-  CliRenderer,
-  createCliRenderer,
+  type CliRenderer,
   InputRenderable,
   InputRenderableEvents,
+  type KeyEvent,
   RGBA,
   RenderableEvents,
+  type SelectOption,
   SelectRenderable,
   SelectRenderableEvents,
   TextRenderable,
-  TimeToFirstDrawRenderable,
-  type KeyEvent,
-  type SelectOption,
   type ThemeMode,
+  TimeToFirstDrawRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
 import { measureText } from "@bettertui/core";
-import * as boxExample from "./examples/fonts.example.js";
-import * as framebufferExample from "./examples/framebuffer.example.js";
-import * as opentuiDemo from "./examples/opentui.example.js";
-import * as nestedZIndexDemo from "./examples/nested-zindex.example.js";
-import * as relativePositioningDemo from "./examples/relative-positioning.example.js";
-import * as transparencyDemo from "./examples/transparency.example.js";
-import * as scrollExample from "./examples/scroll-example.example.js";
-import * as stickyScrollExample from "./examples/sticky-scroll-example.example.js";
-import * as timelineExample from "./examples/timeline-example.example.js";
-import * as tabSelectExample from "./examples/tab-select.example.js";
-import * as selectExample from "./examples/select.example.js";
-import * as inputExample from "./examples/input.example.js";
-import * as layoutExample from "./examples/simple-layout-example.example.js";
-import * as inputSelectLayoutExample from "./examples/input-select-layout.example.js";
-import * as styledTextExample from "./examples/styled-text.example.js";
-import * as textTableExample from "./examples/text-table.example.js";
-import * as mouseInteractionExample from "./examples/mouse-interaction.example.js";
-import * as textSelectionExample from "./examples/text-selection.example.js";
 import * as asciiFontSelectionExample from "./examples/ascii-font-selection.example.js";
-import * as splitModeExample from "./examples/split-mode.example.js";
-import * as splitFooterStreamingDemo from "./examples/split-footer-streaming.example.js";
-import * as consoleExample from "./examples/console.example.js";
-import * as notificationDemo from "./examples/notification.example.js";
-import * as vnodeCompositionDemo from "./examples/vnode-composition.example.js";
-import * as hastSyntaxHighlightingExample from "./examples/hast-syntax-highlighting.example.js";
-import * as codeDemo from "./examples/code.example.js";
-import * as liveStateExample from "./examples/live-state.example.js";
-import * as fullUnicodeExample from "./examples/full-unicode.example.js";
-import * as textNodeDemo from "./examples/text-node.example.js";
-import * as textWrapExample from "./examples/text-wrap.example.js";
-import * as editorDemo from "./examples/editor.example.js";
-import * as sliderDemo from "./examples/slider.example.js";
-import * as terminalDemo from "./examples/terminal.example.js";
-import * as terminalTitleDemo from "./examples/terminal-title.example.js";
-import * as diffDemo from "./examples/diff.example.js";
-import * as keypressDebugDemo from "./examples/keypress-debug.example.js";
-import * as extmarksDemo from "./examples/extmarks.example.js";
-import * as markdownDemo from "./examples/markdown.example.js";
-import * as markdownCodeBlockRendererDemo from "./examples/markdown-code-block-renderer.example.js";
-import * as qrcodeDemo from "./examples/qrcode.example.js";
-import * as linkDemo from "./examples/link.example.js";
-import * as opacityExample from "./examples/opacity-example.example.js";
-import * as scrollboxOverlayHitTest from "./examples/scrollbox-overlay-hit-test.example.js";
-import * as scrollboxMouseTest from "./examples/scrollbox-mouse-test.example.js";
-import * as textTruncationDemo from "./examples/text-truncation.example.js";
-import * as grayscaleBufferDemo from "./examples/grayscale-buffer.example.js";
-import * as focusRestoreDemo from "./examples/focus-restore.example.js";
-import * as keymapDemo from "./examples/keymap.example.js";
-import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
-import * as corePluginSlotsDemo from "./examples/core-plugin-slots.example.js";
-import * as wideGraphemeOverlayDemo from "./examples/wide-grapheme-overlay.example.js";
-import * as nativeAudioDemo from "./examples/native-audio.example.js";
 import * as audioStreamingDemo from "./examples/audio-streaming.example.js";
 import * as clipboardPasteDemo from "./examples/clipboard-paste.example.js";
+import * as codeDemo from "./examples/code.example.js";
+import * as consoleExample from "./examples/console.example.js";
+import * as corePluginSlotsDemo from "./examples/core-plugin-slots.example.js";
+import * as diffDemo from "./examples/diff.example.js";
+import * as editorDemo from "./examples/editor.example.js";
+import * as extmarksDemo from "./examples/extmarks.example.js";
+import * as focusRestoreDemo from "./examples/focus-restore.example.js";
+import * as boxExample from "./examples/fonts.example.js";
+import * as framebufferExample from "./examples/framebuffer.example.js";
+import * as fullUnicodeExample from "./examples/full-unicode.example.js";
+import * as grayscaleBufferDemo from "./examples/grayscale-buffer.example.js";
+import * as hastSyntaxHighlightingExample from "./examples/hast-syntax-highlighting.example.js";
+import * as inputSelectLayoutExample from "./examples/input-select-layout.example.js";
+import * as inputExample from "./examples/input.example.js";
+import * as keymapDemo from "./examples/keymap.example.js";
+import * as keypressDebugDemo from "./examples/keypress-debug.example.js";
+import * as linkDemo from "./examples/link.example.js";
+import * as liveStateExample from "./examples/live-state.example.js";
+import * as markdownCodeBlockRendererDemo from "./examples/markdown-code-block-renderer.example.js";
+import * as markdownDemo from "./examples/markdown.example.js";
+import * as mouseInteractionExample from "./examples/mouse-interaction.example.js";
+import * as nativeAudioDemo from "./examples/native-audio.example.js";
+import * as nestedZIndexDemo from "./examples/nested-zindex.example.js";
+import * as notificationDemo from "./examples/notification.example.js";
+import * as opacityExample from "./examples/opacity-example.example.js";
+import * as opentuiDemo from "./examples/opentui.example.js";
+import * as qrcodeDemo from "./examples/qrcode.example.js";
+import * as relativePositioningDemo from "./examples/relative-positioning.example.js";
+import * as scrollExample from "./examples/scroll-example.example.js";
+import * as scrollboxMouseTest from "./examples/scrollbox-mouse-test.example.js";
+import * as scrollboxOverlayHitTest from "./examples/scrollbox-overlay-hit-test.example.js";
+import * as selectExample from "./examples/select.example.js";
+import * as layoutExample from "./examples/simple-layout-example.example.js";
+import * as sliderDemo from "./examples/slider.example.js";
+import * as splitFooterStreamingDemo from "./examples/split-footer-streaming.example.js";
+import * as splitModeExample from "./examples/split-mode.example.js";
+import * as stickyScrollExample from "./examples/sticky-scroll-example.example.js";
+import * as styledTextExample from "./examples/styled-text.example.js";
+import * as tabSelectExample from "./examples/tab-select.example.js";
+import * as terminalTitleDemo from "./examples/terminal-title.example.js";
+import * as terminalDemo from "./examples/terminal.example.js";
+import * as textNodeDemo from "./examples/text-node.example.js";
+import * as textSelectionExample from "./examples/text-selection.example.js";
+import * as textTableExample from "./examples/text-table.example.js";
+import * as textTruncationDemo from "./examples/text-truncation.example.js";
+import * as textWrapExample from "./examples/text-wrap.example.js";
+import * as timelineExample from "./examples/timeline-example.example.js";
+import * as transparencyDemo from "./examples/transparency.example.js";
+import * as vnodeCompositionDemo from "./examples/vnode-composition.example.js";
+import * as wideGraphemeOverlayDemo from "./examples/wide-grapheme-overlay.example.js";
+import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
 
 type ExampleCategory =
   | "Layout & Composition"
@@ -125,8 +125,7 @@ interface ExampleMenuValue {
   example: Example;
 }
 
-type MenuOptionValue =
-  CategoryMenuValue | SpacerMenuValue | MessageMenuValue | ExampleMenuValue;
+type MenuOptionValue = CategoryMenuValue | SpacerMenuValue | MessageMenuValue | ExampleMenuValue;
 type MenuOption = Omit<SelectOption, "value"> & { value: MenuOptionValue };
 type MenuFocusArea = "filter" | "list";
 
@@ -148,12 +147,9 @@ interface ExampleTheme {
 }
 
 const DEFAULT_THEME_MODE: ThemeMode = "dark";
-const isBunRuntime =
-  typeof process !== "undefined" && typeof process.versions?.bun === "string";
+const isBunRuntime = typeof process !== "undefined" && typeof process.versions?.bun === "string";
 const includeThreeExamples =
-  typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean"
-    ? OPENTUI_BUN_ONLY_EXAMPLES
-    : isBunRuntime;
+  typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean" ? OPENTUI_BUN_ONLY_EXAMPLES : isBunRuntime;
 const MENU_TERMINAL_TITLE = "OpenTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "  ";
@@ -169,10 +165,7 @@ const CATEGORY_LABELS: Record<ExampleCategory, string> = {
   "3D & Physics": "3D",
 };
 
-function unavailableThreeExample(
-  name: string,
-  description: string,
-): ExampleDefinition {
+function unavailableThreeExample(name: string, description: string): ExampleDefinition {
   return {
     name,
     description: `${description} (Requires @bettertui/core in Node.js)`,
@@ -206,12 +199,8 @@ function threeExample(
   };
 }
 
-function sortExampleDefinitions(
-  examples: readonly ExampleDefinition[],
-): ExampleDefinition[] {
-  return [...examples].sort((left, right) =>
-    left.name.localeCompare(right.name),
-  );
+function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
+  return [...examples].sort((left, right) => left.name.localeCompare(right.name));
 }
 
 function section(
@@ -287,10 +276,7 @@ const THREE_EXAMPLES: ExampleDefinition[] = includeThreeExamples
         "Draggable ThreeRenderable",
         "Draggable WebGPU cube with live animation",
       ),
-      unavailableThreeExample(
-        "Fractal Shader",
-        "Fractal rendering with shaders",
-      ),
+      unavailableThreeExample("Fractal Shader", "Fractal rendering with shaders"),
       unavailableThreeExample(
         "Golden Star Demo",
         "3D golden star with particle effects and animated text celebrating 5000 stars",
@@ -300,15 +286,9 @@ const THREE_EXAMPLES: ExampleDefinition[] = includeThreeExamples
       unavailableThreeExample("Phong Lighting", "Phong lighting model demo"),
       unavailableThreeExample("Shader Cube", "3D cube with custom shaders"),
       unavailableThreeExample("Sprite Animation", "Animated sprite sequences"),
-      unavailableThreeExample(
-        "Sprite Particles",
-        "Particle system with sprites",
-      ),
+      unavailableThreeExample("Sprite Particles", "Particle system with sprites"),
       unavailableThreeExample("Static Sprite", "Static sprite rendering demo"),
-      unavailableThreeExample(
-        "Texture Loading",
-        "Loading and displaying textures",
-      ),
+      unavailableThreeExample("Texture Loading", "Loading and displaying textures"),
     ];
 
 const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
@@ -374,8 +354,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Relative Positioning Demo",
-      description:
-        "Shows how child positions are relative to their parent containers",
+      description: "Shows how child positions are relative to their parent containers",
       run: relativePositioningDemo.run,
       destroy: relativePositioningDemo.destroy,
     },
@@ -388,8 +367,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Split Mode Demo (Experimental)",
-      description:
-        "Renderer confined to bottom area with normal terminal output above",
+      description: "Renderer confined to bottom area with normal terminal output above",
       run: splitModeExample.run,
       destroy: splitModeExample.destroy,
     },
@@ -424,8 +402,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Input Demo",
-      description:
-        "Interactive InputElement demo with validation and multiple fields",
+      description: "Interactive InputElement demo with validation and multiple fields",
       run: inputExample.run,
       destroy: inputExample.destroy,
     },
@@ -450,8 +427,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Slider Demo",
-      description:
-        "Interactive slider components with various orientations and configurations",
+      description: "Interactive slider components with various orientations and configurations",
       run: sliderDemo.run,
       destroy: sliderDemo.destroy,
     },
@@ -477,8 +453,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Scrollbox Mouse Test",
-      description:
-        "Test scrollbox mouse hit detection with hover and click events",
+      description: "Test scrollbox mouse hit detection with hover and click events",
       run: scrollboxMouseTest.run,
       destroy: scrollboxMouseTest.destroy,
     },
@@ -512,22 +487,19 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Diff Demo",
-      description:
-        "Unified and split diff views with syntax highlighting and multiple themes",
+      description: "Unified and split diff views with syntax highlighting and multiple themes",
       run: diffDemo.run,
       destroy: diffDemo.destroy,
     },
     {
       name: "Full Unicode Demo",
-      description:
-        "Draggable boxes and background filled with complex graphemes",
+      description: "Draggable boxes and background filled with complex graphemes",
       run: fullUnicodeExample.run,
       destroy: fullUnicodeExample.destroy,
     },
     {
       name: "HAST Syntax Highlighting Demo",
-      description:
-        "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
+      description: "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
       run: hastSyntaxHighlightingExample.run,
       destroy: hastSyntaxHighlightingExample.destroy,
     },
@@ -547,8 +519,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Markdown Code Block Renderer Demo",
-      description:
-        "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
+      description: "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
       run: markdownCodeBlockRendererDemo.run,
       destroy: markdownCodeBlockRendererDemo.destroy,
     },
@@ -593,8 +564,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Wide Grapheme Overlay Demo",
-      description:
-        "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
+      description: "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
       run: wideGraphemeOverlayDemo.run,
       destroy: wideGraphemeOverlayDemo.destroy,
     },
@@ -608,15 +578,13 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Grayscale Buffer",
-      description:
-        "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
+      description: "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
       run: grayscaleBufferDemo.run,
       destroy: grayscaleBufferDemo.destroy,
     },
     {
       name: "Opacity Demo",
-      description:
-        "Box opacity and transparency effects with animated opacity transitions",
+      description: "Box opacity and transparency effects with animated opacity transitions",
       run: opacityExample.run,
       destroy: opacityExample.destroy,
     },
@@ -636,22 +604,19 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
   section("Runtime & Tooling", [
     {
       name: "Console Demo",
-      description:
-        "Interactive console logging with clickable buttons for different log levels",
+      description: "Interactive console logging with clickable buttons for different log levels",
       run: consoleExample.run,
       destroy: consoleExample.destroy,
     },
     {
       name: "Core Plugin Slots Demo",
-      description:
-        "Framework-free plugin slots with cached renderables and deterministic ordering",
+      description: "Framework-free plugin slots with cached renderables and deterministic ordering",
       run: corePluginSlotsDemo.run,
       destroy: corePluginSlotsDemo.destroy,
     },
     {
       name: "Live State Management Demo",
-      description:
-        "Test automatic renderer lifecycle management with live renderables",
+      description: "Test automatic renderer lifecycle management with live renderables",
       run: liveStateExample.run,
       destroy: liveStateExample.destroy,
     },
@@ -666,8 +631,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Audio Demo",
-      description:
-        "WAV-based native mixer with sound groups and live meter stats",
+      description: "WAV-based native mixer with sound groups and live meter stats",
       run: nativeAudioDemo.run,
       destroy: nativeAudioDemo.destroy,
     },
@@ -680,15 +644,13 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Focus Restore Demo",
-      description:
-        "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
+      description: "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
       run: focusRestoreDemo.run,
       destroy: focusRestoreDemo.destroy,
     },
     {
       name: "Keypress Debug Tool",
-      description:
-        "Debug tool to inspect keypress events, raw input, and terminal capabilities",
+      description: "Debug tool to inspect keypress events, raw input, and terminal capabilities",
       run: keypressDebugDemo.run,
       destroy: keypressDebugDemo.destroy,
     },
@@ -708,8 +670,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Terminal Title Demo",
-      description:
-        "Set and update the terminal window title with OSC title sequences",
+      description: "Set and update the terminal window title with OSC title sequences",
       run: terminalTitleDemo.run,
       destroy: terminalTitleDemo.destroy,
     },
@@ -717,12 +678,11 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
   section("3D & Physics", THREE_EXAMPLES),
 ];
 
-export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(
-  ({ category, examples }) =>
-    examples.map((example) => ({
-      ...example,
-      category,
-    })),
+export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(({ category, examples }) =>
+  examples.map((example) => ({
+    ...example,
+    category,
+  })),
 );
 
 function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
@@ -781,17 +741,13 @@ function matchesExample(example: Example, filterText: string): boolean {
   return searchableText.includes(filterText);
 }
 
-function isExampleMenuValue(
-  value: MenuOptionValue | undefined,
-): value is ExampleMenuValue {
+function isExampleMenuValue(value: MenuOptionValue | undefined): value is ExampleMenuValue {
   return value?.kind === "example";
 }
 
 function getExampleFromOption(option: SelectOption | null): Example | null {
   const menuOption = option as MenuOption | null;
-  return isExampleMenuValue(menuOption?.value)
-    ? menuOption.value.example
-    : null;
+  return isExampleMenuValue(menuOption?.value) ? menuOption.value.example : null;
 }
 
 function getFirstExampleOptionIndex(options: readonly MenuOption[]): number {
@@ -804,10 +760,7 @@ function getFirstExampleOptionIndex(options: readonly MenuOption[]): number {
   return -1;
 }
 
-function getExampleOptionIndexByName(
-  options: readonly MenuOption[],
-  name: string | null,
-): number {
+function getExampleOptionIndexByName(options: readonly MenuOption[], name: string | null): number {
   if (!name) {
     return -1;
   }
@@ -822,10 +775,7 @@ function getExampleOptionIndexByName(
   return -1;
 }
 
-function getExamplesBoxTitle(
-  filteredCount: number,
-  isFiltered: boolean,
-): string {
+function getExamplesBoxTitle(filteredCount: number, isFiltered: boolean): string {
   if (!isFiltered || filteredCount > 0) {
     return EXAMPLES_BOX_TITLE;
   }
@@ -1010,10 +960,7 @@ class ExampleSelector {
 
     // Select element
     const selectOptions = createMenuOptions(this.allExamples);
-    const initialSelectedIndex = Math.max(
-      0,
-      getFirstExampleOptionIndex(selectOptions),
-    );
+    const initialSelectedIndex = Math.max(0, getFirstExampleOptionIndex(selectOptions));
 
     this.selectElement = new SelectRenderable(this.renderer, {
       id: "example-selector",
@@ -1117,14 +1064,12 @@ class ExampleSelector {
     }
 
     if (this.selectElement) {
-      this.selectElement.selectedBackgroundColor =
-        theme.selectSelectedBackgroundColor;
+      this.selectElement.selectedBackgroundColor = theme.selectSelectedBackgroundColor;
       this.selectElement.textColor = theme.selectTextColor;
       this.selectElement.focusedTextColor = theme.selectTextColor;
       this.selectElement.selectedTextColor = theme.selectSelectedTextColor;
       this.selectElement.descriptionColor = theme.selectDescriptionColor;
-      this.selectElement.selectedDescriptionColor =
-        theme.selectSelectedDescriptionColor;
+      this.selectElement.selectedDescriptionColor = theme.selectSelectedDescriptionColor;
     }
 
     if (this.instructions) {
@@ -1163,16 +1108,12 @@ class ExampleSelector {
 
     if (this.filterBox) {
       this.filterBox.borderColor =
-        this.menuFocusArea === "filter"
-          ? theme.focusedBorderColor
-          : theme.borderColor;
+        this.menuFocusArea === "filter" ? theme.focusedBorderColor : theme.borderColor;
     }
 
     if (this.selectBox) {
       this.selectBox.borderColor =
-        this.menuFocusArea === "list"
-          ? theme.focusedBorderColor
-          : theme.borderColor;
+        this.menuFocusArea === "list" ? theme.focusedBorderColor : theme.borderColor;
     }
   }
 
@@ -1214,12 +1155,8 @@ class ExampleSelector {
       return;
     }
 
-    const selectedIndex = getExampleOptionIndexByName(
-      options,
-      this.selectedExampleName,
-    );
-    const nextIndex =
-      selectedIndex >= 0 ? selectedIndex : getFirstExampleOptionIndex(options);
+    const selectedIndex = getExampleOptionIndexByName(options, this.selectedExampleName);
+    const nextIndex = selectedIndex >= 0 ? selectedIndex : getFirstExampleOptionIndex(options);
 
     if (nextIndex < 0) {
       return;
@@ -1235,14 +1172,10 @@ class ExampleSelector {
 
     this.selectElement.selectedIndex = index;
     const option = (this.selectElement.options as MenuOption[])[index] ?? null;
-    this.selectedExampleName =
-      getExampleFromOption(option)?.name ?? this.selectedExampleName;
+    this.selectedExampleName = getExampleFromOption(option)?.name ?? this.selectedExampleName;
   }
 
-  private focusNearestExampleOption(
-    startIndex: number,
-    direction: -1 | 1,
-  ): void {
+  private focusNearestExampleOption(startIndex: number, direction: -1 | 1): void {
     if (!this.selectElement) {
       return;
     }
@@ -1310,9 +1243,7 @@ class ExampleSelector {
     if (filterText === "") {
       this.updateSelectOptions(this.allExamples);
     } else {
-      const filtered = this.allExamples.filter((example) =>
-        matchesExample(example, filterText),
-      );
+      const filtered = this.allExamples.filter((example) => matchesExample(example, filterText));
       this.updateSelectOptions(filtered);
     }
   }
@@ -1403,9 +1334,7 @@ class ExampleSelector {
           break;
         case "z":
           if (key.ctrl) {
-            console.log(
-              "Suspending renderer... (will auto-resume in 5 seconds)",
-            );
+            console.log("Suspending renderer... (will auto-resume in 5 seconds)");
             this.renderer.suspend();
             setTimeout(() => {
               console.log("Resuming renderer...");
@@ -1429,8 +1358,7 @@ class ExampleSelector {
       if (!this.notImplementedText) {
         const theme = MENU_THEMES[this.themeMode];
         const unavailableMessage =
-          selected.unavailableMessage ??
-          `${selected.name} is not implemented yet.`;
+          selected.unavailableMessage ?? `${selected.name} is not implemented yet.`;
         this.notImplementedText = new TextRenderable(this.renderer, {
           id: "not-implemented",
           position: "absolute",

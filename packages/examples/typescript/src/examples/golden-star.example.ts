@@ -1,36 +1,35 @@
 #!/usr/bin/env bun
 
 import {
-  createCliRenderer,
-  CliRenderer,
-  FrameBufferRenderable,
-  BoxRenderable,
-  RGBA,
-  ASCIIFontRenderable,
   type ASCIIFontName,
-  type OptimizedBuffer,
+  ASCIIFontRenderable,
+  BoxRenderable,
+  type CliRenderer,
+  FrameBufferRenderable,
+  RGBA,
+  createCliRenderer,
 } from "@bettertui/core";
+import { ThreeCliRenderer } from "@bettertui/core";
 import {
-  Scene as ThreeScene,
-  Mesh as ThreeMesh,
-  PerspectiveCamera,
-  Color,
-  MeshPhongMaterial,
   AmbientLight,
-  DirectionalLight as ThreeDirectionalLight,
-  PointLight as ThreePointLight,
-  ExtrudeGeometry,
-  Shape,
-  BoxGeometry,
   BackSide,
+  BoxGeometry,
+  Color,
+  ConeGeometry,
+  Euler,
+  ExtrudeGeometry,
   InstancedMesh,
   Matrix4,
-  Vector3,
-  Euler,
+  MeshPhongMaterial,
+  PerspectiveCamera,
   Quaternion,
-  ConeGeometry,
+  Shape,
+  DirectionalLight as ThreeDirectionalLight,
+  Mesh as ThreeMesh,
+  PointLight as ThreePointLight,
+  Scene as ThreeScene,
+  Vector3,
 } from "three";
-import { ThreeCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 interface StarParticle {
@@ -56,16 +55,16 @@ class StarParticleSystem {
   private tempPosition: Vector3 = new Vector3();
   private tempQuaternion = new Quaternion();
   private tempScale: Vector3 = new Vector3();
-  private gravity: number = -2.5;
-  private normalGravity: number = -2.5;
-  private hellGravity: number = -0.5;
+  private gravity = -2.5;
+  private normalGravity = -2.5;
+  private hellGravity = -0.5;
   private colors: Color[] = [];
   private cyberColors: Color[] = [];
   private hellColors: Color[] = [];
   private materials: MeshPhongMaterial[] = [];
-  private isHellMode: boolean = false;
+  private isHellMode = false;
 
-  constructor(scene: ThreeScene, maxParticles: number = 100) {
+  constructor(scene: ThreeScene, maxParticles = 100) {
     this.maxParticles = maxParticles;
 
     const starShape = this.createMiniStarShape(0.18, 0.07, 5);
@@ -153,11 +152,7 @@ class StarParticleSystem {
     }
   }
 
-  private createMiniStarShape(
-    outerRadius: number,
-    innerRadius: number,
-    points: number = 5,
-  ): Shape {
+  private createMiniStarShape(outerRadius: number, innerRadius: number, points = 5): Shape {
     const shape = new Shape();
     const angleStep = (Math.PI * 2) / points;
 
@@ -181,7 +176,7 @@ class StarParticleSystem {
     this.emitterPosition.set(x, y, z);
   }
 
-  emit(count: number = 1) {
+  emit(count = 1) {
     for (let i = 0; i < count; i++) {
       if (this.freeIndices.length === 0) {
         const oldestParticle = this.particles.shift();
@@ -194,18 +189,14 @@ class StarParticleSystem {
 
       const instanceIndex = this.freeIndices.pop()!;
 
-      const particlesPerColor = Math.ceil(
-        this.maxParticles / this.colors.length,
-      );
+      const particlesPerColor = Math.ceil(this.maxParticles / this.colors.length);
       const meshIndex = Math.floor(instanceIndex / particlesPerColor);
       const localInstanceIndex = instanceIndex % particlesPerColor;
 
       const spreadAngle = (Math.random() - 0.5) * Math.PI * 0.8;
       const upwardBias = Math.random() * 0.7 + 0.4;
 
-      const baseSpeed = this.isHellMode
-        ? Math.random() * 1.0 + 0.8
-        : Math.random() * 2.0 + 1.5;
+      const baseSpeed = this.isHellMode ? Math.random() * 1.0 + 0.8 : Math.random() * 2.0 + 1.5;
 
       const velocity = new Vector3(
         Math.sin(spreadAngle) * baseSpeed * 0.9,
@@ -270,10 +261,7 @@ class StarParticleSystem {
 
       const lifeRatio = particle.lifetime / particle.maxLifetime;
       const fadeStart = 0.7;
-      const alpha =
-        lifeRatio > fadeStart
-          ? 1.0 - (lifeRatio - fadeStart) / (1.0 - fadeStart)
-          : 1.0;
+      const alpha = lifeRatio > fadeStart ? 1.0 - (lifeRatio - fadeStart) / (1.0 - fadeStart) : 1.0;
       const scale = particle.scale * alpha;
 
       this.tempQuaternion.setFromEuler(particle.rotation);
@@ -366,10 +354,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   sceneRoot.add(keyLight);
   sceneRoot.add(keyLight.target);
 
-  const lightningDirectionalLight = new ThreeDirectionalLight(
-    new Color(1.0, 0.98, 0.95),
-    0.0,
-  );
+  const lightningDirectionalLight = new ThreeDirectionalLight(new Color(1.0, 0.98, 0.95), 0.0);
   lightningDirectionalLight.position.set(0, 5, 8);
   lightningDirectionalLight.target.position.set(0, 0, 0);
   lightningDirectionalLight.name = "lightningDirectional";
@@ -396,38 +381,22 @@ export async function run(renderer: CliRenderer): Promise<void> {
   movingLight4.name = "movingLight4";
   sceneRoot.add(movingLight4);
 
-  const lightningLight1 = new ThreePointLight(
-    new Color(1.0, 0.95, 0.9),
-    0.0,
-    50,
-  );
+  const lightningLight1 = new ThreePointLight(new Color(1.0, 0.95, 0.9), 0.0, 50);
   lightningLight1.position.set(-2, 2, 5);
   lightningLight1.name = "lightningLight1";
   sceneRoot.add(lightningLight1);
 
-  const lightningLight2 = new ThreePointLight(
-    new Color(1.0, 0.95, 0.9),
-    0.0,
-    50,
-  );
+  const lightningLight2 = new ThreePointLight(new Color(1.0, 0.95, 0.9), 0.0, 50);
   lightningLight2.position.set(2, 1, 5);
   lightningLight2.name = "lightningLight2";
   sceneRoot.add(lightningLight2);
 
-  const lightningLight3 = new ThreePointLight(
-    new Color(1.0, 0.95, 0.9),
-    0.0,
-    50,
-  );
+  const lightningLight3 = new ThreePointLight(new Color(1.0, 0.95, 0.9), 0.0, 50);
   lightningLight3.position.set(0, 3, 6);
   lightningLight3.name = "lightningLight3";
   sceneRoot.add(lightningLight3);
 
-  function createStarShape(
-    outerRadius: number,
-    innerRadius: number,
-    points: number = 5,
-  ): Shape {
+  function createStarShape(outerRadius: number, innerRadius: number, points = 5): Shape {
     const shape = new Shape();
     const angleStep = (Math.PI * 2) / points;
 
@@ -595,16 +564,10 @@ export async function run(renderer: CliRenderer): Promise<void> {
         movingLight4.color.setRGB(1.0, 0.8, 0.0);
 
         for (const char of opentuiChars) {
-          char.color = [
-            RGBA.fromInts(255, 40, 0, 255),
-            RGBA.fromInts(200, 0, 0, 255),
-          ];
+          char.color = [RGBA.fromInts(255, 40, 0, 255), RGBA.fromInts(200, 0, 0, 255)];
         }
         for (const char of fiveKChars) {
-          char.color = [
-            RGBA.fromInts(255, 100, 0, 255),
-            RGBA.fromInts(255, 200, 0, 255),
-          ];
+          char.color = [RGBA.fromInts(255, 100, 0, 255), RGBA.fromInts(255, 200, 0, 255)];
         }
 
         if (leftHornNode) leftHornNode.visible = true;
@@ -623,16 +586,10 @@ export async function run(renderer: CliRenderer): Promise<void> {
         movingLight4.color.setRGB(1.0, 0.85, 0.2);
 
         for (const char of opentuiChars) {
-          char.color = [
-            RGBA.fromInts(255, 80, 120, 255),
-            RGBA.fromInts(255, 60, 215, 255),
-          ];
+          char.color = [RGBA.fromInts(255, 80, 120, 255), RGBA.fromInts(255, 60, 215, 255)];
         }
         for (const char of fiveKChars) {
-          char.color = [
-            RGBA.fromInts(50, 255, 120, 255),
-            RGBA.fromInts(100, 255, 150, 255),
-          ];
+          char.color = [RGBA.fromInts(50, 255, 120, 255), RGBA.fromInts(100, 255, 150, 255)];
         }
 
         if (leftHornNode) leftHornNode.visible = false;
@@ -671,10 +628,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
       id: `opentui-char-${i}`,
       text: opentuiText[i],
       font: "block" as ASCIIFontName,
-      color: [
-        RGBA.fromInts(255, 80, 120, 255),
-        RGBA.fromInts(255, 60, 215, 255),
-      ],
+      color: [RGBA.fromInts(255, 80, 120, 255), RGBA.fromInts(255, 60, 215, 255)],
       backgroundColor: RGBA.fromInts(0, 0, 0, 0),
       zIndex: 101,
     });
@@ -699,10 +653,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
       id: `fivek-char-${i}`,
       text: fiveKText[i],
       font: "huge" as ASCIIFontName,
-      color: [
-        RGBA.fromInts(50, 255, 120, 255),
-        RGBA.fromInts(100, 255, 150, 255),
-      ],
+      color: [RGBA.fromInts(50, 255, 120, 255), RGBA.fromInts(100, 255, 150, 255)],
       backgroundColor: RGBA.fromInts(0, 0, 0, 0),
       zIndex: 101,
     });
@@ -767,8 +718,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
       initialLayoutFrames--;
     }
 
-    const starObject = sceneRoot.getObjectByName("star") as
-      ThreeMesh | undefined;
+    const starObject = sceneRoot.getObjectByName("star") as ThreeMesh | undefined;
 
     if (starObject) {
       if (isHellMode) {
@@ -796,8 +746,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
         }
 
         const rotationLerpSpeed = 2.0 * deltaTime;
-        currentRotationY +=
-          (targetRotationY - currentRotationY) * rotationLerpSpeed;
+        currentRotationY += (targetRotationY - currentRotationY) * rotationLerpSpeed;
         starObject.rotation.y = currentRotationY;
 
         if (elapsedTime > nextRandomTime) {
@@ -822,13 +771,8 @@ export async function run(renderer: CliRenderer): Promise<void> {
         const scaleY = 1.0 - landingSquash;
         const scaleXZ = 1.0 + landingSquash * 0.5;
 
-        const pulsate =
-          Math.sin(elapsedTime * 3) * 0.03 + 1.0 + randomOffset * 0.05;
-        starObject.scale.set(
-          pulsate * scaleXZ,
-          pulsate * scaleY,
-          pulsate * scaleXZ,
-        );
+        const pulsate = Math.sin(elapsedTime * 3) * 0.03 + 1.0 + randomOffset * 0.05;
+        starObject.scale.set(pulsate * scaleXZ, pulsate * scaleY, pulsate * scaleXZ);
 
         const jumpInfluence = Math.max(0, rawJump);
         starObject.rotation.x = currentTiltX * jumpInfluence;
@@ -849,14 +793,10 @@ export async function run(renderer: CliRenderer): Promise<void> {
 
     particleSystem.update(deltaTime);
 
-    const light1 = sceneRoot.getObjectByName("movingLight1") as
-      ThreePointLight | undefined;
-    const light2 = sceneRoot.getObjectByName("movingLight2") as
-      ThreePointLight | undefined;
-    const light3 = sceneRoot.getObjectByName("movingLight3") as
-      ThreePointLight | undefined;
-    const light4 = sceneRoot.getObjectByName("movingLight4") as
-      ThreePointLight | undefined;
+    const light1 = sceneRoot.getObjectByName("movingLight1") as ThreePointLight | undefined;
+    const light2 = sceneRoot.getObjectByName("movingLight2") as ThreePointLight | undefined;
+    const light3 = sceneRoot.getObjectByName("movingLight3") as ThreePointLight | undefined;
+    const light4 = sceneRoot.getObjectByName("movingLight4") as ThreePointLight | undefined;
 
     const radius = 2.5;
     const speed = 1.5;
@@ -880,29 +820,21 @@ export async function run(renderer: CliRenderer): Promise<void> {
     }
 
     if (light4) {
-      light4.position.x =
-        Math.cos(elapsedTime * speed + (3 * Math.PI) / 2) * radius;
-      light4.position.y =
-        Math.sin(elapsedTime * speed + (3 * Math.PI) / 2) * radius;
+      light4.position.x = Math.cos(elapsedTime * speed + (3 * Math.PI) / 2) * radius;
+      light4.position.y = Math.sin(elapsedTime * speed + (3 * Math.PI) / 2) * radius;
       light4.position.z = -3;
     }
 
     if (isHellMode) {
       if (elapsedTime >= nextLightningTime) {
         const lightningLights = [
-          sceneRoot.getObjectByName("lightningLight1") as
-            ThreePointLight | undefined,
-          sceneRoot.getObjectByName("lightningLight2") as
-            ThreePointLight | undefined,
-          sceneRoot.getObjectByName("lightningLight3") as
-            ThreePointLight | undefined,
+          sceneRoot.getObjectByName("lightningLight1") as ThreePointLight | undefined,
+          sceneRoot.getObjectByName("lightningLight2") as ThreePointLight | undefined,
+          sceneRoot.getObjectByName("lightningLight3") as ThreePointLight | undefined,
         ].filter((l) => l !== undefined) as ThreePointLight[];
 
-        const numStrikes =
-          Math.random() < 0.4 ? 1 : Math.random() < 0.7 ? 2 : 3;
-        const availableLights = [...lightningLights].sort(
-          () => Math.random() - 0.5,
-        );
+        const numStrikes = Math.random() < 0.4 ? 1 : Math.random() < 0.7 ? 2 : 3;
+        const availableLights = [...lightningLights].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < Math.min(numStrikes, availableLights.length); i++) {
           const light = availableLights[i];
@@ -922,7 +854,8 @@ export async function run(renderer: CliRenderer): Promise<void> {
       }
 
       const lightningDir = sceneRoot.getObjectByName("lightningDirectional") as
-        ThreeDirectionalLight | undefined;
+        | ThreeDirectionalLight
+        | undefined;
       if (lightningDir && activeLightningStrikes.length > 0) {
         const maxStrikeIntensity = Math.max(
           ...activeLightningStrikes.map((s) => s.light.intensity),
@@ -941,13 +874,9 @@ export async function run(renderer: CliRenderer): Promise<void> {
           activeLightningStrikes.splice(i, 1);
         } else {
           const progress = strikeAge / strike.duration;
-          const patternIndex = Math.floor(
-            progress * strike.flickerPattern.length,
-          );
+          const patternIndex = Math.floor(progress * strike.flickerPattern.length);
           const patternValue =
-            strike.flickerPattern[
-              Math.min(patternIndex, strike.flickerPattern.length - 1)
-            ];
+            strike.flickerPattern[Math.min(patternIndex, strike.flickerPattern.length - 1)];
           strike.light.intensity = (patternValue / 120) * strike.maxIntensity;
 
           const microFlicker = 1.0 + (Math.random() - 0.5) * 0.4;
@@ -959,17 +888,18 @@ export async function run(renderer: CliRenderer): Promise<void> {
         }
       }
     } else {
-      const lightningLight1Node = sceneRoot.getObjectByName(
-        "lightningLight1",
-      ) as ThreePointLight | undefined;
-      const lightningLight2Node = sceneRoot.getObjectByName(
-        "lightningLight2",
-      ) as ThreePointLight | undefined;
-      const lightningLight3Node = sceneRoot.getObjectByName(
-        "lightningLight3",
-      ) as ThreePointLight | undefined;
+      const lightningLight1Node = sceneRoot.getObjectByName("lightningLight1") as
+        | ThreePointLight
+        | undefined;
+      const lightningLight2Node = sceneRoot.getObjectByName("lightningLight2") as
+        | ThreePointLight
+        | undefined;
+      const lightningLight3Node = sceneRoot.getObjectByName("lightningLight3") as
+        | ThreePointLight
+        | undefined;
       const lightningDir = sceneRoot.getObjectByName("lightningDirectional") as
-        ThreeDirectionalLight | undefined;
+        | ThreeDirectionalLight
+        | undefined;
 
       if (lightningLight1Node) lightningLight1Node.intensity = 0;
       if (lightningLight2Node) lightningLight2Node.intensity = 0;
@@ -1002,12 +932,8 @@ export async function run(renderer: CliRenderer): Promise<void> {
       let jump = 0;
 
       if (timeSinceWaveStart < waveCycleDuration) {
-        if (
-          timeSinceWaveStart >= charStartTime &&
-          timeSinceWaveStart <= charEndTime
-        ) {
-          const jumpProgress =
-            (timeSinceWaveStart - charStartTime) / charJumpDuration;
+        if (timeSinceWaveStart >= charStartTime && timeSinceWaveStart <= charEndTime) {
+          const jumpProgress = (timeSinceWaveStart - charStartTime) / charJumpDuration;
           const rawJump = Math.sin(jumpProgress * Math.PI);
           const easedJump = Math.pow(rawJump, 0.6);
           jump = easedJump * jumpHeight * (1.0 + charRandomOffsets[i]);

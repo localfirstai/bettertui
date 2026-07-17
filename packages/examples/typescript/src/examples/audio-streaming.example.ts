@@ -2,12 +2,17 @@
 
 import {
   Audio,
+  type AudioGroup,
+  type AudioStream,
   AudioStreamError,
+  type AudioStreamMetadata,
+  type AudioStreamStats,
   BoxRenderable,
-  CliRenderer,
+  type CliRenderer,
   InputRenderable,
   InputRenderableEvents,
-  OptimizedBuffer,
+  type KeyEvent,
+  type OptimizedBuffer,
   RGBA,
   TextAttributes,
   TextRenderable,
@@ -15,11 +20,6 @@ import {
   createCliRenderer,
   fg,
   t,
-  type AudioGroup,
-  type AudioStream,
-  type AudioStreamMetadata,
-  type AudioStreamStats,
-  type KeyEvent,
 } from "@bettertui/core";
 import FFT from "fft.js";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -59,9 +59,7 @@ const BUFFER_COLORS = {
   value: RGBA.fromInts(226, 232, 240),
   muted: RGBA.fromInts(124, 145, 163),
 };
-const FFT_LABEL_COLORS = FFT_BAR_RGB.map(([red, green, blue]) =>
-  RGBA.fromInts(red, green, blue),
-);
+const FFT_LABEL_COLORS = FFT_BAR_RGB.map(([red, green, blue]) => RGBA.fromInts(red, green, blue));
 
 const PALETTE = {
   background: "#071018",
@@ -157,8 +155,7 @@ class AudioStreamingDemo {
     this.renderer.setBackgroundColor(PALETTE.background);
 
     for (let index = 0; index < FFT_SIZE; index += 1) {
-      const windowValue =
-        0.5 * (1 - Math.cos((2 * Math.PI * index) / (FFT_SIZE - 1)));
+      const windowValue = 0.5 * (1 - Math.cos((2 * Math.PI * index) / (FFT_SIZE - 1)));
       this.fftWindow[index] = windowValue;
       this.fftWindowSum += windowValue;
     }
@@ -216,12 +213,8 @@ class AudioStreamingDemo {
         id: `audio-streaming-demo-station-${index + 1}`,
         border: true,
         borderStyle: "single",
-        borderColor:
-          index === this.selectedStationIndex ? PALETTE.accent : PALETTE.border,
-        backgroundColor:
-          index === this.selectedStationIndex
-            ? PALETTE.panelAlt
-            : PALETTE.panel,
+        borderColor: index === this.selectedStationIndex ? PALETTE.accent : PALETTE.border,
+        backgroundColor: index === this.selectedStationIndex ? PALETTE.panelAlt : PALETTE.panel,
         flexGrow: 1,
         flexBasis: 0,
         minWidth: 0,
@@ -235,8 +228,7 @@ class AudioStreamingDemo {
       const label = new TextRenderable(renderer, {
         id: `audio-streaming-demo-station-label-${index + 1}`,
         content: `${index + 1} ${station.name}`,
-        fg:
-          index === this.selectedStationIndex ? PALETTE.signal : PALETTE.muted,
+        fg: index === this.selectedStationIndex ? PALETTE.signal : PALETTE.muted,
         height: 1,
       });
       box.add(label);
@@ -406,14 +398,10 @@ class AudioStreamingDemo {
       return;
     }
 
-    this.selectedStationIndex = DEMO_STATIONS.findIndex(
-      (station) => station.url === url.href,
-    );
+    this.selectedStationIndex = DEMO_STATIONS.findIndex((station) => station.url === url.href);
     this.refreshStationButtons();
     const sourceName =
-      this.selectedStationIndex >= 0
-        ? DEMO_STATIONS[this.selectedStationIndex]!.name
-        : url.host;
+      this.selectedStationIndex >= 0 ? DEMO_STATIONS[this.selectedStationIndex]!.name : url.host;
 
     const generation = ++this.connectionGeneration;
     this.streamController?.abort();
@@ -505,19 +493,14 @@ class AudioStreamingDemo {
       this.statusMessage = `Connected to ${sourceName}`;
       this.statusColor = PALETTE.accent;
     } else {
-      this.statusMessage =
-        "Connected, but current stream controls could not be applied";
+      this.statusMessage = "Connected, but current stream controls could not be applied";
       this.statusColor = PALETTE.error;
     }
     this.refreshText();
   }
 
   private isCurrent(stream: AudioStream, generation: number): boolean {
-    return (
-      !this.destroyed &&
-      this.stream === stream &&
-      this.connectionGeneration === generation
-    );
+    return !this.destroyed && this.stream === stream && this.connectionGeneration === generation;
   }
 
   private selectStation(index: number): void {
@@ -606,11 +589,7 @@ class AudioStreamingDemo {
     if (this.urlInput.focused || key.ctrl || key.meta) return;
 
     const stationIndex = Number.parseInt(key.name, 10) - 1;
-    if (
-      key.name.length === 1 &&
-      stationIndex >= 0 &&
-      stationIndex < DEMO_STATIONS.length
-    ) {
+    if (key.name.length === 1 && stationIndex >= 0 && stationIndex < DEMO_STATIONS.length) {
       key.preventDefault();
       this.selectStation(stationIndex);
       return;
@@ -651,10 +630,7 @@ class AudioStreamingDemo {
   private updateFrame(deltaMs: number): void {
     if (this.destroyed) return;
     if (!this.audio.isStarted() && this.audio.isMixerStarted()) {
-      const frameCount = Math.max(
-        64,
-        Math.min(2048, Math.round((SAMPLE_RATE * deltaMs) / 1000)),
-      );
+      const frameCount = Math.max(64, Math.min(2048, Math.round((SAMPLE_RATE * deltaMs) / 1000)));
       this.audio.mixFrames(frameCount, 2);
     }
 
@@ -673,8 +649,7 @@ class AudioStreamingDemo {
       const tap = this.audio.readTapFrames(FFT_SIZE, 2);
       if (tap && tap.framesRead >= FFT_SIZE) this.computeSpectrum(tap.frames);
     } else {
-      for (let index = 0; index < this.spectrum.length; index += 1)
-        this.spectrum[index] *= 0.94;
+      for (let index = 0; index < this.spectrum.length; index += 1) this.spectrum[index] *= 0.94;
     }
     for (let index = 0; index < this.spectrumPeaks.length; index += 1) {
       this.spectrumPeaks[index] = Math.max(
@@ -705,18 +680,14 @@ class AudioStreamingDemo {
         ? Math.sqrt(center * next)
         : center * Math.sqrt(center / (previous ?? center / 2));
       const firstBin = Math.max(1, Math.floor((low * FFT_SIZE) / SAMPLE_RATE));
-      const lastBin = Math.min(
-        FFT_SIZE / 2,
-        Math.ceil((high * FFT_SIZE) / SAMPLE_RATE),
-      );
+      const lastBin = Math.min(FFT_SIZE / 2, Math.ceil((high * FFT_SIZE) / SAMPLE_RATE));
       let maximum = 0;
       for (let bin = firstBin; bin < lastBin; bin += 1) {
         const real = this.fftOutput[bin * 2] ?? 0;
         const imaginary = this.fftOutput[bin * 2 + 1] ?? 0;
         maximum = Math.max(
           maximum,
-          (2 * Math.sqrt(real * real + imaginary * imaginary)) /
-            this.fftWindowSum,
+          (2 * Math.sqrt(real * real + imaginary * imaginary)) / this.fftWindowSum,
         );
       }
       magnitudes[band] = maximum;
@@ -725,14 +696,9 @@ class AudioStreamingDemo {
     // A fixed dBFS scale preserves level changes instead of pinning each frame's strongest band.
     for (let index = 0; index < this.spectrum.length; index += 1) {
       const decibels = 20 * Math.log10(Math.max(magnitudes[index] ?? 0, 1e-8));
-      const incoming = clamp(
-        (decibels - FFT_DB_FLOOR) / (FFT_DB_CEILING - FFT_DB_FLOOR),
-        0,
-        1,
-      );
+      const incoming = clamp((decibels - FFT_DB_FLOOR) / (FFT_DB_CEILING - FFT_DB_FLOOR), 0, 1);
       const previous = this.spectrum[index] ?? 0;
-      this.spectrum[index] =
-        incoming > previous ? incoming : previous * 0.8 + incoming * 0.2;
+      this.spectrum[index] = incoming > previous ? incoming : previous * 0.8 + incoming * 0.2;
     }
   }
 
@@ -776,75 +742,47 @@ class AudioStreamingDemo {
 
     const bandCount = Math.min(BAND_CENTERS.length, innerWidth);
     const gap = innerWidth >= bandCount * 3 ? 1 : 0;
-    const barWidth = Math.max(
-      1,
-      Math.floor((innerWidth - gap * (bandCount - 1)) / bandCount),
-    );
+    const barWidth = Math.max(1, Math.floor((innerWidth - gap * (bandCount - 1)) / bandCount));
     const totalWidth = bandCount * barWidth + (bandCount - 1) * gap;
-    const offsetX =
-      innerX + Math.max(0, Math.floor((innerWidth - totalWidth) / 2));
+    const offsetX = innerX + Math.max(0, Math.floor((innerWidth - totalWidth) / 2));
 
     for (let bar = 0; bar < bandCount; bar += 1) {
       const band =
-        bandCount === 1
-          ? 0
-          : Math.round((bar * (BAND_CENTERS.length - 1)) / (bandCount - 1));
+        bandCount === 1 ? 0 : Math.round((bar * (BAND_CENTERS.length - 1)) / (bandCount - 1));
       const level = clamp(this.spectrum[band] ?? 0, 0, 1);
       const peak = clamp(this.spectrumPeaks[band] ?? 0, 0, 1);
       const filledHeight = level * availableHeight;
       const rows = Math.ceil(filledHeight);
-      const [baseRed, baseGreen, baseBlue] =
-        FFT_BAR_RGB[band] ?? FFT_BAR_RGB[0];
+      const [baseRed, baseGreen, baseBlue] = FFT_BAR_RGB[band] ?? FFT_BAR_RGB[0];
       const xStart = offsetX + bar * (barWidth + gap);
 
       for (let row = 0; row < rows; row += 1) {
         const y = barsBottom - row;
         const coverage = Math.min(1, filledHeight - row);
-        const heightRatio =
-          availableHeight <= 1 ? 1 : row / (availableHeight - 1);
-        const intensity =
-          (0.42 + heightRatio * 0.58) * (0.35 + coverage * 0.65);
+        const heightRatio = availableHeight <= 1 ? 1 : row / (availableHeight - 1);
+        const intensity = (0.42 + heightRatio * 0.58) * (0.35 + coverage * 0.65);
         const red = Math.round(baseRed * intensity);
         const green = Math.round(baseGreen * intensity);
         const blue = Math.round(baseBlue * intensity);
         for (let x = xStart; x < xStart + barWidth; x += 1) {
-          writeBufferRgb(
-            backgrounds,
-            (y * buffer.width + x) * 4,
-            red,
-            green,
-            blue,
-          );
+          writeBufferRgb(backgrounds, (y * buffer.width + x) * 4, red, green, blue);
         }
       }
 
       if (peak > 0.01) {
-        const peakY =
-          barsBottom - Math.round(peak * Math.max(0, availableHeight - 1));
+        const peakY = barsBottom - Math.round(peak * Math.max(0, availableHeight - 1));
         const peakRed = Math.round(baseRed * 0.45 + 140);
         const peakGreen = Math.round(baseGreen * 0.45 + 140);
         const peakBlue = Math.round(baseBlue * 0.45 + 140);
         for (let x = xStart; x < xStart + barWidth; x += 1) {
-          writeBufferRgb(
-            backgrounds,
-            (peakY * buffer.width + x) * 4,
-            peakRed,
-            peakGreen,
-            peakBlue,
-          );
+          writeBufferRgb(backgrounds, (peakY * buffer.width + x) * 4, peakRed, peakGreen, peakBlue);
         }
       }
 
       if (showLabels && bandCount === BAND_CENTERS.length && barWidth >= 3) {
         const label = formatFrequency(BAND_CENTERS[band] ?? 0);
-        const labelX =
-          xStart + Math.max(0, Math.floor((barWidth - label.length) / 2));
-        buffer.drawText(
-          label,
-          labelX,
-          labelY,
-          FFT_LABEL_COLORS[band] ?? BUFFER_COLORS.muted,
-        );
+        const labelX = xStart + Math.max(0, Math.floor((barWidth - label.length) / 2));
+        buffer.drawText(label, labelX, labelY, FFT_LABEL_COLORS[band] ?? BUFFER_COLORS.muted);
       }
     }
   }
@@ -884,14 +822,11 @@ class AudioStreamingDemo {
   }
 
   private refreshText(): void {
-    const state =
-      this.streamStats?.state ?? (this.stream ? this.stream.state : "idle");
+    const state = this.streamStats?.state ?? (this.stream ? this.stream.state : "idle");
 
     const stats = this.streamStats;
     const bufferRatio =
-      stats && stats.capacityFrames > 0
-        ? stats.bufferedFrames / stats.capacityFrames
-        : 0;
+      stats && stats.capacityFrames > 0 ? stats.bufferedFrames / stats.capacityFrames : 0;
     const stateColor =
       state === "playing"
         ? PALETTE.signal
@@ -901,11 +836,7 @@ class AudioStreamingDemo {
             ? PALETTE.muted
             : PALETTE.warning;
     const bufferColor =
-      bufferRatio >= 0.5
-        ? PALETTE.signal
-        : bufferRatio > 0
-          ? PALETTE.warning
-          : PALETTE.muted;
+      bufferRatio >= 0.5 ? PALETTE.signal : bufferRatio > 0 ? PALETTE.warning : PALETTE.muted;
     const label = (value: string) => fg(PALETTE.muted)(value.padEnd(9));
     const underruns = stats?.underruns ?? 0;
     const reconnects = stats?.reconnectAttempts ?? 0;

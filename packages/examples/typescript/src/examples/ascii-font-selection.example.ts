@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
   RGBA,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
 import { ASCIIFontRenderable } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -65,10 +65,7 @@ export function run(renderer: CliRenderer): void {
     id: "blockFont",
     text: "opentui",
     font: "block",
-    color: [
-      RGBA.fromInts(255, 100, 100, 255),
-      RGBA.fromInts(100, 255, 100, 255),
-    ],
+    color: [RGBA.fromInts(255, 100, 100, 255), RGBA.fromInts(100, 255, 100, 255)],
     backgroundColor: RGBA.fromInts(0, 0, 40, 255),
     selectionBg: "#4a5568",
     selectionFg: "#ffffff",
@@ -81,10 +78,7 @@ export function run(renderer: CliRenderer): void {
     id: "shadeFont",
     text: "SHADE",
     font: "shade",
-    color: [
-      RGBA.fromInts(255, 200, 100, 255),
-      RGBA.fromInts(100, 150, 200, 255),
-    ],
+    color: [RGBA.fromInts(255, 200, 100, 255), RGBA.fromInts(100, 150, 200, 255)],
     backgroundColor: RGBA.fromInts(0, 0, 40, 255),
     selectionBg: "#4a5568",
     selectionFg: "#ffffff",
@@ -97,10 +91,7 @@ export function run(renderer: CliRenderer): void {
     id: "slickFont",
     text: "SLICK",
     font: "slick",
-    color: [
-      RGBA.fromInts(100, 255, 100, 255),
-      RGBA.fromInts(255, 100, 255, 255),
-    ],
+    color: [RGBA.fromInts(100, 255, 100, 255), RGBA.fromInts(255, 100, 255, 255)],
     backgroundColor: RGBA.fromInts(0, 0, 40, 255),
     selectionBg: "#4a5568",
     selectionFg: "#ffffff",
@@ -189,13 +180,9 @@ export function run(renderer: CliRenderer): void {
     ) {
       const selectedText = selection.getSelectedText();
 
-      const selectedCount = allFontRenderables.filter((r) =>
-        r.hasSelection(),
-      ).length;
+      const selectedCount = allFontRenderables.filter((r) => r.hasSelection()).length;
       const container = renderer.getSelectionContainer();
-      const containerInfo = container
-        ? `Container: ${container.id}`
-        : "Container: none";
+      const containerInfo = container ? `Container: ${container.id}` : "Container: none";
       debugText.content = `Selected fonts: ${selectedCount}/${allFontRenderables.length} | ${containerInfo}`;
 
       if (selectedText) {
@@ -211,9 +198,7 @@ export function run(renderer: CliRenderer): void {
           statusText.content = `Selected ${totalLength} chars:`;
           selectionStartText.content = selectedText.substring(0, 30);
           selectionMiddleText.content = "...";
-          selectionEndText.content = selectedText.substring(
-            selectedText.length - 30,
-          );
+          selectionEndText.content = selectedText.substring(selectedText.length - 30);
         } else {
           statusText.content = `Selected ${totalLength} chars:`;
           selectionStartText.content = `"${selectedText}"`;

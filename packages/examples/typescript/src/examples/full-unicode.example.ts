@@ -1,18 +1,18 @@
 import {
-  createCliRenderer,
-  RGBA,
+  BoxRenderable,
+  type CliRenderer,
   FrameBufferRenderable,
+  type KeyEvent,
+  type MouseEvent,
+  RGBA,
+  type RenderContext,
   TextRenderable,
-  t,
   blue,
   bold,
-  underline,
+  createCliRenderer,
   fg,
-  type MouseEvent,
-  type KeyEvent,
-  type CliRenderer,
-  type RenderContext,
-  BoxRenderable,
+  t,
+  underline,
 } from "@bettertui/core";
 import { VignetteEffect } from "@bettertui/core";
 
@@ -227,20 +227,10 @@ export function run(renderer: CliRenderer): void {
   rootGroup.add(box3);
 
   // Draggable styled text using TextRenderable (grapheme-aware via TextBuffer)
-  const styledText = new DraggableStyledText(
-    renderer,
-    "draggable-styled-text",
-    8,
-    12,
-  );
+  const styledText = new DraggableStyledText(renderer, "draggable-styled-text", 8, 12);
   rootGroup.add(styledText);
 
-  const styledText2 = new DraggableStyledText(
-    renderer,
-    "draggable-styled-text-2",
-    18,
-    16,
-  );
+  const styledText2 = new DraggableStyledText(renderer, "draggable-styled-text-2", 18, 16);
   styledText2.content = t`${bold(fg("#55FF55", "Emoji Check:"))} ✅ 👩🏽‍💻  👨‍👩‍👧‍👦  🏳️‍🌈
 ${underline("Drag me too:")} 🇺🇸  🇩🇪  🇯🇵  🇮🇳  a̐éö̲`;
   rootGroup.add(styledText2);

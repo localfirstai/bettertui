@@ -1,17 +1,17 @@
 import {
   BoxRenderable,
-  CliRenderer,
-  createCliRenderer,
+  type CliRenderer,
   FrameBufferRenderable,
+  type KeyEvent,
   RGBA,
   TextRenderable,
-  type KeyEvent,
+  createCliRenderer,
 } from "@bettertui/core";
 import { renderFontToFrameBuffer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let scrollY = 0;
-let contentHeight = 56;
+const contentHeight = 56;
 let buffer: FrameBufferRenderable | null = null;
 let renderer: CliRenderer | null = null;
 let parentContainer: BoxRenderable | null = null;
@@ -74,10 +74,7 @@ export function run(rendererInstance: CliRenderer): void {
     text: "FONTS",
     x: 5,
     y: 1,
-    color: [
-      RGBA.fromInts(255, 100, 100, 255),
-      RGBA.fromInts(100, 100, 255, 255),
-    ],
+    color: [RGBA.fromInts(255, 100, 100, 255), RGBA.fromInts(100, 100, 255, 255)],
     backgroundColor: RGBA.fromInts(0, 0, 40, 255),
     font: "block",
   });
@@ -230,8 +227,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   if (asciiDemo) rendererInstance.root.remove(asciiDemo);
 
   if (parentContainer) {
-    const fontsContainer =
-      rendererInstance.root.getRenderable("fonts-container");
+    const fontsContainer = rendererInstance.root.getRenderable("fonts-container");
     if (fontsContainer) rendererInstance.root.remove(fontsContainer);
     parentContainer = null;
   }

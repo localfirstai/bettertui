@@ -1,27 +1,27 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  RGBA,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
   type KeyEvent,
   type MouseEvent,
+  RGBA,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { ThreeRenderable } from "@bettertui/core";
 import {
-  Scene as ThreeScene,
-  Mesh as ThreeMesh,
-  PerspectiveCamera,
-  Color,
-  DirectionalLight,
   AmbientLight,
   BoxGeometry,
+  Color,
+  DirectionalLight,
   MeshPhongMaterial,
+  PerspectiveCamera,
+  Mesh as ThreeMesh,
+  Scene as ThreeScene,
   Vector3,
 } from "three";
-import { ThreeRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let nextZIndex = 200;
 let keyListener: ((key: KeyEvent) => void) | null = null;
@@ -84,10 +84,7 @@ class DraggableThreeRenderable extends ThreeRenderable {
   }
 }
 
-function getRenderSize(
-  width: number,
-  height: number,
-): { width: number; height: number } {
+function getRenderSize(width: number, height: number): { width: number; height: number } {
   return {
     width: Math.max(24, Math.min(64, Math.floor(width * 0.55))),
     height: Math.max(12, Math.min(28, Math.floor(height * 0.55))),
@@ -169,10 +166,7 @@ export function run(renderer: CliRenderer): void {
   cameraNode.name = "main_camera";
 
   const startX = Math.max(2, Math.floor((width - size.width) / 2));
-  const startY = Math.max(
-    HEADER_HEIGHT,
-    Math.floor((height - size.height) / 2),
-  );
+  const startY = Math.max(HEADER_HEIGHT, Math.floor((height - size.height) / 2));
 
   draggableCube = new DraggableThreeRenderable(renderer, HEADER_HEIGHT, {
     id: "draggable-three",
@@ -253,9 +247,7 @@ export function destroy(renderer: CliRenderer): void {
   }
 
   if (parentContainer) {
-    const draggableThreeContainer = renderer.root.getRenderable(
-      "draggable-three-container",
-    );
+    const draggableThreeContainer = renderer.root.getRenderable("draggable-three-container");
     if (draggableThreeContainer) renderer.root.remove(draggableThreeContainer);
     parentContainer = null;
   }

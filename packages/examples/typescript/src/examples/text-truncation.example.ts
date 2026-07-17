@@ -1,49 +1,49 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  TextRenderable,
   BoxRenderable,
-  t,
-  green,
+  type CliRenderer,
+  TextRenderable,
   bold,
+  createCliRenderer,
   cyan,
-  yellow,
+  green,
   magenta,
-} from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  t,
+  yellow,
+} from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let renderer: CliRenderer | null = null
-let mainContainer: BoxRenderable | null = null
-let header: BoxRenderable | null = null
-let headerText: TextRenderable | null = null
-let leftColumn: BoxRenderable | null = null
-let rightColumn: BoxRenderable | null = null
-let footer: BoxRenderable | null = null
-let footerText: TextRenderable | null = null
-let selectionBox: BoxRenderable | null = null
-let selectionStatusText: TextRenderable | null = null
-let selectionStartText: TextRenderable | null = null
-let selectionMiddleText: TextRenderable | null = null
-let selectionEndText: TextRenderable | null = null
+let renderer: CliRenderer | null = null;
+let mainContainer: BoxRenderable | null = null;
+let header: BoxRenderable | null = null;
+let headerText: TextRenderable | null = null;
+let leftColumn: BoxRenderable | null = null;
+let rightColumn: BoxRenderable | null = null;
+let footer: BoxRenderable | null = null;
+let footerText: TextRenderable | null = null;
+let selectionBox: BoxRenderable | null = null;
+let selectionStatusText: TextRenderable | null = null;
+let selectionStartText: TextRenderable | null = null;
+let selectionMiddleText: TextRenderable | null = null;
+let selectionEndText: TextRenderable | null = null;
 
 // Text elements to demonstrate truncation
-let singleLineText1: TextRenderable | null = null
-let singleLineText2: TextRenderable | null = null
-let singleLineText3: TextRenderable | null = null
-let multilineText1: TextRenderable | null = null
-let multilineText2: TextRenderable | null = null
-let styledText: TextRenderable | null = null
+let singleLineText1: TextRenderable | null = null;
+let singleLineText2: TextRenderable | null = null;
+let singleLineText3: TextRenderable | null = null;
+let multilineText1: TextRenderable | null = null;
+let multilineText2: TextRenderable | null = null;
+let styledText: TextRenderable | null = null;
 
-let truncateEnabled = false
-let wrapMode: "none" | "char" | "word" = "none"
+let truncateEnabled = false;
+let wrapMode: "none" | "char" | "word" = "none";
 
-const allTextElements: TextRenderable[] = []
+const allTextElements: TextRenderable[] = [];
 
 function createLayout(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance
-  renderer.setBackgroundColor("#0d1117")
+  renderer = rendererInstance;
+  renderer.setBackgroundColor("#0d1117");
 
   // Main container
   mainContainer = new BoxRenderable(renderer, {
@@ -53,8 +53,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     flexGrow: 1,
     flexDirection: "column",
     backgroundColor: "#0d1117",
-  })
-  renderer.root.add(mainContainer)
+  });
+  renderer.root.add(mainContainer);
 
   // Header
   header = new BoxRenderable(renderer, {
@@ -67,15 +67,15 @@ function createLayout(rendererInstance: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     border: true,
-  })
-  mainContainer.add(header)
+  });
+  mainContainer.add(header);
 
   headerText = new TextRenderable(renderer, {
     id: "headerText",
     content: "Text Truncation Demo - Press 'T' to toggle truncation",
     fg: "#58a6ff",
-  })
-  header.add(headerText)
+  });
+  header.add(headerText);
 
   // Content area with two columns
   const contentArea = new BoxRenderable(renderer, {
@@ -86,8 +86,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     flexDirection: "row",
     gap: 1,
     padding: 1,
-  })
-  mainContainer.add(contentArea)
+  });
+  mainContainer.add(contentArea);
 
   // Left column
   leftColumn = new BoxRenderable(renderer, {
@@ -97,8 +97,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     flexGrow: 1,
     flexDirection: "column",
     gap: 1,
-  })
-  contentArea.add(leftColumn)
+  });
+  contentArea.add(leftColumn);
 
   // Single line text boxes
   const singleLineBox1 = new BoxRenderable(renderer, {
@@ -112,8 +112,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     title: "Single Line Text 1",
     padding: 1,
     border: true,
-  })
-  leftColumn.add(singleLineBox1)
+  });
+  leftColumn.add(singleLineBox1);
 
   singleLineText1 = new TextRenderable(renderer, {
     id: "singleLineText1",
@@ -121,9 +121,9 @@ function createLayout(rendererInstance: CliRenderer): void {
       "This is a very long single line of text that will definitely exceed the width of most terminal windows and should be truncated when truncation is enabled",
     fg: "#c9d1d9",
     wrapMode: wrapMode,
-  })
-  singleLineBox1.add(singleLineText1)
-  allTextElements.push(singleLineText1)
+  });
+  singleLineBox1.add(singleLineText1);
+  allTextElements.push(singleLineText1);
 
   const singleLineBox2 = new BoxRenderable(renderer, {
     id: "singleLineBox2",
@@ -136,17 +136,17 @@ function createLayout(rendererInstance: CliRenderer): void {
     title: "Single Line Text 2",
     padding: 1,
     border: true,
-  })
-  leftColumn.add(singleLineBox2)
+  });
+  leftColumn.add(singleLineBox2);
 
   singleLineText2 = new TextRenderable(renderer, {
     id: "singleLineText2",
     content: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz",
     fg: "#3fb950",
     wrapMode: wrapMode,
-  })
-  singleLineBox2.add(singleLineText2)
-  allTextElements.push(singleLineText2)
+  });
+  singleLineBox2.add(singleLineText2);
+  allTextElements.push(singleLineText2);
 
   const singleLineBox3 = new BoxRenderable(renderer, {
     id: "singleLineBox3",
@@ -159,17 +159,18 @@ function createLayout(rendererInstance: CliRenderer): void {
     title: "Single Line Text 3 (Unicode)",
     padding: 1,
     border: true,
-  })
-  leftColumn.add(singleLineBox3)
+  });
+  leftColumn.add(singleLineBox3);
 
   singleLineText3 = new TextRenderable(renderer, {
     id: "singleLineText3",
-    content: "🌟 Unicode test: こんにちは世界 Hello World 你好世界 안녕하세요 🚀 More emoji: 🎨🎭🎪🎬🎮🎯",
+    content:
+      "🌟 Unicode test: こんにちは世界 Hello World 你好世界 안녕하세요 🚀 More emoji: 🎨🎭🎪🎬🎮🎯",
     fg: "#d29922",
     wrapMode: wrapMode,
-  })
-  singleLineBox3.add(singleLineText3)
-  allTextElements.push(singleLineText3)
+  });
+  singleLineBox3.add(singleLineText3);
+  allTextElements.push(singleLineText3);
 
   // Right column
   rightColumn = new BoxRenderable(renderer, {
@@ -179,8 +180,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     flexGrow: 1,
     flexDirection: "column",
     gap: 1,
-  })
-  contentArea.add(rightColumn)
+  });
+  contentArea.add(rightColumn);
 
   // Multiline text boxes
   const multilineBox1 = new BoxRenderable(renderer, {
@@ -194,17 +195,17 @@ function createLayout(rendererInstance: CliRenderer): void {
     title: "Multiline Text (Word Wrap)",
     padding: 1,
     border: true,
-  })
-  rightColumn.add(multilineBox1)
+  });
+  rightColumn.add(multilineBox1);
 
   multilineText1 = new TextRenderable(renderer, {
     id: "multilineText1",
     content: `This is a multiline text block that demonstrates how truncation works with word wrapping enabled. Each line that exceeds the viewport width will be truncated independently. Try resizing the terminal to see how it behaves!`,
     fg: "#f778ba",
     wrapMode: wrapMode,
-  })
-  multilineBox1.add(multilineText1)
-  allTextElements.push(multilineText1)
+  });
+  multilineBox1.add(multilineText1);
+  allTextElements.push(multilineText1);
 
   const multilineBox2 = new BoxRenderable(renderer, {
     id: "multilineBox2",
@@ -217,8 +218,8 @@ function createLayout(rendererInstance: CliRenderer): void {
     title: "Multiline Text",
     padding: 1,
     border: true,
-  })
-  rightColumn.add(multilineBox2)
+  });
+  rightColumn.add(multilineBox2);
 
   multilineText2 = new TextRenderable(renderer, {
     id: "multilineText2",
@@ -228,9 +229,9 @@ Line 3: Short line
 Line 4: Yet another extremely long line with lots of text to demonstrate middle truncation behavior`,
     fg: "#bc8cff",
     wrapMode: wrapMode,
-  })
-  multilineBox2.add(multilineText2)
-  allTextElements.push(multilineText2)
+  });
+  multilineBox2.add(multilineText2);
+  allTextElements.push(multilineText2);
 
   const styledBox = new BoxRenderable(renderer, {
     id: "styledBox",
@@ -243,17 +244,17 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
     title: "Styled Text with Truncation",
     padding: 1,
     border: true,
-  })
-  rightColumn.add(styledBox)
+  });
+  rightColumn.add(styledBox);
 
   styledText = new TextRenderable(renderer, {
     id: "styledText",
     content: t`${bold(cyan("Bold Cyan:"))} ${yellow("Yellow text")} ${magenta("and magenta")} ${green("with green parts")} and more styled text that goes on and on`,
     fg: "#c9d1d9",
     wrapMode: wrapMode,
-  })
-  styledBox.add(styledText)
-  allTextElements.push(styledText)
+  });
+  styledBox.add(styledText);
+  allTextElements.push(styledText);
 
   // Footer
   footer = new BoxRenderable(renderer, {
@@ -266,15 +267,15 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
     alignItems: "center",
     justifyContent: "center",
     border: true,
-  })
-  mainContainer.add(footer)
+  });
+  mainContainer.add(footer);
 
   footerText = new TextRenderable(renderer, {
     id: "footerText",
     content: "",
     fg: "#8b949e",
-  })
-  footer.add(footerText)
+  });
+  footer.add(footerText);
 
   selectionBox = new BoxRenderable(renderer, {
     id: "selectionBox",
@@ -289,193 +290,194 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
     gap: 1,
     padding: 1,
     border: true,
-  })
-  mainContainer.add(selectionBox)
+  });
+  mainContainer.add(selectionBox);
 
   selectionStatusText = new TextRenderable(renderer, {
     id: "selectionStatusText",
     content: "Select text to see details here",
     fg: "#8b949e",
-  })
-  selectionBox.add(selectionStatusText)
+  });
+  selectionBox.add(selectionStatusText);
 
   selectionStartText = new TextRenderable(renderer, {
     id: "selectionStartText",
     content: "",
     fg: "#7dd3fc",
-  })
-  selectionBox.add(selectionStartText)
+  });
+  selectionBox.add(selectionStartText);
 
   selectionMiddleText = new TextRenderable(renderer, {
     id: "selectionMiddleText",
     content: "",
     fg: "#94a3b8",
-  })
-  selectionBox.add(selectionMiddleText)
+  });
+  selectionBox.add(selectionMiddleText);
 
   selectionEndText = new TextRenderable(renderer, {
     id: "selectionEndText",
     content: "",
     fg: "#7dd3fc",
-  })
-  selectionBox.add(selectionEndText)
+  });
+  selectionBox.add(selectionEndText);
 
   renderer.on("selection", (selection) => {
-    if (!selectionStatusText || !selectionStartText || !selectionMiddleText || !selectionEndText) return
+    if (!selectionStatusText || !selectionStartText || !selectionMiddleText || !selectionEndText)
+      return;
 
-    const selectedText = selection?.getSelectedText()
+    const selectedText = selection?.getSelectedText();
     if (selectedText) {
-      const lines = selectedText.split("\n")
-      const totalLength = selectedText.length
+      const lines = selectedText.split("\n");
+      const totalLength = selectedText.length;
 
       if (lines.length > 1) {
-        selectionStatusText.content = `Selected ${lines.length} lines (${totalLength} chars):`
-        selectionStartText.content = lines[0]
-        selectionMiddleText.content = "..."
-        selectionEndText.content = lines[lines.length - 1]
+        selectionStatusText.content = `Selected ${lines.length} lines (${totalLength} chars):`;
+        selectionStartText.content = lines[0];
+        selectionMiddleText.content = "...";
+        selectionEndText.content = lines[lines.length - 1];
       } else if (selectedText.length > 60) {
-        selectionStatusText.content = `Selected ${totalLength} chars:`
-        selectionStartText.content = selectedText.substring(0, 30)
-        selectionMiddleText.content = "..."
-        selectionEndText.content = selectedText.substring(selectedText.length - 30)
+        selectionStatusText.content = `Selected ${totalLength} chars:`;
+        selectionStartText.content = selectedText.substring(0, 30);
+        selectionMiddleText.content = "...";
+        selectionEndText.content = selectedText.substring(selectedText.length - 30);
       } else {
-        selectionStatusText.content = `Selected ${totalLength} chars:`
-        selectionStartText.content = `"${selectedText}"`
-        selectionMiddleText.content = ""
-        selectionEndText.content = ""
+        selectionStatusText.content = `Selected ${totalLength} chars:`;
+        selectionStartText.content = `"${selectedText}"`;
+        selectionMiddleText.content = "";
+        selectionEndText.content = "";
       }
     } else {
-      selectionStatusText.content = "Empty selection"
-      selectionStartText.content = ""
-      selectionMiddleText.content = ""
-      selectionEndText.content = ""
+      selectionStatusText.content = "Empty selection";
+      selectionStartText.content = "";
+      selectionMiddleText.content = "";
+      selectionEndText.content = "";
     }
-  })
+  });
 
-  updateFooterText()
+  updateFooterText();
 }
 
 function updateFooterText(): void {
-  if (!footerText) return
+  if (!footerText) return;
 
-  const truncateStatus = truncateEnabled ? "ENABLED" : "DISABLED"
-  const truncateColor = truncateEnabled ? green : yellow
-  const wrapColor = wrapMode === "none" ? yellow : cyan
-  footerText.content = t`Truncate: ${truncateColor(bold(truncateStatus))} | Wrap: ${wrapColor(bold(wrapMode.toUpperCase()))} | ${cyan("T")}: toggle truncate | ${cyan("W")}: cycle wrap | ${cyan("R")}: resize | ${cyan("C")}: clear selection | ${cyan("Ctrl+C")}: exit`
+  const truncateStatus = truncateEnabled ? "ENABLED" : "DISABLED";
+  const truncateColor = truncateEnabled ? green : yellow;
+  const wrapColor = wrapMode === "none" ? yellow : cyan;
+  footerText.content = t`Truncate: ${truncateColor(bold(truncateStatus))} | Wrap: ${wrapColor(bold(wrapMode.toUpperCase()))} | ${cyan("T")}: toggle truncate | ${cyan("W")}: cycle wrap | ${cyan("R")}: resize | ${cyan("C")}: clear selection | ${cyan("Ctrl+C")}: exit`;
 }
 
 function toggleTruncation(): void {
-  truncateEnabled = !truncateEnabled
+  truncateEnabled = !truncateEnabled;
 
   for (const text of allTextElements) {
-    text.truncate = truncateEnabled
+    text.truncate = truncateEnabled;
   }
 
-  updateFooterText()
+  updateFooterText();
 }
 
 function cycleWrapMode(): void {
   if (wrapMode === "none") {
-    wrapMode = "char"
+    wrapMode = "char";
   } else if (wrapMode === "char") {
-    wrapMode = "word"
+    wrapMode = "word";
   } else {
-    wrapMode = "none"
+    wrapMode = "none";
   }
 
   for (const text of allTextElements) {
-    text.wrapMode = wrapMode
+    text.wrapMode = wrapMode;
   }
 
-  updateFooterText()
+  updateFooterText();
 }
 
 function toggleColumnSizes(): void {
-  if (!leftColumn || !rightColumn) return
+  if (!leftColumn || !rightColumn) return;
 
   // Swap flex-grow values to change relative sizes
-  const leftGrow = leftColumn.flexGrow
-  const rightGrow = rightColumn.flexGrow
+  const leftGrow = leftColumn.flexGrow;
+  const rightGrow = rightColumn.flexGrow;
 
   if (leftGrow === 1 && rightGrow === 1) {
     // Make left column larger
-    leftColumn.flexGrow = 2
-    rightColumn.flexGrow = 1
+    leftColumn.flexGrow = 2;
+    rightColumn.flexGrow = 1;
   } else if (leftGrow === 2 && rightGrow === 1) {
     // Make right column larger
-    leftColumn.flexGrow = 1
-    rightColumn.flexGrow = 2
+    leftColumn.flexGrow = 1;
+    rightColumn.flexGrow = 2;
   } else {
     // Reset to equal
-    leftColumn.flexGrow = 1
-    rightColumn.flexGrow = 1
+    leftColumn.flexGrow = 1;
+    rightColumn.flexGrow = 1;
   }
 }
 
 function handleKeyPress(event: any): void {
-  const key = event.sequence.toLowerCase()
+  const key = event.sequence.toLowerCase();
 
   switch (key) {
     case "t":
-      toggleTruncation()
-      break
+      toggleTruncation();
+      break;
     case "w":
-      cycleWrapMode()
-      break
+      cycleWrapMode();
+      break;
     case "r":
-      toggleColumnSizes()
-      break
+      toggleColumnSizes();
+      break;
     case "c":
-      renderer?.clearSelection()
+      renderer?.clearSelection();
       if (selectionStatusText && selectionStartText && selectionMiddleText && selectionEndText) {
-        selectionStatusText.content = "Selection cleared"
-        selectionStartText.content = ""
-        selectionMiddleText.content = ""
-        selectionEndText.content = ""
+        selectionStatusText.content = "Selection cleared";
+        selectionStartText.content = "";
+        selectionMiddleText.content = "";
+        selectionEndText.content = "";
       }
-      break
+      break;
   }
 }
 
 export function run(rendererInstance: CliRenderer): void {
-  createLayout(rendererInstance)
-  rendererInstance.keyInput.on("keypress", handleKeyPress)
+  createLayout(rendererInstance);
+  rendererInstance.keyInput.on("keypress", handleKeyPress);
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
-  rendererInstance.keyInput.off("keypress", handleKeyPress)
+  rendererInstance.keyInput.off("keypress", handleKeyPress);
 
-  mainContainer?.destroyRecursively()
+  mainContainer?.destroyRecursively();
 
-  renderer = null
-  mainContainer = null
-  header = null
-  headerText = null
-  leftColumn = null
-  rightColumn = null
-  footer = null
-  footerText = null
-  selectionBox = null
-  selectionStatusText = null
-  selectionStartText = null
-  selectionMiddleText = null
-  selectionEndText = null
-  singleLineText1 = null
-  singleLineText2 = null
-  singleLineText3 = null
-  multilineText1 = null
-  multilineText2 = null
-  styledText = null
-  allTextElements.length = 0
-  rendererInstance.clearSelection()
+  renderer = null;
+  mainContainer = null;
+  header = null;
+  headerText = null;
+  leftColumn = null;
+  rightColumn = null;
+  footer = null;
+  footerText = null;
+  selectionBox = null;
+  selectionStatusText = null;
+  selectionStartText = null;
+  selectionMiddleText = null;
+  selectionEndText = null;
+  singleLineText1 = null;
+  singleLineText2 = null;
+  singleLineText3 = null;
+  multilineText1 = null;
+  multilineText2 = null;
+  styledText = null;
+  allTextElements.length = 0;
+  rendererInstance.clearSelection();
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     targetFps: 30,
     exitOnCtrlC: true,
-  })
-  run(renderer)
-  setupCommonDemoKeys(renderer)
-  renderer.start()
+  });
+  run(renderer);
+  setupCommonDemoKeys(renderer);
+  renderer.start();
 }

@@ -1,17 +1,17 @@
 import {
-  CliRenderer,
-  CliRenderEvents,
-  createCliRenderer,
   BoxRenderable,
-  TextRenderable,
+  CliRenderEvents,
+  type CliRenderer,
   type ParsedKey,
   ScrollBoxRenderable,
-} from "@bettertui/core"
-import { parseColor } from "@bettertui/core"
-import { getTreeSitterClient } from "@bettertui/core"
-import { MarkdownRenderable } from "@bettertui/core"
-import { SyntaxStyle } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  TextRenderable,
+  createCliRenderer,
+} from "@bettertui/core";
+import { parseColor } from "@bettertui/core";
+import { getTreeSitterClient } from "@bettertui/core";
+import { MarkdownRenderable } from "@bettertui/core";
+import { SyntaxStyle } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Rich markdown example showcasing various features
 const markdownContent = `# OpenTUI Markdown Demo
@@ -252,7 +252,7 @@ The table alignment uses:
 ---
 
 *Press \`?\` for keybindings*
-`
+`;
 
 // Theme definitions
 const themes = {
@@ -408,28 +408,33 @@ const themes = {
       default: { fg: parseColor("#D8DEE9") },
     },
   },
-}
+};
 
-type ThemeKey = keyof typeof themes
-const themeKeys = ["github", "githubLight", "monokai", "nord"] as const satisfies readonly ThemeKey[]
+type ThemeKey = keyof typeof themes;
+const themeKeys = [
+  "github",
+  "githubLight",
+  "monokai",
+  "nord",
+] as const satisfies readonly ThemeKey[];
 
-let renderer: CliRenderer | null = null
-let keyboardHandler: ((key: ParsedKey) => void) | null = null
-let selectionHandler: ((selection: { getSelectedText: () => string }) => void) | null = null
-let parentContainer: BoxRenderable | null = null
-let markdownScrollBox: ScrollBoxRenderable | null = null
-let markdownDisplay: MarkdownRenderable | null = null
-let statusText: TextRenderable | null = null
-let syntaxStyle: SyntaxStyle | null = null
-let helpModal: BoxRenderable | null = null
-let currentThemeIndex = 0
-let concealEnabled = true
-let showingHelp = false
-let streamingMode = false
-let streamingTimer: Timer | null = null
-let streamPosition = 0
-let endlessMode = false
-let rendererDestroyHandler: (() => void) | null = null
+let renderer: CliRenderer | null = null;
+let keyboardHandler: ((key: ParsedKey) => void) | null = null;
+let selectionHandler: ((selection: { getSelectedText: () => string }) => void) | null = null;
+let parentContainer: BoxRenderable | null = null;
+let markdownScrollBox: ScrollBoxRenderable | null = null;
+let markdownDisplay: MarkdownRenderable | null = null;
+let statusText: TextRenderable | null = null;
+let syntaxStyle: SyntaxStyle | null = null;
+let helpModal: BoxRenderable | null = null;
+let currentThemeIndex = 0;
+let concealEnabled = true;
+let showingHelp = false;
+let streamingMode = false;
+let streamingTimer: Timer | null = null;
+let streamPosition = 0;
+let endlessMode = false;
+let rendererDestroyHandler: (() => void) | null = null;
 
 // Streaming speed presets: [minDelay, maxDelay] in milliseconds
 const streamSpeeds = [
@@ -440,24 +445,24 @@ const streamSpeeds = [
   { name: "Fast", min: 40, max: 100 }, // 4
   { name: "Faster", min: 20, max: 60 }, // 5
   { name: "Fastest", min: 10, max: 50 }, // 6
-]
-let currentSpeedIndex = 0
+];
+let currentSpeedIndex = 0;
 
 const JSON_PARSER_WASM_URL =
-  "https://github.com/tree-sitter/tree-sitter-json/releases/download/v0.24.8/tree-sitter-json.wasm"
+  "https://github.com/tree-sitter/tree-sitter-json/releases/download/v0.24.8/tree-sitter-json.wasm";
 const JSON_HIGHLIGHTS_QUERY_URL =
-  "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/json/highlights.scm"
+  "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/json/highlights.scm";
 const DIFF_PARSER_WASM_URL =
-  "https://github.com/tree-sitter-grammars/tree-sitter-diff/releases/download/v0.1.0/tree-sitter-diff.wasm"
+  "https://github.com/tree-sitter-grammars/tree-sitter-diff/releases/download/v0.1.0/tree-sitter-diff.wasm";
 const DIFF_HIGHLIGHTS_QUERY_URL =
-  "https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-diff/master/queries/highlights.scm"
+  "https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-diff/master/queries/highlights.scm";
 
-let demoParsersRegistered = false
+let demoParsersRegistered = false;
 
 function registerTreeSitterParsersForDemo(): void {
-  if (demoParsersRegistered) return
+  if (demoParsersRegistered) return;
 
-  const treeSitterClient = getTreeSitterClient()
+  const treeSitterClient = getTreeSitterClient();
 
   treeSitterClient.addFiletypeParser({
     filetype: "json",
@@ -465,7 +470,7 @@ function registerTreeSitterParsersForDemo(): void {
     queries: {
       highlights: [JSON_HIGHLIGHTS_QUERY_URL],
     },
-  })
+  });
 
   treeSitterClient.addFiletypeParser({
     filetype: "diff",
@@ -473,129 +478,132 @@ function registerTreeSitterParsersForDemo(): void {
     queries: {
       highlights: [DIFF_HIGHLIGHTS_QUERY_URL],
     },
-  })
+  });
 
-  demoParsersRegistered = true
+  demoParsersRegistered = true;
 }
 
 function getCurrentTheme() {
-  return themes[themeKeys[currentThemeIndex]]
+  return themes[themeKeys[currentThemeIndex]];
 }
 
 function getThemeTextColor(theme: (typeof themes)[ThemeKey]) {
-  return theme.styles.default.fg
+  return theme.styles.default.fg;
 }
 
 function getThemeMutedTextColor(theme: (typeof themes)[ThemeKey]) {
-  return theme.styles.conceal.fg ?? theme.styles.default.fg
+  return theme.styles.conceal.fg ?? theme.styles.default.fg;
 }
 
 function getCurrentSpeed() {
-  return streamSpeeds[currentSpeedIndex]
+  return streamSpeeds[currentSpeedIndex];
 }
 
 function stopStreaming() {
   if (streamingTimer) {
-    clearTimeout(streamingTimer)
-    streamingTimer = null
+    clearTimeout(streamingTimer);
+    streamingTimer = null;
   }
-  streamingMode = false
-  streamPosition = 0
+  streamingMode = false;
+  streamPosition = 0;
 }
 
 function startStreaming() {
-  stopStreaming()
-  streamingMode = true
-  streamPosition = 0
+  stopStreaming();
+  streamingMode = true;
+  streamPosition = 0;
 
-  if (!markdownDisplay || !markdownScrollBox) return
+  if (!markdownDisplay || !markdownScrollBox) return;
 
   // Reset to empty and enable streaming mode
-  markdownDisplay.streaming = true
-  markdownDisplay.content = ""
+  markdownDisplay.streaming = true;
+  markdownDisplay.content = "";
 
   // Enable sticky scroll to bottom for streaming
-  markdownScrollBox.stickyScroll = true
+  markdownScrollBox.stickyScroll = true;
 
-  markdownScrollBox.stickyStart = "bottom"
+  markdownScrollBox.stickyStart = "bottom";
 
   // Update status
   if (statusText) {
-    const theme = getCurrentTheme()
-    const speed = getCurrentSpeed()
-    const mode = endlessMode ? "ENDLESS" : "NORMAL"
-    statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Streaming: IN PROGRESS (${speed.name}, ${mode}) | Press X to stop`
+    const theme = getCurrentTheme();
+    const speed = getCurrentSpeed();
+    const mode = endlessMode ? "ENDLESS" : "NORMAL";
+    statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Streaming: IN PROGRESS (${speed.name}, ${mode}) | Press X to stop`;
   }
 
   function streamNextChunk() {
-    if (!streamingMode || !markdownDisplay || markdownDisplay.isDestroyed) return
+    if (!streamingMode || !markdownDisplay || markdownDisplay.isDestroyed) return;
 
     // Random chunk size between 1 and 50 characters
-    const chunkSize = Math.floor(Math.random() * 50) + 1
+    const chunkSize = Math.floor(Math.random() * 50) + 1;
 
     // Calculate which iteration we're on and position within that iteration
-    const positionInCurrentIteration = streamPosition % markdownContent.length
-    const nextPositionInIteration = Math.min(positionInCurrentIteration + chunkSize, markdownContent.length)
+    const positionInCurrentIteration = streamPosition % markdownContent.length;
+    const nextPositionInIteration = Math.min(
+      positionInCurrentIteration + chunkSize,
+      markdownContent.length,
+    );
 
     // Build content by repeating the markdown as many times as needed
-    const fullIterations = Math.floor(streamPosition / markdownContent.length)
-    const currentIterationContent = markdownContent.slice(0, nextPositionInIteration)
+    const fullIterations = Math.floor(streamPosition / markdownContent.length);
+    const currentIterationContent = markdownContent.slice(0, nextPositionInIteration);
 
     // Construct full content: (full iterations of content) + (partial current iteration)
-    let fullContent = markdownContent.repeat(fullIterations) + currentIterationContent
+    const fullContent = markdownContent.repeat(fullIterations) + currentIterationContent;
 
-    markdownDisplay.content = fullContent
-    streamPosition += chunkSize
+    markdownDisplay.content = fullContent;
+    streamPosition += chunkSize;
 
     // In endless mode, never stop. In normal mode, stop after first iteration
-    const shouldContinue = endlessMode || streamPosition < markdownContent.length
+    const shouldContinue = endlessMode || streamPosition < markdownContent.length;
 
     if (shouldContinue) {
       // Random delay based on current speed setting
-      const speed = getCurrentSpeed()
-      const delayRange = speed.max - speed.min
-      const delay = Math.floor(Math.random() * delayRange) + speed.min
-      streamingTimer = setTimeout(streamNextChunk, delay)
+      const speed = getCurrentSpeed();
+      const delayRange = speed.max - speed.min;
+      const delay = Math.floor(Math.random() * delayRange) + speed.min;
+      streamingTimer = setTimeout(streamNextChunk, delay);
     } else {
       // Normal mode - streaming complete
-      streamingMode = false
+      streamingMode = false;
       if (statusText) {
-        const theme = getCurrentTheme()
-        const speed = getCurrentSpeed()
-        statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Streaming: COMPLETE (${speed.name}) | Press S to restart`
+        const theme = getCurrentTheme();
+        const speed = getCurrentSpeed();
+        statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Streaming: COMPLETE (${speed.name}) | Press S to restart`;
       }
     }
   }
 
-  streamNextChunk()
+  streamNextChunk();
 }
 
 export async function run(rendererInstance: CliRenderer): Promise<void> {
-  renderer = rendererInstance
-  showingHelp = false
+  renderer = rendererInstance;
+  showingHelp = false;
 
   rendererDestroyHandler = () => {
-    stopStreaming()
-    markdownDisplay = null
-    markdownScrollBox = null
-    statusText = null
-    parentContainer = null
-    helpModal = null
-  }
-  rendererInstance.on(CliRenderEvents.DESTROY, rendererDestroyHandler)
+    stopStreaming();
+    markdownDisplay = null;
+    markdownScrollBox = null;
+    statusText = null;
+    parentContainer = null;
+    helpModal = null;
+  };
+  rendererInstance.on(CliRenderEvents.DESTROY, rendererDestroyHandler);
 
-  renderer.start()
-  registerTreeSitterParsersForDemo()
+  renderer.start();
+  registerTreeSitterParsersForDemo();
 
-  const theme = getCurrentTheme()
-  renderer.setBackgroundColor(theme.bg)
+  const theme = getCurrentTheme();
+  renderer.setBackgroundColor(theme.bg);
 
   parentContainer = new BoxRenderable(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
-  })
-  renderer.root.add(parentContainer)
+  });
+  renderer.root.add(parentContainer);
 
   const titleBox = new BoxRenderable(renderer, {
     id: "title-box",
@@ -606,15 +614,15 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     title: "Markdown Demo - Table Alignment + Syntax Highlighting",
     titleAlignment: "center",
     border: true,
-  })
-  parentContainer.add(titleBox)
+  });
+  parentContainer.add(titleBox);
 
   const instructionsText = new TextRenderable(renderer, {
     id: "instructions",
     content: "ESC to return | Press ? for keybindings",
     fg: "#888888",
-  })
-  titleBox.add(instructionsText)
+  });
+  titleBox.add(instructionsText);
 
   // Create help modal (hidden by default)
   helpModal = new BoxRenderable(renderer, {
@@ -635,7 +643,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     padding: 2,
     zIndex: 100,
     visible: false,
-  })
+  });
 
   const helpContent = new TextRenderable(renderer, {
     id: "help-content",
@@ -656,10 +664,10 @@ Other:
   ? : Toggle this help screen
   ESC : Return to main menu`,
     fg: "#E6EDF3",
-  })
+  });
 
-  helpModal.add(helpContent)
-  renderer.root.add(helpModal)
+  helpModal.add(helpContent);
+  renderer.root.add(helpModal);
 
   markdownScrollBox = new ScrollBoxRenderable(renderer, {
     id: "markdown-scroll-box",
@@ -676,12 +684,12 @@ Other:
     flexShrink: 1,
     paddingX: 2,
     paddingY: 1,
-  })
-  markdownScrollBox.focus()
-  parentContainer.add(markdownScrollBox)
+  });
+  markdownScrollBox.focus();
+  parentContainer.add(markdownScrollBox);
 
   // Create syntax style from current theme
-  syntaxStyle = SyntaxStyle.fromStyles(theme.styles)
+  syntaxStyle = SyntaxStyle.fromStyles(theme.styles);
 
   // Create markdown display using MarkdownRenderable
   markdownDisplay = new MarkdownRenderable(renderer, {
@@ -694,9 +702,9 @@ Other:
     internalBlockMode: "top-level",
     tableOptions: { style: "grid", widthMode: "content", cellPaddingX: 1 },
     width: "100%",
-  })
+  });
 
-  markdownScrollBox.add(markdownDisplay)
+  markdownScrollBox.add(markdownDisplay);
 
   statusText = new TextRenderable(renderer, {
     id: "status-display",
@@ -704,159 +712,159 @@ Other:
     fg: "#A5D6FF",
     wrapMode: "word",
     flexShrink: 0,
-  })
-  parentContainer.add(statusText)
+  });
+  parentContainer.add(statusText);
 
   const applyTheme = (theme: (typeof themes)[ThemeKey]) => {
-    rendererInstance.setBackgroundColor(theme.bg)
-    syntaxStyle = SyntaxStyle.fromStyles(theme.styles)
+    rendererInstance.setBackgroundColor(theme.bg);
+    syntaxStyle = SyntaxStyle.fromStyles(theme.styles);
 
-    titleBox.backgroundColor = theme.bg
-    instructionsText.fg = getThemeMutedTextColor(theme)
-    helpContent.fg = getThemeTextColor(theme)
+    titleBox.backgroundColor = theme.bg;
+    instructionsText.fg = getThemeMutedTextColor(theme);
+    helpContent.fg = getThemeTextColor(theme);
 
     if (markdownDisplay) {
-      markdownDisplay.syntaxStyle = syntaxStyle
-      markdownDisplay.fg = getThemeTextColor(theme)
-      markdownDisplay.bg = theme.bg
+      markdownDisplay.syntaxStyle = syntaxStyle;
+      markdownDisplay.fg = getThemeTextColor(theme);
+      markdownDisplay.bg = theme.bg;
     }
 
     if (markdownScrollBox) {
-      markdownScrollBox.title = `MarkdownRenderable - ${theme.name}`
-      markdownScrollBox.backgroundColor = theme.bg
+      markdownScrollBox.title = `MarkdownRenderable - ${theme.name}`;
+      markdownScrollBox.backgroundColor = theme.bg;
     }
 
     if (helpModal) {
-      helpModal.backgroundColor = theme.bg
+      helpModal.backgroundColor = theme.bg;
     }
 
     if (statusText) {
-      statusText.fg = getThemeTextColor(theme)
+      statusText.fg = getThemeTextColor(theme);
     }
-  }
+  };
 
   const updateStatusText = () => {
     if (statusText) {
-      const theme = getCurrentTheme()
-      const speed = getCurrentSpeed()
-      const streamStatus = streamingMode ? "STREAMING" : "NORMAL"
-      const endlessStatus = endlessMode ? " [ENDLESS]" : ""
-      statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Mode: ${streamStatus}${endlessStatus} | Speed: ${speed.name} | Select text to copy | Press T/C/S/E/[/]`
+      const theme = getCurrentTheme();
+      const speed = getCurrentSpeed();
+      const streamStatus = streamingMode ? "STREAMING" : "NORMAL";
+      const endlessStatus = endlessMode ? " [ENDLESS]" : "";
+      statusText.content = `Theme: ${theme.name} | Conceal: ${concealEnabled ? "ON" : "OFF"} | Mode: ${streamStatus}${endlessStatus} | Speed: ${speed.name} | Select text to copy | Press T/C/S/E/[/]`;
     }
-  }
+  };
 
-  applyTheme(theme)
-  updateStatusText()
+  applyTheme(theme);
+  updateStatusText();
 
   keyboardHandler = (key: ParsedKey) => {
     // Handle help modal toggle
     if (key.raw === "?" && helpModal) {
-      showingHelp = !showingHelp
-      helpModal.visible = showingHelp
-      return
+      showingHelp = !showingHelp;
+      helpModal.visible = showingHelp;
+      return;
     }
 
     // Don't process other keys when help is showing
-    if (showingHelp) return
+    if (showingHelp) return;
 
     if (key.name === "s" && !key.ctrl && !key.meta) {
       // Start/restart streaming simulation
-      startStreaming()
+      startStreaming();
     } else if (key.name === "e" && !key.ctrl && !key.meta) {
       // Toggle endless mode
-      endlessMode = !endlessMode
-      updateStatusText()
+      endlessMode = !endlessMode;
+      updateStatusText();
     } else if (key.name === "x" && !key.ctrl && !key.meta) {
       // Stop streaming (for endless mode)
-      stopStreaming()
+      stopStreaming();
       if (markdownDisplay) {
-        markdownDisplay.streaming = false
+        markdownDisplay.streaming = false;
       }
-      updateStatusText()
+      updateStatusText();
     } else if (key.raw === "[" && !key.ctrl && !key.meta) {
       // Decrease streaming speed (slower)
       if (currentSpeedIndex > 0) {
-        currentSpeedIndex--
-        updateStatusText()
+        currentSpeedIndex--;
+        updateStatusText();
       }
     } else if (key.raw === "]" && !key.ctrl && !key.meta) {
       // Increase streaming speed (faster)
       if (currentSpeedIndex < streamSpeeds.length - 1) {
-        currentSpeedIndex++
-        updateStatusText()
+        currentSpeedIndex++;
+        updateStatusText();
       }
     } else if (key.name === "t" && !key.ctrl && !key.meta) {
       // Cycle through themes
-      currentThemeIndex = (currentThemeIndex + 1) % themeKeys.length
-      applyTheme(getCurrentTheme())
+      currentThemeIndex = (currentThemeIndex + 1) % themeKeys.length;
+      applyTheme(getCurrentTheme());
 
-      updateStatusText()
+      updateStatusText();
     } else if (key.name === "c" && !key.ctrl && !key.meta) {
       // Stop streaming when toggling conceal
-      stopStreaming()
+      stopStreaming();
 
-      concealEnabled = !concealEnabled
+      concealEnabled = !concealEnabled;
       if (markdownDisplay) {
-        markdownDisplay.conceal = concealEnabled
-        markdownDisplay.streaming = false
-        markdownDisplay.content = markdownContent
+        markdownDisplay.conceal = concealEnabled;
+        markdownDisplay.streaming = false;
+        markdownDisplay.content = markdownContent;
       }
-      updateStatusText()
+      updateStatusText();
     }
-  }
+  };
 
-  rendererInstance.keyInput.on("keypress", keyboardHandler)
+  rendererInstance.keyInput.on("keypress", keyboardHandler);
 
   selectionHandler = (selection) => {
-    const selectedText = selection.getSelectedText()
-    if (!selectedText || !statusText) return
+    const selectedText = selection.getSelectedText();
+    if (!selectedText || !statusText) return;
 
-    const copied = rendererInstance.copyToClipboardOSC52(selectedText)
-    const lineCount = selectedText.split("\n").length
-    const summary = lineCount > 1 ? `${lineCount} lines` : `${selectedText.length} chars`
+    const copied = rendererInstance.copyToClipboardOSC52(selectedText);
+    const lineCount = selectedText.split("\n").length;
+    const summary = lineCount > 1 ? `${lineCount} lines` : `${selectedText.length} chars`;
     statusText.content = copied
       ? `Copied selection to clipboard (${summary})`
-      : `Selected ${summary}; clipboard write unavailable`
-  }
-  rendererInstance.on(CliRenderEvents.SELECTION, selectionHandler)
+      : `Selected ${summary}; clipboard write unavailable`;
+  };
+  rendererInstance.on(CliRenderEvents.SELECTION, selectionHandler);
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
-  stopStreaming()
+  stopStreaming();
 
   if (rendererDestroyHandler) {
-    rendererInstance.off(CliRenderEvents.DESTROY, rendererDestroyHandler)
-    rendererDestroyHandler = null
+    rendererInstance.off(CliRenderEvents.DESTROY, rendererDestroyHandler);
+    rendererDestroyHandler = null;
   }
 
   if (keyboardHandler) {
-    rendererInstance.keyInput.off("keypress", keyboardHandler)
-    keyboardHandler = null
+    rendererInstance.keyInput.off("keypress", keyboardHandler);
+    keyboardHandler = null;
   }
 
   if (selectionHandler) {
-    rendererInstance.off(CliRenderEvents.SELECTION, selectionHandler)
-    selectionHandler = null
+    rendererInstance.off(CliRenderEvents.SELECTION, selectionHandler);
+    selectionHandler = null;
   }
 
-  parentContainer?.destroy()
-  helpModal?.destroy()
-  parentContainer = null
-  markdownScrollBox = null
-  markdownDisplay = null
-  statusText = null
-  syntaxStyle = null
-  helpModal = null
-  showingHelp = false
+  parentContainer?.destroy();
+  helpModal?.destroy();
+  parentContainer = null;
+  markdownScrollBox = null;
+  markdownDisplay = null;
+  statusText = null;
+  syntaxStyle = null;
+  helpModal = null;
+  showingHelp = false;
 
-  renderer = null
+  renderer = null;
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
     targetFps: 60,
-  })
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  });
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

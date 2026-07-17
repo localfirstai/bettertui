@@ -2,26 +2,26 @@ import {
   ASCIIFontRenderable,
   BoxRenderable,
   type CliRenderer,
-  createCliRenderer,
-  TextRenderable,
   RGBA,
-  t,
-  fg,
+  TextRenderable,
   bold,
-  underline,
+  createCliRenderer,
+  fg,
   italic,
-} from "@bettertui/core"
-import { ScrollBoxRenderable } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  t,
+  underline,
+} from "@bettertui/core";
+import { ScrollBoxRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let scrollBox: ScrollBoxRenderable | null = null
-let renderer: CliRenderer | null = null
-let mainContainer: BoxRenderable | null = null
-let instructionsBox: BoxRenderable | null = null
-let nextIndex = 1000
+let scrollBox: ScrollBoxRenderable | null = null;
+let renderer: CliRenderer | null = null;
+let mainContainer: BoxRenderable | null = null;
+let instructionsBox: BoxRenderable | null = null;
+let nextIndex = 1000;
 
 function addBox(i: number) {
-  if (!renderer || !scrollBox) return
+  if (!renderer || !scrollBox) return;
 
   const box = new BoxRenderable(renderer, {
     id: `box-${i + 1}`,
@@ -29,28 +29,28 @@ function addBox(i: number) {
     padding: 1,
     marginBottom: 1,
     backgroundColor: i % 2 === 0 ? "#292e42" : "#2f3449",
-  })
+  });
 
-  const content = makeMultilineContent(i)
+  const content = makeMultilineContent(i);
   const text = new TextRenderable(renderer, {
     content,
-  })
+  });
 
-  box.add(text)
-  scrollBox.add(box)
+  box.add(text);
+  scrollBox.add(box);
 }
 
 function addAsciiRenderable(i: number) {
-  if (!renderer || !scrollBox) return
+  if (!renderer || !scrollBox) return;
 
-  const fonts = ["tiny", "block", "shade", "slick"] as const
-  const font = fonts[i % fonts.length]
+  const fonts = ["tiny", "block", "shade", "slick"] as const;
+  const font = fonts[i % fonts.length];
   const colors = [
     [RGBA.fromInts(166, 227, 161, 255), RGBA.fromInts(122, 162, 247, 255)],
     [RGBA.fromInts(247, 118, 142, 255), RGBA.fromInts(245, 194, 231, 255)],
     [RGBA.fromInts(125, 196, 228, 255), RGBA.fromInts(199, 146, 234, 255)],
     [RGBA.fromInts(244, 191, 117, 255), RGBA.fromInts(249, 226, 175, 255)],
-  ][i % 4]
+  ][i % 4];
 
   const longText =
     `ASCII FONT RENDERABLE #${i + 1} - ${font.toUpperCase()} STYLE - This is an extremely long piece of text that will definitely exceed the width of the scrollbox and trigger horizontal scrolling functionality. `.repeat(
@@ -61,7 +61,7 @@ function addAsciiRenderable(i: number) {
     ) +
     `The quick brown fox jumps over the lazy dog while the sly red panda silently observes from the treetops, contemplating the mysteries of the universe and wondering about the meaning of life. Meanwhile, technology continues to advance at an unprecedented rate, bringing both amazing opportunities and challenging ethical dilemmas to humanity's doorstep. From artificial intelligence to quantum computing, the future holds limitless possibilities that our ancestors could only dream of in their wildest imaginations.`.repeat(
       8,
-    )
+    );
 
   const asciiRenderable = new ASCIIFontRenderable(renderer, {
     id: `ascii-${i + 1}`,
@@ -72,20 +72,28 @@ function addAsciiRenderable(i: number) {
     selectionBg: "#f7768e",
     selectionFg: "#c0caf5",
     zIndex: 10,
-  })
+  });
 
-  scrollBox.add(asciiRenderable)
+  scrollBox.add(asciiRenderable);
 }
 
 function makeMultilineContent(i: number) {
-  const palette = [fg("#7aa2f7"), fg("#9ece6a"), fg("#f7768e"), fg("#7dcfff"), fg("#bb9af7"), fg("#e0af68")]
-  const colorize = palette[i % palette.length]
-  const id = (i + 1).toString().padStart(4, "0")
-  const tag = i % 3 === 0 ? underline("INFO") : i % 3 === 1 ? bold("WARN") : bold(fg("#f7768e")("ERROR"))
+  const palette = [
+    fg("#7aa2f7"),
+    fg("#9ece6a"),
+    fg("#f7768e"),
+    fg("#7dcfff"),
+    fg("#bb9af7"),
+    fg("#e0af68"),
+  ];
+  const colorize = palette[i % palette.length];
+  const id = (i + 1).toString().padStart(4, "0");
+  const tag =
+    i % 3 === 0 ? underline("INFO") : i % 3 === 1 ? bold("WARN") : bold(fg("#f7768e")("ERROR"));
 
-  const barUnits = 10 + (i % 30)
-  const bar = "█".repeat(Math.floor(barUnits * 0.6)).padEnd(barUnits, "░")
-  const details = "data ".repeat((i % 4) + 2)
+  const barUnits = 10 + (i % 30);
+  const bar = "█".repeat(Math.floor(barUnits * 0.6)).padEnd(barUnits, "░");
+  const details = "data ".repeat((i % 4) + 2);
 
   return t`${fg("#565f89")(`[${id}]`)} ${bold(colorize(`Box ${i + 1}`))} ${fg("#565f89")("|")} ${tag}
 ${fg("#9aa5ce")("Multiline content with mixed styles for stress testing.")}
@@ -93,12 +101,12 @@ ${colorize("• Title:")} ${bold(italic(`Lorem ipsum ${i}`))}
 ${fg("#9ece6a")("• Detail A:")} ${fg("#c0caf5")(details.trim())}
 ${fg("#bb9af7")("• Detail B:")} ${fg("#a9b1d6")("The quick brown fox jumps over the lazy dog.")}
 ${fg("#7dcfff")("• Progress:")} ${fg("#73daca")(bar)} ${fg("#565f89")(barUnits)}
-${fg("#565f89")("— end of box —")}`
+${fg("#565f89")("— end of box —")}`;
 }
 
 export function run(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance
-  renderer.setBackgroundColor("#1a1b26")
+  renderer = rendererInstance;
+  renderer.setBackgroundColor("#1a1b26");
 
   mainContainer = new BoxRenderable(renderer, {
     id: "main-container",
@@ -107,7 +115,7 @@ export function run(rendererInstance: CliRenderer): void {
     maxWidth: "100%",
     flexDirection: "column",
     backgroundColor: "#1a1b26",
-  })
+  });
 
   scrollBox = new ScrollBoxRenderable(renderer, {
     id: "scroll-box",
@@ -131,7 +139,7 @@ export function run(rendererInstance: CliRenderer): void {
         backgroundColor: "#414868",
       },
     },
-  })
+  });
 
   instructionsBox = new BoxRenderable(renderer, {
     id: "instructions",
@@ -140,75 +148,75 @@ export function run(rendererInstance: CliRenderer): void {
     backgroundColor: "#2a2b3a",
     paddingLeft: 1,
     flexShrink: 0,
-  })
+  });
 
   const instructionsText1 = new TextRenderable(renderer, {
     content: t`${bold(fg("#7aa2f7")("Controls:"))} ${fg("#c0caf5")("↑/↓/PgUp/PgDn/Home/End")} ${fg("#565f89")("|")} ${bold(fg("#9ece6a")("A"))} ${fg("#c0caf5")("Toggle arrows")} ${fg("#565f89")("|")} ${bold(fg("#bb9af7")("Tab"))} ${fg("#c0caf5")("Focus scrollbox")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("N"))} ${fg("#c0caf5")("Add child")}`,
-  })
+  });
 
   const instructionsText2 = new TextRenderable(renderer, {
     content: t`${bold(fg("#7aa2f7")("Scrollbars:"))} ${bold(fg("#e0af68")("V"))} ${fg("#c0caf5")("Toggle vertical")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("H"))} ${fg("#c0caf5")("Toggle horizontal")}`,
-  })
+  });
 
-  instructionsBox.add(instructionsText1)
-  instructionsBox.add(instructionsText2)
+  instructionsBox.add(instructionsText1);
+  instructionsBox.add(instructionsText2);
 
-  mainContainer.add(scrollBox)
-  mainContainer.add(instructionsBox)
+  mainContainer.add(scrollBox);
+  mainContainer.add(instructionsBox);
 
-  renderer.root.add(mainContainer)
+  renderer.root.add(mainContainer);
 
-  scrollBox.focus()
+  scrollBox.focus();
 
   // Generate 1000 boxes, each with multiline styled text
   // Add an ASCII renderable at the top (index 0) for immediate visibility
-  addAsciiRenderable(0)
+  addAsciiRenderable(0);
 
   for (let index = 1; index < nextIndex; index++) {
     if ((index + 1) % 100 === 0) {
-      addAsciiRenderable(index)
+      addAsciiRenderable(index);
     } else {
-      addBox(index)
+      addBox(index);
     }
   }
 
   rendererInstance.keyInput.on("keypress", (key) => {
     if (key.name === "a" && scrollBox) {
-      const currentState = scrollBox.verticalScrollBar?.showArrows ?? false
-      scrollBox.verticalScrollBar!.showArrows = !currentState
-      scrollBox.horizontalScrollBar!.showArrows = !currentState
-      console.log(`Arrows ${!currentState ? "enabled" : "disabled"}`)
+      const currentState = scrollBox.verticalScrollBar?.showArrows ?? false;
+      scrollBox.verticalScrollBar!.showArrows = !currentState;
+      scrollBox.horizontalScrollBar!.showArrows = !currentState;
+      console.log(`Arrows ${!currentState ? "enabled" : "disabled"}`);
     } else if (key.name === "v" && scrollBox) {
-      const currentState = scrollBox.verticalScrollBar.visible
-      scrollBox.verticalScrollBar.visible = !currentState
-      console.log(`Vertical scrollbar ${!currentState ? "shown" : "hidden"}`)
+      const currentState = scrollBox.verticalScrollBar.visible;
+      scrollBox.verticalScrollBar.visible = !currentState;
+      console.log(`Vertical scrollbar ${!currentState ? "shown" : "hidden"}`);
     } else if (key.name === "h" && scrollBox) {
-      const currentState = scrollBox.horizontalScrollBar.visible
-      scrollBox.horizontalScrollBar.visible = !currentState
-      console.log(`Horizontal scrollbar ${!currentState ? "shown" : "hidden"}`)
+      const currentState = scrollBox.horizontalScrollBar.visible;
+      scrollBox.horizontalScrollBar.visible = !currentState;
+      console.log(`Horizontal scrollbar ${!currentState ? "shown" : "hidden"}`);
     } else if (key.name === "n" && scrollBox) {
-      addBox(nextIndex)
-      nextIndex++
+      addBox(nextIndex);
+      nextIndex++;
     }
-  })
+  });
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
   if (mainContainer) {
-    rendererInstance.root.remove(mainContainer)
-    mainContainer.destroyRecursively()
-    mainContainer = null
+    rendererInstance.root.remove(mainContainer);
+    mainContainer.destroyRecursively();
+    mainContainer = null;
   }
-  scrollBox = null
-  instructionsBox = null
-  renderer = null
+  scrollBox = null;
+  instructionsBox = null;
+  renderer = null;
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

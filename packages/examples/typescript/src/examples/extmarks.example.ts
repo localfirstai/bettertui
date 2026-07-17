@@ -1,15 +1,15 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  TextareaRenderable,
   BoxRenderable,
-  TextRenderable,
-  KeyEvent,
+  type CliRenderer,
   type ExtmarksController,
+  type KeyEvent,
+  TextRenderable,
+  TextareaRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { SyntaxStyle } from "@bettertui/core";
 import { RGBA } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const initialContent = `Welcome to the Extmarks Demo!
 
@@ -36,7 +36,7 @@ let statusText: TextRenderable | null = null;
 let helpText: TextRenderable | null = null;
 let extmarksController: ExtmarksController | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
-let virtualStyleId: number = 0;
+let virtualStyleId = 0;
 
 export async function run(rendererInstance: CliRenderer): Promise<void> {
   renderer = rendererInstance;
@@ -91,8 +91,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
 
   helpText = new TextRenderable(renderer, {
     id: "help",
-    content:
-      "Move cursor with arrows. Try backspacing at end of [VIRTUAL] markers!",
+    content: "Move cursor with arrows. Try backspacing at end of [VIRTUAL] markers!",
     fg: "#FFA657",
     height: 1,
   });

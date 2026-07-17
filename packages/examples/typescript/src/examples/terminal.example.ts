@@ -1,55 +1,55 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
+  BoxRenderable,
+  type CliRenderer,
+  FrameBufferRenderable,
+  InputRenderable,
+  InputRenderableEvents,
   RGBA,
   TextAttributes,
   TextRenderable,
-  FrameBufferRenderable,
-  BoxRenderable,
-  InputRenderable,
-  InputRenderableEvents,
-} from "@bettertui/core"
-import { ScrollBoxRenderable } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
-import type { TerminalColors } from "@bettertui/core"
-import { PaletteGridRenderable } from "../lib/paletteGrid.js"
-import { HexListRenderable } from "../lib/hexList.js"
+  createCliRenderer,
+} from "@bettertui/core";
+import { ScrollBoxRenderable } from "@bettertui/core";
+import type { TerminalColors } from "@bettertui/core";
+import { HexListRenderable } from "../lib/hexList.js";
+import { PaletteGridRenderable } from "../lib/paletteGrid.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 /**
  * This demo showcases terminal palette detection.
  * Enter a palette size (1-256) in the input field and press Enter to fetch colors.
  */
 
-let scrollBox: ScrollBoxRenderable | null = null
-let contentContainer: BoxRenderable | null = null
-let paletteGrid: PaletteGridRenderable | null = null
-let statusText: TextRenderable | null = null
-let diagnosticsText: TextRenderable | null = null
-let rawOscText: TextRenderable | null = null
-let hexList: HexListRenderable | null = null
-let specialColorsBuffer: FrameBufferRenderable | null = null
-let ansiComparisonBuffer: FrameBufferRenderable | null = null
-let terminalColors: TerminalColors | null = null
-let keyboardHandler: ((key: any) => void) | null = null
-let paletteSizeInput: InputRenderable | null = null
-let oscUnsubscribe: (() => void) | null = null
+let scrollBox: ScrollBoxRenderable | null = null;
+let contentContainer: BoxRenderable | null = null;
+let paletteGrid: PaletteGridRenderable | null = null;
+let statusText: TextRenderable | null = null;
+let diagnosticsText: TextRenderable | null = null;
+let rawOscText: TextRenderable | null = null;
+let hexList: HexListRenderable | null = null;
+let specialColorsBuffer: FrameBufferRenderable | null = null;
+let ansiComparisonBuffer: FrameBufferRenderable | null = null;
+let terminalColors: TerminalColors | null = null;
+let keyboardHandler: ((key: any) => void) | null = null;
+let paletteSizeInput: InputRenderable | null = null;
+let oscUnsubscribe: (() => void) | null = null;
 
-const recentColorOscResponses: string[] = []
-const maxRecentColorOscResponses = 8
+const recentColorOscResponses: string[] = [];
+const maxRecentColorOscResponses = 8;
 
 export function run(renderer: CliRenderer): void {
-  renderer.start()
-  const backgroundColor = RGBA.fromInts(15, 23, 42) // Slate-900 inspired
-  renderer.setBackgroundColor(backgroundColor)
+  renderer.start();
+  const backgroundColor = RGBA.fromInts(15, 23, 42); // Slate-900 inspired
+  renderer.setBackgroundColor(backgroundColor);
 
   const mainContainer = new BoxRenderable(renderer, {
     id: "main-container",
     flexGrow: 1,
     flexDirection: "column",
-  })
-  renderer.root.add(mainContainer)
+  });
+  renderer.root.add(mainContainer);
 
   scrollBox = new ScrollBoxRenderable(renderer, {
     id: "terminal-scroll-box",
@@ -63,38 +63,38 @@ export function run(renderer: CliRenderer): void {
       paddingRight: 2,
       paddingTop: 1,
     },
-  })
-  mainContainer.add(scrollBox)
+  });
+  mainContainer.add(scrollBox);
 
   contentContainer = new BoxRenderable(renderer, {
     id: "terminal-palette-container",
     width: "auto",
     flexDirection: "column",
-  })
-  scrollBox.add(contentContainer)
+  });
+  scrollBox.add(contentContainer);
 
   const subtitleText = new TextRenderable(renderer, {
     id: "terminal_subtitle",
     content:
       "Enter palette size (1-256) and press Enter to fetch | 'r' fresh fetch | 'c' clear cache | Watch OSC 10/11 diagnostics below",
     fg: RGBA.fromInts(148, 163, 184), // Slate-400 - softer contrast
-  })
-  contentContainer.add(subtitleText)
+  });
+  contentContainer.add(subtitleText);
 
   // Add input field for palette size
   const inputContainer = new BoxRenderable(renderer, {
     id: "input-container",
     flexDirection: "row",
     marginTop: 1,
-  })
-  contentContainer.add(inputContainer)
+  });
+  contentContainer.add(inputContainer);
 
   const inputLabel = new TextRenderable(renderer, {
     id: "input-label",
     content: "Palette Size: ",
     fg: RGBA.fromInts(148, 163, 184),
-  })
-  inputContainer.add(inputLabel)
+  });
+  inputContainer.add(inputLabel);
 
   paletteSizeInput = new InputRenderable(renderer, {
     id: "palette-size-input",
@@ -106,144 +106,150 @@ export function run(renderer: CliRenderer): void {
     cursorColor: RGBA.fromInts(139, 92, 246), // Purple cursor
     value: "16",
     maxLength: 3,
-  })
-  inputContainer.add(paletteSizeInput)
+  });
+  inputContainer.add(paletteSizeInput);
 
   statusText = new TextRenderable(renderer, {
     id: "terminal_status",
     content: "Status: Ready to fetch palette",
     marginTop: 1,
     fg: RGBA.fromInts(56, 189, 248), // Sky blue - modern accent
-  })
-  contentContainer.add(statusText)
+  });
+  contentContainer.add(statusText);
 
   diagnosticsText = new TextRenderable(renderer, {
     id: "terminal_diagnostics",
     content: "Diagnostics: fetching the default 16-color palette...",
     marginTop: 1,
     fg: RGBA.fromInts(203, 213, 225),
-  })
-  contentContainer.add(diagnosticsText)
+  });
+  contentContainer.add(diagnosticsText);
 
   rawOscText = new TextRenderable(renderer, {
     id: "terminal_raw_osc",
     content: "Recent raw OSC color replies: none yet",
     marginTop: 1,
     fg: RGBA.fromInts(148, 163, 184),
-  })
-  contentContainer.add(rawOscText)
+  });
+  contentContainer.add(rawOscText);
 
   const instructionsText = new TextRenderable(renderer, {
     id: "terminal_instructions",
     content: "Press Escape to return to menu",
     marginTop: 1,
     fg: RGBA.fromInts(100, 116, 139), // Slate-500 - muted but readable
-  })
-  contentContainer.add(instructionsText)
+  });
+  contentContainer.add(instructionsText);
 
   // Create palette grid - will be populated when palette is fetched
   paletteGrid = new PaletteGridRenderable(renderer, {
     id: "palette-grid",
     colors: [],
     marginTop: 2,
-  })
-  contentContainer.add(paletteGrid)
+  });
+  contentContainer.add(paletteGrid);
 
   // Set up input submit handler
   paletteSizeInput.on(InputRenderableEvents.ENTER, async (value: string) => {
-    const size = parseInt(value, 10)
+    const size = Number.parseInt(value, 10);
     if (isNaN(size) || size < 1 || size > 256) {
       if (statusText) {
-        statusText.content = "Status: Invalid palette size. Please enter a number between 1 and 256."
-        statusText.fg = RGBA.fromInts(239, 68, 68) // Red error
+        statusText.content =
+          "Status: Invalid palette size. Please enter a number between 1 and 256.";
+        statusText.fg = RGBA.fromInts(239, 68, 68); // Red error
       }
-      return
+      return;
     }
-    await fetchAndDisplayPalette(renderer, size)
-  })
+    await fetchAndDisplayPalette(renderer, size);
+  });
 
   // Set up keyboard handler
   keyboardHandler = async (key) => {
     if (key.name === "c") {
-      clearPaletteCache(renderer)
+      clearPaletteCache(renderer);
     }
     if (key.name === "r") {
-      renderer.clearPaletteCache()
-      await fetchAndDisplayPalette(renderer, getRequestedPaletteSize())
+      renderer.clearPaletteCache();
+      await fetchAndDisplayPalette(renderer, getRequestedPaletteSize());
     }
-  }
+  };
 
-  renderer.keyInput.on("keypress", keyboardHandler)
+  renderer.keyInput.on("keypress", keyboardHandler);
 
   oscUnsubscribe = renderer.subscribeOsc((sequence) => {
-    if (!isColorOscResponse(sequence)) return
-    recentColorOscResponses.push(sequence)
+    if (!isColorOscResponse(sequence)) return;
+    recentColorOscResponses.push(sequence);
     if (recentColorOscResponses.length > maxRecentColorOscResponses) {
-      recentColorOscResponses.splice(0, recentColorOscResponses.length - maxRecentColorOscResponses)
+      recentColorOscResponses.splice(
+        0,
+        recentColorOscResponses.length - maxRecentColorOscResponses,
+      );
     }
-    updateRawOscText()
-  })
+    updateRawOscText();
+  });
 
   // Focus the input field on start
-  paletteSizeInput.focus()
+  paletteSizeInput.focus();
 
-  void fetchAndDisplayPalette(renderer, 16)
+  void fetchAndDisplayPalette(renderer, 16);
 }
 
 async function fetchAndDisplayPalette(renderer: CliRenderer, size: number): Promise<void> {
-  if (!statusText || !paletteGrid) return
+  if (!statusText || !paletteGrid) return;
 
   try {
-    const wasAlreadyCached = renderer.paletteDetectionStatus === "cached"
-    statusText.content = `Status: ${wasAlreadyCached ? "Using cached palette" : "Fetching palette..."}`
-    statusText.fg = RGBA.fromInts(250, 204, 21) // Amber - warm loading state
-    recentColorOscResponses.length = 0
-    updateRawOscText()
+    const wasAlreadyCached = renderer.paletteDetectionStatus === "cached";
+    statusText.content = `Status: ${wasAlreadyCached ? "Using cached palette" : "Fetching palette..."}`;
+    statusText.fg = RGBA.fromInts(250, 204, 21); // Amber - warm loading state
+    recentColorOscResponses.length = 0;
+    updateRawOscText();
 
-    const startTime = performance.now()
-    terminalColors = await renderer.getPalette({ size })
-    const elapsed = Math.round(performance.now() - startTime)
+    const startTime = performance.now();
+    terminalColors = await renderer.getPalette({ size });
+    const elapsed = Math.round(performance.now() - startTime);
 
-    statusText.content = `Status: Palette (${size} colors) fetched in ${elapsed}ms (${wasAlreadyCached ? "from cache" : "from terminal"})`
-    statusText.fg = RGBA.fromInts(34, 197, 94) // Emerald - fresh success state
+    statusText.content = `Status: Palette (${size} colors) fetched in ${elapsed}ms (${wasAlreadyCached ? "from cache" : "from terminal"})`;
+    statusText.fg = RGBA.fromInts(34, 197, 94); // Emerald - fresh success state
 
-    drawPalette(renderer, terminalColors, size)
+    drawPalette(renderer, terminalColors, size);
   } catch (error) {
     if (statusText) {
-      statusText.content = `Status: Error - ${error instanceof Error ? error.message : String(error)}`
-      statusText.fg = RGBA.fromInts(239, 68, 68) // Red-500 - modern error state
+      statusText.content = `Status: Error - ${error instanceof Error ? error.message : String(error)}`;
+      statusText.fg = RGBA.fromInts(239, 68, 68); // Red-500 - modern error state
     }
   }
 }
 
 function clearPaletteCache(renderer: CliRenderer): void {
-  if (!statusText) return
+  if (!statusText) return;
 
-  renderer.clearPaletteCache()
-  recentColorOscResponses.length = 0
-  statusText.content = "Status: Cache cleared. Enter a size and press Enter to fetch palette again."
-  statusText.fg = RGBA.fromInts(148, 163, 184) // Slate-400 - neutral info state
+  renderer.clearPaletteCache();
+  recentColorOscResponses.length = 0;
+  statusText.content =
+    "Status: Cache cleared. Enter a size and press Enter to fetch palette again.";
+  statusText.fg = RGBA.fromInts(148, 163, 184); // Slate-400 - neutral info state
   if (diagnosticsText) {
-    diagnosticsText.content = "Diagnostics: cache cleared. Fetch again to inspect OSC replies and background fallback."
+    diagnosticsText.content =
+      "Diagnostics: cache cleared. Fetch again to inspect OSC replies and background fallback.";
   }
-  updateRawOscText()
+  updateRawOscText();
 }
 
 function getRequestedPaletteSize(): number {
-  const size = parseInt(paletteSizeInput?.value ?? "16", 10)
-  if (Number.isNaN(size) || size < 1 || size > 256) return 16
-  return size
+  const size = Number.parseInt(paletteSizeInput?.value ?? "16", 10);
+  if (Number.isNaN(size) || size < 1 || size > 256) return 16;
+  return size;
 }
 
 function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size: number): void {
-  const colors = terminalColors.palette.slice(0, size).map((color) => color ?? "#000000")
+  const colors = terminalColors.palette.slice(0, size).map((color) => color ?? "#000000");
 
-  updateDiagnostics(renderer, terminalColors)
-  updateRawOscText()
+  updateDiagnostics(renderer, terminalColors);
+  updateRawOscText();
 
   // Update the palette grid with new colors
   if (paletteGrid) {
-    paletteGrid.colors = colors
+    paletteGrid.colors = colors;
   }
 
   // Create special colors list with colored boxes
@@ -257,11 +263,11 @@ function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size
     { label: "Tek BG", value: terminalColors.tekBackground },
     { label: "Highlight BG", value: terminalColors.highlightBackground },
     { label: "Highlight FG", value: terminalColors.highlightForeground },
-  ]
+  ];
 
   // Create a framebuffer for special colors with colored boxes
-  const specialBufferWidth = 30
-  const specialBufferHeight = specialColors.length * 2
+  const specialBufferWidth = 30;
+  const specialBufferHeight = specialColors.length * 2;
 
   if (!specialColorsBuffer) {
     specialColorsBuffer = new FrameBufferRenderable(renderer, {
@@ -269,49 +275,63 @@ function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size
       width: specialBufferWidth,
       height: specialBufferHeight,
       marginTop: 2,
-    })
-    contentContainer!.add(specialColorsBuffer)
+    });
+    contentContainer!.add(specialColorsBuffer);
   }
 
-  const specialBuffer = specialColorsBuffer.frameBuffer
-  specialBuffer.clear(RGBA.fromInts(30, 41, 59, 255)) // Slate-800 background
+  const specialBuffer = specialColorsBuffer.frameBuffer;
+  specialBuffer.clear(RGBA.fromInts(30, 41, 59, 255)); // Slate-800 background
 
   specialColors.forEach(({ label, value }, index) => {
-    const y = index * 2
-    const boxWidth = 4
+    const y = index * 2;
+    const boxWidth = 4;
 
     if (value) {
       // Parse hex color
-      const hex = value.replace("#", "")
-      const r = parseInt(hex.substring(0, 2), 16)
-      const g = parseInt(hex.substring(2, 4), 16)
-      const b = parseInt(hex.substring(4, 6), 16)
-      const rgba = RGBA.fromInts(r, g, b)
+      const hex = value.replace("#", "");
+      const r = Number.parseInt(hex.substring(0, 2), 16);
+      const g = Number.parseInt(hex.substring(2, 4), 16);
+      const b = Number.parseInt(hex.substring(4, 6), 16);
+      const rgba = RGBA.fromInts(r, g, b);
 
       // Draw colored box (4x2 block)
       for (let dy = 0; dy < 2; dy++) {
         for (let dx = 0; dx < boxWidth; dx++) {
-          specialBuffer.setCell(dx, y + dy, " ", RGBA.fromInts(255, 255, 255), rgba)
+          specialBuffer.setCell(dx, y + dy, " ", RGBA.fromInts(255, 255, 255), rgba);
         }
       }
 
       // Draw label and hex value
-      const text = `${label}: ${value.toUpperCase()}`
-      const textColor = RGBA.fromInts(148, 163, 184)
-      const bgColor = RGBA.fromInts(30, 41, 59, 255)
+      const text = `${label}: ${value.toUpperCase()}`;
+      const textColor = RGBA.fromInts(148, 163, 184);
+      const bgColor = RGBA.fromInts(30, 41, 59, 255);
       for (let i = 0; i < text.length; i++) {
-        specialBuffer.drawText(text[i], boxWidth + 1 + i, y, textColor, bgColor, TextAttributes.NONE)
+        specialBuffer.drawText(
+          text[i],
+          boxWidth + 1 + i,
+          y,
+          textColor,
+          bgColor,
+          TextAttributes.NONE,
+        );
       }
     } else {
       // Draw N/A
-      const text = `${label}: N/A`
-      const textColor = RGBA.fromInts(100, 116, 139)
-      const bgColor = RGBA.fromInts(30, 41, 59, 255)
+      const text = `${label}: N/A`;
+      const textColor = RGBA.fromInts(100, 116, 139);
+      const bgColor = RGBA.fromInts(30, 41, 59, 255);
       for (let i = 0; i < text.length; i++) {
-        specialBuffer.drawText(text[i], boxWidth + 1 + i, y, textColor, bgColor, TextAttributes.NONE)
+        specialBuffer.drawText(
+          text[i],
+          boxWidth + 1 + i,
+          y,
+          textColor,
+          bgColor,
+          TextAttributes.NONE,
+        );
       }
     }
-  })
+  });
 
   // Update the hex list with new colors
   if (!hexList) {
@@ -319,23 +339,23 @@ function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size
       id: "hex-list",
       colors: colors,
       marginTop: 2,
-    })
-    contentContainer!.add(hexList)
+    });
+    contentContainer!.add(hexList);
   } else {
-    hexList.colors = colors
+    hexList.colors = colors;
   }
 
-  drawAnsiComparison(renderer, terminalColors)
+  drawAnsiComparison(renderer, terminalColors);
 }
 
 function drawAnsiComparison(renderer: CliRenderer, colors: TerminalColors): void {
-  const width = 74
-  const height = 5
-  const labelWidth = 19
-  const swatchWidth = 3
-  const textColor = RGBA.fromInts(203, 213, 225)
-  const mutedTextColor = RGBA.fromInts(148, 163, 184)
-  const bgColor = RGBA.fromInts(30, 41, 59)
+  const width = 74;
+  const height = 5;
+  const labelWidth = 19;
+  const swatchWidth = 3;
+  const textColor = RGBA.fromInts(203, 213, 225);
+  const mutedTextColor = RGBA.fromInts(148, 163, 184);
+  const bgColor = RGBA.fromInts(30, 41, 59);
 
   if (!ansiComparisonBuffer) {
     ansiComparisonBuffer = new FrameBufferRenderable(renderer, {
@@ -343,26 +363,26 @@ function drawAnsiComparison(renderer: CliRenderer, colors: TerminalColors): void
       width,
       height,
       marginTop: 2,
-    })
-    contentContainer!.add(ansiComparisonBuffer)
+    });
+    contentContainer!.add(ansiComparisonBuffer);
   }
 
-  const buffer = ansiComparisonBuffer.frameBuffer
-  buffer.clear(bgColor)
+  const buffer = ansiComparisonBuffer.frameBuffer;
+  buffer.clear(bgColor);
 
-  buffer.drawText("ANSI Slot Comparison", 0, 0, textColor, bgColor, TextAttributes.BOLD)
-  buffer.drawText("Indexed 0-15:", 0, 1, mutedTextColor, bgColor, TextAttributes.NONE)
-  buffer.drawText("RGB snapshots:", 0, 3, mutedTextColor, bgColor, TextAttributes.NONE)
+  buffer.drawText("ANSI Slot Comparison", 0, 0, textColor, bgColor, TextAttributes.BOLD);
+  buffer.drawText("Indexed 0-15:", 0, 1, mutedTextColor, bgColor, TextAttributes.NONE);
+  buffer.drawText("RGB snapshots:", 0, 3, mutedTextColor, bgColor, TextAttributes.NONE);
 
   for (let index = 0; index < 16; index++) {
-    const x = labelWidth + index * swatchWidth
-    const detected = colors.palette[index]
-    const indexedColor = RGBA.fromIndex(index, detected ?? undefined)
-    const rgbColor = detected ? RGBA.fromHex(detected) : RGBA.fromInts(0, 0, 0)
+    const x = labelWidth + index * swatchWidth;
+    const detected = colors.palette[index];
+    const indexedColor = RGBA.fromIndex(index, detected ?? undefined);
+    const rgbColor = detected ? RGBA.fromHex(detected) : RGBA.fromInts(0, 0, 0);
 
     for (let dx = 0; dx < swatchWidth; dx++) {
-      buffer.setCell(x + dx, 1, " ", textColor, indexedColor)
-      buffer.setCell(x + dx, 3, " ", textColor, rgbColor)
+      buffer.setCell(x + dx, 1, " ", textColor, indexedColor);
+      buffer.setCell(x + dx, 3, " ", textColor, rgbColor);
     }
   }
 
@@ -373,53 +393,54 @@ function drawAnsiComparison(renderer: CliRenderer, colors: TerminalColors): void
     mutedTextColor,
     bgColor,
     TextAttributes.NONE,
-  )
+  );
 }
 
 function isColorOscResponse(sequence: string): boolean {
-  return /^\x1b\](?:4;0|10|11);/.test(sequence)
+  return /^\x1b\](?:4;0|10|11);/.test(sequence);
 }
 
 function formatHex(value: string | null): string {
-  return value?.toUpperCase() ?? "N/A"
+  return value?.toUpperCase() ?? "N/A";
 }
 
 function inferModeFromHex(value: string | null): "dark" | "light" | "unknown" {
-  if (!value) return "unknown"
-  const [r, g, b] = RGBA.fromHex(value).toInts()
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  return brightness > 128 ? "light" : "dark"
+  if (!value) return "unknown";
+  const [r, g, b] = RGBA.fromHex(value).toInts();
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128 ? "light" : "dark";
 }
 
 function visibleOsc(sequence: string): string {
   return sequence
     .replace(/\x1b\\/g, " ST")
     .replace(/\x1b/g, "ESC")
-    .replace(/\x07/g, " BEL")
+    .replace(/\x07/g, " BEL");
 }
 
 function updateDiagnostics(renderer: CliRenderer, colors: TerminalColors): void {
-  if (!diagnosticsText) return
+  if (!diagnosticsText) return;
 
-  const palette0 = colors.palette[0] ?? null
-  const defaultBackground = colors.defaultBackground
-  const effectiveBackground = defaultBackground ?? palette0
-  const rendererMode = renderer.themeMode ?? "unknown"
-  const inferredMode = inferModeFromHex(effectiveBackground)
-  const modeMismatch = rendererMode !== "unknown" && inferredMode !== "unknown" && rendererMode !== inferredMode
-  const rawRgbaSeen = recentColorOscResponses.some((sequence) => sequence.includes("rgba:"))
+  const palette0 = colors.palette[0] ?? null;
+  const defaultBackground = colors.defaultBackground;
+  const effectiveBackground = defaultBackground ?? palette0;
+  const rendererMode = renderer.themeMode ?? "unknown";
+  const inferredMode = inferModeFromHex(effectiveBackground);
+  const modeMismatch =
+    rendererMode !== "unknown" && inferredMode !== "unknown" && rendererMode !== inferredMode;
+  const rawRgbaSeen = recentColorOscResponses.some((sequence) => sequence.includes("rgba:"));
   const backgroundSource = defaultBackground
     ? "OSC 11 defaultBackground"
     : palette0
       ? "palette[0] fallback because OSC 11 was missing or unparsed"
-      : "none"
+      : "none";
   const verdict = defaultBackground
     ? modeMismatch
       ? "ERR: renderer.themeMode disagrees with the detected background; derived system colors will be wrong."
       : "OK : defaultBackground parsed; system theme can use the terminal background."
     : rawRgbaSeen
       ? "ERR : raw rgba response seen, but defaultBackground is N/A. The parser dropped OSC 11."
-      : "WARN: defaultBackground is N/A. System themes will fall back to palette[0]."
+      : "WARN: defaultBackground is N/A. System themes will fall back to palette[0].";
 
   diagnosticsText.content = [
     "Diagnostics:",
@@ -431,61 +452,61 @@ function updateDiagnostics(renderer: CliRenderer, colors: TerminalColors): void 
     `  system-theme background source: ${backgroundSource}`,
     `  effective background: ${formatHex(effectiveBackground)}`,
     `  ${verdict}`,
-  ].join("\n")
+  ].join("\n");
 }
 
 function updateRawOscText(): void {
-  if (!rawOscText) return
+  if (!rawOscText) return;
 
   if (recentColorOscResponses.length === 0) {
-    rawOscText.content = "Recent raw OSC color replies: none yet"
-    return
+    rawOscText.content = "Recent raw OSC color replies: none yet";
+    return;
   }
 
   rawOscText.content = [
     "Recent raw OSC color replies:",
     ...recentColorOscResponses.map((sequence) => `  ${visibleOsc(sequence)}`),
-  ].join("\n")
+  ].join("\n");
 }
 
 export function destroy(renderer: CliRenderer): void {
   if (oscUnsubscribe) {
-    oscUnsubscribe()
-    oscUnsubscribe = null
+    oscUnsubscribe();
+    oscUnsubscribe = null;
   }
 
   if (keyboardHandler) {
-    renderer.keyInput.off("keypress", keyboardHandler)
-    keyboardHandler = null
+    renderer.keyInput.off("keypress", keyboardHandler);
+    keyboardHandler = null;
   }
 
   if (paletteSizeInput) {
-    paletteSizeInput.destroy()
-    paletteSizeInput = null
+    paletteSizeInput.destroy();
+    paletteSizeInput = null;
   }
 
   if (scrollBox) {
-    const mainContainer = renderer.root.getRenderable("main-container")
-    if (mainContainer) renderer.root.remove(mainContainer)
-    scrollBox = null
+    const mainContainer = renderer.root.getRenderable("main-container");
+    if (mainContainer) renderer.root.remove(mainContainer);
+    scrollBox = null;
   }
 
-  contentContainer = null
-  paletteGrid = null
-  hexList = null
-  specialColorsBuffer = null
-  ansiComparisonBuffer = null
-  diagnosticsText = null
-  rawOscText = null
-  statusText = null
-  terminalColors = null
-  recentColorOscResponses.length = 0
+  contentContainer = null;
+  paletteGrid = null;
+  hexList = null;
+  specialColorsBuffer = null;
+  ansiComparisonBuffer = null;
+  diagnosticsText = null;
+  rawOscText = null;
+  statusText = null;
+  terminalColors = null;
+  recentColorOscResponses.length = 0;
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-  })
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  });
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

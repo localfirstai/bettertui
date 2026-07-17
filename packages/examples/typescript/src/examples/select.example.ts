@@ -1,25 +1,25 @@
 import {
-  createCliRenderer,
-  SelectRenderable,
-  SelectRenderableEvents,
+  BoxRenderable,
+  type CliRenderer,
   RenderableEvents,
   type SelectOption,
-  type CliRenderer,
-  t,
+  SelectRenderable,
+  SelectRenderableEvents,
   bold,
+  createCliRenderer,
   fg,
-  BoxRenderable,
-} from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
-import { TextRenderable } from "@bettertui/core"
+  t,
+} from "@bettertui/core";
+import { TextRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let selectElement: SelectRenderable | null = null
-let renderer: CliRenderer | null = null
-let keyboardHandler: ((key: any) => void) | null = null
-let keyLegendDisplay: TextRenderable | null = null
-let statusDisplay: TextRenderable | null = null
-let lastActionText: string = "Welcome to SelectRenderable demo! Use the controls to test features."
-let lastActionColor: string = "#FFCC00"
+let selectElement: SelectRenderable | null = null;
+let renderer: CliRenderer | null = null;
+let keyboardHandler: ((key: any) => void) | null = null;
+let keyLegendDisplay: TextRenderable | null = null;
+let statusDisplay: TextRenderable | null = null;
+let lastActionText = "Welcome to SelectRenderable demo! Use the controls to test features.";
+let lastActionColor = "#FFCC00";
 
 const selectOptions: SelectOption[] = [
   { name: "Home", description: "Navigate to the home page", value: "home" },
@@ -37,19 +37,23 @@ const selectOptions: SelectOption[] = [
   { name: "Billing", description: "Manage your subscription and billing", value: "billing" },
   { name: "Integrations", description: "Connect with third-party services", value: "integrations" },
   { name: "Security", description: "Configure security settings", value: "security" },
-  { name: "Notifications", description: "Manage your notification preferences", value: "notifications" },
+  {
+    name: "Notifications",
+    description: "Manage your notification preferences",
+    value: "notifications",
+  },
   { name: "Backup", description: "Backup and restore your data", value: "backup" },
   { name: "Import/Export", description: "Import or export your data", value: "import-export" },
   { name: "Advanced Settings", description: "Configure advanced options", value: "advanced" },
   { name: "About", description: "Learn more about this application", value: "about" },
-]
+];
 
 function updateDisplays() {
-  if (!selectElement) return
+  if (!selectElement) return;
 
-  const scrollIndicator = selectElement.showScrollIndicator ? "on" : "off"
-  const description = selectElement.showDescription ? "on" : "off"
-  const wrap = selectElement.wrapSelection ? "on" : "off"
+  const scrollIndicator = selectElement.showScrollIndicator ? "on" : "off";
+  const description = selectElement.showDescription ? "on" : "off";
+  const wrap = selectElement.wrapSelection ? "on" : "off";
 
   const keyLegendText = t`${bold(fg("#FFFFFF")("Key Controls:"))}
 ↑/↓ or j/k: Navigate items
@@ -58,19 +62,21 @@ Enter: Select item
 F: Toggle focus
 D: Toggle descriptions
 S: Toggle scroll indicator
-W: Toggle wrap selection`
+W: Toggle wrap selection`;
 
   if (keyLegendDisplay) {
-    keyLegendDisplay.content = keyLegendText
+    keyLegendDisplay.content = keyLegendText;
   }
 
-  const currentSelection = selectElement.getSelectedOption()
+  const currentSelection = selectElement.getSelectedOption();
   const selectionText = currentSelection
     ? `Selection: ${currentSelection.name} (${currentSelection.value}) - Index: ${selectElement.getSelectedIndex()}`
-    : "No selection"
+    : "No selection";
 
-  const focusText = selectElement.focused ? "Select element is FOCUSED" : "Select element is BLURRED"
-  const focusColor = selectElement.focused ? "#00FF00" : "#FF0000"
+  const focusText = selectElement.focused
+    ? "Select element is FOCUSED"
+    : "Select element is BLURRED";
+  const focusColor = selectElement.focused ? "#00FF00" : "#FF0000";
 
   const statusText = t`${fg("#00FF00")(selectionText)}
 
@@ -78,22 +84,22 @@ ${fg(focusColor)(focusText)}
 
 ${fg("#CCCCCC")(`Scroll indicator: ${scrollIndicator} | Description: ${description} | Wrap: ${wrap}`)}
 
-${fg(lastActionColor)(lastActionText)}`
+${fg(lastActionColor)(lastActionText)}`;
 
   if (statusDisplay) {
-    statusDisplay.content = statusText
+    statusDisplay.content = statusText;
   }
 }
 
 export function run(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance
-  renderer.setBackgroundColor("#001122")
+  renderer = rendererInstance;
+  renderer.setBackgroundColor("#001122");
 
   const parentContainer = new BoxRenderable(renderer, {
     id: "parent-container",
     zIndex: 10,
-  })
-  renderer.root.add(parentContainer)
+  });
+  renderer.root.add(parentContainer);
 
   selectElement = new SelectRenderable(renderer, {
     id: "demo-select",
@@ -116,9 +122,9 @@ export function run(rendererInstance: CliRenderer): void {
     showScrollIndicator: true,
     wrapSelection: false,
     fastScrollStep: 5,
-  })
+  });
 
-  renderer.root.add(selectElement)
+  renderer.root.add(selectElement);
 
   keyLegendDisplay = new TextRenderable(renderer, {
     id: "key-legend",
@@ -130,8 +136,8 @@ export function run(rendererInstance: CliRenderer): void {
     top: 3,
     zIndex: 50,
     fg: "#AAAAAA",
-  })
-  parentContainer.add(keyLegendDisplay)
+  });
+  parentContainer.add(keyLegendDisplay);
 
   statusDisplay = new TextRenderable(renderer, {
     id: "status-display",
@@ -142,97 +148,100 @@ export function run(rendererInstance: CliRenderer): void {
     left: 5,
     top: 24,
     zIndex: 50,
-  })
-  parentContainer.add(statusDisplay)
+  });
+  parentContainer.add(statusDisplay);
 
-  selectElement.on(SelectRenderableEvents.SELECTION_CHANGED, (index: number, option: SelectOption) => {
-    lastActionText = `Navigation: Moved to "${option.name}"`
-    lastActionColor = "#FFCC00"
-    updateDisplays()
-  })
+  selectElement.on(
+    SelectRenderableEvents.SELECTION_CHANGED,
+    (index: number, option: SelectOption) => {
+      lastActionText = `Navigation: Moved to "${option.name}"`;
+      lastActionColor = "#FFCC00";
+      updateDisplays();
+    },
+  );
 
   selectElement.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
-    lastActionText = `*** ACTIVATED: ${option.name} (${option.value}) ***`
-    lastActionColor = "#FF00FF"
-    updateDisplays()
+    lastActionText = `*** ACTIVATED: ${option.name} (${option.value}) ***`;
+    lastActionColor = "#FF00FF";
+    updateDisplays();
     setTimeout(() => {
-      lastActionColor = "#FFCC00"
-      updateDisplays()
-    }, 1000)
-  })
+      lastActionColor = "#FFCC00";
+      updateDisplays();
+    }, 1000);
+  });
 
   selectElement.on(RenderableEvents.FOCUSED, () => {
-    updateDisplays()
-  })
+    updateDisplays();
+  });
 
   selectElement.on(RenderableEvents.BLURRED, () => {
-    updateDisplays()
-  })
+    updateDisplays();
+  });
 
-  updateDisplays()
+  updateDisplays();
 
   keyboardHandler = (key) => {
     if (key.name === "f") {
       if (selectElement?.focused) {
-        selectElement.blur()
-        lastActionText = "Focus removed from select element"
+        selectElement.blur();
+        lastActionText = "Focus removed from select element";
       } else {
-        selectElement?.focus()
-        lastActionText = "Select element focused"
+        selectElement?.focus();
+        lastActionText = "Select element focused";
       }
-      lastActionColor = "#FFCC00"
-      updateDisplays()
+      lastActionColor = "#FFCC00";
+      updateDisplays();
     } else if (key.name === "d") {
-      const newState = !selectElement?.showDescription
-      selectElement!.showDescription = newState
-      lastActionText = `Descriptions ${newState ? "enabled" : "disabled"}`
-      lastActionColor = "#FFCC00"
-      updateDisplays()
+      const newState = !selectElement?.showDescription;
+      selectElement!.showDescription = newState;
+      lastActionText = `Descriptions ${newState ? "enabled" : "disabled"}`;
+      lastActionColor = "#FFCC00";
+      updateDisplays();
     } else if (key.name === "s") {
-      const newState = !selectElement?.showScrollIndicator
-      selectElement!.showScrollIndicator = newState
-      lastActionText = `Scroll indicator ${newState ? "enabled" : "disabled"}`
-      lastActionColor = "#FFCC00"
-      updateDisplays()
+      const newState = !selectElement?.showScrollIndicator;
+      selectElement!.showScrollIndicator = newState;
+      lastActionText = `Scroll indicator ${newState ? "enabled" : "disabled"}`;
+      lastActionColor = "#FFCC00";
+      updateDisplays();
     } else if (key.name === "w") {
-      const newState = !selectElement?.wrapSelection
-      selectElement!.wrapSelection = newState
-      lastActionText = `Wrap selection ${newState ? "enabled" : "disabled"}`
-      lastActionColor = "#FFCC00"
-      updateDisplays()
+      const newState = !selectElement?.wrapSelection;
+      selectElement!.wrapSelection = newState;
+      lastActionText = `Wrap selection ${newState ? "enabled" : "disabled"}`;
+      lastActionColor = "#FFCC00";
+      updateDisplays();
     }
-  }
+  };
 
-  rendererInstance.keyInput.on("keypress", keyboardHandler)
-  selectElement.focus()
+  rendererInstance.keyInput.on("keypress", keyboardHandler);
+  selectElement.focus();
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
   if (keyboardHandler) {
-    rendererInstance.keyInput.off("keypress", keyboardHandler)
-    keyboardHandler = null
+    rendererInstance.keyInput.off("keypress", keyboardHandler);
+    keyboardHandler = null;
   }
 
   if (selectElement) {
-    rendererInstance.root.remove(selectElement)
-    selectElement.destroy()
-    selectElement = null
+    rendererInstance.root.remove(selectElement);
+    selectElement.destroy();
+    selectElement = null;
   }
 
-  const parentContainer = rendererInstance.root.getRenderable("parent-container")
-  if (parentContainer) rendererInstance.root.remove(parentContainer)
+  const parentContainer = rendererInstance.root.getRenderable("parent-container");
+  if (parentContainer) rendererInstance.root.remove(parentContainer);
 
-  keyLegendDisplay = null
-  statusDisplay = null
-  renderer = null
+  keyLegendDisplay = null;
+  statusDisplay = null;
+  renderer = null;
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
-  renderer.start()
+  run(renderer);
+  setupCommonDemoKeys(renderer);
+  renderer.start();
 }

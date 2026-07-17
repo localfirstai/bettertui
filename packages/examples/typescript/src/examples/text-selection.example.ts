@@ -1,34 +1,34 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  TextRenderable,
   BoxRenderable,
-  t,
-  green,
+  type CliRenderer,
+  TextRenderable,
   bold,
-  italic,
-  yellow,
+  createCliRenderer,
   cyan,
+  green,
+  italic,
   magenta,
-} from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  t,
+  yellow,
+} from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let mainContainer: BoxRenderable | null = null
-let floatingBox: BoxRenderable | null = null
-let leftGroup: BoxRenderable | null = null
-let rightGroup: BoxRenderable | null = null
-let statusBox: BoxRenderable | null = null
-let statusText: TextRenderable | null = null
-let selectionStartText: TextRenderable | null = null
-let selectionMiddleText: TextRenderable | null = null
-let selectionEndText: TextRenderable | null = null
-let debugText: TextRenderable | null = null
-let allTextRenderables: (TextRenderable | TextRenderable)[] = []
+let mainContainer: BoxRenderable | null = null;
+let floatingBox: BoxRenderable | null = null;
+let leftGroup: BoxRenderable | null = null;
+let rightGroup: BoxRenderable | null = null;
+let statusBox: BoxRenderable | null = null;
+let statusText: TextRenderable | null = null;
+let selectionStartText: TextRenderable | null = null;
+let selectionMiddleText: TextRenderable | null = null;
+let selectionEndText: TextRenderable | null = null;
+let debugText: TextRenderable | null = null;
+let allTextRenderables: (TextRenderable | TextRenderable)[] = [];
 
 export function run(renderer: CliRenderer): void {
-  renderer.setBackgroundColor("#0d1117")
+  renderer.setBackgroundColor("#0d1117");
 
   mainContainer = new BoxRenderable(renderer, {
     id: "mainContainer",
@@ -43,8 +43,8 @@ export function run(renderer: CliRenderer): void {
     title: "Text Selection Demo",
     titleAlignment: "center",
     border: true,
-  })
-  renderer.root.add(mainContainer)
+  });
+  renderer.root.add(mainContainer);
 
   leftGroup = new BoxRenderable(renderer, {
     id: "leftGroup",
@@ -52,8 +52,8 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: 2,
     zIndex: 10,
-  })
-  mainContainer.add(leftGroup)
+  });
+  mainContainer.add(leftGroup);
 
   const box1 = new BoxRenderable(renderer, {
     id: "box1",
@@ -66,44 +66,44 @@ export function run(renderer: CliRenderer): void {
     flexDirection: "column",
     padding: 1,
     border: true,
-  })
-  leftGroup.add(box1)
+  });
+  leftGroup.add(box1);
 
   const text1 = new TextRenderable(renderer, {
     id: "text1",
     content: "This is a paragraph in the first box.",
     zIndex: 21,
     fg: "#f0f6fc",
-  })
-  box1.add(text1)
-  allTextRenderables.push(text1)
+  });
+  box1.add(text1);
+  allTextRenderables.push(text1);
 
   const text2 = new TextRenderable(renderer, {
     id: "text2",
     content: "It contains multiple lines of text",
     zIndex: 21,
     fg: "#f0f6fc",
-  })
-  box1.add(text2)
-  allTextRenderables.push(text2)
+  });
+  box1.add(text2);
+  allTextRenderables.push(text2);
 
   const text3 = new TextRenderable(renderer, {
     id: "text3",
     content: "that can be selected independently.",
     zIndex: 21,
     fg: "#f0f6fc",
-  })
-  box1.add(text3)
-  allTextRenderables.push(text3)
+  });
+  box1.add(text3);
+  allTextRenderables.push(text3);
 
   const text4 = new TextRenderable(renderer, {
     id: "text4",
     content: "世界, 你好世界, 中文, 한글",
     zIndex: 21,
     fg: "#f0f6fc",
-  })
-  box1.add(text4)
-  allTextRenderables.push(text4)
+  });
+  box1.add(text4);
+  allTextRenderables.push(text4);
 
   const nestedBox = new BoxRenderable(renderer, {
     id: "nestedBox",
@@ -116,8 +116,8 @@ export function run(renderer: CliRenderer): void {
     borderColor: "#a371f7",
     borderStyle: "double",
     border: true,
-  })
-  leftGroup.add(nestedBox)
+  });
+  leftGroup.add(nestedBox);
 
   const nestedText = new TextRenderable(renderer, {
     id: "nestedText",
@@ -127,9 +127,9 @@ export function run(renderer: CliRenderer): void {
     zIndex: 26,
     selectionBg: "#4a5568",
     selectionFg: "#ffffff",
-  })
-  nestedBox.add(nestedText)
-  allTextRenderables.push(nestedText)
+  });
+  nestedBox.add(nestedText);
+  allTextRenderables.push(nestedText);
 
   rightGroup = new BoxRenderable(renderer, {
     id: "rightGroup",
@@ -137,8 +137,8 @@ export function run(renderer: CliRenderer): void {
     left: 48,
     top: 2,
     zIndex: 10,
-  })
-  mainContainer.add(rightGroup)
+  });
+  mainContainer.add(rightGroup);
 
   const box2 = new BoxRenderable(renderer, {
     id: "box2",
@@ -154,44 +154,44 @@ export function run(renderer: CliRenderer): void {
     flexDirection: "column",
     padding: 1,
     border: true,
-  })
-  rightGroup.add(box2)
+  });
+  rightGroup.add(box2);
 
   const codeText1 = new TextRenderable(renderer, {
     id: "codeText1",
     content: t`${magenta("function")} ${cyan("handleSelection")}() {`,
     zIndex: 21,
     selectionBg: "#4a5568",
-  })
-  box2.add(codeText1)
-  allTextRenderables.push(codeText1)
+  });
+  box2.add(codeText1);
+  allTextRenderables.push(codeText1);
 
   const codeText2 = new TextRenderable(renderer, {
     id: "codeText2",
     content: t`  ${magenta("const")} selected = ${cyan("getSelectedText")}()`,
     zIndex: 21,
     selectionBg: "#4a5568",
-  })
-  box2.add(codeText2)
-  allTextRenderables.push(codeText2)
+  });
+  box2.add(codeText2);
+  allTextRenderables.push(codeText2);
 
   const codeText3 = new TextRenderable(renderer, {
     id: "codeText3",
     content: t`  ${yellow("console")}.${green("log")}(selected)`,
     zIndex: 21,
     selectionBg: "#4a5568",
-  })
-  box2.add(codeText3)
-  allTextRenderables.push(codeText3)
+  });
+  box2.add(codeText3);
+  allTextRenderables.push(codeText3);
 
   const codeText4 = new TextRenderable(renderer, {
     id: "codeText4",
     content: "}",
     zIndex: 21,
     fg: "#e6edf3",
-  })
-  box2.add(codeText4)
-  allTextRenderables.push(codeText4)
+  });
+  box2.add(codeText4);
+  allTextRenderables.push(codeText4);
 
   floatingBox = new BoxRenderable(renderer, {
     id: "floatingBox",
@@ -206,8 +206,8 @@ export function run(renderer: CliRenderer): void {
     title: "README",
     borderStyle: "single",
     border: true,
-  })
-  renderer.root.add(floatingBox)
+  });
+  renderer.root.add(floatingBox);
 
   const multilineText = new TextRenderable(renderer, {
     id: "multilineText",
@@ -218,9 +218,9 @@ ${green("✓")} Styled text support`,
     zIndex: 31,
     selectionBg: "#4a5568",
     selectionFg: "#ffffff",
-  })
-  floatingBox.add(multilineText)
-  allTextRenderables.push(multilineText)
+  });
+  floatingBox.add(multilineText);
+  allTextRenderables.push(multilineText);
 
   const instructions = new TextRenderable(renderer, {
     id: "instructions",
@@ -229,9 +229,9 @@ ${green("✓")} Styled text support`,
     top: 17,
     zIndex: 2,
     fg: "#f0f6fc",
-  })
-  mainContainer.add(instructions)
-  allTextRenderables.push(instructions)
+  });
+  mainContainer.add(instructions);
+  allTextRenderables.push(instructions);
 
   statusBox = new BoxRenderable(renderer, {
     id: "statusBox",
@@ -247,122 +247,135 @@ ${green("✓")} Styled text support`,
     titleAlignment: "left",
     padding: 1,
     border: true,
-  })
-  renderer.root.add(statusBox)
+  });
+  renderer.root.add(statusBox);
 
   statusText = new TextRenderable(renderer, {
     id: "statusText",
     content: "No selection - try selecting across different nested elements",
     zIndex: 2,
     fg: "#f0f6fc",
-  })
-  statusBox.add(statusText)
+  });
+  statusBox.add(statusText);
 
   selectionStartText = new TextRenderable(renderer, {
     id: "selectionStartText",
     content: "",
     zIndex: 2,
     fg: "#7dd3fc",
-  })
-  statusBox.add(selectionStartText)
+  });
+  statusBox.add(selectionStartText);
 
   selectionMiddleText = new TextRenderable(renderer, {
     id: "selectionMiddleText",
     content: "",
     zIndex: 2,
     fg: "#94a3b8",
-  })
-  statusBox.add(selectionMiddleText)
+  });
+  statusBox.add(selectionMiddleText);
 
   selectionEndText = new TextRenderable(renderer, {
     id: "selectionEndText",
     content: "",
     zIndex: 2,
     fg: "#7dd3fc",
-  })
-  statusBox.add(selectionEndText)
+  });
+  statusBox.add(selectionEndText);
 
   debugText = new TextRenderable(renderer, {
     id: "debugText",
     content: "",
     zIndex: 2,
     fg: "#e6edf3",
-  })
-  statusBox.add(debugText)
+  });
+  statusBox.add(debugText);
 
   // Listen for selection events
   renderer.on("selection", (selection) => {
-    if (selection && statusText && debugText && selectionStartText && selectionMiddleText && selectionEndText) {
-      const selectedText = selection.getSelectedText()
+    if (
+      selection &&
+      statusText &&
+      debugText &&
+      selectionStartText &&
+      selectionMiddleText &&
+      selectionEndText
+    ) {
+      const selectedText = selection.getSelectedText();
 
       // Count how many renderables have selection
-      const selectedCount = allTextRenderables.filter((r) => r.hasSelection()).length
-      const container = renderer.getSelectionContainer()
-      const containerInfo = container ? `Container: ${container.id}` : "Container: none"
-      debugText.content = `Selected renderables: ${selectedCount}/${allTextRenderables.length} | ${containerInfo}`
+      const selectedCount = allTextRenderables.filter((r) => r.hasSelection()).length;
+      const container = renderer.getSelectionContainer();
+      const containerInfo = container ? `Container: ${container.id}` : "Container: none";
+      debugText.content = `Selected renderables: ${selectedCount}/${allTextRenderables.length} | ${containerInfo}`;
 
       if (selectedText) {
-        const lines = selectedText.split("\n")
-        const totalLength = selectedText.length
+        const lines = selectedText.split("\n");
+        const totalLength = selectedText.length;
 
         if (lines.length > 1) {
-          statusText.content = `Selected ${lines.length} lines (${totalLength} chars):`
-          selectionStartText.content = lines[0]
-          selectionMiddleText.content = "..."
-          selectionEndText.content = lines[lines.length - 1]
+          statusText.content = `Selected ${lines.length} lines (${totalLength} chars):`;
+          selectionStartText.content = lines[0];
+          selectionMiddleText.content = "...";
+          selectionEndText.content = lines[lines.length - 1];
         } else if (selectedText.length > 60) {
-          statusText.content = `Selected ${totalLength} chars:`
-          selectionStartText.content = selectedText.substring(0, 30)
-          selectionMiddleText.content = "..."
-          selectionEndText.content = selectedText.substring(selectedText.length - 30)
+          statusText.content = `Selected ${totalLength} chars:`;
+          selectionStartText.content = selectedText.substring(0, 30);
+          selectionMiddleText.content = "...";
+          selectionEndText.content = selectedText.substring(selectedText.length - 30);
         } else {
-          statusText.content = `Selected ${totalLength} chars:`
-          selectionStartText.content = `"${selectedText}"`
-          selectionMiddleText.content = ""
-          selectionEndText.content = ""
+          statusText.content = `Selected ${totalLength} chars:`;
+          selectionStartText.content = `"${selectedText}"`;
+          selectionMiddleText.content = "";
+          selectionEndText.content = "";
         }
       } else {
-        statusText.content = "Empty selection"
-        selectionStartText.content = ""
-        selectionMiddleText.content = ""
-        selectionEndText.content = ""
+        statusText.content = "Empty selection";
+        selectionStartText.content = "";
+        selectionMiddleText.content = "";
+        selectionEndText.content = "";
       }
     }
-  })
+  });
 
   renderer.keyInput.on("keypress", (event) => {
-    const key = event.sequence
+    const key = event.sequence;
     if (key === "c" || key === "C") {
-      renderer.clearSelection()
-      if (statusText && debugText && selectionStartText && selectionMiddleText && selectionEndText) {
-        statusText.content = "Selection cleared"
-        selectionStartText.content = ""
-        selectionMiddleText.content = ""
-        selectionEndText.content = ""
-        debugText.content = ""
+      renderer.clearSelection();
+      if (
+        statusText &&
+        debugText &&
+        selectionStartText &&
+        selectionMiddleText &&
+        selectionEndText
+      ) {
+        statusText.content = "Selection cleared";
+        selectionStartText.content = "";
+        selectionMiddleText.content = "";
+        selectionEndText.content = "";
+        debugText.content = "";
       }
     }
-  })
+  });
 }
 
 export function destroy(renderer: CliRenderer): void {
-  allTextRenderables = []
+  allTextRenderables = [];
 
-  mainContainer?.destroyRecursively()
-  statusBox?.destroyRecursively()
-  floatingBox?.destroyRecursively()
+  mainContainer?.destroyRecursively();
+  statusBox?.destroyRecursively();
+  floatingBox?.destroyRecursively();
 
-  mainContainer = null
-  leftGroup = null
-  rightGroup = null
-  statusBox = null
-  statusText = null
-  selectionStartText = null
-  selectionMiddleText = null
-  selectionEndText = null
-  debugText = null
+  mainContainer = null;
+  leftGroup = null;
+  rightGroup = null;
+  statusBox = null;
+  statusText = null;
+  selectionStartText = null;
+  selectionMiddleText = null;
+  selectionEndText = null;
+  debugText = null;
 
-  renderer.clearSelection()
+  renderer.clearSelection();
 }
 
 if (import.meta.main) {
@@ -370,8 +383,8 @@ if (import.meta.main) {
     targetFps: 30,
     enableMouseMovement: true,
     exitOnCtrlC: true,
-  })
-  run(renderer)
-  setupCommonDemoKeys(renderer)
-  renderer.start()
+  });
+  run(renderer);
+  setupCommonDemoKeys(renderer);
+  renderer.start();
 }

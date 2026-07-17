@@ -1,15 +1,15 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  TextRenderable,
   BoxRenderable,
+  type CliRenderer,
   type KeyEvent,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { parseColor } from "@bettertui/core";
-import { hastToStyledText, type HASTElement } from "@bettertui/core";
+import { type HASTElement, hastToStyledText } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
 import exampleHAST from "../assets/hast-example.json" with { type: "json" };
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const typedExampleHAST = exampleHAST as HASTElement;
 

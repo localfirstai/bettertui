@@ -1,15 +1,15 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  TextareaRenderable,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
+  type KeyEvent,
   LineNumberRenderable,
-  KeyEvent,
-  t,
+  TextRenderable,
+  TextareaRenderable,
   bold,
+  createCliRenderer,
   cyan,
   fg,
+  t,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -81,8 +81,8 @@ let parentContainer: BoxRenderable | null = null;
 let editor: TextareaRenderable | null = null;
 let editorWithLines: LineNumberRenderable | null = null;
 let statusText: TextRenderable | null = null;
-let highlightsEnabled: boolean = false;
-let diagnosticsEnabled: boolean = false;
+let highlightsEnabled = false;
+let diagnosticsEnabled = false;
 
 export async function run(rendererInstance: CliRenderer): Promise<void> {
   renderer = rendererInstance;
@@ -170,12 +170,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
       key.preventDefault();
       if (editor && !editor.isDestroyed) {
         const currentMode = editor.wrapMode;
-        const nextMode =
-          currentMode === "word"
-            ? "char"
-            : currentMode === "char"
-              ? "none"
-              : "word";
+        const nextMode = currentMode === "word" ? "char" : currentMode === "char" ? "none" : "word";
         editor.wrapMode = nextMode;
       }
     }

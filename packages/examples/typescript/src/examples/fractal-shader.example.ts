@@ -2,39 +2,39 @@
 
 import {
   BoxRenderable,
-  CliRenderer,
-  createCliRenderer,
+  type CliRenderer,
+  type KeyEvent,
   RGBA,
   TextRenderable,
-  type KeyEvent,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { ThreeCliRenderer } from "@bettertui/core";
 import {
-  Scene as ThreeScene,
-  Mesh as ThreeMesh,
   PerspectiveCamera,
   PlaneGeometry,
+  Mesh as ThreeMesh,
+  Scene as ThreeScene,
   Vector2,
 } from "three";
-import { MeshBasicNodeMaterial } from "three/webgpu";
 import {
+  Fn,
+  Loop,
+  atan,
+  ceil,
+  cos,
+  float,
+  int,
+  length,
+  normalize,
+  screenCoordinate,
+  sin,
   uniform,
   vec2,
   vec3,
   vec4,
-  float,
-  screenCoordinate,
-  sin,
-  cos,
-  atan,
-  length,
-  normalize,
-  ceil,
-  Loop,
-  Fn,
-  int,
 } from "three/tsl";
-import { ThreeCliRenderer } from "@bettertui/core";
+import { MeshBasicNodeMaterial } from "three/webgpu";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let engine: ThreeCliRenderer | null = null;
 let sceneRoot: ThreeScene | null = null;
@@ -86,47 +86,39 @@ export async function run(renderer: CliRenderer): Promise<void> {
     const i = float(0.0).toVar();
     const o = vec4(0.0).toVar();
 
-    Loop(
-      { start: int(1), end: int(90), type: "int", condition: "<" },
-      ({ i: loopI }) => {
-        i.assign(float(loopI));
+    Loop({ start: int(1), end: int(90), type: "int", condition: "<" }, ({ i: loopI }) => {
+      i.assign(float(loopI));
 
-        const correctedFC = vec2(FC.x, FC.y.mul(cellAspectRatio));
-        const FCrgb = vec3(correctedFC.x, correctedFC.y, float(0.0));
-        const rxyx = vec3(r.x, r.y.mul(cellAspectRatio), r.x);
-        const p = z.mul(normalize(FCrgb.mul(2.0).sub(rxyx))).toVar();
+      const correctedFC = vec2(FC.x, FC.y.mul(cellAspectRatio));
+      const FCrgb = vec3(correctedFC.x, correctedFC.y, float(0.0));
+      const rxyx = vec3(r.x, r.y.mul(cellAspectRatio), r.x);
+      const p = z.mul(normalize(FCrgb.mul(2.0).sub(rxyx))).toVar();
 
-        p.assign(
-          vec3(atan(p.y, p.x), p.z.div(3.0).sub(t), length(p.xy).sub(9.0)),
-        );
+      p.assign(vec3(atan(p.y, p.x), p.z.div(3.0).sub(t), length(p.xy).sub(9.0)));
 
-        Loop(
-          { start: int(1), end: int(5), type: "int", condition: "<" },
-          ({ i: innerI }) => {
-            const dValue = float(innerI);
-            d.assign(dValue);
+      Loop({ start: int(1), end: int(5), type: "int", condition: "<" }, ({ i: innerI }) => {
+        const dValue = float(innerI);
+        d.assign(dValue);
 
-            const iVec = i.mul(vec3(0.2, 0.0, 0.0));
-            const pyzx = vec3(p.y, p.z, p.x);
-            const arg = pyzx.mul(dValue).sub(iVec);
-            const distortion = sin(ceil(arg)).div(dValue);
-            p.addAssign(distortion);
-          },
-        );
+        const iVec = i.mul(vec3(0.2, 0.0, 0.0));
+        const pyzx = vec3(p.y, p.z, p.x);
+        const arg = pyzx.mul(dValue).sub(iVec);
+        const distortion = sin(ceil(arg)).div(dValue);
+        p.addAssign(distortion);
+      });
 
-        const cos6p = cos(p.mul(6.0));
-        const cosTerm = cos6p.mul(0.2).sub(0.2);
-        const distanceVec = vec4(cosTerm.x, cosTerm.y, cosTerm.z, p.z);
-        const dNew = length(distanceVec).mul(0.2);
-        d.assign(dNew);
-        z.addAssign(dNew);
+      const cos6p = cos(p.mul(6.0));
+      const cosTerm = cos6p.mul(0.2).sub(0.2);
+      const distanceVec = vec4(cosTerm.x, cosTerm.y, cosTerm.z, p.z);
+      const dNew = length(distanceVec).mul(0.2);
+      d.assign(dNew);
+      z.addAssign(dNew);
 
-        const colorPhase = vec4(0.0, 0.5, 1.0, 0.0);
-        const cosResult = cos(p.x.add(colorPhase));
-        const colorContrib = cosResult.add(1.0).div(d).div(z);
-        o.addAssign(colorContrib);
-      },
-    );
+      const colorPhase = vec4(0.0, 0.5, 1.0, 0.0);
+      const cosResult = cos(p.x.add(colorPhase));
+      const colorContrib = cosResult.add(1.0).div(d).div(z);
+      o.addAssign(colorContrib);
+    });
 
     const oSquared = o.mul(o);
     const processed = oSquared.div(800.0);
@@ -161,8 +153,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
 
   const controlsText = new TextRenderable(renderer, {
     id: "fractal_controls",
-    content:
-      "Space: Pause/Resume | R: Reset | P: Screenshot | +/-: Speed | Escape: Back to menu",
+    content: "Space: Pause/Resume | R: Reset | P: Screenshot | +/-: Speed | Escape: Back to menu",
     position: "absolute",
     top: HEIGHT - 2,
     fg: "#FFFFFF",

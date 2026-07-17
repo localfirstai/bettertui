@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  OptimizedBuffer,
-  RGBA,
+  type CliRenderer,
   FrameBufferRenderable,
   type KeyEvent,
+  type OptimizedBuffer,
+  RGBA,
+  createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -17,40 +17,19 @@ let leftBuffer: Float32Array | null = null;
 let rightBuffer: Float32Array | null = null;
 
 let patternMode = 0;
-const PATTERN_NAMES = [
-  "Plasma",
-  "Ripples",
-  "Waves",
-  "Starburst",
-  "Dots",
-  "Checkers",
-];
+const PATTERN_NAMES = ["Plasma", "Ripples", "Waves", "Starburst", "Dots", "Checkers"];
 
-function generatePlasma(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generatePlasma(x: number, y: number, w: number, h: number, t: number): number {
   const nx = x / w;
   const ny = y / h;
   const v1 = Math.sin(nx * 10 + t);
   const v2 = Math.sin(ny * 10 + t * 0.7);
   const v3 = Math.sin((nx + ny) * 8 + t * 1.3);
-  const v4 = Math.sin(
-    Math.sqrt((nx - 0.5) ** 2 + (ny - 0.5) ** 2) * 12 - t * 2,
-  );
+  const v4 = Math.sin(Math.sqrt((nx - 0.5) ** 2 + (ny - 0.5) ** 2) * 12 - t * 2);
   return (v1 + v2 + v3 + v4 + 4) / 8;
 }
 
-function generateRipples(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generateRipples(x: number, y: number, w: number, h: number, t: number): number {
   const cx = w / 2;
   const cy = h / 2;
   const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
@@ -59,13 +38,7 @@ function generateRipples(
   return wave * fade;
 }
 
-function generateWaves(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generateWaves(x: number, y: number, w: number, h: number, t: number): number {
   const nx = x / w;
   const ny = y / h;
   const diagonal = (nx + ny) * 6 - t * 2;
@@ -73,13 +46,7 @@ function generateWaves(
   return (Math.sin(diagonal) * 0.5 + 0.5) * 0.6 + (cross * 0.5 + 0.5) * 0.4;
 }
 
-function generateStarburst(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generateStarburst(x: number, y: number, w: number, h: number, t: number): number {
   const cx = w / 2;
   const cy = h / 2;
   const dx = x - cx;
@@ -91,32 +58,18 @@ function generateStarburst(
   return rayIntensity > 0.7 ? 1.0 : 0.0;
 }
 
-function generateDots(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generateDots(x: number, y: number, w: number, h: number, t: number): number {
   const gridSize = Math.min(w, h) / 6;
   const offsetX = t * 3;
   const offsetY = t * 2;
-  const gx =
-    ((((x + offsetX) % gridSize) + gridSize) % gridSize) - gridSize / 2;
-  const gy =
-    ((((y + offsetY) % gridSize) + gridSize) % gridSize) - gridSize / 2;
+  const gx = ((((x + offsetX) % gridSize) + gridSize) % gridSize) - gridSize / 2;
+  const gy = ((((y + offsetY) % gridSize) + gridSize) % gridSize) - gridSize / 2;
   const dist = Math.sqrt(gx * gx + gy * gy);
   const radius = gridSize * 0.35;
   return dist < radius ? 1.0 : 0.0;
 }
 
-function generateCheckers(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function generateCheckers(x: number, y: number, w: number, h: number, t: number): number {
   const cx = w / 2;
   const cy = h / 2;
   const dx = x - cx;
@@ -131,13 +84,7 @@ function generateCheckers(
   return (checkX + checkY) % 2 === 0 ? 1.0 : 0.0;
 }
 
-function getIntensity(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  t: number,
-): number {
+function getIntensity(x: number, y: number, w: number, h: number, t: number): number {
   switch (patternMode) {
     case 0:
       return generatePlasma(x, y, w, h, t);
@@ -195,22 +142,10 @@ export async function run(renderer: CliRenderer): Promise<void> {
     }
     for (let y = 0; y < panelHeight; y++) {
       for (let x = 0; x < panelWidth; x++) {
-        leftBuffer[y * panelWidth + x] = getIntensity(
-          x,
-          y,
-          panelWidth,
-          panelHeight,
-          time,
-        );
+        leftBuffer[y * panelWidth + x] = getIntensity(x, y, panelWidth, panelHeight, time);
       }
     }
-    fb.drawGrayscaleBuffer(
-      0,
-      headerHeight,
-      leftBuffer,
-      panelWidth,
-      panelHeight,
-    );
+    fb.drawGrayscaleBuffer(0, headerHeight, leftBuffer, panelWidth, panelHeight);
 
     const rightX = panelWidth + 3;
     const ssWidth = panelWidth * 2;
@@ -220,22 +155,10 @@ export async function run(renderer: CliRenderer): Promise<void> {
     }
     for (let y = 0; y < ssHeight; y++) {
       for (let x = 0; x < ssWidth; x++) {
-        rightBuffer[y * ssWidth + x] = getIntensity(
-          x,
-          y,
-          ssWidth,
-          ssHeight,
-          time,
-        );
+        rightBuffer[y * ssWidth + x] = getIntensity(x, y, ssWidth, ssHeight, time);
       }
     }
-    fb.drawGrayscaleBufferSupersampled(
-      rightX,
-      headerHeight,
-      rightBuffer,
-      ssWidth,
-      ssHeight,
-    );
+    fb.drawGrayscaleBufferSupersampled(rightX, headerHeight, rightBuffer, ssWidth, ssHeight);
 
     const dividerX = panelWidth + 1;
     for (let y = headerHeight; y < totalHeight; y++) {
@@ -255,8 +178,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
     }
 
     const rightLabel = "2x Supersampled";
-    const rightLabelX =
-      rightX + Math.floor(panelWidth / 2 - rightLabel.length / 2);
+    const rightLabelX = rightX + Math.floor(panelWidth / 2 - rightLabel.length / 2);
     for (let i = 0; i < rightLabel.length; i++) {
       fb.setCell(rightLabelX + i, 1, rightLabel[i], highlightColor, headerBg);
     }
@@ -264,13 +186,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
     const info = `[${PATTERN_NAMES[patternMode]}] SPACE:pause P:pattern`;
     const infoX = Math.floor(totalWidth / 2 - info.length / 2);
     for (let i = 0; i < info.length; i++) {
-      fb.setCell(
-        infoX + i,
-        0,
-        info[i],
-        RGBA.fromInts(150, 150, 170, 255),
-        headerBg,
-      );
+      fb.setCell(infoX + i, 0, info[i], RGBA.fromInts(150, 150, 170, 255), headerBg);
     }
   }
 

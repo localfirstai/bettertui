@@ -1,17 +1,17 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  t,
-  fg,
-  underline,
-  link,
-  bold,
-  italic,
   BoxRenderable,
-  RGBA,
-  TextRenderable,
+  type CliRenderer,
   type MouseEvent,
+  RGBA,
   type RenderContext,
+  TextRenderable,
+  bold,
+  createCliRenderer,
+  fg,
+  italic,
+  link,
+  t,
+  underline,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -84,9 +84,7 @@ class DraggableBox extends BoxRenderable {
 }
 
 function getHeaderContent(): ReturnType<typeof t> {
-  const dragStatus = dragModeEnabled
-    ? fg("#34d399")("ON")
-    : fg("#f87171")("OFF");
+  const dragStatus = dragModeEnabled ? fg("#34d399")("ON") : fg("#f87171")("OFF");
   return t`${bold(fg("#38bdf8")("OpenTUI Interactive Link Demo"))}
 ${fg("#94a3b8")("Click the links to open them.")} ${fg("#64748b")("Press")} ${bold(fg("#fbbf24")("d"))} ${fg("#64748b")("to toggle drag mode:")} ${dragStatus}
 ${italic(fg("#64748b")("(Terminal must support OSC 8 hyperlinks)"))}`;

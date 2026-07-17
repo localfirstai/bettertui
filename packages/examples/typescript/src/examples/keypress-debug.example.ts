@@ -1,23 +1,22 @@
 #!/usr/bin/env bun
 
+import { writeFile } from "node:fs/promises";
 import {
-  type CliRenderer,
-  createCliRenderer,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
   type KeyEvent,
   type PasteEvent,
+  TextRenderable,
+  createCliRenderer,
   decodePasteBytes,
 } from "@bettertui/core";
 import { ScrollBoxRenderable } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { env, registerEnvVar } from "@bettertui/core";
-import { writeFile } from "node:fs/promises";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 registerEnvVar({
   name: "OTUI_KEYPRESS_DEBUG_SHOW_JSON",
-  description:
-    "Show full JSON for the latest parsed event in the keypress debug tool",
+  description: "Show full JSON for the latest parsed event in the keypress debug tool",
   type: "boolean",
   default: false,
 });
@@ -443,8 +442,7 @@ function refreshUi(renderer: CliRenderer): void {
   }
 
   if (footerText) {
-    footerText.content =
-      "Controls: ?:help  Shift+J:json  Shift+S:save  Shift+L:clear  Ctrl+C:quit";
+    footerText.content = "Controls: ?:help  Shift+J:json  Shift+S:save  Shift+L:clear  Ctrl+C:quit";
   }
 
   if (helpModal) {
@@ -671,13 +669,7 @@ export function run(renderer: CliRenderer): void {
   renderer.prependInputHandler(inputHandler);
 
   keypressHandler = (event: KeyEvent) => {
-    if (
-      event.raw === "?" &&
-      !event.ctrl &&
-      !event.meta &&
-      !event.super &&
-      !event.hyper
-    ) {
+    if (event.raw === "?" && !event.ctrl && !event.meta && !event.super && !event.hyper) {
       showingHelp = !showingHelp;
       refreshUi(renderer);
       return;

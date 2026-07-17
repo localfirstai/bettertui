@@ -1,16 +1,16 @@
 import {
   BoxRenderable,
   type CliRenderer,
-  createCliRenderer,
-  createCoreSlotRegistry,
-  registerCorePlugin,
-  SlotRenderable,
-  TextRenderable,
   type CorePlugin,
   type CoreSlotMode,
   type CoreSlotRegistry,
-  type PluginErrorEvent,
   type KeyEvent,
+  type PluginErrorEvent,
+  SlotRenderable,
+  TextRenderable,
+  createCliRenderer,
+  createCoreSlotRegistry,
+  registerCorePlugin,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -28,15 +28,12 @@ interface PluginStats {
 
 let renderer: CliRenderer | null = null;
 let rootContainer: BoxRenderable | null = null;
-let statusbarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null =
-  null;
-let sidebarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null =
-  null;
+let statusbarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null = null;
+let sidebarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null = null;
 let infoPanel: BoxRenderable | null = null;
 let infoText: TextRenderable | null = null;
 
-let slotRegistry: CoreSlotRegistry<DemoSlot, DemoContext, DemoSlotData> | null =
-  null;
+let slotRegistry: CoreSlotRegistry<DemoSlot, DemoContext, DemoSlotData> | null = null;
 
 let unregisterClockPlugin: (() => void) | null = null;
 let unregisterActivityPlugin: (() => void) | null = null;
@@ -134,18 +131,12 @@ function remountEnabledPlugins(): void {
 
   if (clockPluginEnabled) {
     unregisterClockPlugin?.();
-    unregisterClockPlugin = registerCorePlugin(
-      slotRegistry,
-      createClockPlugin(renderer),
-    );
+    unregisterClockPlugin = registerCorePlugin(slotRegistry, createClockPlugin(renderer));
   }
 
   if (activityPluginEnabled) {
     unregisterActivityPlugin?.();
-    unregisterActivityPlugin = registerCorePlugin(
-      slotRegistry,
-      createActivityPlugin(renderer),
-    );
+    unregisterActivityPlugin = registerCorePlugin(slotRegistry, createActivityPlugin(renderer));
   }
 
   statusbarSlot?.refresh();
@@ -509,10 +500,7 @@ function setClockPluginEnabled(enabled: boolean): void {
   }
 
   if (enabled && !clockPluginEnabled) {
-    unregisterClockPlugin = registerCorePlugin(
-      slotRegistry,
-      createClockPlugin(renderer),
-    );
+    unregisterClockPlugin = registerCorePlugin(slotRegistry, createClockPlugin(renderer));
     clockPluginEnabled = true;
   } else if (!enabled && clockPluginEnabled) {
     unregisterClockPlugin?.();
@@ -529,10 +517,7 @@ function setActivityPluginEnabled(enabled: boolean): void {
   }
 
   if (enabled && !activityPluginEnabled) {
-    unregisterActivityPlugin = registerCorePlugin(
-      slotRegistry,
-      createActivityPlugin(renderer),
-    );
+    unregisterActivityPlugin = registerCorePlugin(slotRegistry, createActivityPlugin(renderer));
     activityPluginEnabled = true;
   } else if (!enabled && activityPluginEnabled) {
     unregisterActivityPlugin?.();
@@ -654,13 +639,10 @@ export function run(rendererInstance: CliRenderer): void {
 
   createLayout(rendererInstance);
 
-  slotRegistry = createCoreSlotRegistry<DemoSlot, DemoContext, DemoSlotData>(
-    rendererInstance,
-    {
-      appName: "core-plugin-slots-demo",
-      version: "1.0.0",
-    },
-  );
+  slotRegistry = createCoreSlotRegistry<DemoSlot, DemoContext, DemoSlotData>(rendererInstance, {
+    appName: "core-plugin-slots-demo",
+    version: "1.0.0",
+  });
 
   if (!slotRegistry || !rootContainer) {
     return;
@@ -696,11 +678,7 @@ export function run(rendererInstance: CliRenderer): void {
         return undefined;
       }
 
-      return createPluginFailurePlaceholder(
-        rendererInstance,
-        failure,
-        "#fb7185",
-      );
+      return createPluginFailurePlaceholder(rendererInstance, failure, "#fb7185");
     },
   });
 
@@ -725,11 +703,7 @@ export function run(rendererInstance: CliRenderer): void {
         return undefined;
       }
 
-      return createPluginFailurePlaceholder(
-        rendererInstance,
-        failure,
-        "#f97316",
-      );
+      return createPluginFailurePlaceholder(rendererInstance, failure, "#f97316");
     },
   });
 

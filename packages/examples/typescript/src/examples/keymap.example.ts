@@ -1,33 +1,28 @@
 import {
   BoxRenderable,
   CliRenderEvents,
+  type CliRenderer,
   InputRenderable,
   InputRenderableEvents,
-  ScrollBoxRenderable,
-  TextRenderable,
-  TextareaRenderable,
-  StyledText,
-  createCliRenderer,
-  bold,
-  bg,
-  fg,
-  type CliRenderer,
   type KeyEvent,
   type Renderable,
+  ScrollBoxRenderable,
+  StyledText,
   type TextChunk,
+  TextRenderable,
+  TextareaRenderable,
+  bg,
+  bold,
+  createCliRenderer,
+  fg,
 } from "@bettertui/core";
-import {
-  type ActiveKey,
-  type Command,
-  type DispatchEvent,
-  type Keymap,
-} from "@bettertui/core";
+import type { ActiveKey, Command, DispatchEvent, Keymap } from "@bettertui/core";
 import * as addons from "@bettertui/core/addons/opentui";
 import { formatKeySequence } from "@bettertui/core/extras";
 import {
-  getGraphSnapshot,
   type GraphBinding,
   type GraphSnapshot,
+  getGraphSnapshot,
 } from "@bettertui/core/extras/graph";
 import { createDefaultOpenTuiKeymap } from "@bettertui/core/opentui";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -103,8 +98,7 @@ interface ExPromptSuggestion {
 const EX_PROMPT_WIDTH = 54;
 const EX_PROMPT_MAX_VISIBLE_SUGGESTIONS = 4;
 const EX_PROMPT_CHROME_ROWS = 5;
-const EX_PROMPT_MAX_HEIGHT =
-  EX_PROMPT_CHROME_ROWS + EX_PROMPT_MAX_VISIBLE_SUGGESTIONS;
+const EX_PROMPT_MAX_HEIGHT = EX_PROMPT_CHROME_ROWS + EX_PROMPT_MAX_VISIBLE_SUGGESTIONS;
 const GRAPH_MIN_PANEL_ROWS = 9;
 const GRAPH_HEADER_ROWS = 4;
 const GRAPH_PULSE_DURATION_MS = 650;
@@ -219,7 +213,7 @@ let logoTileStepIndex = 0;
 let logoTileStates: LogoTileState[] = [];
 let logoTilePattern: LogoTilePattern = createLogoTilePattern();
 let logoTilePatternVersion = 1;
-let disposers: Array<() => void> = [];
+const disposers: Array<() => void> = [];
 
 interface LogoCell {
   x: number;
@@ -334,17 +328,10 @@ function getCountPayload(payload: unknown): number {
   }
 
   const count = (payload as { count?: unknown }).count;
-  return typeof count === "number" && Number.isFinite(count) && count > 0
-    ? count
-    : 1;
+  return typeof count === "number" && Number.isFinite(count) && count > 0 ? count : 1;
 }
 
-function logoGlyphChunk(
-  char: string,
-  color: string,
-  shadow: string,
-  strong: boolean,
-): TextChunk {
+function logoGlyphChunk(char: string, color: string, shadow: string, strong: boolean): TextChunk {
   const base = strong ? bold(fg(color)(char)) : fg(color)(char);
 
   switch (char) {
@@ -403,8 +390,7 @@ function getLogoTileStepIntervalMs(): number {
 }
 
 function addRandomLogoPulse(): void {
-  const cell =
-    LOGO_LIT_CELLS[Math.floor(Math.random() * LOGO_LIT_CELLS.length)];
+  const cell = LOGO_LIT_CELLS[Math.floor(Math.random() * LOGO_LIT_CELLS.length)];
   if (!cell) {
     return;
   }
@@ -419,20 +405,12 @@ function addRandomLogoPulse(): void {
 }
 
 function getLogoTileBaseColor(x: number, y: number): string {
-  const diagonal =
-    (x + y) / Math.max(1, LOGO_TILE_COLUMNS + LOGO_TILE_ROWS - 2);
+  const diagonal = (x + y) / Math.max(1, LOGO_TILE_COLUMNS + LOGO_TILE_ROWS - 2);
   return mixColor("#070711", "#16162a", diagonal);
 }
 
-function triggerLogoTile(
-  x: number,
-  y: number,
-  color: string,
-  accent = 1,
-): void {
-  const tile = logoTileStates.find(
-    (candidate) => candidate.x === x && candidate.y === y,
-  );
+function triggerLogoTile(x: number, y: number, color: string, accent = 1): void {
+  const tile = logoTileStates.find((candidate) => candidate.x === x && candidate.y === y);
   if (!tile) {
     return;
   }
@@ -442,20 +420,10 @@ function triggerLogoTile(
   tile.accent = Math.max(tile.accent, accent);
 }
 
-function triggerLogoTileColumn(
-  column: number,
-  color: string,
-  accent: number,
-): void {
-  const x =
-    ((column % LOGO_TILE_COLUMNS) + LOGO_TILE_COLUMNS) % LOGO_TILE_COLUMNS;
+function triggerLogoTileColumn(column: number, color: string, accent: number): void {
+  const x = ((column % LOGO_TILE_COLUMNS) + LOGO_TILE_COLUMNS) % LOGO_TILE_COLUMNS;
   for (let y = 0; y < LOGO_TILE_ROWS; y += 1) {
-    triggerLogoTile(
-      x,
-      y,
-      color,
-      accent * (0.72 + (y / Math.max(1, LOGO_TILE_ROWS - 1)) * 0.28),
-    );
+    triggerLogoTile(x, y, color, accent * (0.72 + (y / Math.max(1, LOGO_TILE_ROWS - 1)) * 0.28));
   }
 }
 
@@ -517,18 +485,10 @@ function createLogoTilePattern(): LogoTilePattern {
       createLogoTileCluster(3),
       createLogoTileCluster(3),
     ],
-    snareRows: [
-      randomLogoTileIndex(LOGO_TILE_ROWS),
-      randomLogoTileIndex(LOGO_TILE_ROWS),
-    ],
-    hihatColumns: Array.from({ length: 8 }, () =>
-      randomLogoTileIndex(LOGO_TILE_COLUMNS),
-    ),
+    snareRows: [randomLogoTileIndex(LOGO_TILE_ROWS), randomLogoTileIndex(LOGO_TILE_ROWS)],
+    hihatColumns: Array.from({ length: 8 }, () => randomLogoTileIndex(LOGO_TILE_COLUMNS)),
     ghost: Array.from({ length: LOGO_TILE_STEPS }, () => randomLogoTilePoint()),
-    fillColumns: [
-      randomLogoTileIndex(LOGO_TILE_COLUMNS),
-      randomLogoTileIndex(LOGO_TILE_COLUMNS),
-    ],
+    fillColumns: [randomLogoTileIndex(LOGO_TILE_COLUMNS), randomLogoTileIndex(LOGO_TILE_COLUMNS)],
   };
 }
 
@@ -561,11 +521,7 @@ function triggerLogoTileBeat(step: number): void {
   }
 
   if (step % 2 === 2) {
-    triggerLogoTileColumn(
-      logoTilePattern.hihatColumns[Math.floor(step / 2)] ?? 0,
-      P.command,
-      0.56,
-    );
+    triggerLogoTileColumn(logoTilePattern.hihatColumns[Math.floor(step / 2)] ?? 0, P.command, 0.56);
   }
 
   if (step % 2 === 1) {
@@ -593,11 +549,7 @@ function updateLogoTiles(deltaTime: number): void {
     tile.hitMs = Math.max(0, tile.hitMs - deltaTime);
     const strength = clamp01(tile.hitMs / LOGO_TILE_DECAY_MS) * tile.accent;
     const base = getLogoTileBaseColor(tile.x, tile.y);
-    tile.renderable.backgroundColor = mixColor(
-      base,
-      tile.color,
-      Math.min(0.88, strength),
-    );
+    tile.renderable.backgroundColor = mixColor(base, tile.color, Math.min(0.88, strength));
     tile.renderable.opacity = lerpNumber(
       LOGO_TILE_BASE_OPACITY,
       LOGO_TILE_HIT_OPACITY,
@@ -625,22 +577,13 @@ function getLogoPulseStrength(cell: LogoCell): number {
   for (const pulse of logoPulses) {
     const progress = clamp01(pulse.ageMs / pulse.durationMs);
     const radius = easeOut(progress) * 18;
-    const distance = Math.hypot(
-      cell.x + 0.5 - pulse.x,
-      (cell.y + 0.5 - pulse.y) * 2.2,
-    );
-    const ring =
-      Math.exp(-((distance - radius) ** 2) / 9) * (1 - progress) * pulse.force;
-    const core =
-      Math.exp(-(distance ** 2) / 10) *
-      Math.max(0, 1 - progress * 1.8) *
-      pulse.force;
+    const distance = Math.hypot(cell.x + 0.5 - pulse.x, (cell.y + 0.5 - pulse.y) * 2.2);
+    const ring = Math.exp(-((distance - radius) ** 2) / 9) * (1 - progress) * pulse.force;
+    const core = Math.exp(-(distance ** 2) / 10) * Math.max(0, 1 - progress * 1.8) * pulse.force;
     strength = Math.max(strength, ring + core);
   }
 
-  const ambient =
-    (Math.sin(logoAnimationTime * 0.004 + cell.x * 0.45 + cell.y * 1.7) + 1) *
-    0.08;
+  const ambient = (Math.sin(logoAnimationTime * 0.004 + cell.x * 0.45 + cell.y * 1.7) + 1) * 0.08;
   return clamp01(strength + ambient);
 }
 
@@ -678,14 +621,8 @@ function resetLogoAnimation(): void {
 }
 
 function setLogoAnimationBpm(value: number): void {
-  logoAnimationBpm = Math.max(
-    LOGO_MIN_BPM,
-    Math.min(LOGO_MAX_BPM, Math.round(value)),
-  );
-  logoPulseCountdownMs = Math.min(
-    logoPulseCountdownMs,
-    getLogoPulseIntervalMs(),
-  );
+  logoAnimationBpm = Math.max(LOGO_MIN_BPM, Math.min(LOGO_MAX_BPM, Math.round(value)));
+  logoPulseCountdownMs = Math.min(logoPulseCountdownMs, getLogoPulseIntervalMs());
 }
 
 function adjustLogoAnimationBpm(renderer: CliRenderer, delta: number): void {
@@ -713,9 +650,7 @@ function buildOpencodeLogoContent(): StyledText {
         continue;
       }
 
-      chunks.push(
-        logoGlyphChunk(cell.char, getLogoCellColor(cell), shadow, cell.strong),
-      );
+      chunks.push(logoGlyphChunk(cell.char, getLogoCellColor(cell), shadow, cell.strong));
     }
 
     lines.push(styledLine(chunks));
@@ -772,12 +707,7 @@ function trimCell(value: string, width: number): string {
   return `${value.slice(0, width - 1)}.`;
 }
 
-function cell(
-  value: string,
-  width: number,
-  color: string,
-  highlight = false,
-): TextChunk {
+function cell(value: string, width: number, color: string, highlight = false): TextChunk {
   const chunk = fg(color)(trimCell(value, width));
   return highlight ? bold(chunk) : chunk;
 }
@@ -923,9 +853,7 @@ function getBindingPulse(binding: OpenTuiGraphBinding): number {
   return pulseValue;
 }
 
-function getCommandPulse(
-  command: OpenTuiGraphSnapshot["commands"][number],
-): number {
+function getCommandPulse(command: OpenTuiGraphSnapshot["commands"][number]): number {
   let pulseValue = 0;
   for (const pulse of graphPulses) {
     if (pulse.command !== command.name) {
@@ -955,9 +883,7 @@ function pruneGraphPulses(): void {
   graphPulses = graphPulses.filter((pulse) => pulse.remainingMs > 0);
 }
 
-function getPulsePhase(
-  binding: OpenTuiGraphBinding,
-): OpenTuiDispatchEvent["phase"] | undefined {
+function getPulsePhase(binding: OpenTuiGraphBinding): OpenTuiDispatchEvent["phase"] | undefined {
   for (const pulse of graphPulses) {
     if (pulse.bindingIndex !== undefined) {
       if (pulse.layerOrder !== binding.sourceLayerOrder) {
@@ -979,10 +905,7 @@ function getPulsePhase(
   return undefined;
 }
 
-function getPulseMarker(
-  pulse: number,
-  phase: OpenTuiDispatchEvent["phase"] | undefined,
-): string {
+function getPulseMarker(pulse: number, phase: OpenTuiDispatchEvent["phase"] | undefined): string {
   if (phase === "binding-reject") {
     return "!";
   }
@@ -1021,10 +944,7 @@ function getPendingBindingIds(snapshot: OpenTuiGraphSnapshot): Set<string> {
   return ids;
 }
 
-function isBindingPending(
-  binding: OpenTuiGraphBinding,
-  snapshot: OpenTuiGraphSnapshot,
-): boolean {
+function isBindingPending(binding: OpenTuiGraphBinding, snapshot: OpenTuiGraphSnapshot): boolean {
   return getPendingBindingIds(snapshot).has(binding.id);
 }
 
@@ -1084,9 +1004,7 @@ function getGraphTargetLabel(target: Renderable | undefined): string {
   return target.id.replace(/^keymap-demo-/, "");
 }
 
-function getGraphLayerLabel(
-  layer: OpenTuiGraphSnapshot["layers"][number],
-): string {
+function getGraphLayerLabel(layer: OpenTuiGraphSnapshot["layers"][number]): string {
   return `${getGraphTargetLabel(layer.target)}:${layer.order}`;
 }
 
@@ -1094,9 +1012,7 @@ function getGraphLayerRail(
   snapshot: OpenTuiGraphSnapshot,
   visibleBindings: readonly OpenTuiGraphBinding[],
 ): TextChunk[] {
-  const visibleLayerIds = new Set(
-    visibleBindings.map((binding) => binding.layerId),
-  );
+  const visibleLayerIds = new Set(visibleBindings.map((binding) => binding.layerId));
   const visibleLayers = snapshot.layers.filter(
     (layer) => layer.active && visibleLayerIds.has(layer.id),
   );
@@ -1105,10 +1021,7 @@ function getGraphLayerRail(
   }
 
   const chunks: TextChunk[] = [];
-  const visibleLayerChips = visibleLayers.slice(
-    0,
-    GRAPH_MAX_ACTIVE_LAYER_CHIPS,
-  );
+  const visibleLayerChips = visibleLayers.slice(0, GRAPH_MAX_ACTIVE_LAYER_CHIPS);
   for (const [index, layer] of visibleLayerChips.entries()) {
     if (index > 0) {
       chunks.push(fg(P.separator)(" "));
@@ -1131,10 +1044,7 @@ function getGraphLayerRail(
 }
 
 function getGraphPanelRows(): number {
-  return Math.max(
-    GRAPH_MIN_PANEL_ROWS,
-    graphText?.height ?? GRAPH_MIN_PANEL_ROWS,
-  );
+  return Math.max(GRAPH_MIN_PANEL_ROWS, graphText?.height ?? GRAPH_MIN_PANEL_ROWS);
 }
 
 function getVisibleGraphBindings(
@@ -1170,29 +1080,19 @@ function buildGraphBindingLine(
   binding: OpenTuiGraphBinding,
   snapshot: OpenTuiGraphSnapshot,
 ): TextChunk[] {
-  const layer = snapshot.layers.find(
-    (candidate) => candidate.id === binding.layerId,
-  );
+  const layer = snapshot.layers.find((candidate) => candidate.id === binding.layerId);
   const command = binding.commandIds
     .map((id) => snapshot.commands.find((candidate) => candidate.id === id))
-    .find(
-      (candidate): candidate is OpenTuiGraphSnapshot["commands"][number] =>
-        !!candidate,
-    );
+    .find((candidate): candidate is OpenTuiGraphSnapshot["commands"][number] => !!candidate);
   const bindingPulse = getBindingPulse(binding);
   const commandPulse = command ? getCommandPulse(command) : 0;
   const pending = isBindingPending(binding, snapshot);
   const rowCommandPulse = bindingPulse > 0 ? commandPulse : 0;
   const pathPulse = Math.max(bindingPulse, rowCommandPulse);
   const phase = bindingPulse > 0 ? getPulsePhase(binding) : undefined;
-  const marker =
-    pending && pathPulse === 0 ? "~" : getPulseMarker(pathPulse, phase);
+  const marker = pending && pathPulse === 0 ? "~" : getPulseMarker(pathPulse, phase);
   const markerColor =
-    phase === "binding-reject"
-      ? P.textMuted
-      : pathPulse > 0 || pending
-        ? P.leader
-        : P.separator;
+    phase === "binding-reject" ? P.textMuted : pathPulse > 0 || pending ? P.leader : P.separator;
   const layerColor = layer?.active ? P.command : P.textMuted;
   const bindingColor = pending
     ? P.leader
@@ -1207,11 +1107,7 @@ function buildGraphBindingLine(
       ? P.textDim
       : P.textMuted;
   const edgeColor =
-    pathPulse > 0 || pending
-      ? P.leader
-      : binding.reachable
-        ? P.separator
-        : P.textMuted;
+    pathPulse > 0 || pending ? P.leader : binding.reachable ? P.separator : P.textMuted;
   const bindingHighlightPulse = Math.max(
     bindingPulse,
     pending ? Math.max(getPendingSequencePulse(), 0.45) : 0,
@@ -1257,30 +1153,18 @@ function buildGraphContent(): StyledText {
     snapshot.pendingSequence.length === 0
       ? "<root>"
       : formatKeySequence(snapshot.pendingSequence, KEY_FORMAT_OPTIONS);
-  const activeLayerCount = snapshot.layers.filter(
-    (layer) => layer.active,
-  ).length;
-  const reachableBindingCount = snapshot.bindings.filter(
-    (binding) => binding.reachable,
-  ).length;
-  const bindings = getVisibleGraphBindings(
-    snapshot,
-    Math.max(1, rowCount - GRAPH_HEADER_ROWS),
-  );
+  const activeLayerCount = snapshot.layers.filter((layer) => layer.active).length;
+  const reachableBindingCount = snapshot.bindings.filter((binding) => binding.reachable).length;
+  const bindings = getVisibleGraphBindings(snapshot, Math.max(1, rowCount - GRAPH_HEADER_ROWS));
   const rows: TextChunk[][] = [
     styledLine([
       bold(fg(P.accent)("Keymap Graph")),
       fg(P.textMuted)(`  layers ${activeLayerCount}/${snapshot.layers.length}`),
       fg(P.separator)("  |  "),
-      fg(P.textMuted)(
-        `bindings ${reachableBindingCount}/${snapshot.bindings.length}`,
-      ),
+      fg(P.textMuted)(`bindings ${reachableBindingCount}/${snapshot.bindings.length}`),
     ]),
     styledLine([fg(P.textDim)("pending "), bold(fg(P.leader)(pending))]),
-    styledLine([
-      fg(P.textDim)("shown   "),
-      ...getGraphLayerRail(snapshot, bindings),
-    ]),
+    styledLine([fg(P.textDim)("shown   "), ...getGraphLayerRail(snapshot, bindings)]),
     styledLine([
       fg(P.textMuted)("  "),
       cell("layer", GRAPH_LAYER_WIDTH, P.textMuted),
@@ -1321,10 +1205,7 @@ function hasGraphSizeChanged(): boolean {
     return false;
   }
 
-  return (
-    graphText.height !== graphLastRenderedHeight ||
-    graphText.width !== graphLastRenderedWidth
-  );
+  return graphText.height !== graphLastRenderedHeight || graphText.width !== graphLastRenderedWidth;
 }
 
 function stopGraphAnimation(renderer: CliRenderer): void {
@@ -1357,8 +1238,7 @@ function setupGraphAnimation(renderer: CliRenderer): void {
 
   graphFrameCallback = async (deltaTime) => {
     const sizeChanged = hasGraphSizeChanged();
-    const hasGraphWork =
-      graphPulses.length > 0 || graphRefreshPending || sizeChanged;
+    const hasGraphWork = graphPulses.length > 0 || graphRefreshPending || sizeChanged;
     if (!hasGraphWork && !logoOverlayVisible) {
       stopGraphAnimation(renderer);
       return;
@@ -1405,15 +1285,10 @@ function cleanupGraphAnimation(renderer: CliRenderer): void {
   stopGraphAnimation(renderer);
 }
 
-function addGraphPulse(
-  renderer: CliRenderer,
-  event: OpenTuiDispatchEvent,
-): void {
+function addGraphPulse(renderer: CliRenderer, event: OpenTuiDispatchEvent): void {
   const command = typeof event.command === "string" ? event.command : undefined;
   const durationMs =
-    event.phase === "binding-reject"
-      ? GRAPH_REJECT_PULSE_DURATION_MS
-      : GRAPH_PULSE_DURATION_MS;
+    event.phase === "binding-reject" ? GRAPH_REJECT_PULSE_DURATION_MS : GRAPH_PULSE_DURATION_MS;
   graphPulses = [
     ...graphPulses.filter((pulse) => pulse.remainingMs > 0),
     {
@@ -1443,9 +1318,7 @@ function normalizeExPromptName(name: string): string {
   return trimmed.startsWith(":") ? trimmed : `:${trimmed}`;
 }
 
-function parseExPromptInput(
-  input: string,
-): { raw: string; name: string; args: string[] } | null {
+function parseExPromptInput(input: string): { raw: string; name: string; args: string[] } | null {
   const normalized = normalizeExPromptName(input);
   if (normalized === ":") {
     return null;
@@ -1471,17 +1344,9 @@ function getExPromptCommandFieldText(
   return getMetadataText(command[fieldName]);
 }
 
-function getExPromptCommandNargs(
-  command: Command<Renderable, KeyEvent>,
-): ExArgCount | undefined {
+function getExPromptCommandNargs(command: Command<Renderable, KeyEvent>): ExArgCount | undefined {
   const value = command["nargs"];
-  if (
-    value === "0" ||
-    value === "1" ||
-    value === "?" ||
-    value === "*" ||
-    value === "+"
-  ) {
+  if (value === "0" || value === "1" || value === "?" || value === "*" || value === "+") {
     return value;
   }
 
@@ -1538,10 +1403,7 @@ function getSelectedExPromptSuggestion(): ExPromptSuggestion | null {
     return null;
   }
 
-  const selectedIndex = Math.min(
-    commandPromptSelection,
-    suggestions.length - 1,
-  );
+  const selectedIndex = Math.min(commandPromptSelection, suggestions.length - 1);
   return suggestions[selectedIndex] ?? null;
 }
 
@@ -1567,9 +1429,7 @@ function addLog(message: string): void {
 }
 
 function getFocusedEditorIndex(renderer: CliRenderer): number {
-  return editors.findIndex(
-    (editor) => editor === renderer.currentFocusedEditor,
-  );
+  return editors.findIndex((editor) => editor === renderer.currentFocusedEditor);
 }
 
 function getFocusedLabel(renderer: CliRenderer): string {
@@ -1651,10 +1511,7 @@ function renderLogoOverlay(): void {
   }
 }
 
-function closeLogoOverlay(
-  renderer: CliRenderer,
-  message = "Closed opencode overlay",
-): void {
+function closeLogoOverlay(renderer: CliRenderer, message = "Closed opencode overlay"): void {
   if (!logoOverlayVisible) {
     return;
   }
@@ -1681,10 +1538,7 @@ function toggleLogoOverlay(renderer: CliRenderer): void {
   }
 
   renderLogoOverlay();
-  setStatus(
-    renderer,
-    logoOverlayVisible ? "Opened opencode overlay" : "Closed opencode overlay",
-  );
+  setStatus(renderer, logoOverlayVisible ? "Opened opencode overlay" : "Closed opencode overlay");
 }
 
 function closeCommandPrompt(renderer: CliRenderer, message: string): void {
@@ -1708,10 +1562,7 @@ function dismissCommandPromptForFocusChange(
   setStatus(renderer, "Closed ex prompt");
 }
 
-function applyCommandPromptSuggestion(
-  renderer: CliRenderer,
-  direction?: 1 | -1,
-): void {
+function applyCommandPromptSuggestion(renderer: CliRenderer, direction?: 1 | -1): void {
   const suggestions = getExPromptSuggestions();
   if (suggestions.length === 0) {
     return;
@@ -1719,8 +1570,7 @@ function applyCommandPromptSuggestion(
 
   if (direction) {
     commandPromptSelection =
-      (commandPromptSelection + direction + suggestions.length) %
-      suggestions.length;
+      (commandPromptSelection + direction + suggestions.length) % suggestions.length;
   }
 
   const suggestion = getSelectedExPromptSuggestion();
@@ -1730,8 +1580,7 @@ function applyCommandPromptSuggestion(
 
   const normalized = normalizeExPromptName(commandPromptValue);
   const spaceIndex = normalized.indexOf(" ");
-  const rest =
-    spaceIndex === -1 ? "" : normalized.slice(spaceIndex + 1).trimStart();
+  const rest = spaceIndex === -1 ? "" : normalized.slice(spaceIndex + 1).trimStart();
   const nextValue = rest
     ? `${suggestion.insert} ${rest}`
     : suggestion.expectsArgs
@@ -1742,18 +1591,14 @@ function applyCommandPromptSuggestion(
   renderAll(renderer);
 }
 
-function moveCommandPromptSelection(
-  renderer: CliRenderer,
-  direction: 1 | -1,
-): void {
+function moveCommandPromptSelection(renderer: CliRenderer, direction: 1 | -1): void {
   const suggestions = getExPromptSuggestions();
   if (suggestions.length === 0) {
     return;
   }
 
   commandPromptSelection =
-    (commandPromptSelection + direction + suggestions.length) %
-    suggestions.length;
+    (commandPromptSelection + direction + suggestions.length) % suggestions.length;
   renderAll(renderer);
 }
 
@@ -1766,9 +1611,7 @@ function executeCommandPrompt(renderer: CliRenderer): void {
 
   const restoreTarget = commandPromptRestoreTarget;
   const focused =
-    restoreTarget && !restoreTarget.isDestroyed
-      ? restoreTarget
-      : renderer.currentFocusedRenderable;
+    restoreTarget && !restoreTarget.isDestroyed ? restoreTarget : renderer.currentFocusedRenderable;
   const result = keymap?.dispatchCommand(parsed.raw, {
     focused: focused ?? null,
     includeCommand: true,
@@ -1844,9 +1687,7 @@ function moveFocus(renderer: CliRenderer, direction: 1 | -1): void {
     return;
   }
 
-  const currentIndex = targets.findIndex(
-    (target) => target === renderer.currentFocusedRenderable,
-  );
+  const currentIndex = targets.findIndex((target) => target === renderer.currentFocusedRenderable);
   const startIndex = currentIndex === -1 ? 0 : currentIndex;
   const nextIndex = (startIndex + direction + targets.length) % targets.length;
   const target = targets[nextIndex];
@@ -1874,12 +1715,7 @@ function syncEditorFrames(renderer: CliRenderer): void {
   }
 }
 
-function buildPanelContent(
-  label: string,
-  count: number,
-  step: number,
-  color: string,
-): StyledText {
+function buildPanelContent(label: string, count: number, step: number, color: string): StyledText {
   return joinLines([
     styledLine([fg(P.textDim)("Count: "), bold(fg(color)(String(count)))]),
     styledLine([
@@ -1907,10 +1743,7 @@ function buildHelpContent(): StyledText {
       bold(fg(P.key)(":")),
       fg(P.textDim)(" opens the ex prompt."),
     ]),
-    styledLine([
-      bold(fg(P.key)("ctrl+o")),
-      fg(P.textDim)(": toggle the opencode logo overlay"),
-    ]),
+    styledLine([bold(fg(P.key)("ctrl+o")), fg(P.textDim)(": toggle the opencode logo overlay")]),
     styledLine([
       fg(P.textDim)("Editors use "),
       bold(fg(P.key)("g")),
@@ -1926,9 +1759,7 @@ function buildHelpContent(): StyledText {
 function buildCommandPromptUsage(): StyledText {
   const selected = getSelectedExPromptSuggestion();
   if (!selected) {
-    return joinLines([
-      styledLine([fg(P.textMuted)("No matching ex commands")]),
-    ]);
+    return joinLines([styledLine([fg(P.textMuted)("No matching ex commands")])]);
   }
 
   return joinLines([
@@ -1949,8 +1780,7 @@ function buildCommandPromptSuggestions(): StyledText {
 
   return joinLines(
     suggestions.map((suggestion, index) => {
-      const isSelected =
-        index === Math.min(commandPromptSelection, suggestions.length - 1);
+      const isSelected = index === Math.min(commandPromptSelection, suggestions.length - 1);
       return styledLine([
         fg(isSelected ? P.leader : P.textDim)(isSelected ? "> " : "  "),
         bold(fg(isSelected ? P.title : P.command)(suggestion.label)),
@@ -2005,13 +1835,11 @@ function buildWhichKeyEntries(): StyledText {
     return joinLines([styledLine([fg(P.textMuted)("(unavailable)")])]);
   }
 
-  const activeKeys = [...keymap.getActiveKeys({ includeMetadata: true })].sort(
-    (left, right) => {
-      return formatKeySequence([left], KEY_FORMAT_OPTIONS).localeCompare(
-        formatKeySequence([right], KEY_FORMAT_OPTIONS),
-      );
-    },
-  );
+  const activeKeys = [...keymap.getActiveKeys({ includeMetadata: true })].sort((left, right) => {
+    return formatKeySequence([left], KEY_FORMAT_OPTIONS).localeCompare(
+      formatKeySequence([right], KEY_FORMAT_OPTIONS),
+    );
+  });
 
   if (activeKeys.length === 0) {
     return joinLines([styledLine([fg(P.textMuted)("(no active keys)")])]);
@@ -2064,16 +1892,11 @@ function renderStatus(renderer: CliRenderer): void {
   const focusedEditor = renderer.currentFocusedEditor;
   const pendingSequence = keymap?.getPendingSequence() ?? [];
   const pendingLabel =
-    pendingSequence.length === 0
-      ? "None"
-      : formatKeySequence(pendingSequence, KEY_FORMAT_OPTIONS);
+    pendingSequence.length === 0 ? "None" : formatKeySequence(pendingSequence, KEY_FORMAT_OPTIONS);
 
   if (statusFocusedText) {
     statusFocusedText.content = joinLines([
-      styledLine([
-        fg(P.textDim)("Focused: "),
-        bold(fg(focusedColor)(focusedLabel)),
-      ]),
+      styledLine([fg(P.textDim)("Focused: "), bold(fg(focusedColor)(focusedLabel))]),
     ]);
   }
 
@@ -2093,9 +1916,7 @@ function renderStatus(renderer: CliRenderer): void {
             fg(P.text)(String(focusedEditor.plainText.length)),
             fg(P.separator)("  |  "),
             fg(P.textDim)("Keys: "),
-            fg(P.command)(
-              focusedEditor.traits.suspend === true ? "keymap" : "local",
-            ),
+            fg(P.command)(focusedEditor.traits.suspend === true ? "keymap" : "local"),
           ]),
         ])
       : joinLines([
@@ -2142,14 +1963,9 @@ function renderStatus(renderer: CliRenderer): void {
   }
 
   if (whichKeyHeaderText && keymap) {
-    const prefix =
-      formatKeySequence(keymap.getPendingSequence(), KEY_FORMAT_OPTIONS) ||
-      "<root>";
+    const prefix = formatKeySequence(keymap.getPendingSequence(), KEY_FORMAT_OPTIONS) || "<root>";
     whichKeyHeaderText.content = joinLines([
-      styledLine([
-        bold(fg(P.accent)("Which Key")),
-        fg(P.textDim)(`  ${prefix}`),
-      ]),
+      styledLine([bold(fg(P.accent)("Which Key")), fg(P.textDim)(`  ${prefix}`)]),
     ]);
   }
 
@@ -2299,10 +2115,7 @@ function registerCommandLayers(
           run({ payload }) {
             const amount = getCountPayload(payload);
             alphaCount += amount;
-            setStatus(
-              renderer,
-              `Alpha increased by ${amount} to ${alphaCount}`,
-            );
+            setStatus(renderer, `Alpha increased by ${amount} to ${alphaCount}`);
           },
         },
         {
@@ -2323,10 +2136,7 @@ function registerCommandLayers(
           run({ payload }) {
             const amount = getCountPayload(payload);
             alphaCount -= amount;
-            setStatus(
-              renderer,
-              `Alpha decreased by ${amount} to ${alphaCount}`,
-            );
+            setStatus(renderer, `Alpha decreased by ${amount} to ${alphaCount}`);
           },
         },
         {
@@ -2565,9 +2375,7 @@ function registerCommandLayers(
   disposers.push(
     addons.registerManagedTextareaLayer(keymapInstance, renderer, {
       enabled: () =>
-        !commandPromptVisible &&
-        !logoOverlayVisible &&
-        renderer.currentFocusedEditor !== null,
+        !commandPromptVisible && !logoOverlayVisible && renderer.currentFocusedEditor !== null,
       bindings: [
         { key: "left", cmd: "input.move.left", desc: "Cursor left" },
         { key: "right", cmd: "input.move.right", desc: "Cursor right" },
@@ -3132,9 +2940,7 @@ export function run(renderer: CliRenderer): void {
   addLog("Editors use g/gg/shift+g for Vim-style navigation.");
   addLog(": opens the centered ex prompt.");
   addLog("Ctrl+O toggles the opencode overlay.");
-  addLog(
-    "Runtime Graph shows active layers, reachable bindings, and dispatch pulses.",
-  );
+  addLog("Runtime Graph shows active layers, reachable bindings, and dispatch pulses.");
   renderAll(renderer);
   alphaPanel.focus();
   setStatus(renderer, "Focused Alpha panel");

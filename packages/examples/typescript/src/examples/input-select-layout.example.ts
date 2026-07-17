@@ -1,16 +1,12 @@
 import {
-  CliRenderer,
   BoxRenderable,
+  type CliRenderer,
+  type KeyEvent,
   TextRenderable,
   createCliRenderer,
-  type KeyEvent,
 } from "@bettertui/core";
 import { InputRenderable, InputRenderableEvents } from "@bettertui/core";
-import {
-  SelectRenderable,
-  SelectRenderableEvents,
-  type SelectOption,
-} from "@bettertui/core";
+import { type SelectOption, SelectRenderable, SelectRenderableEvents } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let renderer: CliRenderer | null = null;
@@ -271,8 +267,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   footer = new TextRenderable(renderer, {
     id: "footer",
-    content:
-      "TAB: focus next | SHIFT+TAB: focus prev | ARROWS/JK: navigate | ESC: quit",
+    content: "TAB: focus next | SHIFT+TAB: focus prev | ARROWS/JK: navigate | ESC: quit",
     fg: "#dbeafe",
     bg: "transparent",
     zIndex: 1,
@@ -303,19 +298,13 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 function setupEventHandlers(): void {
   if (!leftSelect || !rightSelect || !textInput) return;
 
-  leftSelect.on(
-    SelectRenderableEvents.SELECTION_CHANGED,
-    (index: number, option: SelectOption) => {
-      updateDisplay();
-    },
-  );
+  leftSelect.on(SelectRenderableEvents.SELECTION_CHANGED, (index: number, option: SelectOption) => {
+    updateDisplay();
+  });
 
-  leftSelect.on(
-    SelectRenderableEvents.ITEM_SELECTED,
-    (index: number, option: SelectOption) => {
-      updateDisplay();
-    },
-  );
+  leftSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+    updateDisplay();
+  });
 
   rightSelect.on(
     SelectRenderableEvents.SELECTION_CHANGED,
@@ -324,12 +313,9 @@ function setupEventHandlers(): void {
     },
   );
 
-  rightSelect.on(
-    SelectRenderableEvents.ITEM_SELECTED,
-    (index: number, option: SelectOption) => {
-      updateDisplay();
-    },
-  );
+  rightSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+    updateDisplay();
+  });
 
   textInput.on(InputRenderableEvents.INPUT, (value: string) => {
     updateDisplay();
@@ -383,8 +369,7 @@ function handleKeyPress(key: KeyEvent): void {
   if (key.name === "tab") {
     if (key.shift) {
       currentFocusIndex =
-        (currentFocusIndex - 1 + focusableElements.length) %
-        focusableElements.length;
+        (currentFocusIndex - 1 + focusableElements.length) % focusableElements.length;
     } else {
       currentFocusIndex = (currentFocusIndex + 1) % focusableElements.length;
     }

@@ -1,13 +1,13 @@
 import {
   BoxRenderable,
-  CliRenderer,
+  type CliRenderer,
+  type MarkdownCodeBlockRenderer,
   MarkdownRenderable,
   RGBA,
   SyntaxStyle,
   TextRenderable,
   createCliRenderer,
   createMarkdownCodeBlockRenderer,
-  type MarkdownCodeBlockRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -85,12 +85,7 @@ function parseTaskFlow(source: string): TaskFlowDocument {
 
       const label = rest.slice(0, statusStart);
       const status = rest.slice(statusStart + 1) as TaskFlowStep["status"];
-      if (
-        status === "done" ||
-        status === "active" ||
-        status === "queued" ||
-        status === "blocked"
-      ) {
+      if (status === "done" || status === "active" || status === "queued" || status === "blocked") {
         document.steps.push({ label, status });
       }
     }
@@ -109,9 +104,7 @@ function stepStyle(status: TaskFlowStep["status"]): {
   return { marker: "--", color: "#CBD5E1" };
 }
 
-function createTaskFlowRenderer(
-  renderer: CliRenderer,
-): MarkdownCodeBlockRenderer {
+function createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRenderer {
   return (token) => {
     const flow = parseTaskFlow(token.text);
     const card = new BoxRenderable(renderer, {

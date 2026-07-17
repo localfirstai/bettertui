@@ -1,16 +1,16 @@
 import {
-  createCliRenderer,
+  BoxRenderable,
+  type CliRenderer,
   InputRenderable,
   InputRenderableEvents,
   RenderableEvents,
-  type CliRenderer,
-  t,
   bold,
+  createCliRenderer,
   fg,
-  BoxRenderable,
+  t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { TextRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let nameInput: InputRenderable | null = null;
 let emailInput: InputRenderable | null = null;
@@ -20,10 +20,9 @@ let renderer: CliRenderer | null = null;
 let keyboardHandler: ((key: any) => void) | null = null;
 let keyLegendDisplay: TextRenderable | null = null;
 let statusDisplay: TextRenderable | null = null;
-let lastActionText: string =
-  "Welcome to InputRenderable demo! Use Tab to navigate between fields.";
-let lastActionColor: string = "#FFCC00";
-let activeInputIndex: number = 0;
+let lastActionText = "Welcome to InputRenderable demo! Use Tab to navigate between fields.";
+let lastActionColor = "#FFCC00";
+let activeInputIndex = 0;
 
 const inputElements: InputRenderable[] = [];
 
@@ -355,8 +354,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   });
   inputElements.length = 0;
 
-  const parentContainer =
-    rendererInstance.root.getRenderable("parent-container");
+  const parentContainer = rendererInstance.root.getRenderable("parent-container");
   if (parentContainer) rendererInstance.root.remove(parentContainer);
 
   nameInput = null;

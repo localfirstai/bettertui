@@ -1,59 +1,63 @@
-import { type CliRenderer, TextRenderable, createCliRenderer } from "@bettertui/core"
+import { type CliRenderer, TextRenderable, createCliRenderer } from "@bettertui/core";
 
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-const DEMO_TEXT_ID = "terminal-title-demo-text"
+const DEMO_TEXT_ID = "terminal-title-demo-text";
 
-let text: TextRenderable | null = null
-let titleTimers: ReturnType<typeof setTimeout>[] = []
+let text: TextRenderable | null = null;
+let titleTimers: ReturnType<typeof setTimeout>[] = [];
 
 function clearTitleTimers(): void {
   for (const timer of titleTimers) {
-    clearTimeout(timer)
+    clearTimeout(timer);
   }
-  titleTimers = []
+  titleTimers = [];
 }
 
 function resetStandaloneState(): void {
-  clearTitleTimers()
-  text = null
+  clearTitleTimers();
+  text = null;
 }
 
 function setDemoTitle(renderer: CliRenderer, title: string): void {
-  renderer.setTerminalTitle(title)
+  renderer.setTerminalTitle(title);
 
   if (text) {
-    text.content = [`Current terminal title: ${title}`, "", "Press Escape to return to the examples menu."].join("\n")
+    text.content = [
+      `Current terminal title: ${title}`,
+      "",
+      "Press Escape to return to the examples menu.",
+    ].join("\n");
   }
 
-  renderer.requestRender()
+  renderer.requestRender();
 }
 
 export function run(renderer: CliRenderer): void {
-  renderer.start()
-  clearTitleTimers()
+  renderer.start();
+  clearTitleTimers();
 
-  text?.destroy()
+  text?.destroy();
   text = new TextRenderable(renderer, {
     id: DEMO_TEXT_ID,
     content: "Cycling terminal titles...",
     margin: 2,
-  })
-  renderer.root.add(text)
+  });
+  renderer.root.add(text);
 
-  setDemoTitle(renderer, "OpenTUI Test")
-  titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Terminal Title Demo"), 2000))
-  titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Success!"), 4000))
+  setDemoTitle(renderer, "OpenTUI Test");
+  titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Terminal Title Demo"), 2000));
+  titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Success!"), 4000));
 }
 
 export function destroy(_renderer: CliRenderer): void {
-  clearTitleTimers()
-  text?.destroy()
-  text = null
+  clearTitleTimers();
+  text?.destroy();
+  text = null;
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({ exitOnCtrlC: true, onDestroy: resetStandaloneState })
-  setupCommonDemoKeys(renderer)
-  run(renderer)
+  const renderer = await createCliRenderer({ exitOnCtrlC: true, onDestroy: resetStandaloneState });
+  setupCommonDemoKeys(renderer);
+  run(renderer);
 }

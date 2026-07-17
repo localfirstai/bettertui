@@ -1,22 +1,22 @@
 #!/usr/bin/env bun
 
 import {
-  bg,
-  bold,
   BoxRenderable,
   CliRenderEvents,
   type CliRenderer,
-  createCliRenderer,
-  decodePasteBytes,
-  fg,
   type KeyEvent,
   type PasteEvent,
   ScrollBoxRenderable,
   type Selection,
+  TextRenderable,
+  TextareaRenderable,
+  bg,
+  bold,
+  createCliRenderer,
+  decodePasteBytes,
+  fg,
   stripAnsiSequences,
   t,
-  TextareaRenderable,
-  TextRenderable,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -73,8 +73,7 @@ const FIXTURES: readonly Fixture[] = [
     name: "Unicode + LF",
     short: "Unicode + LF",
     purpose: "UTF-8 decoding and multiline insertion",
-    payload:
-      "OpenTUI clipboard round-trip\nUnicode: 世界 café 🚀\nLine endings: LF\nEnd",
+    payload: "OpenTUI clipboard round-trip\nUnicode: 世界 café 🚀\nLine endings: LF\nEnd",
   },
   {
     name: "CRLF + lone CR",
@@ -131,9 +130,7 @@ function normalizeNewlines(value: string): string {
 
 function escapedPreview(value: string, maxLength = 64): string {
   const escaped = JSON.stringify(value);
-  return escaped.length <= maxLength
-    ? escaped
-    : `${escaped.slice(0, maxLength - 3)}...`;
+  return escaped.length <= maxLength ? escaped : `${escaped.slice(0, maxLength - 3)}...`;
 }
 
 function byteLength(value: string): number {
@@ -142,9 +139,7 @@ function byteLength(value: string): number {
 
 function hexPrefix(bytes: Uint8Array, count = 12): string {
   const slice = bytes.slice(0, count);
-  const hex = Array.from(slice, (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const hex = Array.from(slice, (byte) => byte.toString(16).padStart(2, "0")).join("");
   return bytes.length > count ? `${hex}…` : hex;
 }
 
@@ -183,21 +178,14 @@ function metadataLabel(event: PasteEvent): string {
 }
 
 function statusChunk(status: Status) {
-  return fg(TONE_COLOR[status.tone])(
-    `${TONE_ICON[status.tone]} ${status.text}`,
-  );
+  return fg(TONE_COLOR[status.tone])(`${TONE_ICON[status.tone]} ${status.text}`);
 }
 
 function label(text: string) {
   return fg(P.muted)(text.padEnd(12));
 }
 
-function addLog(
-  renderer: CliRenderer,
-  tone: Tone,
-  message: string,
-  detail?: string,
-): void {
+function addLog(renderer: CliRenderer, tone: Tone, message: string, detail?: string): void {
   if (!logList) return;
 
   const row = new TextRenderable(renderer, {
@@ -234,9 +222,7 @@ function updateTabs(): void {
   if (!tabsText) return;
   const chunks = FIXTURES.map((entry, index) => {
     const text = ` ${index + 1} ${entry.short} `;
-    return index === selectedFixture
-      ? bg(P.cyan)(fg(P.bg)(bold(text)))
-      : fg(P.muted)(text);
+    return index === selectedFixture ? bg(P.cyan)(fg(P.bg)(bold(text))) : fg(P.muted)(text);
   });
   tabsText.content = t`${chunks[0]!} ${chunks[1]!} ${chunks[2]!} ${chunks[3]!}`;
 }
@@ -273,12 +259,7 @@ function resetTest(renderer: CliRenderer, reason: string): void {
   addLog(renderer, "muted", `${reason} — editor cleared, checks idle`);
 }
 
-function panel(
-  renderer: CliRenderer,
-  id: string,
-  title: string,
-  height?: number,
-): BoxRenderable {
+function panel(renderer: CliRenderer, id: string, title: string, height?: number): BoxRenderable {
   return new BoxRenderable(renderer, {
     id,
     title: ` ${title} `,
@@ -319,12 +300,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     content: "",
   });
 
-  const fixturePanel = panel(
-    renderer,
-    "clipboard-paste-fixture-panel",
-    "Fixture",
-    5,
-  );
+  const fixturePanel = panel(renderer, "clipboard-paste-fixture-panel", "Fixture", 5);
   fixturePanel.marginBottom = 1;
   fixtureText = new TextRenderable(renderer, {
     id: "clipboard-paste-fixture",
@@ -361,12 +337,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
   });
   editorPanel.add(editor);
 
-  const checksPanel = panel(
-    renderer,
-    "clipboard-paste-checks-panel",
-    "Checks",
-    7,
-  );
+  const checksPanel = panel(renderer, "clipboard-paste-checks-panel", "Checks", 7);
   checksPanel.marginBottom = 1;
   checksText = new TextRenderable(renderer, {
     id: "clipboard-paste-checks",
@@ -425,8 +396,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     const current = fixture();
     const pasted = decodePasteBytes(event.bytes);
     const exact = pasted === current.payload;
-    const normalized =
-      normalizeNewlines(pasted) === normalizeNewlines(current.payload);
+    const normalized = normalizeNewlines(pasted) === normalizeNewlines(current.payload);
     pasteStatus = exact
       ? {
           tone: "ok",
@@ -608,10 +578,8 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
 export function destroy(renderer: CliRenderer): void {
   if (pasteHandler) renderer.keyInput.off("paste", pasteHandler);
   if (keypressHandler) renderer.keyInput.off("keypress", keypressHandler);
-  if (capabilityHandler)
-    renderer.off(CliRenderEvents.CAPABILITIES, capabilityHandler);
-  if (selectionHandler)
-    renderer.off(CliRenderEvents.SELECTION, selectionHandler);
+  if (capabilityHandler) renderer.off(CliRenderEvents.CAPABILITIES, capabilityHandler);
+  if (selectionHandler) renderer.off(CliRenderEvents.SELECTION, selectionHandler);
   renderer.clearSelection();
   container?.destroyRecursively();
   container = null;

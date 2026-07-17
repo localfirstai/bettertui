@@ -1,41 +1,45 @@
 import {
+  type BorderStyle,
   BoxRenderable,
-  CliRenderer,
+  type CliRenderer,
+  type KeyEvent,
   ScrollBoxRenderable,
-  TextTableRenderable,
   TextRenderable,
+  TextTableRenderable,
   bold,
   createCliRenderer,
   fg,
   t,
-  type BorderStyle,
-  type KeyEvent,
-} from "@bettertui/core"
-import type { Selection } from "@bettertui/core"
-import type { TextTableColumnFitter, TextTableColumnWidthMode, TextTableContent } from "@bettertui/core"
-import type { TextChunk } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+} from "@bettertui/core";
+import type { Selection } from "@bettertui/core";
+import type {
+  TextTableColumnFitter,
+  TextTableColumnWidthMode,
+  TextTableContent,
+} from "@bettertui/core";
+import type { TextChunk } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let container: BoxRenderable | null = null
-let primaryTable: TextTableRenderable | null = null
-let unicodeTable: TextTableRenderable | null = null
-let controlsText: TextRenderable | null = null
-let tableAreaScrollBox: ScrollBoxRenderable | null = null
-let selectionStatusText: TextRenderable | null = null
-let selectionMetaText: TextRenderable | null = null
-let selectionScrollBox: ScrollBoxRenderable | null = null
-let keyboardHandler: ((key: KeyEvent) => void) | null = null
-let selectionHandler: ((selection: Selection) => void) | null = null
+let container: BoxRenderable | null = null;
+let primaryTable: TextTableRenderable | null = null;
+let unicodeTable: TextTableRenderable | null = null;
+let controlsText: TextRenderable | null = null;
+let tableAreaScrollBox: ScrollBoxRenderable | null = null;
+let selectionStatusText: TextRenderable | null = null;
+let selectionMetaText: TextRenderable | null = null;
+let selectionScrollBox: ScrollBoxRenderable | null = null;
+let keyboardHandler: ((key: KeyEvent) => void) | null = null;
+let selectionHandler: ((selection: Selection) => void) | null = null;
 
-let contentIndex = 0
-let wrapIndex = 1
-let borderIndex = 0
-let columnWidthModeIndex = 0
-let columnFitterIndex = 0
-let cellPaddingIndex = 0
-let borderEnabled = true
-let outerBorderEnabled = true
-let showBordersEnabled = true
+let contentIndex = 0;
+let wrapIndex = 1;
+let borderIndex = 0;
+let columnWidthModeIndex = 0;
+let columnFitterIndex = 0;
+let cellPaddingIndex = 0;
+let borderEnabled = true;
+let outerBorderEnabled = true;
+let showBordersEnabled = true;
 
 const PALETTE = {
   bg: "#000000",
@@ -50,13 +54,13 @@ const PALETTE = {
   flame: "#ffffff",
   eye: "#00d4aa",
   border: "#2a2a2a",
-} as const
+} as const;
 
-const WRAP_MODES: Array<"none" | "word" | "char"> = ["none", "word", "char"]
-const BORDER_STYLES: BorderStyle[] = ["single", "rounded", "double", "heavy"]
-const COLUMN_WIDTH_MODES: TextTableColumnWidthMode[] = ["content", "full"]
-const COLUMN_FITTERS: TextTableColumnFitter[] = ["proportional", "balanced"]
-const CELL_PADDING_VALUES: number[] = [0, 1, 2]
+const WRAP_MODES: Array<"none" | "word" | "char"> = ["none", "word", "char"];
+const BORDER_STYLES: BorderStyle[] = ["single", "rounded", "double", "heavy"];
+const COLUMN_WIDTH_MODES: TextTableColumnWidthMode[] = ["content", "full"];
+const COLUMN_FITTERS: TextTableColumnFitter[] = ["proportional", "balanced"];
+const CELL_PADDING_VALUES: number[] = [0, 1, 2];
 
 function cell(text: string): TextChunk[] {
   return [
@@ -64,7 +68,7 @@ function cell(text: string): TextChunk[] {
       __isChunk: true,
       text,
     },
-  ]
+  ];
 }
 
 const primaryContentSets: TextTableContent[] = [
@@ -103,7 +107,9 @@ const primaryContentSets: TextTableContent[] = [
       ),
     ],
     [
-      cell("Snapshot pass for table rendering in content mode and full mode with heavy and double border combinations"),
+      cell(
+        "Snapshot pass for table rendering in content mode and full mode with heavy and double border combinations",
+      ),
       cell("qa automation and visual diff triage group"),
       cell(
         "today pending final baseline updates for oversized fixtures that intentionally stress wrapping behavior on high-resolution terminals",
@@ -123,10 +129,12 @@ const primaryContentSets: TextTableContent[] = [
         "Performance sweep of wrapping algorithm under large datasets to confirm stable frame times during rapid key toggling",
       ),
       cell("runtime performance task force"),
-      cell("scheduled after review, with benchmark runs on laptop and desktop terminals at 200-plus column widths"),
+      cell(
+        "scheduled after review, with benchmark runs on laptop and desktop terminals at 200-plus column widths",
+      ),
     ],
   ],
-]
+];
 
 const unicodeContentSets: TextTableContent[] = [
   [
@@ -168,79 +176,79 @@ const unicodeContentSets: TextTableContent[] = [
       ),
     ],
   ],
-]
+];
 
 function currentWrapMode(): "none" | "word" | "char" {
-  return WRAP_MODES[wrapIndex] ?? "word"
+  return WRAP_MODES[wrapIndex] ?? "word";
 }
 
 function currentBorderStyle(): BorderStyle {
-  return BORDER_STYLES[borderIndex] ?? "single"
+  return BORDER_STYLES[borderIndex] ?? "single";
 }
 
 function currentColumnWidthMode(): TextTableColumnWidthMode {
-  return COLUMN_WIDTH_MODES[columnWidthModeIndex] ?? "content"
+  return COLUMN_WIDTH_MODES[columnWidthModeIndex] ?? "content";
 }
 
 function currentColumnFitter(): TextTableColumnFitter {
-  return COLUMN_FITTERS[columnFitterIndex] ?? "proportional"
+  return COLUMN_FITTERS[columnFitterIndex] ?? "proportional";
 }
 
 function currentCellPadding(): number {
-  return CELL_PADDING_VALUES[cellPaddingIndex] ?? 0
+  return CELL_PADDING_VALUES[cellPaddingIndex] ?? 0;
 }
 
 function updateControlsText(): void {
-  if (!controlsText) return
+  if (!controlsText) return;
 
   controlsText.content = t`${bold("TextTable Demo")}  ${fg(PALETTE.muted)("1/2/3 dataset • W wrap • B style • M width • F fitter • P padding • N inner • O outer • H draw • drag to select • C clear")}
-Current: dataset ${fg(PALETTE.soft)(String(contentIndex + 1))} | wrap ${fg(PALETTE.rose)(currentWrapMode())} | style ${fg(PALETTE.ember)(currentBorderStyle())} | width ${fg(PALETTE.eye)(currentColumnWidthMode())} | fitter ${fg(PALETTE.rose)(currentColumnFitter())} | padding ${fg(PALETTE.soft)(String(currentCellPadding()))} | inner ${fg(PALETTE.rose)(borderEnabled ? "on" : "off")} | outer ${fg(PALETTE.ember)(outerBorderEnabled ? "on" : "off")} | draw ${fg(PALETTE.eye)(showBordersEnabled ? "on" : "off")}`
+Current: dataset ${fg(PALETTE.soft)(String(contentIndex + 1))} | wrap ${fg(PALETTE.rose)(currentWrapMode())} | style ${fg(PALETTE.ember)(currentBorderStyle())} | width ${fg(PALETTE.eye)(currentColumnWidthMode())} | fitter ${fg(PALETTE.rose)(currentColumnFitter())} | padding ${fg(PALETTE.soft)(String(currentCellPadding()))} | inner ${fg(PALETTE.rose)(borderEnabled ? "on" : "off")} | outer ${fg(PALETTE.ember)(outerBorderEnabled ? "on" : "off")} | draw ${fg(PALETTE.eye)(showBordersEnabled ? "on" : "off")}`;
 }
 
 function clearSelectionStatus(message: string): void {
-  if (!selectionMetaText || !selectionStatusText) return
-  selectionMetaText.content = message
-  selectionStatusText.content = ""
+  if (!selectionMetaText || !selectionStatusText) return;
+  selectionMetaText.content = message;
+  selectionStatusText.content = "";
   if (selectionScrollBox) {
-    selectionScrollBox.scrollTop = 0
+    selectionScrollBox.scrollTop = 0;
   }
 }
 
 function applyTableState(): void {
-  if (!primaryTable || !unicodeTable) return
+  if (!primaryTable || !unicodeTable) return;
 
-  primaryTable.content = primaryContentSets[contentIndex] ?? primaryContentSets[0]
-  unicodeTable.content = unicodeContentSets[contentIndex] ?? unicodeContentSets[0]
+  primaryTable.content = primaryContentSets[contentIndex] ?? primaryContentSets[0];
+  unicodeTable.content = unicodeContentSets[contentIndex] ?? unicodeContentSets[0];
 
-  primaryTable.wrapMode = currentWrapMode()
-  unicodeTable.wrapMode = currentWrapMode()
+  primaryTable.wrapMode = currentWrapMode();
+  unicodeTable.wrapMode = currentWrapMode();
 
-  primaryTable.borderStyle = currentBorderStyle()
-  unicodeTable.borderStyle = currentBorderStyle()
+  primaryTable.borderStyle = currentBorderStyle();
+  unicodeTable.borderStyle = currentBorderStyle();
 
-  primaryTable.columnWidthMode = currentColumnWidthMode()
-  unicodeTable.columnWidthMode = currentColumnWidthMode()
+  primaryTable.columnWidthMode = currentColumnWidthMode();
+  unicodeTable.columnWidthMode = currentColumnWidthMode();
 
-  primaryTable.columnFitter = currentColumnFitter()
-  unicodeTable.columnFitter = currentColumnFitter()
+  primaryTable.columnFitter = currentColumnFitter();
+  unicodeTable.columnFitter = currentColumnFitter();
 
-  primaryTable.cellPadding = currentCellPadding()
-  unicodeTable.cellPadding = currentCellPadding()
+  primaryTable.cellPadding = currentCellPadding();
+  unicodeTable.cellPadding = currentCellPadding();
 
-  primaryTable.border = borderEnabled
-  unicodeTable.border = borderEnabled
+  primaryTable.border = borderEnabled;
+  unicodeTable.border = borderEnabled;
 
-  primaryTable.outerBorder = outerBorderEnabled
-  unicodeTable.outerBorder = outerBorderEnabled
+  primaryTable.outerBorder = outerBorderEnabled;
+  unicodeTable.outerBorder = outerBorderEnabled;
 
-  primaryTable.showBorders = showBordersEnabled
-  unicodeTable.showBorders = showBordersEnabled
+  primaryTable.showBorders = showBordersEnabled;
+  unicodeTable.showBorders = showBordersEnabled;
 
-  updateControlsText()
+  updateControlsText();
 }
 
 export function run(renderer: CliRenderer): void {
-  renderer.setBackgroundColor("transparent")
+  renderer.setBackgroundColor("transparent");
 
   container = new BoxRenderable(renderer, {
     id: "text-table-demo-container",
@@ -250,8 +258,8 @@ export function run(renderer: CliRenderer): void {
     padding: 1,
     gap: 1,
     backgroundColor: "transparent",
-  })
-  renderer.root.add(container)
+  });
+  renderer.root.add(container);
 
   controlsText = new TextRenderable(renderer, {
     id: "text-table-demo-controls",
@@ -259,7 +267,7 @@ export function run(renderer: CliRenderer): void {
     fg: PALETTE.text,
     wrapMode: "word",
     selectable: false,
-  })
+  });
 
   tableAreaScrollBox = new ScrollBoxRenderable(renderer, {
     id: "text-table-demo-table-area-scroll",
@@ -274,14 +282,14 @@ export function run(renderer: CliRenderer): void {
       flexDirection: "column",
       gap: 1,
     },
-  })
+  });
 
   const primaryLabel = new TextRenderable(renderer, {
     id: "text-table-demo-primary-label",
     content: t`${bold("Operational Table")}`,
     fg: PALETTE.ember,
     selectable: false,
-  })
+  });
 
   primaryTable = new TextTableRenderable(renderer, {
     id: "text-table-demo-primary",
@@ -293,14 +301,14 @@ export function run(renderer: CliRenderer): void {
     fg: PALETTE.text,
     bg: PALETTE.tablePrimaryBg,
     content: primaryContentSets[contentIndex] ?? primaryContentSets[0],
-  })
+  });
 
   const unicodeLabel = new TextRenderable(renderer, {
     id: "text-table-demo-unicode-label",
     content: t`${bold("Unicode/CJK/Emoji Table")}`,
     fg: PALETTE.rose,
     selectable: false,
-  })
+  });
 
   unicodeTable = new TextTableRenderable(renderer, {
     id: "text-table-demo-unicode",
@@ -312,7 +320,7 @@ export function run(renderer: CliRenderer): void {
     fg: PALETTE.text,
     bg: PALETTE.tableUnicodeBg,
     content: unicodeContentSets[contentIndex] ?? unicodeContentSets[0],
-  })
+  });
 
   const selectionBox = new BoxRenderable(renderer, {
     id: "text-table-demo-selection-box",
@@ -327,14 +335,14 @@ export function run(renderer: CliRenderer): void {
     titleAlignment: "left",
     padding: 1,
     backgroundColor: PALETTE.panel,
-  })
+  });
 
   selectionMetaText = new TextRenderable(renderer, {
     id: "text-table-demo-selection-meta",
     content: "No selection yet",
     fg: PALETTE.eye,
     selectable: false,
-  })
+  });
 
   selectionScrollBox = new ScrollBoxRenderable(renderer, {
     id: "text-table-demo-selection-scroll",
@@ -345,10 +353,10 @@ export function run(renderer: CliRenderer): void {
     scrollX: false,
     border: false,
     backgroundColor: "transparent",
-  })
+  });
 
-  tableAreaScrollBox.verticalScrollbarOptions = { visible: false }
-  selectionScrollBox.verticalScrollbarOptions = { visible: false }
+  tableAreaScrollBox.verticalScrollbarOptions = { visible: false };
+  selectionScrollBox.verticalScrollbarOptions = { visible: false };
 
   selectionStatusText = new TextRenderable(renderer, {
     id: "text-table-demo-selection-text",
@@ -357,138 +365,138 @@ export function run(renderer: CliRenderer): void {
     wrapMode: "word",
     width: "100%",
     selectable: false,
-  })
+  });
 
-  selectionBox.add(selectionMetaText)
-  selectionBox.add(selectionScrollBox)
-  selectionScrollBox.add(selectionStatusText)
+  selectionBox.add(selectionMetaText);
+  selectionBox.add(selectionScrollBox);
+  selectionScrollBox.add(selectionStatusText);
 
-  tableAreaScrollBox.add(controlsText)
-  tableAreaScrollBox.add(primaryLabel)
-  tableAreaScrollBox.add(primaryTable)
-  tableAreaScrollBox.add(unicodeLabel)
-  tableAreaScrollBox.add(unicodeTable)
+  tableAreaScrollBox.add(controlsText);
+  tableAreaScrollBox.add(primaryLabel);
+  tableAreaScrollBox.add(primaryTable);
+  tableAreaScrollBox.add(unicodeLabel);
+  tableAreaScrollBox.add(unicodeTable);
 
-  container.add(tableAreaScrollBox)
-  container.add(selectionBox)
+  container.add(tableAreaScrollBox);
+  container.add(selectionBox);
 
   selectionHandler = (selection: Selection) => {
-    if (!selectionMetaText || !selectionStatusText) return
+    if (!selectionMetaText || !selectionStatusText) return;
 
-    const selectedText = selection.getSelectedText()
+    const selectedText = selection.getSelectedText();
     if (!selectedText) {
-      clearSelectionStatus("Empty selection")
-      return
+      clearSelectionStatus("Empty selection");
+      return;
     }
 
-    const lines = selectedText.split("\n").length
-    const chars = selectedText.length
-    selectionMetaText.content = `Selected ${lines} line${lines === 1 ? "" : "s"} (${chars} chars)`
-    selectionStatusText.content = selectedText
+    const lines = selectedText.split("\n").length;
+    const chars = selectedText.length;
+    selectionMetaText.content = `Selected ${lines} line${lines === 1 ? "" : "s"} (${chars} chars)`;
+    selectionStatusText.content = selectedText;
     if (selectionScrollBox) {
-      selectionScrollBox.scrollTop = 0
+      selectionScrollBox.scrollTop = 0;
     }
-  }
+  };
 
-  renderer.on("selection", selectionHandler)
+  renderer.on("selection", selectionHandler);
 
   keyboardHandler = (key: KeyEvent) => {
-    if (key.ctrl || key.meta) return
+    if (key.ctrl || key.meta) return;
 
     if (key.name === "1" || key.name === "2" || key.name === "3") {
-      contentIndex = Number(key.name) - 1
-      applyTableState()
-      return
+      contentIndex = Number(key.name) - 1;
+      applyTableState();
+      return;
     }
 
     if (key.name === "w") {
-      wrapIndex = (wrapIndex + 1) % WRAP_MODES.length
-      applyTableState()
-      return
+      wrapIndex = (wrapIndex + 1) % WRAP_MODES.length;
+      applyTableState();
+      return;
     }
 
     if (key.name === "b") {
-      borderIndex = (borderIndex + 1) % BORDER_STYLES.length
-      applyTableState()
-      return
+      borderIndex = (borderIndex + 1) % BORDER_STYLES.length;
+      applyTableState();
+      return;
     }
 
     if (key.name === "m") {
-      columnWidthModeIndex = (columnWidthModeIndex + 1) % COLUMN_WIDTH_MODES.length
-      applyTableState()
-      return
+      columnWidthModeIndex = (columnWidthModeIndex + 1) % COLUMN_WIDTH_MODES.length;
+      applyTableState();
+      return;
     }
 
     if (key.name === "f") {
-      columnFitterIndex = (columnFitterIndex + 1) % COLUMN_FITTERS.length
-      applyTableState()
-      return
+      columnFitterIndex = (columnFitterIndex + 1) % COLUMN_FITTERS.length;
+      applyTableState();
+      return;
     }
 
     if (key.name === "p") {
-      cellPaddingIndex = (cellPaddingIndex + 1) % CELL_PADDING_VALUES.length
-      applyTableState()
-      return
+      cellPaddingIndex = (cellPaddingIndex + 1) % CELL_PADDING_VALUES.length;
+      applyTableState();
+      return;
     }
 
     if (key.name === "n") {
-      borderEnabled = !borderEnabled
-      applyTableState()
-      return
+      borderEnabled = !borderEnabled;
+      applyTableState();
+      return;
     }
 
     if (key.name === "o") {
-      outerBorderEnabled = !outerBorderEnabled
-      applyTableState()
-      return
+      outerBorderEnabled = !outerBorderEnabled;
+      applyTableState();
+      return;
     }
 
     if (key.name === "h") {
-      showBordersEnabled = !showBordersEnabled
-      applyTableState()
-      return
+      showBordersEnabled = !showBordersEnabled;
+      applyTableState();
+      return;
     }
 
     if (key.name === "c") {
-      renderer.clearSelection()
-      clearSelectionStatus("Selection cleared")
+      renderer.clearSelection();
+      clearSelectionStatus("Selection cleared");
     }
-  }
+  };
 
-  renderer.keyInput.on("keypress", keyboardHandler)
-  applyTableState()
+  renderer.keyInput.on("keypress", keyboardHandler);
+  applyTableState();
 }
 
 export function destroy(renderer: CliRenderer): void {
   if (keyboardHandler) {
-    renderer.keyInput.off("keypress", keyboardHandler)
-    keyboardHandler = null
+    renderer.keyInput.off("keypress", keyboardHandler);
+    keyboardHandler = null;
   }
 
   if (selectionHandler) {
-    renderer.off("selection", selectionHandler)
-    selectionHandler = null
+    renderer.off("selection", selectionHandler);
+    selectionHandler = null;
   }
 
-  container?.destroyRecursively()
-  container = null
-  primaryTable = null
-  unicodeTable = null
-  controlsText = null
-  tableAreaScrollBox = null
-  selectionStatusText = null
-  selectionMetaText = null
-  selectionScrollBox = null
+  container?.destroyRecursively();
+  container = null;
+  primaryTable = null;
+  unicodeTable = null;
+  controlsText = null;
+  tableAreaScrollBox = null;
+  selectionStatusText = null;
+  selectionMetaText = null;
+  selectionScrollBox = null;
 
-  contentIndex = 0
-  wrapIndex = 1
-  borderIndex = 0
-  columnWidthModeIndex = 0
-  columnFitterIndex = 0
-  cellPaddingIndex = 0
-  borderEnabled = true
-  outerBorderEnabled = true
-  showBordersEnabled = true
+  contentIndex = 0;
+  wrapIndex = 1;
+  borderIndex = 0;
+  columnWidthModeIndex = 0;
+  columnFitterIndex = 0;
+  cellPaddingIndex = 0;
+  borderEnabled = true;
+  outerBorderEnabled = true;
+  showBordersEnabled = true;
 }
 
 if (import.meta.main) {
@@ -496,8 +504,8 @@ if (import.meta.main) {
     exitOnCtrlC: true,
     targetFps: 60,
     enableMouseMovement: true,
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

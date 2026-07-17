@@ -11,13 +11,13 @@
 //   6. Press Escape to return to menu, Ctrl+C to exit
 
 import {
-  type CliRenderer,
-  createCliRenderer,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
+  type MouseEvent,
   RGBA,
   TextAttributes,
-  type MouseEvent,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -88,9 +88,7 @@ function updateDisplay() {
     focusStatus.content = focused
       ? "Focus: YES  (terminal modes active)"
       : "Focus: NO   (modes may be stripped by terminal)";
-    focusStatus.fg = focused
-      ? RGBA.fromInts(126, 231, 135)
-      : RGBA.fromInts(255, 100, 100);
+    focusStatus.fg = focused ? RGBA.fromInts(126, 231, 135) : RGBA.fromInts(255, 100, 100);
   }
   if (mouseStatus) {
     mouseStatus.content = `Mouse: (${mouseX}, ${mouseY}) | Events: ${mouseEvents}`;

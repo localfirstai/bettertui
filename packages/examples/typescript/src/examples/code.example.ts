@@ -1,16 +1,16 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  CodeRenderable,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
+  CodeRenderable,
+  LineNumberRenderable,
   type ParsedKey,
   ScrollBoxRenderable,
-  LineNumberRenderable,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { parseColor } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Code examples to cycle through
 const examples = [
@@ -811,8 +811,7 @@ Other:
       if (key.name === "right") {
         currentExampleIndex = (currentExampleIndex + 1) % examples.length;
       } else {
-        currentExampleIndex =
-          (currentExampleIndex - 1 + examples.length) % examples.length;
+        currentExampleIndex = (currentExampleIndex - 1 + examples.length) % examples.length;
       }
 
       updateCodeTitle();
@@ -833,8 +832,7 @@ Other:
     } else if (key.name === "l" && !key.ctrl && !key.meta) {
       // Toggle line numbers
       if (codeWithLineNumbers) {
-        codeWithLineNumbers.showLineNumbers =
-          !codeWithLineNumbers.showLineNumbers;
+        codeWithLineNumbers.showLineNumbers = !codeWithLineNumbers.showLineNumbers;
       }
       updateTimingText();
     } else if (key.name === "t" && !key.ctrl && !key.meta) {

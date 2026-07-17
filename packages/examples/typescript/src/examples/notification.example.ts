@@ -1,20 +1,20 @@
 import {
   BoxRenderable,
   CliRenderEvents,
-  ScrollBoxRenderable,
-  TextAttributes,
-  TextRenderable,
-  createCliRenderer,
-  t,
-  bold,
-  fg,
   type CliRenderer,
   type KeyEvent,
   type MouseEvent,
   type RenderContext,
+  ScrollBoxRenderable,
   type TerminalCapabilities,
-} from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  TextAttributes,
+  TextRenderable,
+  bold,
+  createCliRenderer,
+  fg,
+  t,
+} from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const P = {
   bg: "#08111f",
@@ -30,16 +30,16 @@ const P = {
   rose: "#fb7185",
   amber: "#fbbf24",
   blue: "#60a5fa",
-} as const
+} as const;
 
 interface NotificationAction {
-  key: string
-  title: string
-  subtitle: string
-  accent: string
-  message: string
-  notificationTitle?: string
-  delayed?: boolean
+  key: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  message: string;
+  notificationTitle?: string;
+  delayed?: boolean;
 }
 
 const actions: NotificationAction[] = [
@@ -75,26 +75,30 @@ const actions: NotificationAction[] = [
     notificationTitle: "Action required",
     message: "A task is waiting for your input in the terminal.",
   },
-]
+];
 
-let renderer: CliRenderer | null = null
-let root: BoxRenderable | null = null
-let statusText: TextRenderable | null = null
-let logList: ScrollBoxRenderable | null = null
-let keyHandler: ((key: KeyEvent) => void) | null = null
-let capabilityHandler: ((capabilities: TerminalCapabilities) => void) | null = null
-let pendingTimer: ReturnType<typeof setTimeout> | null = null
-let cards: NotificationCard[] = []
-let logRows: TextRenderable[] = []
-let logEntryId = 0
-const MAX_LOG_ENTRIES = 80
+let renderer: CliRenderer | null = null;
+let root: BoxRenderable | null = null;
+let statusText: TextRenderable | null = null;
+let logList: ScrollBoxRenderable | null = null;
+let keyHandler: ((key: KeyEvent) => void) | null = null;
+let capabilityHandler: ((capabilities: TerminalCapabilities) => void) | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+let cards: NotificationCard[] = [];
+let logRows: TextRenderable[] = [];
+let logEntryId = 0;
+const MAX_LOG_ENTRIES = 80;
 
 class NotificationCard extends BoxRenderable {
-  private hovered = false
-  private readonly action: NotificationAction
-  private readonly actionHandler: (action: NotificationAction) => void
+  private hovered = false;
+  private readonly action: NotificationAction;
+  private readonly actionHandler: (action: NotificationAction) => void;
 
-  constructor(ctx: RenderContext, action: NotificationAction, actionHandler: (action: NotificationAction) => void) {
+  constructor(
+    ctx: RenderContext,
+    action: NotificationAction,
+    actionHandler: (action: NotificationAction) => void,
+  ) {
     super(ctx, {
       id: `notification-card-${action.key}`,
       width: "auto",
@@ -112,10 +116,10 @@ class NotificationCard extends BoxRenderable {
       title: ` ${action.key} `,
       titleAlignment: "left",
       zIndex: 5,
-    })
+    });
 
-    this.action = action
-    this.actionHandler = actionHandler
+    this.action = action;
+    this.actionHandler = actionHandler;
 
     this.add(
       new TextRenderable(ctx, {
@@ -125,7 +129,7 @@ class NotificationCard extends BoxRenderable {
         flexGrow: 0,
         flexShrink: 0,
       }),
-    )
+    );
     this.add(
       new TextRenderable(ctx, {
         id: `notification-card-${action.key}-subtitle`,
@@ -134,7 +138,7 @@ class NotificationCard extends BoxRenderable {
         flexGrow: 0,
         flexShrink: 0,
       }),
-    )
+    );
     this.add(
       new TextRenderable(ctx, {
         id: `notification-card-${action.key}-spacer`,
@@ -142,7 +146,7 @@ class NotificationCard extends BoxRenderable {
         flexGrow: 1,
         flexShrink: 1,
       }),
-    )
+    );
     this.add(
       new TextRenderable(ctx, {
         id: `notification-card-${action.key}-cta`,
@@ -151,101 +155,104 @@ class NotificationCard extends BoxRenderable {
         flexGrow: 0,
         flexShrink: 0,
       }),
-    )
+    );
   }
 
   protected onMouseEvent(event: MouseEvent): void {
     if (event.type === "over") {
-      this.hovered = true
-      this.backgroundColor = "#172845"
-      this.borderColor = this.action.accent
+      this.hovered = true;
+      this.backgroundColor = "#172845";
+      this.borderColor = this.action.accent;
     } else if (event.type === "out") {
-      this.hovered = false
-      this.backgroundColor = P.panelAlt
-      this.borderColor = P.border
+      this.hovered = false;
+      this.backgroundColor = P.panelAlt;
+      this.borderColor = P.border;
     } else if (event.type === "down") {
-      this.backgroundColor = "#20365b"
-      this.actionHandler(this.action)
-      event.stopPropagation()
+      this.backgroundColor = "#20365b";
+      this.actionHandler(this.action);
+      event.stopPropagation();
     } else if (event.type === "up") {
-      this.backgroundColor = this.hovered ? "#172845" : P.panelAlt
-      event.stopPropagation()
+      this.backgroundColor = this.hovered ? "#172845" : P.panelAlt;
+      event.stopPropagation();
     }
   }
 }
 
 function notificationSupported(): boolean {
-  return renderer?.capabilities?.notifications === true
+  return renderer?.capabilities?.notifications === true;
 }
 
 function addLog(message: string, color = P.muted): void {
-  if (!renderer || !logList) return
+  if (!renderer || !logList) return;
 
-  const stamp = new Date().toLocaleTimeString()
+  const stamp = new Date().toLocaleTimeString();
   const row = new TextRenderable(renderer, {
     id: `notification-demo-log-entry-${logEntryId++}`,
     content: `${stamp}  ${message}`,
     fg: color,
     flexGrow: 0,
     flexShrink: 0,
-  })
+  });
 
-  logList.add(row)
-  logRows.push(row)
+  logList.add(row);
+  logRows.push(row);
 
   while (logRows.length > MAX_LOG_ENTRIES) {
-    const oldRow = logRows.shift()
-    oldRow?.destroyRecursively()
+    const oldRow = logRows.shift();
+    oldRow?.destroyRecursively();
   }
 }
 
 function updateStatus(): void {
-  if (!renderer || !statusText) return
+  if (!renderer || !statusText) return;
 
-  const caps = renderer.capabilities
-  const terminalName = caps?.terminal?.name || "detecting"
-  const terminalVersion = caps?.terminal?.version ? ` ${caps.terminal.version}` : ""
-  const supported = notificationSupported()
-  const status = supported ? fg(P.lime)("enabled") : fg(P.rose)("not detected")
+  const caps = renderer.capabilities;
+  const terminalName = caps?.terminal?.name || "detecting";
+  const terminalVersion = caps?.terminal?.version ? ` ${caps.terminal.version}` : "";
+  const supported = notificationSupported();
+  const status = supported ? fg(P.lime)("enabled") : fg(P.rose)("not detected");
   const transport =
     caps?.multiplexer === "tmux"
       ? fg(P.amber)("tmux passthrough")
       : caps?.multiplexer === "zellij"
         ? fg(P.amber)("Zellij OSC 99")
-        : fg(P.blue)("direct OSC")
+        : fg(P.blue)("direct OSC");
 
   statusText.content = t`${bold(fg(P.text)("Terminal notifications"))}: ${status}
-${fg(P.muted)("Terminal:")} ${fg(P.cyan)(`${terminalName}${terminalVersion}`)}  ${fg(P.muted)("Transport:")} ${transport}`
+${fg(P.muted)("Terminal:")} ${fg(P.cyan)(`${terminalName}${terminalVersion}`)}  ${fg(P.muted)("Transport:")} ${transport}`;
 }
 
 function triggerAction(action: NotificationAction): void {
-  if (!renderer) return
+  if (!renderer) return;
 
   if (action.delayed) {
-    if (pendingTimer) clearTimeout(pendingTimer)
-    addLog("Started simulated background task...", action.accent)
+    if (pendingTimer) clearTimeout(pendingTimer);
+    addLog("Started simulated background task...", action.accent);
     pendingTimer = setTimeout(() => {
-      pendingTimer = null
-      sendNotification(action)
-    }, 1400)
-    return
+      pendingTimer = null;
+      sendNotification(action);
+    }, 1400);
+    return;
   }
 
-  sendNotification(action)
+  sendNotification(action);
 }
 
 function sendNotification(action: NotificationAction): void {
-  if (!renderer) return
+  if (!renderer) return;
 
-  const ok = renderer.triggerNotification(action.message, action.notificationTitle)
-  addLog(ok ? `Sent: ${action.title}` : `Not sent: ${action.title} (unsupported)`, ok ? action.accent : P.rose)
-  updateStatus()
+  const ok = renderer.triggerNotification(action.message, action.notificationTitle);
+  addLog(
+    ok ? `Sent: ${action.title}` : `Not sent: ${action.title} (unsupported)`,
+    ok ? action.accent : P.rose,
+  );
+  updateStatus();
 }
 
 function buildLayout(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance
-  renderer.start()
-  renderer.setBackgroundColor(P.bg)
+  renderer = rendererInstance;
+  renderer.start();
+  renderer.setBackgroundColor(P.bg);
 
   root = new BoxRenderable(renderer, {
     id: "notification-demo-root",
@@ -255,8 +262,8 @@ function buildLayout(rendererInstance: CliRenderer): void {
     flexDirection: "column",
     backgroundColor: P.bg,
     padding: 1,
-  })
-  renderer.root.add(root)
+  });
+  renderer.root.add(root);
 
   const header = new BoxRenderable(renderer, {
     id: "notification-demo-header",
@@ -273,7 +280,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     borderColor: P.borderHot,
     title: " OSC Notifications ",
     titleAlignment: "center",
-  })
+  });
 
   header.add(
     new TextRenderable(renderer, {
@@ -283,7 +290,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
       flexGrow: 0,
       flexShrink: 0,
     }),
-  )
+  );
 
   statusText = new TextRenderable(renderer, {
     id: "notification-demo-status",
@@ -291,10 +298,10 @@ function buildLayout(rendererInstance: CliRenderer): void {
     fg: P.text,
     flexGrow: 0,
     flexShrink: 0,
-  })
-  header.add(statusText)
+  });
+  header.add(statusText);
 
-  root.add(header)
+  root.add(header);
 
   const body = new BoxRenderable(renderer, {
     id: "notification-demo-body",
@@ -304,8 +311,8 @@ function buildLayout(rendererInstance: CliRenderer): void {
     flexShrink: 1,
     flexDirection: "column",
     backgroundColor: P.bg,
-  })
-  root.add(body)
+  });
+  root.add(body);
 
   const cardsRow = new BoxRenderable(renderer, {
     id: "notification-demo-cards",
@@ -317,11 +324,11 @@ function buildLayout(rendererInstance: CliRenderer): void {
     gap: 1,
     marginBottom: 1,
     backgroundColor: P.bg,
-  })
-  body.add(cardsRow)
+  });
+  body.add(cardsRow);
 
-  cards = actions.map((action) => new NotificationCard(renderer!, action, triggerAction))
-  for (const card of cards) cardsRow.add(card)
+  cards = actions.map((action) => new NotificationCard(renderer!, action, triggerAction));
+  for (const card of cards) cardsRow.add(card);
 
   const footer = new BoxRenderable(renderer, {
     id: "notification-demo-footer",
@@ -332,8 +339,8 @@ function buildLayout(rendererInstance: CliRenderer): void {
     flexDirection: "row",
     gap: 1,
     backgroundColor: P.bg,
-  })
-  body.add(footer)
+  });
+  body.add(footer);
 
   const controls = new BoxRenderable(renderer, {
     id: "notification-demo-controls",
@@ -348,7 +355,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     borderStyle: "rounded",
     borderColor: P.border,
     title: " Controls ",
-  })
+  });
   controls.add(
     new TextRenderable(renderer, {
       id: "notification-demo-controls-text",
@@ -359,8 +366,8 @@ ${fg(P.rose)("4")} Needs attention
 ${fg(P.muted)("Mouse")} Click any card
 ${fg(P.muted)("Esc")} Return to menu`,
     }),
-  )
-  footer.add(controls)
+  );
+  footer.add(controls);
 
   const log = new BoxRenderable(renderer, {
     id: "notification-demo-log",
@@ -375,7 +382,7 @@ ${fg(P.muted)("Esc")} Return to menu`,
     borderStyle: "rounded",
     borderColor: P.border,
     title: " Activity ",
-  })
+  });
   logList = new ScrollBoxRenderable(renderer, {
     id: "notification-demo-log-list",
     stickyScroll: true,
@@ -403,58 +410,58 @@ ${fg(P.muted)("Esc")} Return to menu`,
     width: "auto",
     flexGrow: 1,
     flexShrink: 1,
-  })
-  log.add(logList)
-  footer.add(log)
+  });
+  log.add(logList);
+  footer.add(log);
 
-  updateStatus()
-  addLog("Demo ready. Press 1-4 or click a card.", P.cyan)
+  updateStatus();
+  addLog("Demo ready. Press 1-4 or click a card.", P.cyan);
 }
 
 export function run(rendererInstance: CliRenderer): void {
-  buildLayout(rendererInstance)
+  buildLayout(rendererInstance);
 
-  capabilityHandler = () => updateStatus()
-  rendererInstance.on(CliRenderEvents.CAPABILITIES, capabilityHandler)
+  capabilityHandler = () => updateStatus();
+  rendererInstance.on(CliRenderEvents.CAPABILITIES, capabilityHandler);
 
   keyHandler = (key: KeyEvent) => {
-    const action = actions.find((candidate) => candidate.key === key.name)
+    const action = actions.find((candidate) => candidate.key === key.name);
     if (action) {
-      triggerAction(action)
+      triggerAction(action);
     }
-  }
-  rendererInstance.keyInput.on("keypress", keyHandler)
+  };
+  rendererInstance.keyInput.on("keypress", keyHandler);
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
   if (pendingTimer) {
-    clearTimeout(pendingTimer)
-    pendingTimer = null
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
   }
   if (keyHandler) {
-    rendererInstance.keyInput.off("keypress", keyHandler)
-    keyHandler = null
+    rendererInstance.keyInput.off("keypress", keyHandler);
+    keyHandler = null;
   }
   if (capabilityHandler) {
-    rendererInstance.off(CliRenderEvents.CAPABILITIES, capabilityHandler)
-    capabilityHandler = null
+    rendererInstance.off(CliRenderEvents.CAPABILITIES, capabilityHandler);
+    capabilityHandler = null;
   }
   if (root) {
-    rendererInstance.root.remove(root)
-    root.destroyRecursively()
+    rendererInstance.root.remove(root);
+    root.destroyRecursively();
   }
 
-  root = null
-  statusText = null
-  logList = null
-  renderer = null
-  cards = []
-  logRows = []
-  logEntryId = 0
+  root = null;
+  statusText = null;
+  logList = null;
+  renderer = null;
+  cards = [];
+  logRows = [];
+  logEntryId = 0;
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({ exitOnCtrlC: true })
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  const renderer = await createCliRenderer({ exitOnCtrlC: true });
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

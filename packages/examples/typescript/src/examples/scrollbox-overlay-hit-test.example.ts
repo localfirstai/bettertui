@@ -2,49 +2,49 @@
 import {
   BoxRenderable,
   type CliRenderer,
-  createCliRenderer,
-  TextRenderable,
-  t,
-  fg,
-  bold,
   type KeyEvent,
-} from "@bettertui/core"
-import { ScrollBoxRenderable } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  TextRenderable,
+  bold,
+  createCliRenderer,
+  fg,
+  t,
+} from "@bettertui/core";
+import { ScrollBoxRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let overlay: BoxRenderable | null = null
-let dialog: BoxRenderable | null = null
-let scrollBox: ScrollBoxRenderable | null = null
-let baseStatusText: TextRenderable | null = null
-let dialogStatusText: TextRenderable | null = null
-let keyHandler: ((key: KeyEvent) => void) | null = null
-let dialogOpen = false
-let lastClick = "none"
+let overlay: BoxRenderable | null = null;
+let dialog: BoxRenderable | null = null;
+let scrollBox: ScrollBoxRenderable | null = null;
+let baseStatusText: TextRenderable | null = null;
+let dialogStatusText: TextRenderable | null = null;
+let keyHandler: ((key: KeyEvent) => void) | null = null;
+let dialogOpen = false;
+let lastClick = "none";
 
 const updateStatus = () => {
-  const content = t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`
+  const content = t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`;
   if (baseStatusText) {
-    baseStatusText.content = content
+    baseStatusText.content = content;
   }
   if (dialogStatusText) {
-    dialogStatusText.content = content
+    dialogStatusText.content = content;
   }
-}
+};
 
 const setDialogVisible = (visible: boolean) => {
-  dialogOpen = visible
+  dialogOpen = visible;
   if (overlay) {
-    overlay.visible = visible
+    overlay.visible = visible;
   }
-}
+};
 
 const setLastClick = (value: string) => {
-  lastClick = value
-  updateStatus()
-}
+  lastClick = value;
+  updateStatus();
+};
 
 export function run(renderer: CliRenderer): void {
-  renderer.setBackgroundColor("#1a1b26")
+  renderer.setBackgroundColor("#1a1b26");
 
   const app = new BoxRenderable(renderer, {
     id: "app",
@@ -55,23 +55,23 @@ export function run(renderer: CliRenderer): void {
     paddingLeft: 1,
     paddingTop: 1,
     gap: 1,
-  })
-  renderer.root.add(app)
+  });
+  renderer.root.add(app);
 
   const title = new TextRenderable(renderer, {
     content: t`${bold(fg("#7aa2f7")("Scrollbox Overlay Hit Test"))}`,
-  })
-  app.add(title)
+  });
+  app.add(title);
 
   const instructions = new TextRenderable(renderer, {
     content: t`${fg("#c0caf5")("Press 'd' to toggle dialog, 'esc' to close, 'q' to quit")}`,
-  })
-  app.add(instructions)
+  });
+  app.add(instructions);
 
   baseStatusText = new TextRenderable(renderer, {
     content: t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`,
-  })
-  app.add(baseStatusText)
+  });
+  app.add(baseStatusText);
 
   overlay = new BoxRenderable(renderer, {
     id: "overlay",
@@ -84,11 +84,11 @@ export function run(renderer: CliRenderer): void {
     zIndex: 100,
     visible: false,
     onMouseDown: () => {
-      setLastClick("overlay (red)")
-      setDialogVisible(false)
+      setLastClick("overlay (red)");
+      setDialogVisible(false);
     },
-  })
-  renderer.root.add(overlay)
+  });
+  renderer.root.add(overlay);
 
   dialog = new BoxRenderable(renderer, {
     id: "dialog",
@@ -104,34 +104,34 @@ export function run(renderer: CliRenderer): void {
     border: true,
     borderColor: "#7aa2f7",
     onMouseDown: (event) => {
-      setLastClick("dialog (blue)")
-      event.stopPropagation()
+      setLastClick("dialog (blue)");
+      event.stopPropagation();
     },
-  })
-  overlay.add(dialog)
+  });
+  overlay.add(dialog);
 
   const dialogTitle = new TextRenderable(renderer, {
     content: t`${bold(fg("#7aa2f7")("Dialog"))} ${fg("#565f89")("- scroll, then click outside the list")}`,
-  })
-  dialog.add(dialogTitle)
+  });
+  dialog.add(dialogTitle);
 
   const dialogHint = new TextRenderable(renderer, {
     content: t`${fg("#c0caf5")("Click the red overlay above/below the dialog to close it")}`,
-  })
-  dialog.add(dialogHint)
+  });
+  dialog.add(dialogHint);
 
   dialogStatusText = new TextRenderable(renderer, {
     content: t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`,
-  })
-  dialog.add(dialogStatusText)
+  });
+  dialog.add(dialogStatusText);
 
   scrollBox = new ScrollBoxRenderable(renderer, {
     id: "scrollbox",
     flexGrow: 1,
     scrollY: true,
     onMouseDown: (event) => {
-      setLastClick("scrollbox (yellow)")
-      event.stopPropagation()
+      setLastClick("scrollbox (yellow)");
+      event.stopPropagation();
     },
     rootOptions: {
       backgroundColor: "#eab308",
@@ -141,8 +141,8 @@ export function run(renderer: CliRenderer): void {
     contentOptions: {
       backgroundColor: "#111827",
     },
-  })
-  dialog.add(scrollBox)
+  });
+  dialog.add(scrollBox);
 
   for (let i = 0; i < 50; i++) {
     const item = new BoxRenderable(renderer, {
@@ -151,56 +151,56 @@ export function run(renderer: CliRenderer): void {
       height: 1,
       paddingLeft: 1,
       backgroundColor: i % 2 === 0 ? "#1f2937" : "#111827",
-    })
+    });
     const text = new TextRenderable(renderer, {
       content: t`${fg("#cbd5f5")(`Line ${i + 1}: This is some content`)}`,
-    })
-    item.add(text)
-    scrollBox.add(item)
+    });
+    item.add(text);
+    scrollBox.add(item);
   }
 
   keyHandler = (key: KeyEvent) => {
     if (key.name === "q") {
-      renderer.destroy()
-      process.exit(0)
+      renderer.destroy();
+      process.exit(0);
     }
     if (key.name === "d") {
-      setDialogVisible(!dialogOpen)
+      setDialogVisible(!dialogOpen);
     }
     if (key.name === "escape") {
-      setDialogVisible(false)
+      setDialogVisible(false);
     }
-  }
-  renderer.keyInput.on("keypress", keyHandler)
+  };
+  renderer.keyInput.on("keypress", keyHandler);
 
-  updateStatus()
+  updateStatus();
 }
 
 export function destroy(renderer: CliRenderer): void {
   if (keyHandler) {
-    renderer.keyInput.off("keypress", keyHandler)
+    renderer.keyInput.off("keypress", keyHandler);
   }
 
   renderer.root.getChildren().forEach((child) => {
-    renderer.root.remove(child)
-    child.destroyRecursively()
-  })
+    renderer.root.remove(child);
+    child.destroyRecursively();
+  });
 
-  overlay = null
-  dialog = null
-  scrollBox = null
-  baseStatusText = null
-  dialogStatusText = null
-  keyHandler = null
-  dialogOpen = false
-  lastClick = "none"
+  overlay = null;
+  dialog = null;
+  scrollBox = null;
+  baseStatusText = null;
+  dialogStatusText = null;
+  keyHandler = null;
+  dialogOpen = false;
+  lastClick = "none";
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

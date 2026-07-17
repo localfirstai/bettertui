@@ -1,25 +1,25 @@
-import { resolveRenderLib, type CliRenderer, type KeyEvent } from "@bettertui/core"
+import { type CliRenderer, type KeyEvent, resolveRenderLib } from "@bettertui/core";
 
 export function setupCommonDemoKeys(renderer: CliRenderer) {
   renderer.keyInput.on("keypress", (key: KeyEvent) => {
     if (key.name === "`" || key.name === '"') {
-      renderer.console.toggle()
+      renderer.console.toggle();
     } else if (key.name === ".") {
-      renderer.toggleDebugOverlay()
+      renderer.toggleDebugOverlay();
     } else if (key.name === "g" && key.ctrl) {
-      console.log("dumping hit grid")
-      renderer.dumpHitGrid()
+      console.log("dumping hit grid");
+      renderer.dumpHitGrid();
     } else if (key.name === "l" && key.shift) {
-      renderer.start()
+      renderer.start();
     } else if (key.name === "s" && key.shift) {
-      renderer.stop()
+      renderer.stop();
     } else if (key.name === "a" && key.shift) {
-      renderer.auto()
+      renderer.auto();
     } else if (key.name === "a" && key.ctrl) {
-      const lib = resolveRenderLib()
-      const rawBytes = lib.getArenaAllocatedBytes()
-      const formattedBytes = `${(rawBytes / 1024 / 1024).toFixed(2)} MB`
-      console.log("arena allocated bytes:", formattedBytes)
+      const lib = resolveRenderLib();
+      const rawBytes = lib.getArenaAllocatedBytes();
+      const formattedBytes = `${(rawBytes / 1024 / 1024).toFixed(2)} MB`;
+      console.log("arena allocated bytes:", formattedBytes);
     }
-  })
+  });
 }

@@ -1,15 +1,15 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
+  BoxRenderable,
+  type CliRenderer,
+  type MouseEvent,
+  type OptimizedBuffer,
   RGBA,
+  type RenderContext,
   TextAttributes,
   TextRenderable,
-  BoxRenderable,
-  type MouseEvent,
-  OptimizedBuffer,
-  type RenderContext,
+  createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -45,12 +45,7 @@ class ConsoleButton extends BoxRenderable {
     label: string,
     logType: string,
   ) {
-    const borderColor = RGBA.fromValues(
-      color.r * 1.3,
-      color.g * 1.3,
-      color.b * 1.3,
-      1.0,
-    );
+    const borderColor = RGBA.fromValues(color.r * 1.3, color.g * 1.3, color.b * 1.3, 1.0);
 
     super(ctx, {
       id,
@@ -70,18 +65,8 @@ class ConsoleButton extends BoxRenderable {
 
     this.logType = logType;
     this.originalBg = color;
-    this.hoverBg = RGBA.fromValues(
-      color.r * 1.2,
-      color.g * 1.2,
-      color.b * 1.2,
-      color.a,
-    );
-    this.pressBg = RGBA.fromValues(
-      color.r * 0.8,
-      color.g * 0.8,
-      color.b * 0.8,
-      color.a,
-    );
+    this.hoverBg = RGBA.fromValues(color.r * 1.2, color.g * 1.2, color.b * 1.2, color.a);
+    this.pressBg = RGBA.fromValues(color.r * 0.8, color.g * 0.8, color.b * 0.8, color.a);
   }
 
   protected renderSelf(buffer: OptimizedBuffer): void {
@@ -103,20 +88,8 @@ class ConsoleButton extends BoxRenderable {
       const centerX = this.x + Math.floor(this.width / 2);
       const centerY = this.y + Math.floor(this.height / 2);
 
-      buffer.setCell(
-        centerX - 1,
-        centerY,
-        "✦",
-        sparkleColor,
-        this.backgroundColor,
-      );
-      buffer.setCell(
-        centerX + 1,
-        centerY,
-        "✦",
-        sparkleColor,
-        this.backgroundColor,
-      );
+      buffer.setCell(centerX - 1, centerY, "✦", sparkleColor, this.backgroundColor);
+      buffer.setCell(centerX + 1, centerY, "✦", sparkleColor, this.backgroundColor);
     }
   }
 
@@ -209,9 +182,7 @@ class ConsoleButton extends BoxRenderable {
 export function run(renderer: CliRenderer): void {
   renderer.start();
 
-  renderer.console.keyBindings = [
-    { name: "y", ctrl: true, action: "copy-selection" },
-  ];
+  renderer.console.keyBindings = [{ name: "y", ctrl: true, action: "copy-selection" }];
   renderer.console.onCopySelection = (text) => {
     // Use OSC 52 escape sequence for clipboard - works over SSH and on all platforms
     // The terminal emulator handles the clipboard operation locally
@@ -221,9 +192,7 @@ export function run(renderer: CliRenderer): void {
         `Copied to clipboard: "${text.substring(0, 50)}${text.length > 50 ? "..." : ""}"`,
       );
     } else {
-      console.warn(
-        "Clipboard copy failed - OSC 52 not supported or stdout is not a TTY",
-      );
+      console.warn("Clipboard copy failed - OSC 52 not supported or stdout is not a TTY");
     }
   };
 
@@ -365,9 +334,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(decorText2);
 
-  console.log(
-    "Console Demo initialized! Click the buttons above to test different log levels.",
-  );
+  console.log("Console Demo initialized! Click the buttons above to test different log levels.");
 }
 
 export function destroy(renderer: CliRenderer): void {

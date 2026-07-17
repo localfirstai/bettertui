@@ -1,21 +1,21 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
+  Box,
+  BoxRenderable,
+  type CliRenderer,
+  type MouseEvent,
   RGBA,
   TextAttributes,
   TextRenderable,
-  BoxRenderable,
-  type MouseEvent,
-  t,
-  bold,
-  red,
-  green,
   blue,
+  bold,
+  createCliRenderer,
   fg,
+  green,
   parseColor,
-  Box,
+  red,
+  t,
 } from "@bettertui/core";
 import type { BoxOptions } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -41,20 +41,14 @@ function LiveButton(options: BoxOptions & { label: string }) {
     Math.min(1.0, base.b * 1.4),
     base.a,
   );
-  const pressBg = RGBA.fromValues(
-    base.r * 0.6,
-    base.g * 0.6,
-    base.b * 0.6,
-    base.a,
-  );
+  const pressBg = RGBA.fromValues(base.r * 0.6, base.g * 0.6, base.b * 0.6, base.a);
 
   return Box({
     ...options,
     renderAfter(buffer, deltaTime) {
       const textColor = RGBA.fromValues(1, 1, 1, 1);
       const centerY = this.y + Math.floor(this.height / 2);
-      const startX =
-        this.x + Math.floor((this.width - options.label.length) / 2);
+      const startX = this.x + Math.floor((this.width - options.label.length) / 2);
 
       buffer.drawText(options.label, startX, centerY, textColor);
     },
@@ -97,9 +91,7 @@ function updateRendererState(renderer: CliRenderer): void {
 
     const liveIndicators = ["▘", "▝", "▗", "▖"];
     const liveIndicator =
-      liveCount > 0
-        ? liveIndicators[animationCounter % liveIndicators.length]
-        : " ";
+      liveCount > 0 ? liveIndicators[animationCounter % liveIndicators.length] : " ";
     const styledContent = t`${bold("Renderer State:")} ${running ? green(bold("RUNNING")) : red(bold("STOPPED"))} | ${bold("Live Requests:")} ${liveCount > 0 ? green(bold(liveCount.toString())) : fg("#666")(liveCount.toString())} ${liveCount > 0 ? fg("#00FFFF")(liveIndicator) : ""} | ${bold("Control State:")} ${controlState === "live" ? green(bold(controlState.toUpperCase())) : blue(bold(controlState.toUpperCase()))} | ${bold("Frame:")} ${fg("#888")(frameCounter.toString())}`;
 
     rendererStateText.content = styledContent;
@@ -464,9 +456,7 @@ export function run(renderer: CliRenderer): void {
   updateRendererState(renderer);
   updateRenderableState();
 
-  console.log(
-    "Live State Demo initialized! Test the automatic live state management system.",
-  );
+  console.log("Live State Demo initialized! Test the automatic live state management system.");
 }
 
 export function destroy(renderer: CliRenderer): void {

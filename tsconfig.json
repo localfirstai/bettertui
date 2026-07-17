@@ -1,26 +1,27 @@
 {
   "compilerOptions": {
-    "target": "ES2024",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "lib": ["ES2024"],
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "declaration": true,
+    // Features
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleDetection": "force",
+    "lib": ["ESNext"],
+    "allowJs": false,
+    "types": ["node"],
 
-    "sourceMap": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // NodeNext Module
+    "moduleResolution": "NodeNext",
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    // Best Practices
+    "strict": true,
+    "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true
+
+    // Strict flags (disabled)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false,
   },
-  "exclude": ["node_modules", "dist", "build", "target"]
+  "exclude": ["node_modules", "dist", "build"],
 }

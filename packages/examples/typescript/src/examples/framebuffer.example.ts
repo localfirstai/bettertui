@@ -1,14 +1,14 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
+  ASCIIFontRenderable,
+  BoxRenderable,
+  type CliRenderer,
+  FrameBufferRenderable,
   RGBA,
   TextAttributes,
   TextRenderable,
-  FrameBufferRenderable,
-  BoxRenderable,
-  ASCIIFontRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -262,69 +262,15 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(ballObj);
   const ballBuffer = ballObj.frameBuffer;
 
-  ballBuffer.drawText(
-    " ",
-    0,
-    0,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    1,
-    0,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    2,
-    0,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    0,
-    1,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    "O",
-    1,
-    1,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    2,
-    1,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    0,
-    2,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    1,
-    2,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
-  ballBuffer.drawText(
-    " ",
-    2,
-    2,
-    RGBA.fromInts(255, 255, 255),
-    RGBA.fromInts(200, 50, 50),
-  );
+  ballBuffer.drawText(" ", 0, 0, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 1, 0, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 2, 0, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 0, 1, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText("O", 1, 1, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 2, 1, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 0, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 1, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
+  ballBuffer.drawText(" ", 2, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
 
   const resizableObj = new FrameBufferRenderable(renderer, {
     id: "resizable-box",
@@ -343,37 +289,17 @@ export function run(renderer: CliRenderer): void {
 
     for (let x = 0; x < resizableBuffer.width; x++) {
       resizableBuffer.drawText("=", x, 0, RGBA.fromInts(255, 200, 100));
-      resizableBuffer.drawText(
-        "=",
-        x,
-        resizableBuffer.height - 1,
-        RGBA.fromInts(255, 200, 100),
-      );
+      resizableBuffer.drawText("=", x, resizableBuffer.height - 1, RGBA.fromInts(255, 200, 100));
     }
 
     for (let y = 0; y < resizableBuffer.height; y++) {
       resizableBuffer.drawText("|", 0, y, RGBA.fromInts(255, 200, 100));
-      resizableBuffer.drawText(
-        "|",
-        resizableBuffer.width - 1,
-        y,
-        RGBA.fromInts(255, 200, 100),
-      );
+      resizableBuffer.drawText("|", resizableBuffer.width - 1, y, RGBA.fromInts(255, 200, 100));
     }
 
     resizableBuffer.drawText("+", 0, 0, RGBA.fromInts(255, 230, 150));
-    resizableBuffer.drawText(
-      "+",
-      resizableBuffer.width - 1,
-      0,
-      RGBA.fromInts(255, 230, 150),
-    );
-    resizableBuffer.drawText(
-      "+",
-      0,
-      resizableBuffer.height - 1,
-      RGBA.fromInts(255, 230, 150),
-    );
+    resizableBuffer.drawText("+", resizableBuffer.width - 1, 0, RGBA.fromInts(255, 230, 150));
+    resizableBuffer.drawText("+", 0, resizableBuffer.height - 1, RGBA.fromInts(255, 230, 150));
     resizableBuffer.drawText(
       "+",
       resizableBuffer.width - 1,
@@ -702,35 +628,15 @@ export function run(renderer: CliRenderer): void {
       // Draw border
       for (let x = 0; x < emojiBuffer.width; x++) {
         emojiBuffer.drawText("=", x, 0, RGBA.fromInts(255, 200, 100));
-        emojiBuffer.drawText(
-          "=",
-          x,
-          emojiBuffer.height - 1,
-          RGBA.fromInts(255, 200, 100),
-        );
+        emojiBuffer.drawText("=", x, emojiBuffer.height - 1, RGBA.fromInts(255, 200, 100));
       }
       for (let y = 0; y < emojiBuffer.height; y++) {
         emojiBuffer.drawText("|", 0, y, RGBA.fromInts(255, 200, 100));
-        emojiBuffer.drawText(
-          "|",
-          emojiBuffer.width - 1,
-          y,
-          RGBA.fromInts(255, 200, 100),
-        );
+        emojiBuffer.drawText("|", emojiBuffer.width - 1, y, RGBA.fromInts(255, 200, 100));
       }
       emojiBuffer.drawText("+", 0, 0, RGBA.fromInts(255, 230, 150));
-      emojiBuffer.drawText(
-        "+",
-        emojiBuffer.width - 1,
-        0,
-        RGBA.fromInts(255, 230, 150),
-      );
-      emojiBuffer.drawText(
-        "+",
-        0,
-        emojiBuffer.height - 1,
-        RGBA.fromInts(255, 230, 150),
-      );
+      emojiBuffer.drawText("+", emojiBuffer.width - 1, 0, RGBA.fromInts(255, 230, 150));
+      emojiBuffer.drawText("+", 0, emojiBuffer.height - 1, RGBA.fromInts(255, 230, 150));
       emojiBuffer.drawText(
         "+",
         emojiBuffer.width - 1,

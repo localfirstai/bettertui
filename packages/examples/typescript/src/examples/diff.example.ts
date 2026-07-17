@@ -1,14 +1,14 @@
 import {
-  CliRenderer,
-  createCliRenderer,
-  DiffRenderable,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
+  DiffRenderable,
   type ParsedKey,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
-import { parseColor, type RGBA } from "@bettertui/core";
+import { type RGBA, parseColor } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 interface DiffTheme {
   name: string;
@@ -654,9 +654,7 @@ Other:
       currentContentIndex = (currentContentIndex + 1) % contentExamples.length;
       if (diffRenderable) {
         const currentContent = contentExamples[currentContentIndex];
-        diffRenderable.diff = showMalformedDiff
-          ? malformedDiff
-          : currentContent.diff;
+        diffRenderable.diff = showMalformedDiff ? malformedDiff : currentContent.diff;
         diffRenderable.filetype = currentContent.filetype;
       }
       if (titleBox) {

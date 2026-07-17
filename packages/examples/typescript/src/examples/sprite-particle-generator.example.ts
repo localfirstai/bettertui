@@ -1,83 +1,88 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  OptimizedBuffer,
-  RGBA,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
   FrameBufferRenderable,
   type KeyEvent,
-} from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
-import * as THREE from "three"
-import { SpriteAnimator, type TiledSprite, type SpriteDefinition, type AnimationDefinition } from "@bettertui/core"
-import { SpriteResourceManager, type ResourceConfig } from "@bettertui/core"
-import { SpriteParticleGenerator, type ParticleEffectParameters } from "@bettertui/core"
-import { ThreeCliRenderer } from "@bettertui/core"
+  type OptimizedBuffer,
+  RGBA,
+  TextRenderable,
+  createCliRenderer,
+} from "@bettertui/core";
+import {
+  type AnimationDefinition,
+  SpriteAnimator,
+  type SpriteDefinition,
+  type TiledSprite,
+} from "@bettertui/core";
+import { type ResourceConfig, SpriteResourceManager } from "@bettertui/core";
+import { type ParticleEffectParameters, SpriteParticleGenerator } from "@bettertui/core";
+import { ThreeCliRenderer } from "@bettertui/core";
+import * as THREE from "three";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // @ts-ignore
-import heartPath from "../assets/heart.png" with { type: "image/png" }
+import simpleSquarePath from "../assets/forrest_background.png" with { type: "image/png" };
 // @ts-ignore
-import simpleSquarePath from "../assets/forrest_background.png" with { type: "image/png" }
+import heartPath from "../assets/heart.png" with { type: "image/png" };
 // @ts-ignore
-import mainCharRunPath from "../assets/main_char_run_loop.png" with { type: "image/png" }
+import mainCharRunPath from "../assets/main_char_run_loop.png" with { type: "image/png" };
 
-let engine: ThreeCliRenderer | null = null
-let scene: THREE.Scene | null = null
-let framebuffer: OptimizedBuffer | null = null
-let framebufferRenderableRef: FrameBufferRenderable | null = null
-let spriteAnimator: SpriteAnimator | null = null
-let resourceManager: SpriteResourceManager | null = null
-let generators: Record<string, SpriteParticleGenerator> = {}
-let currentGenerator: SpriteParticleGenerator | null = null
-let currentGeneratorKey = "3d-static"
-let backgroundSprite: TiledSprite | null = null
-let configs: Record<string, { name: string; params: ParticleEffectParameters }> = {}
-let inputListener: ((key: KeyEvent) => void) | null = null
-let resizeListener: ((width: number, height: number) => void) | null = null
-let frameCallback: ((deltaTime: number) => Promise<void>) | null = null
-let parentContainer: BoxRenderable | null = null
-let instructionsText: TextRenderable | null = null
-let particleCountText: TextRenderable | null = null
-let configInfoText: TextRenderable | null = null
+let engine: ThreeCliRenderer | null = null;
+let scene: THREE.Scene | null = null;
+let framebuffer: OptimizedBuffer | null = null;
+let framebufferRenderableRef: FrameBufferRenderable | null = null;
+let spriteAnimator: SpriteAnimator | null = null;
+let resourceManager: SpriteResourceManager | null = null;
+let generators: Record<string, SpriteParticleGenerator> = {};
+let currentGenerator: SpriteParticleGenerator | null = null;
+let currentGeneratorKey = "3d-static";
+let backgroundSprite: TiledSprite | null = null;
+let configs: Record<string, { name: string; params: ParticleEffectParameters }> = {};
+let inputListener: ((key: KeyEvent) => void) | null = null;
+let resizeListener: ((width: number, height: number) => void) | null = null;
+let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
+let parentContainer: BoxRenderable | null = null;
+let instructionsText: TextRenderable | null = null;
+let particleCountText: TextRenderable | null = null;
+let configInfoText: TextRenderable | null = null;
 
 export async function run(renderer: CliRenderer): Promise<void> {
-  renderer.start()
-  const initialTermWidth = renderer.terminalWidth
-  const initialTermHeight = renderer.terminalHeight
+  renderer.start();
+  const initialTermWidth = renderer.terminalWidth;
+  const initialTermHeight = renderer.terminalHeight;
 
   parentContainer = new BoxRenderable(renderer, {
     id: "particle-container",
     zIndex: 15,
-  })
-  renderer.root.add(parentContainer)
+  });
+  renderer.root.add(parentContainer);
   const framebufferRenderable = new FrameBufferRenderable(renderer, {
     id: "particle-main",
     width: initialTermWidth,
     height: initialTermHeight,
     zIndex: 10,
-  })
-  renderer.root.add(framebufferRenderable)
-  framebufferRenderableRef = framebufferRenderable
-  framebuffer = framebufferRenderable.frameBuffer
+  });
+  renderer.root.add(framebufferRenderable);
+  framebufferRenderableRef = framebufferRenderable;
+  framebuffer = framebufferRenderable.frameBuffer;
 
   engine = new ThreeCliRenderer(renderer, {
     width: initialTermWidth,
     height: initialTermHeight,
     focalLength: 1,
     backgroundColor: RGBA.fromValues(0.1, 0.1, 0.2, 1.0),
-  })
-  await engine.init()
+  });
+  await engine.init();
 
-  scene = new THREE.Scene()
+  scene = new THREE.Scene();
 
-  const pCamera = new THREE.PerspectiveCamera(75, engine.aspectRatio, 0.1, 1000)
-  pCamera.position.set(0, 0, 3)
-  pCamera.lookAt(0, 0, 0)
-  scene.add(pCamera)
-  engine.setActiveCamera(pCamera)
+  const pCamera = new THREE.PerspectiveCamera(75, engine.aspectRatio, 0.1, 1000);
+  pCamera.position.set(0, 0, 3);
+  pCamera.lookAt(0, 0, 0);
+  scene.add(pCamera);
+  engine.setActiveCamera(pCamera);
 
   instructionsText = new TextRenderable(renderer, {
     id: "particle-instructions",
@@ -88,8 +93,8 @@ export async function run(renderer: CliRenderer): Promise<void> {
     top: 1,
     fg: "#FFFFFF",
     zIndex: 20,
-  })
-  parentContainer.add(instructionsText)
+  });
+  parentContainer.add(instructionsText);
 
   particleCountText = new TextRenderable(renderer, {
     id: "particle-count",
@@ -99,8 +104,8 @@ export async function run(renderer: CliRenderer): Promise<void> {
     top: 2,
     fg: "#FFFFFF",
     zIndex: 20,
-  })
-  parentContainer.add(particleCountText)
+  });
+  parentContainer.add(particleCountText);
 
   configInfoText = new TextRenderable(renderer, {
     id: "particle-config-info",
@@ -110,37 +115,39 @@ export async function run(renderer: CliRenderer): Promise<void> {
     top: 3,
     fg: "#FFFFFF",
     zIndex: 20,
-  })
-  parentContainer.add(configInfoText)
+  });
+  parentContainer.add(configInfoText);
 
-  resourceManager = new SpriteResourceManager(scene)
-  spriteAnimator = new SpriteAnimator(scene)
+  resourceManager = new SpriteResourceManager(scene);
+  spriteAnimator = new SpriteAnimator(scene);
 
   const staticParticleResourceConfig: ResourceConfig = {
     imagePath: heartPath,
     sheetNumFrames: 1,
-  }
+  };
 
   const animatedParticleResourceConfig: ResourceConfig = {
     imagePath: mainCharRunPath,
     sheetNumFrames: 10,
-  }
+  };
 
-  const staticParticleResource = await resourceManager.createResource(staticParticleResourceConfig)
-  const animatedParticleResource = await resourceManager.createResource(animatedParticleResourceConfig)
+  const staticParticleResource = await resourceManager.createResource(staticParticleResourceConfig);
+  const animatedParticleResource = await resourceManager.createResource(
+    animatedParticleResourceConfig,
+  );
 
   const backgroundResourceConfig: ResourceConfig = {
     imagePath: simpleSquarePath,
     sheetNumFrames: 1,
-  }
-  const backgroundResource = await resourceManager.createResource(backgroundResourceConfig)
+  };
+  const backgroundResource = await resourceManager.createResource(backgroundResourceConfig);
   const backgroundAnimDef: AnimationDefinition = {
     resource: backgroundResource,
     animNumFrames: 1,
     animFrameOffset: 0,
     frameDuration: 1000,
     loop: false,
-  }
+  };
   const backgroundSpriteDef: SpriteDefinition = {
     initialAnimation: "idle",
     animations: {
@@ -148,14 +155,14 @@ export async function run(renderer: CliRenderer): Promise<void> {
     },
     scale: 5.0,
     renderOrder: 0,
-  }
+  };
 
-  backgroundSprite = await spriteAnimator.createSprite(backgroundSpriteDef)
+  backgroundSprite = await spriteAnimator.createSprite(backgroundSpriteDef);
   if (backgroundSprite) {
-    backgroundSprite.setPosition(new THREE.Vector3(0, 0, 0))
+    backgroundSprite.setPosition(new THREE.Vector3(0, 0, 0));
   }
 
-  const AUTO_SPAWN_RATE = 30
+  const AUTO_SPAWN_RATE = 30;
 
   configs = {
     "3d-static": {
@@ -252,7 +259,11 @@ export async function run(renderer: CliRenderer): Promise<void> {
         initialVelocityMax: new THREE.Vector3(0.5, 3.5, 0),
         angularVelocityMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
         angularVelocityMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI),
-        gravity: new THREE.Vector3(0, THREE.MathUtils.randFloat(-9.8, 9.8), THREE.MathUtils.randFloat(-2.0, 2.0)),
+        gravity: new THREE.Vector3(
+          0,
+          THREE.MathUtils.randFloat(-9.8, 9.8),
+          THREE.MathUtils.randFloat(-2.0, 2.0),
+        ),
         randomGravityFactorMinMax: new THREE.Vector2(0.8, 1.2),
         scaleOverLifeMinMax: new THREE.Vector2(1.0, 0.1),
         fadeOut: true,
@@ -280,115 +291,117 @@ export async function run(renderer: CliRenderer): Promise<void> {
         fadeOut: true,
       } as ParticleEffectParameters,
     },
-  }
+  };
 
-  generators = {}
+  generators = {};
   for (const [key, config] of Object.entries(configs)) {
-    generators[key] = new SpriteParticleGenerator(scene, config.params)
+    generators[key] = new SpriteParticleGenerator(scene, config.params);
   }
 
-  currentGeneratorKey = "3d-static"
-  currentGenerator = generators[currentGeneratorKey]
-  currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE)
+  currentGeneratorKey = "3d-static";
+  currentGenerator = generators[currentGeneratorKey];
+  currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE);
 
   resizeListener = (newWidth: number, newHeight: number) => {
     if (framebuffer) {
-      framebuffer.resize(newWidth, newHeight)
+      framebuffer.resize(newWidth, newHeight);
     }
     if (engine) {
-      const camera = engine.getActiveCamera()
+      const camera = engine.getActiveCamera();
       if (camera && "aspect" in camera) {
-        ;(camera as THREE.PerspectiveCamera).aspect = newWidth / newHeight
-        ;(camera as THREE.PerspectiveCamera).updateProjectionMatrix()
+        (camera as THREE.PerspectiveCamera).aspect = newWidth / newHeight;
+        (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
       }
     }
-  }
-  renderer.on("resize", resizeListener)
+  };
+  renderer.on("resize", resizeListener);
 
   frameCallback = async (deltaTime: number) => {
     if (spriteAnimator) {
-      spriteAnimator.update(deltaTime)
+      spriteAnimator.update(deltaTime);
     }
 
     for (const generator of Object.values(generators)) {
-      await generator.update(deltaTime)
+      await generator.update(deltaTime);
     }
 
     if (currentGenerator && particleCountText) {
-      particleCountText.content = `Particles: ${currentGenerator.getActiveParticleCount()}`
+      particleCountText.content = `Particles: ${currentGenerator.getActiveParticleCount()}`;
     }
 
     if (engine && scene && framebuffer) {
-      await engine.drawScene(scene, framebuffer, deltaTime)
+      await engine.drawScene(scene, framebuffer, deltaTime);
     }
-  }
-  renderer.setFrameCallback(frameCallback)
+  };
+  renderer.setFrameCallback(frameCallback);
 
   function switchToGenerator(key: string) {
-    if (!generators[key] || !currentGenerator) return
+    if (!generators[key] || !currentGenerator) return;
 
-    const wasAutoSpawning = currentGenerator.hasAutoSpawn()
+    const wasAutoSpawning = currentGenerator.hasAutoSpawn();
 
-    currentGenerator.stopAutoSpawn()
-    currentGeneratorKey = key
-    currentGenerator = generators[key]
+    currentGenerator.stopAutoSpawn();
+    currentGeneratorKey = key;
+    currentGenerator = generators[key];
 
     if (wasAutoSpawning) {
-      currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE)
+      currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE);
     }
 
-    const configName = configs[key as keyof typeof configs].name
-    const isAutoSpawning = currentGenerator.hasAutoSpawn()
-    const status = isAutoSpawning ? "Auto-spawning" : "Idle"
+    const configName = configs[key as keyof typeof configs].name;
+    const isAutoSpawning = currentGenerator.hasAutoSpawn();
+    const status = isAutoSpawning ? "Auto-spawning" : "Idle";
 
     if (configInfoText) {
-      configInfoText.content = `Mode: ${configName} | ${status}`
+      configInfoText.content = `Mode: ${configName} | ${status}`;
     }
 
-    console.log(`Switched to ${configName} generator${wasAutoSpawning ? " (auto-spawn continued)" : ""}`)
+    console.log(
+      `Switched to ${configName} generator${wasAutoSpawning ? " (auto-spawn continued)" : ""}`,
+    );
   }
 
   inputListener = (key: KeyEvent) => {
     if (key.name === "g" && currentGenerator) {
-      console.log("Generating 100 particles (burst)...")
+      console.log("Generating 100 particles (burst)...");
       currentGenerator.spawnParticles(100).then(() => {
-        console.log("Particle burst spawn call completed.")
-      })
+        console.log("Particle burst spawn call completed.");
+      });
     }
 
     if (key.name === "a" && currentGenerator) {
-      console.log("Starting auto-spawn (30 particles/sec)...")
-      currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE)
-      const configName = configs[currentGeneratorKey as keyof typeof configs].name
+      console.log("Starting auto-spawn (30 particles/sec)...");
+      currentGenerator.setAutoSpawn(AUTO_SPAWN_RATE);
+      const configName = configs[currentGeneratorKey as keyof typeof configs].name;
       if (configInfoText) {
-        configInfoText.content = `Mode: ${configName} | Auto-spawning`
+        configInfoText.content = `Mode: ${configName} | Auto-spawning`;
       }
     }
 
     if (key.name === "s" && currentGenerator) {
-      console.log("Stopping auto-spawn...")
-      currentGenerator.stopAutoSpawn()
-      const configName = configs[currentGeneratorKey as keyof typeof configs].name
+      console.log("Stopping auto-spawn...");
+      currentGenerator.stopAutoSpawn();
+      const configName = configs[currentGeneratorKey as keyof typeof configs].name;
       if (configInfoText) {
-        configInfoText.content = `Mode: ${configName} | Idle`
+        configInfoText.content = `Mode: ${configName} | Idle`;
       }
     }
 
     if (key.name === "x" && currentGenerator) {
-      console.log("Clearing all particles...")
-      currentGenerator.dispose()
+      console.log("Clearing all particles...");
+      currentGenerator.dispose();
     }
 
     if (key.name === "1") {
-      switchToGenerator("3d-static")
+      switchToGenerator("3d-static");
     }
 
     if (key.name === "2") {
-      switchToGenerator("2d-static")
+      switchToGenerator("2d-static");
     }
 
     if (key.name === "3") {
-      switchToGenerator("3d-animated")
+      switchToGenerator("3d-animated");
     }
 
     if (key.name === "4") {
@@ -396,87 +409,87 @@ export async function run(renderer: CliRenderer): Promise<void> {
         0,
         THREE.MathUtils.randFloat(-9.8, 9.8),
         THREE.MathUtils.randFloat(-2.0, 2.0),
-      )
+      );
       console.log(
         `Custom gravity: Y=${configs.custom.params.gravity.y.toFixed(1)}, Z=${configs.custom.params.gravity.z.toFixed(1)}`,
-      )
-      switchToGenerator("custom")
+      );
+      switchToGenerator("custom");
     }
 
     if (key.name === "5") {
-      switchToGenerator("2d-animated")
+      switchToGenerator("2d-animated");
     }
-  }
+  };
 
-  renderer.keyInput.on("keypress", inputListener)
+  renderer.keyInput.on("keypress", inputListener);
 }
 
 export function destroy(renderer: CliRenderer): void {
   if (inputListener) {
-    renderer.keyInput.off("keypress", inputListener)
-    inputListener = null
+    renderer.keyInput.off("keypress", inputListener);
+    inputListener = null;
   }
 
   if (resizeListener) {
-    renderer.off("resize", resizeListener)
-    resizeListener = null
+    renderer.off("resize", resizeListener);
+    resizeListener = null;
   }
 
-  renderer.clearFrameCallbacks()
-  frameCallback = null
+  renderer.clearFrameCallbacks();
+  frameCallback = null;
 
   for (const generator of Object.values(generators)) {
-    generator.dispose()
+    generator.dispose();
   }
-  generators = {}
+  generators = {};
 
   if (backgroundSprite) {
-    backgroundSprite = null
+    backgroundSprite = null;
   }
 
   if (spriteAnimator) {
-    spriteAnimator = null
+    spriteAnimator = null;
   }
 
   if (resourceManager) {
-    resourceManager = null
+    resourceManager = null;
   }
 
   if (framebufferRenderableRef) {
-    renderer.root.remove(framebufferRenderableRef)
-    framebufferRenderableRef = null
+    renderer.root.remove(framebufferRenderableRef);
+    framebufferRenderableRef = null;
   }
-  framebuffer = null
+  framebuffer = null;
 
   if (parentContainer) {
-    const particleContainer = renderer.root.getRenderable("particle-container")
-    if (particleContainer) renderer.root.remove(particleContainer)
-    parentContainer = null
+    const particleContainer = renderer.root.getRenderable("particle-container");
+    if (particleContainer) renderer.root.remove(particleContainer);
+    parentContainer = null;
   }
 
-  instructionsText = null
-  particleCountText = null
-  configInfoText = null
+  instructionsText = null;
+  particleCountText = null;
+  configInfoText = null;
 
   if (engine) {
-    engine.destroy()
-    engine = null
+    engine.destroy();
+    engine = null;
   }
 
   if (scene) {
-    scene = null
+    scene = null;
   }
 
-  currentGenerator = null
-  currentGeneratorKey = "3d-static"
-  configs = {}
+  currentGenerator = null;
+  currentGeneratorKey = "3d-static";
+  configs = {};
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
     targetFps: 60,
-  })
-  await run(renderer)
-  setupCommonDemoKeys(renderer)
+  });
+  await run(renderer);
+  setupCommonDemoKeys(renderer);
 }

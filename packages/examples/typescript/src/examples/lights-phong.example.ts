@@ -1,44 +1,35 @@
 #!/usr/bin/env bun
 
 import {
-  CliRenderer,
-  createCliRenderer,
-  RGBA,
   BoxRenderable,
-  TextRenderable,
+  type CliRenderer,
   FrameBufferRenderable,
   type KeyEvent,
+  RGBA,
+  TextRenderable,
+  createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 import { TextureUtils } from "@bettertui/core";
 import {
-  Scene as ThreeScene,
-  Mesh as ThreeMesh,
+  type DataTexture,
   PerspectiveCamera,
-  PointLight as ThreePointLight,
-  SphereGeometry,
   RepeatWrapping,
-  DataTexture,
+  SphereGeometry,
+  Mesh as ThreeMesh,
+  PointLight as ThreePointLight,
+  Scene as ThreeScene,
 } from "three";
-import { MeshPhongNodeMaterial } from "three/webgpu";
-import { lights } from "three/tsl";
-import {
-  color,
-  fog,
-  rangeFogFactor,
-  checker,
-  uv,
-  mix,
-  texture,
-  normalMap,
-} from "three/tsl";
 import { TeapotGeometry } from "three/addons/geometries/TeapotGeometry.js";
+import { lights } from "three/tsl";
+import { checker, color, fog, mix, normalMap, rangeFogFactor, texture, uv } from "three/tsl";
+import { MeshPhongNodeMaterial } from "three/webgpu";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
+import { ThreeCliRenderer } from "@bettertui/core";
 // @ts-ignore
 import normalTexPath from "../assets/Water_2_M_Normal.jpg" with { type: "image/jpeg" };
 // @ts-ignore
 import alphaTexPath from "../assets/roughness_map.jpg" with { type: "image/jpeg" };
-import { ThreeCliRenderer } from "@bettertui/core";
 
 interface PhongDemoState {
   camera: PerspectiveCamera;
@@ -158,20 +149,13 @@ export async function run(renderer: CliRenderer): Promise<void> {
 
   const rightMaterial = new MeshPhongNodeMaterial({ color: 0x555555 });
   rightMaterial.lightsNode = whiteLightsNode;
-  rightMaterial.specularNode = mix(
-    color(0x0000ff),
-    color(0xff0000),
-    checker(uv().mul(5)),
-  );
+  rightMaterial.specularNode = mix(color(0x0000ff), color(0xff0000), checker(uv().mul(5)));
   rightMaterial.shininess = 90;
   const rightObject = new ThreeMesh(geometryTeapot, rightMaterial);
   rightObject.position.x = 3;
   sceneRoot.add(rightObject);
 
-  leftObject.rotation.y =
-    centerObject.rotation.y =
-    rightObject.rotation.y =
-      Math.PI * -0.5;
+  leftObject.rotation.y = centerObject.rotation.y = rightObject.rotation.y = Math.PI * -0.5;
   leftObject.position.y = centerObject.position.y = rightObject.position.y = -1;
 
   engine.setActiveCamera(camera);

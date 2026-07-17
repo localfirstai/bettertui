@@ -1,42 +1,42 @@
 import {
   BoxRenderable,
-  CliRenderer,
+  type CliRenderer,
+  type KeyEvent,
   ScrollBoxRenderable,
+  type SelectOption,
   SelectRenderable,
   SelectRenderableEvents,
   TextAttributes,
   TextRenderable,
   TextareaRenderable,
   createCliRenderer,
-  type KeyEvent,
-  type SelectOption,
-} from "@bettertui/core"
-import { ErrorCorrectionLevel, QRCode, QRCodeRenderable } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+} from "@bettertui/core";
+import { ErrorCorrectionLevel, QRCode, QRCodeRenderable } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-const ROOT_ID = "qrcode-demo-root"
-const DEFAULT_MAX_SCALE = 8
+const ROOT_ID = "qrcode-demo-root";
+const DEFAULT_MAX_SCALE = 8;
 
 interface DemoTheme {
-  name: string
-  background: string
-  panel: string
-  panelAlt: string
-  accent: string
-  accent2: string
-  text: string
-  muted: string
-  inputBg: string
-  inputFocusedBg: string
-  selectionBg: string
-  qrFg: string
-  qrBg: string
-  qrFallback: string
+  name: string;
+  background: string;
+  panel: string;
+  panelAlt: string;
+  accent: string;
+  accent2: string;
+  text: string;
+  muted: string;
+  inputBg: string;
+  inputFocusedBg: string;
+  selectionBg: string;
+  qrFg: string;
+  qrBg: string;
+  qrFallback: string;
 }
 
 interface PresetUrl {
-  label: string
-  url: string
+  label: string;
+  url: string;
 }
 
 const PRESET_URLS: PresetUrl[] = [
@@ -48,7 +48,7 @@ const PRESET_URLS: PresetUrl[] = [
   { label: "Terminal Art", url: "https://en.wikipedia.org/wiki/ANSI_art" },
   { label: "Matrix", url: "https://matrix.org" },
   { label: "TUI Ideas", url: "https://github.com/topics/tui" },
-]
+];
 
 const THEMES: DemoTheme[] = [
   {
@@ -243,14 +243,14 @@ const THEMES: DemoTheme[] = [
     qrBg: "#d6e8ff",
     qrFallback: "#82aaff",
   },
-]
+];
 
 const ERROR_CORRECTION_OPTIONS: SelectOption[] = [
   { name: "L - 7% smallest", description: "", value: ErrorCorrectionLevel.L },
   { name: "M - 15% balanced", description: "", value: ErrorCorrectionLevel.M },
   { name: "Q - 25% durable", description: "", value: ErrorCorrectionLevel.Q },
   { name: "H - 30% strongest", description: "", value: ErrorCorrectionLevel.H },
-]
+];
 
 const SCALE_OPTIONS: SelectOption[] = [
   { name: "Max scale 1", description: "", value: 1 },
@@ -258,44 +258,45 @@ const SCALE_OPTIONS: SelectOption[] = [
   { name: "Max scale 4", description: "", value: 4 },
   { name: "Max scale 8", description: "", value: DEFAULT_MAX_SCALE },
   { name: "Max scale 12", description: "", value: 12 },
-]
+];
 
 const QUIET_ZONE_OPTIONS: SelectOption[] = [
   { name: "Quiet 4 ISO min", description: "", value: 4 },
   { name: "Quiet 5", description: "", value: 5 },
   { name: "Quiet 6", description: "", value: 6 },
   { name: "Quiet 8 wide", description: "", value: 8 },
-]
+];
 
-let renderer: CliRenderer | null = null
-let root: BoxRenderable | null = null
-let inputBox: BoxRenderable | null = null
-let qrArea: BoxRenderable | null = null
-let advancedBox: BoxRenderable | null = null
-let advancedScrollBox: ScrollBoxRenderable | null = null
-let qrCode: QRCodeRenderable | null = null
-let customInput: TextareaRenderable | null = null
-let footerText: TextRenderable | null = null
-let eclSelect: SelectRenderable | null = null
-let scaleSelect: SelectRenderable | null = null
-let quietZoneSelect: SelectRenderable | null = null
-let eclLabel: TextRenderable | null = null
-let scaleLabel: TextRenderable | null = null
-let quietZoneLabel: TextRenderable | null = null
-let currentPresetIndex = 0
-let currentThemeIndex = 0
-let advancedVisible = false
-let currentFocusIndex = 0
-let keyboardHandler: ((key: KeyEvent) => void) | null = null
-const focusableElements: Array<TextareaRenderable | SelectRenderable> = []
-const advancedLabels: Array<{ label: TextRenderable; select: SelectRenderable; content: string }> = []
+let renderer: CliRenderer | null = null;
+let root: BoxRenderable | null = null;
+let inputBox: BoxRenderable | null = null;
+let qrArea: BoxRenderable | null = null;
+let advancedBox: BoxRenderable | null = null;
+let advancedScrollBox: ScrollBoxRenderable | null = null;
+let qrCode: QRCodeRenderable | null = null;
+let customInput: TextareaRenderable | null = null;
+let footerText: TextRenderable | null = null;
+let eclSelect: SelectRenderable | null = null;
+let scaleSelect: SelectRenderable | null = null;
+let quietZoneSelect: SelectRenderable | null = null;
+let eclLabel: TextRenderable | null = null;
+let scaleLabel: TextRenderable | null = null;
+let quietZoneLabel: TextRenderable | null = null;
+let currentPresetIndex = 0;
+let currentThemeIndex = 0;
+let advancedVisible = false;
+let currentFocusIndex = 0;
+let keyboardHandler: ((key: KeyEvent) => void) | null = null;
+const focusableElements: Array<TextareaRenderable | SelectRenderable> = [];
+const advancedLabels: Array<{ label: TextRenderable; select: SelectRenderable; content: string }> =
+  [];
 
 function currentTheme(): DemoTheme {
-  return THEMES[currentThemeIndex]!
+  return THEMES[currentThemeIndex]!;
 }
 
 function activeContent(): string {
-  return customInput?.plainText.trim() || PRESET_URLS[currentPresetIndex]!.url
+  return customInput?.plainText.trim() || PRESET_URLS[currentPresetIndex]!.url;
 }
 
 function createLabel(
@@ -312,9 +313,9 @@ function createLabel(
     marginTop,
     attributes: TextAttributes.BOLD,
     flexShrink: 0,
-  })
-  advancedLabels.push({ label, select, content })
-  return label
+  });
+  advancedLabels.push({ label, select, content });
+  return label;
 }
 
 function createSelect(
@@ -342,201 +343,203 @@ function createSelect(
     showScrollIndicator: false,
     wrapSelection: true,
     flexShrink: 0,
-  })
+  });
 }
 
 function applySelectTheme(select: SelectRenderable | null): void {
-  if (!select) return
-  const theme = currentTheme()
-  select.backgroundColor = theme.panelAlt
-  select.focusedBackgroundColor = theme.inputFocusedBg
-  select.textColor = theme.text
-  select.focusedTextColor = theme.text
-  select.selectedBackgroundColor = theme.selectionBg
-  select.selectedTextColor = theme.qrBg
-  select.descriptionColor = theme.muted
-  select.selectedDescriptionColor = theme.text
+  if (!select) return;
+  const theme = currentTheme();
+  select.backgroundColor = theme.panelAlt;
+  select.focusedBackgroundColor = theme.inputFocusedBg;
+  select.textColor = theme.text;
+  select.focusedTextColor = theme.text;
+  select.selectedBackgroundColor = theme.selectionBg;
+  select.selectedTextColor = theme.qrBg;
+  select.descriptionColor = theme.muted;
+  select.selectedDescriptionColor = theme.text;
 }
 
 function applyTheme(): void {
-  const theme = currentTheme()
+  const theme = currentTheme();
 
-  renderer?.setBackgroundColor(theme.background)
-  if (root) root.backgroundColor = theme.background
-  if (qrArea) qrArea.backgroundColor = theme.panel
+  renderer?.setBackgroundColor(theme.background);
+  if (root) root.backgroundColor = theme.background;
+  if (qrArea) qrArea.backgroundColor = theme.panel;
   if (inputBox) {
-    inputBox.backgroundColor = theme.panel
-    inputBox.borderColor = theme.accent
-    inputBox.focusedBorderColor = theme.accent2
+    inputBox.backgroundColor = theme.panel;
+    inputBox.borderColor = theme.accent;
+    inputBox.focusedBorderColor = theme.accent2;
   }
   if (advancedBox) {
-    advancedBox.backgroundColor = theme.panelAlt
-    advancedBox.borderColor = theme.accent2
+    advancedBox.backgroundColor = theme.panelAlt;
+    advancedBox.borderColor = theme.accent2;
   }
   if (advancedScrollBox) {
-    advancedScrollBox.backgroundColor = theme.panelAlt
-    advancedScrollBox.wrapper.backgroundColor = theme.panelAlt
-    advancedScrollBox.viewport.backgroundColor = theme.panelAlt
-    advancedScrollBox.content.backgroundColor = theme.panelAlt
+    advancedScrollBox.backgroundColor = theme.panelAlt;
+    advancedScrollBox.wrapper.backgroundColor = theme.panelAlt;
+    advancedScrollBox.viewport.backgroundColor = theme.panelAlt;
+    advancedScrollBox.content.backgroundColor = theme.panelAlt;
     advancedScrollBox.verticalScrollBar.trackOptions = {
       foregroundColor: theme.accent,
       backgroundColor: theme.panel,
-    }
+    };
   }
   if (customInput) {
-    customInput.backgroundColor = theme.inputBg
-    customInput.focusedBackgroundColor = theme.inputFocusedBg
-    customInput.textColor = theme.text
-    customInput.focusedTextColor = theme.text
-    customInput.placeholderColor = theme.muted
-    customInput.cursorColor = theme.accent
-    customInput.selectionBg = theme.selectionBg
-    customInput.selectionFg = theme.qrBg
+    customInput.backgroundColor = theme.inputBg;
+    customInput.focusedBackgroundColor = theme.inputFocusedBg;
+    customInput.textColor = theme.text;
+    customInput.focusedTextColor = theme.text;
+    customInput.placeholderColor = theme.muted;
+    customInput.cursorColor = theme.accent;
+    customInput.selectionBg = theme.selectionBg;
+    customInput.selectionFg = theme.qrBg;
   }
-  if (footerText) footerText.fg = theme.muted
+  if (footerText) footerText.fg = theme.muted;
   for (const { label, select } of advancedLabels) {
-    label.fg = select.focused ? theme.accent : theme.text
+    label.fg = select.focused ? theme.accent : theme.text;
   }
 
-  applySelectTheme(eclSelect)
-  applySelectTheme(scaleSelect)
-  applySelectTheme(quietZoneSelect)
-  updateFocusStyles()
-  updateQRCode()
+  applySelectTheme(eclSelect);
+  applySelectTheme(scaleSelect);
+  applySelectTheme(quietZoneSelect);
+  updateFocusStyles();
+  updateQRCode();
 }
 
 function updateQRCode(): void {
-  if (!qrCode) return
+  if (!qrCode) return;
 
-  const theme = currentTheme()
-  const content = activeContent()
+  const theme = currentTheme();
+  const content = activeContent();
   const selectedEcl =
-    (eclSelect?.getSelectedOption()?.value as ErrorCorrectionLevel | undefined) ?? ErrorCorrectionLevel.M
+    (eclSelect?.getSelectedOption()?.value as ErrorCorrectionLevel | undefined) ??
+    ErrorCorrectionLevel.M;
 
   try {
-    QRCode.encodeText(content, selectedEcl)
+    QRCode.encodeText(content, selectedEcl);
     if (qrCode.content !== content && qrCode.errorCorrectionLevel !== selectedEcl) {
-      qrCode.content = ""
+      qrCode.content = "";
     }
-    qrCode.errorCorrectionLevel = selectedEcl
-    qrCode.content = content
-    qrCode.scale = (scaleSelect?.getSelectedOption()?.value as number | undefined) ?? DEFAULT_MAX_SCALE
-    qrCode.quietZone = (quietZoneSelect?.getSelectedOption()?.value as number | undefined) ?? 4
-    qrCode.fit = "contain"
-    qrCode.foregroundColor = theme.qrFg
-    qrCode.backgroundColor = theme.qrBg
-    qrCode.fallbackColor = theme.qrFallback
+    qrCode.errorCorrectionLevel = selectedEcl;
+    qrCode.content = content;
+    qrCode.scale =
+      (scaleSelect?.getSelectedOption()?.value as number | undefined) ?? DEFAULT_MAX_SCALE;
+    qrCode.quietZone = (quietZoneSelect?.getSelectedOption()?.value as number | undefined) ?? 4;
+    qrCode.fit = "contain";
+    qrCode.foregroundColor = theme.qrFg;
+    qrCode.backgroundColor = theme.qrBg;
+    qrCode.fallbackColor = theme.qrFallback;
   } catch {
     // Keep the previous valid QR visible if the current textarea content cannot be encoded.
   }
 }
 
 function rebuildFocusableElements(): void {
-  focusableElements.length = 0
-  if (customInput) focusableElements.push(customInput)
+  focusableElements.length = 0;
+  if (customInput) focusableElements.push(customInput);
   if (advancedVisible) {
-    if (eclSelect) focusableElements.push(eclSelect)
-    if (scaleSelect) focusableElements.push(scaleSelect)
-    if (quietZoneSelect) focusableElements.push(quietZoneSelect)
+    if (eclSelect) focusableElements.push(eclSelect);
+    if (scaleSelect) focusableElements.push(scaleSelect);
+    if (quietZoneSelect) focusableElements.push(quietZoneSelect);
   }
-  currentFocusIndex = Math.min(currentFocusIndex, Math.max(0, focusableElements.length - 1))
+  currentFocusIndex = Math.min(currentFocusIndex, Math.max(0, focusableElements.length - 1));
 }
 
 function updateFocus(): void {
   for (const element of [customInput, eclSelect, scaleSelect, quietZoneSelect]) {
-    element?.blur()
+    element?.blur();
   }
-  focusableElements[currentFocusIndex]?.focus()
-  ensureFocusedAdvancedControlVisible()
-  updateFocusStyles()
+  focusableElements[currentFocusIndex]?.focus();
+  ensureFocusedAdvancedControlVisible();
+  updateFocusStyles();
 }
 
 function ensureFocusedAdvancedControlVisible(): void {
-  if (!advancedScrollBox || !advancedVisible) return
+  if (!advancedScrollBox || !advancedVisible) return;
 
   const focusedRows: Array<{ select: SelectRenderable | null; top: number; height: number }> = [
     { select: eclSelect, top: 0, height: 5 },
     { select: scaleSelect, top: 6, height: 6 },
     { select: quietZoneSelect, top: 13, height: 5 },
-  ]
-  const focused = focusedRows.find((item) => item.select?.focused)
-  if (!focused) return
+  ];
+  const focused = focusedRows.find((item) => item.select?.focused);
+  if (!focused) return;
 
-  const viewportTop = advancedScrollBox.scrollTop
-  const viewportBottom = viewportTop + advancedScrollBox.viewport.height
+  const viewportTop = advancedScrollBox.scrollTop;
+  const viewportBottom = viewportTop + advancedScrollBox.viewport.height;
   if (focused.top < viewportTop) {
-    advancedScrollBox.scrollTop = focused.top
+    advancedScrollBox.scrollTop = focused.top;
   } else if (focused.top + focused.height > viewportBottom) {
-    advancedScrollBox.scrollTop = focused.top + focused.height - advancedScrollBox.viewport.height
+    advancedScrollBox.scrollTop = focused.top + focused.height - advancedScrollBox.viewport.height;
   }
 }
 
 function updateFocusStyles(): void {
-  const theme = currentTheme()
+  const theme = currentTheme();
   for (const { label, select, content } of advancedLabels) {
-    const focused = select.focused
-    label.content = `${focused ? ">" : " "} ${content}`
-    label.fg = focused ? theme.accent : theme.text
-    select.selectedBackgroundColor = focused ? theme.accent : theme.selectionBg
-    select.selectedTextColor = focused ? theme.qrBg : theme.text
+    const focused = select.focused;
+    label.content = `${focused ? ">" : " "} ${content}`;
+    label.fg = focused ? theme.accent : theme.text;
+    select.selectedBackgroundColor = focused ? theme.accent : theme.selectionBg;
+    select.selectedTextColor = focused ? theme.qrBg : theme.text;
   }
 }
 
 function cyclePreset(): void {
-  currentPresetIndex = (currentPresetIndex + 1) % PRESET_URLS.length
-  customInput?.setText(PRESET_URLS[currentPresetIndex]!.url)
-  updateQRCode()
+  currentPresetIndex = (currentPresetIndex + 1) % PRESET_URLS.length;
+  customInput?.setText(PRESET_URLS[currentPresetIndex]!.url);
+  updateQRCode();
 }
 
 function cycleTheme(): void {
-  currentThemeIndex = (currentThemeIndex + 1) % THEMES.length
-  applyTheme()
+  currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
+  applyTheme();
 }
 
 function toggleAdvanced(): void {
-  advancedVisible = !advancedVisible
-  if (advancedBox) advancedBox.visible = advancedVisible
-  rebuildFocusableElements()
-  updateFocus()
+  advancedVisible = !advancedVisible;
+  if (advancedBox) advancedBox.visible = advancedVisible;
+  rebuildFocusableElements();
+  updateFocus();
 }
 
 function setupEvents(rendererInstance: CliRenderer): void {
-  customInput?.on("line-info-change", updateQRCode)
+  customInput?.on("line-info-change", updateQRCode);
 
   for (const select of [eclSelect, scaleSelect, quietZoneSelect]) {
-    select?.on(SelectRenderableEvents.SELECTION_CHANGED, updateQRCode)
+    select?.on(SelectRenderableEvents.SELECTION_CHANGED, updateQRCode);
   }
 
   keyboardHandler = (key: KeyEvent) => {
     if (key.name === "tab") {
-      if (focusableElements.length === 0) return
-      key.preventDefault()
+      if (focusableElements.length === 0) return;
+      key.preventDefault();
       currentFocusIndex = key.shift
         ? (currentFocusIndex - 1 + focusableElements.length) % focusableElements.length
-        : (currentFocusIndex + 1) % focusableElements.length
-      updateFocus()
-      return
+        : (currentFocusIndex + 1) % focusableElements.length;
+      updateFocus();
+      return;
     }
 
     if (key.ctrl && key.name === "n") {
-      key.preventDefault()
-      cyclePreset()
+      key.preventDefault();
+      cyclePreset();
     } else if (key.ctrl && key.name === "t") {
-      key.preventDefault()
-      cycleTheme()
+      key.preventDefault();
+      cycleTheme();
     } else if (key.ctrl && key.name === "a") {
-      key.preventDefault()
-      toggleAdvanced()
+      key.preventDefault();
+      toggleAdvanced();
     }
-  }
+  };
 
-  rendererInstance.keyInput.on("keypress", keyboardHandler)
+  rendererInstance.keyInput.on("keypress", keyboardHandler);
 }
 
 export function run(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance
-  renderer.start()
-  renderer.setBackgroundColor(currentTheme().background)
+  renderer = rendererInstance;
+  renderer.start();
+  renderer.setBackgroundColor(currentTheme().background);
 
   root = new BoxRenderable(renderer, {
     id: ROOT_ID,
@@ -546,8 +549,8 @@ export function run(rendererInstance: CliRenderer): void {
     flexDirection: "column",
     rowGap: 0,
     backgroundColor: currentTheme().background,
-  })
-  renderer.root.add(root)
+  });
+  renderer.root.add(root);
 
   inputBox = new BoxRenderable(renderer, {
     id: `${ROOT_ID}-input`,
@@ -560,8 +563,8 @@ export function run(rendererInstance: CliRenderer): void {
     focusedBorderColor: currentTheme().accent2,
     backgroundColor: currentTheme().panel,
     flexShrink: 0,
-  })
-  root.add(inputBox)
+  });
+  root.add(inputBox);
 
   customInput = new TextareaRenderable(renderer, {
     id: `${ROOT_ID}-custom-url`,
@@ -579,8 +582,8 @@ export function run(rendererInstance: CliRenderer): void {
     selectionFg: currentTheme().qrBg,
     wrapMode: "char",
     showCursor: true,
-  })
-  inputBox.add(customInput)
+  });
+  inputBox.add(customInput);
 
   const body = new BoxRenderable(renderer, {
     id: `${ROOT_ID}-body`,
@@ -591,8 +594,8 @@ export function run(rendererInstance: CliRenderer): void {
     flexDirection: "row",
     columnGap: 0,
     backgroundColor: "transparent",
-  })
-  root.add(body)
+  });
+  root.add(body);
 
   qrArea = new BoxRenderable(renderer, {
     id: `${ROOT_ID}-qr-area`,
@@ -603,8 +606,8 @@ export function run(rendererInstance: CliRenderer): void {
     backgroundColor: currentTheme().panel,
     alignItems: "center",
     justifyContent: "center",
-  })
-  body.add(qrArea)
+  });
+  body.add(qrArea);
 
   qrCode = new QRCodeRenderable(renderer, {
     id: `${ROOT_ID}-qr`,
@@ -620,10 +623,10 @@ export function run(rendererInstance: CliRenderer): void {
     fallbackContent: "Resize terminal for QR",
     fallbackColor: currentTheme().qrFallback,
     onSizeChange() {
-      queueMicrotask(updateQRCode)
+      queueMicrotask(updateQRCode);
     },
-  })
-  qrArea.add(qrCode)
+  });
+  qrArea.add(qrCode);
 
   advancedBox = new BoxRenderable(renderer, {
     id: `${ROOT_ID}-advanced`,
@@ -638,8 +641,8 @@ export function run(rendererInstance: CliRenderer): void {
     flexDirection: "column",
     rowGap: 0,
     visible: false,
-  })
-  body.add(advancedBox)
+  });
+  body.add(advancedBox);
 
   advancedScrollBox = new ScrollBoxRenderable(renderer, {
     id: `${ROOT_ID}-advanced-scroll`,
@@ -669,21 +672,21 @@ export function run(rendererInstance: CliRenderer): void {
         backgroundColor: currentTheme().panel,
       },
     },
-  })
-  advancedBox.add(advancedScrollBox)
+  });
+  advancedBox.add(advancedScrollBox);
 
-  eclSelect = createSelect(renderer, `${ROOT_ID}-ecl`, ERROR_CORRECTION_OPTIONS, 1, 4)
-  scaleSelect = createSelect(renderer, `${ROOT_ID}-scale`, SCALE_OPTIONS, 3, 5)
-  quietZoneSelect = createSelect(renderer, `${ROOT_ID}-quiet`, QUIET_ZONE_OPTIONS, 0, 4)
-  eclLabel = createLabel(renderer, eclSelect, "Error correction")
-  advancedScrollBox.add(eclLabel)
-  advancedScrollBox.add(eclSelect)
-  scaleLabel = createLabel(renderer, scaleSelect, "Scale cap", 1)
-  advancedScrollBox.add(scaleLabel)
-  advancedScrollBox.add(scaleSelect)
-  quietZoneLabel = createLabel(renderer, quietZoneSelect, "Quiet zone", 1)
-  advancedScrollBox.add(quietZoneLabel)
-  advancedScrollBox.add(quietZoneSelect)
+  eclSelect = createSelect(renderer, `${ROOT_ID}-ecl`, ERROR_CORRECTION_OPTIONS, 1, 4);
+  scaleSelect = createSelect(renderer, `${ROOT_ID}-scale`, SCALE_OPTIONS, 3, 5);
+  quietZoneSelect = createSelect(renderer, `${ROOT_ID}-quiet`, QUIET_ZONE_OPTIONS, 0, 4);
+  eclLabel = createLabel(renderer, eclSelect, "Error correction");
+  advancedScrollBox.add(eclLabel);
+  advancedScrollBox.add(eclSelect);
+  scaleLabel = createLabel(renderer, scaleSelect, "Scale cap", 1);
+  advancedScrollBox.add(scaleLabel);
+  advancedScrollBox.add(scaleSelect);
+  quietZoneLabel = createLabel(renderer, quietZoneSelect, "Quiet zone", 1);
+  advancedScrollBox.add(quietZoneLabel);
+  advancedScrollBox.add(quietZoneSelect);
 
   footerText = new TextRenderable(renderer, {
     id: `${ROOT_ID}-footer`,
@@ -691,52 +694,52 @@ export function run(rendererInstance: CliRenderer): void {
     fg: currentTheme().muted,
     height: 1,
     flexShrink: 0,
-  })
-  root.add(footerText)
+  });
+  root.add(footerText);
 
-  rebuildFocusableElements()
-  setupEvents(renderer)
-  applyTheme()
-  updateFocus()
+  rebuildFocusableElements();
+  setupEvents(renderer);
+  applyTheme();
+  updateFocus();
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
   if (keyboardHandler) {
-    rendererInstance.keyInput.off("keypress", keyboardHandler)
-    keyboardHandler = null
+    rendererInstance.keyInput.off("keypress", keyboardHandler);
+    keyboardHandler = null;
   }
 
-  rendererInstance.root.getRenderable(ROOT_ID)?.destroyRecursively()
-  rendererInstance.setCursorPosition(0, 0, false)
+  rendererInstance.root.getRenderable(ROOT_ID)?.destroyRecursively();
+  rendererInstance.setCursorPosition(0, 0, false);
 
-  renderer = null
-  root = null
-  inputBox = null
-  qrArea = null
-  advancedBox = null
-  advancedScrollBox = null
-  qrCode = null
-  customInput = null
-  footerText = null
-  eclSelect = null
-  scaleSelect = null
-  quietZoneSelect = null
-  eclLabel = null
-  scaleLabel = null
-  quietZoneLabel = null
-  currentPresetIndex = 0
-  currentThemeIndex = 0
-  advancedVisible = false
-  currentFocusIndex = 0
-  focusableElements.length = 0
-  advancedLabels.length = 0
+  renderer = null;
+  root = null;
+  inputBox = null;
+  qrArea = null;
+  advancedBox = null;
+  advancedScrollBox = null;
+  qrCode = null;
+  customInput = null;
+  footerText = null;
+  eclSelect = null;
+  scaleSelect = null;
+  quietZoneSelect = null;
+  eclLabel = null;
+  scaleLabel = null;
+  quietZoneLabel = null;
+  currentPresetIndex = 0;
+  currentThemeIndex = 0;
+  advancedVisible = false;
+  currentFocusIndex = 0;
+  focusableElements.length = 0;
+  advancedLabels.length = 0;
 }
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
+  run(renderer);
+  setupCommonDemoKeys(renderer);
 }

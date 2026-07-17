@@ -1,49 +1,49 @@
 import {
   BoxRenderable,
   CliRenderEvents,
-  CodeRenderable,
-  MarkdownRenderable,
-  TextTableRenderable,
-  TextRenderable,
-  createCliRenderer,
   type CliRenderer,
+  CodeRenderable,
   type KeyEvent,
+  MarkdownRenderable,
   type ScrollbackSurface,
-} from "@bettertui/core"
-import { RGBA, parseColor } from "@bettertui/core"
-import { getTreeSitterClient } from "@bettertui/core"
-import type { TextTableContent } from "@bettertui/core"
-import { SyntaxStyle } from "@bettertui/core"
-import type { TextChunk } from "@bettertui/core"
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+  TextRenderable,
+  TextTableRenderable,
+  createCliRenderer,
+} from "@bettertui/core";
+import { RGBA, parseColor } from "@bettertui/core";
+import { getTreeSitterClient } from "@bettertui/core";
+import type { TextTableContent } from "@bettertui/core";
+import { SyntaxStyle } from "@bettertui/core";
+import type { TextChunk } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-const FOOTER_HEIGHT = 10
-const DEFAULT_INTERVAL_MS = 180
-const MIN_INTERVAL_MS = 60
-const MAX_INTERVAL_MS = 1000
-const INTERVAL_STEP_MS = 40
+const FOOTER_HEIGHT = 10;
+const DEFAULT_INTERVAL_MS = 180;
+const MIN_INTERVAL_MS = 60;
+const MAX_INTERVAL_MS = 1000;
+const INTERVAL_STEP_MS = 40;
 
-type StreamKind = "text" | "code" | "markdown"
+type StreamKind = "text" | "code" | "markdown";
 
 interface ScenarioDefinition {
-  kind: StreamKind
-  title: string
-  description: string
-  prefix: string
-  chunks: string[]
+  kind: StreamKind;
+  title: string;
+  description: string;
+  prefix: string;
+  chunks: string[];
 }
 
 interface ActiveRun {
-  id: number
-  scenario: ScenarioDefinition
-  surface: ScrollbackSurface
-  renderable: TextRenderable | CodeRenderable | MarkdownRenderable
-  content: string
-  chunkIndex: number
-  committedRows: number
-  committedBlocks: number
-  cancelled: boolean
-  done: boolean
+  id: number;
+  scenario: ScenarioDefinition;
+  surface: ScrollbackSurface;
+  renderable: TextRenderable | CodeRenderable | MarkdownRenderable;
+  content: string;
+  chunkIndex: number;
+  committedRows: number;
+  committedBlocks: number;
+  cancelled: boolean;
+  done: boolean;
 }
 
 const PALETTE = {
@@ -58,7 +58,7 @@ const PALETTE = {
   codeAccent: "#FFD580",
   markdownAccent: "#C7A6FF",
   error: "#FF9B9B",
-} as const
+} as const;
 
 const SURFACE_SYNTAX_STYLE = SyntaxStyle.fromStyles({
   default: { fg: RGBA.fromInts(230, 237, 243, 255) },
@@ -80,7 +80,7 @@ const SURFACE_SYNTAX_STYLE = SyntaxStyle.fromStyles({
   "markup.link.label": { fg: RGBA.fromInts(88, 166, 255, 255), underline: true },
   "markup.link.url": { fg: RGBA.fromInts(88, 166, 255, 255), underline: true },
   conceal: { fg: RGBA.fromInts(98, 114, 130, 255) },
-})
+});
 
 const SCENARIOS: Record<StreamKind, ScenarioDefinition> = {
   text: {
@@ -140,20 +140,20 @@ const SCENARIOS: Record<StreamKind, ScenarioDefinition> = {
       " in one chunk\n- second item closes the sample\n",
     ],
   },
-}
+};
 
 function getScenarioAccent(kind: StreamKind): string {
   switch (kind) {
     case "text":
-      return PALETTE.textAccent
+      return PALETTE.textAccent;
     case "code":
-      return PALETTE.codeAccent
+      return PALETTE.codeAccent;
     case "markdown":
-      return PALETTE.markdownAccent
+      return PALETTE.markdownAccent;
   }
 }
 
-function tableCell(text: string, color: string, attributes: number = 0): TextChunk[] {
+function tableCell(text: string, color: string, attributes = 0): TextChunk[] {
   return [
     {
       __isChunk: true,
@@ -161,7 +161,7 @@ function tableCell(text: string, color: string, attributes: number = 0): TextChu
       fg: parseColor(color),
       attributes,
     },
-  ]
+  ];
 }
 
 function footerRow(label: string, value: string, valueColor: string): TextTableContent[number] {
@@ -169,40 +169,40 @@ function footerRow(label: string, value: string, valueColor: string): TextTableC
     tableCell(label.toUpperCase().padEnd(6, " "), PALETTE.hint, 1),
     tableCell(":", PALETTE.border),
     tableCell(` ${value}`, valueColor),
-  ]
+  ];
 }
 
 class SplitFooterStreamingDemo {
-  private shell: BoxRenderable
-  private titleText: TextRenderable
-  private footerTable: TextTableRenderable
+  private shell: BoxRenderable;
+  private titleText: TextRenderable;
+  private footerTable: TextTableRenderable;
 
-  private readonly treeSitterClient = getTreeSitterClient()
-  private currentKind: StreamKind = "markdown"
-  private inlinePrefix = false
-  private autoAdvance = true
-  private intervalMs = DEFAULT_INTERVAL_MS
-  private destroyed = false
-  private stepping = false
-  private autoTimer: ReturnType<typeof setInterval> | null = null
-  private activeRun: ActiveRun | null = null
-  private nextRunId = 1
-  private lastStatus = "Ready. Press R to replay the current sample."
-  private pendingReplayReason: string | null = null
-  private wrote = false
+  private readonly treeSitterClient = getTreeSitterClient();
+  private currentKind: StreamKind = "markdown";
+  private inlinePrefix = false;
+  private autoAdvance = true;
+  private intervalMs = DEFAULT_INTERVAL_MS;
+  private destroyed = false;
+  private stepping = false;
+  private autoTimer: ReturnType<typeof setInterval> | null = null;
+  private activeRun: ActiveRun | null = null;
+  private nextRunId = 1;
+  private lastStatus = "Ready. Press R to replay the current sample.";
+  private pendingReplayReason: string | null = null;
+  private wrote = false;
 
   constructor(private renderer: CliRenderer) {
     if (this.renderer.screenMode !== "split-footer") {
-      this.renderer.screenMode = "split-footer"
+      this.renderer.screenMode = "split-footer";
     }
 
-    this.renderer.footerHeight = FOOTER_HEIGHT
+    this.renderer.footerHeight = FOOTER_HEIGHT;
 
     if (this.renderer.externalOutputMode !== "capture-stdout") {
-      this.renderer.externalOutputMode = "capture-stdout"
+      this.renderer.externalOutputMode = "capture-stdout";
     }
 
-    this.renderer.setBackgroundColor(PALETTE.background)
+    this.renderer.setBackgroundColor(PALETTE.background);
 
     this.shell = new BoxRenderable(this.renderer, {
       id: "split-footer-streaming-demo-shell",
@@ -217,7 +217,7 @@ class SplitFooterStreamingDemo {
       paddingRight: 1,
       gap: 0,
       flexDirection: "column",
-    })
+    });
 
     this.titleText = new TextRenderable(this.renderer, {
       id: "split-footer-streaming-demo-title",
@@ -225,7 +225,7 @@ class SplitFooterStreamingDemo {
       content: "Split Footer Surface Streaming Demo",
       fg: PALETTE.title,
       attributes: 1,
-    })
+    });
 
     this.footerTable = new TextTableRenderable(this.renderer, {
       id: "split-footer-streaming-demo-footer-table",
@@ -241,41 +241,41 @@ class SplitFooterStreamingDemo {
       backgroundColor: "transparent",
       fg: PALETTE.detail,
       content: [],
-    })
+    });
 
-    this.shell.add(this.titleText)
-    this.shell.add(this.footerTable)
-    this.renderer.root.add(this.shell)
+    this.shell.add(this.titleText);
+    this.shell.add(this.footerTable);
+    this.renderer.root.add(this.shell);
 
-    this.renderer.keyInput.on("keypress", this.handleKeyPress)
-    this.renderer.on(CliRenderEvents.RESIZE, this.handleResize)
-    this.renderer.on(CliRenderEvents.DESTROY, this.handleRendererDestroy)
+    this.renderer.keyInput.on("keypress", this.handleKeyPress);
+    this.renderer.on(CliRenderEvents.RESIZE, this.handleResize);
+    this.renderer.on(CliRenderEvents.DESTROY, this.handleRendererDestroy);
 
-    this.refreshFooter()
-    this.syncAutoTimer()
-    this.requestReplay("Started markdown sample.")
+    this.refreshFooter();
+    this.syncAutoTimer();
+    this.requestReplay("Started markdown sample.");
   }
 
   private get currentScenario(): ScenarioDefinition {
-    return SCENARIOS[this.currentKind]
+    return SCENARIOS[this.currentKind];
   }
 
   private refreshFooter(): void {
     if (this.destroyed) {
-      return
+      return;
     }
 
-    const scenario = this.currentScenario
-    const run = this.activeRun
+    const scenario = this.currentScenario;
+    const run = this.activeRun;
     const runState = !run
       ? "idle"
       : run.done
         ? `done ${run.chunkIndex}/${run.scenario.chunks.length}`
-        : `chunk ${run.chunkIndex}/${run.scenario.chunks.length}`
+        : `chunk ${run.chunkIndex}/${run.scenario.chunks.length}`;
     const committedState =
       scenario.kind === "markdown"
         ? `${run?.committedBlocks ?? 0} blocks committed`
-        : `${run?.committedRows ?? 0} rows committed`
+        : `${run?.committedRows ?? 0} rows committed`;
 
     this.footerTable.content = [
       footerRow(
@@ -283,89 +283,97 @@ class SplitFooterStreamingDemo {
         `${scenario.title} · start ${this.inlinePrefix ? "inline-prefix" : "newline"} · auto ${this.autoAdvance ? `${this.intervalMs}ms` : "off"} · ${runState}`,
         getScenarioAccent(this.currentKind),
       ),
-      footerRow("status", this.lastStatus, this.lastStatus.startsWith("Error:") ? PALETTE.error : PALETTE.status),
+      footerRow(
+        "status",
+        this.lastStatus,
+        this.lastStatus.startsWith("Error:") ? PALETTE.error : PALETTE.status,
+      ),
       footerRow("stats", `${run?.content.length ?? 0} bytes · ${committedState}`, PALETTE.detail),
       footerRow("about", scenario.description, PALETTE.detail),
       footerRow("scene", "1 text · 2 code · 3 markdown · i inline-prefix", PALETTE.hint),
-      footerRow("flow", "r replay · n next · a auto · [ slower · ] faster · resize -> r", PALETTE.hint),
-    ]
+      footerRow(
+        "flow",
+        "r replay · n next · a auto · [ slower · ] faster · resize -> r",
+        PALETTE.hint,
+      ),
+    ];
   }
 
   private syncAutoTimer(): void {
     if (this.autoTimer) {
-      clearInterval(this.autoTimer)
-      this.autoTimer = null
+      clearInterval(this.autoTimer);
+      this.autoTimer = null;
     }
 
     if (!this.autoAdvance || this.destroyed) {
-      return
+      return;
     }
 
     this.autoTimer = setInterval(() => {
-      void this.stepCurrentRun()
-    }, this.intervalMs)
+      void this.stepCurrentRun();
+    }, this.intervalMs);
   }
 
   private destroyActiveRun(): void {
     if (!this.activeRun) {
-      return
+      return;
     }
 
-    this.activeRun.cancelled = true
+    this.activeRun.cancelled = true;
 
     if (!this.activeRun.surface.isDestroyed) {
       try {
-        this.activeRun.surface.destroy()
+        this.activeRun.surface.destroy();
       } catch {
         // Ignore teardown races while replaying.
       }
     }
 
-    this.activeRun = null
+    this.activeRun = null;
   }
 
   private requestReplay(reason: string): void {
-    this.pendingReplayReason = reason
-    this.destroyActiveRun()
-    this.lastStatus = reason
-    this.refreshFooter()
+    this.pendingReplayReason = reason;
+    this.destroyActiveRun();
+    this.lastStatus = reason;
+    this.refreshFooter();
 
     if (!this.stepping) {
-      const nextReason = this.pendingReplayReason
-      this.pendingReplayReason = null
+      const nextReason = this.pendingReplayReason;
+      this.pendingReplayReason = null;
       if (nextReason) {
-        void this.replayCurrentScenario(nextReason)
+        void this.replayCurrentScenario(nextReason);
       }
     }
   }
 
   private async replayCurrentScenario(reason: string): Promise<void> {
     if (this.destroyed) {
-      return
+      return;
     }
 
-    this.destroyActiveRun()
-    this.lastStatus = reason
-    this.activeRun = this.createRun(this.currentScenario)
-    this.refreshFooter()
-    await this.stepCurrentRun()
+    this.destroyActiveRun();
+    this.lastStatus = reason;
+    this.activeRun = this.createRun(this.currentScenario);
+    this.refreshFooter();
+    await this.stepCurrentRun();
   }
 
   private createRun(scenario: ScenarioDefinition): ActiveRun {
-    const spaced = this.wrote
+    const spaced = this.wrote;
     if (spaced) {
-      this.writeSpacer()
+      this.writeSpacer();
     }
 
     if (this.inlinePrefix) {
-      this.writeInlinePrefix(scenario, !spaced)
+      this.writeInlinePrefix(scenario, !spaced);
     }
 
     const surface = this.renderer.createScrollbackSurface({
       startOnNewLine: this.inlinePrefix ? false : !spaced,
-    })
+    });
 
-    let renderable: TextRenderable | CodeRenderable | MarkdownRenderable
+    let renderable: TextRenderable | CodeRenderable | MarkdownRenderable;
     switch (scenario.kind) {
       case "text":
         renderable = new TextRenderable(surface.renderContext, {
@@ -374,8 +382,8 @@ class SplitFooterStreamingDemo {
           width: "100%",
           wrapMode: "char",
           fg: PALETTE.title,
-        })
-        break
+        });
+        break;
       case "code":
         renderable = new CodeRenderable(surface.renderContext, {
           id: `split-footer-stream-code-${this.nextRunId}`,
@@ -387,8 +395,8 @@ class SplitFooterStreamingDemo {
           drawUnstyledText: false,
           streaming: true,
           treeSitterClient: this.treeSitterClient,
-        })
-        break
+        });
+        break;
       case "markdown":
         renderable = new MarkdownRenderable(surface.renderContext, {
           id: `split-footer-stream-markdown-${this.nextRunId}`,
@@ -399,11 +407,11 @@ class SplitFooterStreamingDemo {
           internalBlockMode: "top-level",
           tableOptions: { widthMode: "content" },
           treeSitterClient: this.treeSitterClient,
-        })
-        break
+        });
+        break;
     }
 
-    surface.root.add(renderable)
+    surface.root.add(renderable);
 
     return {
       id: this.nextRunId++,
@@ -416,12 +424,12 @@ class SplitFooterStreamingDemo {
       committedBlocks: 0,
       cancelled: false,
       done: false,
-    }
+    };
   }
 
   private writeSpacer(): void {
     this.renderer.writeToScrollback((ctx) => {
-      const width = Math.max(1, Math.trunc(ctx.width))
+      const width = Math.max(1, Math.trunc(ctx.width));
       const root = new TextRenderable(ctx.renderContext, {
         id: `split-footer-stream-spacer-${this.nextRunId}`,
         position: "absolute",
@@ -430,7 +438,7 @@ class SplitFooterStreamingDemo {
         width,
         height: 1,
         content: "",
-      })
+      });
 
       return {
         root,
@@ -438,14 +446,14 @@ class SplitFooterStreamingDemo {
         height: 1,
         startOnNewLine: true,
         trailingNewline: true,
-      }
-    })
+      };
+    });
 
-    this.wrote = true
+    this.wrote = true;
   }
 
   private writeInlinePrefix(scenario: ScenarioDefinition, startOnNewLine: boolean): void {
-    const prefix = scenario.prefix
+    const prefix = scenario.prefix;
 
     this.renderer.writeToScrollback((ctx) => {
       const root = new TextRenderable(ctx.renderContext, {
@@ -458,7 +466,7 @@ class SplitFooterStreamingDemo {
         content: prefix,
         fg: getScenarioAccent(scenario.kind),
         attributes: 1,
-      })
+      });
 
       return {
         root,
@@ -466,74 +474,74 @@ class SplitFooterStreamingDemo {
         height: 1,
         startOnNewLine,
         trailingNewline: false,
-      }
-    })
+      };
+    });
 
-    this.wrote = true
+    this.wrote = true;
   }
 
   private async stepCurrentRun(): Promise<void> {
     if (this.destroyed || this.stepping) {
-      return
+      return;
     }
 
-    let run = this.activeRun
+    let run = this.activeRun;
     if (!run) {
-      run = this.createRun(this.currentScenario)
-      this.activeRun = run
-      this.lastStatus = `Started ${run.scenario.title} sample.`
-      this.refreshFooter()
+      run = this.createRun(this.currentScenario);
+      this.activeRun = run;
+      this.lastStatus = `Started ${run.scenario.title} sample.`;
+      this.refreshFooter();
     }
 
     if (run.done || run.cancelled) {
-      return
+      return;
     }
 
     if (run.chunkIndex >= run.scenario.chunks.length) {
-      run.done = true
-      this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`
-      this.refreshFooter()
-      return
+      run.done = true;
+      this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`;
+      this.refreshFooter();
+      return;
     }
 
-    this.stepping = true
+    this.stepping = true;
 
-    const runId = run.id
-    const chunk = run.scenario.chunks[run.chunkIndex]!
-    const isFinalChunk = run.chunkIndex === run.scenario.chunks.length - 1
-    run.chunkIndex += 1
-    run.content += chunk
+    const runId = run.id;
+    const chunk = run.scenario.chunks[run.chunkIndex]!;
+    const isFinalChunk = run.chunkIndex === run.scenario.chunks.length - 1;
+    run.chunkIndex += 1;
+    run.content += chunk;
 
     try {
-      await this.flushRun(run, isFinalChunk)
+      await this.flushRun(run, isFinalChunk);
 
       if (run.cancelled || this.destroyed || this.activeRun?.id !== runId) {
-        return
+        return;
       }
 
       if (isFinalChunk) {
-        run.done = true
-        run.surface.destroy()
-        this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`
+        run.done = true;
+        run.surface.destroy();
+        this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`;
       } else {
-        this.lastStatus = `${run.scenario.title} chunk ${run.chunkIndex}/${run.scenario.chunks.length} committed.`
+        this.lastStatus = `${run.scenario.title} chunk ${run.chunkIndex}/${run.scenario.chunks.length} committed.`;
       }
     } catch (error) {
       if (run.cancelled || this.destroyed) {
-        return
+        return;
       }
 
-      this.lastStatus = `Error: ${run.scenario.title} sample failed.`
-      console.error("split-footer-streaming-demo step failed", error)
-      this.destroyActiveRun()
+      this.lastStatus = `Error: ${run.scenario.title} sample failed.`;
+      console.error("split-footer-streaming-demo step failed", error);
+      this.destroyActiveRun();
     } finally {
-      this.stepping = false
-      this.refreshFooter()
+      this.stepping = false;
+      this.refreshFooter();
 
       if (this.pendingReplayReason && !this.destroyed) {
-        const reason = this.pendingReplayReason
-        this.pendingReplayReason = null
-        void this.replayCurrentScenario(reason)
+        const reason = this.pendingReplayReason;
+        this.pendingReplayReason = null;
+        void this.replayCurrentScenario(reason);
       }
     }
   }
@@ -541,213 +549,221 @@ class SplitFooterStreamingDemo {
   private async flushRun(run: ActiveRun, done: boolean): Promise<void> {
     switch (run.scenario.kind) {
       case "text":
-        await this.flushTextRun(run, done)
-        return
+        await this.flushTextRun(run, done);
+        return;
       case "code":
-        await this.flushCodeRun(run, done)
-        return
+        await this.flushCodeRun(run, done);
+        return;
       case "markdown":
-        await this.flushMarkdownRun(run, done)
-        return
+        await this.flushMarkdownRun(run, done);
+        return;
     }
   }
 
   private async flushTextRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as TextRenderable
-    renderable.content = run.content
-    run.surface.render()
+    const renderable = run.renderable as TextRenderable;
+    renderable.content = run.content;
+    run.surface.render();
 
-    const targetRows = done ? run.surface.height : Math.max(run.committedRows, run.surface.height - 1)
+    const targetRows = done
+      ? run.surface.height
+      : Math.max(run.committedRows, run.surface.height - 1);
     if (targetRows > run.committedRows) {
-      run.surface.commitRows(run.committedRows, targetRows)
-      run.committedRows = targetRows
-      this.wrote = true
+      run.surface.commitRows(run.committedRows, targetRows);
+      run.committedRows = targetRows;
+      this.wrote = true;
     }
   }
 
   private async flushCodeRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as CodeRenderable
-    renderable.content = run.content
-    renderable.streaming = !done
-    await run.surface.settle()
+    const renderable = run.renderable as CodeRenderable;
+    renderable.content = run.content;
+    renderable.streaming = !done;
+    await run.surface.settle();
 
-    const targetRows = done ? run.surface.height : Math.max(run.committedRows, run.surface.height - 1)
+    const targetRows = done
+      ? run.surface.height
+      : Math.max(run.committedRows, run.surface.height - 1);
     if (targetRows > run.committedRows) {
-      run.surface.commitRows(run.committedRows, targetRows)
-      run.committedRows = targetRows
-      this.wrote = true
+      run.surface.commitRows(run.committedRows, targetRows);
+      run.committedRows = targetRows;
+      this.wrote = true;
     }
   }
 
   private async flushMarkdownRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as MarkdownRenderable
-    renderable.content = run.content
-    renderable.streaming = !done
-    await run.surface.settle()
+    const renderable = run.renderable as MarkdownRenderable;
+    renderable.content = run.content;
+    renderable.streaming = !done;
+    await run.surface.settle();
 
-    const targetBlockCount = done ? renderable._blockStates.length : renderable._stableBlockCount
+    const targetBlockCount = done ? renderable._blockStates.length : renderable._stableBlockCount;
     if (targetBlockCount <= run.committedBlocks) {
-      return
+      return;
     }
 
-    const firstState = renderable._blockStates[run.committedBlocks]!
-    const lastState = renderable._blockStates[targetBlockCount - 1]!
-    const nextState = renderable._blockStates[targetBlockCount]
+    const firstState = renderable._blockStates[run.committedBlocks]!;
+    const lastState = renderable._blockStates[targetBlockCount - 1]!;
+    const nextState = renderable._blockStates[targetBlockCount];
     const endRow = nextState
       ? nextState.renderable.y
-      : lastState.renderable.y + lastState.renderable.height + (lastState.marginBottom ?? 0)
+      : lastState.renderable.y + lastState.renderable.height + (lastState.marginBottom ?? 0);
 
-    run.surface.commitRows(firstState.renderable.y, endRow)
-    run.committedBlocks = targetBlockCount
-    this.wrote = true
+    run.surface.commitRows(firstState.renderable.y, endRow);
+    run.committedBlocks = targetBlockCount;
+    this.wrote = true;
   }
 
   private setScenario(kind: StreamKind): void {
     if (this.currentKind === kind) {
-      this.requestReplay(`Replaying ${kind} sample.`)
-      return
+      this.requestReplay(`Replaying ${kind} sample.`);
+      return;
     }
 
-    this.currentKind = kind
-    this.requestReplay(`Switched to ${kind} sample.`)
+    this.currentKind = kind;
+    this.requestReplay(`Switched to ${kind} sample.`);
   }
 
   private toggleAutoAdvance(): void {
-    this.autoAdvance = !this.autoAdvance
-    this.syncAutoTimer()
+    this.autoAdvance = !this.autoAdvance;
+    this.syncAutoTimer();
 
     if (this.autoAdvance && (!this.activeRun || this.activeRun.done)) {
-      this.requestReplay(`Auto advance enabled at ${this.intervalMs}ms.`)
-      return
+      this.requestReplay(`Auto advance enabled at ${this.intervalMs}ms.`);
+      return;
     }
 
-    this.lastStatus = this.autoAdvance ? `Auto advance enabled at ${this.intervalMs}ms.` : "Auto advance disabled."
-    this.refreshFooter()
+    this.lastStatus = this.autoAdvance
+      ? `Auto advance enabled at ${this.intervalMs}ms.`
+      : "Auto advance disabled.";
+    this.refreshFooter();
   }
 
   private toggleInlinePrefix(): void {
-    this.inlinePrefix = !this.inlinePrefix
-    this.requestReplay(this.inlinePrefix ? "Inline-prefix mode enabled." : "New-line mode enabled.")
+    this.inlinePrefix = !this.inlinePrefix;
+    this.requestReplay(
+      this.inlinePrefix ? "Inline-prefix mode enabled." : "New-line mode enabled.",
+    );
   }
 
   private adjustInterval(deltaMs: number): void {
-    const next = Math.min(Math.max(this.intervalMs + deltaMs, MIN_INTERVAL_MS), MAX_INTERVAL_MS)
+    const next = Math.min(Math.max(this.intervalMs + deltaMs, MIN_INTERVAL_MS), MAX_INTERVAL_MS);
     if (next === this.intervalMs) {
-      this.lastStatus = "Interval already at the limit."
-      this.refreshFooter()
-      return
+      this.lastStatus = "Interval already at the limit.";
+      this.refreshFooter();
+      return;
     }
 
-    this.intervalMs = next
-    this.syncAutoTimer()
-    this.lastStatus = `Auto advance interval ${next}ms.`
-    this.refreshFooter()
+    this.intervalMs = next;
+    this.syncAutoTimer();
+    this.lastStatus = `Auto advance interval ${next}ms.`;
+    this.refreshFooter();
   }
 
   private handleKeyPress = (key: KeyEvent): void => {
     if (key.ctrl || key.meta || key.option) {
-      return
+      return;
     }
 
     switch (key.name) {
       case "1":
-        key.preventDefault()
-        this.setScenario("text")
-        return
+        key.preventDefault();
+        this.setScenario("text");
+        return;
       case "2":
-        key.preventDefault()
-        this.setScenario("code")
-        return
+        key.preventDefault();
+        this.setScenario("code");
+        return;
       case "3":
-        key.preventDefault()
-        this.setScenario("markdown")
-        return
+        key.preventDefault();
+        this.setScenario("markdown");
+        return;
       case "r":
-        key.preventDefault()
-        this.requestReplay(`Replaying ${this.currentKind} sample.`)
-        return
+        key.preventDefault();
+        this.requestReplay(`Replaying ${this.currentKind} sample.`);
+        return;
       case "n":
-        key.preventDefault()
-        void this.stepCurrentRun()
-        return
+        key.preventDefault();
+        void this.stepCurrentRun();
+        return;
       case "a":
-        key.preventDefault()
-        this.toggleAutoAdvance()
-        return
+        key.preventDefault();
+        this.toggleAutoAdvance();
+        return;
       case "i":
-        key.preventDefault()
-        this.toggleInlinePrefix()
-        return
+        key.preventDefault();
+        this.toggleInlinePrefix();
+        return;
       case "[":
-        key.preventDefault()
-        this.adjustInterval(INTERVAL_STEP_MS)
-        return
+        key.preventDefault();
+        this.adjustInterval(INTERVAL_STEP_MS);
+        return;
       case "]":
-        key.preventDefault()
-        this.adjustInterval(-INTERVAL_STEP_MS)
-        return
+        key.preventDefault();
+        this.adjustInterval(-INTERVAL_STEP_MS);
+        return;
     }
-  }
+  };
 
   private handleResize = (): void => {
     if (this.destroyed) {
-      return
+      return;
     }
 
-    this.lastStatus = "Renderer resized. Press R to replay at the new width."
-    this.destroyActiveRun()
-    this.refreshFooter()
-  }
+    this.lastStatus = "Renderer resized. Press R to replay at the new width.";
+    this.destroyActiveRun();
+    this.refreshFooter();
+  };
 
   private handleRendererDestroy = (): void => {
-    this.destroy()
-  }
+    this.destroy();
+  };
 
   public destroy(): void {
     if (this.destroyed) {
-      return
+      return;
     }
 
-    this.destroyed = true
+    this.destroyed = true;
 
     if (this.autoTimer) {
-      clearInterval(this.autoTimer)
-      this.autoTimer = null
+      clearInterval(this.autoTimer);
+      this.autoTimer = null;
     }
 
-    this.destroyActiveRun()
-    this.renderer.keyInput.off("keypress", this.handleKeyPress)
-    this.renderer.off(CliRenderEvents.RESIZE, this.handleResize)
-    this.renderer.off(CliRenderEvents.DESTROY, this.handleRendererDestroy)
+    this.destroyActiveRun();
+    this.renderer.keyInput.off("keypress", this.handleKeyPress);
+    this.renderer.off(CliRenderEvents.RESIZE, this.handleResize);
+    this.renderer.off(CliRenderEvents.DESTROY, this.handleRendererDestroy);
 
     if (!this.shell.isDestroyed) {
-      this.shell.destroyRecursively()
+      this.shell.destroyRecursively();
     }
 
     if (!this.renderer.isDestroyed) {
-      this.renderer.externalOutputMode = "passthrough"
-      this.renderer.screenMode = "main-screen"
+      this.renderer.externalOutputMode = "passthrough";
+      this.renderer.screenMode = "main-screen";
     }
   }
 }
 
-let activeDemo: SplitFooterStreamingDemo | null = null
+let activeDemo: SplitFooterStreamingDemo | null = null;
 
 export function run(renderer: CliRenderer): void {
   if (activeDemo) {
-    activeDemo.destroy()
+    activeDemo.destroy();
   }
 
-  activeDemo = new SplitFooterStreamingDemo(renderer)
+  activeDemo = new SplitFooterStreamingDemo(renderer);
 }
 
 export function destroy(_renderer: CliRenderer): void {
   if (!activeDemo) {
-    return
+    return;
   }
 
-  activeDemo.destroy()
-  activeDemo = null
+  activeDemo.destroy();
+  activeDemo = null;
 }
 
 if (import.meta.main) {
@@ -759,9 +775,9 @@ if (import.meta.main) {
     footerHeight: FOOTER_HEIGHT,
     externalOutputMode: "capture-stdout",
     consoleMode: "disabled",
-  })
+  });
 
-  run(renderer)
-  setupCommonDemoKeys(renderer)
-  renderer.start()
+  run(renderer);
+  setupCommonDemoKeys(renderer);
+  renderer.start();
 }

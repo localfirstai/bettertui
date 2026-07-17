@@ -1,36 +1,36 @@
-import { Renderable, type RenderableOptions, RenderableEvents } from "@bettertui/core"
-import { OptimizedBuffer } from "@bettertui/core"
-import { BoxRenderable } from "@bettertui/core"
-import { TabSelectRenderable, TabSelectRenderableEvents } from "@bettertui/core"
-import type { CliRenderer, TabSelectOption } from "@bettertui/core"
-import { parseColor, type ColorInput } from "@bettertui/core"
+import { Renderable, RenderableEvents, type RenderableOptions } from "@bettertui/core";
+import type { OptimizedBuffer } from "@bettertui/core";
+import { BoxRenderable } from "@bettertui/core";
+import { TabSelectRenderable, TabSelectRenderableEvents } from "@bettertui/core";
+import type { CliRenderer, TabSelectOption } from "@bettertui/core";
+import { type ColorInput, parseColor } from "@bettertui/core";
 
 export interface TabObject {
-  title: string
-  init(tabGroup: Renderable): void
-  update?(deltaMs: number, tabGroup: Renderable): void
-  show?(): void
-  hide?(): void
+  title: string;
+  init(tabGroup: Renderable): void;
+  update?(deltaMs: number, tabGroup: Renderable): void;
+  show?(): void;
+  hide?(): void;
 }
 
 interface Tab {
-  title: string
-  tabObject: TabObject
-  group: Renderable
-  initialized: boolean
+  title: string;
+  tabObject: TabObject;
+  group: Renderable;
+  initialized: boolean;
 }
 
 export interface TabControllerOptions extends RenderableOptions<TabControllerRenderable> {
-  backgroundColor?: ColorInput
-  textColor?: ColorInput
-  tabBarHeight?: number
-  tabBarBackgroundColor?: ColorInput
-  selectedBackgroundColor?: ColorInput
-  selectedTextColor?: ColorInput
-  selectedDescriptionColor?: ColorInput
-  showDescription?: boolean
-  showUnderline?: boolean
-  showScrollArrows?: boolean
+  backgroundColor?: ColorInput;
+  textColor?: ColorInput;
+  tabBarHeight?: number;
+  tabBarBackgroundColor?: ColorInput;
+  selectedBackgroundColor?: ColorInput;
+  selectedTextColor?: ColorInput;
+  selectedDescriptionColor?: ColorInput;
+  showDescription?: boolean;
+  showUnderline?: boolean;
+  showScrollArrows?: boolean;
 }
 
 export enum TabControllerEvents {
@@ -38,20 +38,20 @@ export enum TabControllerEvents {
 }
 
 export class TabControllerRenderable extends Renderable {
-  public tabs: Tab[] = []
-  private currentTabIndex = 0
-  private tabSelectElement: TabSelectRenderable
-  private tabBarHeight: number
-  private frameCallback: ((deltaMs: number) => Promise<void>) | null = null
+  public tabs: Tab[] = [];
+  private currentTabIndex = 0;
+  private tabSelectElement: TabSelectRenderable;
+  private tabBarHeight: number;
+  private frameCallback: ((deltaMs: number) => Promise<void>) | null = null;
 
   constructor(
     id: string,
     private renderer: CliRenderer,
     options: TabControllerOptions,
   ) {
-    super(renderer, { ...options, id, buffered: options.backgroundColor ? true : false })
+    super(renderer, { ...options, id, buffered: options.backgroundColor ? true : false });
 
-    this.tabBarHeight = options.tabBarHeight || 4
+    this.tabBarHeight = options.tabBarHeight || 4;
 
     this.tabSelectElement = new TabSelectRenderable(renderer, {
       id: `${id}-tabs`,
@@ -67,18 +67,18 @@ export class TabControllerRenderable extends Renderable {
       showDescription: options.showDescription ?? true,
       showUnderline: options.showUnderline ?? true,
       showScrollArrows: options.showScrollArrows ?? true,
-    })
+    });
 
     this.tabSelectElement.on(TabSelectRenderableEvents.SELECTION_CHANGED, (index: number) => {
-      this.switchToTab(index)
-    })
+      this.switchToTab(index);
+    });
 
-    this.add(this.tabSelectElement)
+    this.add(this.tabSelectElement);
 
     this.frameCallback = async (deltaMs) => {
-      this.update(deltaMs)
-    }
-    this.renderer.setFrameCallback(this.frameCallback)
+      this.update(deltaMs);
+    };
+    this.renderer.setFrameCallback(this.frameCallback);
   }
 
   public addTab(tabObject: TabObject): Tab {
@@ -90,20 +90,20 @@ export class TabControllerRenderable extends Renderable {
       visible: false,
       width: "100%",
       height: 1,
-    })
+    });
 
-    this.add(tabGroup)
+    this.add(tabGroup);
 
     const tab: Tab = {
       title: tabObject.title,
       tabObject,
       group: tabGroup,
       initialized: false,
-    }
-    this.tabs.push(tab)
+    };
+    this.tabs.push(tab);
 
-    this.updateTabSelectOptions()
-    return tab
+    this.updateTabSelectOptions();
+    return tab;
   }
 
   private updateTabSelectOptions(): void {
@@ -111,111 +111,111 @@ export class TabControllerRenderable extends Renderable {
       name: tab.title,
       description: `Tab ${index + 1}/${this.tabs.length} - Use Left/Right arrows to navigate | Press Ctrl+C to exit | D: toggle debug`,
       value: index,
-    }))
+    }));
 
-    this.tabSelectElement.setOptions(options)
+    this.tabSelectElement.setOptions(options);
 
     if (this.tabs.length === 1) {
-      const firstTab = this.getCurrentTab()
-      firstTab.group.visible = true
-      this.initializeTab(firstTab)
+      const firstTab = this.getCurrentTab();
+      firstTab.group.visible = true;
+      this.initializeTab(firstTab);
 
       if (firstTab.tabObject.show) {
-        firstTab.tabObject.show()
+        firstTab.tabObject.show();
       }
     }
   }
 
   private initializeTab(tab: Tab): void {
     if (!tab.initialized) {
-      tab.tabObject.init(tab.group)
-      tab.initialized = true
+      tab.tabObject.init(tab.group);
+      tab.initialized = true;
     }
   }
 
   public getCurrentTab(): Tab {
-    return this.tabs[this.currentTabIndex]
+    return this.tabs[this.currentTabIndex];
   }
 
   public getCurrentTabGroup(): Renderable {
-    return this.getCurrentTab().group
+    return this.getCurrentTab().group;
   }
 
   public switchToTab(index: number): void {
-    if (index < 0 || index >= this.tabs.length) return
-    if (index === this.currentTabIndex) return
+    if (index < 0 || index >= this.tabs.length) return;
+    if (index === this.currentTabIndex) return;
 
-    const currentTab = this.getCurrentTab()
-    currentTab.group.visible = false
+    const currentTab = this.getCurrentTab();
+    currentTab.group.visible = false;
     if (currentTab.tabObject.hide) {
-      currentTab.tabObject.hide()
+      currentTab.tabObject.hide();
     }
 
-    this.currentTabIndex = index
-    this.tabSelectElement.setSelectedIndex(index)
+    this.currentTabIndex = index;
+    this.tabSelectElement.setSelectedIndex(index);
 
-    const newTab = this.getCurrentTab()
-    newTab.group.visible = true
+    const newTab = this.getCurrentTab();
+    newTab.group.visible = true;
 
-    this.initializeTab(newTab)
+    this.initializeTab(newTab);
 
     if (newTab.tabObject.show) {
-      newTab.tabObject.show()
+      newTab.tabObject.show();
     }
 
-    this.emit(TabControllerEvents.TAB_CHANGED, index, newTab)
+    this.emit(TabControllerEvents.TAB_CHANGED, index, newTab);
   }
 
   public nextTab(): void {
-    this.switchToTab((this.currentTabIndex + 1) % this.tabs.length)
+    this.switchToTab((this.currentTabIndex + 1) % this.tabs.length);
   }
 
   public previousTab(): void {
-    this.switchToTab((this.currentTabIndex - 1 + this.tabs.length) % this.tabs.length)
+    this.switchToTab((this.currentTabIndex - 1 + this.tabs.length) % this.tabs.length);
   }
 
   public update(deltaMs: number): void {
-    const currentTab = this.getCurrentTab()
+    const currentTab = this.getCurrentTab();
     if (currentTab && currentTab.tabObject.update) {
-      currentTab.tabObject.update(deltaMs, currentTab.group)
+      currentTab.tabObject.update(deltaMs, currentTab.group);
     }
   }
 
   public getCurrentTabIndex(): number {
-    return this.currentTabIndex
+    return this.currentTabIndex;
   }
 
   public getTabSelectElement(): TabSelectRenderable {
-    return this.tabSelectElement
+    return this.tabSelectElement;
   }
 
   public focus(): void {
-    this.tabSelectElement.focus()
-    this.emit(RenderableEvents.FOCUSED)
+    this.tabSelectElement.focus();
+    this.emit(RenderableEvents.FOCUSED);
   }
 
   public blur(): void {
-    this.tabSelectElement.blur()
-    this.emit(RenderableEvents.BLURRED)
+    this.tabSelectElement.blur();
+    this.emit(RenderableEvents.BLURRED);
   }
 
   public get focused(): boolean {
-    return this.tabSelectElement.focused
+    return this.tabSelectElement.focused;
   }
 
   public onResize(width: number, height: number): void {
-    if (this.width === width && this.height === height) return
+    if (this.width === width && this.height === height) return;
 
-    this.width = width
-    this.height = height
+    this.width = width;
+    this.height = height;
 
-    this.tabSelectElement.width = width
-    this.tabSelectElement.height = this.tabBarHeight
+    this.tabSelectElement.width = width;
+    this.tabSelectElement.height = this.tabBarHeight;
 
     for (const tab of this.tabs) {
-      tab.group.y = this.tabBarHeight
-      tab.group.width = width
-      tab.group.height = height - this.tabBarHeight
+      tab.group.y = this.tabBarHeight;
+      tab.group.width = width;
+      tab.group.height = height - this.tabBarHeight;
     }
   }
 
@@ -225,19 +225,19 @@ export class TabControllerRenderable extends Renderable {
   }
 
   protected destroySelf(): void {
-    this.blur()
+    this.blur();
 
     if (this.frameCallback) {
-      this.renderer.removeFrameCallback(this.frameCallback)
-      this.frameCallback = null
+      this.renderer.removeFrameCallback(this.frameCallback);
+      this.frameCallback = null;
     }
 
     for (const tab of this.tabs) {
-      tab.group.destroy()
+      tab.group.destroy();
     }
 
-    this.tabSelectElement.destroy()
+    this.tabSelectElement.destroy();
 
-    this.removeAllListeners()
+    this.removeAllListeners();
   }
 }
