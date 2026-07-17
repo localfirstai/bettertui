@@ -443,3 +443,60 @@ fn osc_set_hyperlink_with_id() {
         }))
     );
 }
+
+#[test]
+fn osc52_set_sequence_encodes_base64() {
+    let seq = ClipboardData::set_sequence(ClipboardSelection::Clipboard, "Hello");
+    let s = String::from_utf8_lossy(&seq);
+    // "Hello" base64 == "SGVsbG8="
+    assert_eq!(s, "\x1b]52;c;SGVsbG8=\x1b\\");
+}
+
+#[test]
+fn osc52_query_sequence() {
+    let seq = ClipboardData::query_sequence(ClipboardSelection::Primary);
+    let s = String::from_utf8_lossy(&seq);
+    assert_eq!(s, "\x1b]52;p;?\x1b\\");
+}
+
+#[test]
+fn osc52_selection_params() {
+    assert_eq!(ClipboardSelection::Clipboard.param(), 'c');
+    assert_eq!(ClipboardSelection::Primary.param(), 'p');
+    assert_eq!(ClipboardSelection::Secondary.param(), 's');
+    assert_eq!(ClipboardSelection::Tertiary.param(), 'q');
+}
+
+#[test]
+fn osc52_roundtrip_set_then_parse() {
+    let seq = ClipboardData::set_sequence(ClipboardSelection::Clipboard, "round trip");
+    // Strip the ESC ] prefix and ESC \ suffix to feed the OSC payload to parse().
+    let s = String::from_utf8_lossy(&seq);
+    let payload = s.trim_start_matches("\x1b]").trim_end_matches("\x1b\\");
+    let cmd = OscCommand::parse(payload.as_bytes());
+    match cmd {
+        Some(OscCommand::SetClipboard(data)) => {
+            assert_eq!(data.decoded(), Some("round trip".to_string()));
+            assert!(!data.is_query());
+        }
+        other => panic!("expected SetClipboard, got {other:?}"),
+    }
+}
+
+#[test]
+fn osc52_query_marker_decodes_to_none() {
+    let cmd = OscCommand::parse(b"52;c;?");
+    match cmd {
+        Some(OscCommand::SetClipboard(data)) => {
+            assert!(data.is_query());
+            assert_eq!(data.decoded(), None);
+        }
+        other => panic!("expected SetClipboard query, got {other:?}"),
+    }
+}
+
+#[test]
+fn osc52_invalid_base64_decodes_to_none() {
+    let data = ClipboardData { data: "not!base64!".to_string(), selection: ClipboardSelection::Clipboard };
+    assert_eq!(data.decoded(), None);
+}

@@ -1394,6 +1394,55 @@ pub enum ClipboardSelection {
     Tertiary,
 }
 
+impl ClipboardSelection {
+    /// The OSC 52 selection parameter character (`c`/`p`/`s`/`q`).
+    pub fn param(self) -> char {
+        match self {
+            Self::Clipboard => 'c',
+            Self::Primary => 'p',
+            Self::Secondary => 's',
+            Self::Tertiary => 'q',
+        }
+    }
+}
+
+impl ClipboardData {
+    /// Builds an OSC 52 sequence that sets the terminal clipboard to `text`.
+    ///
+    /// The payload is base64-encoded per the OSC 52 spec. The returned bytes
+    /// include the `ESC ] 52 ; <sel> ; <base64> ESC \` framing (ST terminator).
+    pub fn set_sequence(selection: ClipboardSelection, text: &str) -> Vec<u8> {
+        use base64::Engine as _;
+        let encoded = base64::engine::general_purpose::STANDARD.encode(text.as_bytes());
+        format!("\x1b]52;{};{}\x1b\\", selection.param(), encoded).into_bytes()
+    }
+
+    /// Builds an OSC 52 *query* sequence (`... ; ? ...`) asking the terminal to
+    /// report the current clipboard contents. The response arrives as an inbound
+    /// OSC 52 which [`OscCommand::parse`] decodes into a [`ClipboardData`].
+    pub fn query_sequence(selection: ClipboardSelection) -> Vec<u8> {
+        format!("\x1b]52;{};?\x1b\\", selection.param()).into_bytes()
+    }
+
+    /// Decodes the base64 `data` field into the clipboard text.
+    ///
+    /// Returns `None` when the payload is the query marker `?` or is not valid
+    /// base64/UTF-8.
+    pub fn decoded(&self) -> Option<String> {
+        use base64::Engine as _;
+        if self.data == "?" {
+            return None;
+        }
+        let bytes = base64::engine::general_purpose::STANDARD.decode(self.data.as_bytes()).ok()?;
+        String::from_utf8(bytes).ok()
+    }
+
+    /// Returns `true` if this is a clipboard *query* (data is the `?` marker).
+    pub fn is_query(&self) -> bool {
+        self.data == "?"
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hyperlink {
     pub id: Option<String>,
@@ -1423,6 +1472,7 @@ impl OscCommand {
                     "c" | "Clipboard" => ClipboardSelection::Clipboard,
                     "p" | "Primary" => ClipboardSelection::Primary,
                     "s" | "Secondary" => ClipboardSelection::Secondary,
+                    "q" | "Tertiary" => ClipboardSelection::Tertiary,
                     "0" => ClipboardSelection::Clipboard,
                     "1" => ClipboardSelection::Primary,
                     "2" => ClipboardSelection::Secondary,

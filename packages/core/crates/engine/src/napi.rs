@@ -41,6 +41,44 @@ pub fn get_version() -> String {
     VERSION.to_string()
 }
 
+/// Maps a selection name (`clipboard`/`primary`/`secondary`/`tertiary`, or the
+/// short `c`/`p`/`s`/`q`) to a [`ClipboardSelection`]. Defaults to `Clipboard`.
+fn clipboard_selection_from_str(sel: &str) -> crate::ansi::ClipboardSelection {
+    use crate::ansi::ClipboardSelection;
+    match sel {
+        "primary" | "p" => ClipboardSelection::Primary,
+        "secondary" | "s" => ClipboardSelection::Secondary,
+        "tertiary" | "q" => ClipboardSelection::Tertiary,
+        _ => ClipboardSelection::Clipboard,
+    }
+}
+
+/// Builds the OSC 52 escape sequence that sets the terminal clipboard to `text`.
+///
+/// `selection` is one of `clipboard`/`primary`/`secondary`/`tertiary`. The
+/// caller writes the returned bytes to the terminal (stdout).
+#[napi]
+pub fn clipboard_set_sequence(selection: String, text: String) -> Vec<u8> {
+    crate::ansi::ClipboardData::set_sequence(clipboard_selection_from_str(&selection), &text)
+}
+
+/// Builds the OSC 52 *query* sequence asking the terminal to report the current
+/// clipboard contents. The response returns as an inbound OSC 52 that
+/// [`clipboard_decode`] can decode.
+#[napi]
+pub fn clipboard_query_sequence(selection: String) -> Vec<u8> {
+    crate::ansi::ClipboardData::query_sequence(clipboard_selection_from_str(&selection))
+}
+
+/// Decodes a base64 OSC 52 clipboard payload into UTF-8 text. Returns `null`
+/// for the `?` query marker or invalid base64/UTF-8.
+#[napi]
+pub fn clipboard_decode(payload: String) -> Option<String> {
+    use crate::ansi::{ClipboardData, ClipboardSelection};
+    let data = ClipboardData { data: payload, selection: ClipboardSelection::Clipboard };
+    data.decoded()
+}
+
 #[napi(object)]
 pub struct TerminalCapabilities {
     pub brand: String,
