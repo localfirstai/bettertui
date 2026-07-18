@@ -14,6 +14,7 @@ use crate::hit_grid::HitGrid;
 use crate::event_bus::{EventQueue, Key, KeyEvent, Modifiers, MouseButton};
 use crate::input::{FocusDirection, FocusManager, FocusTraversal, KeyBinding, KeyParser, Keymap};
 use crate::logger::{Level, Logger, LoggerConfig, ModuleFilter};
+use crate::plugin::{Capability, PluginHost, PluginInfo, PluginState, SlotMode, SlotRegistry};
 use crate::protocol::{Command, ScreenMode};
 use crate::render::Renderer;
 use crate::scheduler::{FrameStatus, Scheduler};
@@ -1029,6 +1030,165 @@ impl NativeTimeline {
     #[napi]
     pub fn progress(&self) -> Option<f64> {
         self.timeline.lock().ok().and_then(|tl| tl.progress()).map(|p| p as f64)
+    }
+}
+
+// ─── Plugin host + slot composition (Wrapper Pattern) ────────────────────────
+
+/// Parses a slot mode name (`append`/`single-winner`/`replace`).
+fn slot_mode_from_str(mode: &str) -> SlotMode {
+    match mode {
+        "single-winner" | "singleWinner" => SlotMode::SingleWinner,
+        "replace" => SlotMode::Replace,
+        _ => SlotMode::Append,
+    }
+}
+
+/// Parses a capability name into a [`Capability`]. Unknown names become
+/// `Capability::Custom`.
+fn capability_from_str(name: &str) -> Capability {
+    match name {
+        "commands" => Capability::Commands,
+        "widgets" => Capability::Widgets,
+        "themes" => Capability::Themes,
+        "events" => Capability::Events,
+        "filesystem" | "fileSystem" => Capability::FileSystem,
+        other => Capability::Custom(other.to_string()),
+    }
+}
+
+fn plugin_state_name(state: PluginState) -> &'static str {
+    match state {
+        PluginState::Registered => "registered",
+        PluginState::Initialized => "initialized",
+        PluginState::Running => "running",
+        PluginState::Stopped => "stopped",
+        PluginState::Error => "error",
+    }
+}
+
+/// napi wrapper exposing the plugin [`PluginHost`] and named string-valued
+/// [`SlotRegistry`]s to TypeScript — the BetterTUI equivalent of OpenTUI's
+/// plugin API + `SlotRegistry`. Slot values are strings (typically a node id or
+/// a serialized descriptor); the TS side owns their meaning.
+#[napi]
+pub struct NativePluginHost {
+    host: Mutex<PluginHost>,
+    slots: Mutex<std::collections::HashMap<String, SlotRegistry<String>>>,
+}
+
+#[napi]
+impl NativePluginHost {
+    #[napi(constructor)]
+    pub fn new() -> Self {
+        Self { host: Mutex::new(PluginHost::new()), slots: Mutex::new(std::collections::HashMap::new()) }
+    }
+
+    /// Registers a plugin. `capabilities` is a list of capability names. Returns
+    /// an error string on duplicate registration, else `None`.
+    #[napi]
+    pub fn register(&self, name: String, version: String, author: String, capabilities: Vec<String>) -> Option<String> {
+        let info = PluginInfo {
+            name,
+            version,
+            author,
+            capabilities: capabilities.iter().map(|c| capability_from_str(c)).collect(),
+            metadata: std::collections::HashMap::new(),
+        };
+        self.host.lock().ok().and_then(|mut h| h.register(info).err())
+    }
+
+    /// Unregisters a plugin and removes any slot contributions it made.
+    #[napi]
+    pub fn unregister(&self, name: String) -> Option<String> {
+        if let Ok(mut slots) = self.slots.lock() {
+            for reg in slots.values_mut() {
+                reg.remove_plugin(&name);
+            }
+        }
+        self.host.lock().ok().and_then(|mut h| h.unregister(&name).err())
+    }
+
+    /// Lifecycle hook: `Registered`/`Stopped` → `Initialized`.
+    #[napi]
+    pub fn initialize(&self, name: String) -> Option<String> {
+        self.host.lock().ok().and_then(|mut h| h.initialize(&name).err())
+    }
+
+    /// Lifecycle hook: `Initialized`/`Stopped` → `Running`.
+    #[napi]
+    pub fn start(&self, name: String) -> Option<String> {
+        self.host.lock().ok().and_then(|mut h| h.start(&name).err())
+    }
+
+    /// Lifecycle hook: `Running` → `Stopped`.
+    #[napi]
+    pub fn stop(&self, name: String) -> Option<String> {
+        self.host.lock().ok().and_then(|mut h| h.stop(&name).err())
+    }
+
+    /// Lifecycle hook: mark a plugin as errored.
+    #[napi]
+    pub fn mark_error(&self, name: String) -> Option<String> {
+        self.host.lock().ok().and_then(|mut h| h.mark_error(&name).err())
+    }
+
+    /// Current lifecycle state of a plugin, or `None` if unregistered.
+    #[napi]
+    pub fn state(&self, name: String) -> Option<String> {
+        self.host.lock().ok().and_then(|h| h.state(&name)).map(|s| plugin_state_name(s).to_string())
+    }
+
+    /// Names of all registered plugins.
+    #[napi]
+    pub fn plugin_names(&self) -> Vec<String> {
+        self.host.lock().map_or_else(|_| Vec::new(), |h| h.names().into_iter().map(String::from).collect())
+    }
+
+    /// Ensures a named slot exists with the given resolution mode. No-op if the
+    /// slot already exists (mode is not changed).
+    #[napi]
+    pub fn ensure_slot(&self, slot: String, mode: String) {
+        if let Ok(mut slots) = self.slots.lock() {
+            slots.entry(slot).or_insert_with(|| SlotRegistry::new(slot_mode_from_str(&mode)));
+        }
+    }
+
+    /// Registers a contribution to `slot` and returns its token (0 on failure).
+    #[napi]
+    pub fn slot_register(&self, slot: String, plugin_id: String, priority: i32, value: String) -> i64 {
+        if let Ok(mut slots) = self.slots.lock() {
+            let reg = slots.entry(slot).or_insert_with(|| SlotRegistry::new(SlotMode::Append));
+            reg.register(plugin_id, priority, value) as i64
+        } else {
+            0
+        }
+    }
+
+    /// Removes a slot contribution by token. Returns `true` if one was removed.
+    #[napi]
+    pub fn slot_remove(&self, slot: String, token: i64) -> bool {
+        self.slots.lock().map_or(false, |mut slots| slots.get_mut(&slot).map_or(false, |reg| reg.remove(token as u64)))
+    }
+
+    /// Resolves a slot to its effective contributions per its mode.
+    #[napi]
+    pub fn slot_resolve(&self, slot: String) -> Vec<String> {
+        self.slots
+            .lock()
+            .map_or_else(|_| Vec::new(), |slots| slots.get(&slot).map(|reg| reg.resolve()).unwrap_or_default())
+    }
+
+    /// Returns and clears a slot's dirty flag (for coalesced recomputation).
+    #[napi]
+    pub fn slot_take_dirty(&self, slot: String) -> bool {
+        self.slots.lock().map_or(false, |mut slots| slots.get_mut(&slot).map_or(false, |reg| reg.take_dirty()))
+    }
+}
+
+impl Default for NativePluginHost {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

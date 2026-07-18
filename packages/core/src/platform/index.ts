@@ -8,6 +8,7 @@ export {
   createTextEngine,
   createSpanFeed,
   createHitGrid,
+  createPluginHost,
   detectCapabilities,
   getVersion,
   loggerInit,

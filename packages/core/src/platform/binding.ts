@@ -12,6 +12,7 @@ interface NativeModule {
   NativeTextEngine: new (text?: string | null) => NativeTextEngine;
   NativeSpanFeed: new (options?: NativeSpanFeedOptions | null) => NativeSpanFeed;
   NativeHitGrid: new (width: number, height: number) => NativeHitGrid;
+  NativePluginHost: new () => NativePluginHost;
   TerminalCapabilities: TerminalCapabilities;
   detectCapabilities: () => TerminalCapabilities;
   getVersion: () => string;
@@ -786,4 +787,99 @@ export function loggerGetDiagnostics(): NapiDiagnosticSnapshot {
 
 export function loggerFlush(): void {
   native.loggerFlush();
+}
+
+// ─── Plugin host + slot composition ──────────────────────────────────────────
+
+interface NativePluginHost {
+  register(name: string, version: string, author: string, capabilities: string[]): string | null;
+  unregister(name: string): string | null;
+  initialize(name: string): string | null;
+  start(name: string): string | null;
+  stop(name: string): string | null;
+  markError(name: string): string | null;
+  state(name: string): string | null;
+  pluginNames(): string[];
+  ensureSlot(slot: string, mode: string): void;
+  slotRegister(slot: string, pluginId: string, priority: number, value: string): number;
+  slotRemove(slot: string, token: number): boolean;
+  slotResolve(slot: string): string[];
+  slotTakeDirty(slot: string): boolean;
+}
+
+/** Plugin lifecycle state names returned by {@link NapiPluginHost.state}. */
+export type PluginStateName = "registered" | "initialized" | "running" | "stopped" | "error";
+
+/** Slot resolution mode. */
+export type SlotMode = "append" | "single-winner" | "replace";
+
+/**
+ * TypeScript wrapper around the native plugin host + slot registry — the
+ * BetterTUI equivalent of OpenTUI's plugin API and `SlotRegistry`. Lifecycle
+ * methods return an error string when the transition is illegal, else `null`.
+ * Slot values are strings (typically a node id or serialized descriptor).
+ */
+export class NapiPluginHost {
+  constructor(private host: NativePluginHost) {}
+
+  register(
+    name: string,
+    version: string,
+    author: string,
+    capabilities: string[] = [],
+  ): string | null {
+    return this.host.register(name, version, author, capabilities);
+  }
+
+  unregister(name: string): string | null {
+    return this.host.unregister(name);
+  }
+
+  initialize(name: string): string | null {
+    return this.host.initialize(name);
+  }
+
+  start(name: string): string | null {
+    return this.host.start(name);
+  }
+
+  stop(name: string): string | null {
+    return this.host.stop(name);
+  }
+
+  markError(name: string): string | null {
+    return this.host.markError(name);
+  }
+
+  state(name: string): PluginStateName | null {
+    return this.host.state(name) as PluginStateName | null;
+  }
+
+  pluginNames(): string[] {
+    return this.host.pluginNames();
+  }
+
+  ensureSlot(slot: string, mode: SlotMode = "append"): void {
+    this.host.ensureSlot(slot, mode);
+  }
+
+  slotRegister(slot: string, pluginId: string, priority: number, value: string): number {
+    return this.host.slotRegister(slot, pluginId, priority, value);
+  }
+
+  slotRemove(slot: string, token: number): boolean {
+    return this.host.slotRemove(slot, token);
+  }
+
+  slotResolve(slot: string): string[] {
+    return this.host.slotResolve(slot);
+  }
+
+  slotTakeDirty(slot: string): boolean {
+    return this.host.slotTakeDirty(slot);
+  }
+}
+
+export function createPluginHost(): NapiPluginHost {
+  return new NapiPluginHost(new native.NativePluginHost());
 }
