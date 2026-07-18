@@ -112,6 +112,51 @@ impl PluginHost {
         Ok(())
     }
 
+    /// Lifecycle hook: initialize a `Registered` plugin (→ `Initialized`).
+    ///
+    /// Unlike raw [`set_state`](Self::set_state), the lifecycle hooks enforce the
+    /// legal transition order `Registered → Initialized → Running → Stopped`
+    /// (with `Stopped`/`Initialized` re-initializable and `start` allowed from
+    /// `Initialized`/`Stopped`). Illegal transitions return an error and leave
+    /// the plugin unchanged.
+    pub fn initialize(&mut self, name: &str) -> Result<(), String> {
+        self.transition(name, &[PluginState::Registered, PluginState::Stopped], PluginState::Initialized, "initialize")
+    }
+
+    /// Lifecycle hook: start an `Initialized`/`Stopped` plugin (→ `Running`).
+    pub fn start(&mut self, name: &str) -> Result<(), String> {
+        self.transition(name, &[PluginState::Initialized, PluginState::Stopped], PluginState::Running, "start")
+    }
+
+    /// Lifecycle hook: stop a `Running` plugin (→ `Stopped`).
+    pub fn stop(&mut self, name: &str) -> Result<(), String> {
+        self.transition(name, &[PluginState::Running], PluginState::Stopped, "stop")
+    }
+
+    /// Lifecycle hook: mark a plugin as errored from any state.
+    pub fn mark_error(&mut self, name: &str) -> Result<(), String> {
+        let idx = *self.index.get(name).ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
+        self.plugins[idx].state = PluginState::Error;
+        Ok(())
+    }
+
+    /// Validates and applies a lifecycle transition.
+    fn transition(
+        &mut self,
+        name: &str,
+        allowed_from: &[PluginState],
+        to: PluginState,
+        action: &str,
+    ) -> Result<(), String> {
+        let idx = *self.index.get(name).ok_or_else(|| format!("Plugin '{name}' is not registered"))?;
+        let current = self.plugins[idx].state;
+        if !allowed_from.contains(&current) {
+            return Err(format!("cannot {action} plugin '{name}' from state {current:?}"));
+        }
+        self.plugins[idx].state = to;
+        Ok(())
+    }
+
     /// Returns the state of a plugin.
     pub fn state(&self, name: &str) -> Option<PluginState> {
         self.index.get(name).map(|&idx| self.plugins[idx].state)
@@ -157,6 +202,144 @@ impl PluginHost {
     /// Returns all running plugins.
     pub fn running(&self) -> Vec<&Plugin> {
         self.plugins.iter().filter(|p| p.state == PluginState::Running).collect()
+    }
+}
+
+// ─── Slot-based composition ──────────────────────────────────────────────────
+
+/// How a [`SlotRegistry`] resolves multiple contributions to the same slot.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SlotMode {
+    /// All contributions are kept, ordered by registration (then priority).
+    #[default]
+    Append,
+    /// Only the highest-priority contribution wins (ties: first registered).
+    SingleWinner,
+    /// The most recent contribution replaces all previous ones.
+    Replace,
+}
+
+/// One contribution to a slot, owned by a plugin.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SlotEntry<T> {
+    /// The plugin that registered this entry.
+    pub plugin_id: String,
+    /// Higher priority wins under `SingleWinner` and sorts first under `Append`.
+    pub priority: i32,
+    /// The contributed value (e.g. a node id, widget descriptor, string).
+    pub value: T,
+}
+
+/// A named composition point that plugins contribute to — the BetterTUI
+/// equivalent of OpenTUI's `SlotRegistry<T>`. Used to compose core UI regions
+/// (status bar, header, footer) from multiple plugins.
+///
+/// Registration returns a token; dropping it is not automatic (call
+/// [`remove`](Self::remove)). Mutations set a dirty flag so a host can coalesce
+/// recomputation via [`take_dirty`](Self::take_dirty).
+#[derive(Debug, Clone)]
+pub struct SlotRegistry<T> {
+    mode: SlotMode,
+    entries: Vec<SlotEntry<T>>,
+    next_token: u64,
+    tokens: Vec<u64>,
+    dirty: bool,
+}
+
+impl<T: Clone> Default for SlotRegistry<T> {
+    fn default() -> Self {
+        Self::new(SlotMode::default())
+    }
+}
+
+impl<T: Clone> SlotRegistry<T> {
+    pub fn new(mode: SlotMode) -> Self {
+        Self { mode, entries: Vec::new(), next_token: 1, tokens: Vec::new(), dirty: false }
+    }
+
+    /// Registers a contribution and returns a token identifying it. Under
+    /// `Replace`, this clears any previous contributions first.
+    pub fn register(&mut self, plugin_id: impl Into<String>, priority: i32, value: T) -> u64 {
+        if self.mode == SlotMode::Replace {
+            self.entries.clear();
+            self.tokens.clear();
+        }
+        let token = self.next_token;
+        self.next_token += 1;
+        self.entries.push(SlotEntry { plugin_id: plugin_id.into(), priority, value });
+        self.tokens.push(token);
+        self.dirty = true;
+        token
+    }
+
+    /// Removes a contribution by token. Returns `true` if one was removed.
+    pub fn remove(&mut self, token: u64) -> bool {
+        if let Some(pos) = self.tokens.iter().position(|&t| t == token) {
+            self.tokens.remove(pos);
+            self.entries.remove(pos);
+            self.dirty = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Removes all contributions registered by a plugin. Returns how many.
+    pub fn remove_plugin(&mut self, plugin_id: &str) -> usize {
+        let before = self.entries.len();
+        let mut i = 0;
+        while i < self.entries.len() {
+            if self.entries[i].plugin_id == plugin_id {
+                self.entries.remove(i);
+                self.tokens.remove(i);
+            } else {
+                i += 1;
+            }
+        }
+        let removed = before - self.entries.len();
+        if removed > 0 {
+            self.dirty = true;
+        }
+        removed
+    }
+
+    /// Resolves the slot to the effective contributions per the [`SlotMode`].
+    ///
+    /// - `Append`: all entries, sorted by descending priority (stable, so equal
+    ///   priorities keep registration order).
+    /// - `SingleWinner`: the single highest-priority entry (or empty).
+    /// - `Replace`: whatever remains (at most the last registration).
+    pub fn resolve(&self) -> Vec<T> {
+        match self.mode {
+            SlotMode::Append => {
+                let mut ordered: Vec<&SlotEntry<T>> = self.entries.iter().collect();
+                ordered.sort_by(|a, b| b.priority.cmp(&a.priority));
+                ordered.into_iter().map(|e| e.value.clone()).collect()
+            }
+            SlotMode::SingleWinner => self
+                .entries
+                .iter()
+                .enumerate()
+                .max_by(|(ai, a), (bi, b)| a.priority.cmp(&b.priority).then(bi.cmp(ai)))
+                .map(|(_, e)| vec![e.value.clone()])
+                .unwrap_or_default(),
+            SlotMode::Replace => self.entries.last().map(|e| vec![e.value.clone()]).into_iter().flatten().collect(),
+        }
+    }
+
+    /// Number of registered contributions.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Whether the slot has no contributions.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Returns and clears the dirty flag (for coalesced recomputation).
+    pub fn take_dirty(&mut self) -> bool {
+        std::mem::replace(&mut self.dirty, false)
     }
 }
 
@@ -333,5 +516,103 @@ mod tests {
         let c = Capability::Custom("bar".into());
         assert_eq!(a, b);
         assert_ne!(a, c);
+    }
+
+    // ── Lifecycle hooks ──────────────────────────────────────────────────────
+
+    #[test]
+    fn lifecycle_happy_path() {
+        let mut host = PluginHost::new();
+        host.register(test_info("p")).unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Registered));
+        host.initialize("p").unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Initialized));
+        host.start("p").unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Running));
+        host.stop("p").unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Stopped));
+        // Stopped plugins can be restarted.
+        host.start("p").unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Running));
+    }
+
+    #[test]
+    fn lifecycle_rejects_illegal_transition() {
+        let mut host = PluginHost::new();
+        host.register(test_info("p")).unwrap();
+        // Cannot start before initializing.
+        let err = host.start("p").unwrap_err();
+        assert!(err.contains("cannot start"));
+        assert_eq!(host.state("p"), Some(PluginState::Registered));
+        // Cannot stop something that is not running.
+        assert!(host.stop("p").is_err());
+    }
+
+    #[test]
+    fn lifecycle_mark_error_from_any_state() {
+        let mut host = PluginHost::new();
+        host.register(test_info("p")).unwrap();
+        host.mark_error("p").unwrap();
+        assert_eq!(host.state("p"), Some(PluginState::Error));
+    }
+
+    // ── Slot registry ────────────────────────────────────────────────────────
+
+    #[test]
+    fn slot_append_orders_by_priority() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::Append);
+        slot.register("a", 0, "low");
+        slot.register("b", 10, "high");
+        slot.register("c", 5, "mid");
+        assert_eq!(slot.resolve(), vec!["high", "mid", "low"]);
+        assert_eq!(slot.len(), 3);
+    }
+
+    #[test]
+    fn slot_single_winner_picks_highest_priority() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::SingleWinner);
+        slot.register("a", 1, "a");
+        slot.register("b", 9, "b");
+        slot.register("c", 3, "c");
+        assert_eq!(slot.resolve(), vec!["b"]);
+    }
+
+    #[test]
+    fn slot_single_winner_ties_keep_first() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::SingleWinner);
+        slot.register("a", 5, "first");
+        slot.register("b", 5, "second");
+        assert_eq!(slot.resolve(), vec!["first"]);
+    }
+
+    #[test]
+    fn slot_replace_keeps_last() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::Replace);
+        slot.register("a", 0, "old");
+        slot.register("b", 0, "new");
+        assert_eq!(slot.len(), 1);
+        assert_eq!(slot.resolve(), vec!["new"]);
+    }
+
+    #[test]
+    fn slot_remove_by_token_and_plugin() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::Append);
+        let t = slot.register("a", 0, "x");
+        slot.register("a", 0, "y");
+        slot.register("b", 0, "z");
+        assert!(slot.remove(t));
+        assert!(!slot.remove(9999));
+        assert_eq!(slot.remove_plugin("a"), 1); // only "y" remains under plugin a
+        assert_eq!(slot.resolve(), vec!["z"]);
+    }
+
+    #[test]
+    fn slot_dirty_flag_coalesces() {
+        let mut slot: SlotRegistry<&str> = SlotRegistry::new(SlotMode::Append);
+        assert!(!slot.take_dirty());
+        slot.register("a", 0, "x");
+        slot.register("a", 0, "y");
+        assert!(slot.take_dirty(), "registration sets dirty");
+        assert!(!slot.take_dirty(), "dirty cleared after take");
     }
 }
