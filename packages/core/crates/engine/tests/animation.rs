@@ -383,3 +383,78 @@ fn color_to_hex() {
     let c = AnimColor::rgb(255, 128, 0);
     assert_eq!(c.to_hex(), "#FF8000");
 }
+
+// --- Sub-timeline syncing ---
+
+#[test]
+fn timeline_add_sub_timeline_count() {
+    let mut parent = Timeline::new();
+    let child = Timeline::new().with_duration(1.0);
+    parent.add_sub_timeline(child, 0.5);
+    assert_eq!(parent.sub_timeline_count(), 1);
+}
+
+#[test]
+fn timeline_sub_timeline_starts_at_offset_and_completes() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    let done = Arc::new(AtomicBool::new(false));
+    let done2 = done.clone();
+
+    // Child completes after 1.0s and flips the flag via its on_complete.
+    let child = Timeline::new().with_duration(1.0).with_on_complete(move || {
+        done2.store(true, Ordering::SeqCst);
+    });
+
+    let mut parent = Timeline::new();
+    // Child should not start until the parent clock passes 0.5s.
+    parent.add_sub_timeline(child, 0.5);
+    parent.play();
+
+    // Advance to 0.4s: before the child's start offset — must not have run.
+    parent.update(0.4);
+    assert!(!done.load(Ordering::SeqCst), "child must not start before its offset");
+
+    // Advance past the offset and far enough for the child's own 1.0s duration.
+    parent.update(0.4); // parent clock 0.8, child ~0.3 in
+    parent.update(0.8); // child now past its 1.0s duration
+    assert!(done.load(Ordering::SeqCst), "child should have completed once started");
+}
+
+#[test]
+fn timeline_sub_timeline_respects_parent_speed() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    let done = Arc::new(AtomicBool::new(false));
+    let done2 = done.clone();
+    let child = Timeline::new().with_duration(1.0).with_on_complete(move || {
+        done2.store(true, Ordering::SeqCst);
+    });
+
+    let mut parent = Timeline::new();
+    parent.set_speed(2.0);
+    parent.add_sub_timeline(child, 0.0);
+    parent.play();
+
+    // At 2x speed, a single 0.6s update advances the child by 1.2s -> complete.
+    parent.update(0.6);
+    assert!(done.load(Ordering::SeqCst), "child should advance at parent speed");
+}
+
+#[test]
+fn timeline_animation_value_and_count() {
+    let mut timeline = Timeline::new();
+    timeline.add_animation(Animation::from_tween(Tween::new(0.0, 100.0, 1.0), 1), 0.0);
+    timeline.add_animation(Animation::from_tween(Tween::new(0.0, 10.0, 1.0), 2), 0.0);
+    assert_eq!(timeline.animation_count(), 2);
+
+    timeline.play();
+    timeline.update(0.5); // halfway (linear) -> 50 and 5
+    let v0 = timeline.animation_value(0).unwrap();
+    let v1 = timeline.animation_value(1).unwrap();
+    assert!((v0 - 50.0).abs() < 1.0, "first tween ~50, got {v0}");
+    assert!((v1 - 5.0).abs() < 0.5, "second tween ~5, got {v1}");
+    assert_eq!(timeline.animation_value(5), None);
+}

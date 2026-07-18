@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use napi_derive::napi;
 
 use crate::VERSION;
+use crate::animation::{Animation, Easing, Timeline, Tween};
 use crate::engine::Engine;
 use crate::hit_grid::HitGrid;
 // use crate::span_feed::SpanFeed;
@@ -822,6 +823,134 @@ impl NativeScheduler {
     #[napi]
     pub fn end_render(&self) -> bool {
         self.scheduler.lock().map_or(false, |mut s| s.end_render())
+    }
+}
+
+// ─── Animation Timeline (Wrapper Pattern) ───────────────────────────────────────
+
+/// Maps an easing name to an [`Easing`]. Unknown names fall back to `Linear`.
+fn easing_from_str(name: &str) -> Easing {
+    match name {
+        "ease-in" | "easeIn" => Easing::EaseIn,
+        "ease-out" | "easeOut" => Easing::EaseOut,
+        "ease-in-out" | "easeInOut" => Easing::EaseInOut,
+        "ease-in-cubic" | "easeInCubic" => Easing::EaseInCubic,
+        "ease-out-cubic" | "easeOutCubic" => Easing::EaseOutCubic,
+        "ease-in-out-cubic" | "easeInOutCubic" => Easing::EaseInOutCubic,
+        "ease-out-bounce" | "easeOutBounce" => Easing::EaseOutBounce,
+        "ease-out-elastic" | "easeOutElastic" => Easing::EaseOutElastic,
+        _ => Easing::Linear,
+    }
+}
+
+/// napi wrapper exposing the Rust animation [`Timeline`] to TypeScript — the
+/// BetterTUI equivalent of OpenTUI's `useTimeline`. Schedule scalar tweens at
+/// offsets, drive the timeline each frame with `update(dt)`, and read each
+/// tween's interpolated value with `animationValue(index)`.
+#[napi]
+pub struct NativeTimeline {
+    timeline: Mutex<Timeline>,
+    next_id: Mutex<u32>,
+}
+
+#[napi]
+impl NativeTimeline {
+    #[napi(constructor)]
+    pub fn new(duration: Option<f64>, looping: Option<bool>) -> Self {
+        let mut tl = Timeline::new();
+        if let Some(d) = duration {
+            tl = tl.with_duration(d as f32);
+        }
+        if looping.unwrap_or(false) {
+            tl = tl.with_looping(true);
+        }
+        Self { timeline: Mutex::new(tl), next_id: Mutex::new(1) }
+    }
+
+    /// Schedule a scalar tween (`from`→`to` over `duration` seconds, with the
+    /// named easing) to begin at `start_time`. Returns the animation index used
+    /// by [`animation_value`](Self::animation_value).
+    #[napi]
+    pub fn add_tween(&self, from: f64, to: f64, duration: f64, start_time: f64, easing: Option<String>) -> u32 {
+        let ease = easing.as_deref().map(easing_from_str).unwrap_or(Easing::Linear);
+        let mut tween = Tween::new(from as f32, to as f32, duration as f32);
+        tween.easing = ease;
+        let id = {
+            let mut n = self.next_id.lock().unwrap();
+            let cur = *n;
+            *n += 1;
+            cur
+        };
+        if let Ok(mut tl) = self.timeline.lock() {
+            let index = tl.animation_count() as u32;
+            tl.add_animation(Animation::from_tween(tween, id), start_time as f32);
+            index
+        } else {
+            0
+        }
+    }
+
+    #[napi]
+    pub fn play(&self) {
+        if let Ok(mut tl) = self.timeline.lock() {
+            tl.play();
+        }
+    }
+
+    #[napi]
+    pub fn pause(&self) {
+        if let Ok(mut tl) = self.timeline.lock() {
+            tl.pause();
+        }
+    }
+
+    #[napi]
+    pub fn restart(&self) {
+        if let Ok(mut tl) = self.timeline.lock() {
+            tl.restart();
+        }
+    }
+
+    /// Advance the timeline by `dt` seconds (typically the frame delta).
+    #[napi]
+    pub fn update(&self, dt: f64) {
+        if let Ok(mut tl) = self.timeline.lock() {
+            tl.update(dt as f32);
+        }
+    }
+
+    /// Current interpolated value of the tween scheduled at `index`.
+    #[napi]
+    pub fn animation_value(&self, index: u32) -> Option<f64> {
+        self.timeline.lock().ok().and_then(|tl| tl.animation_value(index as usize)).map(|v| v as f64)
+    }
+
+    #[napi]
+    pub fn current_time(&self) -> f64 {
+        self.timeline.lock().map_or(0.0, |tl| tl.current_time() as f64)
+    }
+
+    #[napi]
+    pub fn is_complete(&self) -> bool {
+        self.timeline.lock().map_or(false, |tl| tl.is_complete())
+    }
+
+    #[napi]
+    pub fn is_playing(&self) -> bool {
+        self.timeline.lock().map_or(false, |tl| tl.is_playing())
+    }
+
+    #[napi]
+    pub fn set_speed(&self, speed: f64) {
+        if let Ok(mut tl) = self.timeline.lock() {
+            tl.set_speed(speed as f32);
+        }
+    }
+
+    /// Progress 0.0–1.0 if the timeline has a duration, else `None`.
+    #[napi]
+    pub fn progress(&self) -> Option<f64> {
+        self.timeline.lock().ok().and_then(|tl| tl.progress()).map(|p| p as f64)
     }
 }
 
