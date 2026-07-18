@@ -500,3 +500,18 @@ fn osc52_invalid_base64_decodes_to_none() {
     let data = ClipboardData { data: "not!base64!".to_string(), selection: ClipboardSelection::Clipboard };
     assert_eq!(data.decoded(), None);
 }
+
+#[test]
+fn kitty_csiu_colon_event_type_release() {
+    // CSI 97 ; 1 : 3 u  ==  'a' with no mods, event_type=3 (Release).
+    let mut parser = AnsiParser::new();
+    parser.feed(b"\x1b[97;1:3u");
+    // Drain parser events; the CSI command is surfaced via ParserEvent::Csi.
+    let mut found = None;
+    while let Some(ev) = parser.poll_event() {
+        if let ParserEvent::Csi(CsiCommand::KittyKeyEvent { keycode, modifiers, event_type, .. }) = ev {
+            found = Some((keycode, modifiers, event_type));
+        }
+    }
+    assert_eq!(found, Some((97, 1, KittyEventType::Release)), "colon sub-param must decode event_type");
+}

@@ -622,7 +622,11 @@ impl AnsiParser {
                 }
             }
             ParserState::Csi => {
-                if byte == b';' {
+                if byte == b';' || byte == b':' {
+                    // Both semicolon (parameter) and colon (sub-parameter, e.g.
+                    // Kitty's `modifiers:event_type`) separators start a new param
+                    // slot. Colon is flattened into the param list; handlers that
+                    // care about sub-params (CSI-u) read the extra slot positionally.
                     self.params.push(0);
                 } else if (0x30..=0x39).contains(&byte) {
                     if let Some(last) = self.params.last_mut() {
