@@ -1020,6 +1020,14 @@ impl VtMachine {
                     kind: ResponseKind::TertiaryDeviceAttributes,
                 });
             }
+            CsiCommand::CursorPositionReport { row, col } => {
+                self.terminal_responses.push(TerminalResponse {
+                    query: String::new(),
+                    params: vec![*row, *col],
+                    intermediate: None,
+                    kind: ResponseKind::CursorPosition,
+                });
+            }
             CsiCommand::Mode(action, mode_type) => self.handle_mode_action(*action, mode_type),
             CsiCommand::TabStop(action) => self.handle_tab_stop(action),
             CsiCommand::AttributeReset => {
@@ -1246,6 +1254,10 @@ impl VtMachine {
             OscCommand::SetCursorColor(_) => {}
             OscCommand::SetMouseCursorShape(_) => {}
             OscCommand::SetWorkingDirectory(_) => {}
+            // OSC 4 palette set/response: parsing is surfaced via OscCommand for
+            // capability detection; the VT screen does not maintain a mutable
+            // 256-color palette, so there is nothing to apply here.
+            OscCommand::SetPaletteColor { .. } => {}
             OscCommand::InvalidUrl(_) => {}
             OscCommand::Unknown(_, _) => {}
         }

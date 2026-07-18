@@ -862,8 +862,21 @@ pub enum CsiCommand {
     DeviceAttributes(Vec<u32>),
     SecondaryDeviceAttributes(Vec<u32>),
     TertiaryDeviceAttributes(String),
-    KittyKeyEvent { keycode: u32, modifiers: u32, event_type: KittyEventType, associated_text: Option<String> },
-    KittyEnhancementLevel { level: u8, action: ModeAction },
+    /// Cursor Position Report response: `ESC[<row>;<col>R`.
+    CursorPositionReport {
+        row: u32,
+        col: u32,
+    },
+    KittyKeyEvent {
+        keycode: u32,
+        modifiers: u32,
+        event_type: KittyEventType,
+        associated_text: Option<String>,
+    },
+    KittyEnhancementLevel {
+        level: u8,
+        action: ModeAction,
+    },
     KittyKeyboardQuery(Vec<u32>),
     Unknown(u8, Vec<u32>),
 }
@@ -1041,6 +1054,12 @@ impl CsiCommand {
                 let row = params.first().copied().unwrap_or(1);
                 let col = params.get(1).copied().unwrap_or(1);
                 Some(Self::CursorMovement(CursorMovement::Position(row, col)))
+            }
+            b'R' => {
+                // Cursor Position Report (CPR) response: `ESC[<row>;<col>R`.
+                let row = params.first().copied().unwrap_or(1);
+                let col = params.get(1).copied().unwrap_or(1);
+                Some(Self::CursorPositionReport { row, col })
             }
             b'J' => {
                 let mode = match params.first().copied().unwrap_or(0) {
@@ -1375,6 +1394,12 @@ pub enum OscCommand {
     SetHyperlink(Hyperlink),
     SetIconName(String),
     SetTitle(String),
+    /// OSC 4 palette entry: `OSC 4 ; index ; spec ST`. `spec` is either an
+    /// `rgb:RR/GG/BB` color (a set, or a query response) or `?` (a query).
+    SetPaletteColor {
+        index: u32,
+        spec: String,
+    },
     SetBackgroundColor(String),
     SetForegroundColor(String),
     SetCursorColor(String),
@@ -1493,6 +1518,13 @@ impl OscCommand {
                 let uri = link_parts.get(1).unwrap_or(&"").to_string();
                 Some(Self::SetHyperlink(Hyperlink { id, uri }))
             }
+            4 => {
+                // OSC 4 ; index ; spec  — palette set or query response.
+                let palette_parts: Vec<&str> = value.splitn(2, ';').collect();
+                let index: u32 = palette_parts[0].parse().ok()?;
+                let spec = palette_parts.get(1).unwrap_or(&"").to_string();
+                Some(Self::SetPaletteColor { index, spec })
+            }
             0 | 2 => Some(Self::SetTitle(value.to_string())),
             1 => Some(Self::SetIconName(value.to_string())),
             10 => Some(Self::SetForegroundColor(value.to_string())),
@@ -1503,4 +1535,56 @@ impl OscCommand {
             _ => Some(Self::Unknown(code, data.to_vec())),
         }
     }
+
+    /// Builds an OSC 4 query for palette entry `index`: `OSC 4 ; index ; ? ST`.
+    /// The terminal replies with an OSC 4 carrying an `rgb:RR/GG/BB` spec, which
+    /// [`OscCommand::parse`] decodes into `SetPaletteColor` and
+    /// [`OscCommand::palette_rgb`] turns into `(r, g, b)`.
+    pub fn palette_query(index: u32) -> Vec<u8> {
+        format!("\x1b]4;{};?\x1b\\", index).into_bytes()
+    }
+
+    /// Builds an OSC 4 set sequence assigning `rgb` to palette entry `index`.
+    pub fn palette_set(index: u32, r: u8, g: u8, b: u8) -> Vec<u8> {
+        // OSC 4 uses 16-bit color components (`rgb:RRRR/GGGG/BBBB`); duplicate
+        // each 8-bit byte to the high and low nibble pairs.
+        format!("\x1b]4;{};rgb:{:02x}{:02x}/{:02x}{:02x}/{:02x}{:02x}\x1b\\", index, r, r, g, g, b, b).into_bytes()
+    }
+
+    /// If this is a `SetPaletteColor` whose spec is an `rgb:R/G/B` color, returns
+    /// the decoded 8-bit `(r, g, b)`. Returns `None` for query markers (`?`) or
+    /// unrecognized specs. Handles both 8-bit (`rgb:ff/00/00`) and 16-bit
+    /// (`rgb:ffff/0000/0000`) component widths, using the high byte of each.
+    pub fn palette_rgb(&self) -> Option<(u8, u8, u8)> {
+        let Self::SetPaletteColor { spec, .. } = self else {
+            return None;
+        };
+        let body = spec.strip_prefix("rgb:")?;
+        let mut parts = body.split('/');
+        let r = parse_osc_color_component(parts.next()?)?;
+        let g = parse_osc_color_component(parts.next()?)?;
+        let b = parse_osc_color_component(parts.next()?)?;
+        if parts.next().is_some() {
+            return None;
+        }
+        Some((r, g, b))
+    }
+}
+
+/// Parses one `rgb:` color component (1–4 hex digits) into an 8-bit value,
+/// scaling by taking the most-significant byte for 16-bit components.
+fn parse_osc_color_component(s: &str) -> Option<u8> {
+    if s.is_empty() || s.len() > 4 {
+        return None;
+    }
+    let v = u32::from_str_radix(s, 16).ok()?;
+    // Normalize to 8 bits based on the number of hex digits (bits = 4 * len).
+    let value = match s.len() {
+        1 => v * 0x11, // 4-bit -> 8-bit (0xF -> 0xFF)
+        2 => v,        // already 8-bit
+        3 => v >> 4,   // 12-bit -> 8-bit
+        4 => v >> 8,   // 16-bit -> 8-bit
+        _ => return None,
+    };
+    Some(value as u8)
 }

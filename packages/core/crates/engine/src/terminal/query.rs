@@ -99,6 +99,16 @@ pub fn check_responses(machine: &VtMachine) -> Vec<(TerminalQuery, QueryResult)>
         results.push((TerminalQuery::ProgressiveEnhancement, QueryResult::ProgressiveEnhancement { features }));
     }
 
+    // Cursor Position Report (CPR): `ESC[<row>;<col>R`, stored as a generic
+    // terminal response with `ResponseKind::CursorPosition`.
+    for response in machine.terminal_responses() {
+        if response.kind == crate::terminal::ResponseKind::CursorPosition {
+            let row = response.params.first().copied().unwrap_or(1);
+            let col = response.params.get(1).copied().unwrap_or(1);
+            results.push((TerminalQuery::CursorPosition, QueryResult::CursorPosition { row, col }));
+        }
+    }
+
     results
 }
 
@@ -228,5 +238,22 @@ mod tests {
         assert!(!check_responses(&machine).is_empty());
         clear_responses(&mut machine);
         assert!(check_responses(&machine).is_empty());
+    }
+
+    #[test]
+    fn parse_cursor_position_report() {
+        let mut machine = VtMachine::new(80, 24);
+        let mut parser = crate::ansi::AnsiParser::new();
+        // CPR response: cursor at row 12, col 34.
+        parser.feed(b"\x1b[12;34R");
+        while let Some(event) = parser.poll_event() {
+            machine.process(&event);
+        }
+        let results = check_responses(&machine);
+        let cpr = results.iter().find_map(|(q, r)| match (q, r) {
+            (TerminalQuery::CursorPosition, QueryResult::CursorPosition { row, col }) => Some((*row, *col)),
+            _ => None,
+        });
+        assert_eq!(cpr, Some((12, 34)));
     }
 }
