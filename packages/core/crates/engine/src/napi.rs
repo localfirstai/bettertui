@@ -80,6 +80,84 @@ pub fn clipboard_decode(payload: String) -> Option<String> {
     data.decoded()
 }
 
+// ─── Graphics protocols (Kitty / Sixel / iTerm2) ─────────────────────────────
+
+/// Maps a format string (`rgb`/`rgba`/`png`) to an [`ImageFormat`].
+fn image_format_from_str(fmt: &str) -> crate::graphics_protocol::ImageFormat {
+    use crate::graphics_protocol::ImageFormat;
+    match fmt {
+        "rgba" => ImageFormat::Rgba,
+        "png" => ImageFormat::Png,
+        _ => ImageFormat::Rgb,
+    }
+}
+
+/// Builds a Kitty graphics-protocol sequence transmitting+displaying `data`
+/// (raw `rgb`/`rgba` pixels or `png` bytes) with the given numeric `id`.
+#[napi]
+pub fn graphics_kitty_write(
+    format: String,
+    width: u32,
+    height: u32,
+    data: napi::bindgen_prelude::Buffer,
+    id: u32,
+) -> napi::bindgen_prelude::Buffer {
+    let image = crate::graphics_protocol::GraphicsImage {
+        format: image_format_from_str(&format),
+        width,
+        height,
+        data: data.as_ref(),
+    };
+    crate::graphics_protocol::kitty_write(&image, id).into()
+}
+
+/// Builds the Kitty sequence deleting image `id`.
+#[napi]
+pub fn graphics_kitty_delete(id: u32) -> napi::bindgen_prelude::Buffer {
+    crate::graphics_protocol::kitty_delete(id).into()
+}
+
+/// Builds the Kitty sequence deleting all transmitted images.
+#[napi]
+pub fn graphics_kitty_delete_all() -> napi::bindgen_prelude::Buffer {
+    crate::graphics_protocol::kitty_delete_all().into()
+}
+
+/// Builds a Sixel sequence for a raw `rgb`/`rgba` image (empty for `png`).
+#[napi]
+pub fn graphics_sixel_write(
+    format: String,
+    width: u32,
+    height: u32,
+    data: napi::bindgen_prelude::Buffer,
+) -> napi::bindgen_prelude::Buffer {
+    let image = crate::graphics_protocol::GraphicsImage {
+        format: image_format_from_str(&format),
+        width,
+        height,
+        data: data.as_ref(),
+    };
+    crate::graphics_protocol::sixel_write(&image).into()
+}
+
+/// Builds an iTerm2 inline-image sequence for `file_bytes` (e.g. PNG file data).
+#[napi]
+pub fn graphics_iterm_write(
+    file_bytes: napi::bindgen_prelude::Buffer,
+    name: Option<String>,
+    width: Option<u32>,
+    height: Option<u32>,
+) -> napi::bindgen_prelude::Buffer {
+    crate::graphics_protocol::iterm_write(file_bytes.as_ref(), name.as_deref(), width, height).into()
+}
+
+/// Builds the probe sequence(s) detecting which graphics protocols the terminal
+/// supports (Kitty query + DA1 for Sixel).
+#[napi]
+pub fn graphics_query() -> napi::bindgen_prelude::Buffer {
+    crate::graphics_protocol::graphics_query().into()
+}
+
 #[napi(object)]
 pub struct TerminalCapabilities {
     pub brand: String,
