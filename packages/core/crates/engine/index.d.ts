@@ -115,6 +115,53 @@ export declare class NativeKeymap {
   parseSequence(keyStr: string): Array<string>;
 }
 
+/**
+ * napi wrapper exposing the plugin [`PluginHost`] and named string-valued
+ * [`SlotRegistry`]s to TypeScript — the BetterTUI equivalent of OpenTUI's
+ * plugin API + `SlotRegistry`. Slot values are strings (typically a node id or
+ * a serialized descriptor); the TS side owns their meaning.
+ */
+export declare class NativePluginHost {
+  constructor();
+  /**
+   * Registers a plugin. `capabilities` is a list of capability names. Returns
+   * an error string on duplicate registration, else `None`.
+   */
+  register(
+    name: string,
+    version: string,
+    author: string,
+    capabilities: Array<string>,
+  ): string | null;
+  /** Unregisters a plugin and removes any slot contributions it made. */
+  unregister(name: string): string | null;
+  /** Lifecycle hook: `Registered`/`Stopped` → `Initialized`. */
+  initialize(name: string): string | null;
+  /** Lifecycle hook: `Initialized`/`Stopped` → `Running`. */
+  start(name: string): string | null;
+  /** Lifecycle hook: `Running` → `Stopped`. */
+  stop(name: string): string | null;
+  /** Lifecycle hook: mark a plugin as errored. */
+  markError(name: string): string | null;
+  /** Current lifecycle state of a plugin, or `None` if unregistered. */
+  state(name: string): string | null;
+  /** Names of all registered plugins. */
+  pluginNames(): Array<string>;
+  /**
+   * Ensures a named slot exists with the given resolution mode. No-op if the
+   * slot already exists (mode is not changed).
+   */
+  ensureSlot(slot: string, mode: string): void;
+  /** Registers a contribution to `slot` and returns its token (0 on failure). */
+  slotRegister(slot: string, pluginId: string, priority: number, value: string): number;
+  /** Removes a slot contribution by token. Returns `true` if one was removed. */
+  slotRemove(slot: string, token: number): boolean;
+  /** Resolves a slot to its effective contributions per its mode. */
+  slotResolve(slot: string): Array<string>;
+  /** Returns and clears a slot's dirty flag (for coalesced recomputation). */
+  slotTakeDirty(slot: string): boolean;
+}
+
 export declare class NativeScheduler {
   constructor(fps?: number | undefined | null);
   requestFrame(): void;
@@ -167,6 +214,62 @@ export declare class NativeTextEngine {
   wordCount(): number;
 }
 
+/**
+ * napi wrapper exposing the Rust animation [`Timeline`] to TypeScript — the
+ * BetterTUI equivalent of OpenTUI's `useTimeline`. Schedule scalar tweens at
+ * offsets, drive the timeline each frame with `update(dt)`, and read each
+ * tween's interpolated value with `animationValue(index)`.
+ */
+export declare class NativeTimeline {
+  constructor(duration?: number | undefined | null, looping?: boolean | undefined | null);
+  /**
+   * Schedule a scalar tween (`from`→`to` over `duration` seconds, with the
+   * named easing) to begin at `start_time`. Returns the animation index used
+   * by [`animation_value`](Self::animation_value).
+   */
+  addTween(
+    from: number,
+    to: number,
+    duration: number,
+    startTime: number,
+    easing?: string | undefined | null,
+  ): number;
+  play(): void;
+  pause(): void;
+  restart(): void;
+  /** Advance the timeline by `dt` seconds (typically the frame delta). */
+  update(dt: number): void;
+  /** Current interpolated value of the tween scheduled at `index`. */
+  animationValue(index: number): number | null;
+  currentTime(): number;
+  isComplete(): boolean;
+  isPlaying(): boolean;
+  setSpeed(speed: number): void;
+  /** Progress 0.0–1.0 if the timeline has a duration, else `None`. */
+  progress(): number | null;
+}
+
+/**
+ * Decodes a base64 OSC 52 clipboard payload into UTF-8 text. Returns `null`
+ * for the `?` query marker or invalid base64/UTF-8.
+ */
+export declare function clipboardDecode(payload: string): string | null;
+
+/**
+ * Builds the OSC 52 *query* sequence asking the terminal to report the current
+ * clipboard contents. The response returns as an inbound OSC 52 that
+ * [`clipboard_decode`] can decode.
+ */
+export declare function clipboardQuerySequence(selection: string): Array<number>;
+
+/**
+ * Builds the OSC 52 escape sequence that sets the terminal clipboard to `text`.
+ *
+ * `selection` is one of `clipboard`/`primary`/`secondary`/`tertiary`. The
+ * caller writes the returned bytes to the terminal (stdout).
+ */
+export declare function clipboardSetSequence(selection: string, text: string): Array<number>;
+
 export declare function createDarkTheme(): NapiTheme;
 
 export declare function createLightTheme(): NapiTheme;
@@ -174,6 +277,46 @@ export declare function createLightTheme(): NapiTheme;
 export declare function detectCapabilities(): TerminalCapabilities;
 
 export declare function getVersion(): string;
+
+/** Builds an iTerm2 inline-image sequence for `file_bytes` (e.g. PNG file data). */
+export declare function graphicsItermWrite(
+  fileBytes: Buffer,
+  name?: string | undefined | null,
+  width?: number | undefined | null,
+  height?: number | undefined | null,
+): Buffer;
+
+/** Builds the Kitty sequence deleting image `id`. */
+export declare function graphicsKittyDelete(id: number): Buffer;
+
+/** Builds the Kitty sequence deleting all transmitted images. */
+export declare function graphicsKittyDeleteAll(): Buffer;
+
+/**
+ * Builds a Kitty graphics-protocol sequence transmitting+displaying `data`
+ * (raw `rgb`/`rgba` pixels or `png` bytes) with the given numeric `id`.
+ */
+export declare function graphicsKittyWrite(
+  format: string,
+  width: number,
+  height: number,
+  data: Buffer,
+  id: number,
+): Buffer;
+
+/**
+ * Builds the probe sequence(s) detecting which graphics protocols the terminal
+ * supports (Kitty query + DA1 for Sixel).
+ */
+export declare function graphicsQuery(): Buffer;
+
+/** Builds a Sixel sequence for a raw `rgb`/`rgba` image (empty for `png`). */
+export declare function graphicsSixelWrite(
+  format: string,
+  width: number,
+  height: number,
+  data: Buffer,
+): Buffer;
 
 /** Flush the logger */
 export declare function loggerFlush(): void;
