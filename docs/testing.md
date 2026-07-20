@@ -31,9 +31,8 @@ There is **no `@bettertui/testing` package**. Tests use [Vitest](https://vitest.
 | Package | Test files | Scope |
 |---------|-----------|-------|
 | `@bettertui/core` | 6 | `CommandBuffer`, `Runtime`, tree ops, native bridge, validation |
+| `@bettertui/core` (devtools) | 4 | `createDevTools()`, ANSI overlay helpers, panels, `CliRenderer` debug wiring |
 | `@bettertui/shared` | 1 | Type definitions |
-
-| `@bettertui/devtools` | 1 | `createDevTools()` |
 | `@bettertui/react` | 10 | Public API, hooks, renderer, `renderToString`, runtime provider, easings, providers, components |
 
 ## Notes

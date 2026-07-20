@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> `@bettertui/core` is the **framework package for vanilla / native TypeScript** (no React). React apps install only `@bettertui/react`, which depends on core. (All packages are currently `private`.)
+> `@bettertui/core` is the **framework package for vanilla / native TypeScript** (no React). The React adapter (`@bettertui/react`) is planned but **not implemented** — `packages/react` is a placeholder. (All packages are currently `private`.)
 
 ## Cross-Framework Boundary
 
@@ -11,7 +11,7 @@
 ## Reconciler vs Host Config
 
 - **`packages/core/src/reconciler.ts` (createReconciler) is the simplified, framework-agnostic version.** It wraps pure tree operations (`createInstance`, `appendChild`, etc.) with command emission. No reconciler lifecycle hooks.
-- **The React host config (`packages/react/src/renderer.ts`) does equivalent tree ops but also handles reconciler lifecycle** — `prepareForCommit`, `resetAfterCommit`, `commitMount`, etc. Don't try to deduplicate them; the React version must respond to reconciler internals.
+- **The React host config (planned, `packages/react/src/renderer.ts`) will do equivalent tree ops but also handles reconciler lifecycle** — `prepareForCommit`, `resetAfterCommit`, `commitMount`, etc. Don't try to deduplicate them; the React version must respond to reconciler internals.
 - The pure tree operations (`createInstance`, `appendChild`, `removeChild`, etc.) in `command-buffer.ts` are reused by both. Only the wrapper layer differs.
 
 ## Runtime

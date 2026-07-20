@@ -56,10 +56,10 @@ cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 - `packages/core/crates/logger/` — tracing logger for native code (`bettertui-logger`)
 - `packages/core/crates/benchmark/` — Rust benchmarks (`bettertui-benchmark`)
 - `packages/` — TypeScript packages (all currently `private`):
-  - `@bettertui/core` — framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge)
+  - `@bettertui/core` — framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge, in-core debug tooling)
   - `@bettertui/react` — React adapter (install **only** this for React apps; depends on core)
   - `@bettertui/shared` — **internal** type-only foundation (re-exported by core and react)
-  - `@bettertui/devtools`, `@bettertui/benchmark` — tooling
+  - `@bettertui/benchmark` — tooling
 - `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
 - `examples/` — `vanila/` holds the vanilla / native TypeScript examples (run on `@bettertui/core`); `react/`, `rust/`, `solid/` are reserved
 - `docs/` — the documentation you are reading (canonical source of truth)

@@ -42,7 +42,6 @@ bettertui/
 │   │       ├── logger/        # bettertui-logger (tracing logger for native code)
 │   │       └── benchmark/     # bettertui-benchmark (Rust bench harness)
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── devtools/      # @bettertui/devtools — developer tooling
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
@@ -69,9 +68,8 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|
 | `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** |
-| `@bettertui/core` | yes | `shared` | Framework package for vanilla / native TypeScript — command buffer, tree ops, reconciler wrapper, `CommandRuntime`, native bridge |
+| `@bettertui/core` | yes | `shared` | Framework package for vanilla / native TypeScript — command buffer, tree ops, reconciler wrapper, `CommandRuntime`, native bridge, in-core debug tooling (`createDevTools`, debug overlay) |
 | `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 13 components) — React apps install only this |
-| `@bettertui/devtools` | yes | — | `createDevTools()` factory (inspectors, logger, export) |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
 
 

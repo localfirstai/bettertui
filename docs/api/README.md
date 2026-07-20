@@ -11,7 +11,7 @@ This is the index for per-package API docs. Every entry below is generated from 
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires the `bettertui_engine.node` addon); part of the `@bettertui/core` surface |
 | `@bettertui/shared` | [shared.md](packages/shared.md) | **Internal — types only, re-exported via `@bettertui/core`/`@bettertui/react`** |
 | `@bettertui/themes` | [themes.md](packages/themes.md) | **Removed** — absorbed into `@bettertui/shared` + Rust engine |
-| `@bettertui/devtools` | [devtools.md](packages/devtools.md) | Implemented (`createDevTools` factory) |
+| `@bettertui/core` (devtools) | [devtools.md](packages/devtools.md) | Implemented — in-core `createDevTools` factory + debug overlay; part of the `@bettertui/core` surface |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
 
 ## Rust crates

@@ -6,21 +6,20 @@
 BetterTUI is a **framework-agnostic terminal UI rendering engine**. Rust owns all performance-critical work (rendering, layout, input, animation, text editing, terminal emulation). TypeScript owns the developer experience (typed APIs, framework bindings, theming). A napi-rs FFI boundary is the only coupling point between the two, and it carries **commands** — never framework concepts.
 
 ```
-Vanilla / Native TS App ─┐
-                         ├─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine (bettertui-engine cdylib)
-React App ─▶ @bettertui/react ───────────────┘                       │
-         │                                                            ▼
-         └─────────────────────────────────────▶ bettertui-engine ──▶ (Terminal / PTY)
-                                                                        via crossterm + portable-pty
-Both @bettertui/core and @bettertui/react re-export the internal @bettertui/shared types.
+Vanilla / Native TS App ─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine (bettertui-engine cdylib)
+                                                       │
+                                                       ▼
+                                              bettertui-engine ──▶ (Terminal / PTY)
+                                                       via crossterm + portable-pty
+React App ─▶ @bettertui/react (planned adapter, not yet implemented)
 ```
 
 ## Two first-class packages
 
-- **`@bettertui/core`** is a fully public, framework-agnostic package for vanilla / native TypeScript. It is the recommended entry point when you don't use React.
-- **`@bettertui/react`** is the React adapter. React apps install **only** `@bettertui/react` — it depends on `@bettertui/core` and resolves it automatically.
+- **`@bettertui/core`** is a fully public, framework-agnostic package for vanilla / native TypeScript. It is the recommended entry point when you don't use React. **Implemented.**
+- **`@bettertui/react`** is the planned React adapter. React apps will install **only** `@bettertui/react` — it depends on `@bettertui/core` and resolves it automatically. **Not implemented yet** — `packages/react` is a placeholder.
 
-`@bettertui/shared` is **internal** (re-exported by core and react) and must not be installed directly.
+`@bettertui/shared` is **internal** (re-exported by core) and must not be installed directly.
 
 ## Document Index
 
@@ -69,9 +68,64 @@ are **modules inside `bettertui-engine`** — there is no separate `bettertui-wi
 `napi` feature to produce the Node.js addon (`bettertui_engine.node`).
 
 The TypeScript side is implemented: `@bettertui/core` (command buffer, reconciler wrapper,
-`CommandRuntime`, native bridge, testing utilities) and `@bettertui/react` (a real
-`react-reconciler` host config, hooks, and 13 components). `@bettertui/themes` was removed; theme
-types live in `@bettertui/shared` (internal, re-exported by core/react) and theme presets are
-created in the native bridge. `@bettertui/devtools` is implemented. Vanilla examples under
-`examples/vanila/` demonstrate the `@bettertui/core` API. See [ROADMAP.md](../../ROADMAP.md) for
-the current code-accurate status.
+`CommandRuntime`, native bridge, testing utilities) and `@bettertui/examples` (vanilla / native
+TypeScript demos runnable on `@bettertui/core`). The React adapter (`@bettertui/react`) is **not
+implemented** — `packages/react` is a placeholder directory only. Vanilla examples under
+`packages/examples/typescript/` demonstrate the `@bettertui/core` API. See
+[ROADMAP.md](../ROADMAP.md) for the current code-accurate status.
+
+## Dependency flow
+
+```mermaid
+graph TD
+    VR[Vanilla / Native TS App] --> Core[@bettertui/core]
+    AR[React App] --> React[@bettertui/react]
+    React --> Core
+    Core -->|napi-rs FFI| Engine[bettertui-engine cdylib]
+    Engine --> Term[(crossterm / portable-pty)]
+    Core --> Shared[Internal: @bettertui/shared]
+    React --> Shared
+```
+
+- `bettertui-engine` never imports any JS framework.
+- `@bettertui/core` never imports React.
+- Only `@bettertui/react` (when built) imports React.
+- The only boundary between a UI framework and the engine is the **command** — so Vue/Solid/Svelte/vanilla-TS adapters require no Rust changes.
+
+## Rust engine subsystems
+
+All subsystems below are modules **inside the `bettertui-engine` crate** (`packages/core/crates/engine`). There is no separate `bettertui-widgets`, `bettertui-terminal`, or `bettertui-bindings` crate — the engine crate is itself the `cdylib` (with the `napi` feature) that produces `bettertui_engine.node`.
+
+| Subsystem | Module | Implemented? |
+|-----------|--------|--------------|
+| Arena / node tree | `tree` | ✅ |
+| Command protocol | `protocol` | ✅ |
+| Renderer / frame production | `render` (`Renderer`, `AnsiBackend`, `Painter`), `framebuffer`, `dirty_diff` | ✅ |
+| Frame buffer | `framebuffer` | ✅ |
+| Dirty diff | `dirty_diff` | ✅ |
+| Layout (Taffy) | `taffy` | ✅ |
+| Events | `input` | ✅ |
+| Input parsing | `input`, `ansi` | ✅ |
+| Animation | `animation` | ✅ (callback path partial) |
+| Scheduler | `scheduler` | ✅ |
+| Capabilities | `terminal/capabilities.rs` (engine) | ✅ |
+| Terminal I/O + VT | `terminal/` (engine: `mod.rs`, `vt.rs`, `screen.rs`, `scrollback.rs`, `query.rs`, `neovim.rs`) | ✅ |
+| PTY / process | `pty.rs` (engine), `terminal/process.rs` (engine) | ✅ |
+| Compositor / screen | `tree`/`graphics` (engine), `terminal/screen.rs` (engine) | ✅ |
+| Text editing (rope) | `text` | ✅ |
+| Widget host | `createWidgetHost` (native bridge) | ✅ |
+| napi FFI surface | `napi` module (compiled with the `napi` feature) + `ffi` (C-ABI) | ✅ |
+
+> Note: raw terminal-byte parsing lives in `input` and `ansi`; the C-ABI surface is in `ffi`; the napi surface is in `napi`. There are no top-level `keyboard/`, `mouse/`, `editor/`, `clipboard/`, or `selection/` modules — those concerns live inside `input.rs` and `text/`.
+
+## TypeScript packages
+
+All TypeScript packages are currently `private` (not published to npm).
+
+| Package | Role | Status |
+|---------|------|--------|
+| `@bettertui/core` | Framework package for vanilla / native TypeScript — command protocol, tree ops, `CommandRuntime`, native Rust bridge, in-core debug tooling (`createDevTools`, debug overlay) | ✅ Implemented |
+| `@bettertui/react` | React adapter — install **only** this for React apps (auto-depends on `@bettertui/core`) | ⏳ Not implemented (placeholder) |
+| `@bettertui/shared` | Type foundation (zero runtime code) — **internal, do not install directly** — re-exported via `@bettertui/core` | ✅ Implemented |
+| `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
+| `@bettertui/examples` | Interactive CLI example browser runnable on `@bettertui/core` (no React) | ✅ Implemented |

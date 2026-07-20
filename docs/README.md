@@ -9,10 +9,10 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 
 ## Two ways to use BetterTUI
 
-- **Vanilla / native TypeScript — `@bettertui/core` (first-class).** A fully public, framework-agnostic package. Build CLI tools, daemons, and custom adapters on it directly.
-- **React — `@bettertui/react` (first-class).** Install **only** `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically. You never install core by hand for a React app.
+- **Vanilla / native TypeScript — `@bettertui/core` (implemented).** A fully public, framework-agnostic package. Build CLI tools, daemons, and custom adapters on it directly.
+- **React — `@bettertui/react` (planned, not yet implemented).** The intended first-class adapter. When built, React apps will install **only** `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically. The package directory is currently a placeholder.
 
-`@bettertui/shared` is **internal** (re-exported by core and react) — do not install it directly.
+`@bettertui/shared` is **internal** (re-exported by core) — do not install it directly.
 
 ## Architecture (Rust engine + protocol)
 
@@ -58,8 +58,8 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 
 - [README](../README.md)
 - [CONTRIBUTING](../CONTRIBUTING.md)
-- [ROADMAP](../ROADMAP.md)
-- [ARCHITECTURE](../ARCHITECTURE.md)
+- [Roadmap](../ROADMAP.md)
+- [Architecture](../architecture/README.md)
 - [CHANGELOG](../CHANGELOG.md)
 
 ## Obsolete docs
