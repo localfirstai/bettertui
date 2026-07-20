@@ -1,4 +1,8 @@
 import { EventEmitter } from "node:events";
+import type { DevTools, DevToolsOptions } from "../devtools";
+import { createDevTools } from "../devtools";
+import { OverlayHost } from "../devtools/overlay/overlayHost";
+import { DebugPanel } from "../devtools/overlay/panel.types";
 import { StdinParser } from "../lib/stdin-parser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import {
@@ -30,6 +34,13 @@ export interface CliRendererOptions {
   footerHeight?: number;
   externalOutputMode?: ExternalOutputMode;
   logger?: LoggerConfig;
+  /**
+   * Enable the in-core debug overlay/tooling (§6.4). Pass `true` for defaults or
+   * a {@link DevToolsOptions} object to configure it. When omitted/false, a
+   * zero-cost no-op DevTools is used (Principle #2). Env vars `BTUI_DEBUG` and
+   * `BTUI_SHOW_STATS` force it on regardless.
+   */
+  debug?: boolean | DevToolsOptions;
 }
 
 type KeyInputEvents = {
@@ -106,6 +117,9 @@ export class CliRenderer {
   private externalOutputBuffer: string[] = [];
   private nodes: Map<number, { parent: number | null; children: number[] }> = new Map();
   private running = false;
+  private _devtools: DevTools;
+  private overlay: OverlayHost | null = null;
+  private lastFrameTime = 0;
 
   constructor(options: CliRendererOptions = {}) {
     if (options.logger) {
@@ -132,6 +146,32 @@ export class CliRenderer {
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
+
+    // ─── Debug tooling (§6.4) ────────────────────────────────────────────────
+    // Env vars mirror OpenTUI's OTUI_SHOW_STATS: BTUI_DEBUG / BTUI_SHOW_STATS
+    // force the overlay on regardless of the option.
+    const envDebug =
+      process.env.BTUI_DEBUG === "1" ||
+      process.env.BTUI_DEBUG === "true" ||
+      process.env.BTUI_SHOW_STATS === "1" ||
+      process.env.BTUI_SHOW_STATS === "true";
+    const debugOption = options.debug;
+
+    if (debugOption || envDebug) {
+      const devToolsOptions: DevToolsOptions =
+        typeof debugOption === "object" ? { ...debugOption, enabled: true } : { enabled: true };
+      this._devtools = createDevTools(devToolsOptions);
+      this._devtools.updateCapabilities(mapCapabilities(this.capabilities));
+      this.overlay = new OverlayHost(this, this._devtools);
+      // Env-forced or bare `true` starts with the performance panel visible so
+      // the overlay is discoverable out of the box (like OTUI_SHOW_STATS).
+      if (envDebug || debugOption === true) {
+        this._devtools.show(DebugPanel.Performance);
+      }
+    } else {
+      // Zero-cost no-op keeps `renderer.devtools` always defined (Principle #2).
+      this._devtools = createDevTools();
+    }
   }
 
   get terminalWidth(): number {
@@ -176,6 +216,39 @@ export class CliRenderer {
    */
   getDiagnostics(): DiagnosticSnapshot {
     return loggerGetDiagnostics();
+  }
+
+  /**
+   * The DevTools facade. Always defined — a zero-cost no-op instance unless the
+   * `debug` option (or `BTUI_DEBUG`/`BTUI_SHOW_STATS`) enabled it.
+   */
+  get devtools(): DevTools {
+    return this._devtools;
+  }
+
+  /** Whether the debug overlay is active (enabled via option/env). */
+  get debugEnabled(): boolean {
+    return this.overlay !== null;
+  }
+
+  /**
+   * Toggle a debug panel (defaults to the performance panel). No-op unless the
+   * overlay was enabled. When toggling the last panel off, forces a full redraw
+   * so the vacated region is repainted cleanly.
+   */
+  toggleDebugOverlay(panel: DebugPanel = DebugPanel.Performance): void {
+    if (!this.overlay) return;
+    const nowVisible = this._devtools.toggle(panel);
+    if (!nowVisible && !this.overlay.visible) {
+      // Last panel hidden: wipe the overlay region and repaint the full frame.
+      this.overlay.clear();
+      this.renderFull();
+    }
+  }
+
+  /** Configure the debug overlay (corner, panel width, body rows). No-op when disabled. */
+  configureDebugOverlay(options: Parameters<OverlayHost["configure"]>[0]): void {
+    this.overlay?.configure(options);
   }
 
   start(): void {
@@ -299,10 +372,32 @@ export class CliRenderer {
   }
 
   render(): void {
+    const start = performance.now();
     this.engine.beginFrame();
     const frame = this.engine.render();
     this.engine.commitFrame();
+    this.writeFrame(frame, performance.now() - start);
+  }
 
+  renderFull(): void {
+    const start = performance.now();
+    this.engine.beginFrame();
+    const frame = this.engine.renderFull();
+    this.engine.commitFrame();
+    this.writeFrame(frame, performance.now() - start);
+  }
+
+  /**
+   * Shared frame write path for {@link render} and {@link renderFull}. Writes
+   * the engine's ANSI output, flushes captured external output, then (if the
+   * debug overlay is enabled) records the frame and composites the overlay on
+   * top. The overlay is written *after* engine output and outside the engine's
+   * dirty-diff, so it self-clears vacated rows (see {@link OverlayHost.paint}).
+   */
+  private writeFrame(
+    frame: { output_data: string; dirty_region_count?: number },
+    renderDuration: number,
+  ): void {
     if (frame.output_data) {
       const decoded = Buffer.from(frame.output_data, "base64");
       if (this._screenMode === "split-footer") {
@@ -316,24 +411,23 @@ export class CliRenderer {
     if (this._screenMode === "split-footer" && this.externalOutputBuffer.length > 0) {
       this.flushExternalOutput();
     }
-  }
 
-  renderFull(): void {
-    this.engine.beginFrame();
-    const frame = this.engine.renderFull();
-    this.engine.commitFrame();
+    if (this._devtools.enabled) {
+      const now = performance.now();
+      const dirtyRegionCount = frame.dirty_region_count ?? 0;
+      this._devtools.recordFrame({
+        duration: this.lastFrameTime > 0 ? now - this.lastFrameTime : renderDuration,
+        renderDuration,
+        dirtyRegionCount,
+      });
+      this.lastFrameTime = now;
 
-    if (frame.output_data) {
-      const decoded = Buffer.from(frame.output_data, "base64");
-      if (this._screenMode === "split-footer") {
-        process.stdout.write(`\x1b[1;1H${decoded.toString()}`);
-      } else {
-        process.stdout.write(decoded);
+      if (this.overlay) {
+        this.overlay.setDirtyRegionCount(dirtyRegionCount);
+        if (this.overlay.visible) {
+          this.overlay.paint();
+        }
       }
-    }
-
-    if (this._screenMode === "split-footer" && this.externalOutputBuffer.length > 0) {
-      this.flushExternalOutput();
     }
   }
 
@@ -382,6 +476,48 @@ export class CliRenderer {
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
   return new CliRenderer(options);
+}
+
+/**
+ * Map the engine's snake_case {@link TerminalCapabilities} to the camelCase
+ * shape the DevTools CapabilityInspector expects.
+ */
+function mapCapabilities(caps: TerminalCapabilities): {
+  trueColor: boolean;
+  kittyKeyboard: boolean;
+  mouseSupport: boolean;
+  osc52: boolean;
+  osc8: boolean;
+  pixelSupport: boolean;
+  terminalBrand: string;
+  terminalSize: { columns: number; rows: number };
+  syncUpdate: boolean;
+  bracketedPaste: boolean;
+  focusEvents: boolean;
+  strikethrough: boolean;
+  underlineColor: boolean;
+  cursorStyle: boolean;
+  sixel: boolean;
+  inlineImages: boolean;
+} {
+  return {
+    trueColor: caps.true_color,
+    kittyKeyboard: caps.kitty_keyboard,
+    mouseSupport: caps.mouse,
+    osc52: caps.osc52,
+    osc8: caps.osc8,
+    pixelSupport: caps.sgr_pixel,
+    terminalBrand: caps.brand,
+    terminalSize: { columns: caps.columns, rows: caps.rows },
+    syncUpdate: caps.sync,
+    bracketedPaste: caps.bracketed_paste,
+    focusEvents: caps.focus_events,
+    strikethrough: caps.strikethrough,
+    underlineColor: caps.underline_color,
+    cursorStyle: caps.cursor_style,
+    sixel: caps.sixel,
+    inlineImages: caps.inline_images,
+  };
 }
 
 export { getVersion, detectCapabilities };
