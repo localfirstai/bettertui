@@ -23,15 +23,15 @@ BetterTUI is consumed through TypeScript packages built on the native engine:
 ## Architecture
 
 ```
-Vanilla / Native TS App ─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine
-                                                       │
-                                                       ▼
-                                              bettertui-engine (cdylib: bettertui_engine.node)
-                                                       │
-                                                       ▼
-                                         (Terminal / PTY via crossterm + portable-pty)
+(Vanilla / Native TS App) ─▶ @bettertui/core ──(napi-rs FFI) ──▶ Rust Engine
+                                      │
+                                      ▼
+              bettertui-engine (cdylib: bettertui_engine.node)
+                              │
+                              ▼
+                (Terminal / PTY via crossterm + portable-pty)
 
-React App ─▶ @bettertui/react (planned adapter, not yet implemented)
+(React App) ─▶ @bettertui/react (planned adapter, not yet implemented)
 ```
 
 The Rust engine owns:
@@ -92,13 +92,13 @@ React and depends on `@bettertui/core`.
 
 ## Package Overview
 
-| Package | Description | Status |
-|---------|-------------|--------|
-| `@bettertui/core` | Framework package for native/vanilla TypeScript — framework-agnostic runtime, command protocol, tree ops, the native Rust bridge, and in-core debug tooling (`createDevTools`, debug overlay) | Implemented |
-| `@bettertui/react` | React 19 adapter — install only this for React apps (depends on `@bettertui/core`) | Planned (placeholder, not implemented) |
-| `@bettertui/shared` | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`** | Types complete |
-| `@bettertui/benchmark` | Vitest benchmarks | Implemented |
-| `@bettertui/examples` | Vanilla / native TypeScript examples runnable on `@bettertui/core` | Implemented |
+| Package                | Description                                                                                                                                                                                   | Status                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `@bettertui/core`      | Framework package for native/vanilla TypeScript — framework-agnostic runtime, command protocol, tree ops, the native Rust bridge, and in-core debug tooling (`createDevTools`, debug overlay) | Implemented                            |
+| `@bettertui/react`     | React 19 adapter — install only this for React apps (depends on `@bettertui/core`)                                                                                                            | Planned (placeholder, not implemented) |
+| `@bettertui/shared`    | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`**                                                                                                          | Types complete                         |
+| `@bettertui/benchmark` | Vitest benchmarks                                                                                                                                                                             | Implemented                            |
+| `@bettertui/examples`  | Vanilla / native TypeScript examples runnable on `@bettertui/core`                                                                                                                            | Implemented                            |
 
 ## React Adapter (planned)
 
