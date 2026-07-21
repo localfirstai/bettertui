@@ -1,9 +1,8 @@
 {
-  "name": "@bettertui/benchmark",
+  "name": "@bettertui/performance",
   "version": "0.0.0",
   "private": true,
-  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
-  "license": "MIT",
+  "description": "Micro and end-to-end benchmark suite for BetterTUI",
   "type": "module",
   "scripts": {
     "bench": "vitest bench",
@@ -19,6 +18,7 @@
     "@bettertui/shared": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
