@@ -1,16 +1,16 @@
 # @bettertui/core (native bridge)
 
-**The native bridge (at `packages/core/src/platform/`) loads the Rust engine addon (`bettertui_bindings` at `packages/core/crates/bindings/`).** Previously the separate `@bettertui/native` package; now part of `@bettertui/core`.
+**The native bridge (at `packages/core/src/platform/`) loads the Rust engine addon (`bettertui_engine.node`, built from the `bettertui-engine` crate's `napi` module).** Previously the separate `@bettertui/native` package; now part of `@bettertui/core`.
 
 ## Loading
 
-`loadNativeAddon()` does `require("bettertui_bindings")` lazily (cached). If the addon is missing it throws:
+`loadNativeAddon()` does `require("bettertui_engine")` lazily (cached). If the addon is missing it throws:
 
 ```
-Failed to load native bindings. Run `cargo build -p bettertui-bindings` first.
+Failed to load native bindings. Run `pnpm --filter @bettertui/core build:native` first.
 ```
 
-The addon is **not** declared in `package.json` — it must be built separately.
+The addon is **not** declared in `package.json` — it must be built separately (`napi build --manifest-path crates/engine/Cargo.toml --features napi`).
 
 ## Factories
 
@@ -43,7 +43,7 @@ flowchart TD
     A[createRuntime] --> B[engine]
     A --> C[eventBus]
     A --> D[core CommandBuffer]
-    B --> E[bettertui_bindings addon]
+    B --> E[bettertui_engine.node addon]
     C --> E
 ```
 

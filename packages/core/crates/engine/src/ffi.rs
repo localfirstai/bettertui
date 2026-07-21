@@ -11,9 +11,9 @@ use std::sync::Mutex;
 
 use crate::VERSION;
 use crate::engine::Engine;
+use crate::event_bus::{EventPhase, EventQueue, Key, KeyEvent, Modifiers, MouseButton};
 use crate::input::{
-    EventBus, EventPhase, FocusDirection, FocusManager, FocusScope, FocusScopeType, FocusTraversal, Key, KeyBinding,
-    KeyEvent, KeyParser, Keymap, Modifiers, MouseButton,
+    FocusDirection, FocusManager, FocusScope, FocusScopeType, FocusTraversal, KeyBinding, KeyParser, Keymap,
 };
 use crate::protocol::Command;
 use crate::render::Renderer;
@@ -64,7 +64,7 @@ struct EngineState {
 }
 
 static ENGINES: LazyLock<Mutex<HandleStore<EngineState>>> = LazyLock::new(Default::default);
-static EVENT_BUSES: LazyLock<Mutex<HandleStore<EventBus>>> = LazyLock::new(Default::default);
+static EVENT_BUSES: LazyLock<Mutex<HandleStore<EventQueue>>> = LazyLock::new(Default::default);
 static FOCUS_MANAGERS: LazyLock<Mutex<HandleStore<FocusManager>>> = LazyLock::new(Default::default);
 static TEXT_ENGINES: LazyLock<Mutex<HandleStore<TextEngine>>> = LazyLock::new(Default::default);
 static SCHEDULERS: LazyLock<Mutex<HandleStore<Scheduler>>> = LazyLock::new(Default::default);
@@ -665,7 +665,7 @@ pub unsafe extern "C" fn ffi_engine_should_render(handle: u64) -> *mut std::ffi:
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ffi_event_bus_create() -> u64 {
-    EVENT_BUSES.lock().unwrap().insert(EventBus::new())
+    EVENT_BUSES.lock().unwrap().insert(EventQueue::new())
 }
 
 #[unsafe(no_mangle)]
@@ -742,9 +742,9 @@ pub unsafe extern "C" fn ffi_event_bus_drain(handle: u64) -> *mut std::ffi::c_ch
     })
 }
 
-fn event_to_json(e: &crate::input::Event) -> serde_json::Value {
+fn event_to_json(e: &crate::event_bus::Event) -> serde_json::Value {
     match e {
-        crate::input::Event::Key(ke) => serde_json::json!({
+        crate::event_bus::Event::Key(ke) => serde_json::json!({
             "type": "key",
             "key": format!("{:?}", ke.key).to_lowercase(),
             "ctrl": ke.modifiers.ctrl,
@@ -752,14 +752,14 @@ fn event_to_json(e: &crate::input::Event) -> serde_json::Value {
             "alt": ke.modifiers.alt,
             "target": node_id_u64(ke.target),
         }),
-        crate::input::Event::Mouse(me) => serde_json::json!({
+        crate::event_bus::Event::Mouse(me) => serde_json::json!({
             "type": "mouse",
             "button": format!("{:?}", me.button).to_lowercase(),
             "x": me.position.x,
             "y": me.position.y,
             "target": node_id_u64(me.target),
         }),
-        crate::input::Event::Resize(re) => serde_json::json!({
+        crate::event_bus::Event::Resize(re) => serde_json::json!({
             "type": "resize",
             "width": re.width,
             "height": re.height,
@@ -1166,6 +1166,42 @@ pub unsafe extern "C" fn ffi_scheduler_should_render(handle: u64) -> *mut std::f
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ffi_scheduler_is_idle(handle: u64) -> i32 {
     SCHEDULERS.lock().unwrap().get(handle).map_or(1, |s| matches!(s.status(), FrameStatus::Idle) as i32)
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_request_render_coalesced(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.request_render_coalesced();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_request_render_immediate(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.request_render_immediate();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_has_scheduled_frame(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get(handle).map_or(0, |s| s.has_scheduled_frame() as i32)
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_is_rendering(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get(handle).map_or(0, |s| s.is_rendering() as i32)
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_begin_render(handle: u64) {
+    if let Some(s) = SCHEDULERS.lock().unwrap().get_mut(handle) {
+        s.begin_render();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ffi_scheduler_end_render(handle: u64) -> i32 {
+    SCHEDULERS.lock().unwrap().get_mut(handle).map_or(0, |s| s.end_render() as i32)
 }
 
 #[unsafe(no_mangle)]

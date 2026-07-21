@@ -38,7 +38,7 @@ export type { CommandRuntimeOptions } from "./runtime";
 export { Renderable } from "./renderable";
 export type { WidgetContext, WidgetLifecycle, ImperativeContext } from "./renderable";
 
-// Keymap and validation utilities
+// Keymap, clock, and validation utilities
 export * from "./lib";
 
 // Platform (native engine bridge, events, runtime)
@@ -87,3 +87,9 @@ export type {
 
 // Framework-agnostic widget option types
 export * from "./widgets";
+
+// In-core debug tooling (moved from the retired @bettertui/devtools package).
+// `Logger`, `LogLevel`, and `TerminalCapabilities` already ship from
+// `./platform`; the devtools facade re-exports its own variants under
+// `DevTools*` aliases (see devtools/index.ts) to avoid the name collision.
+export * from "./devtools";

@@ -11,16 +11,30 @@ BetterTUI is a **framework**, not an application, IDE, or AI tool. It provides t
 - **The engine is framework-agnostic.** It knows nothing about React. Commands are the only boundary between a UI framework and the engine, so Vue, Solid, Svelte, and vanilla TypeScript adapters can be added without touching Rust.
 - **No business logic in the engine.** It is a rendering framework, not an application runtime.
 
+## Framework packages
+
+BetterTUI is consumed through TypeScript packages built on the native engine:
+
+- **`@bettertui/core` — native / vanilla TypeScript (implemented).** Use it directly when you don't need React. It is a fully public, framework-agnostic package: command protocol, tree operations, runtime, and the native Rust bridge. This is the recommended path for CLI tools, daemons, and custom framework adapters.
+- **`@bettertui/react` — React adapter (not yet implemented).** Planned as a first-class adapter that depends on `@bettertui/core` and pulls it in automatically. The package directory exists as a placeholder; the React host config, components, and hooks are not written yet.
+
+> Rule of thumb: **Vanilla/native TypeScript apps install `@bettertui/core`.** The React adapter is not available yet.
+
 ## Architecture
 
-```mermaid
-graph TD
-    A[Application] --> B[@bettertui/react]
-    B --> C[@bettertui/core]
-    C -->|napi-rs FFI| D[Rust Engine packages/core/crates/bindings]
-    D --> E[bettertui-engine]
-    E -->|crossterm + portable-pty| F[(Terminal / PTY)]
 ```
+Vanilla / Native TS App ─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine
+                                                       │
+                                                       ▼
+                                              bettertui-engine (cdylib: bettertui_engine.node)
+                                                       │
+                                                       ▼
+                                         (Terminal / PTY via crossterm + portable-pty)
+
+React App ─▶ @bettertui/react (planned adapter, not yet implemented)
+```
+
+The Rust engine owns:
 
 The Rust engine owns:
 
@@ -35,10 +49,10 @@ The Rust engine owns:
 
 TypeScript owns:
 
-- **API** — typed, framework-agnostic interfaces
-- **React bindings** — reconciler host config and components
-- **Themes** — design-token system
-- **Hooks** — useTheme, useFocus, useKeyboard, useMouse, useAnimation, useTimeline, etc.
+- **API** — typed, framework-agnostic interfaces (`@bettertui/core`)
+- **React bindings** — reconciler host config and components (`@bettertui/react`)
+- **Themes** — design-token types (in `@bettertui/shared`; presets created in the native bridge)
+- **Hooks** — `useTheme`, `useFocus`, `useKeyboard`, `useMouse`, `useAnimation`, `useTimeline`, etc.
 
 See [`docs/architecture`](docs/architecture/README.md) for the full design, and [`docs/`](docs/README.md) for the complete documentation index.
 
@@ -49,18 +63,19 @@ bettertui/
 ├── packages/
 │   ├── shared/        # @bettertui/shared  — type-only foundation (internal, re-exported by core & react)
 │   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
-│   │   └── crates/
-│   │       ├── engine/        # bettertui-engine (Rust library + layout_e2e bin)
-│   │       ├── widgets/      # bettertui-widgets (Rust widget framework)
-│   │       ├── terminal/     # bettertui-terminal (Rust terminal I/O, VT emulation, PTY)
-│   │       ├── bindings/     # bettertui-bindings (napi-rs cdylib)
-│   │       └── benchmark/    # bettertui-benchmark (Rust bench harness)
+│   │   └── crates/                    # Rust workspace (packages/core/Cargo.toml)
+│   │       ├── engine/        # bettertui-engine (lib + cdylib + layout_e2e bin; the native addon)
+│   │       ├── logger/        # bettertui-logger (tracing logger for native code)
+│   │       └── benchmark/     # bettertui-benchmark (Rust bench harness)
 │   ├── react/         # @bettertui/react   — React 19 adapter
-│   ├── devtools/      # @bettertui/devtools — developer tooling (implemented)
 │   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
-├── examples/          # @bettertui/examples — single package with runnable TSX demos
+├── examples/
+│   ├── vanila/        # Vanilla / native TypeScript examples (run on @bettertui/core)
+│   ├── react/         # (reserved)
+│   ├── rust/          # (reserved)
+│   └── solid/         # (reserved)
 ├── docs/              # this documentation
 ├── tasks/             # PRDs, reports, archived history (read-only)
 ├── scripts/           # repo-level automation (doc checks, example smoke tests)
@@ -71,50 +86,45 @@ bettertui/
 └── biome.json
 ```
 
+All TypeScript packages are currently `private` (not published to npm). `@bettertui/core` is the
+framework package for vanilla / native TypeScript; `@bettertui/react` is the framework package for
+React and depends on `@bettertui/core`.
+
 ## Package Overview
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| `@bettertui/shared` | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** | ✅ Types complete |
-| `@bettertui/core` | Framework-agnostic runtime, command protocol, tree ops | ✅ Implemented |
-| `@bettertui/react` | React adapter (renderer, hooks, 53 components) | ✅ Reconciler + hooks real; components thin wrappers |
-| `@bettertui/core` (native bridge) | Internal napi bindings bridge (merged from `@bettertui/native`) | ✅ Implemented (needs native addon) |
+| `@bettertui/core` | Framework package for native/vanilla TypeScript — framework-agnostic runtime, command protocol, tree ops, the native Rust bridge, and in-core debug tooling (`createDevTools`, debug overlay) | Implemented |
+| `@bettertui/react` | React 19 adapter — install only this for React apps (depends on `@bettertui/core`) | Planned (placeholder, not implemented) |
+| `@bettertui/shared` | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`** | Types complete |
+| `@bettertui/benchmark` | Vitest benchmarks | Implemented |
+| `@bettertui/examples` | Vanilla / native TypeScript examples runnable on `@bettertui/core` | Implemented |
 
-| `@bettertui/devtools` | Developer tooling | ✅ Implemented (`createDevTools` factory) |
-| `@bettertui/benchmark` | Vitest benchmarks | ✅ Implemented |
+## React Adapter (planned)
 
-## React Components
+`@bettertui/react` is the planned first-class React adapter. The `packages/react` directory is a
+placeholder; no React components, hooks, or host config are implemented yet. When built, React apps
+will install **only** `@bettertui/react`, which depends on `@bettertui/core` and resolves it
+automatically.
 
-BetterTUI provides 53 React component functions (thin wrappers that emit element descriptors; not yet wired to a live native render loop):
+The intended API (not yet implemented) is described in the architecture docs:
 
-**Layout:** Box, Flex, Grid, Stack, Spacer, Separator
-**Text:** Text, Heading, Label, Code, Blockquote
-**Input:** Button, Input, Textarea, Checkbox, Radio, Switch, Slider, Select, Combobox
-**Navigation:** Tabs, Accordion
-**Data Display:** Badge, Progress, Spinner, List, Tree, Table, DataTable
-**Overlays:** Tooltip, Modal, Popover, Dropdown, ContextMenu, Toast
-**Status:** StatusLine, StatusBar
-**Layout:** Pane, Viewport
-**Specialized:** Calendar, Chart, ScrollArea, Markdown, CodeBlock, Diff
-**AI-specific:** PromptComposer, ChatView, ThinkingIndicator
-**Terminal:** Terminal, TerminalViewport, TerminalProcess
-
-## React Hooks
-
-- `useTheme` / `Provider` — theme context with dark theme default
-- `useFocus` / `FocusProvider` — basic focus tracking by string ID
-- `useKeyboard` — keyboard event handling
-- `useMouse` — mouse event handling
-- `useTerminal` / `TerminalProvider` — terminal size context
-- `useFrame` — frame request mechanism
-- `useClipboard` — clipboard operations
-- `useAnimation` — animation with easing (21 easing functions)
-- `useTimeline` — timeline-based animation sequencing
-- `useSelection` / `SelectionProvider` — text selection tracking
-- `useCapabilities` / `CapabilitiesProvider` — terminal capability detection
-- `KeymapProvider` / `useKeymap`, `useKeymapEvent`, `useActiveBindings`, `usePendingSequence`, `useCommand`, `useKeyIntercept`, `useKeymapMode` — full keymap engine (chords, modes, commands, intercepts)
+- Components: `Box`, `Text`, `Code`, `Input`, `Textarea`, `Select`, `Slider`, `TabSelect`, `ScrollBar`, `ScrollBox`, `Markdown`, `Diff`, `TextTable`.
+- Hooks/providers: `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `useMouse`, `TerminalProvider`/`useTerminal`, `useResize`, `useFrame`, `useClipboard`, `useAnimation` (with `easings`), `useTimeline`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`, `KeymapProvider`/`useKeymap`, `RuntimeProvider`/`useRuntime`.
 
 ## Getting Started
+
+### Install
+
+```bash
+# React app — install ONLY @bettertui/react (it pulls in @bettertui/core)
+npm install @bettertui/react
+
+# Vanilla / native TypeScript app — install @bettertui/core directly
+npm install @bettertui/core
+```
+
+### Build from source
 
 ```bash
 # Install dependencies
@@ -124,24 +134,39 @@ pnpm install
 pnpm build
 
 # Build the native Rust addon (required before running anything native)
-cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml
+pnpm --filter @bettertui/core build:native
 
 # Type-check and lint
 pnpm typecheck
 pnpm lint
 ```
 
+### React usage
+
+The React adapter (`@bettertui/react`) is not implemented yet. The `packages/react` directory is a
+placeholder. Once built, React apps will install only `@bettertui/react` and call `render(<Box>…</Box>)`.
+
+### Vanilla / native TypeScript usage
+
+```ts
+import { createEngine, detectCapabilities, CliRenderer } from "@bettertui/core";
+
+const engine = createEngine();
+const caps = detectCapabilities();
+// drive the engine directly — no React required
+```
+
 ### Rust engine
 
 ```bash
-cargo check --workspace
-cargo test --workspace
-cargo clippy --workspace -- -D warnings
+cargo check --manifest-path packages/core/Cargo.toml
+cargo test  --manifest-path packages/core/Cargo.toml
+cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 ```
 
 ## Tech Stack
 
-- **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap)
+- **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap, tree-sitter)
 - **Runtime:** Node.js
 - **Language:** TypeScript (ES2022+)
 - **Monorepo:** TurboRepo + pnpm
@@ -151,15 +176,30 @@ cargo clippy --workspace -- -D warnings
 
 ## Current Status
 
-The Rust engine and its napi-rs bindings are the most complete part: rendering, layout, frame buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd Font support are implemented and covered by **720 passing Rust lib tests** (verified with `cargo test --lib`) across the engine, terminal, and widgets crates. The TypeScript side is implemented: `@bettertui/core` (including the former `@bettertui/native` bridge) is implemented; `@bettertui/react` has a real `react-reconciler` host config, hooks, and 53 component exports — though the component functions are thin wrappers not yet wired to a live native render loop; **15 runnable example apps** are available under `examples/` (`@bettertui/examples`).
+The Rust engine (`bettertui-engine`) is the most complete part: rendering, layout (Taffy), frame
+buffer, events, input, animation, text engine, PTY, capability detection, VT emulation, and Nerd
+Font support are implemented. Terminal I/O, VT emulation, PTY, capabilities, and the widget host
+live as modules **inside** `bettertui-engine` (there is no separate `bettertui-widgets`,
+`bettertui-terminal`, or `bettertui-bindings` crate). The engine is built as a `cdylib` with the
+`napi` feature to produce the Node.js addon (`bettertui_engine.node`).
+
+The TypeScript side is implemented: `@bettertui/core` (command buffer, reconciler wrapper,
+`CommandRuntime`, native bridge, testing utilities) and `@bettertui/examples` (vanilla / native
+TypeScript demos runnable on `@bettertui/core`). The React adapter (`@bettertui/react`) is **not
+implemented** — `packages/react` is a placeholder directory only. Vanilla / native TypeScript
+examples live under `packages/examples/typescript/` and run directly on `@bettertui/core` (no React).
+
+> The Rust unit-test suite is co-located in the engine crate. Run
+> `cargo test --manifest-path packages/core/Cargo.toml --lib` to execute it. (At the time of
+> writing the engine test build has a compilation issue in `terminal/vt.rs`; this must be fixed
+> before the suite is green.)
 
 ## Documentation
 
-- [Architecture (root summary)](ARCHITECTURE.md)
-- [Architecture (full reference)](docs/architecture/README.md)
+- [Architecture](docs/architecture/README.md)
 - [Documentation index](docs/README.md)
+- [Roadmap](docs/ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
-- [Roadmap](ROADMAP.md)
 
 ## Contributing
 

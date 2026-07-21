@@ -46,30 +46,37 @@ export interface NapiEngine {
   render(): NapiRenderResult;
   renderFull(): NapiRenderResult;
   resize(width: number, height: number): void;
+  setScreenMode(mode: string, footerHeight?: number | null): void;
   beginFrame(): void;
   commitFrame(): void;
   nodeCount(): number;
-  frameCount(): string;
-  treeSummary(): string;
+  frameCount(): number;
   printTree(): string;
   validate(): boolean;
-  root(): string;
-  generation(): string;
+  shutdown(): void;
+  setStyle(id: number, styleJson: string): void;
+  setLayout(id: number, layoutJson: string): void;
+  getNode(id: number): string;
+  treeSummary(): string;
+  root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
-  shutdown(): void;
-  dimensions(): number[];
-  shouldRender(): string;
-  requestFrame(): void;
+  hitGridCheck(x: number, y: number): number;
+  hitGridIsDirty(): boolean;
+  hitGridClearCurrent(): void;
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void;
+  hitGridPopScissor(): void;
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void;
+  hitGridDump(): string;
 }
 
 export interface NapiEventBus {
-  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean, targetId: number): void;
-  pushMouse(button: string, x: number, y: number, targetId: number): void;
-  pushMouseMotion(x: number, y: number, targetId: number): void;
-  pushPaste(text: string, targetId: number): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
+  pushMouseMotion(x: number, y: number): void;
+  pushPaste(text: string): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -82,59 +89,50 @@ export interface NapiFocusManager {
   blur(nodeId: number): boolean;
   blurCurrent(): boolean;
   focused(): number;
-  focusedInScope(): number | null;
-  traverse(direction: string): number;
-  setScope(scopeId: number): void;
-  clearScope(): void;
-  scopeId(): number | null;
-  focusOrder(): number[];
   isFocused(nodeId: number): boolean;
+  traverse(direction: string): number;
+  focusOrder(): number[];
+  clear(): void;
 }
 
 export interface NapiTextEngine {
-  insertText(text: string): void;
-  deleteCharBackward(): void;
-  deleteCharForward(): void;
-  deleteWordBackward(): void;
-  deleteWordForward(): void;
-  deleteLineBackward(): void;
-  deleteLineForward(): void;
-  cursorLeft(): void;
-  cursorRight(): void;
-  cursorUp(): void;
-  cursorDown(): void;
-  cursorLineStart(): void;
-  cursorLineEnd(): void;
-  cursorPosition(): number;
-  setCursorPosition(pos: number): void;
-  text(): string;
-  insertAt(position: number, text: string): void;
-  deleteAt(position: number, length: number): string;
-  charAt(position: number): string;
-  substring(start: number, end: number): string;
-  find(pattern: string, caseSensitive: boolean): Array<{ start: number; end: number }>;
-  replaceAll(pattern: string, replacement: string, caseSensitive: boolean): number;
-  undo(): boolean;
-  redo(): boolean;
+  insertChar(ch: string): void;
+  insertStr(text: string): void;
+  deleteChar(): void;
+  getText(): string;
+  clear(): void;
   canUndo(): boolean;
   canRedo(): boolean;
-  clear(): void;
+  undo(): boolean;
+  redo(): boolean;
+  cursorLeft(): void;
+  cursorRight(): void;
+  cursorPosition(): number;
+  setCursorPosition(pos: number): void;
   length(): number;
-  isEmpty(): boolean;
-  lines(): string[];
   lineCount(): number;
+  isEmpty(): boolean;
+  wordCount(): number;
 }
 
 export interface NapiScheduler {
+  requestFrame(): void;
   beginFrame(): boolean;
   endFrame(): void;
-  requestFrame(): void;
-  frameCount(): string;
-  droppedFrames(): string;
-  fps(): string;
-  frameBudgetMs(): string;
   isIdle(): boolean;
+  frameCount(): number;
+  fps(): number;
+  shouldRender(): boolean;
+  requestRenderCoalesced(): void;
+  requestRenderImmediate(): void;
+  hasScheduledFrame(): boolean;
+  isRendering(): boolean;
+  beginRender(): void;
+  endRender(): boolean;
 }
+
+export type ScreenMode = "alternate-screen" | "main-screen" | "split-footer";
+export type ExternalOutputMode = "capture-stdout" | "passthrough";
 
 export interface BindingInfo {
   id: string;

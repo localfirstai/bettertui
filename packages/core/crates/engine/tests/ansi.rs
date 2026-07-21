@@ -443,3 +443,122 @@ fn osc_set_hyperlink_with_id() {
         }))
     );
 }
+
+#[test]
+fn osc52_set_sequence_encodes_base64() {
+    let seq = ClipboardData::set_sequence(ClipboardSelection::Clipboard, "Hello");
+    let s = String::from_utf8_lossy(&seq);
+    // "Hello" base64 == "SGVsbG8="
+    assert_eq!(s, "\x1b]52;c;SGVsbG8=\x1b\\");
+}
+
+#[test]
+fn osc52_query_sequence() {
+    let seq = ClipboardData::query_sequence(ClipboardSelection::Primary);
+    let s = String::from_utf8_lossy(&seq);
+    assert_eq!(s, "\x1b]52;p;?\x1b\\");
+}
+
+#[test]
+fn osc52_selection_params() {
+    assert_eq!(ClipboardSelection::Clipboard.param(), 'c');
+    assert_eq!(ClipboardSelection::Primary.param(), 'p');
+    assert_eq!(ClipboardSelection::Secondary.param(), 's');
+    assert_eq!(ClipboardSelection::Tertiary.param(), 'q');
+}
+
+#[test]
+fn osc52_roundtrip_set_then_parse() {
+    let seq = ClipboardData::set_sequence(ClipboardSelection::Clipboard, "round trip");
+    // Strip the ESC ] prefix and ESC \ suffix to feed the OSC payload to parse().
+    let s = String::from_utf8_lossy(&seq);
+    let payload = s.trim_start_matches("\x1b]").trim_end_matches("\x1b\\");
+    let cmd = OscCommand::parse(payload.as_bytes());
+    match cmd {
+        Some(OscCommand::SetClipboard(data)) => {
+            assert_eq!(data.decoded(), Some("round trip".to_string()));
+            assert!(!data.is_query());
+        }
+        other => panic!("expected SetClipboard, got {other:?}"),
+    }
+}
+
+#[test]
+fn osc52_query_marker_decodes_to_none() {
+    let cmd = OscCommand::parse(b"52;c;?");
+    match cmd {
+        Some(OscCommand::SetClipboard(data)) => {
+            assert!(data.is_query());
+            assert_eq!(data.decoded(), None);
+        }
+        other => panic!("expected SetClipboard query, got {other:?}"),
+    }
+}
+
+#[test]
+fn osc52_invalid_base64_decodes_to_none() {
+    let data = ClipboardData { data: "not!base64!".to_string(), selection: ClipboardSelection::Clipboard };
+    assert_eq!(data.decoded(), None);
+}
+
+#[test]
+fn kitty_csiu_colon_event_type_release() {
+    // CSI 97 ; 1 : 3 u  ==  'a' with no mods, event_type=3 (Release).
+    let mut parser = AnsiParser::new();
+    parser.feed(b"\x1b[97;1:3u");
+    // Drain parser events; the CSI command is surfaced via ParserEvent::Csi.
+    let mut found = None;
+    while let Some(ev) = parser.poll_event() {
+        if let ParserEvent::Csi(CsiCommand::KittyKeyEvent { keycode, modifiers, event_type, .. }) = ev {
+            found = Some((keycode, modifiers, event_type));
+        }
+    }
+    assert_eq!(found, Some((97, 1, KittyEventType::Release)), "colon sub-param must decode event_type");
+}
+
+// ── OSC 4 palette ────────────────────────────────────────────────────────────
+
+#[test]
+fn osc4_parse_set_palette_color() {
+    let cmd = OscCommand::parse(b"4;1;rgb:ff/00/00");
+    match cmd {
+        Some(OscCommand::SetPaletteColor { index, ref spec }) => {
+            assert_eq!(index, 1);
+            assert_eq!(spec, "rgb:ff/00/00");
+        }
+        other => panic!("expected SetPaletteColor, got {other:?}"),
+    }
+    assert_eq!(cmd.unwrap().palette_rgb(), Some((255, 0, 0)));
+}
+
+#[test]
+fn osc4_palette_rgb_16bit_components() {
+    let cmd = OscCommand::parse(b"4;2;rgb:ffff/8000/0000").unwrap();
+    assert_eq!(cmd.palette_rgb(), Some((255, 128, 0)));
+}
+
+#[test]
+fn osc4_query_marker_has_no_rgb() {
+    let cmd = OscCommand::parse(b"4;5;?").unwrap();
+    assert!(matches!(cmd, OscCommand::SetPaletteColor { index: 5, .. }));
+    assert_eq!(cmd.palette_rgb(), None);
+}
+
+#[test]
+fn osc4_query_and_set_builders() {
+    assert_eq!(String::from_utf8_lossy(&OscCommand::palette_query(3)), "\x1b]4;3;?\x1b\\");
+    let set = OscCommand::palette_set(4, 0x12, 0x34, 0x56);
+    assert_eq!(String::from_utf8_lossy(&set), "\x1b]4;4;rgb:1212/3434/5656\x1b\\");
+    // Round-trip: the set spec parses back to the same rgb.
+    let s = String::from_utf8_lossy(&set);
+    let payload = s.trim_start_matches("\x1b]").trim_end_matches("\x1b\\");
+    assert_eq!(OscCommand::parse(payload.as_bytes()).unwrap().palette_rgb(), Some((0x12, 0x34, 0x56)));
+}
+
+// ── CPR (Cursor Position Report) ─────────────────────────────────────────────
+
+#[test]
+fn csi_cursor_position_report_parses() {
+    let cmd = CsiCommand::parse(b'R', &[12, 34], &[]);
+    assert_eq!(cmd, Some(CsiCommand::CursorPositionReport { row: 12, col: 34 }));
+}

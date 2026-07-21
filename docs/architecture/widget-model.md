@@ -1,6 +1,6 @@
 # Widget Model
 
-Widgets are the high-level, composable UI layer built on top of the arena. Code: `packages/core/crates/widgets/src/` (257 lib tests across 36 files; 296 total across the crate).
+Widgets are the high-level, composable UI layer built on top of the arena. The widget host is exposed through the native bridge (`createWidgetHost`) and lives within the `bettertui-engine` crate (there is no separate `bettertui-widgets` crate).
 
 ## Trait
 

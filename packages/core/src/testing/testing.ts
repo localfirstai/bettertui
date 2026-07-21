@@ -1,6 +1,7 @@
 import { Keymap } from "../lib/keybinding";
 import type { KeymapOptions } from "../lib/keybinding";
 import type { NapiKeymap } from "../platform/binding";
+import type { BindingInfo } from "../platform/types";
 
 export interface TestBinding {
   layer: string;
@@ -22,7 +23,7 @@ export function createMockNativeKeymap(): NapiKeymap {
   const parsedKeys = new Map<string, string>();
   let currentModeStr = "";
   let pending: PendingState | null = null;
-  const history: string[] = [];
+  let history: string[] = [];
 
   function parseKey(keyStr: string): string {
     let cached = parsedKeys.get(keyStr);
@@ -118,6 +119,37 @@ export function createMockNativeKeymap(): NapiKeymap {
     },
     clearPending(): void {
       pending = null;
+    },
+    clearMode(): void {
+      currentModeStr = "";
+    },
+    removeLayer(_name: string): boolean {
+      return true;
+    },
+    setChordTimeout(_ms: number): void {},
+    chordTimeout(): number {
+      return 0;
+    },
+    pendingKeys(): string[] {
+      return [];
+    },
+    activeBindings(): BindingInfo[] {
+      return [];
+    },
+    allBindings(): BindingInfo[] {
+      return [];
+    },
+    commandHistory(): string[] {
+      return history;
+    },
+    clearHistory(): void {
+      history = [];
+    },
+    parseKey(keyStr: string): string {
+      return parseKey(keyStr);
+    },
+    parseSequence(keyStr: string): string[] {
+      return [parseKey(keyStr)];
     },
   };
 }

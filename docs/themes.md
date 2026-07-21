@@ -1,6 +1,6 @@
 # Themes
 
-Theming is built into the Rust engine (`packages/core/crates/widgets/src/theme.rs`) 
+Theming is built into the Rust engine (`packages/core/crates/engine/src/theme.rs`) 
 and exposed through `@bettertui/react` (which re-exports the types).
 
 ## Theme shape
@@ -52,4 +52,4 @@ The default dark theme is built into the Rust engine. The React `Provider` accep
 ## See also
 
 - `@bettertui/react` — Theme, ThemeColors, ThemeSpacing, BorderStyle types (re-exported from `@bettertui/shared`), Provider, useTheme
-- `packages/core/crates/widgets/src/theme.rs` — Rust canonical Theme definition
+- `packages/core/crates/engine/src/theme.rs` — Rust canonical Theme definition

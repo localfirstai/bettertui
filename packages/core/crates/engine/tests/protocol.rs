@@ -1,7 +1,7 @@
 //! Tests for the protocol module.
 
 use bettertui_engine::protocol::{
-    Command, CommandBuffer, CommandError, CommandProcessor, CommandRegistry, CommandResult, CommandWarning,
+    Command, CommandBuffer, CommandError, CommandProcessor, CommandRegistry, CommandResult, CommandWarning, ScreenMode,
 };
 use bettertui_engine::tree::{NodeId, NodeKind, RenderNode};
 
@@ -428,4 +428,36 @@ fn processor_print_tree() {
     let proc = CommandProcessor::new();
     let output = proc.print_tree();
     assert!(!output.is_empty());
+}
+
+// ── ScreenMode / split-footer ───────────────────────────────────────────────
+
+#[test]
+fn screen_mode_default_is_alternate() {
+    assert_eq!(ScreenMode::default(), ScreenMode::AlternateScreen);
+    assert_eq!(ScreenMode::AlternateScreen.name(), "alternate-screen");
+    assert_eq!(ScreenMode::MainScreen.name(), "main-screen");
+    assert_eq!(ScreenMode::SplitFooter { height: 3 }.name(), "split-footer");
+}
+
+#[test]
+fn screen_mode_render_offset() {
+    // Only split-footer shifts the render origin down.
+    assert_eq!(ScreenMode::AlternateScreen.render_offset(24), 0);
+    assert_eq!(ScreenMode::MainScreen.render_offset(24), 0);
+    assert_eq!(ScreenMode::SplitFooter { height: 3 }.render_offset(24), 21);
+}
+
+#[test]
+fn screen_mode_viewport_height() {
+    assert_eq!(ScreenMode::AlternateScreen.viewport_height(24), 24);
+    assert_eq!(ScreenMode::MainScreen.viewport_height(24), 24);
+    assert_eq!(ScreenMode::SplitFooter { height: 5 }.viewport_height(24), 19);
+}
+
+#[test]
+fn screen_mode_split_footer_saturates_when_taller_than_terminal() {
+    // A footer taller than the terminal must not underflow.
+    assert_eq!(ScreenMode::SplitFooter { height: 100 }.render_offset(24), 0);
+    assert_eq!(ScreenMode::SplitFooter { height: 100 }.viewport_height(24), 0);
 }

@@ -7,23 +7,37 @@ export declare class NativeEngine {
   commitFrame(): void;
   render(): string;
   renderFull(): string;
+  setScreenMode(mode: string, footerHeight?: number | undefined | null): void;
   resize(width: number, height: number): void;
   nodeCount(): number;
   frameCount(): number;
   printTree(): string;
   validate(): boolean;
   shutdown(): void;
+  setStyle(id: number, styleJson: string): void;
+  setLayout(id: number, layoutJson: string): void;
+  getNode(id: number): string;
+  treeSummary(): string;
   root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
+  hitGridCheck(x: number, y: number): number;
+  hitGridIsDirty(): boolean;
+  hitGridClearCurrent(): void;
+  hitGridPushScissor(x: number, y: number, width: number, height: number): void;
+  hitGridPopScissor(): void;
+  hitGridAddCurrentClipped(x: number, y: number, width: number, height: number, id: number): void;
+  hitGridDump(): string;
 }
 
 export declare class NativeEventBus {
   constructor();
   pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
   pushMouse(button: string, x: number, y: number): void;
+  pushMouseMotion(x: number, y: number): void;
+  pushPaste(text: string): void;
   pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
   drain(): string;
   len(): number;
@@ -31,9 +45,46 @@ export declare class NativeEventBus {
   clear(): void;
 }
 
+export declare class NativeEventPipeline {
+  constructor(config?: NativeEventPipelineConfig | undefined | null);
+  feed(data: Buffer): void;
+  pushKey(key: string, ctrl: boolean, shift: boolean, alt: boolean): void;
+  pushMouse(button: string, x: number, y: number): void;
+  pushPaste(text: string): void;
+  pushResize(width: number, height: number, prevWidth: number, prevHeight: number): void;
+  drain(): string;
+  len(): number;
+  isEmpty(): boolean;
+  clear(): void;
+  resize(width: number, height: number): void;
+  reset(): void;
+}
+
 export declare class NativeFocusManager {
   constructor();
+  focus(id: number): boolean;
+  blur(id: number): boolean;
+  blurCurrent(): boolean;
+  focused(): number;
+  isFocused(id: number): boolean;
   traverse(direction: string): string;
+  focusOrder(): Array<number>;
+  clear(): void;
+}
+
+export declare class NativeHitGrid {
+  constructor(width: number, height: number);
+  resize(width: number, height: number): void;
+  add(x: number, y: number, width: number, height: number, id: number): void;
+  check(x: number, y: number): number;
+  clearNext(): void;
+  clearCurrent(): void;
+  swap(): boolean;
+  isDirty(): boolean;
+  dimensions(): string;
+  pushScissor(x: number, y: number, width: number, height: number): void;
+  popScissor(): void;
+  clearScissors(): void;
 }
 
 export declare class NativeKeymap {
@@ -49,6 +100,66 @@ export declare class NativeKeymap {
   handleKey(key: string): string;
   hasPending(): boolean;
   clearPending(): void;
+  setMode(mode: string): void;
+  currentMode(): string;
+  clearMode(): void;
+  removeLayer(name: string): boolean;
+  setChordTimeout(ms: number): void;
+  chordTimeout(): number;
+  pendingKeys(): Array<string>;
+  activeBindings(): string;
+  allBindings(): string;
+  commandHistory(): Array<string>;
+  clearHistory(): void;
+  parseKey(keyStr: string): string;
+  parseSequence(keyStr: string): Array<string>;
+}
+
+/**
+ * napi wrapper exposing the plugin [`PluginHost`] and named string-valued
+ * [`SlotRegistry`]s to TypeScript — the BetterTUI equivalent of OpenTUI's
+ * plugin API + `SlotRegistry`. Slot values are strings (typically a node id or
+ * a serialized descriptor); the TS side owns their meaning.
+ */
+export declare class NativePluginHost {
+  constructor();
+  /**
+   * Registers a plugin. `capabilities` is a list of capability names. Returns
+   * an error string on duplicate registration, else `None`.
+   */
+  register(
+    name: string,
+    version: string,
+    author: string,
+    capabilities: Array<string>,
+  ): string | null;
+  /** Unregisters a plugin and removes any slot contributions it made. */
+  unregister(name: string): string | null;
+  /** Lifecycle hook: `Registered`/`Stopped` → `Initialized`. */
+  initialize(name: string): string | null;
+  /** Lifecycle hook: `Initialized`/`Stopped` → `Running`. */
+  start(name: string): string | null;
+  /** Lifecycle hook: `Running` → `Stopped`. */
+  stop(name: string): string | null;
+  /** Lifecycle hook: mark a plugin as errored. */
+  markError(name: string): string | null;
+  /** Current lifecycle state of a plugin, or `None` if unregistered. */
+  state(name: string): string | null;
+  /** Names of all registered plugins. */
+  pluginNames(): Array<string>;
+  /**
+   * Ensures a named slot exists with the given resolution mode. No-op if the
+   * slot already exists (mode is not changed).
+   */
+  ensureSlot(slot: string, mode: string): void;
+  /** Registers a contribution to `slot` and returns its token (0 on failure). */
+  slotRegister(slot: string, pluginId: string, priority: number, value: string): number;
+  /** Removes a slot contribution by token. Returns `true` if one was removed. */
+  slotRemove(slot: string, token: number): boolean;
+  /** Resolves a slot to its effective contributions per its mode. */
+  slotResolve(slot: string): Array<string>;
+  /** Returns and clears a slot's dirty flag (for coalesced recomputation). */
+  slotTakeDirty(slot: string): boolean;
 }
 
 export declare class NativeScheduler {
@@ -58,6 +169,28 @@ export declare class NativeScheduler {
   endFrame(): void;
   isIdle(): boolean;
   frameCount(): number;
+  fps(): number;
+  shouldRender(): boolean;
+  requestRenderCoalesced(): void;
+  requestRenderImmediate(): void;
+  hasScheduledFrame(): boolean;
+  isRendering(): boolean;
+  beginRender(): void;
+  endRender(): boolean;
+}
+
+export declare class NativeSpanFeed {
+  constructor(options?: NativeSpanFeedOptions | undefined | null);
+  write(data: Buffer): number;
+  drainSpans(out: Buffer): number;
+  close(): void;
+  reset(): void;
+  pendingSpans(): number;
+  pendingBytes(): number;
+  isClosed(): boolean;
+  isBackpressured(): boolean;
+  stats(): NativeSpanFeedStats;
+  markConsumed(chunkIndex: number): void;
 }
 
 export declare class NativeTextEngine {
@@ -71,11 +204,238 @@ export declare class NativeTextEngine {
   canRedo(): boolean;
   undo(): boolean;
   redo(): boolean;
+  cursorLeft(): void;
+  cursorRight(): void;
+  cursorPosition(): number;
+  setCursorPosition(pos: number): void;
+  length(): number;
+  lineCount(): number;
+  isEmpty(): boolean;
+  wordCount(): number;
 }
+
+/**
+ * napi wrapper exposing the Rust animation [`Timeline`] to TypeScript — the
+ * BetterTUI equivalent of OpenTUI's `useTimeline`. Schedule scalar tweens at
+ * offsets, drive the timeline each frame with `update(dt)`, and read each
+ * tween's interpolated value with `animationValue(index)`.
+ */
+export declare class NativeTimeline {
+  constructor(duration?: number | undefined | null, looping?: boolean | undefined | null);
+  /**
+   * Schedule a scalar tween (`from`→`to` over `duration` seconds, with the
+   * named easing) to begin at `start_time`. Returns the animation index used
+   * by [`animation_value`](Self::animation_value).
+   */
+  addTween(
+    from: number,
+    to: number,
+    duration: number,
+    startTime: number,
+    easing?: string | undefined | null,
+  ): number;
+  play(): void;
+  pause(): void;
+  restart(): void;
+  /** Advance the timeline by `dt` seconds (typically the frame delta). */
+  update(dt: number): void;
+  /** Current interpolated value of the tween scheduled at `index`. */
+  animationValue(index: number): number | null;
+  currentTime(): number;
+  isComplete(): boolean;
+  isPlaying(): boolean;
+  setSpeed(speed: number): void;
+  /** Progress 0.0–1.0 if the timeline has a duration, else `None`. */
+  progress(): number | null;
+}
+
+/**
+ * Decodes a base64 OSC 52 clipboard payload into UTF-8 text. Returns `null`
+ * for the `?` query marker or invalid base64/UTF-8.
+ */
+export declare function clipboardDecode(payload: string): string | null;
+
+/**
+ * Builds the OSC 52 *query* sequence asking the terminal to report the current
+ * clipboard contents. The response returns as an inbound OSC 52 that
+ * [`clipboard_decode`] can decode.
+ */
+export declare function clipboardQuerySequence(selection: string): Array<number>;
+
+/**
+ * Builds the OSC 52 escape sequence that sets the terminal clipboard to `text`.
+ *
+ * `selection` is one of `clipboard`/`primary`/`secondary`/`tertiary`. The
+ * caller writes the returned bytes to the terminal (stdout).
+ */
+export declare function clipboardSetSequence(selection: string, text: string): Array<number>;
+
+export declare function createDarkTheme(): NapiTheme;
+
+export declare function createLightTheme(): NapiTheme;
 
 export declare function detectCapabilities(): TerminalCapabilities;
 
 export declare function getVersion(): string;
+
+/** Builds an iTerm2 inline-image sequence for `file_bytes` (e.g. PNG file data). */
+export declare function graphicsItermWrite(
+  fileBytes: Buffer,
+  name?: string | undefined | null,
+  width?: number | undefined | null,
+  height?: number | undefined | null,
+): Buffer;
+
+/** Builds the Kitty sequence deleting image `id`. */
+export declare function graphicsKittyDelete(id: number): Buffer;
+
+/** Builds the Kitty sequence deleting all transmitted images. */
+export declare function graphicsKittyDeleteAll(): Buffer;
+
+/**
+ * Builds a Kitty graphics-protocol sequence transmitting+displaying `data`
+ * (raw `rgb`/`rgba` pixels or `png` bytes) with the given numeric `id`.
+ */
+export declare function graphicsKittyWrite(
+  format: string,
+  width: number,
+  height: number,
+  data: Buffer,
+  id: number,
+): Buffer;
+
+/**
+ * Builds the probe sequence(s) detecting which graphics protocols the terminal
+ * supports (Kitty query + DA1 for Sixel).
+ */
+export declare function graphicsQuery(): Buffer;
+
+/** Builds a Sixel sequence for a raw `rgb`/`rgba` image (empty for `png`). */
+export declare function graphicsSixelWrite(
+  format: string,
+  width: number,
+  height: number,
+  data: Buffer,
+): Buffer;
+
+/** Flush the logger */
+export declare function loggerFlush(): void;
+
+/** Get a snapshot of diagnostic counters */
+export declare function loggerGetDiagnostics(): NapiDiagnosticSnapshot;
+
+/** Get the current log level */
+export declare function loggerGetLevel(): string;
+
+/** Initialize the logger with the given configuration */
+export declare function loggerInit(config: NapiLoggerConfig): void;
+
+/** Set the global log level */
+export declare function loggerSetLevel(level: string): void;
+
+/** Set the module filter */
+export declare function loggerSetModuleFilter(
+  include?: Array<string> | undefined | null,
+  exclude?: Array<string> | undefined | null,
+): void;
+
+/** Diagnostic snapshot for TypeScript */
+export interface NapiDiagnosticSnapshot {
+  renderCalls: number;
+  renderBytes: number;
+  eventDispatches: number;
+  layoutComputations: number;
+  cacheHits: number;
+  cacheMisses: number;
+  allocations: number;
+  averageFrameTime: number;
+  fps: number;
+}
+
+/** Logger configuration for TypeScript */
+export interface NapiLoggerConfig {
+  level?: string;
+  color?: boolean;
+  timestamp?: boolean;
+  module?: boolean;
+  thread?: boolean;
+  file?: string;
+  maxFileSize?: number;
+  maxFiles?: number;
+  dev?: boolean;
+}
+
+export interface NapiTheme {
+  name: string;
+  colors: NapiThemeColors;
+  spacing: NapiThemeSpacing;
+  borders: NapiThemeBorders;
+}
+
+export interface NapiThemeBorders {
+  style: string;
+  fg: string;
+}
+
+export interface NapiThemeColors {
+  background: string;
+  surface: string;
+  surfaceHigh: string;
+  surfaceLow: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  text: string;
+  textMuted: string;
+  textDim: string;
+  border: string;
+  borderFocused: string;
+  accent: string;
+  accentForeground: string;
+  error: string;
+  warning: string;
+  success: string;
+  info: string;
+  scrollbar: string;
+  scrollbarThumb: string;
+}
+
+export interface NapiThemeSpacing {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+}
+
+export interface NativeEventPipelineConfig {
+  kittyKeyboard?: boolean;
+  bracketedPaste?: boolean;
+  focusEvents?: boolean;
+  mouseTracking?: boolean;
+  width?: number;
+  height?: number;
+}
+
+export interface NativeSpanFeedOptions {
+  chunkSize: number;
+  initialChunks: number;
+  maxBytes: number;
+  growthPolicy: number;
+  autoCommitOnFull: number;
+  spanQueueCapacity: number;
+}
+
+export interface NativeSpanFeedStats {
+  bytesWritten: number;
+  spansCommitted: number;
+  chunks: number;
+  pendingSpans: number;
+}
 
 export interface TerminalCapabilities {
   brand: string;

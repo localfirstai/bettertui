@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> `@bettertui/core` is the **framework package for vanilla / native TypeScript** (no React). The React adapter (`@bettertui/react`) is planned but **not implemented** — `packages/react` is a placeholder. (All packages are currently `private`.)
+
 ## Cross-Framework Boundary
 
 - **`CommandBufferConsumer` (`{ push(command: Command): void }`) is the sole API contract between core and framework adapters.** Every framework adapter (React, Vue, Solid, Svelte) implements its own consumer. Keep this interface minimal — adding framework-specific concerns here breaks multi-framework architecture.
@@ -9,7 +11,7 @@
 ## Reconciler vs Host Config
 
 - **`packages/core/src/reconciler.ts` (createReconciler) is the simplified, framework-agnostic version.** It wraps pure tree operations (`createInstance`, `appendChild`, etc.) with command emission. No reconciler lifecycle hooks.
-- **The React host config (`packages/react/src/renderer.ts`) does equivalent tree ops but also handles reconciler lifecycle** — `prepareForCommit`, `resetAfterCommit`, `commitMount`, etc. Don't try to deduplicate them; the React version must respond to reconciler internals.
+- **The React host config (planned, `packages/react/src/renderer.ts`) will do equivalent tree ops but also handles reconciler lifecycle** — `prepareForCommit`, `resetAfterCommit`, `commitMount`, etc. Don't try to deduplicate them; the React version must respond to reconciler internals.
 - The pure tree operations (`createInstance`, `appendChild`, `removeChild`, etc.) in `command-buffer.ts` are reused by both. Only the wrapper layer differs.
 
 ## Runtime
@@ -19,7 +21,7 @@
 
 ## Native Bridge (napi-rs)
 
-- **tsdown must externalize `bettertui_bindings`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_bindings"] }` in `tsdown.config.ts`.
+- **tsdown must externalize `bettertui_engine`.** The native napi-rs binary is loaded at runtime by Node.js and cannot be bundled. Add `deps: { neverBundle: ["bettertui_engine"] }` in `tsdown.config.ts`.
 - **Runtime name collision:** Engine bridge exports a `Runtime` interface (napi Rust engine wrapper). Core also has a `Runtime` class (framework-agnostic runtime). In `packages/core/src/index.ts`, rename the engine import: `import { Runtime as NativeRuntime } from "./engine/runtime"` to avoid collision.
 - **Packages/core/src/index.ts must explicitly re-export engine bridge symbols** (createNativeRuntime, NativeRuntime, etc.) from `src/platform/index.ts`. Without explicit re-exports, the symbols are not part of the public API.
 

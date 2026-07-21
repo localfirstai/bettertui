@@ -1,6 +1,6 @@
 # Input System
 
-The input system turns raw terminal bytes into structured events. Raw-byte parsing lives in `packages/core/crates/engine/src/input.rs` (the `input` module) and `packages/core/crates/engine/src/ansi.rs`; the `bettertui-terminal` crate's `vt` module (`vt.rs`) and the `input` module's keymap types provide keybinding handling and hit-testing on top of the parsed input.
+The input system turns raw terminal bytes into structured events. Raw-byte parsing lives in `packages/core/crates/engine/src/input.rs` (the `input` module) and `packages/core/crates/engine/src/ansi.rs`; the engine's `terminal/vt.rs` module and the `input` module's keymap types provide keybinding handling and hit-testing on top of the parsed input.
 
 ## Flow
 
@@ -17,7 +17,7 @@ flowchart LR
 
 - `input.rs`: `KeyboardInput { key: char, modifiers, action }`, `KeyAction`, `KeyModifiers` (bitflags SHIFT/CTRL/ALT/SUPER).
 - Escape sequences: arrows, F-keys, Home/End, PageUp/Down, modifier combos (`ESC[1;2A` = Shift+Up).
-- **Kitty keyboard protocol** (`CSI > 31 u`): key release, full modifier state, distinct ESC key. Parsed in the `bettertui-terminal` crate's `vt.rs` via `KittyKeyEvent::to_keyboard_input()`.
+- **Kitty keyboard protocol** (`CSI > 31 u`): key release, full modifier state, distinct ESC key. Parsed in the engine's `terminal/vt.rs` via `KittyKeyEvent::to_keyboard_input()`.
 
 ## Mouse
 

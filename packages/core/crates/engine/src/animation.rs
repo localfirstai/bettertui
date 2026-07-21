@@ -751,14 +751,17 @@ impl std::fmt::Debug for Timeline {
     }
 }
 
-/// A sub-timeline synced to a parent
-#[derive(Debug, Clone)]
-#[expect(dead_code, reason = "sub-timeline infrastructure for future use")]
+/// A sub-timeline synced to a parent timeline. The child is started when the
+/// parent's clock reaches `start_time` and is then advanced by the parent's
+/// (speed-scaled) delta each update, so nested timelines stay in sync.
+#[derive(Debug)]
 struct SubTimeline {
-    /// Start time in parent timeline
+    /// Start time in the parent timeline (seconds).
     start_time: f32,
-    /// Whether this sub-timeline has been started
+    /// Whether this sub-timeline has been started.
     started: bool,
+    /// The child timeline driven by the parent.
+    timeline: Box<Timeline>,
 }
 
 impl Default for Timeline {
@@ -825,6 +828,38 @@ impl Timeline {
         self.items.push(TimelineItemType::Callback(TimelineCallbackItem { start_time, executed: false }));
     }
 
+    /// Add a nested sub-timeline that starts (and is thereafter advanced by this
+    /// timeline) once the parent clock reaches `start_time`.
+    pub fn add_sub_timeline(&mut self, timeline: Timeline, start_time: f32) {
+        self.sub_timelines.push(SubTimeline { start_time, started: false, timeline: Box::new(timeline) });
+    }
+
+    /// Number of nested sub-timelines.
+    pub fn sub_timeline_count(&self) -> usize {
+        self.sub_timelines.len()
+    }
+
+    /// Number of scheduled animations (excludes callbacks and sub-timelines).
+    pub fn animation_count(&self) -> usize {
+        self.items.iter().filter(|i| matches!(i, TimelineItemType::Animation(_))).count()
+    }
+
+    /// Current value of the animation scheduled at `index` (insertion order of
+    /// `add_animation` calls). Returns `None` if `index` is out of range or the
+    /// item at that position is a callback rather than an animation.
+    pub fn animation_value(&self, index: usize) -> Option<f32> {
+        let mut anim_idx = 0;
+        for item in &self.items {
+            if let TimelineItemType::Animation(a) = item {
+                if anim_idx == index {
+                    return Some(a.animation.current_value);
+                }
+                anim_idx += 1;
+            }
+        }
+        None
+    }
+
     /// Check if the timeline has completed
     pub fn is_complete(&self) -> bool {
         self.complete
@@ -865,6 +900,10 @@ impl Timeline {
                     c.executed = false;
                 }
             }
+        }
+        for sub in &mut self.sub_timelines {
+            sub.started = false;
+            sub.timeline.reset();
         }
     }
 
@@ -918,6 +957,19 @@ impl Timeline {
                         c.executed = true;
                     }
                 }
+            }
+        }
+
+        // Drive nested sub-timelines: start each once the parent clock reaches
+        // its start time, then advance it by the same speed-scaled delta.
+        let scaled_dt = dt * self.speed;
+        for sub in &mut self.sub_timelines {
+            if self.current_time >= sub.start_time {
+                if !sub.started {
+                    sub.started = true;
+                    sub.timeline.play();
+                }
+                sub.timeline.update(scaled_dt);
             }
         }
 

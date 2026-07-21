@@ -12,8 +12,26 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "lib"]
 
 [features]
-default = []
+default = ["diagnostics"]
 napi = ["dep:napi", "dep:napi-derive"]
+
+# Diagnostic counters (render calls, frame times, cache hit/miss, ...). Enabled
+# by default. Build with `--no-default-features` (or omit this from your feature
+# set) to compile out every counter increment on the render/event hot paths for
+# a zero-overhead release build; `loggerGetDiagnostics()` then reports zeros.
+diagnostics = []
+
+# Compile-time log gating. Enabling one of these statically removes any
+# `tracing` event below the chosen level from RELEASE builds (debug builds are
+# unaffected, so development still sees everything). These forward to
+# `tracing`'s `release_max_level_*` features. Pick at most one.
+release-logs-off = ["tracing/release_max_level_off"]
+release-logs-error = ["tracing/release_max_level_error"]
+release-logs-warn = ["tracing/release_max_level_warn"]
+release-logs-info = ["tracing/release_max_level_info"]
+release-logs-debug = ["tracing/release_max_level_debug"]
+# Convenience: the recommended production default (warn and above).
+production = ["release-logs-warn"]
 
 [[bin]]
 name = "layout_e2e"
@@ -23,6 +41,7 @@ path = "src/bin/layout_e2e.rs"
 taffy.workspace = true
 crossterm.workspace = true
 ropey.workspace = true
+regex.workspace = true
 unicode-width.workspace = true
 unicode-segmentation.workspace = true
 tracing.workspace = true
@@ -36,6 +55,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 base64 = "0.22"
 cfonts = { version = "1.3", default-features = false }
+thiserror = "2.0"
 
 # Tree-sitter for syntax highlighting
 tree-sitter = "0.25"
@@ -59,3 +79,4 @@ napi-build = "2"
 [dev-dependencies]
 insta = { version = "1.42", features = ["yaml", "redactions"] }
 vt100 = "0.16"
+proptest = "1"

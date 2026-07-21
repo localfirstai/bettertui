@@ -4,7 +4,7 @@ export NVM_DIR="$HOME/.nvm"
 
 # Format TypeScript/JS/JSON, organize imports, and apply safe lint fixes
 # Skip biome if no TS/JS/JSON files are staged (e.g., markdown-only commits)
-if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx|json)$'; then
+if git diff --cached --name-only --diff-filter=d | grep -qE '\.(ts|tsx|js|jsx|json)$'; then
   pnpm exec biome check --write --staged . || exit 1
 fi
 

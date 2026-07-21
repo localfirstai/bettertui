@@ -169,3 +169,148 @@ fn scheduler_stats() {
     let stats = s.stats();
     assert_eq!(stats.total_frames, 1);
 }
+
+// ─── Render Coalescing Tests ──────────────────────────────────────────────
+
+#[test]
+fn coalesced_request_coalesces_multiple() {
+    let mut s = Scheduler::new();
+    s.request_render_coalesced();
+    s.request_render_coalesced();
+    s.request_render_coalesced();
+    assert!(s.has_scheduled_frame());
+    assert_eq!(s.priority_queue.len(), 1);
+}
+
+#[test]
+fn coalesced_request_promotes_priority() {
+    let mut s = Scheduler::new();
+    s.request_render_coalesced_with_priority(Priority::Low);
+    assert_eq!(s.highest_priority(), Some(Priority::Low));
+
+    s.request_render_coalesced_with_priority(Priority::High);
+    assert_eq!(s.highest_priority(), Some(Priority::High));
+    assert_eq!(s.priority_queue.len(), 1);
+
+    // Lower priority should not demote
+    s.request_render_coalesced_with_priority(Priority::Idle);
+    assert_eq!(s.highest_priority(), Some(Priority::High));
+    assert_eq!(s.priority_queue.len(), 1);
+}
+
+#[test]
+fn coalesced_request_defers_during_render() {
+    let mut s = Scheduler::new();
+    s.begin_render();
+    assert!(s.is_rendering());
+
+    s.request_render_coalesced();
+    assert!(s.immediate_rerender_requested());
+    assert!(!s.has_scheduled_frame());
+
+    let should_rerender = s.end_render();
+    assert!(should_rerender);
+    assert!(!s.is_rendering());
+}
+
+#[test]
+fn immediate_request_bypasses_coalescing() {
+    let mut s = Scheduler::new();
+    s.request_render_coalesced_with_priority(Priority::Normal);
+    assert_eq!(s.priority_queue.len(), 1);
+
+    s.request_render_immediate();
+    assert_eq!(s.priority_queue.len(), 2);
+    assert_eq!(s.highest_priority(), Some(Priority::Critical));
+}
+
+#[test]
+fn critical_priority_is_highest() {
+    assert!(Priority::Critical > Priority::High);
+    assert!(Priority::Critical > Priority::Normal);
+    assert!(Priority::Critical > Priority::Low);
+    assert!(Priority::Critical > Priority::Idle);
+}
+
+#[test]
+fn coalesced_frame_cleared_on_begin_frame() {
+    let mut s = Scheduler::new();
+    s.request_render_coalesced();
+    assert!(s.has_scheduled_frame());
+    std::thread::sleep(Duration::from_millis(20));
+    assert!(s.begin_frame());
+    assert!(!s.has_scheduled_frame());
+}
+
+#[test]
+fn non_coalesced_request_still_works() {
+    let mut s = Scheduler::new();
+    s.request_frame();
+    s.request_frame();
+    s.request_frame();
+    assert_eq!(s.priority_queue.len(), 3);
+}
+
+// ─── Clock-Based Frame Budget Tests ───────────────────────────────────────
+
+#[test]
+fn frame_budget_start_frame_at_uses_clock() {
+    use std::time::Instant;
+    let mut b = FrameBudget::new(60);
+    let t = Instant::now();
+    b.start_frame_at(t);
+    assert!(b.current_frame_start.is_some());
+}
+
+#[test]
+fn frame_budget_end_frame_at_uses_clock() {
+    use std::time::Instant;
+    let mut b = FrameBudget::new(60);
+    let start = Instant::now();
+    b.start_frame_at(start);
+    // Simulate some elapsed time
+    std::thread::sleep(Duration::from_millis(1));
+    let end = start + Duration::from_millis(5);
+    b.end_frame_at(end);
+    assert!(b.last_frame_duration >= Duration::from_millis(4));
+    assert!(b.last_frame_duration <= Duration::from_millis(6));
+}
+
+#[test]
+fn frame_budget_remaining_budget_at() {
+    use std::time::Instant;
+    let mut b = FrameBudget::new(60); // 16ms frame time
+    let start = Instant::now();
+    b.start_frame_at(start);
+    let check = start + Duration::from_millis(5);
+    let remaining = b.remaining_budget_at(check);
+    assert!(remaining > Duration::from_millis(10));
+    assert!(remaining < Duration::from_millis(12));
+}
+
+// ─── Full Coalescing + Clock Integration ──────────────────────────────────
+
+#[test]
+fn coalescing_with_clock_full_cycle() {
+    let mut clock = bettertui_engine::clock::ManualClock::new();
+    let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+    s.request_render_coalesced();
+    s.request_render_coalesced();
+    s.request_render_coalesced_with_priority(Priority::High);
+    assert_eq!(s.priority_queue.len(), 1);
+    assert_eq!(s.highest_priority(), Some(Priority::High));
+
+    clock.advance(20);
+    assert!(s.begin_frame());
+    assert_eq!(s.priority_queue.len(), 0);
+
+    s.begin_render();
+    s.request_render_coalesced();
+    assert!(s.immediate_rerender_requested());
+    let should_rerender = s.end_render();
+    assert!(should_rerender);
+
+    s.end_frame();
+    assert_eq!(s.frame_count(), 1);
+}

@@ -48,6 +48,8 @@ describe("Slider", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe(6);
   });
@@ -69,6 +71,8 @@ describe("Slider", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe(4);
   });
@@ -90,6 +94,8 @@ describe("Slider", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe(0);
   });
@@ -111,6 +117,8 @@ describe("Slider", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe(10);
   });
@@ -125,6 +133,8 @@ describe("Slider", () => {
         shift: false,
         alt: false,
         meta: false,
+        eventType: "press",
+        source: "raw",
       }),
     ).toBe(false);
   });
@@ -147,6 +157,8 @@ describe("Slider", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(val).toBe(15);
   });

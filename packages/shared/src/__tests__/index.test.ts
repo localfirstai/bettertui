@@ -88,6 +88,8 @@ describe("KeyEvent", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     };
     expect(k.key).toBe("a");
     expect(k.code).toBe("KeyA");
@@ -101,6 +103,8 @@ describe("KeyEvent", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     };
     expect(k.ctrl).toBe(true);
   });
@@ -113,6 +117,8 @@ describe("KeyEvent", () => {
       shift: true,
       alt: true,
       meta: true,
+      eventType: "press",
+      source: "raw",
     };
     expect(k.ctrl && k.shift && k.alt && k.meta).toBe(true);
   });
@@ -125,6 +131,8 @@ describe("KeyEvent", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     };
     expect(k.key).toBe("Escape");
   });
@@ -137,6 +145,8 @@ describe("KeyEvent", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     };
     expect(k.key).toBe("F1");
   });

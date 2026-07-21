@@ -1,23 +1,25 @@
 # @bettertui/core
 
-Framework-agnostic runtime, command protocol, tree operations, and the internal native bridge for BetterTUI. This package contains **no React** and no UI-framework code — it is the boundary between any UI framework and the Rust engine.
+**The framework package for native / vanilla TypeScript.** Use it directly when you don't need React. It is fully framework-agnostic — no React, no UI-framework code — and is the boundary between any TypeScript app (vanilla or a custom framework adapter) and the Rust engine. (All packages are currently `private`.)
+
+> **React apps:** install **only** `@bettertui/react`. It depends on `@bettertui/core` and pulls it in automatically — you never install core by hand for a React project.
 
 ## What's inside
 
 - `CommandBuffer` — ordered queue of render commands (taffy layout → ANSI).
-- `Runtime` — frame loop and commit orchestration.
+- `CommandRuntime` — frame loop and commit orchestration.
 - Tree operations — `createInstance`, `createTextInstance`, `appendChild`, `insertBefore`, `removeChild`, `commitUpdate`, `commitTextUpdate`, and friends used by reconcilers.
 - `createReconciler()` — framework-agnostic `react-reconciler`-style host config (no React import).
-- Engine module (`src/platform/`) — loads the `bettertui_bindings` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `createRuntime`, `createEventLoop`, `detectCapabilities`, `getVersion`).
+- Engine module (`src/platform/`) — loads the `bettertui_engine` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`) plus `CliRenderer` / `KeyInput` for CLI rendering.
 
 ## Building
 
 ```bash
 pnpm build                # tsdown -> dist/
-cargo build -p bettertui-bindings --manifest-path packages/core/Cargo.toml  # native addon
+pnpm build:native         # builds bettertui_engine.node via napi (--features napi)
 ```
 
-The native addon is **not** declared in `package.json`. `@bettertui/core` calls `require("bettertui_bindings")` at runtime and throws a clear error if the addon was not built first.
+The native addon is **not** declared in `package.json`. `@bettertui/core` calls `require("bettertui_engine")` at runtime and throws a clear error if the addon was not built first.
 
 ## Testing
 

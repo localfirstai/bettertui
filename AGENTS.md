@@ -1,5 +1,16 @@
 # AGENTS.md
 
+## Naming Conventions
+
+**When creating any new file, always follow `.claude/rules/naming-convension.md`.** Summary:
+
+- **Rust:** standard Rust nomenclature — `snake_case` files/modules, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
+- **TypeScript:** camelCase identifiers and camelCase file names for services, utils, and plain modules (e.g. `userService.ts`).
+  - Types: `*.types.ts` (e.g. `demo.types.ts`).
+  - Examples: `*.example.ts` (e.g. `demo.example.ts`).
+  - TS widgets (non-React): `PascalCase.ts` (e.g. `Button.ts`).
+- **React:** components are `kebab-case.tsx` (e.g. `text-input.tsx`); hooks are `useHookName.ts` (e.g. `useFocus.ts`).
+
 ## TurboRepo
 
 - Build outputs must be `["dist/**"]`, not `[".next/**"]` — the default starter is Next.js-specific.
@@ -9,7 +20,7 @@
 
 ## pnpm Workspace
 
-- `pnpm-workspace.yaml` currently includes all packages under `packages/*`. The Rust bindings are inside `packages/core/crates/bindings/` (no package.json needed for pnpm).
+- `pnpm-workspace.yaml` currently includes all packages under `packages/*`. The Rust engine lives in `packages/core/crates/engine/` and is built as a `cdylib` with the `napi` feature to produce the `bettertui_engine.node` addon (no separate `crates/bindings` directory).
 - Use `pnpm@9.15.0` (pinned in `packageManager` field).
 - **Package deletion order**: Update all dependents' package.json FIRST (remove the deleted package from their deps), THEN run `pnpm install -r`. The lockfile auto-regenerates. Deleting the package dir before updating dependents causes `pnpm install` to fail with unresolved workspace deps.
 
@@ -24,7 +35,7 @@
 
 ## Rust + TypeScript Interop
 
-- `packages/core/crates/bindings/build.rs` must exist and call `napi_build::setup()` for napi-rs to work.
+- The native addon is built from `packages/core/crates/engine/` with the `napi` feature via `napi build` (see `packages/core/package.json` `build:native` script); the engine crate's `build.rs` and `napi` feature handle `napi_build::setup()`.
 - Rust structs with `new()` must also implement `Default` or clippy will error.
 - `impl Into<String>` in function signatures creates monomorphizations — prefer accepting `String` directly or use a different pattern.
 
@@ -45,18 +56,18 @@
 
 - CI workflow in `.github/workflows/ci.yml`.
 - Runs Biome CI, Rust formatting check, Clippy with `-D warnings`, TypeScript typecheck, and workspace build.
-- Separate job for `cargo test --workspace`.
+- Separate job for `cargo test --manifest-path packages/core/Cargo.toml`.
 
 ## Architecture
 
-- **Canonical design docs:** `docs/architecture/` contains the definitive architecture. Root `ARCHITECTURE.md`, `ROADMAP.md`, `CONTRIBUTING.md` are older summaries — prefer docs/architecture/ for design decisions.
-- **Package layering:** Application → `@bettertui/react` → `@bettertui/core` → Rust Engine (packages/core/crates/). React may depend on Core. Nothing may bypass Core.
+- **Canonical design docs:** `docs/architecture/` contains the definitive architecture. The root `CONTRIBUTING.md` is the older process summary; architecture and roadmap live under `docs/` (`docs/architecture/README.md`, `docs/ROADMAP.md`) — prefer those for design decisions.
+- **Two planned first-class packages.** `@bettertui/core` is the **public, first-class package for vanilla / native TypeScript** (framework-agnostic: CommandBuffer, Command protocol, Runtime class, tree manipulation, createReconciler(), native bridge) — **implemented**. `@bettertui/react` is the **planned public, first-class React adapter** — React apps will install only `@bettertui/react`, which depends on core and pulls it in automatically. The `packages/react` directory is a placeholder; the React adapter is **not implemented yet**. Nothing may bypass Core.
 - **`@bettertui/core` is the framework-agnostic foundation:** Contains the CommandBuffer, Command protocol, Runtime class, tree manipulation (Instance, TextInstance), HostConfig types, and the framework-agnostic createReconciler(). Zero React dependency. Future adapters (Vue, Solid, Svelte) depend on core directly.
-- **`@bettertui/react` is the React adapter:** Absorbs the old `@bettertui/reconciler` and `@bettertui/runtime` packages. Contains the react-reconciler HostConfig, createRenderer, render(), RuntimeProvider, useRuntime, hooks (useTheme, useFocus, useKeyboard, etc.), and component stubs. Internal implementation details are not exported.
+- **`@bettertui/react` is the planned React adapter:** When built, it will absorb the old `@bettertui/reconciler` and `@bettertui/runtime` packages, containing the react-reconciler HostConfig, createRenderer, render(), RuntimeProvider, useRuntime, hooks (useTheme, useFocus, useKeyboard, etc.), and components. Internal implementation details are not exported. **Currently a placeholder — not implemented.**
 - **`@bettertui/reconciler` and `@bettertui/runtime` removed:** Absorbed into `@bettertui/react` (React-specific parts) and `@bettertui/core` (framework-agnostic parts). Do not reference these packages.
 - **`@bettertui/core` owns both TypeScript runtime and Rust engine:** The engine bridge (internal to core as `src/platform/`) imports `Command` and `CommandBuffer` from core. The Rust crates live in `packages/core/crates/` — `engine`, `widgets`, `terminal`, and `bindings`. Everything from the Rust crates is exposed through `@bettertui/core` only.
 - **`@bettertui/shared` is the type foundation:** Pure type definitions, zero runtime dependencies. Both core and react re-export shared types.
-- **No `@bettertui/testing` package:** Testing is done with per-package Vitest suites (e.g. `*.test.ts` next to source). There is no separate testing package or headless harness — React output is asserted via `renderToStringAsync` in `packages/react/src/testing.ts`. Do not create `@bettertui/testing`.
+- **No `@bettertui/testing` package:** Testing is done with per-package Vitest suites (e.g. `*.test.ts` next to source). There is no separate testing package or headless harness. When the React adapter exists, its output will be asserted via `renderToStringAsync` (planned for `packages/react/src/testing.ts`). Do not create `@bettertui/testing`.
 - **Proposed but not yet created packages:** The architecture documents reference packages that don't exist yet: `@bettertui/protocol`, `@bettertui/renderer`, `@bettertui/hooks`, `@bettertui/animations`, `@bettertui/editor`, `@bettertui/graphics`.
 - **Node model design:** The architecture specifies `slotmap`-based arena allocation with generational indices (`NodeId` = `slotmap::DefaultKey`, 8 bytes). The TypeScript `NodeId` is currently `string` — this will need to change when the Rust engine is implemented.
 
@@ -67,11 +78,10 @@
 
 ## Rust Engine Testing
 
-- Run engine tests: `cargo test -p bettertui-engine --lib --manifest-path packages/core/Cargo.toml`
-- Run widgets tests: `cargo test -p bettertui-widgets --lib --manifest-path packages/core/Cargo.toml`
-- Run all tests: `cargo test --workspace --lib --manifest-path packages/core/Cargo.toml`
-- Run clippy: `cargo clippy -p bettertui-engine -p bettertui-widgets --lib --manifest-path packages/core/Cargo.toml -- -D warnings`
+- Run engine tests: `cargo test --manifest-path packages/core/Cargo.toml --lib`
+- Run all tests: `cargo test --manifest-path packages/core/Cargo.toml`
+- Run clippy: `cargo clippy --manifest-path packages/core/Cargo.toml --lib -- -D warnings`
 - All structs with `new()` must have `#[derive(Default)]` or manual Default impl.
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
-- Widget tests: 251 in `bettertui-widgets`. Engine tests: 159 in `bettertui-engine`.
+- The only Rust crate with a unit-test suite co-located in `#[cfg(test)]` blocks is `bettertui-engine`. (The engine test build currently has a compilation issue in `terminal/vt.rs` that must be fixed before the suite is green.)
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.

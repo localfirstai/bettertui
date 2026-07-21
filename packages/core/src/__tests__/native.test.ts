@@ -412,8 +412,8 @@ describe("createEventLoop", () => {
     const loop = createEventLoop(eventBus);
     const cb = vi.fn();
     loop.onEvent(cb);
-    loop.pushKey("a", false, false, false, 1);
-    expect(eventBus.pushKey).toHaveBeenCalledWith("a", false, false, false, 1);
+    loop.pushKey("a", false, false, false);
+    expect(eventBus.pushKey).toHaveBeenCalledWith("a", false, false, false);
     expect(cb).toHaveBeenCalledWith(
       expect.objectContaining({ key: "a", ctrl: false, meta: false }),
     );
@@ -423,8 +423,8 @@ describe("createEventLoop", () => {
     const loop = createEventLoop(eventBus);
     const cb = vi.fn();
     loop.onEvent(cb);
-    loop.pushMouse("left", 10, 20, 1);
-    expect(eventBus.pushMouse).toHaveBeenCalledWith("left", 10, 20, 1);
+    loop.pushMouse("left", 10, 20);
+    expect(eventBus.pushMouse).toHaveBeenCalledWith("left", 10, 20);
     expect(cb).toHaveBeenCalledWith(
       expect.objectContaining({
         button: "left",

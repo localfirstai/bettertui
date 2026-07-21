@@ -7,6 +7,51 @@ use crate::taffy::{FlexDirection, FlexWrap, LayoutProps};
 use crate::tree::{Color, NodeArena, NodeId, NodeKind, RenderNode, Style};
 
 // ══════════════════════════════════════════════════════════════════════════════
+// SCREEN MODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+/// Screen mode determines how the renderer interacts with the terminal display.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ScreenMode {
+    /// Use the alternate screen buffer (default). The UI replaces the entire terminal.
+    #[default]
+    AlternateScreen,
+    /// Render inline in the main screen buffer.
+    MainScreen,
+    /// Render in a reserved footer region of the main screen.
+    /// The `height` field specifies how many rows the footer occupies.
+    SplitFooter { height: u16 },
+}
+
+impl ScreenMode {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::AlternateScreen => "alternate-screen",
+            Self::MainScreen => "main-screen",
+            Self::SplitFooter { .. } => "split-footer",
+        }
+    }
+
+    /// Returns the render offset (how many rows from the top to skip).
+    /// For split-footer mode, this is `terminal_height - footer_height`.
+    /// For other modes, this is 0.
+    pub fn render_offset(&self, terminal_height: u16) -> u16 {
+        match self {
+            Self::SplitFooter { height } => terminal_height.saturating_sub(*height),
+            _ => 0,
+        }
+    }
+
+    /// Returns the viewport height (how many rows are available for rendering).
+    pub fn viewport_height(&self, terminal_height: u16) -> u16 {
+        match self {
+            Self::SplitFooter { height } => terminal_height.saturating_sub(*height),
+            _ => terminal_height,
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // COMMAND
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -187,6 +232,10 @@ pub enum Command {
     /// Invalidate a node (mark as needing re-render).
     Invalidate { id: NodeId },
 
+    // ─── Screen Commands ───────────────────────────────────────────
+    /// Set the screen mode (alternate-screen, main-screen, split-footer).
+    SetScreenMode { mode: ScreenMode },
+
     // ─── Lifecycle Commands ───────────────────────────────────────
     /// Shut down the engine.
     Shutdown,
@@ -249,6 +298,7 @@ impl Command {
             Self::Invalidate { id } => Some(*id),
             Self::BeginFrame { .. } => None,
             Self::CommitFrame { .. } => None,
+            Self::SetScreenMode { .. } => None,
             Self::Shutdown => None,
         }
     }
@@ -309,6 +359,7 @@ impl Command {
             Self::BeginFrame { .. } => "BeginFrame",
             Self::CommitFrame { .. } => "CommitFrame",
             Self::Invalidate { .. } => "Invalidate",
+            Self::SetScreenMode { .. } => "SetScreenMode",
             Self::Shutdown => "Shutdown",
         }
     }
@@ -417,6 +468,7 @@ impl std::fmt::Display for Command {
             Self::BeginFrame { frame_id } => write!(f, "BeginFrame({frame_id})"),
             Self::CommitFrame { frame_id } => write!(f, "CommitFrame({frame_id})"),
             Self::Invalidate { id } => write!(f, "Invalidate({id:?})"),
+            Self::SetScreenMode { mode } => write!(f, "SetScreenMode({:?})", mode),
             Self::Shutdown => write!(f, "Shutdown"),
         }
     }
@@ -1247,6 +1299,14 @@ impl CommandProcessor {
             Command::Invalidate { id } => {
                 let node = self.get_node_mut(id)?;
                 node.state.mark_dirty();
+                self.arena.mark_changed();
+                Ok(())
+            }
+
+            // ─── Screen Commands ────────────────────────────────────
+            Command::SetScreenMode { mode: _ } => {
+                // Screen mode is handled at a higher level (renderer);
+                // just track it in the arena metadata
                 self.arena.mark_changed();
                 Ok(())
             }

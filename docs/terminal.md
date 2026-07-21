@@ -8,7 +8,7 @@
 
 ## Embedded terminal (`vt.rs` + `pty.rs` + `process.rs`)
 
-A `TerminalRuntime` (in the `bettertui-terminal` crate's `process.rs`) spawns a `PtyProcess` (engine `pty.rs`, via `portable-pty`). Child output is fed through the `AnsiParser` → `VtMachine` → `ScreenBuffer`, producing a `FrameBuffer` that can be composited into the UI.
+A `TerminalRuntime` (engine `terminal/process.rs`) spawns a `PtyProcess` (engine `pty.rs`, via `portable-pty`). Child output is fed through the `AnsiParser` → `VtMachine` → `ScreenBuffer`, producing a `FrameBuffer` that can be composited into the UI.
 
 See [Architecture: Terminal](architecture/terminal.md), [PTY](architecture/pty.md), and [Guides: Terminal & PTY](guides/terminal.md).
 

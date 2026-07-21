@@ -4,12 +4,15 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 
+use crate::clock::Clock;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Idle = 0,
     Low = 1,
     Normal = 2,
     High = 3,
+    Critical = 4,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,8 +40,12 @@ impl FrameRequest {
         self
     }
 
+    pub fn is_overdue_at(&self, now: Instant) -> bool {
+        self.deadline.is_some_and(|d| now > d)
+    }
+
     pub fn is_overdue(&self) -> bool {
-        self.deadline.is_some_and(|d| Instant::now() > d)
+        self.is_overdue_at(Instant::now())
     }
 }
 
@@ -99,10 +106,27 @@ impl FrameBudget {
         }
     }
 
-    pub fn start_frame(&mut self) {
-        self.current_frame_start = Some(Instant::now());
+    /// Start a frame, recording the given `now` as the frame start time.
+    pub fn start_frame_at(&mut self, now: Instant) {
+        self.current_frame_start = Some(now);
     }
 
+    /// Start a frame using `Instant::now()` (convenience for non-clock contexts).
+    pub fn start_frame(&mut self) {
+        self.start_frame_at(Instant::now());
+    }
+
+    /// End a frame, computing duration from the given `now`.
+    pub fn end_frame_at(&mut self, now: Instant) {
+        if let Some(start) = self.current_frame_start.take() {
+            self.last_frame_duration = now.saturating_duration_since(start);
+            if self.last_frame_duration > self.target_frame_time {
+                self.budget_exceeded_count += 1;
+            }
+        }
+    }
+
+    /// End a frame using real elapsed time (convenience for non-clock contexts).
     pub fn end_frame(&mut self) {
         if let Some(start) = self.current_frame_start.take() {
             self.last_frame_duration = start.elapsed();
@@ -112,6 +136,18 @@ impl FrameBudget {
         }
     }
 
+    /// Remaining budget computed against the given `now`.
+    pub fn remaining_budget_at(&self, now: Instant) -> Duration {
+        match self.current_frame_start {
+            Some(start) => {
+                let elapsed = now.saturating_duration_since(start);
+                if elapsed >= self.target_frame_time { Duration::ZERO } else { self.target_frame_time - elapsed }
+            }
+            None => self.target_frame_time,
+        }
+    }
+
+    /// Remaining budget using real elapsed time (convenience for non-clock contexts).
     pub fn remaining_budget(&self) -> Duration {
         match self.current_frame_start {
             Some(start) => {
@@ -157,6 +193,14 @@ pub struct Scheduler {
     #[doc(hidden)]
     pub frame_budget: FrameBudget,
     stats: SchedulerStats,
+    clock: Option<Box<dyn Clock + Send>>,
+    clock_base: Option<(Instant, Duration)>,
+    /// Coalescing: when true, `request_render_coalesced()` is a no-op.
+    has_scheduled_frame: bool,
+    /// Set during a frame; pending requests are deferred to the next frame.
+    rendering: bool,
+    /// One-shot: request an immediate re-render after the current frame completes.
+    immediate_rerender_requested: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -197,10 +241,11 @@ impl Scheduler {
         let min_interval =
             if max_fps > 0 { Duration::from_millis(1000 / max_fps as u64) } else { Duration::from_millis(8) };
 
+        let now = Instant::now();
         Self {
             frame_interval: interval,
             min_frame_interval: min_interval,
-            last_frame: Instant::now(),
+            last_frame: now,
             pending: false,
             immediate_mode: false,
             frame_count: 0,
@@ -211,6 +256,32 @@ impl Scheduler {
             animation_frame_id: 0,
             frame_budget: FrameBudget::with_fps_range(target_fps, max_fps),
             stats: SchedulerStats::default(),
+            clock: None,
+            clock_base: None,
+            has_scheduled_frame: false,
+            rendering: false,
+            immediate_rerender_requested: false,
+        }
+    }
+
+    /// Create scheduler with an external clock source (for testing).
+    pub fn with_clock(target_fps: u32, clock: Box<dyn Clock + Send>) -> Self {
+        let mut s = Self::with_fps(target_fps);
+        let now_dur = clock.now();
+        s.clock = Some(clock);
+        s.clock_base = Some((Instant::now(), now_dur));
+        s.last_frame = s.now();
+        s
+    }
+
+    /// Get the current `Instant`, using the injected clock if available.
+    fn now(&self) -> Instant {
+        match (&self.clock, &self.clock_base) {
+            (Some(clock), Some((base_instant, base_dur))) => {
+                let elapsed = clock.now().saturating_sub(*base_dur);
+                *base_instant + elapsed
+            }
+            _ => Instant::now(),
         }
     }
 
@@ -247,6 +318,90 @@ impl Scheduler {
         self.request_frame_with_priority(Priority::Idle);
     }
 
+    /// Request a frame with render coalescing.
+    ///
+    /// Multiple calls between frames are collapsed into a single pending frame.
+    /// Uses the highest priority seen. If a frame is already being rendered,
+    /// the request is deferred via `immediate_rerender_requested`.
+    pub fn request_render_coalesced(&mut self) {
+        self.request_render_coalesced_with_priority(Priority::Normal);
+    }
+
+    /// Coalesced frame request with explicit priority.
+    pub fn request_render_coalesced_with_priority(&mut self, priority: Priority) {
+        if self.rendering {
+            self.immediate_rerender_requested = true;
+            return;
+        }
+
+        if self.has_scheduled_frame {
+            // Already have a pending frame — just promote priority if higher.
+            if let Some(top) = self.priority_queue.peek() {
+                if priority > top.priority {
+                    self.priority_queue.pop();
+                    self.priority_queue.push(FrameRequest::new(priority));
+                }
+            }
+            return;
+        }
+
+        self.has_scheduled_frame = true;
+        self.request_frame_with_priority(priority);
+    }
+
+    /// Request an immediate re-render, bypassing coalescing.
+    ///
+    /// Use this for critical updates that must render in the next available frame
+    /// even if a frame is already scheduled.
+    pub fn request_render_immediate(&mut self) {
+        self.request_render_immediate_with_priority(Priority::Critical);
+    }
+
+    /// Immediate frame request with explicit priority.
+    pub fn request_render_immediate_with_priority(&mut self, priority: Priority) {
+        if self.rendering {
+            self.immediate_rerender_requested = true;
+            return;
+        }
+
+        self.has_scheduled_frame = true;
+        self.request_frame_with_priority(priority);
+    }
+
+    /// Returns `true` if a frame is already scheduled (coalescing active).
+    pub fn has_scheduled_frame(&self) -> bool {
+        self.has_scheduled_frame
+    }
+
+    /// Returns `true` if a deferred immediate render was requested during a frame.
+    pub fn immediate_rerender_requested(&self) -> bool {
+        self.immediate_rerender_requested
+    }
+
+    /// Returns `true` if a frame is currently being rendered.
+    pub fn is_rendering(&self) -> bool {
+        self.rendering
+    }
+
+    /// Mark the start of a render pass. Call before rendering begins.
+    pub fn begin_render(&mut self) {
+        self.rendering = true;
+    }
+
+    /// Mark the end of a render pass. Call after rendering completes.
+    /// Returns `true` if an immediate re-render was requested during the frame.
+    pub fn end_render(&mut self) -> bool {
+        self.rendering = false;
+        let should_rerender = self.immediate_rerender_requested;
+        self.immediate_rerender_requested = false;
+        should_rerender
+    }
+
+    /// Clear the scheduled frame flag. Called when a frame is consumed.
+    pub fn clear_scheduled_frame(&mut self) {
+        self.has_scheduled_frame = false;
+    }
+
     pub fn schedule_animation(&mut self, callback: impl FnMut(u64) + Send + 'static) -> u64 {
         let id = self.animation_frame_id;
         self.animation_frames.push((id, Box::new(callback)));
@@ -271,7 +426,8 @@ impl Scheduler {
 
         let effective_interval = if self.immediate_mode { self.min_frame_interval } else { self.frame_interval };
 
-        let elapsed = self.last_frame.elapsed();
+        let now = self.now();
+        let elapsed = now.saturating_duration_since(self.last_frame);
         if elapsed >= effective_interval {
             if elapsed >= effective_interval * 2 { FrameStatus::Overdue } else { FrameStatus::Due }
         } else {
@@ -285,16 +441,18 @@ impl Scheduler {
         }
 
         self.pending = false;
+        self.has_scheduled_frame = false;
         self.priority_queue.clear();
-        self.last_frame = Instant::now();
+        self.last_frame = self.now();
         self.frame_count += 1;
-        self.frame_budget.start_frame();
+        self.frame_budget.start_frame_at(self.now());
         self.stats.total_frames = self.frame_count;
         true
     }
 
     pub fn end_frame(&mut self) {
-        self.frame_budget.end_frame();
+        let now = self.now();
+        self.frame_budget.end_frame_at(now);
 
         if self.frame_budget.last_frame_duration > self.stats.max_frame_time {
             self.stats.max_frame_time = self.frame_budget.last_frame_duration;
@@ -339,6 +497,7 @@ impl Scheduler {
             self.dropped_frames += 1;
             self.stats.dropped_frames = self.dropped_frames;
             self.pending = false;
+            self.has_scheduled_frame = false;
             self.priority_queue.clear();
         }
     }
@@ -385,12 +544,13 @@ impl Scheduler {
     }
 
     pub fn time_until_next_frame(&self) -> Duration {
-        let elapsed = self.last_frame.elapsed();
+        let now = self.now();
+        let elapsed = now.saturating_duration_since(self.last_frame);
         if elapsed >= self.frame_interval { Duration::ZERO } else { self.frame_interval - elapsed }
     }
 
     pub fn reset(&mut self) {
-        self.last_frame = Instant::now();
+        self.last_frame = self.now();
         self.pending = false;
         self.immediate_mode = false;
         self.frame_count = 0;
@@ -401,6 +561,9 @@ impl Scheduler {
         self.animation_frame_id = 0;
         self.frame_budget = FrameBudget::with_fps_range(60, 60);
         self.stats = SchedulerStats::default();
+        self.has_scheduled_frame = false;
+        self.rendering = false;
+        self.immediate_rerender_requested = false;
     }
 }
 
@@ -452,5 +615,276 @@ mod tests {
         scheduler.set_fps_range(30, 120);
         assert_eq!(scheduler.target_fps(), 30);
         assert!(scheduler.max_fps() >= 120);
+    }
+
+    #[test]
+    fn scheduler_with_clock_tracks_time() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        let t0 = scheduler.now();
+        clock.advance(100);
+        let t1 = scheduler.now();
+        assert!(t1 >= t0);
+    }
+
+    #[test]
+    fn scheduler_with_clock_advances_frame_time() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        scheduler.request_frame();
+        // Advance clock past frame interval so frame is due
+        clock.advance(200);
+        assert!(scheduler.begin_frame());
+        scheduler.end_frame();
+        assert_eq!(scheduler.frame_count(), 1);
+    }
+
+    #[test]
+    fn scheduler_clock_controls_status() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        assert_eq!(scheduler.status(), FrameStatus::Idle);
+        scheduler.request_frame();
+        // No time elapsed — frame should be pending
+        assert_eq!(scheduler.status(), FrameStatus::Pending);
+        clock.advance(20);
+        // Enough time for 60fps (16ms) — should be due
+        assert_eq!(scheduler.status(), FrameStatus::Due);
+        clock.advance(100);
+        // More than 2x frame interval — should be overdue
+        assert_eq!(scheduler.status(), FrameStatus::Overdue);
+    }
+
+    // ─── Render Coalescing Tests ──────────────────────────────────────────────
+
+    #[test]
+    fn coalesced_request_single_pending() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.request_render_coalesced();
+        assert!(s.has_scheduled_frame());
+        assert_eq!(s.priority_queue.len(), 1);
+
+        // Second call should be a no-op (coalesced)
+        s.request_render_coalesced();
+        assert_eq!(s.priority_queue.len(), 1);
+    }
+
+    #[test]
+    fn coalesced_request_promotes_priority() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.request_render_coalesced_with_priority(Priority::Low);
+        assert_eq!(s.highest_priority(), Some(Priority::Low));
+
+        // Higher priority should promote
+        s.request_render_coalesced_with_priority(Priority::High);
+        assert_eq!(s.highest_priority(), Some(Priority::High));
+        assert_eq!(s.priority_queue.len(), 1);
+
+        // Lower priority should not demote
+        s.request_render_coalesced_with_priority(Priority::Idle);
+        assert_eq!(s.highest_priority(), Some(Priority::High));
+        assert_eq!(s.priority_queue.len(), 1);
+    }
+
+    #[test]
+    fn coalesced_request_defers_during_render() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.begin_render();
+        assert!(s.is_rendering());
+
+        s.request_render_coalesced();
+        assert!(s.immediate_rerender_requested());
+        assert!(!s.has_scheduled_frame());
+
+        let should_rerender = s.end_render();
+        assert!(should_rerender);
+        assert!(!s.is_rendering());
+        assert!(!s.immediate_rerender_requested());
+    }
+
+    #[test]
+    fn coalesced_frame_cleared_on_begin_frame() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.request_render_coalesced();
+        assert!(s.has_scheduled_frame());
+
+        clock.advance(20);
+        assert!(s.begin_frame());
+        assert!(!s.has_scheduled_frame());
+    }
+
+    #[test]
+    fn immediate_request_bypasses_coalescing() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.request_render_coalesced_with_priority(Priority::Normal);
+        assert_eq!(s.priority_queue.len(), 1);
+
+        // Immediate request adds a new entry (bypasses coalescing)
+        s.request_render_immediate();
+        assert_eq!(s.priority_queue.len(), 2);
+        assert_eq!(s.highest_priority(), Some(Priority::Critical));
+    }
+
+    #[test]
+    fn immediate_request_defers_during_render() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.begin_render();
+        s.request_render_immediate();
+        assert!(s.immediate_rerender_requested());
+        assert!(!s.has_scheduled_frame());
+        s.end_render();
+    }
+
+    #[test]
+    fn non_coalesced_request_still_works() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        // Legacy request_frame() always pushes (no coalescing)
+        s.request_frame();
+        s.request_frame();
+        s.request_frame();
+        assert_eq!(s.priority_queue.len(), 3);
+    }
+
+    #[test]
+    fn critical_priority_is_highest() {
+        assert!(Priority::Critical > Priority::High);
+        assert!(Priority::Critical > Priority::Normal);
+        assert!(Priority::Critical > Priority::Low);
+        assert!(Priority::Critical > Priority::Idle);
+    }
+
+    // ─── Clock-Based Frame Budget Tests ───────────────────────────────────────
+
+    #[test]
+    fn frame_budget_uses_clock_for_start_frame() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        scheduler.request_frame();
+        clock.advance(20);
+        assert!(scheduler.begin_frame());
+
+        // Advance clock by 5ms — remaining budget should reflect that
+        clock.advance(5);
+        let remaining = scheduler.frame_budget().remaining_budget_at(scheduler.now());
+        // 60fps = 16.67ms frame time. After 5ms, ~11ms remaining.
+        assert!(remaining < Duration::from_millis(16));
+        assert!(remaining > Duration::from_millis(5));
+
+        scheduler.end_frame();
+    }
+
+    #[test]
+    fn frame_budget_uses_clock_for_end_frame() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        scheduler.request_frame();
+        clock.advance(20);
+        assert!(scheduler.begin_frame());
+
+        // Advance clock by 8ms to simulate render work
+        clock.advance(8);
+        scheduler.end_frame();
+
+        let dur = scheduler.frame_budget().last_frame_duration;
+        assert!(dur >= Duration::from_millis(7));
+        assert!(dur <= Duration::from_millis(10));
+    }
+
+    #[test]
+    fn frame_budget_detects_exceeded_with_clock() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(30, Box::new(clock.clone())); // 33ms frame time
+
+        scheduler.request_frame();
+        clock.advance(40);
+        assert!(scheduler.begin_frame());
+
+        // Advance past frame budget
+        clock.advance(40);
+        scheduler.end_frame();
+
+        assert!(scheduler.frame_budget().last_frame_duration > Duration::from_millis(33));
+        assert!(scheduler.frame_budget().budget_exceeded_count >= 1);
+    }
+
+    #[test]
+    fn time_until_next_frame_uses_clock() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        scheduler.request_frame();
+        clock.advance(20);
+        assert!(scheduler.begin_frame());
+        scheduler.end_frame();
+
+        // Right after frame, time_until_next_frame should be near the frame interval
+        let remaining = scheduler.time_until_next_frame();
+        assert!(remaining <= Duration::from_millis(16));
+
+        // Advance halfway
+        clock.advance(8);
+        let remaining = scheduler.time_until_next_frame();
+        assert!(remaining < Duration::from_millis(10));
+    }
+
+    // ─── Full Coalescing + Clock Integration ──────────────────────────────────
+
+    #[test]
+    fn coalescing_with_clock_full_cycle() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        // Request several coalesced frames
+        s.request_render_coalesced();
+        s.request_render_coalesced();
+        s.request_render_coalesced_with_priority(Priority::High);
+        assert_eq!(s.priority_queue.len(), 1);
+        assert_eq!(s.highest_priority(), Some(Priority::High));
+
+        // Advance past frame interval
+        clock.advance(20);
+        assert!(s.begin_frame());
+        assert_eq!(s.priority_queue.len(), 0);
+
+        // Simulate render work
+        s.begin_render();
+        s.request_render_coalesced(); // deferred during render
+        assert!(s.immediate_rerender_requested());
+        let should_rerender = s.end_render();
+        assert!(should_rerender);
+
+        s.end_frame();
+        assert_eq!(s.frame_count(), 1);
+    }
+
+    #[test]
+    fn coalescing_preserves_highest_priority() {
+        let mut clock = crate::clock::ManualClock::new();
+        let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
+
+        s.request_render_coalesced_with_priority(Priority::Idle);
+        s.request_render_coalesced_with_priority(Priority::Low);
+        s.request_render_coalesced_with_priority(Priority::Normal);
+        s.request_render_coalesced_with_priority(Priority::High);
+
+        // Should have only 1 entry with highest priority
+        assert_eq!(s.priority_queue.len(), 1);
+        assert_eq!(s.highest_priority(), Some(Priority::High));
     }
 }

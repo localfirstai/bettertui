@@ -39,6 +39,8 @@ describe("Textarea", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(true);
     expect(ta.value).toBe("hi!");
@@ -53,6 +55,8 @@ describe("Textarea", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(ta.value).toBe("line1\n");
   });
@@ -66,6 +70,8 @@ describe("Textarea", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(ta.value).toBe("hell");
   });
@@ -79,6 +85,8 @@ describe("Textarea", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(false);
   });
@@ -92,6 +100,8 @@ describe("Textarea", () => {
       shift: false,
       alt: false,
       meta: false,
+      eventType: "press",
+      source: "raw",
     });
     expect(result).toBe(false);
     expect(ta.value).toBe("test");

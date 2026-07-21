@@ -1,38 +1,11 @@
 # @bettertui/react
 
-The React 19 adapter for BetterTUI. It is the first (but not the only) framework binding — it translates React's virtual-DOM operations into `@bettertui/core` `Command`s through a `react-reconciler` host config.
+**Planned first-class React adapter for BetterTUI.** Not implemented yet.
 
-## What's inside
+This directory is a placeholder. The React package will:
 
-- `render()` and `RuntimeProvider` / `useRuntime` — mount a BetterTUI tree.
-- Hooks: `useTheme`, `useFocus`, `useKeyboard`, `useMouse`, `useTerminal`, `useFrame`, `useClipboard`, `useAnimation`, `useTimeline`, `useSelection`, `useCapabilities`, `useResize`.
-- Providers: `Provider`, `FocusProvider`, `TerminalProvider`, `SelectionProvider`, `CapabilitiesProvider`, `RuntimeProvider`.
-- 53 component functions (layout, typography, interactive, navigation, feedback, data display, overlays, status, container, content, chat, scroll, terminal, native). These are currently thin wrappers that emit element descriptors and are not yet wired to a live native render loop.
-- `renderToStringAsync` (`src/testing.ts`) — drives the real reconciler against the Rust engine and returns ANSI output for tests.
+- depend on `@bettertui/core` and resolve it automatically (React apps install **only** `@bettertui/react`);
+- provide a `react-reconciler` host config, a `render()` entry point, and components/hooks;
+- never bypass `@bettertui/core` — it builds on the framework-agnostic runtime, command protocol, and native bridge that core already exposes.
 
-## Example
-
-```tsx
-import { render, Box, Text } from "@bettertui/react";
-
-render(
-  <Box>
-    <Text>hello</Text>
-  </Box>,
-);
-```
-
-## Testing
-
-```bash
-pnpm test                 # vitest run (jsdom + setup file)
-pnpm test:coverage        # with @vitest/coverage-v8
-```
-
-React output is verified through `renderToStringAsync` — there is **no** `@bettertui/testing` package.
-
-## Status
-
-Reconciler and hooks are real; the 53 component functions are thin wrappers not yet connected to a live native render loop.
-
-See [`docs/api/packages/react.md`](../../docs/api/packages/react.md) and [`docs/guides/testing.md`](../../docs/guides/testing.md).
+Until the adapter lands, build terminal UIs with the implemented [`@bettertui/core`](../core/README.md) package directly. See the [architecture overview](../../docs/architecture/overview.md) for the intended React layering.

@@ -7,6 +7,8 @@ use tracing::{debug, info};
 
 use crate::dirty_diff::{DirtyDiff, DirtyRegion};
 use crate::framebuffer::{Cell, CellAttributes, FrameBuffer};
+use crate::hit_grid::HitGrid;
+use crate::protocol::ScreenMode;
 use crate::scheduler::{FrameStatus, Scheduler};
 use crate::taffy::build_render_tree_with_viewport;
 use crate::taffy::{ClipBounds, LayoutTreeSync, PaintBounds, PaintContext, PaintFlags, Viewport};
@@ -23,6 +25,10 @@ pub trait RenderBackend: Send {
     fn finish(&self) -> &[u8];
     fn reset(&mut self);
     fn set_cursor_position(&mut self, x: u16, y: u16, visible: bool);
+    /// Called at the start of each frame. Emit mode-switching ANSI sequences here.
+    fn begin_frame(&mut self, _screen_mode: &ScreenMode, _width: u16, _height: u16) {}
+    /// Called at the end of each frame. Emit cleanup sequences here.
+    fn end_frame(&mut self, _screen_mode: &ScreenMode) {}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -33,6 +39,10 @@ pub struct AnsiBackend {
     buffer: Vec<u8>,
     cursor_x: u16,
     cursor_y: u16,
+    previous_mode: ScreenMode,
+    entered_alternate: bool,
+    /// Link id of the currently-open OSC 8 hyperlink (`0` = none open).
+    current_link: u16,
 }
 
 impl Default for AnsiBackend {
@@ -43,7 +53,14 @@ impl Default for AnsiBackend {
 
 impl AnsiBackend {
     pub fn new() -> Self {
-        Self { buffer: Vec::with_capacity(4096), cursor_x: u16::MAX, cursor_y: u16::MAX }
+        Self {
+            buffer: Vec::with_capacity(4096),
+            cursor_x: u16::MAX,
+            cursor_y: u16::MAX,
+            previous_mode: ScreenMode::AlternateScreen,
+            entered_alternate: false,
+            current_link: 0,
+        }
     }
 
     fn encode_region(&mut self, buffer: &FrameBuffer, region: &DirtyRegion) {
@@ -58,13 +75,20 @@ impl AnsiBackend {
                 x += 1;
                 while x < region.x + region.width {
                     let next = buffer.get(x, y);
-                    if next.fg == cell.fg && next.bg == cell.bg && next.attributes == cell.attributes {
+                    if next.fg == cell.fg
+                        && next.bg == cell.bg
+                        && next.attributes == cell.attributes
+                        && next.link_id == cell.link_id
+                    {
                         x += 1;
                     } else {
                         break;
                     }
                 }
                 let run_len = x - run_start;
+
+                // Open/close OSC 8 hyperlink when the run's link changes.
+                self.sync_link(cell.link_id, buffer);
 
                 // Emit SGR once for entire run
                 self.encode_cell(&cell);
@@ -74,6 +98,28 @@ impl AnsiBackend {
                     self.push_char(buffer.get(cx, y).ch);
                 }
                 self.cursor_x += run_len;
+            }
+        }
+    }
+
+    /// Emits the OSC 8 sequence needed to transition the open hyperlink to
+    /// `link_id` (0 closes any open link). No-op when already in that state.
+    fn sync_link(&mut self, link_id: u16, buffer: &FrameBuffer) {
+        if link_id == self.current_link {
+            return;
+        }
+        match buffer.link_url(link_id) {
+            Some(url) => {
+                // OSC 8 ; params ; URI ST — params left empty (no id needed on emit).
+                self.buffer.extend_from_slice(b"\x1b]8;;");
+                self.buffer.extend_from_slice(url.as_bytes());
+                self.buffer.extend_from_slice(b"\x1b\\");
+                self.current_link = link_id;
+            }
+            None => {
+                // Close the currently open link (empty URI).
+                self.buffer.extend_from_slice(b"\x1b]8;;\x1b\\");
+                self.current_link = 0;
             }
         }
     }
@@ -262,6 +308,45 @@ impl AnsiBackend {
     pub fn reset_sgr(&mut self) {
         self.buffer.extend_from_slice(b"\x1b[0m");
     }
+
+    /// Begin synchronized output (DECSET 2026).
+    pub fn begin_sync(&mut self) {
+        self.buffer.extend_from_slice(b"\x1b[?2026h");
+    }
+
+    /// End synchronized output (DECSET 2026).
+    pub fn end_sync(&mut self) {
+        self.buffer.extend_from_slice(b"\x1b[?2026l");
+    }
+
+    /// Emit split-footer scroll region: main viewport rows 1..footer_start.
+    /// After this, cursor movement in rows >= footer_start is clipped.
+    pub fn set_scroll_region(&mut self, footer_start: u16, _total_height: u16) {
+        self.buffer.extend_from_slice(b"\x1b[");
+        self.push_u16(1);
+        self.buffer.push(b';');
+        self.push_u16(footer_start);
+        self.buffer.push(b'r');
+    }
+
+    /// Reset scroll region to full terminal height.
+    pub fn reset_scroll_region(&mut self, total_height: u16) {
+        self.buffer.extend_from_slice(b"\x1b[");
+        self.push_u16(1);
+        self.buffer.push(b';');
+        self.push_u16(total_height);
+        self.buffer.push(b'r');
+    }
+
+    /// Switch to main screen (exit alternate screen).
+    pub fn exit_alternate_screen(&mut self) {
+        self.buffer.extend_from_slice(b"\x1b[?1049l");
+    }
+
+    /// Enter alternate screen (save main screen).
+    pub fn enter_alternate_screen(&mut self) {
+        self.buffer.extend_from_slice(b"\x1b[?1049h");
+    }
 }
 
 impl RenderBackend for AnsiBackend {
@@ -269,6 +354,7 @@ impl RenderBackend for AnsiBackend {
         self.buffer.clear();
         self.cursor_x = u16::MAX;
         self.cursor_y = u16::MAX;
+        self.current_link = 0;
 
         if regions.is_empty() {
             return;
@@ -282,6 +368,13 @@ impl RenderBackend for AnsiBackend {
 
         for region in regions {
             self.encode_region(buffer, region);
+        }
+
+        // Close any hyperlink left open by the final run so it does not bleed
+        // into subsequent output.
+        if self.current_link != 0 {
+            self.buffer.extend_from_slice(b"\x1b]8;;\x1b\\");
+            self.current_link = 0;
         }
     }
 
@@ -300,6 +393,46 @@ impl RenderBackend for AnsiBackend {
         } else {
             self.hide_cursor();
         }
+    }
+
+    fn begin_frame(&mut self, screen_mode: &ScreenMode, _width: u16, height: u16) {
+        self.begin_sync();
+
+        let mode_changed = *screen_mode != self.previous_mode;
+
+        if mode_changed {
+            match screen_mode {
+                ScreenMode::AlternateScreen => {
+                    if !self.entered_alternate {
+                        self.enter_alternate_screen();
+                        self.entered_alternate = true;
+                    }
+                    self.reset_scroll_region(height);
+                }
+                ScreenMode::MainScreen => {
+                    if self.entered_alternate {
+                        self.exit_alternate_screen();
+                        self.entered_alternate = false;
+                    }
+                    self.reset_scroll_region(height);
+                }
+                ScreenMode::SplitFooter { height: footer_h } => {
+                    if self.entered_alternate {
+                        self.exit_alternate_screen();
+                        self.entered_alternate = false;
+                    }
+                    let footer_start = height.saturating_sub(*footer_h);
+                    self.set_scroll_region(footer_start, height);
+                    // Move cursor to footer start
+                    self.move_to(0, footer_start);
+                }
+            }
+            self.previous_mode = *screen_mode;
+        }
+    }
+
+    fn end_frame(&mut self, _screen_mode: &ScreenMode) {
+        self.end_sync();
     }
 }
 
@@ -528,12 +661,14 @@ impl RenderTree {
             && *cached_rev == revision
             && let Some(ref commands) = *self.cached_commands.borrow()
         {
+            crate::diag!(|d| d.inc_cache_hits());
             return commands.clone();
         }
 
         drop(cached_gen);
         drop(cached_rev);
 
+        crate::diag!(|d| d.inc_cache_misses());
         let commands = self.collect_commands();
         *self.cached_commands.borrow_mut() = Some(commands.clone());
         *self.cached_generation.borrow_mut() = generation;
@@ -1175,9 +1310,18 @@ pub struct CursorState {
     pub visible: bool,
 }
 
+/// Convert a NodeId to a u64 for hit grid storage.
+fn node_id_to_u64(id: NodeId) -> u64 {
+    // SAFETY: NodeId is slotmap::DefaultKey, a transparent newtype around a
+    // 64-bit generational index. Both types have identical size and layout.
+    unsafe { std::mem::transmute(id) }
+}
+
 pub struct Renderer {
     width: u16,
     height: u16,
+    render_offset: u16,
+    screen_mode: ScreenMode,
     layout_sync: LayoutTreeSync,
     render_tree: RenderTree,
     painter: Painter,
@@ -1190,6 +1334,7 @@ pub struct Renderer {
     generation: u64,
     last_change_count: u64,
     cursor_state: CursorState,
+    hit_grid: HitGrid,
 }
 
 impl Default for Renderer {
@@ -1201,9 +1346,13 @@ impl Default for Renderer {
 impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
         info!(width, height, "Renderer::new() - creating renderer");
+        let vw = width as u32;
+        let vh = height as u32;
         Self {
             width,
             height,
+            render_offset: 0,
+            screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
             render_tree: RenderTree::new(),
             painter: Painter::new(width, height),
@@ -1216,14 +1365,19 @@ impl Renderer {
             generation: 0,
             last_change_count: 0,
             cursor_state: CursorState::default(),
+            hit_grid: HitGrid::new(vw, vh),
         }
     }
 
     pub fn with_backend(width: u16, height: u16, backend: Box<dyn RenderBackend>) -> Self {
         info!(width, height, "Renderer::with_backend() - creating renderer with custom backend");
+        let vw = width as u32;
+        let vh = height as u32;
         Self {
             width,
             height,
+            render_offset: 0,
+            screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
             render_tree: RenderTree::new(),
             painter: Painter::new(width, height),
@@ -1236,6 +1390,7 @@ impl Renderer {
             generation: 0,
             last_change_count: 0,
             cursor_state: CursorState::default(),
+            hit_grid: HitGrid::new(vw, vh),
         }
     }
 
@@ -1251,19 +1406,113 @@ impl Renderer {
         &self.cursor_state
     }
 
+    pub fn screen_mode(&self) -> &ScreenMode {
+        &self.screen_mode
+    }
+
+    pub fn set_screen_mode(&mut self, mode: ScreenMode) {
+        self.screen_mode = mode;
+        self.render_offset = mode.render_offset(self.height);
+        self.needs_full_repaint = true;
+        info!(?mode, offset = self.render_offset, "Renderer::set_screen_mode()");
+    }
+
+    pub fn render_offset(&self) -> u16 {
+        self.render_offset
+    }
+
+    /// Returns the usable viewport height accounting for screen mode.
+    pub fn viewport_height(&self) -> u16 {
+        self.screen_mode.viewport_height(self.height)
+    }
+
+    /// Populate the hit grid from the current render tree.
+    /// Each visible render object writes its NodeId to the grid.
+    fn populate_hit_grid(&mut self) {
+        self.hit_grid.clear_scissors();
+        self.hit_grid.clear_next();
+        for obj in self.render_tree.objects() {
+            let handle = node_id_to_u64(obj.id);
+            self.hit_grid.add(
+                obj.bounds.x as i32,
+                obj.bounds.y as i32,
+                obj.bounds.width as u32,
+                obj.bounds.height as u32,
+                handle,
+            );
+        }
+    }
+
+    /// Write a renderable's bounds to nextHitGrid for the upcoming frame.
+    pub fn hit_grid_add(&mut self, x: u16, y: u16, width: u16, height: u16, id: u64) {
+        self.hit_grid.add(x as i32, y as i32, width as u32, height as u32, id);
+    }
+
+    /// Clear currentHitGrid for immediate rebuild.
+    pub fn hit_grid_clear_current(&mut self) {
+        self.hit_grid.clear_current();
+    }
+
+    /// Return whether the hit grid changed during the last render.
+    pub fn hit_grid_dirty(&self) -> bool {
+        self.hit_grid.is_dirty()
+    }
+
+    /// Return the renderable ID at screen position (x, y), or 0 if none.
+    pub fn hit_grid_check(&self, x: u32, y: u32) -> u64 {
+        self.hit_grid.check(x, y)
+    }
+
+    /// Push a scissor rect for hit grid clipping during direct rebuild.
+    pub fn hit_grid_push_scissor(&mut self, x: i32, y: i32, width: u32, height: u32) {
+        self.hit_grid.push_scissor(x, y, width, height);
+    }
+
+    /// Pop the current scissor rect.
+    pub fn hit_grid_pop_scissor(&mut self) {
+        self.hit_grid.pop_scissor();
+    }
+
+    /// Clear all hit grid scissor rects.
+    pub fn hit_grid_clear_scissors(&mut self) {
+        self.hit_grid.clear_scissors();
+    }
+
+    /// Write directly to currentHitGrid with scissor clipping (immediate, no render needed).
+    pub fn hit_grid_add_current_clipped(&mut self, x: u16, y: u16, width: u16, height: u16, id: u64) {
+        self.hit_grid.add_current(x as i32, y as i32, width as u32, height as u32, id);
+    }
+
+    pub fn hit_grid_dump(&self) -> String {
+        let (w, h) = self.hit_grid.dimensions();
+        let mut s = String::new();
+        for y in 0..h {
+            for x in 0..w {
+                let id = self.hit_grid.check(x, y);
+                let ch = if id == 0 { '.' } else { char::from_digit((id % 10) as u32, 10).unwrap_or('?') };
+                s.push(ch);
+            }
+            s.push('\n');
+        }
+        s
+    }
+
     pub fn resize(&mut self, width: u16, height: u16) {
         let old_w = self.width;
         let old_h = self.height;
         self.width = width;
         self.height = height;
+        self.render_offset = self.screen_mode.render_offset(height);
         self.painter.resize(width, height);
         self.snapshot.resize(width, height);
+        self.hit_grid.resize(width as u32, height as u32);
         self.needs_full_repaint = true;
         debug!(
             old_width = old_w,
             old_height = old_h,
             new_width = width,
             new_height = height,
+            render_offset = self.render_offset,
             "Renderer::resize() - framebuffer resized"
         );
     }
@@ -1302,12 +1551,15 @@ impl Renderer {
                 self.layout_sync.sync_children(arena, id);
             }
         }
-        let _ = self.layout_sync.compute(root_id, self.width, self.height);
+        let vp_height = self.viewport_height();
+        let _ = self.layout_sync.compute(root_id, self.width, vp_height);
+        crate::diag!(|d| d.inc_layout_computations());
 
-        let vp = Viewport::new(0, 0, self.width, self.height);
+        let vp = Viewport::new(0, 0, self.width, vp_height);
         build_render_tree_with_viewport(arena, self.layout_sync.results(), Some(&vp), &mut self.render_tree);
 
-        let ctx = crate::taffy::PaintContext::new(self.width, self.height);
+        let ctx = crate::taffy::PaintContext::new(self.width, vp_height);
+        self.populate_hit_grid();
         self.painter.paint(&self.render_tree, &ctx);
 
         // Post-processing: execute render passes on the painter's framebuffer
@@ -1321,7 +1573,6 @@ impl Renderer {
         let pp_result = self.pipeline.execute(self.painter.buffer_mut(), &pp_ctx);
 
         let dirty_regions = if pp_result == PassResult::Modified {
-            // Post-processing modified the buffer — re-diff from snapshot
             self.dirty_diff.compute(self.painter.buffer(), &self.snapshot, self.generation);
             self.dirty_diff.regions().to_vec()
         } else if self.needs_full_repaint {
@@ -1333,13 +1584,19 @@ impl Renderer {
             self.dirty_diff.regions().to_vec()
         };
 
+        self.backend.begin_frame(&self.screen_mode, self.width, self.height);
         self.backend.encode(self.painter.buffer(), &dirty_regions);
+        self.backend.end_frame(&self.screen_mode);
 
         if self.cursor_state.visible {
             self.backend.set_cursor_position(self.cursor_state.x, self.cursor_state.y, true);
         }
 
         self.snapshot.copy_from(self.painter.buffer());
+
+        // Swap hit grid: next (built during render) becomes current for hit testing
+        self.hit_grid_clear_scissors();
+        self.hit_grid.swap();
 
         self.scheduler.end_frame();
 
@@ -1403,7 +1660,7 @@ impl Renderer {
 }
 
 #[cfg(test)]
-mod render_command_tests {
+mod render_tests {
     use super::*;
 
     #[test]
@@ -1518,5 +1775,223 @@ mod render_command_tests {
 
         let commands = tree.collect_commands_cached(1, 1);
         assert!(!commands.is_empty());
+    }
+
+    // ─── AnsiBackend Tests ────────────────────────────────────────
+
+    #[test]
+    fn ansi_backend_sync_sequences() {
+        let mut backend = AnsiBackend::new();
+        backend.begin_sync();
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?2026h"), "should enable sync: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_end_sync() {
+        let mut backend = AnsiBackend::new();
+        backend.end_sync();
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?2026l"), "should disable sync: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_alternate_screen_enter() {
+        let mut backend = AnsiBackend::new();
+        backend.enter_alternate_screen();
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?1049h"), "should enter alt screen: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_alternate_screen_exit() {
+        let mut backend = AnsiBackend::new();
+        backend.exit_alternate_screen();
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?1049l"), "should exit alt screen: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        backend.set_scroll_region(5, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("1;5r"), "scroll region should be 1;5r: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_reset_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        backend.reset_scroll_region(24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("1;24r"), "reset should be 1;24r: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_begin_frame_alternate_screen() {
+        let mut backend = AnsiBackend::new();
+        // previous_mode starts as AlternateScreen, so first call with the same mode
+        // does not emit transition. Emit a transition from MainScreen instead.
+        backend.begin_frame(&ScreenMode::AlternateScreen, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?2026h"), "should begin sync");
+    }
+
+    #[test]
+    fn ansi_backend_emits_osc8_hyperlink() {
+        let mut fb = FrameBuffer::new(3, 1);
+        let id = fb.alloc_link("https://example.com", None);
+        fb.set(0, 0, Cell::new('A').with_link(id));
+        fb.set(1, 0, Cell::new('B').with_link(id));
+        fb.set(2, 0, Cell::new('C')); // no link
+
+        let mut backend = AnsiBackend::new();
+        backend.encode(&fb, &[DirtyRegion::new(0, 0, 3, 1)]);
+        let output = String::from_utf8_lossy(backend.finish());
+
+        // Opens the link before the linked run...
+        assert!(output.contains("\x1b]8;;https://example.com\x1b\\"), "should open OSC 8: {output:?}");
+        // ...and closes it (empty URI) before the unlinked cell.
+        assert!(output.contains("\x1b]8;;\x1b\\"), "should close OSC 8: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_no_osc8_without_links() {
+        let mut fb = FrameBuffer::new(2, 1);
+        fb.set(0, 0, Cell::new('A'));
+        fb.set(1, 0, Cell::new('B'));
+
+        let mut backend = AnsiBackend::new();
+        backend.encode(&fb, &[DirtyRegion::new(0, 0, 2, 1)]);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(!output.contains("\x1b]8;"), "no OSC 8 when no links: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_split_footer_sets_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        // previous_mode starts as AlternateScreen, so a SplitFooter is a change.
+        backend.begin_frame(&ScreenMode::SplitFooter { height: 3 }, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        // Footer starts at row 24-3 = 21; scroll region is DECSTBM 1;21r.
+        assert!(output.contains("1;21r"), "should reserve footer scroll region: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_main_screen_resets_scroll_region() {
+        let mut backend = AnsiBackend::new();
+        // Transition away from the default alternate screen to main screen.
+        backend.begin_frame(&ScreenMode::MainScreen, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("1;24r"), "main screen resets full scroll region: {output:?}");
+    }
+
+    #[test]
+    fn ansi_backend_enter_alternate_screen() {
+        let mut backend = AnsiBackend::new();
+        // Simulate transition from main to alternate screen
+        backend.begin_frame(&ScreenMode::MainScreen, 80, 24);
+        backend.finish(); // flush first frame output
+        backend.begin_frame(&ScreenMode::AlternateScreen, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?1049h"), "should enter alt screen: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_begin_frame_split_footer() {
+        let mut backend = AnsiBackend::new();
+        backend.begin_frame(&ScreenMode::SplitFooter { height: 3 }, 80, 24);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?2026h"), "should begin sync");
+        // Should set scroll region leaving 3 rows for footer
+        assert!(output.contains("1;21r"), "scroll region should end at row 21: {output}");
+    }
+
+    #[test]
+    fn ansi_backend_end_frame_emits_sync_end() {
+        let mut backend = AnsiBackend::new();
+        backend.end_frame(&ScreenMode::AlternateScreen);
+        let output = String::from_utf8_lossy(backend.finish());
+        assert!(output.contains("?2026l"), "should end sync: {output}");
+    }
+
+    // ─── Renderer HitGrid Integration Tests ───────────────────────
+
+    #[test]
+    fn renderer_hit_grid_populate_and_check() {
+        let mut renderer = Renderer::new(80, 24);
+        let vw = 80u32;
+        let vh = 24u32;
+
+        // Add some renderable areas
+        renderer.hit_grid_add(0, 0, 10, 10, 1001);
+        renderer.hit_grid_add(10, 10, 10, 10, 1002);
+        renderer.hit_grid_add_current_clipped(5, 5, 5, 5, 1003);
+
+        // Check that next grid has the data
+        // (swap needed since add writes to next buffer)
+        let changed = renderer.hit_grid.swap();
+        assert!(changed, "hit grid should be dirty after adding items");
+
+        assert_eq!(renderer.hit_grid_check(0, 0), 1001);
+        assert_eq!(renderer.hit_grid_check(5, 5), 1001);
+        assert_eq!(renderer.hit_grid_check(9, 9), 1001);
+        assert_eq!(renderer.hit_grid_check(10, 10), 1002);
+        assert_eq!(renderer.hit_grid_check(19, 19), 1002);
+        // Outside any registered area
+        assert_eq!(renderer.hit_grid_check(20, 20), 0);
+    }
+
+    #[test]
+    fn renderer_hit_grid_scissor_stack() {
+        let mut renderer = Renderer::new(80, 40);
+
+        renderer.hit_grid_push_scissor(10, 10, 20, 20);
+        // This add should be clipped to the scissor rect
+        renderer.hit_grid_add(0, 0, 80, 40, 42);
+        renderer.hit_grid.swap();
+
+        // Should only have data inside the scissor rect
+        assert_eq!(renderer.hit_grid_check(10, 10), 42);
+        assert_eq!(renderer.hit_grid_check(29, 29), 42);
+        // Outside scissor
+        assert_eq!(renderer.hit_grid_check(9, 9), 0);
+        assert_eq!(renderer.hit_grid_check(30, 30), 0);
+
+        renderer.hit_grid_pop_scissor();
+    }
+
+    #[test]
+    fn renderer_hit_grid_clear_and_dirty() {
+        let mut renderer = Renderer::new(80, 24);
+        renderer.hit_grid_add(0, 0, 10, 10, 1);
+        renderer.hit_grid.swap();
+        assert!(renderer.hit_grid_dirty());
+
+        renderer.hit_grid_clear_current();
+        assert_eq!(renderer.hit_grid_check(0, 0), 0);
+    }
+
+    #[test]
+    fn renderer_hit_grid_clear_scissors() {
+        let mut renderer = Renderer::new(80, 24);
+        renderer.hit_grid_push_scissor(5, 5, 10, 10);
+        renderer.hit_grid_clear_scissors();
+        // After clearing scissors, add should affect full screen
+        renderer.hit_grid_add(0, 0, 80, 24, 1);
+        renderer.hit_grid.swap();
+        assert_eq!(renderer.hit_grid_check(0, 0), 1);
+        assert_eq!(renderer.hit_grid_check(79, 23), 1);
+    }
+
+    #[test]
+    fn renderer_hit_grid_dump() {
+        let mut renderer = Renderer::new(80, 24);
+        renderer.hit_grid_add(0, 0, 1, 1, 101);
+        renderer.hit_grid.swap();
+        let dump = renderer.hit_grid_dump();
+        assert!(dump.len() > 0);
+        // Should contain the ID we added (101 -> '1')
+        assert!(dump.starts_with('1'), "first cell should be '1': {dump}");
     }
 }

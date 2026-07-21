@@ -1,0 +1,98 @@
+//! High-level input event types combining keyboard, mouse, clipboard, and terminal events.
+
+use super::clipboard::ClipboardInput;
+use super::key::KeyboardInput;
+use super::mouse::MouseInput;
+
+// === event.rs ===
+
+#[derive(Debug, Clone)]
+pub enum InputEventType {
+    Keyboard(KeyboardInput),
+    Mouse(MouseInput),
+    Clipboard(ClipboardInput),
+    Resize(u16, u16),
+    Focus,
+    Blur,
+    Paste(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct InputEvent {
+    pub event_type: InputEventType,
+    pub timestamp: u64,
+}
+
+impl InputEvent {
+    pub fn new(event_type: InputEventType) -> Self {
+        Self {
+            event_type,
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64,
+        }
+    }
+
+    pub fn keyboard(input: KeyboardInput) -> Self {
+        Self::new(InputEventType::Keyboard(input))
+    }
+
+    pub fn mouse(input: MouseInput) -> Self {
+        Self::new(InputEventType::Mouse(input))
+    }
+
+    pub fn clipboard(input: ClipboardInput) -> Self {
+        Self::new(InputEventType::Clipboard(input))
+    }
+
+    pub fn resize(width: u16, height: u16) -> Self {
+        Self::new(InputEventType::Resize(width, height))
+    }
+
+    pub fn focus() -> Self {
+        Self::new(InputEventType::Focus)
+    }
+
+    pub fn blur() -> Self {
+        Self::new(InputEventType::Blur)
+    }
+
+    pub fn paste(data: String) -> Self {
+        Self::new(InputEventType::Paste(data))
+    }
+
+    pub fn is_keyboard(&self) -> bool {
+        matches!(self.event_type, InputEventType::Keyboard(_))
+    }
+
+    pub fn is_mouse(&self) -> bool {
+        matches!(self.event_type, InputEventType::Mouse(_))
+    }
+
+    pub fn is_clipboard(&self) -> bool {
+        matches!(self.event_type, InputEventType::Clipboard(_))
+    }
+
+    pub fn is_resize(&self) -> bool {
+        matches!(self.event_type, InputEventType::Resize(_, _))
+    }
+
+    pub fn is_focus(&self) -> bool {
+        matches!(self.event_type, InputEventType::Focus)
+    }
+
+    pub fn is_blur(&self) -> bool {
+        matches!(self.event_type, InputEventType::Blur)
+    }
+
+    pub fn is_paste(&self) -> bool {
+        matches!(self.event_type, InputEventType::Paste(_))
+    }
+}
+
+impl Default for InputEvent {
+    fn default() -> Self {
+        Self::new(InputEventType::Focus)
+    }
+}

@@ -1,6 +1,20 @@
 import { EventEmitter } from "node:events";
+import type { DevTools, DevToolsOptions } from "../devtools";
+import { createDevTools } from "../devtools";
+import { OverlayHost } from "../devtools/overlay/overlayHost";
+import { DebugPanel } from "../devtools/overlay/panel.types";
+import { StdinParser } from "../lib/stdin-parser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
-import { createEngine, createKeymap, detectCapabilities, getVersion } from "./binding";
+import {
+  createEngine,
+  createKeymap,
+  detectCapabilities,
+  getVersion,
+  loggerGetDiagnostics,
+  loggerInit,
+} from "./binding";
+import type { DiagnosticSnapshot, LoggerConfig } from "./logger";
+import type { ExternalOutputMode, ScreenMode } from "./types";
 
 export interface KeyEvent {
   name: string;
@@ -16,36 +30,38 @@ export interface CliRendererOptions {
   height?: number;
   exitOnCtrlC?: boolean;
   targetFps?: number;
+  screenMode?: ScreenMode;
+  footerHeight?: number;
+  externalOutputMode?: ExternalOutputMode;
+  logger?: LoggerConfig;
+  /**
+   * Enable the in-core debug overlay/tooling (§6.4). Pass `true` for defaults or
+   * a {@link DevToolsOptions} object to configure it. When omitted/false, a
+   * zero-cost no-op DevTools is used (Principle #2). Env vars `BTUI_DEBUG` and
+   * `BTUI_SHOW_STATS` force it on regardless.
+   */
+  debug?: boolean | DevToolsOptions;
 }
-
-const NAMED_KEYS: Record<string, string> = {
-  "\x1b[A": "up",
-  "\x1b[B": "down",
-  "\x1b[C": "right",
-  "\x1b[D": "left",
-  "\x1b[5~": "pageup",
-  "\x1b[6~": "pagedown",
-  "\x1b[H": "home",
-  "\x1b[F": "end",
-  "\x1b[3~": "delete",
-  "\x1b[Z": "tab",
-  "\x1b": "escape",
-  "\r": "enter",
-  "\n": "enter",
-  "\t": "tab",
-  " ": "space",
-  "\x7f": "backspace",
-  "\x08": "backspace",
-};
 
 type KeyInputEvents = {
   keypress: [KeyEvent];
 };
 
 export class KeyInput extends EventEmitter<KeyInputEvents> {
-  private buffer = "";
-  private timeout: ReturnType<typeof setTimeout> | null = null;
+  private stdinParser: StdinParser;
   private rawMode = false;
+  private readonly onDataBound: (data: Buffer) => void;
+
+  constructor() {
+    super();
+    this.stdinParser = new StdinParser({
+      useKittyKeyboard: false, // Keep disabled to match old behavior
+      onTimeoutFlush: () => {
+        this.drain();
+      },
+    });
+    this.onDataBound = this.onData.bind(this);
+  }
 
   start(): void {
     const stdin = process.stdin;
@@ -54,74 +70,36 @@ export class KeyInput extends EventEmitter<KeyInputEvents> {
       this.rawMode = true;
     }
     stdin.resume();
-    stdin.on("data", this.onData);
+    stdin.on("data", this.onDataBound);
   }
 
   stop(): void {
-    process.stdin.off("data", this.onData);
+    process.stdin.off("data", this.onDataBound);
     if (this.rawMode && process.stdin.setRawMode) {
       process.stdin.setRawMode(false);
       this.rawMode = false;
     }
     process.stdin.pause();
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
-    }
+    this.stdinParser.reset();
   }
 
-  private onData = (data: Buffer): void => {
-    this.buffer += data.toString("latin1");
-    if (this.timeout) clearTimeout(this.timeout);
+  private onData(data: Buffer): void {
+    this.stdinParser.push(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+    this.drain();
+  }
 
-    const flush = () => {
-      this.timeout = null;
-      const data = this.buffer;
-      this.buffer = "";
-      this.dispatch(data);
-    };
-
-    if (this.buffer === "\x1b") {
-      this.timeout = setTimeout(flush, 20);
-      return;
-    }
-    flush();
-  };
-
-  private dispatch(data: string): void {
-    const trimmed = data.replace(/\r?\n+$/u, "");
-    const payload = trimmed.length > 0 ? trimmed : data;
-
-    const isNamed = NAMED_KEYS[payload] !== undefined;
-    const ctrl = !isNamed && payload.length === 1 && payload.charCodeAt(0) < 32;
-    const alt = payload.startsWith("\x1b") && payload.length > 1;
-    const shift = payload === "\x1b[Z";
-
-    const known =
-      NAMED_KEYS[payload] !== undefined ||
-      (payload.length === 1 && payload.charCodeAt(0) >= 32) ||
-      ctrl;
-
-    if (!known) return;
-
-    let key: string;
-    if (NAMED_KEYS[payload]) {
-      key = NAMED_KEYS[payload] ?? payload;
-    } else if (ctrl && payload.length === 1 && payload.charCodeAt(0) < 32) {
-      key = String.fromCharCode(payload.charCodeAt(0) + 96);
-    } else if (payload.length === 1) {
-      key = payload;
-    } else {
-      key = payload;
-    }
-
-    this.emit("keypress", {
-      name: key,
-      ctrl,
-      shift,
-      alt,
-      meta: false,
-      sequence: payload,
+  private drain(): void {
+    this.stdinParser.drain((event) => {
+      if (event.type === "key") {
+        this.emit("keypress", {
+          name: event.key.name,
+          ctrl: event.key.ctrl,
+          shift: event.key.shift,
+          alt: event.key.option, // option acts as alt
+          meta: event.key.meta,
+          sequence: event.key.sequence,
+        });
+      }
     });
   }
 }
@@ -133,13 +111,34 @@ export class CliRenderer {
   private capabilities: TerminalCapabilities;
   private width: number;
   private height: number;
+  private renderOffset: number;
+  private _screenMode: ScreenMode;
+  private _externalOutputMode: ExternalOutputMode;
+  private externalOutputBuffer: string[] = [];
   private nodes: Map<number, { parent: number | null; children: number[] }> = new Map();
   private running = false;
+  private _devtools: DevTools;
+  private overlay: OverlayHost | null = null;
+  private lastFrameTime = 0;
 
   constructor(options: CliRendererOptions = {}) {
+    if (options.logger) {
+      // Default `dev` from NODE_ENV so file logging lands in the repo-root
+      // `logs/` dir during development but stays off in production unless the
+      // caller passes an explicit `file` path. An explicit `dev` still wins.
+      loggerInit({ dev: process.env.NODE_ENV !== "production", ...options.logger });
+    }
     this.capabilities = detectCapabilities();
     this.width = options.width ?? this.capabilities.columns;
     this.height = options.height ?? this.capabilities.rows;
+
+    this._screenMode = options.screenMode ?? "alternate-screen";
+    this._externalOutputMode =
+      options.externalOutputMode ??
+      (this._screenMode === "split-footer" ? "capture-stdout" : "passthrough");
+    const footerHeight = options.footerHeight ?? 0;
+    this.renderOffset =
+      this._screenMode === "split-footer" ? Math.max(0, this.height - footerHeight) : 0;
 
     this.engine = createEngine(this.width, this.height);
     this.keymap = createKeymap();
@@ -147,6 +146,32 @@ export class CliRenderer {
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
+
+    // ─── Debug tooling (§6.4) ────────────────────────────────────────────────
+    // Env vars mirror OpenTUI's OTUI_SHOW_STATS: BTUI_DEBUG / BTUI_SHOW_STATS
+    // force the overlay on regardless of the option.
+    const envDebug =
+      process.env.BTUI_DEBUG === "1" ||
+      process.env.BTUI_DEBUG === "true" ||
+      process.env.BTUI_SHOW_STATS === "1" ||
+      process.env.BTUI_SHOW_STATS === "true";
+    const debugOption = options.debug;
+
+    if (debugOption || envDebug) {
+      const devToolsOptions: DevToolsOptions =
+        typeof debugOption === "object" ? { ...debugOption, enabled: true } : { enabled: true };
+      this._devtools = createDevTools(devToolsOptions);
+      this._devtools.updateCapabilities(mapCapabilities(this.capabilities));
+      this.overlay = new OverlayHost(this, this._devtools);
+      // Env-forced or bare `true` starts with the performance panel visible so
+      // the overlay is discoverable out of the box (like OTUI_SHOW_STATS).
+      if (envDebug || debugOption === true) {
+        this._devtools.show(DebugPanel.Performance);
+      }
+    } else {
+      // Zero-cost no-op keeps `renderer.devtools` always defined (Principle #2).
+      this._devtools = createDevTools();
+    }
   }
 
   get terminalWidth(): number {
@@ -155,6 +180,18 @@ export class CliRenderer {
 
   get terminalHeight(): number {
     return this.height;
+  }
+
+  get viewportHeight(): number {
+    return this._screenMode === "split-footer" ? this.renderOffset : this.height;
+  }
+
+  get screenMode(): ScreenMode {
+    return this._screenMode;
+  }
+
+  get externalOutputMode(): ExternalOutputMode {
+    return this._externalOutputMode;
   }
 
   get keyInput(): KeyInput {
@@ -173,10 +210,54 @@ export class CliRenderer {
     return this.running;
   }
 
+  /**
+   * Snapshot the engine's diagnostic counters (render calls, frame times, cache
+   * hit/miss, etc.). Returns zeroed counters if the logger was never initialized.
+   */
+  getDiagnostics(): DiagnosticSnapshot {
+    return loggerGetDiagnostics();
+  }
+
+  /**
+   * The DevTools facade. Always defined — a zero-cost no-op instance unless the
+   * `debug` option (or `BTUI_DEBUG`/`BTUI_SHOW_STATS`) enabled it.
+   */
+  get devtools(): DevTools {
+    return this._devtools;
+  }
+
+  /** Whether the debug overlay is active (enabled via option/env). */
+  get debugEnabled(): boolean {
+    return this.overlay !== null;
+  }
+
+  /**
+   * Toggle a debug panel (defaults to the performance panel). No-op unless the
+   * overlay was enabled. When toggling the last panel off, forces a full redraw
+   * so the vacated region is repainted cleanly.
+   */
+  toggleDebugOverlay(panel: DebugPanel = DebugPanel.Performance): void {
+    if (!this.overlay) return;
+    const nowVisible = this._devtools.toggle(panel);
+    if (!nowVisible && !this.overlay.visible) {
+      // Last panel hidden: wipe the overlay region and repaint the full frame.
+      this.overlay.clear();
+      this.renderFull();
+    }
+  }
+
+  /** Configure the debug overlay (corner, panel width, body rows). No-op when disabled. */
+  configureDebugOverlay(options: Parameters<OverlayHost["configure"]>[0]): void {
+    this.overlay?.configure(options);
+  }
+
   start(): void {
     if (this.running) return;
     this.running = true;
-    this.enterAlternateScreen();
+
+    if (this._screenMode === "alternate-screen") {
+      this.enterAlternateScreen();
+    }
     this._keyInput.start();
   }
 
@@ -184,9 +265,34 @@ export class CliRenderer {
     if (!this.running) return;
     this.running = false;
     this._keyInput.stop();
-    this.exitAlternateScreen();
+
+    if (this._screenMode === "split-footer") {
+      this.flushExternalOutput();
+    } else {
+      this.exitAlternateScreen();
+    }
     this.engine.shutdown();
   }
+
+  /** Flush captured external output above the footer region. */
+  private flushExternalOutput(): void {
+    if (this.externalOutputBuffer.length === 0) return;
+    // Move cursor above footer, replay output, restore footer position
+    const output = this.externalOutputBuffer.join("");
+    this.externalOutputBuffer = [];
+    process.stdout.write(`\x1b[${this.renderOffset + 1};1H${output}`);
+  }
+
+  /** Capture or passthrough stdout writes depending on mode. */
+  interceptStdoutWrite = (chunk: string | Uint8Array): boolean => {
+    if (this._externalOutputMode === "capture-stdout") {
+      this.externalOutputBuffer.push(
+        typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"),
+      );
+      return true;
+    }
+    return false;
+  };
 
   createNode(kind: string): number {
     const id = this.engine.createNode(kind);
@@ -238,25 +344,90 @@ export class CliRenderer {
     }
   }
 
-  render(): void {
-    this.engine.beginFrame();
-    const frame = this.engine.render();
-    this.engine.commitFrame();
+  /** Switch screen mode at runtime. */
+  setScreenMode(mode: ScreenMode, footerHeight?: number): void {
+    const oldMode = this._screenMode;
+    this._screenMode = mode;
 
-    if (frame.output_data) {
-      const decoded = Buffer.from(frame.output_data, "base64");
-      process.stdout.write(decoded);
+    if (mode === "split-footer") {
+      this._externalOutputMode = "capture-stdout";
+      this.renderOffset = Math.max(0, this.height - (footerHeight ?? 0));
+      this.engine.setScreenMode("split-footer", footerHeight ?? 0);
+      if (oldMode === "alternate-screen") {
+        this.exitAlternateScreen();
+      }
+    } else if (mode === "alternate-screen") {
+      this._externalOutputMode = "passthrough";
+      this.renderOffset = 0;
+      this.engine.setScreenMode("alternate-screen");
+      this.enterAlternateScreen();
+    } else {
+      this._externalOutputMode = "passthrough";
+      this.renderOffset = 0;
+      this.engine.setScreenMode("main-screen");
+      if (oldMode === "alternate-screen") {
+        this.exitAlternateScreen();
+      }
     }
   }
 
+  render(): void {
+    const start = performance.now();
+    this.engine.beginFrame();
+    const frame = this.engine.render();
+    this.engine.commitFrame();
+    this.writeFrame(frame, performance.now() - start);
+  }
+
   renderFull(): void {
+    const start = performance.now();
     this.engine.beginFrame();
     const frame = this.engine.renderFull();
     this.engine.commitFrame();
+    this.writeFrame(frame, performance.now() - start);
+  }
 
+  /**
+   * Shared frame write path for {@link render} and {@link renderFull}. Writes
+   * the engine's ANSI output, flushes captured external output, then (if the
+   * debug overlay is enabled) records the frame and composites the overlay on
+   * top. The overlay is written *after* engine output and outside the engine's
+   * dirty-diff, so it self-clears vacated rows (see {@link OverlayHost.paint}).
+   */
+  private writeFrame(
+    frame: { output_data: string; dirty_region_count?: number },
+    renderDuration: number,
+  ): void {
     if (frame.output_data) {
       const decoded = Buffer.from(frame.output_data, "base64");
-      process.stdout.write(decoded);
+      if (this._screenMode === "split-footer") {
+        // Paint only in the viewport region (above footer)
+        process.stdout.write(`\x1b[1;1H${decoded.toString()}`);
+      } else {
+        process.stdout.write(decoded);
+      }
+    }
+
+    if (this._screenMode === "split-footer" && this.externalOutputBuffer.length > 0) {
+      this.flushExternalOutput();
+    }
+
+    if (this._devtools.enabled) {
+      const now = performance.now();
+      const dirtyRegionCount = frame.dirty_region_count ?? 0;
+      this._devtools.recordFrame({
+        duration: this.lastFrameTime > 0 ? now - this.lastFrameTime : renderDuration,
+        renderDuration,
+        dirtyRegionCount,
+      });
+      this.lastFrameTime = now;
+
+      if (this.overlay) {
+        this.overlay.setDirtyRegionCount(dirtyRegionCount);
+        if (this.overlay.visible) {
+          this.overlay.paint();
+        }
+      }
     }
   }
 
@@ -271,7 +442,12 @@ export class CliRenderer {
   resize(width: number, height: number): void {
     this.width = width;
     this.height = height;
-    this.engine.resize(width, height);
+    if (this._screenMode === "split-footer") {
+      // Keep footer height stable, adjust viewport
+      this.engine.resize(width, this.viewportHeight);
+    } else {
+      this.engine.resize(width, height);
+    }
   }
 
   private enterAlternateScreen(): void {
@@ -300,6 +476,48 @@ export class CliRenderer {
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
   return new CliRenderer(options);
+}
+
+/**
+ * Map the engine's snake_case {@link TerminalCapabilities} to the camelCase
+ * shape the DevTools CapabilityInspector expects.
+ */
+function mapCapabilities(caps: TerminalCapabilities): {
+  trueColor: boolean;
+  kittyKeyboard: boolean;
+  mouseSupport: boolean;
+  osc52: boolean;
+  osc8: boolean;
+  pixelSupport: boolean;
+  terminalBrand: string;
+  terminalSize: { columns: number; rows: number };
+  syncUpdate: boolean;
+  bracketedPaste: boolean;
+  focusEvents: boolean;
+  strikethrough: boolean;
+  underlineColor: boolean;
+  cursorStyle: boolean;
+  sixel: boolean;
+  inlineImages: boolean;
+} {
+  return {
+    trueColor: caps.true_color,
+    kittyKeyboard: caps.kitty_keyboard,
+    mouseSupport: caps.mouse,
+    osc52: caps.osc52,
+    osc8: caps.osc8,
+    pixelSupport: caps.sgr_pixel,
+    terminalBrand: caps.brand,
+    terminalSize: { columns: caps.columns, rows: caps.rows },
+    syncUpdate: caps.sync,
+    bracketedPaste: caps.bracketed_paste,
+    focusEvents: caps.focus_events,
+    strikethrough: caps.strikethrough,
+    underlineColor: caps.underline_color,
+    cursorStyle: caps.cursor_style,
+    sixel: caps.sixel,
+    inlineImages: caps.inline_images,
+  };
 }
 
 export { getVersion, detectCapabilities };

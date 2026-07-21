@@ -50,6 +50,8 @@ pub struct Cell {
     pub underline_color: Color,
     /// Text attributes (bold, italic, etc.).
     pub attributes: CellAttributes,
+    /// Hyperlink id referencing a URL in the [`LinkPool`]. `0` means no link.
+    pub link_id: u16,
 }
 
 impl Cell {
@@ -61,6 +63,7 @@ impl Cell {
             bg: Color::Default,
             underline_color: Color::Default,
             attributes: CellAttributes::empty(),
+            link_id: 0,
         }
     }
 
@@ -82,9 +85,19 @@ impl Cell {
         self
     }
 
+    /// Sets the hyperlink id (builder pattern). `0` clears the link.
+    pub fn with_link(mut self, link_id: u16) -> Self {
+        self.link_id = link_id;
+        self
+    }
+
     /// Returns `true` if the cell is in its default state (space character, default colors, no attributes).
     pub fn is_empty(&self) -> bool {
-        self.ch == ' ' && self.fg == Color::Default && self.bg == Color::Default && self.attributes.is_empty()
+        self.ch == ' '
+            && self.fg == Color::Default
+            && self.bg == Color::Default
+            && self.attributes.is_empty()
+            && self.link_id == 0
     }
 
     /// Resets the cell to its default state.
@@ -94,6 +107,7 @@ impl Cell {
         self.bg = Color::Default;
         self.underline_color = Color::Default;
         self.attributes = CellAttributes::empty();
+        self.link_id = 0;
     }
 }
 
@@ -153,6 +167,76 @@ impl Default for CellAttributes {
 }
 
 // ---------------------------------------------------------------------------
+// LinkPool
+// ---------------------------------------------------------------------------
+
+/// Stores hyperlink URLs referenced by [`Cell::link_id`].
+///
+/// Cells carry a compact `u16` id instead of an owned `String`, keeping the SoA
+/// cell arrays small and `Copy`. Id `0` is reserved to mean "no link"; real ids
+/// start at `1`. Identical URLs registered with the same explicit OSC 8 `id`
+/// (or the same URL with no id) are de-duplicated so a multi-cell link shares one
+/// entry.
+#[derive(Debug, Clone, Default)]
+pub struct LinkPool {
+    /// Parallel to ids: `urls[link_id - 1]` is the URL for `link_id`.
+    urls: Vec<String>,
+    /// De-dup key `(explicit_osc8_id, url)` -> assigned `link_id`.
+    lookup: std::collections::HashMap<(String, String), u16>,
+}
+
+impl LinkPool {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Allocates (or reuses) a link id for `url`, optionally keyed by an explicit
+    /// OSC 8 `id=` parameter so that non-adjacent runs of the same logical link
+    /// coalesce. Returns `0` when `url` is empty or the pool is exhausted
+    /// (`u16::MAX` distinct links).
+    pub fn alloc(&mut self, url: &str, explicit_id: Option<&str>) -> u16 {
+        if url.is_empty() {
+            return 0;
+        }
+        let key = (explicit_id.unwrap_or("").to_string(), url.to_string());
+        if let Some(&id) = self.lookup.get(&key) {
+            return id;
+        }
+        if self.urls.len() >= (u16::MAX as usize) {
+            return 0;
+        }
+        self.urls.push(url.to_string());
+        let id = self.urls.len() as u16; // ids are 1-based
+        self.lookup.insert(key, id);
+        id
+    }
+
+    /// Returns the URL for `link_id`, or `None` for id `0` / unknown ids.
+    pub fn get(&self, link_id: u16) -> Option<&str> {
+        if link_id == 0 {
+            return None;
+        }
+        self.urls.get((link_id - 1) as usize).map(String::as_str)
+    }
+
+    /// Number of distinct links registered.
+    pub fn len(&self) -> usize {
+        self.urls.len()
+    }
+
+    /// Returns `true` if no links are registered.
+    pub fn is_empty(&self) -> bool {
+        self.urls.is_empty()
+    }
+
+    /// Removes all links.
+    pub fn clear(&mut self) {
+        self.urls.clear();
+        self.lookup.clear();
+    }
+}
+
+// ---------------------------------------------------------------------------
 // FrameBuffer
 // ---------------------------------------------------------------------------
 
@@ -170,6 +254,7 @@ struct CellArrays {
     bg: Vec<Color>,
     underline_color: Vec<Color>,
     attrs: Vec<CellAttributes>,
+    link_id: Vec<u16>,
 }
 
 impl CellArrays {
@@ -180,6 +265,7 @@ impl CellArrays {
             bg: vec![Color::Default; size],
             underline_color: vec![Color::Default; size],
             attrs: vec![CellAttributes::empty(); size],
+            link_id: vec![0; size],
         }
     }
 
@@ -189,6 +275,7 @@ impl CellArrays {
         self.bg.resize(size, Color::Default);
         self.underline_color.resize(size, Color::Default);
         self.attrs.resize(size, CellAttributes::empty());
+        self.link_id.resize(size, 0);
     }
 }
 
@@ -218,6 +305,7 @@ pub struct FrameBuffer {
     height: u16,
     cells: CellArrays,
     back: CellArrays,
+    links: LinkPool,
 }
 
 impl Default for FrameBuffer {
@@ -232,7 +320,7 @@ impl FrameBuffer {
     /// All cells are initialized to the default (space character, default colors).
     pub fn new(width: u16, height: u16) -> Self {
         let size = (width as usize) * (height as usize);
-        Self { width, height, cells: CellArrays::new(size), back: CellArrays::new(size) }
+        Self { width, height, cells: CellArrays::new(size), back: CellArrays::new(size), links: LinkPool::new() }
     }
 
     /// Returns the width of the buffer in cells.
@@ -264,6 +352,8 @@ impl FrameBuffer {
         self.cells.bg.fill(Color::Default);
         self.cells.underline_color.fill(Color::Default);
         self.cells.attrs.fill(CellAttributes::empty());
+        self.cells.link_id.fill(0);
+        self.links.clear();
     }
 
     /// Clears a rectangular region without affecting cells outside the rect.
@@ -284,6 +374,7 @@ impl FrameBuffer {
                 self.cells.bg[idx] = Color::Default;
                 self.cells.underline_color[idx] = Color::Default;
                 self.cells.attrs[idx] = CellAttributes::empty();
+                self.cells.link_id[idx] = 0;
             }
         }
     }
@@ -310,6 +401,7 @@ impl FrameBuffer {
                 bg: self.cells.bg[idx],
                 underline_color: self.cells.underline_color[idx],
                 attributes: self.cells.attrs[idx],
+                link_id: self.cells.link_id[idx],
             }
         } else {
             Cell::default()
@@ -325,7 +417,26 @@ impl FrameBuffer {
             self.cells.bg[idx] = cell.bg;
             self.cells.underline_color[idx] = cell.underline_color;
             self.cells.attrs[idx] = cell.attributes;
+            self.cells.link_id[idx] = cell.link_id;
         }
+    }
+
+    /// Registers a hyperlink URL and returns its id for use in [`Cell::link_id`].
+    ///
+    /// `explicit_id` corresponds to the OSC 8 `id=` parameter and lets
+    /// non-adjacent cells share one logical link. Returns `0` for an empty URL.
+    pub fn alloc_link(&mut self, url: &str, explicit_id: Option<&str>) -> u16 {
+        self.links.alloc(url, explicit_id)
+    }
+
+    /// Returns the URL registered for `link_id`, or `None`.
+    pub fn link_url(&self, link_id: u16) -> Option<&str> {
+        self.links.get(link_id)
+    }
+
+    /// Returns a reference to the buffer's [`LinkPool`].
+    pub fn links(&self) -> &LinkPool {
+        &self.links
     }
 
     /// Fills a rectangular region with the given cell.
@@ -383,6 +494,8 @@ impl FrameBuffer {
         self.cells.bg[..copy_len].copy_from_slice(&other.cells.bg[..copy_len]);
         self.cells.underline_color[..copy_len].copy_from_slice(&other.cells.underline_color[..copy_len]);
         self.cells.attrs[..copy_len].copy_from_slice(&other.cells.attrs[..copy_len]);
+        self.cells.link_id[..copy_len].copy_from_slice(&other.cells.link_id[..copy_len]);
+        self.links = other.links.clone();
     }
 
     /// Returns the list of `(x, y)` coordinates that differ between the front and back buffers.
@@ -396,6 +509,7 @@ impl FrameBuffer {
                     || self.cells.bg[idx] != self.back.bg[idx]
                     || self.cells.underline_color[idx] != self.back.underline_color[idx]
                     || self.cells.attrs[idx] != self.back.attrs[idx]
+                    || self.cells.link_id[idx] != self.back.link_id[idx]
                 {
                     dirty.push((x, y));
                 }
@@ -415,6 +529,7 @@ impl FrameBuffer {
                 bg: self.cells.bg[i],
                 underline_color: self.cells.underline_color[i],
                 attributes: self.cells.attrs[i],
+                link_id: self.cells.link_id[i],
             });
         }
         result
@@ -439,6 +554,7 @@ impl FrameBuffer {
                     bg: self.cells.bg[idx],
                     underline_color: self.cells.underline_color[idx],
                     attributes: self.cells.attrs[idx],
+                    link_id: self.cells.link_id[idx],
                 };
                 f(x, y, &mut cell);
                 self.cells.chars[idx] = cell.ch;
@@ -446,6 +562,7 @@ impl FrameBuffer {
                 self.cells.bg[idx] = cell.bg;
                 self.cells.underline_color[idx] = cell.underline_color;
                 self.cells.attrs[idx] = cell.attributes;
+                self.cells.link_id[idx] = cell.link_id;
             }
         }
     }
@@ -498,6 +615,7 @@ impl FrameBuffer {
                     bg: self.cells.bg[idx],
                     underline_color: self.cells.underline_color[idx],
                     attributes: self.cells.attrs[idx],
+                    link_id: self.cells.link_id[idx],
                 };
                 f(col, row, &mut cell);
                 self.cells.chars[idx] = cell.ch;
@@ -505,7 +623,78 @@ impl FrameBuffer {
                 self.cells.bg[idx] = cell.bg;
                 self.cells.underline_color[idx] = cell.underline_color;
                 self.cells.attrs[idx] = cell.attributes;
+                self.cells.link_id[idx] = cell.link_id;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod link_tests {
+    use super::*;
+
+    #[test]
+    fn link_pool_alloc_and_get() {
+        let mut pool = LinkPool::new();
+        let id = pool.alloc("https://example.com", None);
+        assert_eq!(id, 1);
+        assert_eq!(pool.get(id), Some("https://example.com"));
+        assert_eq!(pool.get(0), None);
+        assert_eq!(pool.get(99), None);
+    }
+
+    #[test]
+    fn link_pool_empty_url_is_zero() {
+        let mut pool = LinkPool::new();
+        assert_eq!(pool.alloc("", None), 0);
+        assert!(pool.is_empty());
+    }
+
+    #[test]
+    fn link_pool_dedups_same_url() {
+        let mut pool = LinkPool::new();
+        let a = pool.alloc("https://a.com", None);
+        let b = pool.alloc("https://a.com", None);
+        assert_eq!(a, b);
+        assert_eq!(pool.len(), 1);
+    }
+
+    #[test]
+    fn link_pool_explicit_id_distinguishes() {
+        let mut pool = LinkPool::new();
+        // Same URL but different explicit ids are distinct logical links.
+        let a = pool.alloc("https://a.com", Some("one"));
+        let b = pool.alloc("https://a.com", Some("two"));
+        assert_ne!(a, b);
+        assert_eq!(pool.len(), 2);
+    }
+
+    #[test]
+    fn framebuffer_cell_carries_link_id() {
+        let mut fb = FrameBuffer::new(4, 1);
+        let id = fb.alloc_link("https://example.com", None);
+        fb.set(0, 0, Cell::new('X').with_link(id));
+        assert_eq!(fb.get(0, 0).link_id, id);
+        assert_eq!(fb.link_url(id), Some("https://example.com"));
+    }
+
+    #[test]
+    fn framebuffer_link_diff_detected() {
+        let mut fb = FrameBuffer::new(2, 1);
+        fb.swap(); // back is now the (empty) baseline
+        let id = fb.alloc_link("https://example.com", None);
+        fb.set(0, 0, Cell::new('X').with_link(id));
+        let dirty = fb.diff();
+        assert!(dirty.contains(&(0, 0)));
+    }
+
+    #[test]
+    fn framebuffer_clear_resets_links() {
+        let mut fb = FrameBuffer::new(2, 1);
+        let id = fb.alloc_link("https://example.com", None);
+        fb.set(0, 0, Cell::new('X').with_link(id));
+        fb.clear();
+        assert_eq!(fb.get(0, 0).link_id, 0);
+        assert!(fb.links().is_empty());
     }
 }

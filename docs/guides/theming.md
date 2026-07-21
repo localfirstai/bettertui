@@ -1,6 +1,6 @@
 # Theming
 
-Theming is built into the Rust engine (`packages/core/crates/widgets/src/theme.rs`)
+Theming is built into the Rust engine (`packages/core/crates/engine/src/theme.rs`)
 and exposed through `@bettertui/react` (which re-exports the types). The React `Provider` accepts
 `Partial<Theme>` directly.
 
