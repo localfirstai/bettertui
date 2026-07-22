@@ -1,37 +1,65 @@
 # BetterTUI
 
-A framework-agnostic terminal UI rendering engine powered by **Rust** and exposed to **TypeScript** with first-class **React** support.
+A framework-agnostic terminal UI rendering engine powered by **Rust** and exposed to **TypeScript** with first-class **React**, **SolidJS** support.
 
-BetterTUI is a **framework**, not an application, IDE, or AI tool. It provides the rendering engine, layout engine, input system, and widget primitives that other frameworks build on top of.
+BetterTUI is a **native terminal UI**, not an application, IDE, or AI tool. It provides the rendering engine, layout engine, input system, and widget primitives that other frameworks build on top of.
 
 ## Philosophy
 
 - **Rust owns performance-critical work.** Rendering, layout, input parsing, event dispatch, and text editing live in a native engine.
 - **TypeScript owns developer experience.** Public APIs, framework bindings, theming, and tooling are written in TypeScript.
-- **The engine is framework-agnostic.** It knows nothing about React. Commands are the only boundary between a UI framework and the engine, so Vue, Solid, Svelte, and vanilla TypeScript adapters can be added without touching Rust.
-- **No business logic in the engine.** It is a rendering framework, not an application runtime.
-
-## Framework packages
-
-BetterTUI is consumed through TypeScript packages built on the native engine:
-
-- **`@bettertui/core` — native / vanilla TypeScript (implemented).** Use it directly when you don't need React. It is a fully public, framework-agnostic package: command protocol, tree operations, runtime, and the native Rust bridge. This is the recommended path for CLI tools, daemons, and custom framework adapters.
-- **`@bettertui/react` — React adapter (not yet implemented).** Planned as a first-class adapter that depends on `@bettertui/core` and pulls it in automatically. The package directory exists as a placeholder; the React host config, components, and hooks are not written yet.
-
-> Rule of thumb: **Vanilla/native TypeScript apps install `@bettertui/core`.** The React adapter is not available yet.
+- **The engine is framework-agnostic.** The native core exposes a C ABI and can be used from any language.
 
 ## Architecture
 
 ```
-(Vanilla / Native TS App) ─▶ @bettertui/core ──(napi-rs FFI) ──▶ Rust Engine
-                                      │
-                                      ▼
-              bettertui-engine (cdylib: bettertui_engine.node)
-                              │
-                              ▼
-                (Terminal / PTY via crossterm + portable-pty)
+┌───────────────────────────────────────────────────────────────────────────┐
+│                           BetterTUI Architecture                          │
+└───────────────────────────────────────────────────────────────────────────┘
 
-(React App) ─▶ @bettertui/react (planned adapter, not yet implemented)
+   ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+   │  Vanilla / Native│     │    React App     │     │   SolidJS App    │
+   │    TypeScript    │     │                  │     │                  │
+   └────────┬─────────┘     └────────┬─────────┘     └────────┬─────────┘
+            │                        │                        │
+            ▼                        ▼                        ▼
+   ┌──────────────────┐     ┌───────────────────┐    ┌──────────────────┐
+   │  @bettertui/core │     │  @bettertui/react │    │  @bettertui/solid│
+   │  (public API)    │     │    (adapter)      │    │    (adapter)     │
+   └────────┬─────────┘     └────────┬──────────┘    └────────┬─────────┘
+            │                        │                        │
+            │                        │                        │
+            └────────────────────────┘────────────────────────┘
+            │
+            ▼
+   ┌─────────────────────────┐
+   │   napi-rs FFI bridge    │
+   └────────┬────────────────┘
+            ▼
+   ┌──────────────────────────────────────────────────────────────┐
+   │                      Rust Engine                             │
+   │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐   │
+   │  │   Rendering     │  │   Layout        │  │   Input     │   │
+   │  │   (text buffer) │  │   (taffy)       │  │   (events)  │   │
+   │  └─────────────────┘  └─────────────────┘  └─────────────┘   │
+   │  ┌─────────────────┐  ┌─────────────────┐                    │
+   │  │   Widgets       │  │   Text Editing │                     │
+   │  │   (primitives)  │  │   (rope)        │                    │
+   │  └─────────────────┘  └─────────────────┘                    │
+   └────────────────────────────┬─────────────────────────────────┘
+                                │
+                                ▼
+   ┌──────────────────────────────────────────────────────────────┐
+   │               Terminal / PTY Layer                           │
+   │            (crossterm + portable-pty)                        │
+   └──────────────────────────────────────────────────────────────┘
+
+   ┌──────────────────────────────────────────────────────────────┐
+   │  Package Dependencies:                                       │
+   │  • @bettertui/core     → Public API, framework-agnostic      │
+   │  • @bettertui/react    → React adapter (depends on core)     │
+   │  • @bettertui/solid    → SolidJS adapter (depends on core)   │
+   └──────────────────────────────────────────────────────────────┘
 ```
 
 The Rust engine owns:
@@ -54,65 +82,20 @@ TypeScript owns:
 - **Themes** — design-token types (in `@bettertui/shared`; presets created in the native bridge)
 - **Hooks** — `useTheme`, `useFocus`, `useKeyboard`, `useMouse`, `useAnimation`, `useTimeline`, etc.
 
-See [`docs/architecture`](docs/architecture/README.md) for the full design, and [`docs/`](docs/README.md) for the complete documentation index.
+Docs: https://bettertui.dev/docs/getting-started
 
-## Project Layout
+Quick start with `create-tui`:
 
+```bash
+# npm
+npm create tui
+
+# pnpm
+pnpm create tui
+
+# bun
+bun create tui
 ```
-bettertui/
-├── packages/
-│   ├── shared/        # @bettertui/shared  — type-only foundation (internal, re-exported by core & react)
-│   ├── core/          # @bettertui/core    — command protocol, tree ops, runtime, native bridge
-│   │   └── crates/                    # Rust workspace (packages/core/Cargo.toml)
-│   │       ├── engine/        # bettertui-engine (lib + cdylib + layout_e2e bin; the native addon)
-│   │       ├── logger/        # bettertui-logger (tracing logger for native code)
-│   │       └── benchmark/     # bettertui-benchmark (Rust bench harness)
-│   ├── react/         # @bettertui/react   — React 19 adapter
-│   └── benchmark/     # @bettertui/benchmark — TS benchmark harness
-├── apps/
-│   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
-├── examples/
-│   ├── vanila/        # Vanilla / native TypeScript examples (run on @bettertui/core)
-│   ├── react/         # (reserved)
-│   ├── rust/          # (reserved)
-│   └── solid/         # (reserved)
-├── docs/              # this documentation
-├── tasks/             # PRDs, reports, archived history (read-only)
-├── scripts/           # repo-level automation (doc checks, example smoke tests)
-├── packages/core/Cargo.toml         # Rust workspace
-├── package.json       # root TS manifest + pnpm scripts
-├── pnpm-workspace.yaml
-├── turbo.json
-└── biome.json
-```
-
-All TypeScript packages are currently `private` (not published to npm). `@bettertui/core` is the
-framework package for vanilla / native TypeScript; `@bettertui/react` is the framework package for
-React and depends on `@bettertui/core`.
-
-## Package Overview
-
-| Package                | Description                                                                                                                                                                                   | Status                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `@bettertui/core`      | Framework package for native/vanilla TypeScript — framework-agnostic runtime, command protocol, tree ops, the native Rust bridge, and in-core debug tooling (`createDevTools`, debug overlay) | Implemented                            |
-| `@bettertui/react`     | React 19 adapter — install only this for React apps (depends on `@bettertui/core`)                                                                                                            | Planned (placeholder, not implemented) |
-| `@bettertui/shared`    | Framework-agnostic type definitions — **internal, re-exported by `@bettertui/core`**                                                                                                          | Types complete                         |
-| `@bettertui/benchmark` | Vitest benchmarks                                                                                                                                                                             | Implemented                            |
-| `@bettertui/examples`  | Vanilla / native TypeScript examples runnable on `@bettertui/core`                                                                                                                            | Implemented                            |
-
-## React Adapter (planned)
-
-`@bettertui/react` is the planned first-class React adapter. The `packages/react` directory is a
-placeholder; no React components, hooks, or host config are implemented yet. When built, React apps
-will install **only** `@bettertui/react`, which depends on `@bettertui/core` and resolves it
-automatically.
-
-The intended API (not yet implemented) is described in the architecture docs:
-
-- Components: `Box`, `Text`, `Code`, `Input`, `Textarea`, `Select`, `Slider`, `TabSelect`, `ScrollBar`, `ScrollBox`, `Markdown`, `Diff`, `TextTable`.
-- Hooks/providers: `Provider`/`useTheme`, `FocusProvider`/`useFocus`, `useKeyboard`, `useMouse`, `TerminalProvider`/`useTerminal`, `useResize`, `useFrame`, `useClipboard`, `useAnimation` (with `easings`), `useTimeline`, `SelectionProvider`/`useSelection`, `CapabilitiesProvider`/`useCapabilities`, `KeymapProvider`/`useKeymap`, `RuntimeProvider`/`useRuntime`.
-
-## Getting Started
 
 ### Install
 
