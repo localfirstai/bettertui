@@ -1,4 +1,4 @@
-import type { BenchmarkMetrics } from "./types";
+import type { BenchmarkMetrics } from "./bench.types";
 
 export class MetricCollector {
   private layoutSamples: number[] = [];

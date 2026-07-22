@@ -1,5 +1,5 @@
-import type { ProgressBarOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { ProgressBarOptions } from "./widget.types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
 
 export type { ProgressBarOptions };

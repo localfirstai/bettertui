@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import type { BindingInfo } from "./types.js";
+import type { BindingInfo } from "./platform.types";
 
 const require = createRequire(import.meta.url);
 

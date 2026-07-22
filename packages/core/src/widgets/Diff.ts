@@ -1,5 +1,5 @@
-import type { DiffOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { DiffOptions } from "./widget.types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
 
 export type { DiffOptions };

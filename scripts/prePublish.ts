@@ -10,7 +10,7 @@
  * - No duplicate versions on npm
  *
  * Usage:
- *   node scripts/pre-publish.ts
+ *   node scripts/prePublish.ts
  */
 
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
@@ -171,7 +171,7 @@ function validatePackage(config: PackageConfig): void {
         const nativeDir = join(config.rootDir, "node_modules", depName);
         if (!existsSync(nativeDir)) {
           console.error(`ERROR: Native package directory not found: ${nativeDir}`);
-          console.error("Please run 'node packages/core/scripts/build-native.ts --all' first");
+          console.error("Please run 'node packages/core/scripts/buildNative.ts --all' first");
           process.exit(1);
         }
 

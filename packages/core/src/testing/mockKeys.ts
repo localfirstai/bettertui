@@ -1,4 +1,4 @@
-import type { CliRenderer } from "../platform/cli-renderer";
+import type { CliRenderer } from "../platform/cliRenderer";
 
 export const KeyCodes = {
   RETURN: "\r",

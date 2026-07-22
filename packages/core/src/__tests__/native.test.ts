@@ -226,7 +226,7 @@ import {
 } from "../platform";
 import { createEventLoop } from "../platform/events";
 import { createRuntime } from "../platform/runtime";
-import type { NapiEngine, NapiEventBus } from "../platform/types";
+import type { NapiEngine, NapiEventBus } from "../platform/platform.types";
 
 function createMockEngine(overrides: Partial<NapiEngine> = {}): NapiEngine {
   return {

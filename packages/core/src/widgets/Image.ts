@@ -1,5 +1,5 @@
-import type { ImageFormat, ImageOptions, ImageProtocol } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { ImageFormat, ImageOptions, ImageProtocol } from "./widget.types";
+import type { Command } from "../command/command.types";
 import {
   graphicsItermWrite,
   graphicsKittyDelete,

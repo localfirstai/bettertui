@@ -11,7 +11,7 @@ import {
   sparkline,
   stripAnsi,
   truncate,
-} from "../overlay/ansi.utils";
+} from "../overlay/ansiUtils";
 
 describe("moveTo", () => {
   it("builds a 1-based absolute cursor move", () => {

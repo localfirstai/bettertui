@@ -1,7 +1,7 @@
 import type { KeyEvent as SharedKeyEvent, MouseEvent as SharedMouseEvent } from "@bettertui/shared";
 import { SystemClock } from "../lib/clock";
 import type { Clock, TimerHandle } from "../lib/clock";
-import type { NapiEventBus } from "./types";
+import type { NapiEventBus } from "./platform.types";
 
 export type KeyEvent = SharedKeyEvent;
 export type MouseEvent = SharedMouseEvent;

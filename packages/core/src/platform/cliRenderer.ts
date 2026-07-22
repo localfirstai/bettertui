@@ -4,7 +4,7 @@ import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
-import { StdinParser } from "../lib/stdin-parser";
+import { StdinParser } from "../lib/stdinParser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import {
   createEngine,
@@ -15,9 +15,9 @@ import {
   loggerInit,
 } from "./binding";
 import type { DiagnosticSnapshot, LoggerConfig } from "./logger";
-import type { ExternalOutputMode, ScreenMode } from "./types";
+import type { ExternalOutputMode, ScreenMode } from "./platform.types";
 
-export interface KeyEvent {
+export interface RawKeyEvent {
   name: string;
   ctrl: boolean;
   shift: boolean;
@@ -45,7 +45,7 @@ export interface CliRendererOptions {
 }
 
 type KeyInputEvents = {
-  keypress: [KeyEvent];
+  keypress: [RawKeyEvent];
 };
 
 export class KeyInput extends EventEmitter<KeyInputEvents> {

@@ -14,70 +14,13 @@ import type {
   MouseEvent,
   Overflow,
   Padding,
-  Point,
   Position,
-  Rect,
-  Size,
   Sizing,
   Style,
   Theme,
   ThemeColors,
   ThemeSpacing,
 } from "../index";
-
-describe("Point", () => {
-  it("validates point geometry", () => {
-    const p: Point = { x: 10, y: 20 };
-    expect(p.x).toBe(10);
-    expect(p.y).toBe(20);
-  });
-
-  it("supports negative coordinates", () => {
-    const p: Point = { x: -5, y: -10 };
-    expect(p.x).toBe(-5);
-    expect(p.y).toBe(-10);
-  });
-
-  it("supports zero coordinates", () => {
-    const p: Point = { x: 0, y: 0 };
-    expect(p.x).toBe(0);
-  });
-
-  it("supports fractional coordinates", () => {
-    const p: Point = { x: 1.5, y: 2.75 };
-    expect(p.x).toBe(1.5);
-    expect(p.y).toBe(2.75);
-  });
-});
-
-describe("Size", () => {
-  it("validates size dimensions", () => {
-    const s: Size = { width: 100, height: 50 };
-    expect(s.width).toBe(100);
-    expect(s.height).toBe(50);
-  });
-
-  it("supports zero size", () => {
-    const s: Size = { width: 0, height: 0 };
-    expect(s.width).toBe(0);
-  });
-});
-
-describe("Rect", () => {
-  it("validates rect with all properties", () => {
-    const r: Rect = { x: 0, y: 0, width: 80, height: 24 };
-    expect(r.x).toBe(0);
-    expect(r.y).toBe(0);
-    expect(r.width).toBe(80);
-    expect(r.height).toBe(24);
-  });
-
-  it("supports rect at arbitrary positions", () => {
-    const r: Rect = { x: 10, y: 5, width: 40, height: 12 };
-    expect(r.width).toBe(40);
-    expect(r.height).toBe(12);
-  });
-});
 
 describe("KeyEvent", () => {
   it("validates a basic key event", () => {

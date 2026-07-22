@@ -9,7 +9,7 @@ import type {
   SchedulerSnapshot,
   TerminalCapabilities,
   TimelineEntry,
-  TreeNode,
+  DevToolsNode,
   TreeSnapshot,
 } from "./devtools.types";
 
@@ -40,7 +40,7 @@ export interface ExportData {
   /** Performance snapshot */
   performance?: PerformanceSnapshot | undefined;
   /** Render tree */
-  tree?: TreeNode | undefined;
+  tree?: DevToolsNode | undefined;
   /** Scheduler snapshot */
   scheduler?: SchedulerSnapshot | undefined;
   /** Focus snapshot */

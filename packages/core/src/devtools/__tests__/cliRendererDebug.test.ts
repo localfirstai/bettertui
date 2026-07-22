@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CliRenderer } from "../../platform/cli-renderer";
+import { CliRenderer } from "../../platform/cliRenderer";
 import { DebugPanel } from "../overlay/panel.types";
 
 afterEach(() => {

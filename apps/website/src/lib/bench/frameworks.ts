@@ -1,6 +1,6 @@
 import { BENCH_APPS } from "./definitions";
 import { MetricCollector, writeReport } from "./metrics";
-import type { BenchApp, BenchmarkMetrics, FrameworkId, FrameworkRunner } from "./types";
+import type { BenchApp, BenchmarkMetrics, FrameworkId, FrameworkRunner } from "./bench.types";
 
 export class OpenTuiRunner implements FrameworkRunner {
   id: FrameworkId = "opentui";

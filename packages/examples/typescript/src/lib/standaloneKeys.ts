@@ -1,7 +1,7 @@
-import { type CliRenderer, type KeyEvent, resolveRenderLib } from "@bettertui/core";
+import { type CliRenderer, type RawKeyEvent, resolveRenderLib } from "@bettertui/core";
 
 export function setupCommonDemoKeys(renderer: CliRenderer) {
-  renderer.keyInput.on("keypress", (key: KeyEvent) => {
+  renderer.keyInput.on("keypress", (key: RawKeyEvent) => {
     if (key.name === "`" || key.name === '"') {
       renderer.console.toggle();
     } else if (key.name === ".") {

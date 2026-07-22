@@ -1,6 +1,6 @@
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import { generateId } from "@bettertui/shared";
-import type { Instance, TextInstance } from "./types";
+import type { Instance, TextInstance } from "./command.types";
 
 export function createInstance(type: string, props: Record<string, unknown>): Instance {
   const id = generateId();

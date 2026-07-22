@@ -1,18 +1,18 @@
 export { BENCH_APPS } from "./definitions";
 export { MetricCollector, writeReport } from "./metrics";
 export { OpenTuiRunner, runOpenTuiBenchmarks } from "./frameworks";
-export { BetterTuiRunner } from "./bettertui-runner";
+export { BetterTuiRunner } from "./bettertuiRunner";
 export {
   sampleReport,
   generateOpentuiMetrics,
   generateBettertuiMetrics,
   getMetricForApp,
   computeImprovement,
-} from "./sample-data";
+} from "./sampleData";
 export type {
   BenchmarkMetrics,
   BenchApp,
   FrameworkId,
   FrameworkRunner,
   VisualReport,
-} from "./types";
+} from "./bench.types";

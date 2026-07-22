@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "node:events";
-import type { KeyEventType, ParsedKey } from "./parse.keypress.js";
+import type { KeyEventType, ParsedKey } from "./parseKeypress";
 
 type EventHandler = (...args: unknown[]) => void;
 

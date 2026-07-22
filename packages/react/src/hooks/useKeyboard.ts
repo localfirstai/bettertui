@@ -1,4 +1,4 @@
-import type { KeyEvent } from "@bettertui/core";
+import type { RawKeyEvent } from "@bettertui/core";
 import { useEffect } from "react";
 import { useEffectEvent } from "./useEvent";
 import { useRuntime } from "./useRuntime";
@@ -18,7 +18,7 @@ export interface UseKeyboardOptions {
  * ```
  */
 export function useKeyboard(
-  handler: (key: KeyEvent) => void,
+  handler: (key: RawKeyEvent) => void,
   options: UseKeyboardOptions = {},
 ): void {
   const renderer = useRuntime();
@@ -27,9 +27,9 @@ export function useKeyboard(
   // biome-ignore lint/correctness/useExhaustiveDependencies: stableHandler has stable identity
   useEffect(() => {
     const keyInput = renderer.keyInput;
-    keyInput.on("keypress", stableHandler as (e: KeyEvent) => void);
+    keyInput.on("keypress", stableHandler as (e: RawKeyEvent) => void);
     return () => {
-      keyInput.off("keypress", stableHandler as (e: KeyEvent) => void);
+      keyInput.off("keypress", stableHandler as (e: RawKeyEvent) => void);
     };
   }, [renderer, options.release]);
 }

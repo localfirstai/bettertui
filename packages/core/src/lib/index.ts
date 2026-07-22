@@ -28,30 +28,30 @@ export {
   parseKeypress,
   nonAlphanumericKeys,
   terminalNamedSingleStrokeKeys,
-} from "./parse.keypress";
+} from "./parseKeypress";
 export type {
   ParsedKey,
   KeyEventType,
   ParseKeypressOptions,
-} from "./parse.keypress";
+} from "./parseKeypress";
 
 export {
   parseKittyKeyboard,
   kittyNamedSingleStrokeKeys,
-} from "./parse.keypress-kitty";
+} from "./parseKeypressKitty";
 
-export { MouseParser } from "./parse.mouse";
-export type { MouseEventType, RawMouseEvent, ScrollInfo } from "./parse.mouse";
+export { MouseParser } from "./parseMouse";
+export type { MouseEventType, RawMouseEvent, ScrollInfo } from "./parseMouse";
 
-export { KeyHandler, InternalKeyHandler, PasteEvent } from "./KeyHandler";
-export { KeyEvent as KeyboardEvent } from "./KeyHandler";
-export type { KeyHandlerEventMap } from "./KeyHandler";
+export { KeyHandler, InternalKeyHandler, PasteEvent } from "./keyHandler";
+export { KeyEvent as KeyboardEvent } from "./keyHandler";
+export type { KeyHandlerEventMap } from "./keyHandler";
 
-export { StdinParser } from "./stdin-parser";
+export { StdinParser } from "./stdinParser";
 export type {
   StdinEvent,
   StdinParserOptions,
   StdinParserProtocolContext,
   StdinResponseProtocol,
   PasteMetadata,
-} from "./stdin-parser";
+} from "./stdinParser";

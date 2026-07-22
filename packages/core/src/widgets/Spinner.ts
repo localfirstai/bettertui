@@ -1,5 +1,5 @@
-import type { SpinnerOptions, SpinnerVariant } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { SpinnerOptions, SpinnerVariant } from "./widget.types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
 
 export type { SpinnerOptions, SpinnerVariant };

@@ -1,5 +1,5 @@
-import type { TextTableOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { TextTableOptions } from "./widget.types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
 
 export type { TextTableOptions };

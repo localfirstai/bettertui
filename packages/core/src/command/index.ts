@@ -5,7 +5,7 @@ export type {
   HostConfig,
   Command,
   CommandBufferConsumer,
-} from "./types";
+} from "./command.types";
 export { CommandBuffer } from "./buffer";
 export {
   generateId,

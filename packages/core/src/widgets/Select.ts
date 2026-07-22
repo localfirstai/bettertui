@@ -1,5 +1,6 @@
-import type { KeyEvent, SelectOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { KeyEvent } from "@bettertui/shared";
+import type { SelectOptions } from "./widget.types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
 
 export type { SelectOptions };

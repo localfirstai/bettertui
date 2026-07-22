@@ -1,5 +1,5 @@
 import type { TimelineOptions, TweenConfig } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { Command } from "../command/command.types";
 import { type NapiTimeline, createTimeline } from "../platform/binding";
 import { Renderable } from "../renderable";
 

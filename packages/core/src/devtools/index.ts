@@ -8,7 +8,7 @@ export type {
   RecordedEvent,
   FrameMetrics,
   PerformanceSnapshot,
-  TreeNode,
+  DevToolsNode,
   SchedulerSnapshot,
   FocusSnapshot,
   TerminalCapabilities as DevToolsTerminalCapabilities,
@@ -47,7 +47,7 @@ export { OverlayHost } from "./overlay/overlayHost";
 export type { OverlayHostOptions, OverlayCorner } from "./overlay/overlayHost";
 export { DebugPanel } from "./overlay/panel.types";
 export type { Panel, PanelContext } from "./overlay/panel.types";
-export * as ansi from "./overlay/ansi.utils";
+export * as ansi from "./overlay/ansiUtils";
 
 // ─── DevTools Interface ──────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ import type {
   RecordedEvent,
   SchedulerSnapshot,
   TerminalCapabilities,
-  TreeNode,
+  DevToolsNode,
 } from "./devtools.types";
 import type { ExportOptions } from "./export";
 import { DebugPanel } from "./overlay/panel.types";
@@ -163,7 +163,7 @@ export interface DevTools {
   stopProfiling(): readonly FrameMetrics[];
 
   /** Inspect a node by id; returns its recorded tree node if known. */
-  inspect(nodeId: string): TreeNode | undefined;
+  inspect(nodeId: string): DevToolsNode | undefined;
 
   /** Highlight a node (records the highlight target for the overlay). */
   highlight(nodeId: string): void;
@@ -181,7 +181,7 @@ export interface DevTools {
   getEventLog(): readonly RecordedEvent[];
 
   /** Layout box for a node, if recorded. */
-  inspectLayout(nodeId: string): TreeNode["layout"] | undefined;
+  inspectLayout(nodeId: string): DevToolsNode["layout"] | undefined;
 
   /** Show the dirty-region panel (stats-level). */
   showDirtyRegions(enabled: boolean): void;
@@ -246,7 +246,7 @@ export interface DevTools {
   updateScheduler(state: Partial<SchedulerSnapshot>): void;
 
   /** Capture a tree snapshot */
-  captureSnapshot(tree: TreeNode): number;
+  captureSnapshot(tree: DevToolsNode): number;
 
   /** Get a full diagnostic export */
   exportData(options?: ExportOptions | undefined): DiagnosticExport;

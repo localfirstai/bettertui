@@ -1,4 +1,4 @@
-import type { SnapshotDiff, TreeNode, TreeSnapshot } from "./devtools.types";
+import type { SnapshotDiff, DevToolsNode, TreeSnapshot } from "./devtools.types";
 
 export interface SnapshotOptions {
   maxSnapshots?: number | undefined;
@@ -14,7 +14,7 @@ export class SnapshotManager {
   }
 
   /** Capture a snapshot of the current tree */
-  capture(tree: TreeNode): TreeSnapshot {
+  capture(tree: DevToolsNode): TreeSnapshot {
     const snapshot: TreeSnapshot = {
       id: this.nextId++,
       timestamp: performance.now(),
@@ -40,7 +40,7 @@ export class SnapshotManager {
   }
 
   /** Compare two trees */
-  diffTrees(a: TreeNode, b: TreeNode): SnapshotDiff {
+  diffTrees(a: DevToolsNode, b: DevToolsNode): SnapshotDiff {
     const aNodes = this.flattenTree(a);
     const bNodes = this.flattenTree(b);
 
@@ -86,15 +86,15 @@ export class SnapshotManager {
     return this.snapshots.find((s) => s.id === id);
   }
 
-  private flattenTree(node: TreeNode): TreeNode[] {
-    const result: TreeNode[] = [node];
+  private flattenTree(node: DevToolsNode): DevToolsNode[] {
+    const result: DevToolsNode[] = [node];
     for (const child of node.children) {
       result.push(...this.flattenTree(child));
     }
     return result;
   }
 
-  private countNodes(node: TreeNode): number {
+  private countNodes(node: DevToolsNode): number {
     let count = 1;
     for (const child of node.children) {
       count += this.countNodes(child);

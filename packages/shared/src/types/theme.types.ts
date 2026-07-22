@@ -56,7 +56,7 @@ export interface ThemeSpacing {
   xxl: number;
 }
 
-import type { BorderStyle } from "./style";
+import type { BorderStyle } from "./style.types";
 
 /** A complete theme definition. Mirrors the Rust engine's Theme struct exactly. */
 export interface Theme {

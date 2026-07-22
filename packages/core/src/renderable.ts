@@ -1,7 +1,7 @@
 import { generateId } from "@bettertui/shared";
 import type { KeyEvent, MouseEvent } from "@bettertui/shared";
-import type { Command, CommandBufferConsumer } from "./command/types";
-import type { CliRenderer } from "./platform/cli-renderer";
+import type { Command, CommandBufferConsumer } from "./command/command.types";
+import type { CliRenderer } from "./platform/cliRenderer";
 
 export interface WidgetContext {
   buffer: CommandBufferConsumer;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDevTools } from "../index";
-import { stripAnsi } from "../overlay/ansi.utils";
+import { stripAnsi } from "../overlay/ansiUtils";
 import { OverlayHost, type OverlayRenderer } from "../overlay/overlayHost";
 import { DebugPanel } from "../overlay/panel.types";
 
