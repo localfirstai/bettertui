@@ -318,6 +318,31 @@ export declare function graphicsSixelWrite(
   data: Buffer,
 ): Buffer;
 
+/**
+ * Highlight `code` written in `language` using the built-in tree-sitter engine.
+ *
+ * Returns one `HighlightedLine` per source line (empty array if the language
+ * is unknown or the input is empty).
+ */
+export declare function highlightCode(code: string, language: string): Array<HighlightedLine>;
+
+/** A single highlighted line, composed of [`HighlightSegment`]s. */
+export interface HighlightedLine {
+  segments: Array<HighlightSegment>;
+}
+
+/** A single styled segment returned by [`highlight_code`]. */
+export interface HighlightSegment {
+  text: string;
+  fg?: string;
+  bg?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  dim?: boolean;
+  strikethrough?: boolean;
+}
+
 /** Flush the logger */
 export declare function loggerFlush(): void;
 

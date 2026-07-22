@@ -2540,3 +2540,62 @@ pub fn logger_get_diagnostics() -> NapiDiagnosticSnapshot {
 pub fn logger_flush() {
     Logger::flush();
 }
+
+// ─── Syntax Highlighting ─────────────────────────────────────────────────────
+
+/// A single styled segment returned by [`highlight_code`].
+#[napi(object)]
+pub struct HighlightSegment {
+    pub text: String,
+    pub fg: Option<String>,
+    pub bg: Option<String>,
+    pub bold: Option<bool>,
+    pub italic: Option<bool>,
+    pub underline: Option<bool>,
+    pub dim: Option<bool>,
+    pub strikethrough: Option<bool>,
+}
+
+/// A single highlighted line, composed of [`HighlightSegment`]s.
+#[napi(object)]
+pub struct HighlightedLine {
+    pub segments: Vec<HighlightSegment>,
+}
+
+/// Highlight `code` written in `language` using the built-in tree-sitter engine.
+///
+/// Returns one `HighlightedLine` per source line (empty array if the language
+/// is unknown or the input is empty).
+#[napi]
+pub fn highlight_code(code: String, language: String) -> Vec<HighlightedLine> {
+    use crate::syntax::global_highlighter;
+
+    let highlighter = global_highlighter();
+    let result = highlighter.lock().ok().and_then(|mut h| h.highlight(&code, &language));
+
+    match result {
+        None => Vec::new(),
+        Some(lines) => lines
+            .into_iter()
+            .map(|line| HighlightedLine {
+                segments: line
+                    .segments
+                    .into_iter()
+                    .map(|seg| {
+                        let style = &seg.style;
+                        HighlightSegment {
+                            text: seg.text,
+                            fg: style.fg.map(color_to_hex),
+                            bg: style.bg.map(color_to_hex),
+                            bold: style.bold,
+                            italic: style.italic,
+                            underline: style.underline,
+                            dim: style.dim,
+                            strikethrough: style.strikethrough,
+                        }
+                    })
+                    .collect(),
+            })
+            .collect(),
+    }
+}

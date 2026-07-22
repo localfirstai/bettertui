@@ -127,6 +127,7 @@ export interface ScrollBarOptions {
   thumbSize?: number;
   trackSize?: number;
   position?: number;
+  onChange?: (position: number) => void;
 }
 
 export interface ScrollBoxOptions {
@@ -134,4 +135,109 @@ export interface ScrollBoxOptions {
   height?: number | "auto" | "100%";
   scrollX?: boolean;
   scrollY?: boolean;
+  onScroll?: (offsetX: number, offsetY: number) => void;
+}
+
+// ─── Progress ────────────────────────────────────────────────────────────────
+
+export interface ProgressBarOptions {
+  value?: number;
+  min?: number;
+  max?: number;
+  width?: number | "100%";
+  showPercent?: boolean;
+  color?: string;
+  trackColor?: string;
+  label?: string;
+}
+
+// ─── Spinner ─────────────────────────────────────────────────────────────────
+
+export type SpinnerVariant =
+  | "dots"
+  | "line"
+  | "arc"
+  | "bounce"
+  | "pipe"
+  | "clock"
+  | "earth"
+  | "moon"
+  | "pulse"
+  | "star";
+
+export interface SpinnerOptions {
+  variant?: SpinnerVariant;
+  color?: string;
+  label?: string;
+  speed?: number;
+}
+
+// ─── Badge ───────────────────────────────────────────────────────────────────
+
+export type BadgeVariant = "default" | "primary" | "success" | "warning" | "error" | "info";
+
+export interface BadgeOptions {
+  label: string;
+  variant?: BadgeVariant;
+  color?: string;
+  bgColor?: string;
+}
+
+// ─── Divider ─────────────────────────────────────────────────────────────────
+
+export interface DividerOptions {
+  orientation?: "horizontal" | "vertical";
+  label?: string;
+  char?: string;
+  color?: string;
+}
+
+// ─── Tree ────────────────────────────────────────────────────────────────────
+
+export interface TreeNode {
+  id: string;
+  label: string;
+  children?: TreeNode[];
+  expanded?: boolean;
+  data?: unknown;
+}
+
+export interface TreeOptions {
+  nodes?: TreeNode[];
+  selectedId?: string;
+  onSelect?: (node: TreeNode) => void;
+  onToggle?: (node: TreeNode, expanded: boolean) => void;
+  indentSize?: number;
+}
+
+// ─── List ────────────────────────────────────────────────────────────────────
+
+export interface ListItem {
+  id: string;
+  label: string;
+  description?: string;
+  disabled?: boolean;
+  data?: unknown;
+}
+
+export interface ListOptions {
+  items?: ListItem[];
+  selectedId?: string;
+  height?: number;
+  onSelect?: (item: ListItem) => void;
+  onChange?: (item: ListItem) => void;
+  searchable?: boolean;
+  placeholder?: string;
+}
+
+// ─── Dialog ──────────────────────────────────────────────────────────────────
+
+export interface DialogOptions {
+  title?: string;
+  open?: boolean;
+  width?: number | "auto";
+  height?: number | "auto";
+  onClose?: () => void;
+  closeOnEsc?: boolean;
+  closeOnClickOutside?: boolean;
 }
