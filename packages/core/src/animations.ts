@@ -1,33 +1,15 @@
 /**
- * @bettertui/animations
- *
- * Animation system for BetterTUI: Timeline widget, easing functions, and
- * imperative tween helpers. Built on the native Rust animation engine
- * (`NativeTimeline` in @bettertui/core).
+ * Animation utilities: easing functions, Tween, Spring, and interpolation helpers.
  *
  * @example
  * ```ts
- * import { Timeline, easing, lerp } from "@bettertui/animations"
+ * import { easing, Tween, Spring, lerp } from "@bettertui/core"
  *
- * const tl = new Timeline({ duration: 2, looping: true })
- * const idx = tl.addTween({ from: 0, to: 100, duration: 2, easing: "ease-in-out" })
- *
- * // In your render loop:
- * tl.tick(deltaTime)
- * const x = tl.animationValue(idx) ?? 0
+ * const tw = new Tween({ from: 0, to: 100, duration: 1, onUpdate: v => setX(v) })
+ * tw.play()
+ * tw.tick(deltaSeconds)
  * ```
  */
-
-// ── Core re-exports ───────────────────────────────────────────────────────────
-
-export { Timeline } from "@bettertui/core";
-export type { TimelineOptions, TweenConfig } from "@bettertui/shared";
-
-// ── Graphics utilities (Canvas, PixelBuffer) co-located here for convenience ─
-// These duplicate the @bettertui/graphics exports so animation examples can
-// import everything from one place.
-export { Canvas, PixelBuffer, parseHex, rgbFg, rgbBg, RESET, gradientH } from "@bettertui/graphics";
-export type { RGB, RGBA } from "@bettertui/graphics";
 
 // ── Easing functions ──────────────────────────────────────────────────────────
 
@@ -123,7 +105,7 @@ export const easing = {
 
 export type EasingName = keyof typeof easing;
 
-// ── Interpolation helpers ──────────────────────────────────────────────────────
+// ── Interpolation helpers ─────────────────────────────────────────────────────
 
 /** Linear interpolation between `a` and `b` by factor `t` (clamped to [0,1]). */
 export function lerp(a: number, b: number, t: number): number {
@@ -159,13 +141,13 @@ export interface TweenOptions {
 }
 
 /**
- * A simple imperative tween that can be driven manually with `tick(dt)`.
+ * A simple imperative tween driven manually with `tick(dt)`.
  * Does NOT require a Timeline — useful for one-shot or procedural animations.
  *
  * @example
  * ```ts
  * const tw = new Tween({ from: 0, to: 255, duration: 1, onUpdate: v => setAlpha(v) })
- * // drive it:
+ * tw.play()
  * tw.tick(deltaSeconds)
  * ```
  */
@@ -240,7 +222,6 @@ export interface SpringOptions {
  * @example
  * ```ts
  * const spring = new Spring({ target: 100, frequency: 8, damping: 0.75 })
- * // In render loop:
  * spring.tick(dt)
  * const x = spring.position
  * ```
@@ -273,36 +254,33 @@ export class Spring {
 
   /** Advance the spring simulation by `dt` seconds. */
   tick(dt: number): void {
-    // Exact solution for under/over/critically-damped second-order spring.
-    // Uses the analytical closed-form to avoid Euler instability for large omega*dt.
-    const omega = 2 * Math.PI * this._frequency; // natural frequency
-    const zeta = this._damping; // damping ratio
+    const omega = 2 * Math.PI * this._frequency;
+    const zeta = this._damping;
     const x0 = this._pos - this._target;
     const v0 = this._vel;
 
     if (Math.abs(zeta - 1) < 1e-6) {
-      // Critically damped: x(t) = (x0 + (v0 + omega*x0)*t) * exp(-omega*t)
+      // Critically damped
       const e = Math.exp(-omega * dt);
-      const c1 = x0;
       const c2 = v0 + omega * x0;
-      const newX = (c1 + c2 * dt) * e;
-      const newV = c2 * e + (c1 + c2 * dt) * -omega * e;
+      const newX = (x0 + c2 * dt) * e;
+      const newV = c2 * e + (x0 + c2 * dt) * -omega * e;
       this._pos = newX + this._target;
       this._vel = newV;
     } else if (zeta < 1) {
       // Under-damped
-      const omega_d = omega * Math.sqrt(1 - zeta * zeta);
+      const omegaD = omega * Math.sqrt(1 - zeta * zeta);
       const e = Math.exp(-zeta * omega * dt);
-      const cos_d = Math.cos(omega_d * dt);
-      const sin_d = Math.sin(omega_d * dt);
-      const newX = e * (x0 * cos_d + ((v0 + zeta * omega * x0) / omega_d) * sin_d);
+      const cosD = Math.cos(omegaD * dt);
+      const sinD = Math.sin(omegaD * dt);
+      const newX = e * (x0 * cosD + ((v0 + zeta * omega * x0) / omegaD) * sinD);
       const newV =
         e *
-          ((v0 + zeta * omega * x0) * cos_d -
-            (x0 * omega_d + (v0 + zeta * omega * x0) * ((zeta * omega) / omega_d)) * sin_d) -
+          ((v0 + zeta * omega * x0) * cosD -
+            (x0 * omegaD + (v0 + zeta * omega * x0) * ((zeta * omega) / omegaD)) * sinD) -
         zeta * omega * newX;
       this._pos = newX + this._target;
-      this._vel = newV + zeta * omega * newX - zeta * omega * newX; // keep consistent
+      this._vel = newV;
     } else {
       // Over-damped
       const alpha = omega * (zeta - Math.sqrt(zeta * zeta - 1));
@@ -310,10 +288,8 @@ export class Spring {
       const denom = beta - alpha;
       const c1 = (v0 + beta * x0) / denom;
       const c2 = -(v0 + alpha * x0) / denom;
-      const newX = c1 * Math.exp(-alpha * dt) + c2 * Math.exp(-beta * dt);
-      const newV = -c1 * alpha * Math.exp(-alpha * dt) - c2 * beta * Math.exp(-beta * dt);
-      this._pos = newX + this._target;
-      this._vel = newV;
+      this._pos = c1 * Math.exp(-alpha * dt) + c2 * Math.exp(-beta * dt) + this._target;
+      this._vel = -c1 * alpha * Math.exp(-alpha * dt) - c2 * beta * Math.exp(-beta * dt);
     }
   }
 

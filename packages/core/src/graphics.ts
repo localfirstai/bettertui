@@ -1,38 +1,17 @@
 /**
- * @bettertui/graphics
- *
- * Terminal graphics package for BetterTUI: Kitty, iTerm2, Sixel image
- * rendering, plus a canvas-like pixel buffer for custom rasterised output.
+ * Terminal graphics utilities: pixel buffer, canvas, ANSI color helpers,
+ * and gradient generation.
  *
  * @example
  * ```ts
- * import { Image, Canvas, graphicsQuery } from "@bettertui/graphics"
- * import { readFileSync } from "node:fs"
+ * import { Canvas, parseHex } from "@bettertui/core"
  *
- * // Display an image
- * const data = readFileSync("photo.png")
- * const img = new Image({ data, width: 40, height: 20, protocol: "auto" })
- * process.stdout.write(img.buildSequence())
- *
- * // Use canvas for pixel art
- * const canvas = new Canvas(20, 10)
- * canvas.setPixel(5, 3, { r: 255, g: 128, b: 0 })
- * canvas.render()
+ * const canvas = new Canvas(40, 20)
+ * canvas.fill(parseHex("#1a1a2e"))
+ * canvas.drawRect(5, 2, 10, 6, { r: 255, g: 64, b: 0 })
+ * process.stdout.write(canvas.render())
  * ```
  */
-
-// ── Core re-exports ───────────────────────────────────────────────────────────
-
-export { Image } from "@bettertui/core";
-export type { ImageFormat, ImageOptions, ImageProtocol } from "@bettertui/shared";
-export {
-  graphicsQuery,
-  graphicsKittyWrite,
-  graphicsKittyDelete,
-  graphicsKittyDeleteAll,
-  graphicsItermWrite,
-  graphicsSixelWrite,
-} from "@bettertui/core";
 
 // ── Color types ───────────────────────────────────────────────────────────────
 
@@ -60,17 +39,22 @@ export function parseHex(hex: string): RGBA {
     return { r: p(h.slice(0, 2)), g: p(h.slice(2, 4)), b: p(h.slice(4, 6)), a: 255 };
   }
   if (h.length === 8) {
-    return { r: p(h.slice(0, 2)), g: p(h.slice(2, 4)), b: p(h.slice(4, 6)), a: p(h.slice(6, 8)) };
+    return {
+      r: p(h.slice(0, 2)),
+      g: p(h.slice(2, 4)),
+      b: p(h.slice(4, 6)),
+      a: p(h.slice(6, 8)),
+    };
   }
   return { r: 0, g: 0, b: 0, a: 255 };
 }
 
-/** Convert RGBA to a 24-bit ANSI truecolor foreground escape sequence. */
+/** Convert RGB to a 24-bit ANSI truecolor foreground escape sequence. */
 export function rgbFg(color: RGB): string {
   return `\x1b[38;2;${color.r};${color.g};${color.b}m`;
 }
 
-/** Convert RGBA to a 24-bit ANSI truecolor background escape sequence. */
+/** Convert RGB to a 24-bit ANSI truecolor background escape sequence. */
 export function rgbBg(color: RGB): string {
   return `\x1b[48;2;${color.r};${color.g};${color.b}m`;
 }
@@ -206,9 +190,7 @@ export class Canvas {
     return out;
   }
 
-  /**
-   * Draw a filled rectangle.
-   */
+  /** Draw a filled rectangle. */
   drawRect(x: number, y: number, w: number, h: number, color: RGB | RGBA): void {
     for (let dy = 0; dy < h; dy++) {
       for (let dx = 0; dx < w; dx++) {
@@ -217,9 +199,7 @@ export class Canvas {
     }
   }
 
-  /**
-   * Draw a 1-pixel-wide rectangle outline.
-   */
+  /** Draw a 1-pixel-wide rectangle outline. */
   drawRectOutline(x: number, y: number, w: number, h: number, color: RGB | RGBA): void {
     for (let dx = 0; dx < w; dx++) {
       this._buffer.setPixel(x + dx, y, color);
@@ -231,9 +211,7 @@ export class Canvas {
     }
   }
 
-  /**
-   * Draw a line using Bresenham's algorithm.
-   */
+  /** Draw a line using Bresenham's algorithm. */
   drawLine(x0: number, y0: number, x1: number, y1: number, color: RGB | RGBA): void {
     const dx = Math.abs(x1 - x0);
     const dy = Math.abs(y1 - y0);
@@ -258,9 +236,7 @@ export class Canvas {
     }
   }
 
-  /**
-   * Draw a filled circle using midpoint circle algorithm.
-   */
+  /** Draw a filled or outline circle using midpoint circle algorithm. */
   drawCircle(cx: number, cy: number, radius: number, color: RGB | RGBA, filled = true): void {
     const r2 = radius * radius;
     for (let y = -radius; y <= radius; y++) {

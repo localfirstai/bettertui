@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Spring, Tween, clamp, easing, inverseLerp, lerp, smoothstep } from "../index";
+import { Spring, Tween, clamp, easing, inverseLerp, lerp, smoothstep } from "../animations";
 
 // ── easing ────────────────────────────────────────────────────────────────────
 
@@ -128,7 +128,6 @@ describe("Spring", () => {
   });
 
   it("moves toward target on tick", () => {
-    // Use low frequency + small dt to keep Euler integration stable
     const s = new Spring({ target: 100, initial: 0, frequency: 5, damping: 1 });
     s.tick(0.016);
     expect(s.position).toBeGreaterThan(0);
@@ -136,7 +135,6 @@ describe("Spring", () => {
   });
 
   it("settles after many ticks", () => {
-    // Low frequency (2 Hz) ensures Euler integration is stable; run 5 seconds
     const s = new Spring({ target: 50, initial: 0, frequency: 2, damping: 1 });
     for (let i = 0; i < 312; i++) s.tick(0.016);
     expect(s.isSettled(0.5)).toBe(true);
@@ -150,7 +148,7 @@ describe("Spring", () => {
     expect(s.isSettled()).toBe(true);
   });
 
-  it("settles after many ticks", () => {
+  it("settles after many ticks (critically damped)", () => {
     const s = new Spring({ target: 50, initial: 0, frequency: 10, damping: 1 });
     for (let i = 0; i < 200; i++) s.tick(0.016);
     expect(s.isSettled()).toBe(true);

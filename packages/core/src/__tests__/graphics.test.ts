@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Canvas, PixelBuffer, RESET, gradientH, parseHex, rgbBg, rgbFg } from "../index";
+import { Canvas, PixelBuffer, RESET, gradientH, parseHex, rgbBg, rgbFg } from "../graphics";
 
 // ── parseHex ─────────────────────────────────────────────────────────────────
 

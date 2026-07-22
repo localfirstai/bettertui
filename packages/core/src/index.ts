@@ -88,6 +88,12 @@ export type {
 // Framework-agnostic widget option types
 export * from "./widgets";
 
+// Animation utilities: easing, Tween, Spring, lerp helpers
+export * from "./animations";
+
+// Terminal graphics utilities: PixelBuffer, Canvas, color helpers
+export * from "./graphics";
+
 // In-core debug tooling (moved from the retired @bettertui/devtools package).
 // `Logger`, `LogLevel`, and `TerminalCapabilities` already ship from
 // `./platform`; the devtools facade re-exports its own variants under
