@@ -1,5 +1,5 @@
+import type { BenchApp, BenchmarkMetrics, FrameworkId, FrameworkRunner } from "./bench.types";
 import { MetricCollector } from "./metrics";
-import type { BenchApp, BenchmarkMetrics, FrameworkId, FrameworkRunner } from "./types";
 
 export class BetterTuiRunner implements FrameworkRunner {
   id: FrameworkId = "bettertui";

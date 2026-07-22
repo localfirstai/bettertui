@@ -1,12 +1,12 @@
 import type { DiagnosticSnapshot } from "../../platform/logger";
 import type { DevTools } from "../index";
-import { RESET, RESTORE_CURSOR, SAVE_CURSOR, displayWidth, drawBox, moveTo } from "./ansi.utils";
+import { RESET, RESTORE_CURSOR, SAVE_CURSOR, displayWidth, drawBox, moveTo } from "./ansiUtils";
 import { DebugPanel, type Panel, type PanelContext } from "./panel.types";
-import { dirtyRegionsPanel } from "./panels/dirtyRegions.panel";
-import { eventsPanel } from "./panels/events.panel";
-import { layoutPanel } from "./panels/layout.panel";
-import { performancePanel } from "./panels/performance.panel";
-import { treePanel } from "./panels/tree.panel";
+import { dirtyRegionsPanel } from "./panels/dirtyRegionsPanel";
+import { eventsPanel } from "./panels/eventsPanel";
+import { layoutPanel } from "./panels/layoutPanel";
+import { performancePanel } from "./panels/performancePanel";
+import { treePanel } from "./panels/treePanel";
 
 /** Corner the overlay is anchored to. */
 export type OverlayCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";

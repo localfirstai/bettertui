@@ -1,9 +1,9 @@
-import type { CliRenderer, CliRendererOptions } from "../platform/cli-renderer";
-import { CliRenderer as CliRendererClass, createCliRenderer } from "../platform/cli-renderer";
-import { createMockKeys } from "./mock-keys";
-import { createMockMouse } from "./mock-mouse";
-import { createTestStdin, createTestStdout } from "./test-streams";
-import type { TestStdin, TestStdout } from "./test-streams";
+import type { CliRenderer, CliRendererOptions } from "../platform/cliRenderer";
+import { CliRenderer as CliRendererClass, createCliRenderer } from "../platform/cliRenderer";
+import { createMockKeys } from "./mockKeys";
+import { createMockMouse } from "./mockMouse";
+import { createTestStdin, createTestStdout } from "./testStreams";
+import type { TestStdin, TestStdout } from "./testStreams";
 
 export interface TestRendererOptions extends CliRendererOptions {
   width?: number;

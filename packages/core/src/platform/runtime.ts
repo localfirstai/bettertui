@@ -1,5 +1,5 @@
 import type { Command, CommandBuffer } from "../command";
-import type { NapiEngine, NapiEventBus, NapiRenderResult, ProcessResult } from "./types";
+import type { NapiEngine, NapiEventBus, NapiRenderResult, ProcessResult } from "./platform.types";
 
 export interface RenderResult {
   outputData: Uint8Array;

@@ -96,7 +96,7 @@ export interface PerformanceSnapshot {
 
 // ─── Tree Types ──────────────────────────────────────────────────────────────
 
-export interface TreeNode {
+export interface DevToolsNode {
   id: string;
   type: string;
   props: Record<string, unknown>;
@@ -109,7 +109,7 @@ export interface TreeNode {
         height: number;
       }
     | undefined;
-  children: TreeNode[];
+  children: DevToolsNode[];
   parent?: string | undefined;
   dirty?: boolean | undefined;
   visible?: boolean | undefined;
@@ -181,7 +181,7 @@ export interface TimelineEntry {
 export interface TreeSnapshot {
   id: number;
   timestamp: number;
-  tree: TreeNode;
+  tree: DevToolsNode;
   nodeCount: number;
 }
 
@@ -202,7 +202,7 @@ export interface DiagnosticExport {
   events: readonly RecordedEvent[];
   frames: readonly FrameMetrics[];
   performance: PerformanceSnapshot;
-  tree?: TreeNode | undefined;
+  tree?: DevToolsNode | undefined;
   scheduler?: SchedulerSnapshot | undefined;
   focus?: FocusSnapshot | undefined;
   capabilities?: TerminalCapabilities | undefined;

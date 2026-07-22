@@ -1,4 +1,4 @@
-import { displayWidth } from "../ansi.utils";
+import { displayWidth } from "../ansiUtils";
 import { DebugPanel, type Panel, type PanelContext } from "../panel.types";
 
 function labelled(label: string, value: string, width: number): string {

@@ -2,7 +2,7 @@
 // Handles: arrows, F-keys, Home/End, PageUp/Down, modifier combos, meta keys
 
 import { Buffer } from "node:buffer";
-import { kittyNamedSingleStrokeKeys, parseKittyKeyboard } from "./parse.keypress-kitty.js";
+import { kittyNamedSingleStrokeKeys, parseKittyKeyboard } from "./parseKeypressKitty";
 
 const ESC = "\x1b";
 

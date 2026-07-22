@@ -1,6 +1,7 @@
-import type { KeyEvent, ListItem, ListOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { KeyEvent } from "@bettertui/shared";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { ListItem, ListOptions } from "./widget.types";
 
 export type { ListItem, ListOptions };
 

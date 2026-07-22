@@ -1,14 +1,14 @@
-import type { TreeNode } from "./devtools.types";
+import type { DevToolsNode } from "./devtools.types";
 
 export interface TreeInspectorOptions {
-  onTreeUpdate?: ((root: TreeNode | null) => void) | undefined;
+  onTreeUpdate?: ((root: DevToolsNode | null) => void) | undefined;
 }
 
 export class TreeInspector {
-  private root: TreeNode | null = null;
-  private nodeIndex = new Map<string, TreeNode>();
+  private root: DevToolsNode | null = null;
+  private nodeIndex = new Map<string, DevToolsNode>();
   private dirtyNodes = new Set<string>();
-  private onTreeUpdate: ((root: TreeNode | null) => void) | undefined;
+  private onTreeUpdate: ((root: DevToolsNode | null) => void) | undefined;
 
   constructor(options: TreeInspectorOptions = {}) {
     this.onTreeUpdate = options.onTreeUpdate;
@@ -27,14 +27,14 @@ export class TreeInspector {
       visible?: boolean;
       zIndex?: number;
     }>,
-  ): TreeNode {
+  ): DevToolsNode {
     this.nodeIndex.clear();
     this.dirtyNodes.clear();
 
     // Create all nodes
-    const nodeMap = new Map<string, TreeNode>();
+    const nodeMap = new Map<string, DevToolsNode>();
     for (const n of nodes) {
-      const treeNode: TreeNode = {
+      const treeNode: DevToolsNode = {
         id: n.id,
         type: n.type,
         props: n.props ?? {},
@@ -52,7 +52,7 @@ export class TreeInspector {
     }
 
     // Wire parent-child relationships
-    let root: TreeNode | null = null;
+    let root: DevToolsNode | null = null;
     for (const treeNode of nodeMap.values()) {
       if (treeNode.parent) {
         const parentNode = nodeMap.get(treeNode.parent);
@@ -70,7 +70,7 @@ export class TreeInspector {
   }
 
   /** Update a single node's properties */
-  updateNode(id: string, updates: Partial<Omit<TreeNode, "id" | "children">>): void {
+  updateNode(id: string, updates: Partial<Omit<DevToolsNode, "id" | "children">>): void {
     const node = this.nodeIndex.get(id);
     if (!node) return;
 
@@ -105,24 +105,24 @@ export class TreeInspector {
     this.dirtyNodes.clear();
   }
 
-  getNode(id: string): TreeNode | undefined {
+  getNode(id: string): DevToolsNode | undefined {
     return this.nodeIndex.get(id);
   }
 
-  getRoot(): TreeNode | null {
+  getRoot(): DevToolsNode | null {
     return this.root;
   }
 
-  getDirtyNodes(): TreeNode[] {
+  getDirtyNodes(): DevToolsNode[] {
     return [...this.dirtyNodes]
       .map((id) => this.nodeIndex.get(id))
-      .filter((n): n is TreeNode => n !== undefined);
+      .filter((n): n is DevToolsNode => n !== undefined);
   }
 
   /** Find nodes matching a predicate */
-  findNodes(predicate: (node: TreeNode) => boolean): TreeNode[] {
-    const results: TreeNode[] = [];
-    const walk = (node: TreeNode) => {
+  findNodes(predicate: (node: DevToolsNode) => boolean): DevToolsNode[] {
+    const results: DevToolsNode[] = [];
+    const walk = (node: DevToolsNode) => {
       if (predicate(node)) results.push(node);
       for (const child of node.children) {
         walk(child);
@@ -133,8 +133,8 @@ export class TreeInspector {
   }
 
   /** Get the path from root to a given node */
-  getPath(nodeId: string): TreeNode[] {
-    const path: TreeNode[] = [];
+  getPath(nodeId: string): DevToolsNode[] {
+    const path: DevToolsNode[] = [];
     let current = this.nodeIndex.get(nodeId);
     while (current) {
       path.unshift(current);
@@ -149,7 +149,7 @@ export class TreeInspector {
   }
 
   /** Get all nodes as a flat array */
-  getAllNodes(): TreeNode[] {
+  getAllNodes(): DevToolsNode[] {
     return [...this.nodeIndex.values()];
   }
 

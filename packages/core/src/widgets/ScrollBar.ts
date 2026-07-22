@@ -1,7 +1,7 @@
-import type { ScrollBarOptions } from "@bettertui/shared";
 import type { KeyEvent } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { ScrollBarOptions } from "./widget.types";
 
 export type { ScrollBarOptions };
 

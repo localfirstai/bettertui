@@ -1,10 +1,10 @@
-import type { TreeNode } from "../../devtools.types";
-import { truncate } from "../ansi.utils";
+import type { DevToolsNode } from "../../devtools.types";
+import { truncate } from "../ansiUtils";
 import { DebugPanel, type Panel, type PanelContext } from "../panel.types";
 
 /** Flatten a tree to indented display lines (depth-first). */
 function walk(
-  node: TreeNode,
+  node: DevToolsNode,
   depth: number,
   out: string[],
   maxRows: number,

@@ -1,5 +1,5 @@
 import type { RecordedEvent } from "../../devtools.types";
-import { truncate } from "../ansi.utils";
+import { truncate } from "../ansiUtils";
 import { DebugPanel, type Panel, type PanelContext } from "../panel.types";
 
 const CATEGORY_GLYPH: Record<string, string> = {

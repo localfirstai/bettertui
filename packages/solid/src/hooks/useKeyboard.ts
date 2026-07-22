@@ -6,7 +6,7 @@
  * to also receive key-release events (kitty keyboard protocol required).
  */
 
-import type { KeyEvent } from "@bettertui/core";
+import type { RawKeyEvent } from "@bettertui/core";
 import { createEffect, onCleanup } from "solid-js";
 import { useRenderer } from "../context/rendererContext";
 
@@ -16,7 +16,7 @@ export interface UseKeyboardOptions {
 }
 
 export function useKeyboard(
-  handler: (event: KeyEvent) => void,
+  handler: (event: RawKeyEvent) => void,
   options: UseKeyboardOptions = {},
 ): void {
   const renderer = useRenderer();

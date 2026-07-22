@@ -1,6 +1,6 @@
-import type { DividerOptions } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { DividerOptions } from "./widget.types";
 
 export type { DividerOptions };
 

@@ -1,4 +1,4 @@
-import type { Command } from "./types";
+import type { Command } from "./command.types";
 
 export class CommandBuffer {
   private commands: Command[] = [];

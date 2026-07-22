@@ -1,4 +1,4 @@
-import type { BenchApp } from "./types";
+import type { BenchApp } from "./bench.types";
 
 export const BENCH_APPS: BenchApp[] = [
   { id: "hello-world", label: "Hello World", description: "Minimal render" },

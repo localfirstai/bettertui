@@ -1,4 +1,3 @@
-export type { Point, Size, Rect } from "./geometry";
 export type {
   FlexDirection,
   JustifyContent,
@@ -14,8 +13,14 @@ export type {
   Inset,
   Gap,
   LayoutConstraints,
-} from "./layout";
-export type { KeyEvent, KeyEventType, KeyEventSource, MouseButton, MouseEvent } from "./events";
-export type { ColorValue, Style, BorderStyleKind, BorderStyle } from "./style";
-export type { Theme, ThemeColors, ThemeSpacing } from "./theme";
-export type { ValidationError, ValidationResult } from "./validation";
+} from "./layout.types";
+export type {
+  KeyEvent,
+  KeyEventSource,
+  KeyEventType,
+  MouseButton,
+  MouseEvent,
+} from "./events.types";
+export type { ColorValue, Style, BorderStyleKind, BorderStyle } from "./style.types";
+export type { Theme, ThemeColors, ThemeSpacing } from "./theme.types";
+export type { ValidationError, ValidationResult } from "./validation.types";

@@ -9,21 +9,25 @@ export type {
   Gap,
   Inset,
   JustifyContent,
+  KeyEvent,
+  KeyEventSource,
+  KeyEventType,
   LayoutConstraints,
   Margin,
   MouseButton,
+  MouseEvent,
   Overflow,
   Padding,
-  Point,
   Position,
-  Rect,
-  Size,
   Sizing,
   Style,
   Theme,
   ThemeColors,
   ThemeSpacing,
 } from "@bettertui/shared";
+
+// Geometry types (core-only: not needed by framework adapters)
+export type { Point, Rect, Size } from "./geometry.types";
 
 // Command protocol, buffer, and tree operations
 export * from "./command";

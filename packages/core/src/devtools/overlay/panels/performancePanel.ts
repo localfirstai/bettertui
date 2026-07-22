@@ -1,4 +1,4 @@
-import { bar, displayWidth, padEnd, sparkline } from "../ansi.utils";
+import { bar, displayWidth, padEnd, sparkline } from "../ansiUtils";
 import { DebugPanel, type Panel, type PanelContext } from "../panel.types";
 
 /** Format a byte count into a short human string. */

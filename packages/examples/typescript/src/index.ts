@@ -18,59 +18,59 @@ import {
   createCliRenderer,
 } from "@bettertui/core";
 import { measureText } from "@bettertui/core";
-import * as asciiFontSelectionExample from "./examples/ascii-font-selection.example.js";
-import * as audioStreamingDemo from "./examples/audio-streaming.example.js";
-import * as clipboardPasteDemo from "./examples/clipboard-paste.example.js";
+import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
+import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
+import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
 import * as codeDemo from "./examples/code.example.js";
 import * as consoleExample from "./examples/console.example.js";
-import * as corePluginSlotsDemo from "./examples/core-plugin-slots.example.js";
+import * as corePluginSlotsDemo from "./examples/corePluginSlots.example.js";
 import * as diffDemo from "./examples/diff.example.js";
 import * as editorDemo from "./examples/editor.example.js";
 import * as extmarksDemo from "./examples/extmarks.example.js";
-import * as focusRestoreDemo from "./examples/focus-restore.example.js";
+import * as focusRestoreDemo from "./examples/focusRestore.example.js";
 import * as boxExample from "./examples/fonts.example.js";
 import * as framebufferExample from "./examples/framebuffer.example.js";
-import * as fullUnicodeExample from "./examples/full-unicode.example.js";
-import * as grayscaleBufferDemo from "./examples/grayscale-buffer.example.js";
-import * as hastSyntaxHighlightingExample from "./examples/hast-syntax-highlighting.example.js";
-import * as inputSelectLayoutExample from "./examples/input-select-layout.example.js";
+import * as fullUnicodeExample from "./examples/fullUnicode.example.js";
+import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example.js";
+import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example.js";
 import * as inputExample from "./examples/input.example.js";
+import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example.js";
 import * as keymapDemo from "./examples/keymap.example.js";
-import * as keypressDebugDemo from "./examples/keypress-debug.example.js";
+import * as keypressDebugDemo from "./examples/keypressDebug.example.js";
 import * as linkDemo from "./examples/link.example.js";
-import * as liveStateExample from "./examples/live-state.example.js";
-import * as markdownCodeBlockRendererDemo from "./examples/markdown-code-block-renderer.example.js";
+import * as liveStateExample from "./examples/liveState.example.js";
 import * as markdownDemo from "./examples/markdown.example.js";
-import * as mouseInteractionExample from "./examples/mouse-interaction.example.js";
-import * as nativeAudioDemo from "./examples/native-audio.example.js";
-import * as nestedZIndexDemo from "./examples/nested-zindex.example.js";
+import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
+import * as mouseInteractionExample from "./examples/mouseInteraction.example.js";
+import * as nativeAudioDemo from "./examples/nativeAudio.example.js";
+import * as nestedZIndexDemo from "./examples/nestedZindex.example.js";
 import * as notificationDemo from "./examples/notification.example.js";
-import * as opacityExample from "./examples/opacity-example.example.js";
+import * as opacityExample from "./examples/opacityExample.example.js";
 import * as opentuiDemo from "./examples/opentui.example.js";
 import * as qrcodeDemo from "./examples/qrcode.example.js";
-import * as relativePositioningDemo from "./examples/relative-positioning.example.js";
-import * as scrollExample from "./examples/scroll-example.example.js";
-import * as scrollboxMouseTest from "./examples/scrollbox-mouse-test.example.js";
-import * as scrollboxOverlayHitTest from "./examples/scrollbox-overlay-hit-test.example.js";
+import * as relativePositioningDemo from "./examples/relativePositioning.example.js";
+import * as scrollExample from "./examples/scrollExample.example.js";
+import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example.js";
+import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example.js";
 import * as selectExample from "./examples/select.example.js";
-import * as layoutExample from "./examples/simple-layout-example.example.js";
+import * as layoutExample from "./examples/simpleLayoutExample.example.js";
 import * as sliderDemo from "./examples/slider.example.js";
-import * as splitFooterStreamingDemo from "./examples/split-footer-streaming.example.js";
-import * as splitModeExample from "./examples/split-mode.example.js";
-import * as stickyScrollExample from "./examples/sticky-scroll-example.example.js";
-import * as styledTextExample from "./examples/styled-text.example.js";
-import * as tabSelectExample from "./examples/tab-select.example.js";
-import * as terminalTitleDemo from "./examples/terminal-title.example.js";
+import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example.js";
+import * as splitModeExample from "./examples/splitMode.example.js";
+import * as stickyScrollExample from "./examples/stickyScrollExample.example.js";
+import * as styledTextExample from "./examples/styledText.example.js";
+import * as tabSelectExample from "./examples/tabSelect.example.js";
 import * as terminalDemo from "./examples/terminal.example.js";
-import * as textNodeDemo from "./examples/text-node.example.js";
-import * as textSelectionExample from "./examples/text-selection.example.js";
-import * as textTableExample from "./examples/text-table.example.js";
-import * as textTruncationDemo from "./examples/text-truncation.example.js";
-import * as textWrapExample from "./examples/text-wrap.example.js";
-import * as timelineExample from "./examples/timeline-example.example.js";
+import * as terminalTitleDemo from "./examples/terminalTitle.example.js";
+import * as textNodeDemo from "./examples/textNode.example.js";
+import * as textSelectionExample from "./examples/textSelection.example.js";
+import * as textTableExample from "./examples/textTable.example.js";
+import * as textTruncationDemo from "./examples/textTruncation.example.js";
+import * as textWrapExample from "./examples/textWrap.example.js";
+import * as timelineExample from "./examples/timelineExample.example.js";
 import * as transparencyDemo from "./examples/transparency.example.js";
-import * as vnodeCompositionDemo from "./examples/vnode-composition.example.js";
-import * as wideGraphemeOverlayDemo from "./examples/wide-grapheme-overlay.example.js";
+import * as vnodeCompositionDemo from "./examples/vnodeComposition.example.js";
+import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example.js";
 import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
 
 type ExampleCategory =
@@ -218,57 +218,57 @@ const THREE_EXAMPLES: ExampleDefinition[] = includeThreeExamples
       threeExample(
         "Draggable ThreeRenderable",
         "Draggable WebGPU cube with live animation",
-        () => import("./examples/draggable-three.example.js"),
+        () => import("./examples/draggableThree.example.js"),
       ),
       threeExample(
         "Fractal Shader",
         "Fractal rendering with shaders",
-        () => import("./examples/fractal-shader.example.js"),
+        () => import("./examples/fractalShader.example.js"),
       ),
       threeExample(
         "Golden Star Demo",
         "3D golden star with particle effects and animated text celebrating 5000 stars",
-        () => import("./examples/golden-star.example.js"),
+        () => import("./examples/goldenStar.example.js"),
       ),
       threeExample(
         "Physics Planck",
         "2D physics with Planck.js",
-        () => import("./examples/physx-planck-2d.example.js"),
+        () => import("./examples/physxPlanck2d.example.js"),
       ),
       threeExample(
         "Physics Rapier",
         "2D physics with Rapier",
-        () => import("./examples/physx-rapier-2d.example.js"),
+        () => import("./examples/physxRapier2d.example.js"),
       ),
       threeExample(
         "Phong Lighting",
         "Phong lighting model demo",
-        () => import("./examples/lights-phong.example.js"),
+        () => import("./examples/lightsPhong.example.js"),
       ),
       threeExample(
         "Shader Cube",
         "3D cube with custom shaders",
-        () => import("./examples/shader-cube.example.js"),
+        () => import("./examples/shaderCube.example.js"),
       ),
       threeExample(
         "Sprite Animation",
         "Animated sprite sequences",
-        () => import("./examples/sprite-animation.example.js"),
+        () => import("./examples/spriteAnimation.example.js"),
       ),
       threeExample(
         "Sprite Particles",
         "Particle system with sprites",
-        () => import("./examples/sprite-particle-generator.example.js"),
+        () => import("./examples/spriteParticleGenerator.example.js"),
       ),
       threeExample(
         "Static Sprite",
         "Static sprite rendering demo",
-        () => import("./examples/static-sprite.example.js"),
+        () => import("./examples/staticSprite.example.js"),
       ),
       threeExample(
         "Texture Loading",
         "Loading and displaying textures",
-        () => import("./examples/texture-loading.example.js"),
+        () => import("./examples/textureLoading.example.js"),
       ),
     ]
   : [
@@ -1248,7 +1248,7 @@ class ExampleSelector {
     }
   }
 
-  private handleResize(width: number, height: number): void {
+  private handleResize(width: number, _height: number): void {
     if (this.title) {
       const titleWidth = this.title.frameBuffer.width;
       const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);

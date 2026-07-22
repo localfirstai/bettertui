@@ -1,4 +1,4 @@
-import type { BenchmarkMetrics, VisualReport } from "./types";
+import type { BenchmarkMetrics, VisualReport } from "./bench.types";
 
 const opentuiBase: Record<string, Partial<BenchmarkMetrics>> = {
   "hello-world": {

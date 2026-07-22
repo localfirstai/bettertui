@@ -57,6 +57,7 @@ export type { ListItem, ListOptions } from "./List";
 
 export { Tree } from "./Tree";
 export type { TreeOptions } from "./Tree";
+export type { TreeNode } from "./widget.types";
 
 export { Dialog } from "./Dialog";
 export type { DialogOptions } from "./Dialog";

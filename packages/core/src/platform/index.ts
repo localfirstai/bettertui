@@ -18,8 +18,8 @@ export {
   loggerGetDiagnostics,
   loggerFlush,
 } from "./binding";
-export { CliRenderer, KeyInput, createCliRenderer } from "./cli-renderer";
-export type { CliRendererOptions, KeyEvent } from "./cli-renderer";
-export type { ScreenMode, ExternalOutputMode } from "./types";
+export { CliRenderer, KeyInput, createCliRenderer } from "./cliRenderer";
+export type { CliRendererOptions, RawKeyEvent } from "./cliRenderer";
+export type { ScreenMode, ExternalOutputMode } from "./platform.types";
 export type { MouseEvent } from "./events";
 export * from "./logger";

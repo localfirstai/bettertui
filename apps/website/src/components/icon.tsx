@@ -1,14 +1,14 @@
 import type { SVGProps } from "react";
 
-import { AstroIconDark } from "./ui/svgs/astroIconDark";
-import { AstroIconLight } from "./ui/svgs/astroIconLight";
-import { AstroWordmarkDark } from "./ui/svgs/astroWordmarkDark";
-import { AstroWordmarkLight } from "./ui/svgs/astroWordmarkLight";
+import { AstroIconDark } from "./ui/svgs/astro-icon-dark";
+import { AstroIconLight } from "./ui/svgs/astro-icon-light";
+import { AstroWordmarkDark } from "./ui/svgs/astro-wordmark-dark";
+import { AstroWordmarkLight } from "./ui/svgs/astro-wordmark-light";
 import { Preact } from "./ui/svgs/preact";
-import { ReactDark } from "./ui/svgs/reactDark";
-import { ReactLight } from "./ui/svgs/reactLight";
-import { ReactWordmarkDark } from "./ui/svgs/reactWordmarkDark";
-import { ReactWordmarkLight } from "./ui/svgs/reactWordmarkLight";
+import { ReactDark } from "./ui/svgs/react-dark";
+import { ReactLight } from "./ui/svgs/react-light";
+import { ReactWordmarkDark } from "./ui/svgs/react-wordmark-dark";
+import { ReactWordmarkLight } from "./ui/svgs/react-wordmark-light";
 import { Solidjs } from "./ui/svgs/solidjs";
 import { Svelte } from "./ui/svgs/svelte";
 import { Vue } from "./ui/svgs/vue";

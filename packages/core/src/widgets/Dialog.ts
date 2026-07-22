@@ -1,6 +1,7 @@
-import type { DialogOptions, KeyEvent, MouseEvent } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { KeyEvent, MouseEvent } from "@bettertui/shared";
+import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { DialogOptions } from "./widget.types";
 
 export type { DialogOptions };
 

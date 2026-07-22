@@ -9,8 +9,8 @@
  * 3. Each package contains the compiled .node binary and exports its path
  *
  * Usage:
- *   node scripts/build-native.ts --all          # Build for all platforms
- *   node scripts/build-native.ts --target darwin-arm64  # Build for specific target
+ *   node scripts/buildNative.ts --all          # Build for all platforms
+ *   node scripts/buildNative.ts --target darwin-arm64  # Build for specific target
  */
 
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";

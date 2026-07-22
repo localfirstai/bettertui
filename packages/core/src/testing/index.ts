@@ -1,26 +1,26 @@
-export { createTestRenderer, createTestRendererSync } from "./test-renderer";
+export { createTestRenderer, createTestRendererSync } from "./testRenderer";
 export type {
   TestRendererOptions,
   TestRenderer,
   MockInput,
   MockMouse,
   TestRendererSetup,
-} from "./test-renderer";
+} from "./testRenderer";
 
-export { createMockKeys, KeyCodes } from "./mock-keys";
-export type { TestKeyInput, MockKeysOptions, KeyModifiers } from "./mock-keys";
+export { createMockKeys, KeyCodes } from "./mockKeys";
+export type { TestKeyInput, MockKeysOptions, KeyModifiers } from "./mockKeys";
 
-export { createMockMouse, MouseButtons } from "./mock-mouse";
+export { createMockMouse, MouseButtons } from "./mockMouse";
 export type {
   MouseButton,
   MousePosition,
   MouseModifiers,
   MouseEventType,
   MouseEventOptions,
-} from "./mock-mouse";
+} from "./mockMouse";
 
-export { createTestStdin, createTestStdout, TestReadStream, TestWriteStream } from "./test-streams";
-export type { TestStdin, TestStdout } from "./test-streams";
+export { createTestStdin, createTestStdout, TestReadStream, TestWriteStream } from "./testStreams";
+export type { TestStdin, TestStdout } from "./testStreams";
 
 export { createSpy } from "./spy";
 export type { Spy } from "./spy";
@@ -31,8 +31,8 @@ export {
   createFullTerminalCapabilities,
   createKittyTerminalCapabilities,
   createITerm2TerminalCapabilities,
-} from "./terminal-capabilities";
-export type { TerminalCapabilitiesOptions } from "./terminal-capabilities";
+} from "./terminalCapabilities";
+export type { TerminalCapabilitiesOptions } from "./terminalCapabilities";
 
 export { createMockNativeKeymap, createTestKeymap } from "./testing";
 export type { TestBinding } from "./testing";

@@ -1,5 +1,4 @@
-import type { ImageFormat, ImageOptions, ImageProtocol } from "@bettertui/shared";
-import type { Command } from "../command/types";
+import type { Command } from "../command/command.types";
 import {
   graphicsItermWrite,
   graphicsKittyDelete,
@@ -9,6 +8,7 @@ import {
   graphicsSixelWrite,
 } from "../platform/binding";
 import { Renderable } from "../renderable";
+import type { ImageFormat, ImageOptions, ImageProtocol } from "./widget.types";
 
 export type { ImageFormat, ImageOptions, ImageProtocol };
 export {
