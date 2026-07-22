@@ -24,6 +24,7 @@ interface NativeModule {
   loggerSetModuleFilter: (include?: string[] | null, exclude?: string[] | null) => void;
   loggerGetDiagnostics: () => NapiDiagnosticSnapshot;
   loggerFlush: () => void;
+  highlightCode: (code: string, language: string) => NativeHighlightedLine[];
 }
 
 interface NativeEngine {
@@ -516,7 +517,22 @@ export interface HighlightSegment {
   strikethrough: boolean | null;
 }
 
-export function highlightCode(_code: string, _language: string): HighlightSegment[][] {
+interface NativeHighlightedLine {
+  segments: HighlightSegment[];
+}
+
+export interface HighlightedLine {
+  segments: HighlightSegment[];
+}
+
+export function highlightCode(code: string, language: string): HighlightedLine[] {
+  try {
+    if (typeof native.highlightCode === "function") {
+      return native.highlightCode(code, language);
+    }
+  } catch {
+    // native binary not yet rebuilt — fall through to empty
+  }
   return [];
 }
 
