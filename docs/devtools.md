@@ -1,5 +1,7 @@
 # DevTools
 
+> **Architecture deep-dive:** [DevTools Architecture](architecture/devtools.md) · [API reference](api/packages/devtools.md)
+
 BetterTUI's developer tooling lives **inside `@bettertui/core`** (module
 `@bettertui/core` → `src/devtools/`). The standalone `@bettertui/devtools`
 package has been retired; import everything from `@bettertui/core`.
