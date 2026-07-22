@@ -1,6 +1,6 @@
-import type { MarkdownOptions, MarkdownTheme } from "./widget.types";
 import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { MarkdownOptions, MarkdownTheme } from "./widget.types";
 
 export type { MarkdownOptions, MarkdownTheme };
 

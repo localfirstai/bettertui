@@ -1,7 +1,7 @@
 import type { KeyEvent } from "@bettertui/shared";
-import type { TreeNode } from "../../widgets/widget.types";
 import { describe, expect, it } from "vitest";
 import { Tree } from "../../widgets/Tree";
+import type { TreeNode } from "../../widgets/widget.types";
 
 function key(name: string): KeyEvent {
   return {

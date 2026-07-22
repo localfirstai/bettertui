@@ -52,6 +52,7 @@ export * as ansi from "./overlay/ansiUtils";
 // ─── DevTools Interface ──────────────────────────────────────────────────────
 
 import type {
+  DevToolsNode,
   DiagnosticExport,
   FrameMetrics,
   LogEntry,
@@ -59,7 +60,6 @@ import type {
   RecordedEvent,
   SchedulerSnapshot,
   TerminalCapabilities,
-  DevToolsNode,
 } from "./devtools.types";
 import type { ExportOptions } from "./export";
 import { DebugPanel } from "./overlay/panel.types";

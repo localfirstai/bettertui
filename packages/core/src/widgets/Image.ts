@@ -1,4 +1,3 @@
-import type { ImageFormat, ImageOptions, ImageProtocol } from "./widget.types";
 import type { Command } from "../command/command.types";
 import {
   graphicsItermWrite,
@@ -9,6 +8,7 @@ import {
   graphicsSixelWrite,
 } from "../platform/binding";
 import { Renderable } from "../renderable";
+import type { ImageFormat, ImageOptions, ImageProtocol } from "./widget.types";
 
 export type { ImageFormat, ImageOptions, ImageProtocol };
 export {

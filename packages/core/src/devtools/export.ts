@@ -1,4 +1,5 @@
 import type {
+  DevToolsNode,
   DiagnosticExport,
   FocusSnapshot,
   FrameMetrics,
@@ -9,7 +10,6 @@ import type {
   SchedulerSnapshot,
   TerminalCapabilities,
   TimelineEntry,
-  DevToolsNode,
   TreeSnapshot,
 } from "./devtools.types";
 

@@ -33,14 +33,14 @@ import * as framebufferExample from "./examples/framebuffer.example.js";
 import * as fullUnicodeExample from "./examples/fullUnicode.example.js";
 import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example.js";
 import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example.js";
-import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example.js";
 import * as inputExample from "./examples/input.example.js";
+import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example.js";
 import * as keymapDemo from "./examples/keymap.example.js";
 import * as keypressDebugDemo from "./examples/keypressDebug.example.js";
 import * as linkDemo from "./examples/link.example.js";
 import * as liveStateExample from "./examples/liveState.example.js";
-import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
 import * as markdownDemo from "./examples/markdown.example.js";
+import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
 import * as mouseInteractionExample from "./examples/mouseInteraction.example.js";
 import * as nativeAudioDemo from "./examples/nativeAudio.example.js";
 import * as nestedZIndexDemo from "./examples/nestedZindex.example.js";
@@ -60,8 +60,8 @@ import * as splitModeExample from "./examples/splitMode.example.js";
 import * as stickyScrollExample from "./examples/stickyScrollExample.example.js";
 import * as styledTextExample from "./examples/styledText.example.js";
 import * as tabSelectExample from "./examples/tabSelect.example.js";
-import * as terminalTitleDemo from "./examples/terminalTitle.example.js";
 import * as terminalDemo from "./examples/terminal.example.js";
+import * as terminalTitleDemo from "./examples/terminalTitle.example.js";
 import * as textNodeDemo from "./examples/textNode.example.js";
 import * as textSelectionExample from "./examples/textSelection.example.js";
 import * as textTableExample from "./examples/textTable.example.js";
@@ -1248,7 +1248,7 @@ class ExampleSelector {
     }
   }
 
-  private handleResize(width: number, height: number): void {
+  private handleResize(width: number, _height: number): void {
     if (this.title) {
       const titleWidth = this.title.frameBuffer.width;
       const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);

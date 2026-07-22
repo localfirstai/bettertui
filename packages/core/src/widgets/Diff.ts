@@ -1,6 +1,6 @@
-import type { DiffOptions } from "./widget.types";
 import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { DiffOptions } from "./widget.types";
 
 export type { DiffOptions };
 

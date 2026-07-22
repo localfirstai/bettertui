@@ -1,4 +1,4 @@
-import type { SnapshotDiff, DevToolsNode, TreeSnapshot } from "./devtools.types";
+import type { DevToolsNode, SnapshotDiff, TreeSnapshot } from "./devtools.types";
 
 export interface SnapshotOptions {
   maxSnapshots?: number | undefined;

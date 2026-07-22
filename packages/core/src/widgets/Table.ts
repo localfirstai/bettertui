@@ -1,7 +1,7 @@
 import type { KeyEvent } from "@bettertui/shared";
-import type { TableBorderStyle, TableColumn, TableColumnAlign, TableOptions } from "./widget.types";
 import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { TableBorderStyle, TableColumn, TableColumnAlign, TableOptions } from "./widget.types";
 
 export type { TableBorderStyle, TableColumn, TableColumnAlign, TableOptions };
 

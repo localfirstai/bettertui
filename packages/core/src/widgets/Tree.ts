@@ -1,7 +1,7 @@
 import type { KeyEvent } from "@bettertui/shared";
-import type { TreeNode, TreeOptions } from "./widget.types";
 import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { TreeNode, TreeOptions } from "./widget.types";
 
 // Re-export types consumers need when using this widget
 export type { TreeOptions };

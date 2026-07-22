@@ -1,9 +1,9 @@
 import type { KeyEvent } from "@bettertui/shared";
-import type { InputOptions } from "./widget.types";
 import type { Command } from "../command/command.types";
 import type { NapiTextEngine } from "../platform/binding";
 import { createTextEngine } from "../platform/binding";
 import { Renderable } from "../renderable";
+import type { InputOptions } from "./widget.types";
 
 export type { InputOptions };
 

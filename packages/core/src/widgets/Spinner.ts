@@ -1,6 +1,6 @@
-import type { SpinnerOptions, SpinnerVariant } from "./widget.types";
 import type { Command } from "../command/command.types";
 import { Renderable } from "../renderable";
+import type { SpinnerOptions, SpinnerVariant } from "./widget.types";
 
 export type { SpinnerOptions, SpinnerVariant };
 

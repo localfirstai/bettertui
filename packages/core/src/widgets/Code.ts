@@ -1,8 +1,8 @@
-import type { CodeOptions } from "./widget.types";
 import type { Command } from "../command/command.types";
 import type { HighlightedLine } from "../platform/binding";
 import { highlightCode } from "../platform/binding";
 import { Renderable } from "../renderable";
+import type { CodeOptions } from "./widget.types";
 
 export type { CodeOptions };
 
