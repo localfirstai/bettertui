@@ -8,7 +8,7 @@ import {
   PerformanceTracker,
   SchedulerInspector,
   SnapshotManager,
-  Timeline,
+  DevToolsTimeline as Timeline,
   TreeInspector,
   createDevTools,
   createExport,

@@ -80,4 +80,9 @@ export type {
   ListOptions,
   ListItem,
   DialogOptions,
+  TimelineOptions,
+  TweenConfig,
+  ImageOptions,
+  ImageFormat,
+  ImageProtocol,
 } from "./widget.types";

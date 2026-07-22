@@ -3,8 +3,6 @@ import type { Command } from "../command/types";
 import { type NapiTimeline, createTimeline } from "../platform/binding";
 import { Renderable } from "../renderable";
 
-export type { TweenConfig, TimelineOptions };
-
 /**
  * Timeline widget — wraps the native tween/spring animation engine
  * (`NativeTimeline`). Use `addTween()` to schedule scalar animations, call

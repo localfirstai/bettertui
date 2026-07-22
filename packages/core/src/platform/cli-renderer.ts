@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import type { LayoutConstraints, Style } from "@bettertui/shared";
 import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
@@ -249,6 +250,59 @@ export class CliRenderer {
   /** Configure the debug overlay (corner, panel width, body rows). No-op when disabled. */
   configureDebugOverlay(options: Parameters<OverlayHost["configure"]>[0]): void {
     this.overlay?.configure(options);
+  }
+
+  /**
+   * Returns the native ID of the engine's root node.
+   * Used by the React adapter to append top-level elements to the engine root.
+   */
+  get rootNodeId(): number {
+    return this.engine.root();
+  }
+
+  /**
+   * Returns the native IDs of the direct children of a node.
+   * Used by the React adapter to iterate and clear children.
+   */
+  getChildrenOf(id: number): number[] {
+    return this.nodes.get(id)?.children ?? [];
+  }
+
+  /**
+   * Set visual style properties on a native node.
+   * Called by the React reconciler after prop commits.
+   */
+  setNodeStyle(id: number, style: Style): void {
+    this.engine.setStyle(id, JSON.stringify(style));
+  }
+
+  /**
+   * Set layout properties on a native node.
+   * Called by the React reconciler after prop commits.
+   */
+  setNodeLayout(id: number, layout: LayoutConstraints): void {
+    const layoutJson = layoutToEngineJson(layout);
+    this.engine.setLayout(id, JSON.stringify(layoutJson));
+  }
+
+  /**
+   * Insert `childId` immediately before `beforeId` in `parentId`'s children.
+   * Uses processCommands with the raw u64 node IDs as decimal strings.
+   */
+  insertNodeBefore(parentId: number, childId: number, beforeId: number): void {
+    const cmds = [{ type: "InsertBefore", reference: String(beforeId), child: String(childId) }];
+    this.engine.processCommands(JSON.stringify(cmds));
+    // Keep our TS node tracking in sync
+    const parentNode = this.nodes.get(parentId);
+    if (parentNode) {
+      const beforeIdx = parentNode.children.indexOf(beforeId);
+      const childIdx = parentNode.children.indexOf(childId);
+      if (childIdx !== -1) parentNode.children.splice(childIdx, 1);
+      const insertAt = beforeIdx === -1 ? parentNode.children.length : beforeIdx;
+      parentNode.children.splice(insertAt, 0, childId);
+      const childNode = this.nodes.get(childId);
+      if (childNode) childNode.parent = parentId;
+    }
   }
 
   start(): void {
@@ -521,3 +575,73 @@ function mapCapabilities(caps: TerminalCapabilities): {
 }
 
 export { getVersion, detectCapabilities };
+
+/**
+ * Convert a TypeScript {@link LayoutConstraints} object to the snake_case JSON
+ * shape expected by the Rust engine's `setLayout` command.
+ */
+function layoutToEngineJson(layout: LayoutConstraints): Record<string, unknown> {
+  const j: Record<string, unknown> = {};
+
+  if (layout.flexDirection !== undefined) j.direction = layout.flexDirection;
+  if (layout.flexWrap !== undefined) j.flex_wrap = layout.flexWrap;
+  if (layout.justifyContent !== undefined) j.justify = layout.justifyContent;
+  if (layout.alignItems !== undefined) j.align = layout.alignItems;
+  if (layout.flexGrow !== undefined) j.flex_grow = layout.flexGrow;
+  if (layout.flexShrink !== undefined) j.flex_shrink = layout.flexShrink;
+
+  if (layout.width !== undefined) j.width = String(layout.width);
+  if (layout.height !== undefined) j.height = String(layout.height);
+  if (layout.minWidth !== undefined) j.min_width = String(layout.minWidth);
+  if (layout.minHeight !== undefined) j.min_height = String(layout.minHeight);
+  if (layout.maxWidth !== undefined) j.max_width = String(layout.maxWidth);
+  if (layout.maxHeight !== undefined) j.max_height = String(layout.maxHeight);
+
+  // Padding
+  const pt =
+    layout.paddingTop ??
+    (typeof layout.padding === "number" ? layout.padding : layout.padding?.top);
+  const pr =
+    layout.paddingRight ??
+    (typeof layout.padding === "number" ? layout.padding : layout.padding?.right);
+  const pb =
+    layout.paddingBottom ??
+    (typeof layout.padding === "number" ? layout.padding : layout.padding?.bottom);
+  const pl =
+    layout.paddingLeft ??
+    (typeof layout.padding === "number" ? layout.padding : layout.padding?.left);
+  if (pt !== undefined) j.padding_top = pt;
+  if (pr !== undefined) j.padding_right = pr;
+  if (pb !== undefined) j.padding_bottom = pb;
+  if (pl !== undefined) j.padding_left = pl;
+
+  // Margin
+  const mt =
+    layout.marginTop ?? (typeof layout.margin === "number" ? layout.margin : layout.margin?.top);
+  const mr =
+    layout.marginRight ??
+    (typeof layout.margin === "number" ? layout.margin : layout.margin?.right);
+  const mb =
+    layout.marginBottom ??
+    (typeof layout.margin === "number" ? layout.margin : layout.margin?.bottom);
+  const ml =
+    layout.marginLeft ?? (typeof layout.margin === "number" ? layout.margin : layout.margin?.left);
+  if (mt !== undefined) j.margin_top = mt;
+  if (mr !== undefined) j.margin_right = mr;
+  if (mb !== undefined) j.margin_bottom = mb;
+  if (ml !== undefined) j.margin_left = ml;
+
+  // Gap
+  const gapVal = layout.gap;
+  if (gapVal !== undefined) {
+    if (typeof gapVal === "number") {
+      j.gap_row = gapVal;
+      j.gap_column = gapVal;
+    } else {
+      if (gapVal.row !== undefined) j.gap_row = gapVal.row;
+      if (gapVal.column !== undefined) j.gap_column = gapVal.column;
+    }
+  }
+
+  return j;
+}
