@@ -101,8 +101,33 @@ export interface TabSelectOptions {
 
 // ─── Content ─────────────────────────────────────────────────────────────────
 
+export interface MarkdownTheme {
+  /** Color for h1 headings. Default: "bright_cyan". */
+  h1Color?: string;
+  /** Color for h2 headings. Default: "cyan". */
+  h2Color?: string;
+  /** Color for h3-h6 headings. Default: "blue". */
+  h3Color?: string;
+  /** Color for inline code and code fences. Default: "yellow". */
+  codeColor?: string;
+  /** Background for code blocks. Default: "bright_black". */
+  codeBg?: string;
+  /** Color for blockquote text. Default: "bright_black". */
+  blockquoteColor?: string;
+  /** Color for list bullet/number. Default: "bright_cyan". */
+  bulletColor?: string;
+  /** Color for links. Default: "blue". */
+  linkColor?: string;
+  /** Color for horizontal rules. Default: "bright_black". */
+  hrColor?: string;
+}
+
 export interface MarkdownOptions {
   content?: string;
+  /** Override default color theme for markdown elements. */
+  theme?: MarkdownTheme;
+  /** Maximum width for word wrapping (0 = no wrap). Default: 0. */
+  maxWidth?: number;
 }
 
 export interface DiffOptions {
@@ -279,4 +304,39 @@ export interface ImageOptions {
   id?: number;
   /** Optional filename hint for iTerm2. */
   name?: string;
+}
+
+// ─── Table ───────────────────────────────────────────────────────────────────
+
+export type TableColumnAlign = "left" | "center" | "right";
+export type TableBorderStyle = "single" | "double" | "rounded" | "bold" | "none";
+
+export interface TableColumn {
+  header: string;
+  key?: string;
+  width?: number;
+  align?: TableColumnAlign;
+  minWidth?: number;
+  maxWidth?: number;
+}
+
+export interface TableOptions {
+  /** Column definitions (header label, optional fixed width, alignment). */
+  columns?: TableColumn[];
+  /** Row data as 2D string array — each inner array is one row. */
+  rows?: string[][];
+  /** Show table borders. Default: true. */
+  showBorder?: boolean;
+  /** Border drawing style. Default: "single". */
+  borderStyle?: TableBorderStyle;
+  /** Show header row. Default: true. */
+  showHeader?: boolean;
+  /** Index of the selected row (-1 = no selection). */
+  selectedRow?: number;
+  /** Zebra striping for alternating rows. Default: false. */
+  striped?: boolean;
+  /** Compact rendering (no padding around cells). Default: false. */
+  compact?: boolean;
+  /** Called when a row is selected. */
+  onSelect?: (row: string[], index: number) => void;
 }

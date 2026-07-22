@@ -42,11 +42,19 @@ export class Timeline extends Renderable<TimelineOptions> {
   }
 
   /** Advance the timeline by `dt` seconds. Call once per frame. */
-  update(dt: number): void {
+  tick(dt: number): void {
     this._tl.update(dt);
     if (this._tl.isComplete()) {
       this.opts.onComplete?.();
     }
+  }
+
+  /**
+   * Override Renderable.update to update timeline options.
+   * To advance the animation use `tick(dt)` instead.
+   */
+  override update(options: Partial<import("@bettertui/shared").TimelineOptions>): void {
+    super.update(options);
   }
 
   /** Current interpolated value of tween at `index`. */

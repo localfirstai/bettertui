@@ -1,0 +1,44 @@
+{
+  "name": "@bettertui/solid",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SolidJS renderer adapter for BetterTUI",
+  "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "biome check src/",
+    "format": "biome format --write src/",
+    "format:check": "biome format src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@bettertui/core": "workspace:*",
+    "@bettertui/shared": "workspace:*",
+    "solid-js": "^1.9.0"
+  },
+  "peerDependencies": {
+    "solid-js": ">=1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "solid-js": "^1.9.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -13,6 +13,10 @@ interface NativeModule {
   NativeSpanFeed: new (options?: NativeSpanFeedOptions | null) => NativeSpanFeed;
   NativeHitGrid: new (width: number, height: number) => NativeHitGrid;
   NativePluginHost: new () => NativePluginHost;
+  NativeTimeline: new (
+    duration?: number | null,
+    looping?: boolean | null,
+  ) => NativeTimelineInstance;
   TerminalCapabilities: TerminalCapabilities;
   detectCapabilities: () => TerminalCapabilities;
   getVersion: () => string;
@@ -25,6 +29,47 @@ interface NativeModule {
   loggerGetDiagnostics: () => NapiDiagnosticSnapshot;
   loggerFlush: () => void;
   highlightCode: (code: string, language: string) => NativeHighlightedLine[];
+  // Graphics protocol (may be absent in debug builds)
+  graphicsKittyWrite?: (
+    format: string,
+    width: number,
+    height: number,
+    data: Buffer,
+    id: number,
+  ) => Buffer;
+  graphicsKittyDelete?: (id: number) => Buffer;
+  graphicsKittyDeleteAll?: () => Buffer;
+  graphicsItermWrite?: (
+    fileBytes: Buffer,
+    name?: string | null,
+    width?: number | null,
+    height?: number | null,
+  ) => Buffer;
+  graphicsSixelWrite?: (format: string, width: number, height: number, data: Buffer) => Buffer;
+  graphicsQuery?: () => Buffer;
+  clipboardSetSequence?: (selection: string, text: string) => Buffer;
+  clipboardQuerySequence?: (selection: string) => Buffer;
+  clipboardDecode?: (payload: string) => string | null;
+}
+
+interface NativeTimelineInstance {
+  addTween(
+    from: number,
+    to: number,
+    duration: number,
+    startTime: number,
+    easing?: string | null,
+  ): number;
+  play(): void;
+  pause(): void;
+  restart(): void;
+  update(dt: number): void;
+  animationValue(index: number): number | null;
+  currentTime(): number;
+  isComplete(): boolean;
+  isPlaying(): boolean;
+  setSpeed(speed: number): void;
+  progress(): number | null;
 }
 
 interface NativeEngine {
@@ -47,6 +92,7 @@ interface NativeEngine {
   root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
+  insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
   hitGridCheck(x: number, y: number): number;
@@ -203,6 +249,8 @@ export interface NapiEngine {
   frameCount(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
+  /** Fast path: insert `child` immediately before `before` in the tree. */
+  insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
   root(): number;
@@ -350,6 +398,9 @@ class EngineWrapper implements NapiEngine {
   }
   appendChild(parent: number, child: number): boolean {
     return this.engine.appendChild(parent, child);
+  }
+  insertBefore(before: number, child: number): boolean {
+    return this.engine.insertBefore(before, child);
   }
   removeNode(id: number): void {
     this.engine.removeNode(id);
@@ -907,7 +958,7 @@ export function createPluginHost(): NapiPluginHost {
  * Wraps `NativeTimeline` from the napi-rs binary.
  */
 export class NapiTimeline {
-  private _tl: InstanceType<typeof native.NativeTimeline>;
+  private _tl: NativeTimelineInstance;
 
   constructor(duration?: number, looping?: boolean) {
     this._tl = new native.NativeTimeline(duration ?? null, looping ?? null);
@@ -980,7 +1031,7 @@ export function graphicsKittyWrite(
   id: number,
 ): Buffer {
   try {
-    return native.graphicsKittyWrite(format, width, height, data, id);
+    return native.graphicsKittyWrite?.(format, width, height, data, id) ?? Buffer.alloc(0);
   } catch {
     return Buffer.alloc(0);
   }
@@ -989,7 +1040,7 @@ export function graphicsKittyWrite(
 /** Build the Kitty sequence deleting image `id`. */
 export function graphicsKittyDelete(id: number): Buffer {
   try {
-    return native.graphicsKittyDelete(id);
+    return native.graphicsKittyDelete?.(id) ?? Buffer.alloc(0);
   } catch {
     return Buffer.alloc(0);
   }
@@ -998,7 +1049,7 @@ export function graphicsKittyDelete(id: number): Buffer {
 /** Build the Kitty sequence deleting all transmitted images. */
 export function graphicsKittyDeleteAll(): Buffer {
   try {
-    return native.graphicsKittyDeleteAll();
+    return native.graphicsKittyDeleteAll?.() ?? Buffer.alloc(0);
   } catch {
     return Buffer.alloc(0);
   }
@@ -1014,7 +1065,10 @@ export function graphicsItermWrite(
   height?: number,
 ): Buffer {
   try {
-    return native.graphicsItermWrite(fileBytes, name ?? null, width ?? null, height ?? null);
+    return (
+      native.graphicsItermWrite?.(fileBytes, name ?? null, width ?? null, height ?? null) ??
+      Buffer.alloc(0)
+    );
   } catch {
     return Buffer.alloc(0);
   }
@@ -1028,7 +1082,7 @@ export function graphicsSixelWrite(
   data: Buffer,
 ): Buffer {
   try {
-    return native.graphicsSixelWrite(format, width, height, data);
+    return native.graphicsSixelWrite?.(format, width, height, data) ?? Buffer.alloc(0);
   } catch {
     return Buffer.alloc(0);
   }
@@ -1041,7 +1095,7 @@ export function graphicsSixelWrite(
  */
 export function graphicsQuery(): Buffer {
   try {
-    return native.graphicsQuery();
+    return native.graphicsQuery?.() ?? Buffer.alloc(0);
   } catch {
     return Buffer.alloc(0);
   }
@@ -1056,7 +1110,8 @@ export function graphicsQuery(): Buffer {
  */
 export function clipboardSetSequence(selection: string, text: string): number[] {
   try {
-    return Array.from(native.clipboardSetSequence(selection, text));
+    const buf = native.clipboardSetSequence?.(selection, text);
+    return buf ? Array.from(buf) : [];
   } catch {
     return [];
   }
@@ -1069,7 +1124,8 @@ export function clipboardSetSequence(selection: string, text: string): number[] 
  */
 export function clipboardQuerySequence(selection: string): number[] {
   try {
-    return Array.from(native.clipboardQuerySequence(selection));
+    const buf = native.clipboardQuerySequence?.(selection);
+    return buf ? Array.from(buf) : [];
   } catch {
     return [];
   }
@@ -1081,7 +1137,7 @@ export function clipboardQuerySequence(selection: string): number[] {
  */
 export function clipboardDecode(payload: string): string | null {
   try {
-    return native.clipboardDecode(payload);
+    return native.clipboardDecode?.(payload) ?? null;
   } catch {
     return null;
   }

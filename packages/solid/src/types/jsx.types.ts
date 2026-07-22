@@ -1,10 +1,19 @@
-import type { LayoutConstraints, Style } from "@bettertui/shared";
-import type React from "react";
-
 /**
- * All valid JSX element names for @bettertui/react.
- * These correspond to node kinds understood by the Rust engine.
+ * JSX type declarations for @bettertui/solid.
+ *
+ * Declares all valid intrinsic element names and their prop shapes. These are
+ * augmented onto `solid-js`'s JSX namespace so editors provide autocomplete
+ * inside `.tsx` files that set `jsxImportSource: "@bettertui/solid"`.
+ *
+ * Tag names follow Solid's convention of using underscores for multi-word
+ * elements (e.g. `tab_select`, `progress_bar`) because JSX transpilers may
+ * treat hyphens as subtraction operators in some contexts.
  */
+
+import type { LayoutConstraints, Style } from "@bettertui/shared";
+import type { JSX as SolidJSX } from "solid-js";
+
+/** All valid JSX element names for @bettertui/solid. */
 export type BetterTUIElementType =
   | "box"
   | "text"
@@ -15,7 +24,7 @@ export type BetterTUIElementType =
   | "list"
   | "tree"
   | "dialog"
-  | "progressbar"
+  | "progress_bar"
   | "spinner"
   | "badge"
   | "divider"
@@ -24,16 +33,15 @@ export type BetterTUIElementType =
   | "markdown"
   | "table"
   | "texttable"
-  | "tabselect"
+  | "tab_select"
   | "timeline"
   | "diff"
   | "image";
 
 /** Base props shared by all terminal UI elements. */
 export interface BaseProps {
-  /** Visual style overrides. */
-  style?: Style;
-  /** Layout / flex properties. */
+  // biome-ignore lint/suspicious/noExplicitAny: style must accept any to avoid conflict with HTMLElementTags/SVGElementTags which use CSSProperties
+  style?: any;
   layout?: LayoutConstraints;
   flexDirection?: LayoutConstraints["flexDirection"];
   width?: LayoutConstraints["width"];
@@ -61,13 +69,14 @@ export interface BaseProps {
   dim?: Style["dim"];
   strikethrough?: Style["strikethrough"];
   inverse?: Style["inverse"];
-  children?: React.ReactNode;
+  children?: SolidJSX.Element;
 }
 
 export interface InputProps extends BaseProps {
   value?: string;
   placeholder?: string;
-  onChange?: (value: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: onChange must accept any to avoid conflict with HTMLInputElement's onChange event type
+  onChange?: any;
   onSubmit?: (value: string) => void;
 }
 
@@ -82,7 +91,7 @@ export interface ScrollBarProps extends BaseProps {
   orientation?: "vertical" | "horizontal";
   thumbSize?: number;
   trackSize?: number;
-  /** Scroll thumb position (0–1 or pixel offset). Distinct from the layout `position` prop. */
+  /** Scroll thumb position (0–1). Distinct from the layout `position` prop. */
   scrollPosition?: number;
   onChange?: (position: number) => void;
 }
@@ -97,21 +106,20 @@ export interface SliderProps extends BaseProps {
 }
 
 export interface TableProps extends BaseProps {
-  /** Column definitions. */
   columns?: Array<{
     header: string;
     key?: string;
     width?: number;
     align?: "left" | "center" | "right";
   }>;
-  /** Row data as 2D string array. */
   rows?: string[][];
   showBorder?: boolean;
   borderStyle?: "single" | "double" | "rounded" | "bold" | "none";
   showHeader?: boolean;
   selectedRow?: number;
   striped?: boolean;
-  onSelect?: (row: string[], index: number) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: onSelect must accept any to avoid conflict with HTMLTableElement's onSelect event type
+  onSelect?: any;
 }
 
 export interface TabSelectProps extends BaseProps {
@@ -131,7 +139,8 @@ export interface DiffProps extends BaseProps {
   language?: string;
 }
 
-declare global {
+// Augment solid-js's JSX namespace with BetterTUI intrinsic elements.
+declare module "solid-js" {
   namespace JSX {
     interface IntrinsicElements {
       box: BoxProps;
@@ -148,7 +157,7 @@ declare global {
       };
       tree: BaseProps;
       dialog: BaseProps & { open?: boolean; title?: string; onClose?: () => void };
-      progressbar: BaseProps & {
+      progress_bar: BaseProps & {
         value?: number;
         min?: number;
         max?: number;
@@ -163,14 +172,22 @@ declare global {
         orientation?: "horizontal" | "vertical";
       };
       slider: SliderProps;
-      code: BaseProps & { language?: string; content?: string };
+      // biome-ignore lint/suspicious/noExplicitAny: intentional override of conflicting HTML style type
+      code: Omit<BaseProps, "style"> & { style?: any; language?: string; content?: string };
       markdown: MarkdownProps;
       table: TableProps;
       texttable: BaseProps & { headers?: string[]; rows?: string[][]; showHeader?: boolean };
-      tabselect: TabSelectProps;
+      tab_select: TabSelectProps;
       timeline: BaseProps & { duration?: number; looping?: boolean; autoPlay?: boolean };
       diff: DiffProps;
-      image: BaseProps & { data?: Buffer; width?: number; height?: number; protocol?: string };
+      // biome-ignore lint/suspicious/noExplicitAny: intentional override of conflicting HTML style type
+      image: Omit<BaseProps, "style"> & {
+        style?: any;
+        data?: Buffer;
+        width?: number;
+        height?: number;
+        protocol?: string;
+      };
     }
   }
 }

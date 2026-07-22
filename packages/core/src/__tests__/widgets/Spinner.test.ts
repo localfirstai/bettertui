@@ -75,7 +75,9 @@ describe("Spinner", () => {
       };
     });
     expect(tickCb).not.toBeNull();
-    tickCb?.();
+    // Local alias needed: TS 5.4 closure-assignment narrowing widens `tickCb` to `never` at call site
+    const tick = tickCb as unknown as () => void;
+    tick();
     expect(s.currentFrame).not.toBe(frame0);
     stop();
     expect(tickCb).toBeNull();

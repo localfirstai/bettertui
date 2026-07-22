@@ -287,11 +287,10 @@ export class CliRenderer {
 
   /**
    * Insert `childId` immediately before `beforeId` in `parentId`'s children.
-   * Uses processCommands with the raw u64 node IDs as decimal strings.
+   * Uses the direct `insertBefore` NAPI call (fast path — no JSON serialization).
    */
   insertNodeBefore(parentId: number, childId: number, beforeId: number): void {
-    const cmds = [{ type: "InsertBefore", reference: String(beforeId), child: String(childId) }];
-    this.engine.processCommands(JSON.stringify(cmds));
+    this.engine.insertBefore(beforeId, childId);
     // Keep our TS node tracking in sync
     const parentNode = this.nodes.get(parentId);
     if (parentNode) {

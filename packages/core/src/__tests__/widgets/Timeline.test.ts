@@ -18,10 +18,10 @@ describe("Timeline", () => {
     expect(typeof idx).toBe("number");
   });
 
-  it("animationValue returns number after update", () => {
+  it("animationValue returns number after tick", () => {
     const tl = new Timeline({ duration: 1.0 });
     tl.addTween({ from: 0, to: 100, duration: 1.0 });
-    tl.update(0.5);
+    tl.tick(0.5);
     const val = tl.animationValue(0);
     expect(val).not.toBeNull();
     if (val !== null) {
@@ -32,7 +32,7 @@ describe("Timeline", () => {
 
   it("progress returns 0..1 when duration set", () => {
     const tl = new Timeline({ duration: 2.0 });
-    tl.update(1.0);
+    tl.tick(1.0);
     const p = tl.progress();
     expect(p).not.toBeNull();
     if (p !== null) {
@@ -57,7 +57,7 @@ describe("Timeline", () => {
         done = true;
       },
     });
-    tl.update(0.2);
+    tl.tick(0.2);
     expect(done).toBe(true);
   });
 
@@ -74,7 +74,7 @@ describe("Timeline", () => {
   it("setSpeed changes playback rate", () => {
     const tl = new Timeline({ duration: 10.0 });
     tl.setSpeed(2.0);
-    tl.update(1.0); // at 2x speed, 1s = 2s elapsed
+    tl.tick(1.0); // at 2x speed, 1s = 2s elapsed
     const p = tl.progress();
     // progress should be roughly 0.2 (2s / 10s)
     expect(p).not.toBeNull();
@@ -83,7 +83,7 @@ describe("Timeline", () => {
 
   it("restart resets timeline", () => {
     const tl = new Timeline({ duration: 2.0 });
-    tl.update(1.0);
+    tl.tick(1.0);
     tl.restart();
     expect(tl.currentTime()).toBeCloseTo(0, 1);
   });
