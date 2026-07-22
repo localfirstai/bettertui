@@ -64,8 +64,6 @@ BetterTUI is a **native terminal UI**, not an application, IDE, or AI tool. It p
 
 The Rust engine owns:
 
-The Rust engine owns:
-
 - **Rendering** — double-buffered, cell-based frame buffer with dirty-region diffing
 - **Layout** — Taffy-based flexbox adapted to terminal cells
 - **Input** — keyboard, mouse, and paste parsing (incl. Kitty / CSI-u)
@@ -78,9 +76,8 @@ The Rust engine owns:
 TypeScript owns:
 
 - **API** — typed, framework-agnostic interfaces (`@bettertui/core`)
-- **React bindings** — reconciler host config and components (`@bettertui/react`)
+- **Framework adapters** — React and SolidJS bindings (planned, not yet implemented)
 - **Themes** — design-token types (in `@bettertui/shared`; presets created in the native bridge)
-- **Hooks** — `useTheme`, `useFocus`, `useKeyboard`, `useMouse`, `useAnimation`, `useTimeline`, etc.
 
 Docs: https://bettertui.dev/docs/getting-started
 
@@ -127,7 +124,12 @@ pnpm lint
 ### React usage
 
 The React adapter (`@bettertui/react`) is not implemented yet. The `packages/react` directory is a
-placeholder. Once built, React apps will install only `@bettertui/react` and call `render(<Box>…</Box>)`.
+placeholder. Once built, React apps will install only `@bettertui/react` and call `render(<App />)`.
+
+### SolidJS usage
+
+The SolidJS adapter (`@bettertui/solid`) is not implemented yet. The `packages/solid` directory is a
+placeholder.
 
 ### Vanilla / native TypeScript usage
 
@@ -149,11 +151,10 @@ cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 
 ## Tech Stack
 
-- **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap, tree-sitter)
+- **Engine:** Rust (napi-rs, taffy, crossterm, ropey, portable-pty, slotmap)
 - **Runtime:** Node.js
 - **Language:** TypeScript (ES2022+)
 - **Monorepo:** TurboRepo + pnpm
-- **React:** React 19 + custom reconciler
 - **Formatting/Linting:** Biome (TS/JS/JSON), rustfmt + clippy (Rust)
 - **Git Hooks:** Husky
 
@@ -168,9 +169,9 @@ live as modules **inside** `bettertui-engine` (there is no separate `bettertui-w
 
 The TypeScript side is implemented: `@bettertui/core` (command buffer, reconciler wrapper,
 `CommandRuntime`, native bridge, testing utilities) and `@bettertui/examples` (vanilla / native
-TypeScript demos runnable on `@bettertui/core`). The React adapter (`@bettertui/react`) is **not
-implemented** — `packages/react` is a placeholder directory only. Vanilla / native TypeScript
-examples live under `packages/examples/typescript/` and run directly on `@bettertui/core` (no React).
+TypeScript demos runnable on `@bettertui/core`). The React adapter (`@bettertui/react`) and SolidJS
+adapter (`@bettertui/solid`) are **not implemented** — `packages/react` and `packages/solid` are
+placeholder directories only. Vanilla / native TypeScript examples run directly on `@bettertui/core`.
 
 > The Rust unit-test suite is co-located in the engine crate. Run
 > `cargo test --manifest-path packages/core/Cargo.toml --lib` to execute it. (At the time of

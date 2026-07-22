@@ -46,10 +46,7 @@ bettertui/
 ├── apps/
 │   └── website/       # @bettertui/website — Astro/Starlight docs + landing site
 ├── examples/
-│   ├── vanila/        # Vanilla / native TypeScript examples (run on @bettertui/core)
-│   ├── react/         # (reserved)
-│   ├── rust/          # (reserved)
-│   └── solid/         # (reserved)
+│   └── vanilla/       # Vanilla / native TypeScript examples (run on @bettertui/core)
 ├── docs/              # this documentation
 ├── scripts/           # repo-level automation (doc checks, example smoke tests)
 ├── tasks/             # PRDs, reports, archived history (read-only)
@@ -67,9 +64,10 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 
 | Package | `private` | Depends on | Role |
 |---------|-----------|-----------|------|
-| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) — **internal, re-exported by `@bettertui/core`/`@bettertui/react`** |
+| `@bettertui/shared` | yes | — | Pure type definitions (no runtime code) — **internal, re-exported by `@bettertui/core`** |
 | `@bettertui/core` | yes | `shared` | Framework package for vanilla / native TypeScript — command buffer, tree ops, reconciler wrapper, `CommandRuntime`, native bridge, in-core debug tooling (`createDevTools`, debug overlay) |
-| `@bettertui/react` | yes | `core`, `shared`, `react-reconciler` | React 19 adapter (host config, hooks, 13 components) — React apps install only this |
+| `@bettertui/react` | yes | `core`, `shared` | **Placeholder** — React adapter not yet implemented |
+| `@bettertui/solid` | yes | `core`, `shared` | **Placeholder** — SolidJS adapter not yet implemented |
 | `@bettertui/benchmark` | yes | `core` | Vitest benchmarks for TS packages |
 
 
@@ -77,12 +75,13 @@ All TypeScript packages are ESM-only, built with `tsdown` (`dts: true`), and exp
 graph TD
     shared[shared — internal]
     core[core — vanilla/native TS]
-    react[react — React]
-    devtools[devtools]
+    react[react — placeholder]
+    solid[solid — placeholder]
     shared --> core
     shared --> react
+    shared --> solid
     core --> react
-    devtools -.leaf.-> devtools
+    core --> solid
 ```
 
 ## Rust Crate Layout
@@ -122,10 +121,9 @@ flowchart TD
     B --> C{build order by ^dep}
     C --> D[build @bettertui/shared (internal)]
     D --> E[build @bettertui/core]
-    E --> F[build @bettertui/react]
     B -. optional .-> G[pnpm --filter @bettertui/core build:native]
     G --> H[bettertui_engine.node addon]
-    F -->|requires| H
+    E -->|requires| H
 ```
 
 Key root scripts:
@@ -147,12 +145,14 @@ The Rust addon (`bettertui_engine.node`) is **not** declared in any package.json
 graph TD
     VR[Vanilla / Native TS App] --> Core
     AR[React App] --> React
+    SR[SolidJS App] --> Solid
     React --> Core
+    Solid --> Core
     Core -->|napi-rs| Engine[bettertui-engine]
     Engine --> Terminal[(Terminal)]
     Core --> Shared[Internal: @bettertui/shared]
     React --> Shared
-
+    Solid --> Shared
 ```
 
 Rules enforced by code, not just policy:
@@ -169,10 +169,12 @@ graph TD
         VR[Vanilla / Native TS App]
         C[@bettertui/core — first-class, framework-agnostic]
         AR[React App]
-        R[@bettertui/react — first-class, depends on core]
+        R[@bettertui/react — placeholder, depends on core]
+        SR[SolidJS App]
+        S[@bettertui/solid — placeholder, depends on core]
     end
     subgraph L2[Type Foundation]
-        S[@bettertui/shared — internal, re-exported]
+        TF[@bettertui/shared — internal, re-exported]
     end
     subgraph L3[Rust Crate Layer]
         E[bettertui-engine — lib + cdylib]
@@ -182,11 +184,14 @@ graph TD
     end
     VR --> C
     AR --> R
+    SR --> S
     R --> C
+    S --> C
     C -->|napi-rs| E
     E --> X
-    C --> S
-    R --> S
+    C --> TF
+    R --> TF
+    S --> TF
 ```
 
 - **Layer 1 (App-facing packages).** `@bettertui/core` is the framework package for vanilla / native TypeScript. `@bettertui/react` is the React adapter and depends on core — React apps install only `@bettertui/react`.

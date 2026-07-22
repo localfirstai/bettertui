@@ -10,7 +10,8 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 ## Two ways to use BetterTUI
 
 - **Vanilla / native TypeScript — `@bettertui/core` (implemented).** A fully public, framework-agnostic package. Build CLI tools, daemons, and custom adapters on it directly.
-- **React — `@bettertui/react` (planned, not yet implemented).** The intended first-class adapter. When built, React apps will install **only** `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically. The package directory is currently a placeholder.
+- **React — `@bettertui/react` (placeholder, not yet implemented).** The intended first-class adapter. When built, React apps will install **only** `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically. The `packages/react` directory is currently a placeholder.
+- **SolidJS — `@bettertui/solid` (placeholder, not yet implemented).** The SolidJS adapter. The `packages/solid` directory is currently a placeholder.
 
 `@bettertui/shared` is **internal** (re-exported by core) — do not install it directly.
 

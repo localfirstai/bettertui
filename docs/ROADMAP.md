@@ -13,8 +13,8 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 | `@bettertui/core` (testing utilities) | ✅ Implemented | `createTestRenderer`, `createMockKeys`, `createMockMouse`, test streams, terminal capabilities mocks |
 | `@bettertui/core` (debug tooling) | ✅ Implemented | In-core `createDevTools()` factory (inspectors, logger, export helpers) + debug overlay (`CliRenderer` `debug` option) |
 | `@bettertui/benchmark` | ✅ Implemented | Vitest `bench` harness for TS packages |
-| `@bettertui/examples` | ✅ Implemented | Interactive CLI example browser (`packages/examples/typescript`) using the native Rust engine directly via `@bettertui/core` (no React) |
 | `@bettertui/react` | ⏳ Not implemented | `packages/react` is a placeholder directory. The React adapter (host config, `render()`, hooks, components) is planned but not written. |
+| `@bettertui/solid` | ⏳ Not implemented | `packages/solid` is a placeholder directory. The SolidJS adapter is planned but not written. |
 
 ## Completed
 
@@ -51,10 +51,11 @@ BetterTUI is built in layers. The Rust engine and its FFI bindings lead; the Typ
 ## Planned
 
 - [ ] `@bettertui/react` adapter — `react-reconciler` host config, `render()`, hooks, and components (when built, React apps install only `@bettertui/react`, which depends on `@bettertui/core`)
+- [ ] `@bettertui/solid` adapter — SolidJS adapter (when built, SolidJS apps install only `@bettertui/solid`, which depends on `@bettertui/core`)
 - [ ] React `Terminal` component wrapping the embedded PTY
 - [ ] Theme presets (light, high-contrast)
 - [ ] Example applications wired to the engine (dashboard, mouse, table, text-editor, tree)
-- [ ] Additional framework adapters (Vue, Solid, Svelte, vanilla TypeScript) — require no Rust changes
+- [ ] Additional framework adapters (Vue, Svelte, vanilla TypeScript) — require no Rust changes
 - [ ] Plugin system
 - [ ] Per-package test coverage: expand Vitest suites in each package (mock input, snapshot assertions); no separate `@bettertui/testing` package
 - [ ] Public API reference documentation per package (see `api/packages/`)

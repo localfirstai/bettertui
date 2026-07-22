@@ -57,11 +57,11 @@ cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 - `packages/core/crates/benchmark/` — Rust benchmarks (`bettertui-benchmark`)
 - `packages/` — TypeScript packages (all currently `private`):
   - `@bettertui/core` — framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge, in-core debug tooling)
-  - `@bettertui/react` — React adapter (install **only** this for React apps; depends on core)
-  - `@bettertui/shared` — **internal** type-only foundation (re-exported by core and react)
-  - `@bettertui/benchmark` — tooling
+  - `@bettertui/react` — **placeholder** — React adapter not yet implemented
+  - `@bettertui/solid` — **placeholder** — SolidJS adapter not yet implemented
+  - `@bettertui/shared` — **internal** type-only foundation (re-exported by core)
 - `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
-- `examples/` — `vanila/` holds the vanilla / native TypeScript examples (run on `@bettertui/core`); `react/`, `rust/`, `solid/` are reserved
+- `examples/` — vanilla TypeScript examples run on `@bettertui/core`; `react/`, `rust/`, `solid/` are reserved
 - `docs/` — the documentation you are reading (canonical source of truth)
 
 ## Test-Driven Development
@@ -160,4 +160,3 @@ Use GitHub Issues to report bugs or request features. Include:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
-IT License.

@@ -6,11 +6,11 @@ This is the index for per-package API docs. Every entry below is generated from 
 
 | Package | API doc | Status |
 |---------|---------|--------|
-| `@bettertui/core` | [core.md](packages/core.md) | Framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge) |
-| `@bettertui/react` | [react.md](packages/react.md) | React adapter — host config, hooks, and **13 component functions**; install **only** this for React apps (depends on `@bettertui/core`) |
+| `@bettertui/core` | [core.md](packages/core.md) | Framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge) — **implemented** |
+| `@bettertui/react` | [react.md](packages/react.md) | **Placeholder** — React adapter not yet implemented |
+| `@bettertui/solid` | — | **Placeholder** — SolidJS adapter not yet implemented |
+| `@bettertui/shared` | [shared.md](packages/shared.md) | **Internal — types only, re-exported via `@bettertui/core`** |
 | `@bettertui/core` (native bridge) | [native.md](packages/native.md) | Implemented (requires the `bettertui_engine.node` addon); part of the `@bettertui/core` surface |
-| `@bettertui/shared` | [shared.md](packages/shared.md) | **Internal — types only, re-exported via `@bettertui/core`/`@bettertui/react`** |
-| `@bettertui/themes` | [themes.md](packages/themes.md) | **Removed** — absorbed into `@bettertui/shared` + Rust engine |
 | `@bettertui/core` (devtools) | [devtools.md](packages/devtools.md) | Implemented — in-core `createDevTools` factory + debug overlay; part of the `@bettertui/core` surface |
 | `@bettertui/benchmark` | — | Implemented (Vitest bench) |
 
