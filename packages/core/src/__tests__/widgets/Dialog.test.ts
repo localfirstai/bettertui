@@ -1,4 +1,4 @@
-import type { KeyEvent } from "@bettertui/shared";
+import type { KeyEvent, MouseEvent } from "@bettertui/shared";
 import { describe, expect, it } from "vitest";
 import { Dialog } from "../../widgets/Dialog";
 
@@ -96,5 +96,45 @@ describe("Dialog", () => {
     const d = new Dialog({ open: false });
     d.update({ open: true });
     expect(d.isOpen).toBe(true);
+  });
+
+  it("handleMouse left-click closes when closeOnClickOutside=true", () => {
+    const d = new Dialog({ open: true, closeOnClickOutside: true });
+    const ev: MouseEvent = {
+      button: "left",
+      position: { x: 5, y: 5 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    const result = d.handleMouse(ev);
+    expect(result).toBe(true);
+    expect(d.isOpen).toBe(false);
+  });
+
+  it("handleMouse does not close when closeOnClickOutside not set", () => {
+    const d = new Dialog({ open: true });
+    const ev: MouseEvent = {
+      button: "left",
+      position: { x: 5, y: 5 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    const result = d.handleMouse(ev);
+    expect(result).toBe(false);
+    expect(d.isOpen).toBe(true);
+  });
+
+  it("handleMouse returns false when closed", () => {
+    const d = new Dialog({ open: false, closeOnClickOutside: true });
+    const ev: MouseEvent = {
+      button: "left",
+      position: { x: 5, y: 5 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    expect(d.handleMouse(ev)).toBe(false);
   });
 });

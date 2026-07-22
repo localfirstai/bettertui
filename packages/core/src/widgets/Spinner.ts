@@ -20,6 +20,7 @@ const SPINNER_FRAMES: Record<SpinnerVariant, string[]> = {
 export class Spinner extends Renderable<SpinnerOptions> {
   private _frameIndex = 0;
   private _timer: ReturnType<typeof setInterval> | null = null;
+  private _stopFn: (() => void) | null = null;
 
   constructor(options: SpinnerOptions = {}) {
     super(options);
@@ -39,12 +40,27 @@ export class Spinner extends Renderable<SpinnerOptions> {
     return true;
   }
 
-  /** Start auto-ticking at interval (ms). Returns cleanup fn. */
-  start(intervalMs?: number): () => void {
+  /**
+   * Start auto-ticking at interval (ms). Returns cleanup fn.
+   *
+   * @param intervalMs - tick interval in milliseconds (default: `opts.speed ?? 80`)
+   * @param scheduler  - optional clock injection: `(cb, ms) => stopFn`. Defaults
+   *                     to `setInterval`. Inject a custom scheduler in tests to
+   *                     avoid real timers and prevent interval leaks.
+   */
+  start(intervalMs?: number, scheduler?: (cb: () => void, ms: number) => () => void): () => void {
+    this.stop();
     const speed = intervalMs ?? this.opts.speed ?? 80;
-    this._timer = setInterval(() => {
-      this.tick();
-    }, speed);
+    if (scheduler) {
+      this._stopFn = scheduler(() => {
+        this.tick();
+      }, speed);
+    } else {
+      this._timer = setInterval(() => {
+        this.tick();
+      }, speed);
+      this._stopFn = null;
+    }
     return () => this.stop();
   }
 
@@ -52,6 +68,10 @@ export class Spinner extends Renderable<SpinnerOptions> {
     if (this._timer !== null) {
       clearInterval(this._timer);
       this._timer = null;
+    }
+    if (this._stopFn !== null) {
+      this._stopFn();
+      this._stopFn = null;
     }
   }
 

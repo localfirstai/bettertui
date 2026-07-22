@@ -57,3 +57,17 @@ export type { TreeOptions } from "./Tree";
 
 export { Dialog } from "./Dialog";
 export type { DialogOptions } from "./Dialog";
+
+export { Timeline } from "./Timeline";
+export type { TimelineOptions, TweenConfig } from "./Timeline";
+
+export { Image } from "./Image";
+export type { ImageOptions, ImageFormat, ImageProtocol } from "./Image";
+export {
+  graphicsQuery,
+  graphicsKittyWrite,
+  graphicsKittyDelete,
+  graphicsKittyDeleteAll,
+  graphicsItermWrite,
+  graphicsSixelWrite,
+} from "./Image";

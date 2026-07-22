@@ -899,3 +899,190 @@ export class NapiPluginHost {
 export function createPluginHost(): NapiPluginHost {
   return new NapiPluginHost(new native.NativePluginHost());
 }
+
+// ─── Timeline ────────────────────────────────────────────────────────────────
+
+/**
+ * TypeScript wrapper around the native tween/spring animation timeline.
+ * Wraps `NativeTimeline` from the napi-rs binary.
+ */
+export class NapiTimeline {
+  private _tl: InstanceType<typeof native.NativeTimeline>;
+
+  constructor(duration?: number, looping?: boolean) {
+    this._tl = new native.NativeTimeline(duration ?? null, looping ?? null);
+  }
+
+  /**
+   * Schedule a tween from `from` → `to` over `duration` seconds starting at
+   * `startTime`. Returns the animation index for {@link animationValue}.
+   */
+  addTween(from: number, to: number, duration: number, startTime: number, easing?: string): number {
+    return this._tl.addTween(from, to, duration, startTime, easing ?? null);
+  }
+
+  play(): void {
+    this._tl.play();
+  }
+  pause(): void {
+    this._tl.pause();
+  }
+  restart(): void {
+    this._tl.restart();
+  }
+
+  /** Advance by `dt` seconds (frame delta). Call once per frame. */
+  update(dt: number): void {
+    this._tl.update(dt);
+  }
+
+  /** Current interpolated value of tween at `index`. */
+  animationValue(index: number): number | null {
+    return this._tl.animationValue(index);
+  }
+
+  currentTime(): number {
+    return this._tl.currentTime();
+  }
+  isComplete(): boolean {
+    return this._tl.isComplete();
+  }
+  isPlaying(): boolean {
+    return this._tl.isPlaying();
+  }
+  setSpeed(speed: number): void {
+    this._tl.setSpeed(speed);
+  }
+
+  /** Progress 0.0–1.0 if timeline has a fixed duration, else `null`. */
+  progress(): number | null {
+    return this._tl.progress();
+  }
+}
+
+export function createTimeline(duration?: number, looping?: boolean): NapiTimeline {
+  return new NapiTimeline(duration, looping);
+}
+
+// ─── Graphics protocol ───────────────────────────────────────────────────────
+
+export type GraphicsFormat = "rgb" | "rgba" | "png";
+
+/**
+ * Build a Kitty graphics-protocol sequence transmitting+displaying raw pixel
+ * or PNG data with the given numeric `id`.
+ */
+export function graphicsKittyWrite(
+  format: GraphicsFormat,
+  width: number,
+  height: number,
+  data: Buffer,
+  id: number,
+): Buffer {
+  try {
+    return native.graphicsKittyWrite(format, width, height, data, id);
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+/** Build the Kitty sequence deleting image `id`. */
+export function graphicsKittyDelete(id: number): Buffer {
+  try {
+    return native.graphicsKittyDelete(id);
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+/** Build the Kitty sequence deleting all transmitted images. */
+export function graphicsKittyDeleteAll(): Buffer {
+  try {
+    return native.graphicsKittyDeleteAll();
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+/**
+ * Build an iTerm2 inline-image sequence for `fileBytes` (e.g. PNG file data).
+ */
+export function graphicsItermWrite(
+  fileBytes: Buffer,
+  name?: string,
+  width?: number,
+  height?: number,
+): Buffer {
+  try {
+    return native.graphicsItermWrite(fileBytes, name ?? null, width ?? null, height ?? null);
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+/** Build a Sixel sequence for a raw `rgb`/`rgba` image (empty for `png`). */
+export function graphicsSixelWrite(
+  format: GraphicsFormat,
+  width: number,
+  height: number,
+  data: Buffer,
+): Buffer {
+  try {
+    return native.graphicsSixelWrite(format, width, height, data);
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+/**
+ * Build the probe sequence(s) that detect which graphics protocols the
+ * terminal supports (Kitty query + DA1 for Sixel). Write the returned bytes
+ * to stdout, then wait for the terminal's DA1 response.
+ */
+export function graphicsQuery(): Buffer {
+  try {
+    return native.graphicsQuery();
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
+
+// ─── Clipboard (OSC 52) ──────────────────────────────────────────────────────
+
+/**
+ * Build the OSC 52 sequence that sets the terminal clipboard to `text`.
+ * Write the returned bytes to stdout.
+ * `selection`: `"clipboard"` | `"primary"` | `"secondary"` | `"tertiary"`
+ */
+export function clipboardSetSequence(selection: string, text: string): number[] {
+  try {
+    return Array.from(native.clipboardSetSequence(selection, text));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Build the OSC 52 query sequence asking the terminal to report clipboard
+ * contents. Write the returned bytes to stdout; the response arrives as an
+ * inbound OSC 52 which {@link clipboardDecode} can decode.
+ */
+export function clipboardQuerySequence(selection: string): number[] {
+  try {
+    return Array.from(native.clipboardQuerySequence(selection));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Decode a base64 OSC 52 clipboard payload into UTF-8 text.
+ * Returns `null` for the `?` query marker or invalid base64/UTF-8.
+ */
+export function clipboardDecode(payload: string): string | null {
+  try {
+    return native.clipboardDecode(payload);
+  } catch {
+    return null;
+  }
+}

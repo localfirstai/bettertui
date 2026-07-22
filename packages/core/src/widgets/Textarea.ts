@@ -81,12 +81,20 @@ export class Textarea extends Renderable<TextareaOptions> {
 
     // Navigation
     if (key.key === "left") {
-      this._engine.cursorLeft();
+      if (key.ctrl || key.meta) {
+        this._moveCursorWordLeft();
+      } else {
+        this._engine.cursorLeft();
+      }
       return true;
     }
 
     if (key.key === "right") {
-      this._engine.cursorRight();
+      if (key.ctrl || key.meta) {
+        this._moveCursorWordRight();
+      } else {
+        this._engine.cursorRight();
+      }
       return true;
     }
 
@@ -144,6 +152,38 @@ export class Textarea extends Renderable<TextareaOptions> {
       return true;
     }
 
+    // Kill line (line-scoped, unlike Input which kills whole buffer)
+    if (key.ctrl && key.key === "k") {
+      const text = this._engine.getText();
+      const pos = this._engine.cursorPosition();
+      let lineEnd = pos;
+      while (lineEnd < text.length && text[lineEnd] !== "\n") lineEnd++;
+      const before = text.slice(0, pos);
+      const after = text.slice(lineEnd);
+      this._engine.clear();
+      if (before.length > 0) this._engine.insertStr(before);
+      if (after.length > 0) this._engine.insertStr(after);
+      this._engine.setCursorPosition(pos);
+      this.opts.onChange?.(this._engine.getText());
+      return true;
+    }
+
+    // Kill to line start
+    if (key.ctrl && key.key === "u") {
+      const text = this._engine.getText();
+      const pos = this._engine.cursorPosition();
+      let lineStart = pos;
+      while (lineStart > 0 && text[lineStart - 1] !== "\n") lineStart--;
+      const before = text.slice(0, lineStart);
+      const after = text.slice(pos);
+      this._engine.clear();
+      if (before.length > 0) this._engine.insertStr(before);
+      if (after.length > 0) this._engine.insertStr(after);
+      this._engine.setCursorPosition(lineStart);
+      this.opts.onChange?.(this._engine.getText());
+      return true;
+    }
+
     // Skip modifier combos
     if (key.ctrl || key.meta || key.alt) return false;
 
@@ -155,6 +195,23 @@ export class Textarea extends Renderable<TextareaOptions> {
     }
 
     return false;
+  }
+
+  private _moveCursorWordLeft(): void {
+    const text = this._engine.getText();
+    let pos = this._engine.cursorPosition();
+    while (pos > 0 && text[pos - 1] === " ") pos--;
+    while (pos > 0 && text[pos - 1] !== " " && text[pos - 1] !== "\n") pos--;
+    this._engine.setCursorPosition(pos);
+  }
+
+  private _moveCursorWordRight(): void {
+    const text = this._engine.getText();
+    let pos = this._engine.cursorPosition();
+    const len = text.length;
+    while (pos < len && text[pos] !== " " && text[pos] !== "\n") pos++;
+    while (pos < len && text[pos] === " ") pos++;
+    this._engine.setCursorPosition(pos);
   }
 
   private _moveCursorVertically(direction: -1 | 1): void {

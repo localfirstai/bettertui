@@ -225,9 +225,11 @@ export interface ListOptions {
   selectedId?: string;
   height?: number;
   onSelect?: (item: ListItem) => void;
+  onSelectMulti?: (items: ListItem[]) => void;
   onChange?: (item: ListItem) => void;
   searchable?: boolean;
   placeholder?: string;
+  multiSelect?: boolean;
 }
 
 // ─── Dialog ──────────────────────────────────────────────────────────────────
@@ -240,4 +242,41 @@ export interface DialogOptions {
   onClose?: () => void;
   closeOnEsc?: boolean;
   closeOnClickOutside?: boolean;
+}
+
+// ─── Timeline ────────────────────────────────────────────────────────────────
+
+export interface TimelineOptions {
+  duration?: number;
+  looping?: boolean;
+  autoPlay?: boolean;
+  onComplete?: () => void;
+}
+
+export interface TweenConfig {
+  from: number;
+  to: number;
+  duration: number;
+  startTime?: number;
+  easing?: string;
+}
+
+// ─── Image ───────────────────────────────────────────────────────────────────
+
+export type ImageFormat = "rgb" | "rgba" | "png";
+export type ImageProtocol = "kitty" | "iterm2" | "sixel" | "auto";
+
+export interface ImageOptions {
+  /** Raw pixel data or PNG file bytes (Buffer). */
+  data: Buffer;
+  width: number;
+  height: number;
+  /** Pixel format. Default: "png". */
+  format?: ImageFormat;
+  /** Graphics protocol. Default: "auto" (uses graphicsQuery result). */
+  protocol?: ImageProtocol;
+  /** Kitty image id (required for Kitty protocol). */
+  id?: number;
+  /** Optional filename hint for iTerm2. */
+  name?: string;
 }

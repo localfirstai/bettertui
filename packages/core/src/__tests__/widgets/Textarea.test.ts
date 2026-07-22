@@ -91,6 +91,91 @@ describe("Textarea", () => {
     expect(result).toBe(false);
   });
 
+  it("handleKey Ctrl+Left jumps word left", () => {
+    const ta = new Textarea({ value: "hello world" });
+    // cursor at end after construction
+    ta.handleKey({
+      key: "left",
+      code: "ArrowLeft",
+      ctrl: true,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    // should jump back one word ("world")
+    expect(ta.cursorPosition).toBeLessThan(11);
+  });
+
+  it("handleKey Ctrl+Right jumps word right", () => {
+    const ta = new Textarea({ value: "hello world" });
+    // move to start
+    ta.handleKey({
+      key: "home",
+      code: "Home",
+      ctrl: false,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    ta.handleKey({
+      key: "right",
+      code: "ArrowRight",
+      ctrl: true,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    expect(ta.cursorPosition).toBeGreaterThan(0);
+  });
+
+  it("handleKey Ctrl+K kills to end of line", () => {
+    const ta = new Textarea({ value: "hello\nworld" });
+    // cursor at end (pos 11, on "world" line). Home → start of "world" (pos 6).
+    ta.handleKey({
+      key: "home",
+      code: "Home",
+      ctrl: false,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    ta.handleKey({
+      key: "k",
+      code: "KeyK",
+      ctrl: true,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    expect(ta.value).toBe("hello\n");
+  });
+
+  it("handleKey Ctrl+U kills to start of line", () => {
+    const ta = new Textarea({ value: "hello\nworld" });
+    // cursor at end (pos 11, on "world" line). Ctrl+U kills from lineStart(6) to pos(11).
+    ta.handleKey({
+      key: "u",
+      code: "KeyU",
+      ctrl: true,
+      shift: false,
+      alt: false,
+      meta: false,
+      eventType: "press",
+      source: "raw",
+    });
+    expect(ta.value).toBe("hello\n");
+  });
+
   it("handleKey no-ops when disabled", () => {
     const ta = new Textarea({ value: "test", disabled: true });
     const result = ta.handleKey({
