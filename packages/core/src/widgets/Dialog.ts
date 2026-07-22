@@ -1,4 +1,4 @@
-import type { DialogOptions, KeyEvent } from "@bettertui/shared";
+import type { DialogOptions, KeyEvent, MouseEvent } from "@bettertui/shared";
 import type { Command } from "../command/types";
 import { Renderable } from "../renderable";
 
@@ -80,6 +80,15 @@ export class Dialog extends Renderable<DialogOptions> {
       return true;
     }
 
+    return false;
+  }
+
+  override handleMouse(event: MouseEvent): boolean {
+    if (!this._open) return false;
+    if (this.opts.closeOnClickOutside === true && event.button === "left") {
+      this.close();
+      return true;
+    }
     return false;
   }
 }

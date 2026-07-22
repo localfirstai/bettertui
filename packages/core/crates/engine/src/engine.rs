@@ -140,6 +140,13 @@ impl Engine {
         self.processor.process_single(Command::AppendChild { parent, child })
     }
 
+    /// Inserts `child` immediately before `reference` in `reference`'s parent.
+    /// The parent is inferred from `reference`'s current parent.
+    pub fn insert_before(&mut self, reference: NodeId, child: NodeId) -> Result<(), crate::protocol::CommandError> {
+        debug!(?reference, ?child, "Engine::insert_before() - inserting child before reference");
+        self.processor.process_single(Command::InsertBefore { reference, child })
+    }
+
     /// Removes a node and its descendants.
     pub fn remove_node(&mut self, id: NodeId) {
         debug!(?id, "Engine::remove_node() - removing node");

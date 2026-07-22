@@ -1,17 +1,17 @@
 import type { EventCategory, TimelineEntry } from "./devtools.types";
 
-export interface TimelineOptions {
+export interface DevToolsTimelineOptions {
   maxEntries?: number | undefined;
   onEntry?: ((entry: TimelineEntry) => void) | undefined;
 }
 
-export class Timeline {
+export class DevToolsTimeline {
   private entries: TimelineEntry[] = [];
   private nextId = 0;
   private maxEntries: number;
   private onEntry: ((entry: TimelineEntry) => void) | undefined;
 
-  constructor(options: TimelineOptions = {}) {
+  constructor(options: DevToolsTimelineOptions = {}) {
     this.maxEntries = options.maxEntries ?? 5000;
     this.onEntry = options.onEntry;
   }

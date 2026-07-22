@@ -35,8 +35,8 @@ export { FocusInspector } from "./focusInspector";
 export type { FocusInspectorOptions } from "./focusInspector";
 export { CapabilityInspector } from "./capabilityInspector";
 export type { CapabilityInspectorOptions } from "./capabilityInspector";
-export { Timeline } from "./timeline";
-export type { TimelineOptions } from "./timeline";
+export { DevToolsTimeline } from "./timeline";
+export type { DevToolsTimelineOptions } from "./timeline";
 export { SnapshotManager } from "./snapshot";
 export type { SnapshotOptions } from "./snapshot";
 export { createExport, exportToJson, createSummary } from "./export";
@@ -73,7 +73,7 @@ import { Logger } from "./logger";
 import { PerformanceTracker } from "./performance";
 import { SchedulerInspector } from "./schedulerInspector";
 import { SnapshotManager } from "./snapshot";
-import { Timeline } from "./timeline";
+import { DevToolsTimeline } from "./timeline";
 import { TreeInspector } from "./treeInspector";
 
 /** Memory statistics captured from the Node.js process. */
@@ -126,7 +126,7 @@ export interface DevTools {
   readonly capabilities: CapabilityInspector;
 
   /** Timeline — chronological event recording */
-  readonly timeline: Timeline;
+  readonly timeline: DevToolsTimeline;
 
   /** Snapshot manager — capture and compare tree states */
   readonly snapshots: SnapshotManager;
@@ -329,7 +329,7 @@ function createNoOpDevTools(): DevTools {
     scheduler: new SchedulerInspector(),
     focus: new FocusInspector(),
     capabilities: new CapabilityInspector(),
-    timeline: new Timeline(),
+    timeline: new DevToolsTimeline(),
     snapshots: new SnapshotManager(),
     console: createNoOpConsole(),
     visiblePanels: EMPTY_PANELS,
@@ -420,7 +420,7 @@ export function createDevTools(options?: CreateDevToolsOptions): DevTools {
   const scheduler = new SchedulerInspector();
   const focus = new FocusInspector();
   const capabilities = new CapabilityInspector();
-  const timeline = new Timeline({ maxEntries: maxEvents });
+  const timeline = new DevToolsTimeline({ maxEntries: maxEvents });
   const snapshots = new SnapshotManager();
 
   const visiblePanels = new Set<DebugPanel>();

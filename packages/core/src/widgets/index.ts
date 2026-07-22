@@ -29,13 +29,16 @@ export { ScrollBox } from "./ScrollBox";
 export type { ScrollBoxOptions } from "./ScrollBox";
 
 export { Markdown } from "./Markdown";
-export type { MarkdownOptions } from "./Markdown";
+export type { MarkdownOptions, MarkdownTheme } from "./Markdown";
 
 export { Diff } from "./Diff";
 export type { DiffOptions } from "./Diff";
 
 export { TextTable } from "./TextTable";
 export type { TextTableOptions } from "./TextTable";
+
+export { Table } from "./Table";
+export type { TableBorderStyle, TableColumn, TableColumnAlign, TableOptions } from "./Table";
 
 export { ProgressBar } from "./ProgressBar";
 export type { ProgressBarOptions } from "./ProgressBar";
@@ -57,3 +60,16 @@ export type { TreeOptions } from "./Tree";
 
 export { Dialog } from "./Dialog";
 export type { DialogOptions } from "./Dialog";
+
+export { Timeline } from "./Timeline";
+
+export { Image } from "./Image";
+export type { ImageOptions, ImageFormat, ImageProtocol } from "./Image";
+export {
+  graphicsQuery,
+  graphicsKittyWrite,
+  graphicsKittyDelete,
+  graphicsKittyDeleteAll,
+  graphicsItermWrite,
+  graphicsSixelWrite,
+} from "./Image";

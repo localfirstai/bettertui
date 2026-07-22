@@ -471,6 +471,18 @@ impl NativeEngine {
         state.engine.append_child(node_id(parent as u64), node_id(child as u64)).is_ok()
     }
 
+    /// Inserts `child` immediately before `before` in the tree.
+    /// The parent is inferred from `before`'s current parent — this is the fast
+    /// path used by the React reconciler to avoid the JSON command round-trip.
+    #[napi]
+    pub fn insert_before(&self, before: i64, child: i64) -> bool {
+        let mut state = match self.state.lock() {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+        state.engine.insert_before(node_id(before as u64), node_id(child as u64)).is_ok()
+    }
+
     #[napi]
     pub fn remove_node(&self, id: i64) {
         if let Ok(mut state) = self.state.lock() {

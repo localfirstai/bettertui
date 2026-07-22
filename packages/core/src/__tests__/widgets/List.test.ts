@@ -113,4 +113,38 @@ describe("List", () => {
     l.update({ items: [{ id: "x", label: "X" }] });
     expect(l.selectedIndex).toBe(0);
   });
+
+  it("multiSelect Enter toggles item into selection", () => {
+    const l = new List({ items, multiSelect: true });
+    l.handleKey(key("return")); // select "a"
+    expect(l.selectedItems.some((i) => i.id === "a")).toBe(true);
+  });
+
+  it("multiSelect Enter toggles item out of selection", () => {
+    const l = new List({ items, multiSelect: true });
+    l.handleKey(key("return")); // select "a"
+    l.handleKey(key("return")); // deselect "a"
+    expect(l.selectedItems.some((i) => i.id === "a")).toBe(false);
+  });
+
+  it("multiSelect calls onSelectMulti with selected items", () => {
+    let lastSelected: string[] = [];
+    const l = new List({
+      items,
+      multiSelect: true,
+      onSelectMulti: (selected) => {
+        lastSelected = selected.map((i) => i.id);
+      },
+    });
+    l.handleKey(key("return")); // select "a"
+    l.handleKey(key("down"));
+    l.handleKey(key("return")); // select "b"
+    expect(lastSelected).toContain("a");
+    expect(lastSelected).toContain("b");
+  });
+
+  it("multiSelect selectedItems returns empty when nothing selected", () => {
+    const l = new List({ items, multiSelect: true });
+    expect(l.selectedItems).toHaveLength(0);
+  });
 });

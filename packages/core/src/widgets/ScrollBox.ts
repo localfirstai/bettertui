@@ -1,5 +1,5 @@
 import type { ScrollBoxOptions } from "@bettertui/shared";
-import type { KeyEvent } from "@bettertui/shared";
+import type { KeyEvent, MouseEvent } from "@bettertui/shared";
 import type { Command } from "../command/types";
 import { Renderable } from "../renderable";
 
@@ -104,6 +104,34 @@ export class ScrollBox extends Renderable<ScrollBoxOptions> {
       }
       if (key.key === "right") {
         this.scrollBy(1, 0);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  override handleMouse(event: MouseEvent): boolean {
+    const scrollY = this.opts.scrollY !== false;
+    const scrollX = this.opts.scrollX === true;
+
+    if (event.button === "scroll_up") {
+      if (scrollY) {
+        this.scrollBy(0, -3);
+        return true;
+      }
+      if (scrollX) {
+        this.scrollBy(-3, 0);
+        return true;
+      }
+    }
+    if (event.button === "scroll_down") {
+      if (scrollY) {
+        this.scrollBy(0, 3);
+        return true;
+      }
+      if (scrollX) {
+        this.scrollBy(3, 0);
         return true;
       }
     }

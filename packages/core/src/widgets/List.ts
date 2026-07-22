@@ -7,6 +7,7 @@ export type { ListItem, ListOptions };
 export class List extends Renderable<ListOptions> {
   private _items: ListItem[];
   private _selectedIndex: number;
+  private _selectedIds: Set<string>;
   private _scrollOffset = 0;
   private _query = "";
 
@@ -14,6 +15,7 @@ export class List extends Renderable<ListOptions> {
     super(options);
     this._items = options.items ?? [];
     this._selectedIndex = this._findIndexById(options.selectedId) ?? 0;
+    this._selectedIds = options.selectedId ? new Set([options.selectedId]) : new Set();
   }
 
   get selectedItem(): ListItem | undefined {
@@ -25,11 +27,20 @@ export class List extends Renderable<ListOptions> {
     return this._selectedIndex;
   }
 
+  get selectedItems(): ListItem[] {
+    if (!this.opts.multiSelect) {
+      const item = this.selectedItem;
+      return item ? [item] : [];
+    }
+    return this._filteredItems().filter((item) => this._selectedIds.has(item.id));
+  }
+
   override update(options: Partial<ListOptions>): void {
     if (options.items !== undefined) {
       this._items = options.items;
       this._selectedIndex = 0;
       this._scrollOffset = 0;
+      this._selectedIds.clear();
     }
     if (options.selectedId !== undefined) {
       const idx = this._findIndexById(options.selectedId);
@@ -68,11 +79,19 @@ export class List extends Renderable<ListOptions> {
       cmds.push({ type: "CreateNode", id: itemId, kind: "Text" });
 
       const prefix = i === this._selectedIndex ? "▶ " : "  ";
+      const multiMark = this.opts.multiSelect && this._selectedIds.has(item.id) ? "✓ " : "";
       const suffix = item.description ? `  ${item.description}` : "";
-      cmds.push({ type: "SetText", id: itemId, text: `${prefix}${item.label}${suffix}` });
+      cmds.push({
+        type: "SetText",
+        id: itemId,
+        text: `${prefix}${multiMark}${item.label}${suffix}`,
+      });
 
       if (i === this._selectedIndex) {
         cmds.push({ type: "SetInverse", id: itemId, value: true });
+      }
+      if (this.opts.multiSelect && this._selectedIds.has(item.id) && i !== this._selectedIndex) {
+        cmds.push({ type: "SetBold", id: itemId, value: true });
       }
       if (item.disabled) {
         cmds.push({ type: "SetDim", id: itemId, value: true });
@@ -126,7 +145,16 @@ export class List extends Renderable<ListOptions> {
     if (key.key === "return") {
       const item = filtered[this._selectedIndex];
       if (item && !item.disabled) {
-        this.opts.onSelect?.(item);
+        if (this.opts.multiSelect) {
+          if (this._selectedIds.has(item.id)) {
+            this._selectedIds.delete(item.id);
+          } else {
+            this._selectedIds.add(item.id);
+          }
+          this.opts.onSelectMulti?.(this.selectedItems);
+        } else {
+          this.opts.onSelect?.(item);
+        }
       }
       return true;
     }

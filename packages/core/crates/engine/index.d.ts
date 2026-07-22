@@ -21,6 +21,12 @@ export declare class NativeEngine {
   root(): number;
   createNode(kind: string): number;
   appendChild(parent: number, child: number): boolean;
+  /**
+   * Inserts `child` immediately before `before` in the tree.
+   * The parent is inferred from `before`'s current parent — this is the fast
+   * path used by the React reconciler to avoid the JSON command round-trip.
+   */
+  insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
   hitGridCheck(x: number, y: number): number;

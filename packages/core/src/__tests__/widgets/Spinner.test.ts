@@ -63,4 +63,33 @@ describe("Spinner", () => {
     const setFg = cmds.find((c) => c.type === "SetForeground" && "id" in c && c.id === "sp1-frame");
     expect(setFg).toBeDefined();
   });
+
+  it("start with custom scheduler calls tick without real timer", () => {
+    const s = new Spinner({ variant: "line" });
+    const frame0 = s.currentFrame;
+    let tickCb: (() => void) | null = null;
+    const stop = s.start(80, (cb) => {
+      tickCb = cb;
+      return () => {
+        tickCb = null;
+      };
+    });
+    expect(tickCb).not.toBeNull();
+    // Local alias needed: TS 5.4 closure-assignment narrowing widens `tickCb` to `never` at call site
+    const tick = tickCb as unknown as () => void;
+    tick();
+    expect(s.currentFrame).not.toBe(frame0);
+    stop();
+    expect(tickCb).toBeNull();
+  });
+
+  it("stop clears custom scheduler", () => {
+    const s = new Spinner();
+    let stopped = false;
+    s.start(80, (_cb) => () => {
+      stopped = true;
+    });
+    s.stop();
+    expect(stopped).toBe(true);
+  });
 });

@@ -41,6 +41,7 @@ React App ─▶ @bettertui/react (planned adapter, not yet implemented)
 | [Capabilities](capabilities.md) | Terminal feature detection (engine `terminal/capabilities.rs`) |
 | [Text Editing](text-editing.md) | Rope-based editor (`text` module, exposed as `NapiTextEngine`) |
 | [Scheduler](scheduler.md) | Frame timing and priority scheduling (`scheduler` module) |
+| [DevTools](devtools.md) | In-core debug overlay, inspector modules, and overlay data flow (`src/devtools/`) |
 
 ## Engineering notes
 

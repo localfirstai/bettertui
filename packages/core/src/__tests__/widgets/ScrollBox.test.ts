@@ -1,4 +1,4 @@
-import type { KeyEvent } from "@bettertui/shared";
+import type { KeyEvent, MouseEvent } from "@bettertui/shared";
 import { describe, expect, it } from "vitest";
 import { ScrollBox } from "../../widgets/ScrollBox";
 
@@ -125,5 +125,59 @@ describe("ScrollBox", () => {
     sb.setViewSize(80, 10);
     sb.handleKey(key("right"));
     expect(sb.offsetX).toBe(1);
+  });
+
+  it("handleMouse scroll_down scrolls Y by 3", () => {
+    const sb = new ScrollBox();
+    sb.setContentSize(80, 100);
+    sb.setViewSize(80, 10);
+    const ev: MouseEvent = {
+      button: "scroll_down",
+      position: { x: 0, y: 0 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    sb.handleMouse(ev);
+    expect(sb.offsetY).toBe(3);
+  });
+
+  it("handleMouse scroll_up scrolls Y negative", () => {
+    const sb = new ScrollBox();
+    sb.setContentSize(80, 100);
+    sb.setViewSize(80, 10);
+    const ev: MouseEvent = {
+      button: "scroll_down",
+      position: { x: 0, y: 0 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    sb.handleMouse(ev);
+    sb.handleMouse(ev);
+    const evUp: MouseEvent = {
+      button: "scroll_up",
+      position: { x: 0, y: 0 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    sb.handleMouse(evUp);
+    expect(sb.offsetY).toBe(3);
+  });
+
+  it("handleMouse scroll_down scrolls X when scrollX enabled", () => {
+    const sb = new ScrollBox({ scrollX: true, scrollY: false });
+    sb.setContentSize(200, 10);
+    sb.setViewSize(80, 10);
+    const ev: MouseEvent = {
+      button: "scroll_down",
+      position: { x: 0, y: 0 },
+      ctrl: false,
+      shift: false,
+      alt: false,
+    };
+    sb.handleMouse(ev);
+    expect(sb.offsetX).toBe(3);
   });
 });

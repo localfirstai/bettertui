@@ -5,7 +5,7 @@ export type KeyEventType = "press" | "repeat" | "release";
 export type KeyEventSource = "raw" | "kitty";
 
 /** Mouse button identifier. */
-export type MouseButton = "left" | "right" | "middle" | "none";
+export type MouseButton = "left" | "right" | "middle" | "none" | "scroll_up" | "scroll_down";
 
 /** A keyboard event from the terminal. */
 export interface KeyEvent {
