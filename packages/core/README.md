@@ -1,37 +1,57 @@
 # @bettertui/core
 
-**The framework package for native / vanilla TypeScript.** Use it directly when you don't need React. It is fully framework-agnostic — no React, no UI-framework code — and is the boundary between any TypeScript app (vanilla or a custom framework adapter) and the Rust engine. (All packages are currently `private`.)
+**Framework-agnostic command protocol, tree manipulation, reconciler wrapper, and runtime.** Framework package for vanilla / native TypeScript. No React dependency.
 
-> **React apps:** install **only** `@bettertui/react`. It depends on `@bettertui/core` and pulls it in automatically — you never install core by hand for a React project.
+## Overview
 
-## What's inside
+`@bettertui/core` is the public entry point for building terminal UIs without React. It provides:
 
-- `CommandBuffer` — ordered queue of render commands (taffy layout → ANSI).
-- `CommandRuntime` — frame loop and commit orchestration.
-- Tree operations — `createInstance`, `createTextInstance`, `appendChild`, `insertBefore`, `removeChild`, `commitUpdate`, `commitTextUpdate`, and friends used by reconcilers.
-- `createReconciler()` — framework-agnostic `react-reconciler`-style host config (no React import).
-- Engine module (`src/platform/`) — loads the `bettertui_engine` napi addon and exposes engine factories (`createEngine`, `createEventBus`, `createFocusManager`, `createKeymap`, `createTextEngine`, `createScheduler`, `detectCapabilities`, `getVersion`) plus `CliRenderer` / `KeyInput` for CLI rendering.
+- **Command protocol** — typed `Command` union and `CommandBuffer` for batching
+- **Reconciler** — `createReconciler(buffer)` wraps tree ops with command emission
+- **Runtime** — `CommandRuntime` owns the buffer, frame loop, and subscriber dispatch
+- **Native bridge** — loads `bettertui_engine.node` addon, exposes engine factories
+- **DevTools** — in-core debug tooling (`createDevTools`, debug overlay)
+- **Testing utilities** — `createTestRenderer`, `createMockKeys`, mock streams, spies
+- **Keymap** — framework-agnostic input binding engine
+- **Widgets** — TypeScript widget option types
+- **Validation** — `validate`, `warnIfInvalid`, layout/style validation
 
-## Building
-
-```bash
-pnpm build                # tsdown -> dist/
-pnpm build:native         # builds bettertui_engine.node via napi (--features napi)
-```
-
-The native addon is **not** declared in `package.json`. `@bettertui/core` calls `require("bettertui_engine")` at runtime and throws a clear error if the addon was not built first.
-
-## Testing
+## Installation
 
 ```bash
-pnpm test                 # vitest run (src/**/*.test.ts)
-pnpm test:coverage        # with @vitest/coverage-v8
+npm install @bettertui/core
 ```
 
-The package carries the largest TypeScript test suite in the repo (command buffer, runtime, tree ops, native bridge).
+Requires building the native Rust addon for native bridge features:
 
-## Status
+```bash
+pnpm --filter @bettertui/core build:native
+```
 
-Implemented. The native bridge (merged from the former `@bettertui/native`) requires the Rust addon to be built before any native call executes.
+## Quick start
 
-See [`docs/api/packages/core.md`](../../docs/api/packages/core.md) and [`docs/architecture/overview.md`](../../docs/architecture/overview.md).
+```ts
+import { createEngine, detectCapabilities, CliRenderer } from "@bettertui/core";
+
+const engine = createEngine();
+const caps = detectCapabilities();
+```
+
+## Re-exports
+
+Re-exports all types from `@bettertui/shared` (internal — don't install separately).
+
+## Features
+
+- Framework-agnostic (no React dependency)
+- Native Rust engine via napi-rs FFI
+- Command-batched rendering (one FFI call per frame)
+- In-core DevTools with debug overlay
+- Testing utilities for headless rendering
+- Keymap with layered bindings, chord sequences, and modes
+
+## Related Documentation
+
+- [Architecture overview](../../docs/architecture/overview.md)
+- [API reference](../../docs/api/packages/core.md)
+- [Guides](../../docs/guides/getting-started.md)

@@ -1,25 +1,39 @@
 # @bettertui/examples
 
-Vanilla TypeScript examples for BetterTUI — a runnable launcher that exercises `@bettertui/core` directly (no React). It is a fully working example terminal UI: a filterable menu that runs each demo against a live `CliRenderer`.
+BetterTUI vanilla TypeScript examples and standalone executable.
 
-For React examples, see `@bettertui/react` instead. This package targets the framework-agnostic `@bettertui/core` API.
+64 examples covering rendering, layout, input, widgets, animation, performance, terminal features, and more. Each example is a self-contained module under `src/examples/` that exports `meta` + `Example` + `run(keyInput)` + `destroy(keyInput)`.
 
-## What's inside
-
-- `src/index.ts` — the example launcher (menu + example registry) built on `CliRenderer`, `BoxRenderable`, `TextRenderable`, `InputRenderable`, `SelectRenderable`, and friends from `@bettertui/core`.
-- `src/*.ts` — one file per demo, grouped into categories (Layout, Input, Scroll, Text, Rendering, Runtime, Terminal, 3D & Physics).
-
-## Usage
+## Running
 
 ```bash
-pnpm --filter @bettertui/examples dev      # node --experimental-strip-types src/index.ts
-pnpm --filter @bettertui/examples typecheck
+pnpm --filter @bettertui/core build:native
+pnpm dev                    # interactive launcher
+pnpm dev <slug>             # run a single example
+pnpm dev --list             # print catalogue
 ```
 
-`Tab`/`Esc` switch focus between filter and list; type to filter; `↑↓`/`j`/`k` move; `Enter` runs; `ctrl+c` quits.
+## Structure
 
-## Status
+```
+src/
+├── examples/           # 64 .example.ts files
+│   ├── core/           # basic rendering, engine
+│   ├── layout/         # flexbox, grid
+│   ├── input/          # keyboard, mouse
+│   ├── widgets/        # tree, table, select, slider
+│   ├── animation/      # sprite, timeline
+│   ├── performance/    # metrics, stress test
+│   ├── terminal/       # capabilities, PTY, VT
+│   └── ...             # graphics, fonts, markdown, etc.
+├── lib/                # shared infrastructure
+├── assets/             # images, textures
+└── xterm-web-demo/     # browser-based demo
+```
 
-The launcher and core-backed demos run against `@bettertui/core`. A subset of demos (`keymap`, `qrcode`, and the 3D/physics set) import packages (`@bettertui/keymap`, `@bettertui/qrcode`, `@bettertui/three`) that may not yet be part of the BetterTUI workspace — they need to be created or ported before those examples resolve and run.
+Dependencies: `@bettertui/core` (workspace).
 
-See [`packages/core/README.md`](../core/README.md) and [`docs/architecture/overview.md`](../../docs/architecture/overview.md).
+## Related Documentation
+
+- [Examples guide](../../docs/examples.md)
+- [@bettertui/core API](../../docs/api/packages/core.md)

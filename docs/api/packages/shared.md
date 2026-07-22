@@ -11,11 +11,13 @@
 | `Size` | `{ width: number; height: number }` |
 | `Rect` | `{ x: number; y: number; width: number; height: number }` |
 | `FlexDirection` | `"row" \| "column" \| "rowReverse" \| "columnReverse"` |
+| `FlexWrap` | `"nowrap" \| "wrap"` |
 | `JustifyContent` | `"flexStart" \| "center" \| "flexEnd" \| "spaceBetween" \| "spaceAround" \| "spaceEvenly"` |
-| `AlignItems` | `"flexStart" \| "center" \| "flexEnd" \| "stretch"` |
-| `AlignSelf` | `"auto" \| "flexStart" \| "center" \| "flexEnd" \| "stretch"` |
-| `Position` | `"static" \| "relative" \| "absolute"` |
-| `Sizing` | `"auto" \| "content" \| "fill"` |
+| `AlignItems` | `"flexStart" \| "center" \| "flexEnd" \| "stretch" \| "baseline"` |
+| `AlignSelf` | `"auto" \| "flexStart" \| "center" \| "flexEnd" \| "stretch" \| "baseline"` |
+| `Position` | `"relative" \| "absolute"` |
+| `Display` | `"flex" \| "none"` |
+| `Sizing` | `number \| string` |
 | `Overflow` | `"visible" \| "hidden" \| "scroll"` |
 | `Padding` | `{ top?; right?; bottom?; left? }` |
 | `Margin` | `{ top?; right?; bottom?; left? }` |
@@ -23,7 +25,9 @@
 | `Gap` | `number \| { row?; column? }` |
 | `LayoutConstraints` | `{ minWidth?; maxWidth?; minHeight?; maxHeight? }` |
 | `KeyEvent` | `{ key: string; code?: string; ctrl?; shift?; alt?; meta? }` |
-| `MouseButton` | `"left" \| "right" \| "middle" \| "none"` |
+| `KeyEventType` | `"press" \| "repeat" \| "release"` |
+| `KeyEventSource` | `"raw" \| "kitty"` |
+| `MouseButton` | `"left" \| "right" \| "middle" \| "none" \| "scroll_up" \| "scroll_down"` |
 | `MouseEvent` | `{ button: MouseButton; x: number; y: number; ctrl?; shift?; alt?; meta? }` |
 | `ColorValue` | `string` |
 | `Style` | `{ color?; background?; bold?; italic?; underline?; dim?; strikethrough?; inverse? }` |

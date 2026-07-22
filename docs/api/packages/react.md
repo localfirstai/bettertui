@@ -1,22 +1,51 @@
 # @bettertui/react
 
-**Placeholder — React adapter not yet implemented.**
+**React 19 adapter for BetterTUI.** Depends on `@bettertui/core` and `@bettertui/shared`. React apps install **only** `@bettertui/react` — core resolves automatically.
 
-This package directory (`packages/react`) is a placeholder. React apps should wait for `@bettertui/react` to be implemented.
+## Exports
 
-## Planned API
+### Reconciler
 
-When implemented, this adapter will:
+| Export | Type | Notes |
+|--------|------|-------|
+| `createRoot(element)` | function | Returns `Root` with `{ root, runtime, dispose() }` |
+| `Root` | type | `{ root: ReconcilerRoot; runtime: CommandRuntime; dispose(): void }` |
 
-- depend on `@bettertui/core` and resolve it automatically (React apps install **only** `@bettertui/react`);
-- provide a `react-reconciler` host config, a `render()` entry point, and components/hooks;
-- never bypass `@bettertui/core` — it builds on the framework-agnostic runtime, command protocol, and native bridge that core already exposes.
+### Runtime context
 
-## Until then
+| Export | Type | Notes |
+|--------|------|-------|
+| `RuntimeContext` | `React.Context` | Default provides null renderer |
+| `useRuntimeContext()` | hook | Returns `RuntimeContextValue` |
 
-Build terminal UIs with the implemented [`@bettertui/core`](../core.md) package directly. See the [architecture overview](../../architecture/overview.md) for the intended React layering.
+### Hooks
 
-## Related Documentation
+| Export | Notes |
+|--------|-------|
+| `useEffectEvent(effect, deps?)` | Wraps `useEffect` for runtime-aware lifecycle |
+| `useFocus()` | Focus management |
+| `useKeyboard(options?)` | `UseKeyboardOptions` |
+| `useRuntime()` | Throws if called outside `createRoot()` |
+| `useTerminalDimensions()` | Returns `TerminalDimensions` |
+| `useTheme()` | Returns `ThemeMode` |
+| `useTimeline()` | Timeline hook |
 
-- [Architecture Overview](../../architecture/overview.md)
-- [@bettertui/core API](../core.md)
+### JSX types
+
+| Export | Notes |
+|--------|-------|
+| `BaseProps` | Common props for all elements |
+| `BoxProps` | Props for Box element |
+| `BetterTUIElementType` | Union of all element types |
+| `InputProps` | Props for Input element |
+| `ScrollBoxProps` | Props for ScrollBox element |
+| `TextProps` | Props for Text element |
+
+### Other
+
+| Export | Notes |
+|--------|-------|
+| `useEffectEvent`, `useRuntime` | Re-exported from hooks |
+| `TerminalDimensions` | `{ width: number; height: number }` |
+| `ThemeMode` | Theme mode type |
+| `UseKeyboardOptions` | Keyboard hook options |

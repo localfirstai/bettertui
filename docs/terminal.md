@@ -1,21 +1,17 @@
 # Terminal
 
-"Terminal" covers two concerns: driving the host terminal (raw mode, alternate screen) and embedding a child process via PTY with VT emulation.
+"Terminal" covers host terminal I/O (raw mode, alternate screen) and embedded child process PTY with VT emulation.
 
-## Host terminal (`terminal/`)
+## Host terminal
 
-`Terminal` manages raw mode, alternate screen, clear, cursor visibility/position, and event polling (`poll_event`). `Drop` restores state.
+`Terminal` manages raw mode, alternate screen, clear, cursor visibility/position, and event polling. `Drop` restores state.
 
-## Embedded terminal (`vt.rs` + `pty.rs` + `process.rs`)
+## Embedded terminal
 
-A `TerminalRuntime` (engine `terminal/process.rs`) spawns a `PtyProcess` (engine `pty.rs`, via `portable-pty`). Child output is fed through the `AnsiParser` → `VtMachine` → `ScreenBuffer`, producing a `FrameBuffer` that can be composited into the UI.
+`TerminalRuntime` spawns a `PtyProcess`. Child output feeds through `AnsiParser` → `VtMachine` → `ScreenBuffer`, producing a `FrameBuffer` for compositing into the UI.
 
 See [Architecture: Terminal](architecture/terminal.md), [PTY](architecture/pty.md), and [Guides: Terminal & PTY](guides/terminal.md).
 
-## React components
-
-`@bettertui/react` exports `Terminal`, `TerminalViewport`, and `TerminalProcess` as thin wrappers that emit element descriptors. They are not yet wired to the live native PTY read path, but the engine-level capability (PTY + `AnsiParser`/`VtMachine`) is implemented.
-
 ## Status
 
-Engine-level terminal emulation and PTY are implemented and tested. The `VtMachine`/`AnsiParser` are not yet wired into the production PTY read path (known gap).
+Engine-level terminal emulation and PTY are implemented and tested. The `VtMachine`/`AnsiParser` are not yet wired into the production PTY read path.

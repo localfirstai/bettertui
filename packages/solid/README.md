@@ -2,6 +2,4 @@
 
 **Placeholder — SolidJS adapter not yet implemented.**
 
-This directory is a placeholder. The SolidJS adapter will:
-
-Until the adapter lands, build terminal UIs with the implemented [`@bettertui/core`](../core/README.md) package directly. See the [architecture overview](../../docs/architecture/overview.md) for the intended React layering.
+`packages/solid` has stub source structure (`context/`, `hooks/`, `renderer/`, `types/`) but is not usable. Follow the BetterTUI roadmap for SolidJS support.

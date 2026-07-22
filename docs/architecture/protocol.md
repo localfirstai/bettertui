@@ -1,20 +1,14 @@
 # Command Protocol
 
-The command protocol is the **only** interface between TypeScript and the Rust engine. It is the boundary that keeps the engine framework-agnostic. Every framework adapter (React today, Vue/Solid/Svelte later) translates its tree operations into `Command`s.
+The command protocol is the **only** interface between TypeScript and the Rust engine. Every framework adapter translates its tree operations into `Command`s.
 
 ## Why commands?
 
-```mermaid
-flowchart LR
-    A[100 individual FFI calls] -->|~100µs overhead| B[Slow]
-    C[1 batched FFI call with 100 commands] -->|~0.5ms| D[Fast]
-```
+Batching reduces per-call FFI overhead, lets commands be logged/replayed for debugging, and lets the engine process a frame atomically.
 
-Batching reduces FFI overhead, lets commands be logged/replayed for debugging, and lets the engine process a frame atomically. The engine internally normalizes all commands to fine-grained operations.
+## The Command enum (`protocol.rs`)
 
-## The Command enum (`protocol/command.rs`)
-
-The Rust `Command` enum has ~41 variants grouped by category. The napi bindings accept the same set via a `CommandJson` serde enum (41 variants mapped 1:1):
+The Rust `Command` enum has ~41 variants grouped by category. The napi bindings accept the same set via a `CommandJson` serde enum:
 
 | Category | Variants |
 |----------|----------|
@@ -29,33 +23,12 @@ The Rust `Command` enum has ~41 variants grouped by category. The napi bindings 
 | Frame (3) | `BeginFrame`, `CommitFrame`, `Invalidate` |
 | Lifecycle (1) | `Shutdown` |
 
-## Processing Pipeline
+## Processing pipeline
 
-```mermaid
-flowchart TD
-    A[Command batch from FFI] --> B[CommandProcessor::process]
-    B --> C{validate NodeIds exist}
-    C -- invalid --> D[error collected]
-    C -- valid --> E[apply to NodeArena]
-    E --> F[set dirty flags on node + ancestors]
-    F --> G[generation++]
-    G --> H[layout recalculated on dirty subtrees]
-```
-
-Files: `protocol.rs` (`Command` enum, `CommandProcessor`, `CommandBuffer`, error/result types).
+`Command batch → CommandProcessor::process → validate NodeIds → apply to NodeArena → set dirty flags → generation++ → layout recalculated`.
 
 ## TypeScript side
 
-`@bettertui/core` builds commands incrementally in a `CommandBuffer` and drains them at frame boundaries. The `Runtime` (also in `@bettertui/core`) owns the buffer and flushes to subscribers. `@bettertui/core`'s `createRuntime()` ties a native engine + event bus + core `CommandBuffer` together and drives `processCommands()` / `renderFrame()`.
+`@bettertui/core` builds commands in a `CommandBuffer` and drains at frame boundaries. `CommandRuntime` owns the buffer and flushes to subscribers. `createRuntime()` (via the native bridge) ties a native engine + event bus + core `CommandBuffer` together.
 
-```mermaid
-flowchart TD
-    A[React reconciler host config] --> B[core CommandBuffer]
-    B --> C[core Runtime.drain]
-    C --> D[native processCommands]
-    D --> E[bindings decode CommandJson]
-    E --> F[engine CommandProcessor]
-    F --> G[NodeArena]
-```
-
-> The current implementation uses a **JSON command envelope** decoded in `bindings/src/lib.rs` (the `CommandJson` enum), not a hand-rolled binary codec. There is no separate `@bettertui/protocol` package — the protocol lives inside `bettertui-engine`'s `protocol` module and `@bettertui/core`'s `command-buffer.ts`.
+The current implementation uses a **JSON command envelope** decoded in the engine's napi module (`napi.rs`), not a hand-rolled binary codec. There is no separate `@bettertui/protocol` package.

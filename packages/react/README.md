@@ -1,11 +1,43 @@
 # @bettertui/react
 
-**Planned first-class React adapter for BetterTUI.** Not implemented yet.
+**React 19 adapter for BetterTUI.** React apps install **only** `@bettertui/react` — it depends on `@bettertui/core` and resolves it automatically.
 
-This directory is a placeholder. The React package will:
+## Overview
 
-- depend on `@bettertui/core` and resolve it automatically (React apps install **only** `@bettertui/react`);
-- provide a `react-reconciler` host config, a `render()` entry point, and components/hooks;
-- never bypass `@bettertui/core` — it builds on the framework-agnostic runtime, command protocol, and native bridge that core already exposes.
+- **Reconciler** — `createRoot(element)` returns root with runtime
+- **Hooks** — `useRuntime`, `useFocus`, `useKeyboard`, `useTheme`, `useTimeline`, `useTerminalDimensions`, `useEffectEvent`
+- **Runtime context** — `RuntimeContext`, `useRuntimeContext`
+- **JSX types** — `BoxProps`, `TextProps`, `InputProps`, `ScrollBoxProps`, plus global JSX namespace augmentation
+- **Dependencies** — `@bettertui/core`, `@bettertui/shared`, `react-reconciler`; peer `react@^19`
 
-Until the adapter lands, build terminal UIs with the implemented [`@bettertui/core`](../core/README.md) package directly. See the [architecture overview](../../docs/architecture/overview.md) for the intended React layering.
+## Installation
+
+```bash
+npm install @bettertui/react
+```
+
+## Quick start
+
+```tsx
+import { createRoot } from "@bettertui/react";
+
+function App() {
+  return <Box>Hello, terminal!</Box>;
+}
+
+const { root, runtime } = createRoot(<App />);
+```
+
+## Features
+
+- Full react-reconciler host config (mutation mode)
+- Runtime provider with frame loop
+- Focus, keyboard, theme, and terminal dimension hooks
+- JSX type support with autocomplete
+- 10 test files covering public API, hooks, renderer, and runtime
+
+## Related Documentation
+
+- [API reference](../../docs/api/packages/react.md)
+- [Architecture overview](../../docs/architecture/overview.md)
+- [Getting started](../../docs/guides/getting-started.md)

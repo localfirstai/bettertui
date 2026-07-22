@@ -1,25 +1,20 @@
 # Getting Started
 
-This guide gets you from a clone to a running example. It reflects the current build, including the Rust-native addon requirement.
-
 ## Prerequisites
 
 - Node.js >= 20
-- pnpm >= 9 (`packageManager` is pinned to `pnpm@9.15.0`)
+- pnpm >= 9 (pinned to `pnpm@9.15.0`)
 - Rust stable (cargo + rustup)
-- napi CLI is **not** required — the build uses the local `@napi-rs/cli` via Cargo build scripts
 
 ## Install & build
 
 ```bash
 pnpm install
-pnpm build            # turbo run build across all TS packages
-pnpm --filter @bettertui/core build:native   # produces the bettertui_engine.node addon
+pnpm build
+pnpm --filter @bettertui/core build:native   # produces bettertui_engine.node
 ```
 
-> `@bettertui/core`'s native bridge calls `require("bettertui_engine")` at runtime. If you skip the native build step, native factories throw: `Failed to load native bindings. Run pnpm --filter @bettertui/core build:native first.`
-
-The Rust workspace is independent of pnpm; the TS `build` task does not compile Rust. Build the addon explicitly (or wire it into your app's build) before running anything that touches the native bridge (`@bettertui/core`'s engine module at `packages/core/src/platform/`).
+Without the native addon, native factories throw: `Failed to load native bindings. Run pnpm --filter @bettertui/core build:native first.`
 
 ## Useful scripts
 
@@ -29,41 +24,29 @@ The Rust workspace is independent of pnpm; the TS `build` task does not compile 
 | `pnpm typecheck` | `turbo run typecheck` |
 | `pnpm format:check` | Biome format check |
 | `pnpm check` | lint + format:check + typecheck + `cargo:check` |
-| `cargo test --manifest-path packages/core/Cargo.toml --lib` | engine library tests (co-located in `bettertui-engine`) |
-| `cargo clippy --workspace -- -D warnings` | lint, warnings are errors |
-| `cargo fmt --all` | rustfmt |
+| `cargo test --manifest-path packages/core/Cargo.toml --lib` | engine unit tests |
 
-## Running the examples
-
-Vanilla / native TypeScript examples live in `examples/vanila/` and run directly on `@bettertui/core` via the native `CliRenderer`. Build the native addon first, then run the launcher:
+## Running examples
 
 ```bash
 pnpm --filter @bettertui/core build:native
-pnpm --filter @bettertui/examples-vanila dev            # interactive browser
-pnpm --filter @bettertui/examples-vanila dev hello-world # run a single example by slug
+pnpm --filter @bettertui/examples dev            # interactive browser
+pnpm --filter @bettertui/examples dev <slug>     # single example
 ```
-
-The vanilla examples under `examples/vanila/` (e.g. `hello-world`, `flex-layout`, `colors`, `capabilities`, `keyboard`, `performance`, `select-demo`) run directly on `@bettertui/core` and the native engine.
-
-> The React component functions are thin wrappers that emit element descriptors; the live native render loop is not yet connected, so running an example exercises the API surface and reconciler rather than painting pixels to the terminal.
 
 ## Two ways to use BetterTUI
 
 ```
-Vanilla / Native TS App ─┐
-                         ├─▶ @bettertui/core ──(napi-rs FFI)──▶ Rust Engine (bettertui_engine.node)
-React App ─▶ @bettertui/react ───────────────┘
-                                                       │
-                                                       ▼
-                                         (Terminal / PTY via crossterm + portable-pty)
+Vanilla / Native TS App ──▶ @bettertui/core ──▶ Rust Engine (bettertui_engine.node)
+React App ──▶ @bettertui/react ──▶ @bettertui/core (auto-resolved)
 ```
 
-- **React app:** `npm install @bettertui/react` (this pulls in `@bettertui/core` automatically — you never install core by hand).
-- **Vanilla / native TypeScript app:** `npm install @bettertui/core` and use the command protocol, runtime, and native bridge directly.
+- **React app:** `npm install @bettertui/react` (auto-pulls `@bettertui/core`)
+- **Vanilla TypeScript app:** `npm install @bettertui/core`
 
 ## Next steps
 
-- Read [Architecture Overview](../architecture/overview.md) for the full layout.
-- Read [Theming](../guides/theming.md) to style your UI.
-- Read [Terminal & PTY](../guides/terminal.md) to embed a shell.
-- See [Examples](../examples.md) for what is and isn't implemented yet.
+- [Architecture Overview](../architecture/overview.md)
+- [Theming guide](theming.md)
+- [Testing guide](testing.md)
+- [Terminal & PTY guide](terminal.md)

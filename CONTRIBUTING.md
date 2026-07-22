@@ -1,162 +1,96 @@
 # Contributing to BetterTUI
 
-Thank you for your interest in contributing to BetterTUI.
-
-## Development Setup
+## Development setup
 
 ### Prerequisites
 
 - Node.js >= 24.15.0
-- pnpm >= 9 (the repo pins `pnpm@9.15.0`)
+- pnpm >= 9 (pinned to `pnpm@9.15.0`)
 - Rust (stable, with `cargo` and `rustup`)
-- napi CLI is **not** required — the native build uses Cargo build scripts
 
-### Getting Started
+### Getting started
 
 ```bash
-# Clone the repository
 git clone https://github.com/bettertui/bettertui.git
 cd bettertui
-
-# Install dependencies
 pnpm install
-
-# Build all TypeScript packages (does NOT compile Rust)
 pnpm build
-
-# Build the native Rust addon (required before running anything native)
 pnpm --filter @bettertui/core build:native
-
-# Run linting
 pnpm lint
-
-# Run type checking
 pnpm typecheck
 ```
 
-### Rust Development
+### Rust development
 
 ```bash
-# Check the engine compiles
 cargo check --manifest-path packages/core/Cargo.toml
-
-# Run tests (library tests are co-located in the engine crate)
 cargo test --manifest-path packages/core/Cargo.toml --lib
-
-# Format code
 cargo fmt --all
-
-# Lint
 cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 ```
 
-## Project Structure
+## Project structure
 
-- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, lib + cdylib; the `bettertui_engine.node` addon)
-- `packages/core/crates/logger/` — tracing logger for native code (`bettertui-logger`)
+- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, lib + cdylib)
 - `packages/core/crates/benchmark/` — Rust benchmarks (`bettertui-benchmark`)
-- `packages/` — TypeScript packages (all currently `private`):
-  - `@bettertui/core` — framework package for vanilla / native TypeScript (command protocol, tree ops, `CommandRuntime`, native bridge, in-core debug tooling)
-  - `@bettertui/react` — **placeholder** — React adapter not yet implemented
-  - `@bettertui/solid` — **placeholder** — SolidJS adapter not yet implemented
-  - `@bettertui/shared` — **internal** type-only foundation (re-exported by core)
-- `apps/website/` — Astro/Starlight docs + landing site (not part of the framework)
-- `examples/` — vanilla TypeScript examples run on `@bettertui/core`; `react/`, `rust/`, `solid/` are reserved
-- `docs/` — the documentation you are reading (canonical source of truth)
+- `packages/` — TypeScript packages:
+  - `@bettertui/core` — framework-agnostic public API
+  - `@bettertui/react` — React 19 adapter
+  - `@bettertui/solid` — **placeholder**
+  - `@bettertui/shared` — type-only foundation (internal)
+  - `@bettertui/performance` — Vitest benchmarks
+  - `@bettertui/examples` — TypeScript examples
+- `apps/website/` — Astro/Starlight docs site
+- `docs/` — canonical documentation
 
-## Test-Driven Development
-
-BetterTUI is built test-first. Tests describe behavior before or alongside implementation, and every change is gated by automated checks. There is **no `@bettertui/testing` package** and no snapshot/headless harness — tests use [Vitest](https://vitest.dev/) directly, and React output is verified through `renderToStringAsync` in `packages/react/src/testing.ts`.
-
-- **Write the test first.** For an engine change or a new API, add a failing test that pins the expected behavior.
-- **Rust:** unit tests live next to the code in `#[cfg(test)] mod tests` within the engine crate (`packages/core/crates/engine`), plus `tests/`. Run them with `cargo test --manifest-path packages/core/Cargo.toml --lib`.
-- **TypeScript:** co-locate tests as `src/**/*.test.ts` / `*.test.tsx` (see `vitest.shared.ts`); run them with `pnpm test`.
-- **Keep the suite green.** Run `pnpm lint && pnpm typecheck && pnpm build && pnpm test` and `cargo test --manifest-path packages/core/Cargo.toml --lib` before opening a PR.
-- **No dead code or TODOs in committed source.** Track planned work in `tasks/`.
-
-For commands and the full testing workflow, see [docs/guides/testing.md](docs/guides/testing.md) and [docs/testing.md](docs/testing.md).
-
-## Code Standards
+## Coding standards
 
 ### TypeScript
 
-- Use modern TypeScript (ES2022+)
-- No `any` types — use `unknown` or proper types
+- ES2022+
+- No `any` — use `unknown` or proper types
 - Prefer `type` over `interface` for simple shapes
 - Use `const` assertions where appropriate
 - All exports must be typed
-- Formatting and linting enforced by **Biome** (no ESLint or Prettier)
+- Biome for formatting and linting (no ESLint or Prettier)
 
 ### Rust
 
 - Edition 2024
-- No `unwrap()` in production code — use proper error handling
-- Use `parking_lot` for synchronization primitives
+- No `unwrap()` in production code
+- Use `parking_lot` for synchronization
 - Prefer `smallvec` for small collections
-- Document public APIs with `///` doc comments
-- Formatting enforced by **rustfmt**, linting by **clippy**
-- All structs with `new()` must derive or implement `Default` (clippy requirement)
+- Public APIs must have `///` doc comments
+- rustfmt for formatting, clippy for linting
+- All structs with `new()` must derive or implement `Default`
 
 ### General
 
 - Feature-first architecture
-- No dead code — remove unused imports and variables
-- No TODO comments in committed code (track work in `tasks/`)
+- No dead code or TODO comments in committed code (track work in `tasks/`)
 - Keep functions small and focused
 - Write descriptive commit messages
 
-## Pre-commit Hooks
+## Pre-commit hooks
 
-This repository uses **Husky** to automatically format code before every commit:
+Husky runs `biome check --write --staged` then `cargo fmt --all` then `git update-index --again`.
 
-```bash
-# TypeScript/JS/JSON: formatted with Biome (lint + organize imports)
-# Rust: formatted with rustfmt
-# Modified files are automatically re-staged
-```
+## Editor setup
 
-If pre-commit formatting fails, the commit is aborted. Fix the reported issues and try again.
+Install **Biome** (`biomejs.biome`) and **Rust Analyzer** (`rust-lang.rust-analyzer`) VS Code extensions. Format on save with Biome for TS/JS/JSON and rust-analyzer for Rust.
 
-## Editor Setup
-
-### VS Code (recommended)
-
-Install these extensions:
-
-- **Biome** (`biomejs.biome`) — formatter and linter for TypeScript/JS/JSON
-- **Rust Analyzer** (`rust-lang.rust-analyzer`) — Rust language support
-
-Configure format on save in `.vscode/settings.json`:
-
-```json
-{
-  "editor.formatOnSave": true,
-  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" }
-}
-```
-
-## Pull Request Process
+## Pull request process
 
 1. Create a feature branch from `main`
-2. Make your changes following the code standards
-3. Ensure all checks pass: `pnpm lint && pnpm typecheck && pnpm build`
-4. Ensure Rust checks pass: `cargo check --manifest-path packages/core/Cargo.toml && cargo test --manifest-path packages/core/Cargo.toml --lib`
+2. Make changes following code standards
+3. Ensure `pnpm lint && pnpm typecheck && pnpm build` passes
+4. Ensure `cargo check && cargo test --manifest-path packages/core/Cargo.toml --lib` passes
 5. Submit a pull request with a clear description
 
-## Reporting Issues
+## Reporting issues
 
-Use GitHub Issues to report bugs or request features. Include:
-
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Environment details (OS, Node version, Rust version)
+Use GitHub Issues. Include steps to reproduce, expected behaviour, actual behaviour, and environment details.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree your contributions are licensed under MIT.

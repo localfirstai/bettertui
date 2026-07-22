@@ -1,19 +1,19 @@
 # BetterTUI Documentation
 
-Welcome to the canonical BetterTUI documentation. This is the source of truth for the framework; everything here is derived from the implementation.
+Welcome to the canonical BetterTUI documentation.
 
 ## Start here
 
 - [Architecture Overview](architecture/overview.md) — repository layout, workspaces, dependency direction
-- [Getting Started](guides/getting-started.md) — install, build, run the examples
+- [Getting Started](guides/getting-started.md) — install, build, run examples
 
 ## Two ways to use BetterTUI
 
-- **Vanilla / native TypeScript — `@bettertui/core` (implemented).** A fully public, framework-agnostic package. Build CLI tools, daemons, and custom adapters on it directly.
-- **React — `@bettertui/react` (placeholder, not yet implemented).** The intended first-class adapter. When built, React apps will install **only** `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically. The `packages/react` directory is currently a placeholder.
-- **SolidJS — `@bettertui/solid` (placeholder, not yet implemented).** The SolidJS adapter. The `packages/solid` directory is currently a placeholder.
+- **Vanilla / native TypeScript — `@bettertui/core` (implemented).** Framework-agnostic. Build CLI tools, daemons, and custom adapters on it directly.
+- **React — `@bettertui/react` (implemented).** React 19 adapter with reconciler, hooks, and JSX support. Install only `@bettertui/react`; it depends on `@bettertui/core` and pulls it in automatically.
+- **SolidJS — `@bettertui/solid` (placeholder).** Not yet implemented.
 
-`@bettertui/shared` is **internal** (re-exported by core) — do not install it directly.
+`@bettertui/shared` is internal (re-exported by core) — do not install it directly.
 
 ## Architecture (Rust engine + protocol)
 
@@ -32,7 +32,7 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 | [Capabilities](architecture/capabilities.md) | terminal feature detection |
 | [Terminal](architecture/terminal.md) | raw mode + VT emulation |
 | [PTY](architecture/pty.md) | embedding a process |
-| [Compositor](architecture/compositor.md) | layered output + screen |
+| [Compositor](architecture/compositor.md) | compositing primitives |
 | [Text Editing](architecture/text-editing.md) | rope editor |
 | [Widget Model](architecture/widget-model.md) | trait-based widgets |
 
@@ -47,7 +47,7 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 ## API & Packages
 
 - [API Index](api/README.md)
-- Per-package: [shared](api/packages/shared.md), [core](api/packages/core.md), [react](api/packages/react.md), [native](api/packages/native.md), [widgets](api/packages/widgets.md), [themes](api/packages/themes.md), [devtools](api/packages/devtools.md)
+- Per-package: [core](api/packages/core.md), [shared](api/packages/shared.md), [react](api/packages/react.md), [native](api/packages/native.md), [widgets](api/packages/widgets.md), [themes](api/packages/themes.md), [devtools](api/packages/devtools.md)
 
 ## Subsystem docs
 
@@ -60,9 +60,4 @@ Welcome to the canonical BetterTUI documentation. This is the source of truth fo
 - [README](../README.md)
 - [CONTRIBUTING](../CONTRIBUTING.md)
 - [Roadmap](../ROADMAP.md)
-- [Architecture](../architecture/README.md)
 - [CHANGELOG](../CHANGELOG.md)
-
-## Obsolete docs
-
-Older, aspirational design docs and AI iteration reports have been moved to `tasks/slop/docs/` (they described packages/modules that no longer match the code). They are preserved for history but are **not** canonical.

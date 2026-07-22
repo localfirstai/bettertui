@@ -1,69 +1,20 @@
 # Animation
 
-The animation engine provides tween, spring, keyframe, and color interpolation. Code: `packages/core/crates/engine/tests/animation.rs` (41 tests). It is decoupled from rendering and driven by the `Scheduler`.
+The animation engine provides tween, spring, keyframe, and color interpolation. Code: `packages/core/crates/engine/src/animation.rs`.
 
 ## Types
 
-```mermaid
-classDiagram
-    class AnimationEngine {
-        +tween(from, to, dur, easing) Animation
-        +spring(target, ...) Animation
-        +keyframes(frames, easing) Animation
-        +update(dt) 
-        +active_count() usize
-        +is_running() bool
-        +cancel_all()
-    }
-    class Tween {
-        +from: f32
-        +to: f32
-        +duration
-        +easing
-        +value_at(t) f32
-        +is_complete() bool
-    }
-    class Spring {
-        +target/stiffness/damping/mass/velocity
-        +update(current, dt) (f32, bool)
-    }
-    class Keyframes {
-        +Vec~Keyframe~ keyframes
-        +value_at(t) f32
-    }
-    class AnimColor {
-        +rgba
-        +lerp(other, t)
-    }
-    class Timeline {
-        +speed
-        +loop
-        +progress
-    }
-    AnimationEngine --> Tween
-    AnimationEngine --> Spring
-    AnimationEngine --> Keyframes
-```
-
-- `Easing`: Linear, EaseIn/Out/InOut, quadratic/cubic/expo/bounce/elastic, `CubicBezier(f32,f32,f32,f32)`, `Steps(u32, StepJump)`. `apply(t) -> f32`.
+- `Easing`: Linear, EaseIn/Out/InOut, quadratic/cubic/expo/bounce/elastic, `CubicBezier(f32,f32,f32,f32)`, `Steps(u32, StepJump)`.
 - `AnimationState`: Idle, Playing, Paused, Completed.
-- `AnimatableValue`: `Float` | `Color`. `AnimatableProperty` enumerates which node property is animated.
+- `AnimatableValue`: `Float` | `Color`.
+- `AnimatableProperty` enumerates which node property is animated.
 
 ## Integration
 
-```mermaid
-sequenceDiagram
-    participant S as Scheduler
-    participant A as AnimationEngine
-    participant Arena as NodeArena
-    S->>A: update(dt)
-    A->>A: interpolate active animations
-    A->>Arena: set animated property (sets dirty flags)
-    Arena-->>S: dirty -> layout/render scheduled
-```
+The scheduler ticks the animation engine, which interpolates values and sets dirty flags on the arena, triggering layout/render.
 
-## From TypeScript
+## TypeScript surface
 
-`@bettertui/react` exposes `useAnimation()`; `@bettertui/core` exposes `NapiScheduler.schedule_animation()` through the bindings.
+The native bridge exposes `NapiScheduler.schedule_animation()` and scheduler frame API (`beginFrame`, `endFrame`, `requestFrame`, `shouldRender`, `fps`, `frameBudgetMs`, `isIdle`, `frameCount`, `droppedFrames`).
 
-> Known issue (Phase 8 review): `schedule_animation()`/`cancel_animation()` exist but animation callbacks were not being executed at the time of the review — documented as a half-implemented path.
+> Known gap: `schedule_animation()`/`cancel_animation()` exist but animation callbacks were not executing at time of review — documented as a half-implemented path. There is no `useAnimation()` React hook.

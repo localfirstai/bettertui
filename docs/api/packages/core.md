@@ -4,7 +4,7 @@
 
 ## Re-exported types (from `@bettertui/shared`)
 
-`AlignItems, AlignSelf, BorderStyle, BorderStyleKind, ColorValue, FlexDirection, Gap, Inset, JustifyContent, KeyEvent, LayoutConstraints, Margin, MouseButton, MouseEvent, Overflow, Padding, Point, Position, Rect, Size, Sizing, Style, Theme, ThemeColors, ThemeSpacing`
+`AlignItems, AlignSelf, BorderStyle, BorderStyleKind, ColorValue, Display, FlexDirection, FlexWrap, Gap, Inset, JustifyContent, KeyEvent, KeyEventSource, KeyEventType, LayoutConstraints, Margin, MouseButton, MouseEvent, Overflow, Padding, Point, Position, Rect, Size, Sizing, Style, Theme, ThemeColors, ThemeSpacing`
 
 ## Local types
 

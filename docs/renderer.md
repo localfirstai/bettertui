@@ -2,28 +2,12 @@
 
 The renderer turns the arena node tree into ANSI output. It is the top of the Rust render pipeline.
 
-## Responsibilities
+## Pipeline
 
-```mermaid
-flowchart LR
-    A[NodeArena] --> B[Renderer.render]
-    B --> C[layout sync]
-    C --> D[build render tree]
-    D --> E[paint -> FrameBuffer]
-    E --> F[dirty diff]
-    F --> G[AnsiBackend encode]
-    G --> H[stdout]
-```
+`NodeArena → Renderer.render → layout sync → build render tree → paint → FrameBuffer → dirty diff → AnsiBackend encode → stdout`
 
-See [Architecture: Rendering Pipeline](architecture/rendering-pipeline.md) for the full stage breakdown and the `Renderer`/`RenderFrame`/`RenderBackend` API.
-
-## Pipeline pieces
-
-- `render/` — `Renderer`, `RenderFrame`, `RenderBackend` trait, `AnsiBackend` (in `render/render.rs`); `effects.rs` post-processing passes
-- `render/` — `build_render_tree`, `RenderTree` (z-sorted), `PaintContext`
-- `framebuffer/` + `dirty_diff/` — rasterization + diffing
-- `tree.rs` / `graphics.rs` — compositing primitives (see [Compositor](architecture/compositor.md))
+See [Architecture: Rendering Pipeline](architecture/rendering-pipeline.md) for the full breakdown.
 
 ## Status
 
-Implemented and tested. The renderer and its post-processing passes are exercised by the engine integration suite (`engine/tests/render.rs`, `engine/tests/effects.rs`). Known issues documented in the architecture pipeline doc: full-buffer clear per paint and O(n) dirty scan.
+Implemented and tested. Known issues: full-buffer clear per paint, O(n) dirty scan (documented in the architecture pipeline doc).

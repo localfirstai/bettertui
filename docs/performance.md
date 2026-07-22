@@ -1,37 +1,24 @@
 # Performance
 
-Performance is a first-class concern. The engine targets 60fps with dirty-region optimization.
+Performance targets 60fps with dirty-region optimization.
 
 ## Strategy
 
-```mermaid
-flowchart TD
-    A[node change] --> B[set dirty flags]
-    B --> C[layout only dirty subtrees]
-    C --> D[render only dirty nodes]
-    D --> E[diff only changed cells]
-    E --> F[encode only dirty regions]
-```
-
-- **Dirty tracking** — arena `generation` + per-node `layout_dirty`/`render_dirty` flags exist; frame suppression via `change_count` skips the full render when nothing changed.
-- **Layout** — Taffy recomputes layout from scratch each frame; only the dirty frame is skipped when `change_count` is unchanged.
-- **Batch commands** — one FFI call per frame (amortized).
-- **Frame diffing** — only changed cells written to terminal.
-- **Style coalescing + cursor-move optimization** — minimal ANSI volume.
-
-## Known issues (from the Phase 8 review)
-
-1. `Painter::paint()` clears every cell before repainting (O(n) per frame) — needs region-based clearing.
-2. `DirtyDiff::find_dirty_cells` does a full scan every frame — needs per-node dirty tracking.
-3. `OSC` `String::from_utf8_lossy()` allocates — needs `&[u8]` parsing.
-4. `Vec<SgrAttribute>` per SGR sequence — could use `SmallVec`.
-5. `begin_frame()` called at end of `render()` and clears the priority queue; two frame counters (`Engine::frame_count` vs `Scheduler::frame_count`) are unsynchronized.
+`node change → dirty flags → layout dirty subtrees → render dirty nodes → diff changed cells → encode dirty regions`
 
 ## Benchmarking
 
-Benchmarks live in `@bettertui/benchmark` as Vitest `bench` files (`command-buffer.bench.ts`, `reconciler.bench.ts`, `runtime.bench.ts`, `theme.bench.ts`); run with `pnpm bench`. The Rust engine is measured with `cargo bench` (when benches are enabled). CI runs `cargo test`, clippy, rustfmt, and the Turborepo TS tasks.
+- TypeScript: `@bettertui/performance` (Vitest `bench` files: command-buffer, reconciler, runtime, theme, etc.)
+- Rust: `cargo bench` (criterion, in `crates/benchmark/`)
 
-## Numbers (engine targets)
+## Known issues
+
+1. `Painter::paint()` clears every cell before repainting (O(n) per frame)
+2. `DirtyDiff::find_dirty_cells` does a full scan every frame
+3. Two frame counters (`Engine::frame_count` vs `Scheduler::frame_count`) unsynchronized
+4. `begin_frame()` called at end of `render()`, clears priority queue
+
+## Targets
 
 | Metric | Target |
 |--------|--------|
