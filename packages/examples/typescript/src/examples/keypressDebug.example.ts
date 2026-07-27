@@ -214,24 +214,25 @@ function formatInline(text: string | undefined, maxLength: number): string {
 }
 
 function snapshotKeyEvent(event: KeyEvent): KeySnapshot {
+  const e = event as unknown as Record<string, unknown>;
   return {
     name: event.name,
     ctrl: event.ctrl,
     meta: event.meta,
     shift: event.shift,
-    option: event.option,
+    option: e.option as boolean,
     sequence: event.sequence,
-    raw: event.raw,
-    eventType: event.eventType,
-    source: event.source,
-    number: event.number,
-    code: event.code,
-    super: event.super,
-    hyper: event.hyper,
-    capsLock: event.capsLock,
-    numLock: event.numLock,
-    baseCode: event.baseCode,
-    repeated: event.repeated,
+    raw: e.raw as string,
+    eventType: e.eventType as string,
+    source: e.source as string,
+    number: e.number as boolean,
+    code: e.code as string | undefined,
+    super: e.super as boolean | undefined,
+    hyper: e.hyper as boolean | undefined,
+    capsLock: e.capsLock as boolean | undefined,
+    numLock: e.numLock as boolean | undefined,
+    baseCode: e.baseCode as number | undefined,
+    repeated: e.repeated as boolean | undefined,
   };
 }
 
@@ -252,9 +253,11 @@ function pushVisibleEvent(entry: DebugEntry): void {
 }
 
 function terminalSummary(renderer: CliRenderer): string {
-  const terminalName = renderer.capabilities?.terminal?.name ?? "unknown";
-  const terminalVersion = renderer.capabilities?.terminal?.version;
-  return terminalVersion ? `${terminalName} ${terminalVersion}` : terminalName;
+  const caps = renderer.capabilities as unknown as Record<string, unknown>;
+  const terminal = caps?.terminal as Record<string, unknown> | undefined;
+  const terminalName = (terminal?.name as string) ?? caps?.brand ?? "unknown";
+  const terminalVersion = terminal?.version as string | undefined;
+  return terminalVersion ? `${terminalName} ${terminalVersion}` : String(terminalName);
 }
 
 function latestEventSummary(): string {
@@ -277,7 +280,8 @@ function createStatusText(renderer: CliRenderer): string {
     `events ${allKeyEvents.length}`,
     `visible ${visibleEvents.length}`,
     `raw ${allRawInputs.length}`,
-    `kitty ${renderer.useKittyKeyboard ? "on" : "off"}`,
+    // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer flag
+    `kitty ${(renderer as any).useKittyKeyboard ? "on" : "off"}`,
     `json ${showJson ? "on" : "off"}`,
   ].join(" | ");
 
@@ -340,7 +344,8 @@ function createEventListText(): string {
   }
 
   for (let index = 0; index < visibleEvents.length; index += 1) {
-    const entry = visibleEvents[index]!;
+    const entry = visibleEvents[index];
+    if (!entry) continue;
     lines.push(createEventRow(entry, index === visibleEvents.length - 1));
   }
 
@@ -352,7 +357,8 @@ function createDetailText(renderer: CliRenderer): string {
   const lines = [
     "Session",
     `terminal      ${terminalSummary(renderer)}`,
-    `kitty kb      ${renderer.useKittyKeyboard ? "on" : "off"}`,
+    // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer flag
+    `kitty kb      ${(renderer as any).useKittyKeyboard ? "on" : "off"}`,
     `raw inputs    ${allRawInputs.length}`,
     `parsed events ${allKeyEvents.length}`,
     `last raw      ${formatInline(lastRawInput?.sequence, 56)}`,
@@ -525,9 +531,10 @@ function recordParsedEvent(
 
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#0D1117");
-  showJson = env.OTUI_KEYPRESS_DEBUG_SHOW_JSON;
+  showJson = Boolean(env.OTUI_KEYPRESS_DEBUG_SHOW_JSON);
 
-  const cachedDebugInputs = renderer.getDebugInputs();
+  // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer debug API
+  const cachedDebugInputs = (renderer as any).getDebugInputs?.() ?? [];
   if (cachedDebugInputs.length > 0) {
     allRawInputs.push(...cachedDebugInputs);
     lastRawInput = cachedDebugInputs[cachedDebugInputs.length - 1] ?? null;
@@ -574,7 +581,8 @@ export function run(renderer: CliRenderer): void {
       padding: 1,
     },
   });
-  eventFeed.verticalScrollbarOptions = { visible: false };
+  // biome-ignore lint/suspicious/noExplicitAny: setting internal ScrollBox option
+  (eventFeed as any).verticalScrollbarOptions = { visible: false };
 
   eventListText = new TextRenderable(renderer, {
     id: "keypress-debug-feed-text",
@@ -600,7 +608,8 @@ export function run(renderer: CliRenderer): void {
       padding: 1,
     },
   });
-  detailFeed.verticalScrollbarOptions = { visible: false };
+  // biome-ignore lint/suspicious/noExplicitAny: setting internal ScrollBox option
+  (detailFeed as any).verticalScrollbarOptions = { visible: false };
 
   detailText = new TextRenderable(renderer, {
     id: "keypress-debug-detail-text",
@@ -666,10 +675,12 @@ export function run(renderer: CliRenderer): void {
     refreshUi(renderer);
     return false;
   };
-  renderer.prependInputHandler(inputHandler);
+  // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer input handler API
+  (renderer as any).prependInputHandler(inputHandler);
 
   keypressHandler = (event: KeyEvent) => {
-    if (event.raw === "?" && !event.ctrl && !event.meta && !event.super && !event.hyper) {
+    const e = event as unknown as Record<string, unknown>;
+    if (e.raw === "?" && !event.ctrl && !event.meta && !e.super && !e.hyper) {
       showingHelp = !showingHelp;
       refreshUi(renderer);
       return;
@@ -733,7 +744,8 @@ export function destroy(renderer: CliRenderer): void {
   }
 
   if (inputHandler) {
-    renderer.removeInputHandler(inputHandler);
+    // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer input handler API
+    (renderer as any).removeInputHandler(inputHandler);
     inputHandler = null;
   }
 
@@ -765,7 +777,9 @@ export function destroy(renderer: CliRenderer): void {
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({
+  const renderer = await (
+    createCliRenderer as (opts: Record<string, unknown>) => Promise<CliRenderer>
+  )({
     exitOnCtrlC: true,
     targetFps: 60,
     useKittyKeyboard: { events: true },

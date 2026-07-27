@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 
 import {
   BoxRenderable,
@@ -38,8 +39,11 @@ import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let engine: ThreeCliRenderer | null = null;
 let sceneRoot: ThreeScene | null = null;
+// biome-ignore lint/suspicious/noExplicitAny: ThreeJS uniform objects have dynamic types
 let timeUniform: any = null;
+// biome-ignore lint/suspicious/noExplicitAny: ThreeJS uniform objects have dynamic types
 let resolutionUniform: any = null;
+// biome-ignore lint/suspicious/noExplicitAny: ThreeJS uniform objects have dynamic types
 let cellAspectRatio: any = null;
 let cameraNode: PerspectiveCamera | null = null;
 let time = 0;

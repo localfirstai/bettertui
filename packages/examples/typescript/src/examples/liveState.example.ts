@@ -1,12 +1,9 @@
 #!/usr/bin/env bun
 
 import {
-  Box,
   BoxRenderable,
   type CliRenderer,
-  type MouseEvent,
   RGBA,
-  TextAttributes,
   TextRenderable,
   blue,
   bold,
@@ -15,6 +12,7 @@ import {
   green,
   parseColor,
   red,
+  rgbaToEngineColor,
   t,
 } from "@bettertui/core";
 import type { BoxOptions } from "@bettertui/core";
@@ -33,7 +31,7 @@ let frameCounter = 0;
 let animationCounter = 0;
 let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
 
-function LiveButton(options: BoxOptions & { label: string }) {
+function LiveButton(options: BoxOptions & { label: string }): BoxRenderable {
   const base = parseColor(options.backgroundColor ?? "transparent");
   const hoverBg = RGBA.fromValues(
     Math.min(1.0, base.r * 1.4),
@@ -42,38 +40,34 @@ function LiveButton(options: BoxOptions & { label: string }) {
     base.a,
   );
   const pressBg = RGBA.fromValues(base.r * 0.6, base.g * 0.6, base.b * 0.6, base.a);
-
-  return Box({
+  const _labelText = options.label;
+  if (!currentRenderer) throw new Error("LiveButton requires an active renderer");
+  return new BoxRenderable(currentRenderer, {
     ...options,
-    renderAfter(buffer, deltaTime) {
-      const textColor = RGBA.fromValues(1, 1, 1, 1);
-      const centerY = this.y + Math.floor(this.height / 2);
-      const startX = this.x + Math.floor((this.width - options.label.length) / 2);
-
-      buffer.drawText(options.label, startX, centerY, textColor);
-    },
-    onMouse(event: MouseEvent) {
-      switch (event.type) {
+    onMouse(event: unknown) {
+      const e = event as { type?: string; stopPropagation?(): void };
+      const box = this as BoxRenderable;
+      switch (e.type) {
         case "down":
-          this.backgroundColor = pressBg;
-          event.stopPropagation();
+          box.backgroundColor = pressBg;
+          e.stopPropagation?.();
           break;
 
         case "up":
-          this.backgroundColor = base;
-          event.stopPropagation();
+          box.backgroundColor = base;
+          e.stopPropagation?.();
           break;
 
         case "over":
-          this.backgroundColor = hoverBg;
+          box.backgroundColor = hoverBg;
           break;
 
         case "out":
-          this.backgroundColor = base;
+          box.backgroundColor = base;
           break;
       }
     },
-  });
+  } as BoxOptions);
 }
 
 function updateStatusText(message: string): void {
@@ -86,8 +80,9 @@ function updateStatusText(message: string): void {
 function updateRendererState(renderer: CliRenderer): void {
   if (rendererStateText) {
     const running = renderer.isRunning;
-    const liveCount = renderer.liveRequestCount;
-    const controlState = renderer.currentControlState;
+    const r = renderer as unknown as Record<string, unknown>;
+    const liveCount = (r.liveRequestCount as number) ?? 0;
+    const controlState = (r.currentControlState as string) ?? "unknown";
 
     const liveIndicators = ["▘", "▝", "▗", "▖"];
     const liveIndicator =
@@ -101,7 +96,7 @@ function updateRendererState(renderer: CliRenderer): void {
 function updateRenderableState(): void {
   if (renderableStateText) {
     const exists = demoRenderable !== null;
-    const live = demoRenderable?.live || false;
+    const live = (demoRenderable as unknown as Record<string, unknown>)?.live || false;
     const visible = demoRenderable?.visible ?? false;
 
     const styledContent = t`${bold("Demo Renderable:")} ${exists ? green(bold("ADDED")) : fg("#666")(bold("NOT ADDED"))} | ${bold("Live:")} ${live ? green(bold("TRUE")) : red(bold("FALSE"))} | ${bold("Visible:")} ${visible ? blue(bold("TRUE")) : fg("#666")(bold("FALSE"))}`;
@@ -156,7 +151,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(mainGroup);
 
   const backgroundColor = RGBA.fromInts(25, 30, 45, 255);
-  renderer.setBackgroundColor(backgroundColor);
+  renderer.setBackgroundColor(rgbaToEngineColor(backgroundColor));
 
   titleText = new TextRenderable(renderer, {
     id: "live_demo_title",
@@ -165,7 +160,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: 1,
     fg: RGBA.fromInts(255, 215, 135),
-    attributes: TextAttributes.BOLD,
     zIndex: 1000,
   });
   mainGroup.add(titleText);
@@ -188,7 +182,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: 4,
     fg: RGBA.fromInts(144, 238, 144),
-    attributes: TextAttributes.ITALIC,
     zIndex: 1000,
   });
   mainGroup.add(statusText);
@@ -309,7 +302,7 @@ export function run(renderer: CliRenderer): void {
       label: "LIVE = TRUE",
       onMouseDown: () => {
         if (demoRenderable) {
-          demoRenderable.live = true;
+          (demoRenderable as unknown as Record<string, unknown>).live = true;
           updateStatusText("Set demo renderable live = true");
         } else {
           updateStatusText("No demo renderable to set live!");
@@ -331,7 +324,7 @@ export function run(renderer: CliRenderer): void {
       label: "LIVE = FALSE",
       onMouseDown: () => {
         if (demoRenderable) {
-          demoRenderable.live = false;
+          (demoRenderable as unknown as Record<string, unknown>).live = false;
           updateStatusText("Set demo renderable live = false");
         } else {
           updateStatusText("No demo renderable to set live!");
@@ -402,7 +395,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: startY - 1,
     fg: rendererColor,
-    attributes: TextAttributes.BOLD,
     zIndex: 500,
   });
   mainGroup.add(rendererLabel);
@@ -414,7 +406,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: startY + 4,
     fg: renderableColor,
-    attributes: TextAttributes.BOLD,
     zIndex: 500,
   });
   mainGroup.add(renderableLabel);
@@ -426,7 +417,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: startY + 9,
     fg: liveColor,
-    attributes: TextAttributes.BOLD,
     zIndex: 500,
   });
   mainGroup.add(liveLabel);
@@ -438,12 +428,11 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: startY + 14,
     fg: visibilityColor,
-    attributes: TextAttributes.BOLD,
     zIndex: 500,
   });
   mainGroup.add(visibilityLabel);
 
-  frameCallback = async (deltaTime) => {
+  frameCallback = async (_deltaTime) => {
     frameCounter++;
     if (frameCounter % 10 === 0) {
       animationCounter++;

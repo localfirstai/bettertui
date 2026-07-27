@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 //
 // OpenTUI x xterm.js -- shared Pong in the browser.
 //

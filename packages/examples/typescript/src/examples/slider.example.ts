@@ -20,12 +20,13 @@ let animatedVerticalSlider: SliderRenderable | null = null;
 let renderer: CliRenderer | null = null;
 let mainContainer: BoxRenderable | null = null;
 let instructionsBox: BoxRenderable | null = null;
+// biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler signature
 let keyboardHandler: ((key: any) => void) | null = null;
 let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
 let animationTime = 0;
 
-let lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
-let lastActionColor = "#FFCC00";
+let _lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
+let _lastActionColor = "#FFCC00";
 
 // Value display elements
 let h1ValueText: TextRenderable | null = null;
@@ -70,12 +71,12 @@ function resetSliders() {
   if (verticalSlider3) verticalSlider3.value = 50;
   if (animatedVerticalSlider) animatedVerticalSlider.value = 50;
 
-  lastActionText = "*** All sliders reset to default values ***";
-  lastActionColor = "#FF00FF";
+  _lastActionText = "*** All sliders reset to default values ***";
+  _lastActionColor = "#FF00FF";
   updateDisplays();
 
   setTimeout(() => {
-    lastActionColor = "#FFCC00";
+    _lastActionColor = "#FFCC00";
     updateDisplays();
   }, 1000);
 }
@@ -126,8 +127,8 @@ function focusSlider(index: number) {
 
   if (slider) {
     slider.focus();
-    lastActionText = `Focused: ${sliderName}`;
-    lastActionColor = "#00FF00";
+    _lastActionText = `Focused: ${sliderName}`;
+    _lastActionColor = "#00FF00";
     updateDisplays();
   }
 }
@@ -185,10 +186,10 @@ export function run(rendererInstance: CliRenderer): void {
     max: 50,
     viewPortSize: 1,
     backgroundColor: "#414868",
-    foregroundColor: "#e0af68",
+    thumbColor: "#e0af68",
     onChange: (value: number) => {
-      lastActionText = `H1: ${value.toFixed(1)}`;
-      lastActionColor = "#FFA500";
+      _lastActionText = `H1: ${value.toFixed(1)}`;
+      _lastActionColor = "#FFA500";
       updateDisplays();
     },
   });
@@ -225,10 +226,10 @@ export function run(rendererInstance: CliRenderer): void {
     max: 200,
     viewPortSize: 50,
     backgroundColor: "#414868",
-    foregroundColor: "#bb9af7",
+    thumbColor: "#bb9af7",
     onChange: (value: number) => {
-      lastActionText = `H2: ${value.toFixed(1)}`;
-      lastActionColor = "#BB9AF7";
+      _lastActionText = `H2: ${value.toFixed(1)}`;
+      _lastActionColor = "#BB9AF7";
       updateDisplays();
     },
   });
@@ -264,8 +265,8 @@ export function run(rendererInstance: CliRenderer): void {
     max: 50,
     viewPortSize: 0.1, // Fine step size for smooth animation
     backgroundColor: "#414868",
-    foregroundColor: "#FF6B6B",
-    onChange: (value: number) => {
+    thumbColor: "#FF6B6B",
+    onChange: (_value: number) => {
       // Update the animated horizontal slider value display
       updateDisplays();
     },
@@ -321,10 +322,10 @@ ${fg("#565f89")("1w")}`,
     max: 10,
     viewPortSize: 1,
     backgroundColor: "#414868",
-    foregroundColor: "#f7768e",
+    thumbColor: "#f7768e",
     onChange: (value: number) => {
-      lastActionText = `V1: ${value.toFixed(1)}`;
-      lastActionColor = "#FF00FF";
+      _lastActionText = `V1: ${value.toFixed(1)}`;
+      _lastActionColor = "#FF00FF";
       updateDisplays();
     },
   });
@@ -373,10 +374,10 @@ ${fg("#565f89")("3w")}`,
     max: 50,
     viewPortSize: 5,
     backgroundColor: "#414868",
-    foregroundColor: "#ff9e64",
+    thumbColor: "#ff9e64",
     onChange: (value: number) => {
-      lastActionText = `V2: ${value.toFixed(1)}`;
-      lastActionColor = "#FF9E64";
+      _lastActionText = `V2: ${value.toFixed(1)}`;
+      _lastActionColor = "#FF9E64";
       updateDisplays();
     },
   });
@@ -425,10 +426,10 @@ ${fg("#565f89")("5w")}`,
     max: 100,
     viewPortSize: 10,
     backgroundColor: "#414868",
-    foregroundColor: "#73daca",
+    thumbColor: "#73daca",
     onChange: (value: number) => {
-      lastActionText = `V3: ${value.toFixed(1)}`;
-      lastActionColor = "#73DACA";
+      _lastActionText = `V3: ${value.toFixed(1)}`;
+      _lastActionColor = "#73DACA";
       updateDisplays();
     },
   });
@@ -477,8 +478,8 @@ ${fg("#565f89")("2w")}`,
     max: 100,
     viewPortSize: 0.2, // Fine step size for smooth animation
     backgroundColor: "#414868",
-    foregroundColor: "#FF6B6B",
-    onChange: (value: number) => {
+    thumbColor: "#FF6B6B",
+    onChange: (_value: number) => {
       // Update the animated vertical slider value display
       updateDisplays();
     },
@@ -611,8 +612,8 @@ export function destroy(rendererInstance: CliRenderer): void {
   frameCallback = null;
   animationTime = 0;
 
-  lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
-  lastActionColor = "#FFCC00";
+  _lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
+  _lastActionColor = "#FFCC00";
 }
 
 if (import.meta.main) {

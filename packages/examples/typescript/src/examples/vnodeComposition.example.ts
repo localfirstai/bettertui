@@ -1,49 +1,37 @@
-import { type CliRenderer, type MouseEvent, createCliRenderer } from "@bettertui/core";
+import { type CliRenderer, createCliRenderer } from "@bettertui/core";
 import {
-  Box,
   type BoxOptions,
   BoxRenderable,
   Generic,
-  Input,
-  Text,
   type VNode,
+  VNodeBox,
+  VNodeInput,
+  VNodeText,
   delegate,
   instantiate,
   vstyles,
 } from "@bettertui/core";
-import type { RenderContext } from "@bettertui/core";
-import type { OptimizedBuffer } from "@bettertui/core";
+import type { FrameBufferLike } from "@bettertui/core";
 import { RGBA, parseColor } from "@bettertui/core";
-import type { Renderable } from "@bettertui/core";
-import { TextAttributes } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const textColor = parseColor("#FFFFFF");
 const globalbgColor = parseColor("#333333");
 const transparent = parseColor("transparent");
 
-const {
-  bold,
-  italic,
-  underline,
-  dim,
-  boldItalic,
-  boldUnderline,
-  italicUnderline,
-  color,
-  bgColor,
-  styled,
-} = vstyles;
+const { bold, italic, underline, dim, boldItalic, boldUnderline, color, bgColor, styled } = vstyles;
 
 // This is NOT react and not reactive, it's just a declarative way to compose renderables
 // and mount them into a parent container.
-function MyRenderable(props: any, children: VNode[] = []) {
-  const mouseHandler = (event: MouseEvent) => {
-    console.log("mouseHandler", event.type);
+function MyRenderable(_props: Record<string, unknown>, children: VNode[] = []) {
+  const mouseHandler = (event: unknown) => {
+    const e = event as { type?: string };
+    console.log("mouseHandler", e.type);
   };
 
-  return Box({ id: "inner" }, [
-    Box(
+  return VNodeBox(
+    { id: "inner" },
+    VNodeBox(
       {
         border: true,
         borderStyle: "double",
@@ -51,9 +39,9 @@ function MyRenderable(props: any, children: VNode[] = []) {
         onMouseDown: mouseHandler,
         flexDirection: "row",
       },
-      children,
+      ...children,
     ),
-  ]);
+  );
 }
 
 function Button(
@@ -64,14 +52,14 @@ function Button(
   },
   children: VNode[] = [],
 ) {
-  return Box(
+  return VNodeBox(
     {
       id: "button",
       border: true,
       onMouseDown: props.onClick,
       borderColor: props.borderColor,
     },
-    Text({ content: props.title, selectable: false }),
+    VNodeText({ content: props.title }),
     ...children,
   );
 }
@@ -87,17 +75,18 @@ function VNodeButton(
 ) {
   return Generic(
     {
-      render: (buffer, deltaTime, renderable) => demoRenderFn(props, buffer, deltaTime, renderable),
+      render: (buffer: FrameBufferLike, deltaTime: number, renderable: BoxRenderable) =>
+        demoRenderFn(props, buffer, deltaTime, renderable),
       maxWidth: props.title.length + 4,
       margin: 1,
     },
-    Box(
+    VNodeBox(
       {
         id: "button",
         height: 3,
         onMouseDown: props.onClick,
       },
-      children,
+      ...children,
     ),
   );
 }
@@ -108,10 +97,9 @@ class MyRoot {
 
   constructor(private readonly props: { title: string; borderColor?: RGBA }) {
     this.width = Math.max(props.title.length + 4, 12);
-    Object.assign(this, props);
   }
 
-  render(buffer: OptimizedBuffer, deltaTime: number, renderable: Renderable) {
+  render(buffer: FrameBufferLike, deltaTime: number, renderable: BoxRenderable) {
     demoRenderFn(this.props, buffer, deltaTime, renderable);
   }
 }
@@ -120,9 +108,15 @@ function ButtonWithClassRender(
   props: { title: string; onClick: () => void; borderColor?: RGBA; marginLeft?: number },
   children: VNode[] = [],
 ) {
+  const myRoot = new MyRoot(props);
   return Generic(
-    new MyRoot(props),
-    Box(
+    {
+      render: (buffer: FrameBufferLike, dt: number, r: BoxRenderable) =>
+        myRoot.render(buffer, dt, r),
+      maxWidth: props.title.length + 4,
+      margin: props.marginLeft ?? 1,
+    },
+    VNodeBox(
       {
         id: "button",
         height: 3,
@@ -134,54 +128,55 @@ function ButtonWithClassRender(
 }
 
 // Host Override Example
-function MyDelegateToVNodeRenderable(props: any, children: VNode[] = []) {
+function MyDelegateToVNodeRenderable(props: Record<string, unknown>, children: VNode[] = []) {
   return delegate(
-    {
-      add: `${props.id}_box3`,
-      remove: `${props.id}_box3`,
-    },
-    Box({ id: `${props.id}_outer3`, border: true, borderColor: "blue" }, [
-      Box({ id: `${props.id}_inner3`, border: true, borderColor: "magenta" }, [
-        Box({ id: `${props.id}_box3`, flexDirection: "row", border: true, padding: 1 }, children),
-      ]),
-    ]),
-  );
-}
-
-function MyDelegateToRenderableComponent(
-  renderer: RenderContext,
-  props: any,
-  children: VNode[] = [],
-) {
-  return delegate(
-    {
-      add: "__box4",
-      remove: "__box4",
-    },
-    instantiate(
-      renderer,
-      Box({ id: "__outer4", border: true, borderColor: "blue" }, [
-        Box({ id: "__inner4", border: true, borderColor: "magenta" }, [
-          Box({ id: "__box4", flexDirection: "row", border: true, padding: 1 }, children),
-        ]),
-      ]),
+    `${props.id}_box3`,
+    VNodeBox(
+      { id: `${props.id}_outer3`, border: true, borderColor: "blue" },
+      VNodeBox(
+        { id: `${props.id}_inner3`, border: true, borderColor: "magenta" },
+        VNodeBox(
+          { id: `${props.id}_box3`, flexDirection: "row", border: true, padding: 1 },
+          ...children,
+        ),
+      ),
     ),
   );
 }
 
-function MyInstancedRenderable(renderer: RenderContext, props: any, children: VNode[] = []) {
+function MyDelegateToRenderableComponent(
+  renderer: CliRenderer,
+  _props: Record<string, unknown>,
+  children: VNode[] = [],
+): BoxRenderable {
+  // Instantiate directly (no delegate needed for BoxRenderable)
+  return instantiate(
+    renderer,
+    VNodeBox(
+      { id: "__outer4", border: true, borderColor: "blue" },
+      VNodeBox(
+        { id: "__inner4", border: true, borderColor: "magenta" },
+        VNodeBox({ id: "__box4", flexDirection: "row", border: true, padding: 1 }, ...children),
+      ),
+    ),
+  );
+}
+
+function MyInstancedRenderable(
+  renderer: CliRenderer,
+  props: Record<string, unknown>,
+  children: VNode[] = [],
+) {
   return instantiate(renderer, MyDelegateToVNodeRenderable(props, children));
 }
 
 function LabeledInput(props: { id: string; label: string; placeholder: string }) {
   return delegate(
-    {
-      focus: `${props.id}-input`,
-    },
-    Box(
+    `${props.id}-input`,
+    VNodeBox(
       { flexDirection: "row", id: `${props.id}-labeled-outer` },
-      Text({ content: props.label + " " }),
-      Input({
+      VNodeText({ content: `${props.label} ` }),
+      VNodeInput({
         id: `${props.id}-input`,
         placeholder: props.placeholder,
         width: 20,
@@ -195,19 +190,15 @@ function LabeledInput(props: { id: string; label: string; placeholder: string })
 }
 
 function BaseBox(props: BoxOptions, children: VNode[] = []) {
-  return Box(
+  return VNodeBox(
     {
       id: "base-box",
       border: true,
       borderColor: "blue",
       backgroundColor: "orange",
       ...props,
-      renderAfter(buffer: OptimizedBuffer, deltaTime: number) {
-        buffer.drawText("Hello", this.x + 1, this.y + 1, RGBA.fromInts(255, 255, 255, 255));
-        props.renderAfter?.call(this, buffer, deltaTime);
-      },
     },
-    children,
+    ...children,
   );
 }
 
@@ -216,9 +207,6 @@ function ExtendedBaseBox(props: BoxOptions, children: VNode[] = []) {
     {
       id: "extended-base-box",
       ...props,
-      renderAfter(buffer: OptimizedBuffer, deltaTime: number) {
-        buffer.drawText("Extended", this.x + 1, this.y + 2, RGBA.fromInts(255, 255, 255, 255));
-      },
     },
     children,
   );
@@ -233,45 +221,63 @@ export function run(renderer: CliRenderer) {
 
   // BaseBox example
   mainGroup.add(
-    ExtendedBaseBox({
-      width: 20,
-      height: 10,
-      position: "absolute",
-      left: 55,
-      top: 10,
-      zIndex: 1000,
-    }),
+    instantiate(
+      renderer,
+      ExtendedBaseBox({
+        width: 20,
+        height: 10,
+        position: "absolute",
+        left: 55,
+        top: 10,
+        zIndex: 1000,
+      }),
+    ),
   );
 
   // Proxied VNode example
-  const tree = MyRenderable({ id: "demo-root" }, [
-    Box({ id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 }, [
-      Text({ content: "Hello" }),
+  const tree = instantiate(
+    renderer,
+    MyRenderable({ id: "demo-root" }, [
+      VNodeBox(
+        { id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 },
+        VNodeText({ content: "Hello" }),
+      ),
+      VNodeBox(
+        { id: "child-2", width: 24, height: 3, border: true },
+        VNodeText({ content: "VNode world" }),
+      ),
     ]),
-    Box({ id: "child-2", width: 24, height: 3, border: true }, [Text({ content: "VNode world" })]),
-  ]);
+  );
   tree.backgroundColor = RGBA.fromInts(0, 155, 155, 100);
 
   mainGroup.add(tree);
 
-  const input = LabeledInput({
-    id: "labeled-input",
-    label: "Label:",
-    placeholder: "Enter your text...",
-  });
-  input.focus();
-  mainGroup.add(input);
+  const inputInstance = instantiate(
+    renderer,
+    LabeledInput({
+      id: "labeled-input",
+      label: "Label:",
+      placeholder: "Enter your text...",
+    }),
+  );
+  inputInstance.focus();
+  mainGroup.add(inputInstance);
 
   //
   // VNode delegated version
-  const instance1 = MyDelegateToVNodeRenderable({ id: "delegated-demo-root" }, [
-    Box({ id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 }, [
-      Text({ content: "Hello delegated 1" }),
+  const instance1 = instantiate(
+    renderer,
+    MyDelegateToVNodeRenderable({ id: "delegated-demo-root" }, [
+      VNodeBox(
+        { id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 },
+        VNodeText({ content: "Hello delegated 1" }),
+      ),
+      VNodeBox(
+        { id: "child-2", width: 24, height: 3, border: true },
+        VNodeText({ content: "VNode world delegated 1" }),
+      ),
     ]),
-    Box({ id: "child-2", width: 24, height: 3, border: true }, [
-      Text({ content: "VNode world delegated 1" }),
-    ]),
-  ]);
+  );
   instance1.backgroundColor = RGBA.fromInts(155, 0, 155, 100);
 
   mainGroup.add(instance1);
@@ -279,96 +285,124 @@ export function run(renderer: CliRenderer) {
   //
   // Instaced Delegated version
   const instance = MyInstancedRenderable(renderer, { id: "demo-root" }, [
-    Box({ id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 }, [
-      Text({ content: "Hello 2" }),
-    ]),
-    Box({ id: "child-2", width: 24, height: 3, border: true }, [
-      Text({ content: "VNode world 2" }),
-    ]),
+    VNodeBox(
+      { id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 },
+      VNodeText({ content: "Hello 2" }),
+    ),
+    VNodeBox(
+      { id: "child-2", width: 24, height: 3, border: true },
+      VNodeText({ content: "VNode world 2" }),
+    ),
   ]);
 
   mainGroup.add(instance);
 
   // Delegated to __box3, would otherwise end up in the top-level group!
   instance.add(
-    Box({ id: "child-3", width: 24, height: 3, border: true }, [
-      Text({ content: "VNode world 3" }),
-    ]),
+    instantiate(
+      renderer,
+      VNodeBox(
+        { id: "child-3", width: 24, height: 3, border: true },
+        VNodeText({ content: "VNode world 3" }),
+      ),
+    ),
   );
   instance.add(
-    Button({ title: "Click me", onClick: () => console.log("clicked"), borderColor: "red" }),
+    instantiate(
+      renderer,
+      Button({ title: "Click me", onClick: () => console.log("clicked"), borderColor: "red" }),
+    ),
   );
 
   //
   // Renderable delegated version
   const renderableInstance = MyDelegateToRenderableComponent(renderer, { id: "demo-root" }, [
-    Box({ id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 }, [
-      Text({ content: "Hello 4" }),
-    ]),
-    Box({ id: "child-2", width: 24, height: 3, border: true }, [
-      Text({ content: "VNode world 4" }),
-    ]),
+    VNodeBox(
+      { id: "child-1", width: 20, height: 3, border: true, marginBottom: 1 },
+      VNodeText({ content: "Hello 4" }),
+    ),
+    VNodeBox(
+      { id: "child-2", width: 24, height: 3, border: true },
+      VNodeText({ content: "VNode world 4" }),
+    ),
   ]);
   mainGroup.add(renderableInstance);
 
-  // Delegated to __box4, would otherwise end up in the top-level group!
+  // Would otherwise end up in the top-level group!
   renderableInstance.add(
-    Button({ title: "Click me too!", onClick: () => console.log("clicked"), borderColor: "red" }),
+    instantiate(
+      renderer,
+      Button({ title: "Click me too!", onClick: () => console.log("clicked"), borderColor: "red" }),
+    ),
   );
 
   //
   // Add animated VNode button
   mainGroup.add(
-    VNodeButton({
-      title: "Animated VNode",
-      onClick: () => console.log("vnode 1 clicked"),
-      borderColor: RGBA.fromInts(0, 0, 255, 255),
-    }),
+    instantiate(
+      renderer,
+      VNodeButton({
+        title: "Animated VNode",
+        onClick: () => console.log("vnode 1 clicked"),
+        borderColor: RGBA.fromInts(0, 0, 255, 255),
+      }),
+    ),
   );
   mainGroup.add(
-    VNodeButton({
-      title: "Same VNode, different props",
-      onClick: () => console.log("vnode 2 clicked"),
-      borderColor: RGBA.fromInts(255, 0, 255, 255),
-    }),
+    instantiate(
+      renderer,
+      VNodeButton({
+        title: "Same VNode, different props",
+        onClick: () => console.log("vnode 2 clicked"),
+        borderColor: RGBA.fromInts(255, 0, 255, 255),
+      }),
+    ),
   );
 
   //
   // Add button with class render function
   mainGroup.add(
-    ButtonWithClassRender({
-      marginLeft: 1,
-      title: "ClassRender",
-      onClick: () => console.log("clicked"),
-      borderColor: RGBA.fromInts(0, 0, 255, 255),
-    }),
+    instantiate(
+      renderer,
+      ButtonWithClassRender({
+        marginLeft: 1,
+        title: "ClassRender",
+        onClick: () => console.log("clicked"),
+        borderColor: RGBA.fromInts(0, 0, 255, 255),
+      }),
+    ),
   );
 
   mainGroup.add(
-    Box({ flexDirection: "column", marginTop: 2 }, [
-      // Basic styles
-      Text({}, bold("Bold Text")),
-      Text({}, italic("Italic Text")),
-      Text({}, underline("Underlined Text")),
-      Text({}, dim("Dim Text")),
+    instantiate(
+      renderer,
+      VNodeBox(
+        { flexDirection: "column", marginTop: 2 },
+        // Basic styles
+        bold("Bold Text"),
+        italic("Italic Text"),
+        underline("Underlined Text"),
+        dim("Dim Text"),
 
-      // Combined styles
-      Text({}, boldItalic("Bold and Italic")),
-      Text({}, boldUnderline("Bold and Underlined")),
-      Text({}, italicUnderline("Italic and Underlined")),
+        // Combined styles
+        boldItalic("Bold and Italic"),
+        boldUnderline("Bold and Underlined"),
+        // italicUnderline is not in vstyles; use italic("Italic and Underlined")
+        italic("Italic and Underlined"),
 
-      // Colors
-      Text({}, color("#ff6b6b", "Red Text")),
-      Text({}, bgColor("#4ecdc4", "Text with Background")),
+        // Colors
+        color("#ff6b6b", "Red Text"),
+        bgColor("#4ecdc4", "Text with Background"),
 
-      // Custom styling
-      Text({}, styled(TextAttributes.BOLD | TextAttributes.UNDERLINE, "Custom Styled")),
+        // Custom styling
+        styled({ content: "Custom Styled" }, "Custom Styled"),
 
-      // Stacked styles
-      Text({}, bold(underline("hello"), " world")),
-      Text({}, color("#ff6b6b", bold("Bold Red"), " normal")),
-      Text({}, italic(color("#4ecdc4", "Green Italic"), " normal again")),
-    ]),
+        // Stacked styles
+        color("#ffffff", bold("hello"), " world"),
+        color("#ff6b6b", bold("Bold Red"), " normal"),
+        color("#4ecdc4", "Green Italic", " normal again"),
+      ),
+    ),
   );
 }
 
@@ -389,14 +423,14 @@ if (import.meta.main) {
 
 function demoRenderFn(
   props: { title: string; borderColor?: RGBA },
-  buffer: OptimizedBuffer,
-  deltaTime: number,
-  renderable: Renderable,
+  buffer: FrameBufferLike,
+  _deltaTime: number,
+  renderable: BoxRenderable,
 ) {
   const x = renderable.x;
   const y = renderable.y;
-  const width = renderable.width;
-  const height = renderable.height;
+  const w = typeof renderable.width === "number" ? renderable.width : 0;
+  const h = typeof renderable.height === "number" ? renderable.height : 0;
 
   const borderColor = props.borderColor ?? RGBA.fromInts(255, 255, 0, 255);
 
@@ -419,12 +453,12 @@ function demoRenderFn(
     globalbgColor.a,
   );
 
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
+  for (let row = 0; row < h; row++) {
+    for (let col = 0; col < w; col++) {
       const isTop = row === 0;
-      const isBottom = row === height - 1;
+      const isBottom = row === h - 1;
       const isLeft = col === 0;
-      const isRight = col === width - 1;
+      const isRight = col === w - 1;
       const isBorder = isTop || isBottom || isLeft || isRight;
 
       if (isBorder) {
@@ -444,9 +478,9 @@ function demoRenderFn(
     textColor.a,
   );
 
-  const titleX = x + Math.floor((width - props.title.length) / 2);
-  const titleY = y + Math.floor(height / 2);
-  if (titleY >= y && titleY < y + height) {
+  const titleX = x + Math.floor((w - props.title.length) / 2);
+  const titleY = y + Math.floor(h / 2);
+  if (titleY >= y && titleY < y + h) {
     buffer.drawText(props.title, titleX, titleY, pulsingTextColor, transparent);
   }
 }

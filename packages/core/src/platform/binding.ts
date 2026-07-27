@@ -199,6 +199,7 @@ export interface TerminalCapabilities {
   focus_events: boolean;
   mouse: boolean;
   osc52: boolean;
+  osc52_support: boolean;
   osc8: boolean;
   sync: boolean;
   sgr_pixel: boolean;

@@ -2,15 +2,15 @@
 
 import {
   type CliRenderer,
+  type FrameBufferLike,
   FrameBufferRenderable,
   type KeyEvent,
-  type OptimizedBuffer,
   RGBA,
   createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let framebuffer: OptimizedBuffer | null = null;
+let framebuffer: FrameBufferLike | null = null;
 let keyListener: ((key: KeyEvent) => void) | null = null;
 let resizeListener: ((width: number, height: number) => void) | null = null;
 let leftBuffer: Float32Array | null = null;
@@ -103,6 +103,48 @@ function getIntensity(x: number, y: number, w: number, h: number, t: number): nu
   }
 }
 
+/** Render a Float32Array of intensity values [0,1] as grayscale cells. */
+function drawGrayscaleBuffer(
+  fb: FrameBufferLike,
+  x: number,
+  y: number,
+  buffer: Float32Array,
+  width: number,
+  height: number,
+): void {
+  for (let gy = 0; gy < height; gy++) {
+    for (let gx = 0; gx < width; gx++) {
+      const intensity = buffer[gy * width + gx] ?? 0;
+      const v = Math.floor(Math.max(0, Math.min(1, intensity)) * 255);
+      fb.setCell(x + gx, y + gy, " ", undefined, RGBA.fromInts(v, v, v, 255));
+    }
+  }
+}
+
+/** Supersample: average 2x2 input pixels into one output cell. */
+function drawGrayscaleBufferSupersampled(
+  fb: FrameBufferLike,
+  x: number,
+  y: number,
+  buffer: Float32Array,
+  width: number,
+  height: number,
+): void {
+  const outW = Math.floor(width / 2);
+  const outH = Math.floor(height / 2);
+  for (let gy = 0; gy < outH; gy++) {
+    for (let gx = 0; gx < outW; gx++) {
+      const i00 = buffer[gy * 2 * width + gx * 2] ?? 0;
+      const i01 = buffer[gy * 2 * width + (gx * 2 + 1)] ?? 0;
+      const i10 = buffer[(gy * 2 + 1) * width + gx * 2] ?? 0;
+      const i11 = buffer[(gy * 2 + 1) * width + (gx * 2 + 1)] ?? 0;
+      const avg = (i00 + i01 + i10 + i11) / 4;
+      const v = Math.floor(Math.max(0, Math.min(1, avg)) * 255);
+      fb.setCell(x + gx, y + gy, " ", undefined, RGBA.fromInts(v, v, v, 255));
+    }
+  }
+}
+
 export async function run(renderer: CliRenderer): Promise<void> {
   renderer.start();
 
@@ -145,7 +187,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
         leftBuffer[y * panelWidth + x] = getIntensity(x, y, panelWidth, panelHeight, time);
       }
     }
-    fb.drawGrayscaleBuffer(0, headerHeight, leftBuffer, panelWidth, panelHeight);
+    drawGrayscaleBuffer(fb, 0, headerHeight, leftBuffer, panelWidth, panelHeight);
 
     const rightX = panelWidth + 3;
     const ssWidth = panelWidth * 2;
@@ -158,7 +200,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
         rightBuffer[y * ssWidth + x] = getIntensity(x, y, ssWidth, ssHeight, time);
       }
     }
-    fb.drawGrayscaleBufferSupersampled(rightX, headerHeight, rightBuffer, ssWidth, ssHeight);
+    drawGrayscaleBufferSupersampled(fb, rightX, headerHeight, rightBuffer, ssWidth, ssHeight);
 
     const dividerX = panelWidth + 1;
     for (let y = headerHeight; y < totalHeight; y++) {
@@ -205,9 +247,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   resizeListener = (width: number, height: number) => {
     WIDTH = width;
     HEIGHT = height;
-    if (framebuffer) {
-      framebuffer.resize(width, height);
-    }
+    // Note: FrameBufferLike.resize() not in current API; new content will render at next frame
   };
   renderer.on("resize", resizeListener);
 

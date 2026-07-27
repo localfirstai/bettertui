@@ -4,7 +4,12 @@ import type { Clock, TimerHandle } from "../lib/clock";
 import type { NapiEventBus } from "./platform.types";
 
 export type KeyEvent = SharedKeyEvent;
-export type MouseEvent = SharedMouseEvent;
+
+export interface MouseEvent extends SharedMouseEvent {
+  type?: string;
+  stopPropagation(): void;
+  preventDefault(): void;
+}
 
 export type EventCallback = (event: SharedKeyEvent | SharedMouseEvent) => void;
 

@@ -1,11 +1,8 @@
-import type { RenderableOptions } from "@bettertui/core";
 import { RGBA } from "@bettertui/core";
 import { type FrameBufferOptions, FrameBufferRenderable } from "@bettertui/core";
-import type { RenderContext } from "@bettertui/core";
-import { TextAttributes } from "@bettertui/core";
+import type { CliRenderer } from "@bettertui/core";
 
-export interface HexListOptions
-  extends Omit<RenderableOptions<HexListRenderable>, "width" | "height"> {
+export interface HexListOptions extends Omit<FrameBufferOptions, "width" | "height"> {
   colors: string[];
   columns?: number;
   blockWidth?: number;
@@ -21,7 +18,7 @@ export class HexListRenderable extends FrameBufferRenderable {
   private _maxHeight: number;
   private _itemWidth: number;
 
-  constructor(ctx: RenderContext, options: HexListOptions) {
+  constructor(ctx: CliRenderer, options: HexListOptions) {
     const columns = options.columns ?? 4;
     const blockWidth = options.blockWidth ?? 4;
     const blockHeight = options.blockHeight ?? 2;
@@ -61,6 +58,10 @@ export class HexListRenderable extends FrameBufferRenderable {
     this.requestRender();
   }
 
+  private requestRender(): void {
+    this._renderer.requestRender();
+  }
+
   private updateDimensions(): void {
     const numRows = Math.ceil(this._colors.length / this._columns);
     const requiredHeight = numRows * (this._blockHeight + 1);
@@ -71,8 +72,7 @@ export class HexListRenderable extends FrameBufferRenderable {
     }
   }
 
-  protected onResize(width: number, height: number): void {
-    super.onResize(width, height);
+  protected onResize(_width: number, _height: number): void {
     this.renderhexList();
   }
 
@@ -116,7 +116,10 @@ export class HexListRenderable extends FrameBufferRenderable {
       const spacing = 2;
 
       for (let ci = 0; ci < text.length && textStartX + ci < x + this._itemWidth - spacing; ci++) {
-        buffer.drawText(text[ci], textStartX + ci, y, textColor, bgColor, TextAttributes.NONE);
+        const ch = text[ci];
+        if (ch !== undefined) {
+          buffer.drawText(ch, textStartX + ci, y, textColor, bgColor);
+        }
       }
     }
   }

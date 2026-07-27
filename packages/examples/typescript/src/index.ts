@@ -784,7 +784,7 @@ function getExamplesBoxTitle(filteredCount: number, isFiltered: boolean): string
 }
 
 function getPrintableKeyText(key: KeyEvent): string | null {
-  if (key.ctrl || key.meta || key.super || key.hyper || key.option) {
+  if (key.ctrl || key.meta) {
     return null;
   }
 
@@ -843,6 +843,9 @@ class ExampleSelector {
 
   private menuContainer: BoxRenderable | null = null;
   private title: ASCIIFontRenderable | null = null;
+  private titleWidth = 0;
+  private titleFont = "tiny";
+  private titleText = "OPENTUI EXAMPLES";
   private filterBox: BoxRenderable | null = null;
   private filterInput: InputRenderable | null = null;
   private instructions: TextRenderable | null = null;
@@ -888,12 +891,13 @@ class ExampleSelector {
     this.renderer.root.add(this.menuContainer);
 
     // Title
-    const titleText = "OPENTUI EXAMPLES";
-    const titleFont = "tiny";
+    const titleText = this.titleText;
+    const titleFont = this.titleFont;
     const { width: titleWidth } = measureText({
       text: titleText,
       font: titleFont,
     });
+    this.titleWidth = titleWidth;
     const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);
 
     this.title = new ASCIIFontRenderable(this.renderer, {
@@ -953,7 +957,6 @@ class ExampleSelector {
       title: EXAMPLES_BOX_TITLE,
       titleAlignment: "center",
       backgroundColor: "transparent",
-      shouldFill: true,
       border: true,
     });
     this.menuContainer.add(this.selectBox);
@@ -1077,7 +1080,7 @@ class ExampleSelector {
     }
 
     if (this.timeToFirstDrawText) {
-      this.timeToFirstDrawText.color = theme.instructionsColor;
+      this.timeToFirstDrawText.fg = theme.instructionsColor;
     }
 
     if (this.notImplementedText) {
@@ -1123,7 +1126,7 @@ class ExampleSelector {
     }
 
     this.filterText = "";
-    this.filterInput.setText("");
+    this.filterInput.value = "";
     this.filterInput.cursorOffset = 0;
   }
 
@@ -1132,7 +1135,7 @@ class ExampleSelector {
       return;
     }
 
-    this.filterInput.setText(this.filterText);
+    this.filterInput.value = this.filterText;
     this.filterInput.cursorOffset = this.filterInput.plainText.length;
   }
 
@@ -1250,9 +1253,8 @@ class ExampleSelector {
 
   private handleResize(width: number, _height: number): void {
     if (this.title) {
-      const titleWidth = this.title.frameBuffer.width;
-      const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);
-      this.title.x = centerX;
+      const centerX = Math.floor(width / 2) - Math.floor(this.titleWidth / 2);
+      this.title.setPosition({ left: centerX });
     }
 
     this.renderer.requestRender();
@@ -1276,7 +1278,6 @@ class ExampleSelector {
 
       if (key.name === "tab" || key.name === "escape") {
         key.preventDefault();
-        key.stopPropagation();
         this.setMenuFocus(this.menuFocusArea === "filter" ? "list" : "filter");
         return;
       }
@@ -1298,7 +1299,6 @@ class ExampleSelector {
 
         if (printableText === "/") {
           key.preventDefault();
-          key.stopPropagation();
           this.setMenuFocus("filter");
           return;
         }

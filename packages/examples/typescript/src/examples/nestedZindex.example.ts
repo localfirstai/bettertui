@@ -1,9 +1,11 @@
 import {
   BoxRenderable,
   type KeyEvent,
-  TextAttributes,
   TextRenderable,
+  bold,
   createCliRenderer,
+  t,
+  underline,
 } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -24,12 +26,11 @@ export function run(renderer: CliRenderer): void {
 
   const title = new TextRenderable(renderer, {
     id: "main-title",
-    content: "Nested Render Objects & Z-Index Demo",
+    content: t`${bold(underline("Nested Render Objects & Z-Index Demo"))}`,
     position: "absolute",
     left: 10,
     top: 2,
     fg: "#FFFF00",
-    attributes: TextAttributes.BOLD | TextAttributes.UNDERLINE,
     zIndex: 1000,
   });
   parentContainer.add(title);
@@ -81,12 +82,11 @@ export function run(renderer: CliRenderer): void {
 
   const textA1 = new TextRenderable(renderer, {
     id: "text-a1",
-    content: "Child A1 (z=10)",
+    content: t`${bold("Child A1 (z=10)")}`,
     position: "absolute",
     left: 17,
     top: 10,
     fg: "#FF44FF",
-    attributes: TextAttributes.BOLD,
     zIndex: 10,
   });
   parentGroupA.add(textA1);
@@ -137,12 +137,11 @@ export function run(renderer: CliRenderer): void {
 
   const textB1 = new TextRenderable(renderer, {
     id: "text-b1",
-    content: "Child B1 (z=20)",
+    content: t`${bold("Child B1 (z=20)")}`,
     position: "absolute",
     left: 32,
     top: 14,
     fg: "#44FF44",
-    attributes: TextAttributes.BOLD,
     zIndex: 20,
   });
   parentGroupB.add(textB1);
@@ -183,7 +182,7 @@ export function run(renderer: CliRenderer): void {
     height: 6,
     backgroundColor: "#442200",
     zIndex: 30,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#FFFF44",
     title: "Parent C (z=20)",
     titleAlignment: "center",
@@ -193,12 +192,11 @@ export function run(renderer: CliRenderer): void {
 
   const textC1 = new TextRenderable(renderer, {
     id: "text-c1",
-    content: "Child C1 (z=30)",
+    content: t`${bold("Child C1 (z=30)")}`,
     position: "absolute",
     left: 47,
     top: 18,
     fg: "#FFFF44",
-    attributes: TextAttributes.BOLD,
     zIndex: 30,
   });
   parentGroupC.add(textC1);
@@ -254,12 +252,11 @@ export function run(renderer: CliRenderer): void {
 
   const phaseIndicator = new TextRenderable(renderer, {
     id: "phase-indicator",
-    content: "Animation Phase: 1/4",
+    content: t`${bold("Animation Phase: 1/4")}`,
     position: "absolute",
     left: 10,
     top: 28,
     fg: "#FFFFFF",
-    attributes: TextAttributes.BOLD,
     zIndex: 1000,
   });
   parentContainer.add(phaseIndicator);
@@ -275,7 +272,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(zIndexDisplay);
 
-  renderer.setFrameCallback(async (deltaMs) => {
+  renderer.setFrameCallback(async (_deltaMs) => {
     const time = Date.now();
     const newPhase = Math.floor((time % (animationSpeed * 4)) / animationSpeed);
 
@@ -358,7 +355,6 @@ export function destroy(renderer: CliRenderer): void {
   }
 
   renderer.clearFrameCallbacks();
-  renderer.setCursorPosition(0, 0, false);
 }
 
 if (import.meta.main) {

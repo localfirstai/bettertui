@@ -1,5 +1,5 @@
 import {
-  type BorderStyle,
+  type BorderStyleKind,
   BoxRenderable,
   type CliRenderer,
   type KeyEvent,
@@ -57,7 +57,7 @@ const PALETTE = {
 } as const;
 
 const WRAP_MODES: Array<"none" | "word" | "char"> = ["none", "word", "char"];
-const BORDER_STYLES: BorderStyle[] = ["single", "rounded", "double", "heavy"];
+const BORDER_STYLES: BorderStyleKind[] = ["single", "round", "double", "thick"];
 const COLUMN_WIDTH_MODES: TextTableColumnWidthMode[] = ["content", "full"];
 const COLUMN_FITTERS: TextTableColumnFitter[] = ["proportional", "balanced"];
 const CELL_PADDING_VALUES: number[] = [0, 1, 2];
@@ -182,7 +182,7 @@ function currentWrapMode(): "none" | "word" | "char" {
   return WRAP_MODES[wrapIndex] ?? "word";
 }
 
-function currentBorderStyle(): BorderStyle {
+function currentBorderStyle(): BorderStyleKind {
   return BORDER_STYLES[borderIndex] ?? "single";
 }
 
@@ -355,8 +355,8 @@ export function run(renderer: CliRenderer): void {
     backgroundColor: "transparent",
   });
 
-  tableAreaScrollBox.verticalScrollbarOptions = { visible: false };
-  selectionScrollBox.verticalScrollbarOptions = { visible: false };
+  tableAreaScrollBox.verticalScrollBar.visible = false;
+  selectionScrollBox.verticalScrollBar.visible = false;
 
   selectionStatusText = new TextRenderable(renderer, {
     id: "text-table-demo-selection-text",

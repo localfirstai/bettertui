@@ -1,9 +1,8 @@
 import {
   BoxRenderable,
+  type CliRenderer,
   FrameBufferRenderable,
   type KeyEvent,
-  type MouseEvent,
-  type OptimizedBuffer,
   RGBA,
   TextRenderable,
   bold,
@@ -11,7 +10,6 @@ import {
   fg,
   t,
 } from "@bettertui/core";
-import type { CliRenderer, RenderContext } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const GRAPHEME_LINES: string[] = [
@@ -38,7 +36,7 @@ class DraggableBox extends BoxRenderable {
   private alphaPercentage: number;
 
   constructor(
-    ctx: RenderContext,
+    ctx: CliRenderer,
     id: string,
     x: number,
     y: number,
@@ -58,44 +56,57 @@ class DraggableBox extends BoxRenderable {
       top: y,
     });
     this.alphaPercentage = Math.round(bg.a * 100);
-  }
 
-  protected renderSelf(buffer: OptimizedBuffer): void {
-    super.renderSelf(buffer);
-
+    // Alpha percentage label
     const alphaText = `${this.alphaPercentage}%`;
-    const centerX = this.x + Math.floor(this.width / 2 - alphaText.length / 2);
-    const centerY = this.y + Math.floor(this.height / 2);
+    const w = typeof width === "number" ? width : 0;
+    const h = typeof height === "number" ? height : 0;
+    const label = new TextRenderable(ctx, {
+      id: `${id}-label`,
+      content: alphaText,
+      position: "absolute",
+      left: Math.max(0, Math.floor(w / 2) - Math.floor(alphaText.length / 2)),
+      top: Math.floor(h / 2),
+    });
+    label.fg = RGBA.fromInts(255, 255, 255, 220);
+    this.add(label);
 
-    buffer.drawText(alphaText, centerX, centerY, RGBA.fromInts(255, 255, 255, 220));
+    // Wire up mouse event handling after super() returns
+    this._options.onMouseDown = (e: unknown) => this._onMouse(e, "down");
+    this._options.onMouseDrag = (e: unknown) => this._onMouse(e, "drag");
+    this._options.onMouseDragEnd = (e: unknown) => this._onMouse(e, "drag-end");
   }
 
-  protected onMouseEvent(event: MouseEvent): void {
-    switch (event.type) {
+  private _onMouse(event: unknown, type: string): void {
+    const e = event as { x?: number; y?: number; stopPropagation?: () => void };
+    const ex = (e.x ?? 0) as number;
+    const ey = (e.y ?? 0) as number;
+    const w = typeof this._options.width === "number" ? this._options.width : 0;
+    const h = typeof this._options.height === "number" ? this._options.height : 0;
+
+    switch (type) {
       case "down":
         this.isDragging = true;
-        this.dragOffsetX = event.x - this.x;
-        this.dragOffsetY = event.y - this.y;
+        this.dragOffsetX = ex - this.x;
+        this.dragOffsetY = ey - this.y;
         this.zIndex = nextZIndex++;
-        event.stopPropagation();
+        e.stopPropagation?.();
         break;
-
       case "drag-end":
         if (this.isDragging) {
           this.isDragging = false;
-          event.stopPropagation();
+          e.stopPropagation?.();
         }
         break;
-
       case "drag":
         if (this.isDragging) {
-          const newX = event.x - this.dragOffsetX;
-          const newY = event.y - this.dragOffsetY;
-
-          this.x = Math.max(0, Math.min(newX, this._ctx.width - this.width));
-          this.y = Math.max(0, Math.min(newY, this._ctx.height - this.height));
-
-          event.stopPropagation();
+          const newX = ex - this.dragOffsetX;
+          const newY = ey - this.dragOffsetY;
+          this.setPosition({
+            left: Math.max(0, Math.min(newX, this._renderer.terminalWidth - w)),
+            top: Math.max(0, Math.min(newY, this._renderer.terminalHeight - h)),
+          });
+          e.stopPropagation?.();
         }
         break;
     }
@@ -103,7 +114,7 @@ class DraggableBox extends BoxRenderable {
 }
 
 class GraphemeBackground extends FrameBufferRenderable {
-  constructor(ctx: RenderContext, id: string, width: number, height: number) {
+  constructor(ctx: CliRenderer, id: string, width: number, height: number) {
     super(ctx, {
       id,
       width,
@@ -111,13 +122,12 @@ class GraphemeBackground extends FrameBufferRenderable {
       position: "absolute",
       left: 0,
       top: HEADER_HEIGHT,
-      respectAlpha: false,
     });
 
     this.fillGraphemes(width, height);
   }
 
-  private fillGraphemes(width: number, height: number) {
+  private fillGraphemes(_width: number, _height: number) {
     const fgColor = RGBA.fromInts(220, 220, 220, 255);
     const bgColor = RGBA.fromInts(10, 14, 20, 255);
     this.frameBuffer.clear(bgColor);
@@ -156,7 +166,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: 0,
     zIndex: 200,
-    selectable: false,
   });
   updateHeader();
   root.add(headerDisplay);
@@ -271,7 +280,6 @@ export function destroy(renderer: CliRenderer): void {
 
   const root = renderer.root.getRenderable("wg-overlay-root");
   if (root) renderer.root.remove(root);
-  renderer.setCursorPosition(0, 0, false);
 }
 
 if (import.meta.main) {

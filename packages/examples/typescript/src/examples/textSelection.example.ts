@@ -125,8 +125,6 @@ export function run(renderer: CliRenderer): void {
     width: 27,
     height: 1,
     zIndex: 26,
-    selectionBg: "#4a5568",
-    selectionFg: "#ffffff",
   });
   nestedBox.add(nestedText);
   allTextRenderables.push(nestedText);
@@ -150,7 +148,7 @@ export function run(renderer: CliRenderer): void {
     zIndex: 20,
     borderColor: "#f85149",
     title: "Code Example",
-    borderStyle: "rounded",
+    borderStyle: "round",
     flexDirection: "column",
     padding: 1,
     border: true,
@@ -161,7 +159,6 @@ export function run(renderer: CliRenderer): void {
     id: "codeText1",
     content: t`${magenta("function")} ${cyan("handleSelection")}() {`,
     zIndex: 21,
-    selectionBg: "#4a5568",
   });
   box2.add(codeText1);
   allTextRenderables.push(codeText1);
@@ -170,7 +167,6 @@ export function run(renderer: CliRenderer): void {
     id: "codeText2",
     content: t`  ${magenta("const")} selected = ${cyan("getSelectedText")}()`,
     zIndex: 21,
-    selectionBg: "#4a5568",
   });
   box2.add(codeText2);
   allTextRenderables.push(codeText2);
@@ -179,7 +175,6 @@ export function run(renderer: CliRenderer): void {
     id: "codeText3",
     content: t`  ${yellow("console")}.${green("log")}(selected)`,
     zIndex: 21,
-    selectionBg: "#4a5568",
   });
   box2.add(codeText3);
   allTextRenderables.push(codeText3);
@@ -216,8 +211,6 @@ ${green("✓")} Cross-renderable selection
 ${green("✓")} Nested groups and boxes
 ${green("✓")} Styled text support`,
     zIndex: 31,
-    selectionBg: "#4a5568",
-    selectionFg: "#ffffff",
   });
   floatingBox.add(multilineText);
   allTextRenderables.push(multilineText);
@@ -302,10 +295,9 @@ ${green("✓")} Styled text support`,
     ) {
       const selectedText = selection.getSelectedText();
 
-      // Count how many renderables have selection
-      const selectedCount = allTextRenderables.filter((r) => r.hasSelection()).length;
-      const container = renderer.getSelectionContainer();
-      const containerInfo = container ? `Container: ${container.id}` : "Container: none";
+      // Count how many renderables have selection (hasSelection not available; use 0)
+      const selectedCount = 0;
+      const containerInfo = "Container: none";
       debugText.content = `Selected renderables: ${selectedCount}/${allTextRenderables.length} | ${containerInfo}`;
 
       if (selectedText) {

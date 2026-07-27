@@ -62,7 +62,9 @@ export type { TreeNode } from "./widget.types";
 export { Dialog } from "./Dialog";
 export type { DialogOptions } from "./Dialog";
 
-export { Timeline } from "./Timeline";
+// Exported under ReconcilerTimeline to keep the public createTimeline export
+// consistent with the high-level TypeScript Timeline class.
+export { Timeline as ReconcilerTimeline } from "./Timeline";
 
 export { Image } from "./Image";
 export type { ImageOptions, ImageFormat, ImageProtocol } from "./Image";

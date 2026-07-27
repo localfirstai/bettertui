@@ -107,7 +107,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     height: "auto",
     minHeight: 5,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#58a6ff",
     title: "Single Line Text 1",
     padding: 1,
@@ -131,7 +131,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     height: "auto",
     minHeight: 5,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#3fb950",
     title: "Single Line Text 2",
     padding: 1,
@@ -154,7 +154,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     height: "auto",
     minHeight: 7,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#d29922",
     title: "Single Line Text 3 (Unicode)",
     padding: 1,
@@ -190,7 +190,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     height: "auto",
     flexGrow: 1,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#f778ba",
     title: "Multiline Text (Word Wrap)",
     padding: 1,
@@ -200,7 +200,8 @@ function createLayout(rendererInstance: CliRenderer): void {
 
   multilineText1 = new TextRenderable(renderer, {
     id: "multilineText1",
-    content: `This is a multiline text block that demonstrates how truncation works with word wrapping enabled. Each line that exceeds the viewport width will be truncated independently. Try resizing the terminal to see how it behaves!`,
+    content:
+      "This is a multiline text block that demonstrates how truncation works with word wrapping enabled. Each line that exceeds the viewport width will be truncated independently. Try resizing the terminal to see how it behaves!",
     fg: "#f778ba",
     wrapMode: wrapMode,
   });
@@ -213,7 +214,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     height: "auto",
     flexGrow: 1,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#bc8cff",
     title: "Multiline Text",
     padding: 1,
@@ -239,7 +240,7 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
     height: "auto",
     flexGrow: 1,
     backgroundColor: "#161b22",
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#ff7b72",
     title: "Styled Text with Truncation",
     padding: 1,
@@ -414,6 +415,7 @@ function toggleColumnSizes(): void {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler
 function handleKeyPress(event: any): void {
   const key = event.sequence.toLowerCase();
 

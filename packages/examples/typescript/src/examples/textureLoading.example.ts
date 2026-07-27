@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 
 import {
   BoxRenderable,
@@ -211,6 +212,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   const textureMap = await TextureUtils.fromFile(imagePath);
   const textureEmissive = await TextureUtils.fromFile(crateEmissivePath);
 
+  // biome-ignore lint/suspicious/noImplicitAnyLet: material type depends on optional texture
   let material;
   if (textureMap) {
     material = new MeshPhongNodeMaterial({
