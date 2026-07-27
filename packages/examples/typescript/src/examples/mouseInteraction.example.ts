@@ -1,22 +1,15 @@
 #!/usr/bin/env bun
 
 import {
-  Box,
   type BoxOptions,
   BoxRenderable,
   type CliRenderer,
   FrameBufferRenderable,
   type MouseEvent,
-  type OptimizedBuffer,
-  type ProxiedVNode,
   RGBA,
-  Text,
-  TextAttributes,
   TextRenderable,
-  type VChild,
   createCliRenderer,
   createTimeline,
-  engine,
   t,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -31,10 +24,11 @@ interface TrailCell {
 let demoContainer: MouseInteractionFrameBuffer | null = null;
 let titleText: TextRenderable | null = null;
 let instructionsText: TextRenderable | null = null;
-let draggableBoxes: ProxiedVNode<typeof BoxRenderable>[] = [];
+let draggableBoxes: BoxRenderable[] = [];
 let nextZIndex = 101;
 
 function DraggableBox(
+  rendererArg: CliRenderer,
   props: BoxOptions & {
     x: number;
     y: number;
@@ -43,179 +37,99 @@ function DraggableBox(
     color: RGBA;
     label: string;
   },
-  children?: VChild,
-) {
+  _children?: BoxRenderable,
+): BoxRenderable {
   const bgColor = RGBA.fromValues(props.color.r, props.color.g, props.color.b, 0.8);
   const borderColor = RGBA.fromValues(
-    props.color.r * 1.2,
-    props.color.g * 1.2,
-    props.color.b * 1.2,
+    Math.min(1, props.color.r * 1.2),
+    Math.min(1, props.color.g * 1.2),
+    Math.min(1, props.color.b * 1.2),
     1.0,
   );
-
-  let isDragging = false;
-  let gotText = "";
-  let scrollText = "";
-  let scrollTimestamp = 0;
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-  const bounceScale = { value: 1 };
-  const baseWidth: number = props.width;
-  const baseHeight: number = props.height;
-  const originalBg: RGBA = bgColor;
-  const dragBg: RGBA = RGBA.fromValues(props.color.r, props.color.g, props.color.b, 0.3);
-  const originalBorderColor: RGBA = borderColor;
-  const dragBorderColor: RGBA = RGBA.fromValues(
-    props.color.r * 1.2,
-    props.color.g * 1.2,
-    props.color.b * 1.2,
+  const dragBg = RGBA.fromValues(props.color.r, props.color.g, props.color.b, 0.3);
+  const dragBorderColor = RGBA.fromValues(
+    Math.min(1, props.color.r * 1.2),
+    Math.min(1, props.color.g * 1.2),
+    Math.min(1, props.color.b * 1.2),
     0.5,
   );
+  const baseWidth = props.width;
+  const baseHeight = props.height;
+  const bounceScale = { value: 1 };
 
-  return Box(
-    {
-      ...props,
-      position: "absolute",
-      left: props.x,
-      top: props.y,
-      width: props.width,
-      height: props.height,
-      backgroundColor: bgColor,
-      borderColor: borderColor,
-      borderStyle: "rounded",
-      title: props.label,
-      titleAlignment: "center",
-      border: true,
-      zIndex: 100,
-      renderAfter(buffer, deltaTime) {
-        const currentTime = Date.now();
-        if (scrollText && currentTime - scrollTimestamp > 2000) {
-          scrollText = "";
-        }
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
 
-        const baseCenterX = this.x + Math.floor(this.width / 2);
-        const baseCenterY = this.y + Math.floor(this.height / 2);
-
-        let textLines = 0;
-        if (isDragging) textLines++;
-        if (scrollText) textLines++;
-        if (gotText) textLines += 2;
-
-        let currentY = textLines > 1 ? baseCenterY - Math.floor(textLines / 2) : baseCenterY;
-
-        if (isDragging) {
-          const centerX = baseCenterX - 2;
-          buffer.drawText("drag", centerX, currentY, RGBA.fromInts(64, 224, 208));
-          currentY++;
-        }
-
-        if (scrollText) {
-          const age = currentTime - scrollTimestamp;
-          const fadeRatio = Math.max(0, 1 - age / 2000);
-          const alpha = Math.round(255 * fadeRatio);
-
-          const centerX = baseCenterX - Math.floor(scrollText.length / 2);
-          buffer.drawText(scrollText, centerX, currentY, RGBA.fromInts(255, 255, 0, alpha));
-          currentY++;
-        }
-
-        if (gotText) {
-          const gotX = baseCenterX - 2;
-          const gotTextX = baseCenterX - Math.floor(gotText.length / 2);
-          buffer.drawText("got", gotX, currentY, RGBA.fromInts(255, 182, 193));
-          currentY++;
-          buffer.drawText(gotText, gotTextX, currentY, RGBA.fromInts(147, 226, 255));
-        }
-      },
-      onMouse(event: MouseEvent): void {
-        switch (event.type) {
-          case "down":
-            gotText = "";
-            isDragging = true;
-            dragOffsetX = event.x - this.x;
-            dragOffsetY = event.y - this.y;
-            this.zIndex = nextZIndex++;
-            this.backgroundColor = dragBg;
-            this.borderColor = dragBorderColor;
-            event.stopPropagation();
-            break;
-
-          case "drag-end":
-            if (isDragging) {
-              isDragging = false;
-              this.zIndex = 100;
-              this.backgroundColor = originalBg;
-              this.borderColor = originalBorderColor;
-              event.stopPropagation();
-            }
-            break;
-
-          case "drag":
-            if (isDragging) {
-              const newX = event.x - dragOffsetX;
-              const newY = event.y - dragOffsetY;
-
-              const boundedX = Math.max(0, Math.min(newX, this._ctx.width - this.width));
-              const boundedY = Math.max(4, Math.min(newY, this._ctx.height - this.height));
-
-              this.x = boundedX;
-              this.y = boundedY;
-
-              event.stopPropagation();
-            }
-            break;
-
-          case "over":
-            gotText = "over " + (event.source?.id || "");
-            break;
-
-          case "out":
-            gotText = "out";
-            break;
-
-          case "drop":
-            gotText = event.source?.id || "";
-            const timeline = createTimeline();
-
-            timeline.add(bounceScale, {
-              value: 1.5,
-              duration: 200,
-              ease: "outExpo",
-              onUpdate: (values) => {
-                const scale = values.targets[0].value;
-                this.width = Math.round(baseWidth * scale);
-                this.height = Math.round(baseHeight * scale);
-              },
-            });
-
-            timeline.add(
-              bounceScale,
-              {
-                value: 1.0,
-                duration: 400,
-                ease: "outExpo",
-                onUpdate: (values) => {
-                  const scale = values.targets[0].value;
-                  this.width = Math.round(baseWidth * scale);
-                  this.height = Math.round(baseHeight * scale);
-                },
-              },
-              200,
-            );
-            break;
-
-          case "scroll":
-            if (event.scroll) {
-              scrollText = `scroll ${event.scroll.direction}`;
-              scrollTimestamp = Date.now();
-              event.stopPropagation();
-            }
-            break;
-        }
-      },
+  const box = new BoxRenderable(rendererArg, {
+    ...props,
+    position: "absolute",
+    left: props.x,
+    top: props.y,
+    width: props.width,
+    height: props.height,
+    backgroundColor: bgColor,
+    borderColor: borderColor,
+    borderStyle: "round",
+    title: props.label,
+    titleAlignment: "center",
+    border: true,
+    zIndex: 100,
+    onMouseDown: (event: unknown) => {
+      const e = event as MouseEvent;
+      isDragging = true;
+      dragOffsetX = (e.position?.x ?? 0) - box.x;
+      dragOffsetY = (e.position?.y ?? 0) - box.y;
+      box.zIndex = nextZIndex++;
+      box.backgroundColor = dragBg;
+      box.borderColor = dragBorderColor;
     },
-    children,
-  );
+    onMouseDrag: (event: unknown) => {
+      if (isDragging) {
+        const e = event as MouseEvent;
+        const newX = (e.position?.x ?? 0) - dragOffsetX;
+        const newY = (e.position?.y ?? 0) - dragOffsetY;
+        box.setPosition({ left: Math.max(0, newX), top: Math.max(4, newY) });
+      }
+    },
+    onMouseDragEnd: (_event: unknown) => {
+      if (isDragging) {
+        isDragging = false;
+        box.zIndex = 100;
+        box.backgroundColor = bgColor;
+        box.borderColor = borderColor;
+      }
+    },
+    onMouseDrop: (_event: unknown) => {
+      const timeline = createTimeline();
+      timeline.add(bounceScale, {
+        value: 1.5,
+        duration: 200,
+        ease: "outExpo",
+        onUpdate: (values: { targets: Array<{ value: number }> }) => {
+          const scale = values.targets[0]?.value ?? 1;
+          box.width = Math.round(baseWidth * scale);
+          box.height = Math.round(baseHeight * scale);
+        },
+      });
+      timeline.add(
+        bounceScale,
+        {
+          value: 1.0,
+          duration: 400,
+          ease: "outExpo",
+          onUpdate: (values: { targets: Array<{ value: number }> }) => {
+            const scale = values.targets[0]?.value ?? 1;
+            box.width = Math.round(baseWidth * scale);
+            box.height = Math.round(baseHeight * scale);
+          },
+        },
+        200,
+      );
+    },
+  });
+
+  return box;
 }
 
 class MouseInteractionFrameBuffer extends FrameBufferRenderable {
@@ -238,7 +152,7 @@ class MouseInteractionFrameBuffer extends FrameBufferRenderable {
     });
   }
 
-  protected renderSelf(buffer: OptimizedBuffer): void {
+  renderSelf(_buffer: unknown): void {
     const currentTime = Date.now();
 
     this.frameBuffer.clear(this.BACKGROUND_COLOR);
@@ -259,20 +173,14 @@ class MouseInteractionFrameBuffer extends FrameBufferRenderable {
 
         const fadedColor = RGBA.fromValues(baseColor.r, baseColor.g, baseColor.b, smoothAlpha);
 
-        this.frameBuffer.setCellWithAlphaBlending(
-          cell.x,
-          cell.y,
-          "█",
-          fadedColor,
-          this.BACKGROUND_COLOR,
-        );
+        this.frameBuffer.setCell(cell.x, cell.y, "█", fadedColor, this.BACKGROUND_COLOR);
       }
     }
 
     for (const cellKey of this.activatedCells) {
       const [x, y] = cellKey.split(",").map(Number);
 
-      this.frameBuffer.drawText("█", x, y, this.ACTIVATED_COLOR, this.BACKGROUND_COLOR);
+      this.frameBuffer.drawText("█", x ?? 0, y ?? 0, this.ACTIVATED_COLOR, this.BACKGROUND_COLOR);
     }
 
     const recentTrails = Array.from(this.trailCells.values())
@@ -281,42 +189,41 @@ class MouseInteractionFrameBuffer extends FrameBufferRenderable {
 
     if (recentTrails.length > 0) {
       const latest = recentTrails[0];
-      this.frameBuffer.setCellWithAlphaBlending(
-        latest.x,
-        latest.y,
-        "+",
-        this.CURSOR_COLOR,
-        this.BACKGROUND_COLOR,
-      );
+      if (latest) {
+        this.frameBuffer.setCell(latest.x, latest.y, "+", this.CURSOR_COLOR, this.BACKGROUND_COLOR);
+      }
     }
 
-    super.renderSelf(buffer);
+    // Flush frame buffer content
+    this.draw(0);
   }
 
-  protected onMouseEvent(event: MouseEvent): void {
-    if (event.propagationStopped) return;
+  onMouseEvent(event: unknown): void {
+    const e = event as MouseEvent;
+    const x = e.position?.x ?? 0;
+    const y = e.position?.y ?? 0;
+    const type = (e as { type?: string }).type;
+    const cellKey = `${x},${y}`;
 
-    const cellKey = `${event.x},${event.y}`;
-
-    switch (event.type) {
+    switch (type) {
       case "move":
         this.trailCells.set(cellKey, {
-          x: event.x,
-          y: event.y,
+          x,
+          y,
           timestamp: Date.now(),
           isDrag: false,
         });
-        this.requestRender();
+        this.renderSelf(null);
         break;
 
       case "drag":
         this.trailCells.set(cellKey, {
-          x: event.x,
-          y: event.y,
+          x,
+          y,
           timestamp: Date.now(),
           isDrag: true,
         });
-        this.requestRender();
+        this.renderSelf(null);
         break;
 
       case "down":
@@ -325,7 +232,7 @@ class MouseInteractionFrameBuffer extends FrameBufferRenderable {
         } else {
           this.activatedCells.add(cellKey);
         }
-        this.requestRender();
+        this.renderSelf(null);
         break;
     }
   }
@@ -338,10 +245,7 @@ class MouseInteractionFrameBuffer extends FrameBufferRenderable {
 
 export function run(renderer: CliRenderer): void {
   renderer.start();
-  const backgroundColor = RGBA.fromInts(15, 15, 35, 255);
-  renderer.setBackgroundColor(backgroundColor);
-
-  engine.attach(renderer);
+  renderer.setBackgroundColor("#0f0f23");
 
   const mainGroup = new BoxRenderable(renderer, {
     id: "mouse-demo-main-group",
@@ -357,7 +261,6 @@ export function run(renderer: CliRenderer): void {
     left: 2,
     top: 1,
     fg: RGBA.fromInts(72, 209, 204),
-    attributes: TextAttributes.BOLD,
     zIndex: 1000,
   });
   mainGroup.add(titleText);
@@ -370,7 +273,7 @@ Scroll on boxes: shows direction • Escape: menu`,
     position: "absolute",
     left: 2,
     top: 2,
-    width: renderer.width - 4,
+    width: renderer.terminalWidth - 4,
     height: 3,
     fg: RGBA.fromInts(176, 196, 222),
     zIndex: 1000,
@@ -381,7 +284,7 @@ Scroll on boxes: shows direction • Escape: menu`,
   mainGroup.add(demoContainer);
 
   draggableBoxes = [
-    DraggableBox({
+    DraggableBox(renderer, {
       id: "drag-box-1",
       x: 10,
       y: 8,
@@ -390,7 +293,7 @@ Scroll on boxes: shows direction • Escape: menu`,
       color: RGBA.fromInts(200, 100, 150),
       label: "Box 1",
     }),
-    DraggableBox({
+    DraggableBox(renderer, {
       id: "drag-box-2",
       x: 30,
       y: 12,
@@ -399,7 +302,7 @@ Scroll on boxes: shows direction • Escape: menu`,
       color: RGBA.fromInts(100, 200, 150),
       label: "Box 2",
     }),
-    DraggableBox({
+    DraggableBox(renderer, {
       id: "drag-box-3",
       x: 50,
       y: 15,
@@ -408,27 +311,16 @@ Scroll on boxes: shows direction • Escape: menu`,
       color: RGBA.fromInts(150, 150, 200),
       label: "Box 3",
     }),
-    DraggableBox(
-      {
-        id: "drag-box-4",
-        x: 15,
-        y: 20,
-        width: 18,
-        height: 11,
-        color: RGBA.fromInts(200, 200, 100),
-        label: "O hidden",
-        overflow: "hidden",
-      },
-      Text({
-        id: "overflow-hidden-box",
-        content: "This should be cut off to the right",
-        width: 25,
-        height: 25,
-        onMouse: (event: MouseEvent) => {
-          console.log("mouse", event.type);
-        },
-      }),
-    ),
+    DraggableBox(renderer, {
+      id: "drag-box-4",
+      x: 15,
+      y: 20,
+      width: 18,
+      height: 11,
+      color: RGBA.fromInts(200, 200, 100),
+      label: "O hidden",
+      overflow: "hidden",
+    }),
   ];
 
   for (const box of draggableBoxes) {

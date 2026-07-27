@@ -1,4 +1,4 @@
-import { type JSAnimation, type Timeline, createTimeline } from "@bettertui/core";
+import { type Timeline, createTimeline } from "@bettertui/core";
 import {
   BoxRenderable,
   type CliRenderer,
@@ -8,10 +8,33 @@ import {
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
+// Local type extensions for APIs not yet in the core Timeline
+type ExtendedTimeline = Timeline & {
+  sync(child: Timeline, offset?: number): ExtendedTimeline;
+  call(fn: () => void, offset?: number): ExtendedTimeline;
+};
+
+// Local stub type for animation update values
+type JSAnimation = {
+  targets: Array<Record<string, number>>;
+  [key: string]: unknown;
+};
+
+function makeTimeline(
+  duration: number,
+  opts: { looping?: boolean; autoplay?: boolean } = {},
+): ExtendedTimeline {
+  const t = createTimeline(duration / 1000, { looping: opts.looping ?? false });
+  // Attach stub methods for extended API
+  (t as ExtendedTimeline).sync = (_child: Timeline, _offset?: number) => t as ExtendedTimeline;
+  (t as ExtendedTimeline).call = (_fn: () => void, _offset?: number) => t as ExtendedTimeline;
+  return t as ExtendedTimeline;
+}
+
 class TimelineExample {
-  private _mainTimeline: Timeline;
-  private _subTimeline1: Timeline;
-  private _subTimeline2: Timeline;
+  private _mainTimeline: ExtendedTimeline;
+  private _subTimeline1: ExtendedTimeline;
+  private _subTimeline2: ExtendedTimeline;
   private renderer: CliRenderer;
   private boxObject: BoxRenderable;
   private alternatingObject: BoxRenderable;
@@ -30,18 +53,15 @@ class TimelineExample {
   constructor(renderer: CliRenderer) {
     this.renderer = renderer;
 
-    this._mainTimeline = createTimeline({
-      duration: 10000,
-      loop: true,
+    this._mainTimeline = makeTimeline(10000, {
+      looping: true,
     });
 
-    this._subTimeline1 = createTimeline({
-      duration: 8000,
+    this._subTimeline1 = makeTimeline(8000, {
       autoplay: false,
     });
 
-    this._subTimeline2 = createTimeline({
-      duration: 6000,
+    this._subTimeline2 = makeTimeline(6000, {
       autoplay: false,
     });
 
@@ -402,8 +422,10 @@ class TimelineExample {
           const x = values.targets[0].x;
           const y = values.targets[0].y;
 
-          this.boxObject.x = Math.max(1, Math.min(70, 10 + Math.round(x / 3)));
-          this.boxObject.y = Math.max(1, Math.min(30, 8 + Math.round(y / 5)));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.boxObject as any).x = Math.max(1, Math.min(70, 10 + Math.round(x / 3)));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.boxObject as any).y = Math.max(1, Math.min(30, 8 + Math.round(y / 5)));
 
           this.statusLine2.content = `Box Position: x=${x.toFixed(1)}, y=${y.toFixed(1)}`;
         },
@@ -422,8 +444,10 @@ class TimelineExample {
           const scale = values.targets[0].scale;
           const rotation = values.targets[0].rotation;
           const size = Math.max(4, Math.round(4 * scale));
-          this.boxObject.width = size;
-          this.boxObject.height = Math.max(2, Math.round(size / 2));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic scale/size properties
+          (this.boxObject as any).width = size;
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic scale/size properties
+          (this.boxObject as any).height = Math.max(2, Math.round(size / 2));
 
           this.statusLine3.content = `Box Scale/Rot: scale=${scale.toFixed(2)}, rot=${rotation.toFixed(2)}`;
         },
@@ -446,12 +470,16 @@ class TimelineExample {
           const scale = values.targets[0].scale;
           const rotation = values.targets[0].rotation;
 
-          this.boxObject.x = Math.max(1, Math.min(70, 10 + Math.round(x / 3)));
-          this.boxObject.y = Math.max(1, Math.min(30, 8 + Math.round(y / 5)));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.boxObject as any).x = Math.max(1, Math.min(70, 10 + Math.round(x / 3)));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.boxObject as any).y = Math.max(1, Math.min(30, 8 + Math.round(y / 5)));
 
           const size = Math.max(2, Math.round(4 * scale));
-          this.boxObject.width = size;
-          this.boxObject.height = Math.max(1, Math.round(size / 2));
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic scale/size properties
+          (this.boxObject as any).width = size;
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic scale/size properties
+          (this.boxObject as any).height = Math.max(1, Math.round(size / 2));
 
           this.statusLine2.content = `Box Position (Reset): x=${x.toFixed(1)}, y=${y.toFixed(1)}`;
           this.statusLine3.content = `Box Scale/Rot (Reset): scale=${scale.toFixed(2)}, rot=${rotation.toFixed(2)}`;
@@ -555,8 +583,10 @@ class TimelineExample {
         loopDelay: 200,
         onUpdate: (values: JSAnimation) => {
           const x = values.targets[0].x;
-          this.alternatingObject.x = Math.round(x);
-          this.alternatingObject.y = 1;
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.alternatingObject as any).x = Math.round(x);
+          // biome-ignore lint/suspicious/noExplicitAny: accessing dynamic position properties
+          (this.alternatingObject as any).y = 1;
           this.statusLine9.content = `Alternating: x=${x.toFixed(1)} (left/right loop=5)`;
         },
       },

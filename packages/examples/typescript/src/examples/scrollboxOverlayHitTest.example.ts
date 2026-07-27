@@ -105,7 +105,7 @@ export function run(renderer: CliRenderer): void {
     borderColor: "#7aa2f7",
     onMouseDown: (event) => {
       setLastClick("dialog (blue)");
-      event.stopPropagation();
+      (event as { stopPropagation(): void }).stopPropagation();
     },
   });
   overlay.add(dialog);
@@ -131,7 +131,7 @@ export function run(renderer: CliRenderer): void {
     scrollY: true,
     onMouseDown: (event) => {
       setLastClick("scrollbox (yellow)");
-      event.stopPropagation();
+      (event as { stopPropagation(): void }).stopPropagation();
     },
     rootOptions: {
       backgroundColor: "#eab308",
@@ -181,10 +181,10 @@ export function destroy(renderer: CliRenderer): void {
     renderer.keyInput.off("keypress", keyHandler);
   }
 
-  renderer.root.getChildren().forEach((child) => {
+  for (const child of renderer.root.getChildren()) {
     renderer.root.remove(child);
     child.destroyRecursively();
-  });
+  }
 
   overlay = null;
   dialog = null;

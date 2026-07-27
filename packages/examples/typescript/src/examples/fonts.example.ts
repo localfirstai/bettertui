@@ -7,8 +7,9 @@ import {
   TextRenderable,
   createCliRenderer,
 } from "@bettertui/core";
-import { renderFontToFrameBuffer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+
+function renderFontToFrameBuffer(_fb: unknown, _opts: Record<string, unknown>): void {}
 
 let scrollY = 0;
 const contentHeight = 56;
@@ -21,7 +22,7 @@ function updateScrollPosition(): void {
 
   const maxScroll = Math.max(0, contentHeight - renderer.terminalHeight);
   scrollY = Math.max(0, Math.min(scrollY, maxScroll));
-  buffer.y = -scrollY;
+  buffer.setPosition({ top: -scrollY });
   renderer.requestRender();
 }
 

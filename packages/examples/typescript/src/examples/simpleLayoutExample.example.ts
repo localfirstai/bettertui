@@ -30,7 +30,7 @@ let moveableText: TextRenderable | null = null;
 let absolutePositionedBox: BoxRenderable | null = null;
 let absolutePositionedText: TextRenderable | null = null;
 let currentDemoIndex = 0;
-let autoAdvanceTimeout: Timer | null = null;
+let autoAdvanceTimeout: ReturnType<typeof setTimeout> | null = null;
 let autoplayEnabled = true;
 let moveableElementVisible = true;
 let moveableElementX = 0;
@@ -62,14 +62,15 @@ const layoutDemos: LayoutDemo[] = [
 function resetElementLayout(element: BoxRenderable): void {
   element.flexBasis = "auto";
   element.flexGrow = 0;
-  element.flexShrink = 0;
   element.width = "auto";
   element.height = "auto";
-
-  element.minWidth = undefined;
-  element.maxWidth = undefined;
-  element.minHeight = undefined;
-  element.maxHeight = undefined;
+  element.setLayout({
+    flexShrink: 0,
+    minWidth: undefined,
+    maxWidth: undefined,
+    minHeight: undefined,
+    maxHeight: undefined,
+  });
 }
 
 function setupHorizontalLayout(): void {
@@ -83,23 +84,21 @@ function setupHorizontalLayout(): void {
   resetElementLayout(mainContent);
 
   contentArea.flexDirection = "row";
-  contentArea.alignItems = "stretch";
+  contentArea.setLayout({ alignItems: "stretch" });
 
-  const sidebarWidth = Math.max(15, Math.floor(renderer!.terminalWidth * 0.2));
+  const sidebarWidth = Math.max(15, Math.floor(renderer?.terminalWidth * 0.2));
   sidebar.flexBasis = sidebarWidth;
   sidebar.flexGrow = 0;
-  sidebar.flexShrink = 0;
+  sidebar.setLayout({ flexShrink: 0, minWidth: 15 });
   sidebar.width = sidebarWidth;
-  sidebar.minWidth = 15;
   sidebar.height = "auto";
   if (sidebarText) sidebarText.content = "LEFT SIDEBAR";
   sidebar.backgroundColor = "#64748b";
 
   mainContent.flexBasis = "auto";
   mainContent.flexGrow = 1;
-  mainContent.flexShrink = 1;
+  mainContent.setLayout({ flexShrink: 1, minWidth: 20 });
   mainContent.width = "auto";
-  mainContent.minWidth = 20;
   mainContent.height = "auto";
   if (mainContentText) mainContentText.content = "MAIN CONTENT";
   mainContent.backgroundColor = "#eab308";
@@ -116,24 +115,22 @@ function setupVerticalLayout(): void {
   resetElementLayout(mainContent);
 
   contentArea.flexDirection = "column";
-  contentArea.alignItems = "stretch";
+  contentArea.setLayout({ alignItems: "stretch" });
 
-  const contentHeight = renderer!.terminalHeight - 6;
+  const contentHeight = renderer?.terminalHeight - 6;
   const topBarHeight = Math.max(3, Math.floor(contentHeight * 0.2));
   sidebar.flexBasis = topBarHeight;
   sidebar.flexGrow = 0;
-  sidebar.flexShrink = 0;
+  sidebar.setLayout({ flexShrink: 0, minHeight: 3 });
   sidebar.height = topBarHeight;
-  sidebar.minHeight = 3;
   sidebar.width = "auto";
   if (sidebarText) sidebarText.content = "TOP BAR";
   sidebar.backgroundColor = "#059669";
 
   mainContent.flexBasis = "auto";
   mainContent.flexGrow = 1;
-  mainContent.flexShrink = 1;
+  mainContent.setLayout({ flexShrink: 1, minHeight: 5 });
   mainContent.height = "auto";
-  mainContent.minHeight = 5;
   mainContent.width = "auto";
   if (mainContentText) mainContentText.content = "MAIN CONTENT";
   mainContent.backgroundColor = "#eab308";
@@ -149,16 +146,17 @@ function setupCenteredLayout(): void {
   resetElementLayout(mainContent);
 
   contentArea.flexDirection = "row";
-  contentArea.alignItems = "stretch";
-  contentArea.justifyContent = "center";
+  contentArea.setLayout({ alignItems: "stretch", justifyContent: "center" });
 
-  const centerWidth = Math.max(30, Math.floor(renderer!.terminalWidth * 0.6));
+  const centerWidth = Math.max(30, Math.floor(renderer?.terminalWidth * 0.6));
   mainContent.flexBasis = centerWidth;
   mainContent.flexGrow = 0;
-  mainContent.flexShrink = 0;
+  mainContent.setLayout({
+    flexShrink: 0,
+    minWidth: 30,
+    maxWidth: Math.floor(renderer?.terminalWidth * 0.8),
+  });
   mainContent.width = centerWidth;
-  mainContent.minWidth = 30;
-  mainContent.maxWidth = Math.floor(renderer!.terminalWidth * 0.8);
   mainContent.height = "auto";
   if (mainContentText) mainContentText.content = "CENTERED CONTENT";
   mainContent.backgroundColor = "#7c3aed";
@@ -176,34 +174,31 @@ function setupThreeColumnLayout(): void {
   resetElementLayout(rightSidebar);
 
   contentArea.flexDirection = "row";
-  contentArea.alignItems = "stretch";
+  contentArea.setLayout({ alignItems: "stretch" });
 
-  const terminalWidth = renderer!.terminalWidth;
+  const terminalWidth = renderer?.terminalWidth;
   const sidebarWidth = Math.max(12, Math.floor(terminalWidth * 0.15));
 
   sidebar.flexBasis = sidebarWidth;
   sidebar.flexGrow = 0;
-  sidebar.flexShrink = 0;
+  sidebar.setLayout({ flexShrink: 0, minWidth: 12 });
   sidebar.width = sidebarWidth;
-  sidebar.minWidth = 12;
   sidebar.height = "auto";
   if (sidebarText) sidebarText.content = "LEFT";
   sidebar.backgroundColor = "#dc2626";
 
   mainContent.flexBasis = "auto";
   mainContent.flexGrow = 1;
-  mainContent.flexShrink = 1;
+  mainContent.setLayout({ flexShrink: 1, minWidth: 20 });
   mainContent.width = "auto";
-  mainContent.minWidth = 20;
   mainContent.height = "auto";
   if (mainContentText) mainContentText.content = "CENTER";
   mainContent.backgroundColor = "#059669";
 
   rightSidebar.flexBasis = sidebarWidth;
   rightSidebar.flexGrow = 0;
-  rightSidebar.flexShrink = 0;
+  rightSidebar.setLayout({ flexShrink: 0, minWidth: 12 });
   rightSidebar.width = sidebarWidth;
-  rightSidebar.minWidth = 12;
   rightSidebar.height = "auto";
   if (rightSidebarText) rightSidebarText.content = "RIGHT";
   rightSidebar.backgroundColor = "#7c3aed";
@@ -417,7 +412,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   renderer.on("resize", handleResize);
 }
 
-function handleResize(width: number, height: number): void {
+function handleResize(_width: number, _height: number): void {
   // Root layout is automatically resized by the renderer
   centerMoveableElement();
 }

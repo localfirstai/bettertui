@@ -1,4 +1,29 @@
-export * from "./binding";
+export type {
+  TerminalCapabilities,
+  CommandResult,
+  RenderResult,
+  NapiEngine,
+  NapiEventBus,
+  NapiFocusManager,
+  NapiTextEngine,
+  NapiScheduler,
+  NapiKeymap,
+  HighlightSegment,
+  HighlightedLine,
+  NapiWidgetHost,
+  NativeSpanFeedOptions,
+  NapiSpanFeedStats,
+  NapiThemeColors,
+  NapiThemeSpacing,
+  NapiThemeBorders,
+  NapiTheme,
+  NapiLoggerConfig,
+  NapiDiagnosticSnapshot,
+  PluginStateName,
+  SlotMode,
+  GraphicsFormat,
+} from "./binding";
+
 export {
   createEngine,
   createEventBus,
@@ -7,19 +32,45 @@ export {
   createScheduler,
   createTextEngine,
   createSpanFeed,
+  NapiSpanFeed,
   createHitGrid,
+  NapiHitGrid,
   createPluginHost,
+  NapiPluginHost,
+  createTimeline as createNativeTimeline,
+  NapiTimeline,
   detectCapabilities,
   getVersion,
+  getNativePackageName,
+  createWidgetHost,
+  createDarkTheme,
+  createLightTheme,
   loggerInit,
   loggerSetLevel,
   loggerGetLevel,
   loggerSetModuleFilter,
   loggerGetDiagnostics,
   loggerFlush,
+  highlightCode,
+  graphicsKittyWrite,
+  graphicsKittyDelete,
+  graphicsKittyDeleteAll,
+  graphicsItermWrite,
+  graphicsSixelWrite,
+  graphicsQuery,
+  clipboardSetSequence,
+  clipboardQuerySequence,
+  clipboardDecode,
 } from "./binding";
-export { CliRenderer, KeyInput, createCliRenderer } from "./cliRenderer";
-export type { CliRendererOptions, RawKeyEvent } from "./cliRenderer";
+
+export { CliRenderer, KeyInput, createCliRenderer, TerminalConsole } from "./cliRenderer";
+export type {
+  CliRendererOptions,
+  RawKeyEvent,
+  RawKeyEvent as KeyEvent,
+  ThemeMode,
+} from "./cliRenderer";
+export { CliRenderEvents } from "./cliRenderer";
 export type { ScreenMode, ExternalOutputMode } from "./platform.types";
 export type { MouseEvent } from "./events";
 export * from "./logger";

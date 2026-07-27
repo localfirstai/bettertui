@@ -3,7 +3,7 @@ import {
   type CliRenderer,
   type MouseEvent,
   RGBA,
-  type RenderContext,
+  type StyledText,
   TextRenderable,
   bold,
   createCliRenderer,
@@ -23,9 +23,11 @@ class DraggableBox extends BoxRenderable {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
+  private _posX = 0;
+  private _posY = 0;
 
   constructor(
-    ctx: RenderContext,
+    ctx: CliRenderer,
     id: string,
     x: number,
     y: number,
@@ -42,41 +44,49 @@ class DraggableBox extends BoxRenderable {
       position: "absolute",
       left: x,
       top: y,
-      borderStyle: "rounded",
+      borderStyle: "round",
       borderColor: RGBA.fromHex("#ffffff"),
       padding: 1,
       flexDirection: "column",
     });
+    this._posX = x;
+    this._posY = y;
   }
 
   protected onMouseEvent(event: MouseEvent): void {
     if (!dragModeEnabled) return;
+    const ev = event as MouseEvent & { type?: string; x?: number; y?: number };
+    const ex = ev.x ?? (ev as unknown as { position?: { x: number } }).position?.x ?? 0;
+    const ey = ev.y ?? (ev as unknown as { position?: { y: number } }).position?.y ?? 0;
 
-    switch (event.type) {
+    switch (ev.type) {
       case "down":
         this.isDragging = true;
-        this.dragOffsetX = event.x - this.x;
-        this.dragOffsetY = event.y - this.y;
+        this.dragOffsetX = ex - this._posX;
+        this.dragOffsetY = ey - this._posY;
         this.zIndex = nextZIndex++;
-        event.stopPropagation();
+        (event as { stopPropagation?: () => void }).stopPropagation?.();
         break;
 
       case "drag-end":
         if (this.isDragging) {
           this.isDragging = false;
-          event.stopPropagation();
+          (event as { stopPropagation?: () => void }).stopPropagation?.();
         }
         break;
 
       case "drag":
         if (this.isDragging) {
-          const newX = event.x - this.dragOffsetX;
-          const newY = event.y - this.dragOffsetY;
-
-          this.x = Math.max(0, Math.min(newX, this._ctx.width - this.width));
-          this.y = Math.max(0, Math.min(newY, this._ctx.height - this.height));
-
-          event.stopPropagation();
+          const newX = ex - this.dragOffsetX;
+          const newY = ey - this.dragOffsetY;
+          const maxX =
+            this._renderer.terminalWidth - (typeof this.width === "number" ? this.width : 0);
+          const maxY =
+            this._renderer.terminalHeight - (typeof this.height === "number" ? this.height : 0);
+          this._posX = Math.max(0, Math.min(newX, maxX));
+          this._posY = Math.max(0, Math.min(newY, maxY));
+          this.setPosition({ left: this._posX, top: this._posY });
+          (event as { stopPropagation?: () => void }).stopPropagation?.();
         }
         break;
     }
@@ -183,7 +193,7 @@ function createCard(
   width: number,
   height: number,
   bg: RGBA,
-  content: any,
+  content: string | StyledText,
 ) {
   const card = new DraggableBox(renderer, id, x, y, width, height, bg);
 

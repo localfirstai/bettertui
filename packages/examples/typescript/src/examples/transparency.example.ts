@@ -1,10 +1,8 @@
 import {
   BoxRenderable,
+  type CliRenderer,
   type KeyEvent,
-  type MouseEvent,
-  type OptimizedBuffer,
   RGBA,
-  TextAttributes,
   TextRenderable,
   bold,
   createCliRenderer,
@@ -12,7 +10,7 @@ import {
   t,
   underline,
 } from "@bettertui/core";
-import type { CliRenderer, RenderContext, ThemeMode } from "@bettertui/core";
+import type { ThemeMode } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let nextZIndex = 101;
@@ -75,6 +73,11 @@ function getHeaderText(themeName: ThemeName) {
 ${fg(theme.headerMuted)(`Drag boxes with the mouse • Press B to cycle dark/light/transparent (current: ${theme.label})`)}`;
 }
 
+function colorToString(color: string | RGBA): string {
+  if (typeof color === "string") return color;
+  return RGBA.toHex(color);
+}
+
 class DraggableTransparentBox extends BoxRenderable {
   private isDragging = false;
   private dragOffsetX = 0;
@@ -83,7 +86,7 @@ class DraggableTransparentBox extends BoxRenderable {
   private labelColor: RGBA;
 
   constructor(
-    ctx: RenderContext,
+    ctx: CliRenderer,
     id: string,
     x: number,
     y: number,
@@ -104,48 +107,61 @@ class DraggableTransparentBox extends BoxRenderable {
     });
     this.alphaPercentage = Math.round(bg.a * 100);
     this.labelColor = THEMES.dark.boxLabelColor;
+
+    // Alpha percentage label as a child TextRenderable
+    const alphaText = `${this.alphaPercentage}%`;
+    const w = typeof width === "number" ? width : 0;
+    const h = typeof height === "number" ? height : 0;
+    const label = new TextRenderable(ctx, {
+      id: `${id}-label`,
+      content: alphaText,
+      position: "absolute",
+      left: Math.max(0, Math.floor(w / 2) - Math.floor(alphaText.length / 2)),
+      top: Math.floor(h / 2),
+    });
+    label.fg = this.labelColor;
+    this.add(label);
+
+    // Wire up mouse event handling via options after super() returns
+    this._options.onMouseDown = (e: unknown) => this._onMouse(e, "down");
+    this._options.onMouseDrag = (e: unknown) => this._onMouse(e, "drag");
+    this._options.onMouseDragEnd = (e: unknown) => this._onMouse(e, "drag-end");
   }
 
   public setLabelColor(color: RGBA): void {
     this.labelColor = color;
   }
 
-  protected renderSelf(buffer: OptimizedBuffer): void {
-    super.renderSelf(buffer);
+  private _onMouse(event: unknown, type: string): void {
+    const e = event as { x?: number; y?: number; stopPropagation?: () => void };
+    const ex = (e.x ?? 0) as number;
+    const ey = (e.y ?? 0) as number;
+    const w = typeof this._options.width === "number" ? this._options.width : 0;
+    const h = typeof this._options.height === "number" ? this._options.height : 0;
 
-    const alphaText = `${this.alphaPercentage}%`;
-    const centerX = this.x + Math.floor(this.width / 2 - alphaText.length / 2);
-    const centerY = this.y + Math.floor(this.height / 2);
-
-    buffer.drawText(alphaText, centerX, centerY, this.labelColor);
-  }
-
-  protected onMouseEvent(event: MouseEvent): void {
-    switch (event.type) {
+    switch (type) {
       case "down":
         this.isDragging = true;
-        this.dragOffsetX = event.x - this.x;
-        this.dragOffsetY = event.y - this.y;
+        this.dragOffsetX = ex - this.x;
+        this.dragOffsetY = ey - this.y;
         this.zIndex = nextZIndex++;
-        event.stopPropagation();
+        e.stopPropagation?.();
         break;
-
       case "drag-end":
         if (this.isDragging) {
           this.isDragging = false;
-          event.stopPropagation();
+          e.stopPropagation?.();
         }
         break;
-
       case "drag":
         if (this.isDragging) {
-          const newX = event.x - this.dragOffsetX;
-          const newY = event.y - this.dragOffsetY;
-
-          this.x = Math.max(0, Math.min(newX, this._ctx.width - this.width));
-          this.y = Math.max(4, Math.min(newY, this._ctx.height - this.height));
-
-          event.stopPropagation();
+          const newX = ex - this.dragOffsetX;
+          const newY = ey - this.dragOffsetY;
+          this.setPosition({
+            left: Math.max(0, Math.min(newX, this._renderer.terminalWidth - w)),
+            top: Math.max(4, Math.min(newY, this._renderer.terminalHeight - h)),
+          });
+          e.stopPropagation?.();
         }
         break;
     }
@@ -160,7 +176,9 @@ export function run(renderer: CliRenderer): void {
   let currentThemeMode: ThemeMode = renderer.themeMode ?? DEFAULT_THEME_MODE;
   let transparentBackgroundColor = getTransparentFallbackBackgroundColor(currentThemeMode);
   let transparentPaletteRequestVersion = 0;
-  renderer.setBackgroundColor(getThemeBackgroundColor(currentTheme, currentThemeMode));
+  renderer.setBackgroundColor(
+    colorToString(getThemeBackgroundColor(currentTheme, currentThemeMode)),
+  );
 
   const parentContainer = new BoxRenderable(renderer, {
     id: "parent-container",
@@ -177,31 +195,27 @@ export function run(renderer: CliRenderer): void {
     left: 10,
     top: 2,
     zIndex: 1,
-    selectable: false,
   });
   parentContainer.add(headerDisplay);
 
   const textUnderAlpha = new TextRenderable(renderer, {
     id: "text-under-alpha",
-    content: "This text should not be selectable",
+    content: t`${bold("This text should not be selectable")}`,
     position: "absolute",
     left: 10,
     top: 6,
     fg: THEMES[currentTheme].textUnderAlpha,
-    attributes: TextAttributes.BOLD,
     zIndex: 4,
-    selectable: false,
   });
   parentContainer.add(textUnderAlpha);
 
   const moreTextUnder = new TextRenderable(renderer, {
     id: "more-text-under",
-    content: "Selectable text to show character preservation",
+    content: t`${bold("Selectable text to show character preservation")}`,
     position: "absolute",
     left: 15,
     top: 10,
     fg: THEMES[currentTheme].moreTextUnder,
-    attributes: TextAttributes.BOLD,
     zIndex: 1,
   });
   parentContainer.add(moreTextUnder);
@@ -289,7 +303,9 @@ export function run(renderer: CliRenderer): void {
 
     const theme = THEMES[themeName];
     renderer.setBackgroundColor(
-      themeName === "transparent" ? transparentBackgroundColor : theme.backgroundColor,
+      themeName === "transparent"
+        ? colorToString(transparentBackgroundColor)
+        : theme.backgroundColor,
     );
     headerDisplay.content = getHeaderText(themeName);
     textUnderAlpha.fg = theme.textUnderAlpha;
@@ -309,34 +325,20 @@ export function run(renderer: CliRenderer): void {
     transparentBackgroundColor = getTransparentFallbackBackgroundColor(currentThemeMode);
 
     if (currentTheme === "transparent") {
-      renderer.setBackgroundColor(transparentBackgroundColor);
+      renderer.setBackgroundColor(colorToString(transparentBackgroundColor));
     }
 
-    try {
-      const palette = await renderer.getPalette();
-
-      if (
-        currentRunVersion !== demoRunVersion ||
-        requestVersion !== transparentPaletteRequestVersion
-      ) {
-        return;
-      }
-
-      if (palette.defaultBackground) {
-        transparentBackgroundColor = RGBA.fromHex(palette.defaultBackground);
-        transparentBackgroundColor.a = 0;
-      }
-    } catch {
-      if (
-        currentRunVersion !== demoRunVersion ||
-        requestVersion !== transparentPaletteRequestVersion
-      ) {
-        return;
-      }
+    // Note: renderer.getPalette() is not available in the current API;
+    // transparent background color is derived from the theme mode fallback.
+    if (
+      currentRunVersion !== demoRunVersion ||
+      requestVersion !== transparentPaletteRequestVersion
+    ) {
+      return;
     }
 
     if (currentTheme === "transparent") {
-      renderer.setBackgroundColor(transparentBackgroundColor);
+      renderer.setBackgroundColor(colorToString(transparentBackgroundColor));
     }
   };
 
@@ -364,7 +366,7 @@ export function run(renderer: CliRenderer): void {
 
   themeModeListener = (mode: ThemeMode) => {
     currentThemeMode = mode;
-    renderer.clearPaletteCache();
+    // renderer.clearPaletteCache() is not available in the current API
 
     if (currentTheme === "transparent") {
       void updateTransparentBackgroundColor();
@@ -395,7 +397,6 @@ export function destroy(renderer: CliRenderer): void {
 
   const parentContainer = renderer.root.getRenderable("parent-container");
   if (parentContainer) renderer.root.remove(parentContainer);
-  renderer.setCursorPosition(0, 0, false);
 }
 
 if (import.meta.main) {

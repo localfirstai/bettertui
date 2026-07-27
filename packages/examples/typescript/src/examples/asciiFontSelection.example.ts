@@ -181,8 +181,10 @@ export function run(renderer: CliRenderer): void {
       const selectedText = selection.getSelectedText();
 
       const selectedCount = allFontRenderables.filter((r) => r.hasSelection()).length;
-      const container = renderer.getSelectionContainer();
-      const containerInfo = container ? `Container: ${container.id}` : "Container: none";
+      const container = renderer.getSelectionContainer() as { id?: string } | null;
+      const containerInfo = container
+        ? `Container: ${container.id ?? "unknown"}`
+        : "Container: none";
       debugText.content = `Selected fonts: ${selectedCount}/${allFontRenderables.length} | ${containerInfo}`;
 
       if (selectedText) {

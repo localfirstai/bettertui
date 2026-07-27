@@ -1,18 +1,76 @@
 import {
   BoxRenderable,
   type CliRenderer,
-  type CorePlugin,
-  type CoreSlotMode,
-  type CoreSlotRegistry,
   type KeyEvent,
-  type PluginErrorEvent,
-  SlotRenderable,
   TextRenderable,
   createCliRenderer,
-  createCoreSlotRegistry,
-  registerCorePlugin,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+
+// ── Local type stubs for core plugin/slot API (not yet exported from @bettertui/core) ──
+
+type CoreSlotMode = "append" | "replace" | "single_winner";
+
+interface PluginErrorEvent {
+  pluginId: string;
+  phase: string;
+  source: string;
+  slot?: string | null;
+  error: Error;
+}
+
+interface CoreSlotRegistry<_TSlot = string, _TCtx = unknown, _TData = unknown> {
+  onPluginError(cb: (event: PluginErrorEvent) => void): () => void;
+  clearPluginErrors(): void;
+  updateOrder(pluginId: string, order: number): void;
+}
+
+interface CorePlugin<_TSlot = string, _TCtx = unknown, _TData = unknown> {
+  id: string;
+  order?: number;
+  dispose?(): void;
+  slots?: Record<
+    string,
+    {
+      render(_ctx: _TCtx, data: _TData): BoxRenderable;
+      onActivate?(): void;
+      onDeactivate?(): void;
+      onDispose?(): void;
+    }
+  >;
+}
+
+// SlotRenderable stub that extends BoxRenderable
+class SlotRenderable<_TSlot = string, _TCtx = unknown, _TData = unknown> extends BoxRenderable {
+  mode: CoreSlotMode = "append";
+  data: Record<string, unknown> = {};
+
+  constructor(renderer: CliRenderer, options: Record<string, unknown> = {}) {
+    super(renderer, options as import("@bettertui/core").BoxOptions);
+  }
+
+  refresh(): void {}
+}
+
+function createCoreSlotRegistry<_TSlot = string, TCtx = unknown, _TData = unknown>(
+  _renderer: CliRenderer,
+  _context: TCtx,
+): CoreSlotRegistry<_TSlot, TCtx, _TData> {
+  return {
+    onPluginError(_cb) {
+      return () => {};
+    },
+    clearPluginErrors() {},
+    updateOrder(_id, _order) {},
+  };
+}
+
+function registerCorePlugin<_TSlot = string, _TCtx = unknown, _TData = unknown>(
+  _registry: CoreSlotRegistry<_TSlot, _TCtx, _TData>,
+  _plugin: CorePlugin<_TSlot, _TCtx, _TData>,
+): () => void {
+  return () => {};
+}
 
 type DemoSlot = "statusbar" | "sidebar";
 type DemoContext = { appName: string; version: string };
@@ -625,6 +683,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   // The SlotRenderables are created later in run() after the registry exists,
   // but we need to save the body reference to add them.
   // We'll add the slots in run() instead.
+  // biome-ignore lint/suspicious/noExplicitAny: storing runtime reference on widget instance
   (rootContainer as any).__body = body;
 }
 
@@ -648,6 +707,7 @@ export function run(rendererInstance: CliRenderer): void {
     return;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: reading runtime reference from widget instance
   const body = (rootContainer as any).__body as BoxRenderable;
 
   unregisterPluginErrorListener = slotRegistry.onPluginError((event) => {
@@ -673,7 +733,7 @@ export function run(rendererInstance: CliRenderer): void {
         content: "Fallback statusbar content",
         fg: "#94a3b8",
       }),
-    pluginFailurePlaceholder: (failure) => {
+    pluginFailurePlaceholder: (failure: PluginErrorEvent) => {
       if (!showPluginFailurePlaceholder) {
         return undefined;
       }
@@ -698,7 +758,7 @@ export function run(rendererInstance: CliRenderer): void {
         content: "No sidebar plugin active",
         fg: "#94a3b8",
       }),
-    pluginFailurePlaceholder: (failure) => {
+    pluginFailurePlaceholder: (failure: PluginErrorEvent) => {
       if (!showPluginFailurePlaceholder) {
         return undefined;
       }
@@ -710,7 +770,7 @@ export function run(rendererInstance: CliRenderer): void {
   // Insert statusbar before the body
   rootContainer.add(statusbarSlot, 0);
   body.add(sidebarSlot);
-  body.add(infoPanel!);
+  if (infoPanel) body.add(infoPanel);
 
   setClockPluginEnabled(true);
   setActivityPluginEnabled(true);

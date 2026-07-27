@@ -3,9 +3,7 @@ import {
   type CliRenderer,
   FrameBufferRenderable,
   type KeyEvent,
-  type MouseEvent,
   RGBA,
-  type RenderContext,
   TextRenderable,
   blue,
   bold,
@@ -14,7 +12,6 @@ import {
   t,
   underline,
 } from "@bettertui/core";
-import { VignetteEffect } from "@bettertui/core";
 
 type FullUnicodeDemoState = {
   keyHandler: (key: KeyEvent) => void;
@@ -35,14 +32,14 @@ class DraggableGraphemeBox extends FrameBufferRenderable {
   private dragOffsetY = 0;
 
   constructor(
-    ctx: RenderContext,
+    ctx: CliRenderer,
     id: string,
     x: number,
     y: number,
     width: number,
     height: number,
     bg: RGBA,
-    respectAlpha = true,
+    _respectAlpha = true,
   ) {
     super(ctx, {
       id,
@@ -51,43 +48,53 @@ class DraggableGraphemeBox extends FrameBufferRenderable {
       position: "absolute",
       left: x,
       top: y,
-      respectAlpha,
     });
 
     // Fill the internal framebuffer with graphemes
     this.frameBuffer.clear(RGBA.fromInts(0, 0, 0, Math.round(bg.a * 255)));
 
-    const fg = RGBA.fromInts(255, 255, 255, 255);
+    const fgColor = RGBA.fromInts(255, 255, 255, 255);
     let row = 0;
     for (const line of GRAPHEME_LINES) {
       if (row >= height) break;
-      this.frameBuffer.drawText(line, 1, row, fg, bg);
+      this.frameBuffer.drawText(line, 1, row, fgColor, bg);
       row += 1;
     }
+
+    // Wire up mouse handlers after super()
+    this._options.onMouseDown = (e: unknown) => this._onMouse(e, "down");
+    this._options.onMouseDrag = (e: unknown) => this._onMouse(e, "drag");
+    this._options.onMouseDragEnd = (e: unknown) => this._onMouse(e, "drag-end");
   }
 
-  protected onMouseEvent(event: MouseEvent): void {
-    switch (event.type) {
+  private _onMouse(event: unknown, type: string): void {
+    const e = event as { x?: number; y?: number; stopPropagation?: () => void };
+    const ex = (e.x ?? 0) as number;
+    const ey = (e.y ?? 0) as number;
+
+    switch (type) {
       case "down":
         this.isDragging = true;
-        this.dragOffsetX = event.x - this.x;
-        this.dragOffsetY = event.y - this.y;
-        this.requestRender();
-        event.stopPropagation();
+        this.dragOffsetX = ex - this.x;
+        this.dragOffsetY = ey - this.y;
+        this._renderer.requestRender();
+        e.stopPropagation?.();
         break;
       case "drag":
         if (this.isDragging) {
-          this.x = event.x - this.dragOffsetX;
-          this.y = event.y - this.dragOffsetY;
-          this.requestRender();
-          event.stopPropagation();
+          this.setPosition({
+            left: ex - this.dragOffsetX,
+            top: ey - this.dragOffsetY,
+          });
+          this._renderer.requestRender();
+          e.stopPropagation?.();
         }
         break;
       case "drag-end":
         if (this.isDragging) {
           this.isDragging = false;
-          this.requestRender();
-          event.stopPropagation();
+          this._renderer.requestRender();
+          e.stopPropagation?.();
         }
         break;
     }
@@ -95,7 +102,7 @@ class DraggableGraphemeBox extends FrameBufferRenderable {
 }
 
 class GraphemeBackground extends FrameBufferRenderable {
-  constructor(ctx: RenderContext, id: string, width: number, height: number) {
+  constructor(ctx: CliRenderer, id: string, width: number, height: number) {
     super(ctx, {
       id,
       width,
@@ -103,16 +110,15 @@ class GraphemeBackground extends FrameBufferRenderable {
       position: "absolute",
       left: 0,
       top: 0,
-      respectAlpha: false,
     });
 
     // Fill entire background with repeating grapheme lines
-    const fg = RGBA.fromInts(220, 220, 220, 255);
-    const bg = RGBA.fromInts(0, 17, 34, 255);
+    const fgColor = RGBA.fromInts(220, 220, 220, 255);
+    const bgColor = RGBA.fromInts(0, 17, 34, 255);
     this.frameBuffer.clear(RGBA.fromInts(0, 17, 34, 255));
     for (let y = 0; y < height; y++) {
       const line = GRAPHEME_LINES[y % GRAPHEME_LINES.length];
-      this.frameBuffer.drawText(line, 2, y, fg, bg);
+      this.frameBuffer.drawText(line, 2, y, fgColor, bgColor);
     }
   }
 }
@@ -122,14 +128,13 @@ class DraggableStyledText extends TextRenderable {
   private dragOffsetX = 0;
   private dragOffsetY = 0;
 
-  constructor(ctx: RenderContext, id: string, x: number, y: number) {
+  constructor(ctx: CliRenderer, id: string, x: number, y: number) {
     super(ctx, {
       id,
       position: "absolute",
       left: x,
       top: y,
       zIndex: 2,
-      selectable: false,
     });
 
     // Styled text content with graphemes
@@ -139,30 +144,38 @@ ${underline("Complex:")} a̐éö̲  Z͑͗͛̒͘a̴͈͚̐̓l̷͓̱͉g̶̙̗̓͘
     this.content = content;
     this.fg = RGBA.fromInts(255, 255, 255, 255);
     this.bg = RGBA.fromInts(0, 0, 0, 0);
+
+    // Wire up mouse handlers after super()
+    this._options.onMouseDown = (e: unknown) => this._onMouse(e, "down");
+    this._options.onMouseDrag = (e: unknown) => this._onMouse(e, "drag");
+    this._options.onMouseDragEnd = (e: unknown) => this._onMouse(e, "drag-end");
   }
 
-  protected onMouseEvent(event: MouseEvent): void {
-    switch (event.type) {
+  private _onMouse(event: unknown, type: string): void {
+    const e = event as { x?: number; y?: number; stopPropagation?: () => void };
+    const ex = (e.x ?? 0) as number;
+    const ey = (e.y ?? 0) as number;
+
+    switch (type) {
       case "down":
         this.isDragging = true;
-        this.dragOffsetX = event.x - this.x;
-        this.dragOffsetY = event.y - this.y;
-        this.requestRender();
-        event.stopPropagation();
+        this.dragOffsetX = ex - this.x;
+        this.dragOffsetY = ey - this.y;
+        this._renderer.requestRender();
+        e.stopPropagation?.();
         break;
       case "drag":
         if (this.isDragging) {
-          this.x = event.x - this.dragOffsetX;
-          this.y = event.y - this.dragOffsetY;
-          this.requestRender();
-          event.stopPropagation();
+          this.setPosition({ left: ex - this.dragOffsetX, top: ey - this.dragOffsetY });
+          this._renderer.requestRender();
+          e.stopPropagation?.();
         }
         break;
       case "drag-end":
         if (this.isDragging) {
           this.isDragging = false;
-          this.requestRender();
-          event.stopPropagation();
+          this._renderer.requestRender();
+          e.stopPropagation?.();
         }
         break;
     }
@@ -171,10 +184,8 @@ ${underline("Complex:")} a̐éö̲  Z͑͗͛̒͘a̴͈͚̐̓l̷͓̱͉g̶̙̗̓͘
 
 export function run(renderer: CliRenderer): void {
   renderer.start();
-  renderer.pause();
-  renderer.setBackgroundColor(RGBA.fromInts(0, 17, 34, 255));
+  renderer.setBackgroundColor(RGBA.toHex(RGBA.fromInts(0, 17, 34, 255)));
 
-  const vignetteEffect = new VignetteEffect(0.55);
   let vignetteEnabled = false;
 
   const rootGroup = new BoxRenderable(renderer, {
@@ -231,8 +242,8 @@ export function run(renderer: CliRenderer): void {
   rootGroup.add(styledText);
 
   const styledText2 = new DraggableStyledText(renderer, "draggable-styled-text-2", 18, 16);
-  styledText2.content = t`${bold(fg("#55FF55", "Emoji Check:"))} ✅ 👩🏽‍💻  👨‍👩‍👧‍👦  🏳️‍🌈
-${underline("Drag me too:")} 🇺🇸  🇩🇪  🇯🇵  🇮🇳  a̐éö̲`;
+  styledText2.content = t`${bold(fg("#55FF55")("Emoji Check:"))} ✅ 👩🏽‍💻  👨‍👩‍👧‍👦  🏳️‍🌈
+${underline("Drag me too:")} 🇺🇸  🇩🇪  🇯🇵  🇮🇳  a̐éö̲`;
   rootGroup.add(styledText2);
 
   const hintText = new TextRenderable(renderer, {
@@ -250,12 +261,7 @@ ${underline("Drag me too:")} 🇺🇸  🇩🇪  🇯🇵  🇮🇳  a̐éö̲
     if (key.name?.toLowerCase() !== "v") return;
     vignetteEnabled = !vignetteEnabled;
     hintText.content = `V: Toggle vignette (${vignetteEnabled ? "ON" : "OFF"})`;
-
-    renderer.clearPostProcessFns();
-    if (vignetteEnabled) {
-      renderer.addPostProcessFn(vignetteEffect.apply.bind(vignetteEffect));
-    }
-
+    // Note: clearPostProcessFns/addPostProcessFn not available in current API
     renderer.requestRender();
   };
 
@@ -272,7 +278,7 @@ export function destroy(renderer: CliRenderer): void {
   if (demoState) {
     renderer.keyInput.off("keypress", demoState.keyHandler);
   }
-  renderer.clearPostProcessFns();
+  // Note: clearPostProcessFns not available in current API
   const root = renderer.root.getRenderable("full-unicode-root");
   if (root) renderer.root.remove(root);
   demoState = null;

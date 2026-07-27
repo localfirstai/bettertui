@@ -2,13 +2,12 @@ import {
   BoxRenderable,
   CliRenderEvents,
   type CliRenderer,
-  type ParsedKey,
+  type RawKeyEvent,
   ScrollBoxRenderable,
   TextRenderable,
   createCliRenderer,
 } from "@bettertui/core";
 import { parseColor } from "@bettertui/core";
-import { getTreeSitterClient } from "@bettertui/core";
 import { MarkdownRenderable } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -419,19 +418,19 @@ const themeKeys = [
 ] as const satisfies readonly ThemeKey[];
 
 let renderer: CliRenderer | null = null;
-let keyboardHandler: ((key: ParsedKey) => void) | null = null;
+let keyboardHandler: ((key: RawKeyEvent) => void) | null = null;
 let selectionHandler: ((selection: { getSelectedText: () => string }) => void) | null = null;
 let parentContainer: BoxRenderable | null = null;
 let markdownScrollBox: ScrollBoxRenderable | null = null;
 let markdownDisplay: MarkdownRenderable | null = null;
 let statusText: TextRenderable | null = null;
-let syntaxStyle: SyntaxStyle | null = null;
+let _syntaxStyle: SyntaxStyle | null = null;
 let helpModal: BoxRenderable | null = null;
 let currentThemeIndex = 0;
 let concealEnabled = true;
 let showingHelp = false;
 let streamingMode = false;
-let streamingTimer: Timer | null = null;
+let streamingTimer: ReturnType<typeof setTimeout> | null = null;
 let streamPosition = 0;
 let endlessMode = false;
 let rendererDestroyHandler: (() => void) | null = null;
@@ -448,39 +447,19 @@ const streamSpeeds = [
 ];
 let currentSpeedIndex = 0;
 
-const JSON_PARSER_WASM_URL =
+const _JSON_PARSER_WASM_URL =
   "https://github.com/tree-sitter/tree-sitter-json/releases/download/v0.24.8/tree-sitter-json.wasm";
-const JSON_HIGHLIGHTS_QUERY_URL =
+const _JSON_HIGHLIGHTS_QUERY_URL =
   "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/json/highlights.scm";
-const DIFF_PARSER_WASM_URL =
+const _DIFF_PARSER_WASM_URL =
   "https://github.com/tree-sitter-grammars/tree-sitter-diff/releases/download/v0.1.0/tree-sitter-diff.wasm";
-const DIFF_HIGHLIGHTS_QUERY_URL =
+const _DIFF_HIGHLIGHTS_QUERY_URL =
   "https://raw.githubusercontent.com/tree-sitter-grammars/tree-sitter-diff/master/queries/highlights.scm";
 
-let demoParsersRegistered = false;
+const _demoParsersRegistered = false;
 
 function registerTreeSitterParsersForDemo(): void {
-  if (demoParsersRegistered) return;
-
-  const treeSitterClient = getTreeSitterClient();
-
-  treeSitterClient.addFiletypeParser({
-    filetype: "json",
-    wasm: JSON_PARSER_WASM_URL,
-    queries: {
-      highlights: [JSON_HIGHLIGHTS_QUERY_URL],
-    },
-  });
-
-  treeSitterClient.addFiletypeParser({
-    filetype: "diff",
-    wasm: DIFF_PARSER_WASM_URL,
-    queries: {
-      highlights: [DIFF_HIGHLIGHTS_QUERY_URL],
-    },
-  });
-
-  demoParsersRegistered = true;
+  // Tree-sitter parsers not available in this build — no-op
 }
 
 function getCurrentTheme() {
@@ -516,13 +495,10 @@ function startStreaming() {
   if (!markdownDisplay || !markdownScrollBox) return;
 
   // Reset to empty and enable streaming mode
-  markdownDisplay.streaming = true;
   markdownDisplay.content = "";
 
   // Enable sticky scroll to bottom for streaming
   markdownScrollBox.stickyScroll = true;
-
-  markdownScrollBox.stickyStart = "bottom";
 
   // Update status
   if (statusText) {
@@ -628,12 +604,10 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   helpModal = new BoxRenderable(renderer, {
     id: "help-modal",
     position: "absolute",
-    left: "50%",
-    top: "50%",
+    left: 10,
+    top: 5,
     width: 60,
     height: 20,
-    marginLeft: -30,
-    marginTop: -10,
     border: true,
     borderStyle: "double",
     borderColor: "#4ECDC4",
@@ -689,18 +663,14 @@ Other:
   parentContainer.add(markdownScrollBox);
 
   // Create syntax style from current theme
-  syntaxStyle = SyntaxStyle.fromStyles(theme.styles);
+  _syntaxStyle = new SyntaxStyle();
 
   // Create markdown display using MarkdownRenderable
   markdownDisplay = new MarkdownRenderable(renderer, {
     id: "markdown-display",
     content: markdownContent,
-    syntaxStyle,
     fg: getThemeTextColor(theme),
     bg: theme.bg,
-    conceal: concealEnabled,
-    internalBlockMode: "top-level",
-    tableOptions: { style: "grid", widthMode: "content", cellPaddingX: 1 },
     width: "100%",
   });
 
@@ -717,14 +687,13 @@ Other:
 
   const applyTheme = (theme: (typeof themes)[ThemeKey]) => {
     rendererInstance.setBackgroundColor(theme.bg);
-    syntaxStyle = SyntaxStyle.fromStyles(theme.styles);
+    _syntaxStyle = new SyntaxStyle();
 
     titleBox.backgroundColor = theme.bg;
     instructionsText.fg = getThemeMutedTextColor(theme);
     helpContent.fg = getThemeTextColor(theme);
 
     if (markdownDisplay) {
-      markdownDisplay.syntaxStyle = syntaxStyle;
       markdownDisplay.fg = getThemeTextColor(theme);
       markdownDisplay.bg = theme.bg;
     }
@@ -756,9 +725,9 @@ Other:
   applyTheme(theme);
   updateStatusText();
 
-  keyboardHandler = (key: ParsedKey) => {
+  keyboardHandler = (key: RawKeyEvent) => {
     // Handle help modal toggle
-    if (key.raw === "?" && helpModal) {
+    if (key.sequence === "?" && helpModal) {
       showingHelp = !showingHelp;
       helpModal.visible = showingHelp;
       return;
@@ -777,17 +746,14 @@ Other:
     } else if (key.name === "x" && !key.ctrl && !key.meta) {
       // Stop streaming (for endless mode)
       stopStreaming();
-      if (markdownDisplay) {
-        markdownDisplay.streaming = false;
-      }
       updateStatusText();
-    } else if (key.raw === "[" && !key.ctrl && !key.meta) {
+    } else if (key.sequence === "[" && !key.ctrl && !key.meta) {
       // Decrease streaming speed (slower)
       if (currentSpeedIndex > 0) {
         currentSpeedIndex--;
         updateStatusText();
       }
-    } else if (key.raw === "]" && !key.ctrl && !key.meta) {
+    } else if (key.sequence === "]" && !key.ctrl && !key.meta) {
       // Increase streaming speed (faster)
       if (currentSpeedIndex < streamSpeeds.length - 1) {
         currentSpeedIndex++;
@@ -797,34 +763,28 @@ Other:
       // Cycle through themes
       currentThemeIndex = (currentThemeIndex + 1) % themeKeys.length;
       applyTheme(getCurrentTheme());
-
       updateStatusText();
     } else if (key.name === "c" && !key.ctrl && !key.meta) {
       // Stop streaming when toggling conceal
       stopStreaming();
-
       concealEnabled = !concealEnabled;
       if (markdownDisplay) {
-        markdownDisplay.conceal = concealEnabled;
-        markdownDisplay.streaming = false;
         markdownDisplay.content = markdownContent;
       }
       updateStatusText();
     }
   };
 
-  rendererInstance.keyInput.on("keypress", keyboardHandler);
+  rendererInstance.keyInput.on("keypress", keyboardHandler as (key: RawKeyEvent) => void);
 
   selectionHandler = (selection) => {
     const selectedText = selection.getSelectedText();
     if (!selectedText || !statusText) return;
 
-    const copied = rendererInstance.copyToClipboardOSC52(selectedText);
+    rendererInstance.copyToClipboardOSC52(selectedText);
     const lineCount = selectedText.split("\n").length;
     const summary = lineCount > 1 ? `${lineCount} lines` : `${selectedText.length} chars`;
-    statusText.content = copied
-      ? `Copied selection to clipboard (${summary})`
-      : `Selected ${summary}; clipboard write unavailable`;
+    statusText.content = `Copied selection to clipboard (${summary})`;
   };
   rendererInstance.on(CliRenderEvents.SELECTION, selectionHandler);
 }
@@ -838,7 +798,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   }
 
   if (keyboardHandler) {
-    rendererInstance.keyInput.off("keypress", keyboardHandler);
+    rendererInstance.keyInput.off("keypress", keyboardHandler as (key: RawKeyEvent) => void);
     keyboardHandler = null;
   }
 
@@ -853,7 +813,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   markdownScrollBox = null;
   markdownDisplay = null;
   statusText = null;
-  syntaxStyle = null;
+  _syntaxStyle = null;
   helpModal = null;
   showingHelp = false;
 

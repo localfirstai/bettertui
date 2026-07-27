@@ -70,11 +70,14 @@ export class KeyEvent implements ParsedKey {
 export class PasteEvent {
   type = "paste" as const;
   bytes: Uint8Array;
+  /** Optional metadata attached to the paste event (e.g. bracketed-paste info). */
+  metadata?: Record<string, unknown>;
   private _defaultPrevented = false;
   private _propagationStopped = false;
 
-  constructor(bytes: Uint8Array) {
+  constructor(bytes: Uint8Array, metadata?: Record<string, unknown>) {
     this.bytes = bytes;
+    this.metadata = metadata;
   }
 
   get defaultPrevented(): boolean {

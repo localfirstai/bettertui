@@ -13,7 +13,7 @@ let container: BoxRenderable | null = null;
 let infoText: TextRenderable | null = null;
 let boxes: BoxRenderable[] = [];
 const opacityValues = [1.0, 0.8, 0.5, 0.3];
-let animationInterval: Timer | null = null;
+let animationInterval: ReturnType<typeof setInterval> | null = null;
 
 function createOpacityDemo(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;

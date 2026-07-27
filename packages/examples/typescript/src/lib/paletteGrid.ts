@@ -1,11 +1,8 @@
-import type { RenderableOptions } from "@bettertui/core";
 import { RGBA } from "@bettertui/core";
 import { type FrameBufferOptions, FrameBufferRenderable } from "@bettertui/core";
-import type { RenderContext } from "@bettertui/core";
-import { TextAttributes } from "@bettertui/core";
+import type { CliRenderer } from "@bettertui/core";
 
-export interface PaletteGridOptions
-  extends Omit<RenderableOptions<PaletteGridRenderable>, "width" | "height"> {
+export interface PaletteGridOptions extends Omit<FrameBufferOptions, "width" | "height"> {
   colors: string[];
   blockWidth?: number;
   blockHeight?: number;
@@ -20,7 +17,7 @@ export class PaletteGridRenderable extends FrameBufferRenderable {
   private _colorsPerRow: number;
   private _maxHeight: number;
 
-  constructor(ctx: RenderContext, options: PaletteGridOptions) {
+  constructor(ctx: CliRenderer, options: PaletteGridOptions) {
     const blockWidth = options.blockWidth ?? 4;
     const blockHeight = options.blockHeight ?? 2;
     const colorsPerRow = options.colorsPerRow ?? 16;
@@ -58,6 +55,10 @@ export class PaletteGridRenderable extends FrameBufferRenderable {
     this.requestRender();
   }
 
+  private requestRender(): void {
+    this._renderer.requestRender();
+  }
+
   private updateDimensions(): void {
     const numRows = Math.ceil(this._colors.length / this._colorsPerRow);
     const requiredHeight = numRows * this._blockHeight;
@@ -68,8 +69,7 @@ export class PaletteGridRenderable extends FrameBufferRenderable {
     }
   }
 
-  protected onResize(width: number, height: number): void {
-    super.onResize(width, height);
+  protected onResize(_width: number, _height: number): void {
     this.renderPalette();
   }
 
@@ -117,7 +117,10 @@ export class PaletteGridRenderable extends FrameBufferRenderable {
 
         if (indexStr.length <= this._blockWidth) {
           for (let ci = 0; ci < indexStr.length; ci++) {
-            buffer.drawText(indexStr[ci], textX + ci, textY, textColor, rgba, TextAttributes.NONE);
+            const ch = indexStr[ci];
+            if (ch !== undefined) {
+              buffer.drawText(ch, textX + ci, textY, textColor, rgba);
+            }
           }
         }
       }

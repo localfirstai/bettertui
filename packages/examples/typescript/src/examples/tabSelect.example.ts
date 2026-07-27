@@ -2,7 +2,7 @@ import {
   BoxRenderable,
   type CliRenderer,
   RenderableEvents,
-  type TabSelectOption,
+  type TabOption,
   TabSelectRenderable,
   TabSelectRenderableEvents,
   bold,
@@ -15,13 +15,14 @@ import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let tabSelect: TabSelectRenderable | null = null;
 let renderer: CliRenderer | null = null;
+// biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler
 let keyboardHandler: ((key: any) => void) | null = null;
 let parentContainer: BoxRenderable | null = null;
 let keyLegendDisplay: TextRenderable | null = null;
 let statusDisplay: TextRenderable | null = null;
-let lastSelectedItem: TabSelectOption | null = null;
+let lastSelectedItem: TabOption | null = null;
 
-const tabOptions: TabSelectOption[] = [
+const tabOptions: TabOption[] = [
   { name: "Home", description: "Welcome to the home page", value: "home" },
   { name: "Profile", description: "Manage your user profile", value: "profile" },
   { name: "Settings", description: "Configure application settings", value: "settings" },
@@ -101,12 +102,10 @@ export function run(rendererInstance: CliRenderer): void {
     zIndex: 100,
     tabWidth: 12,
     backgroundColor: "#1e293b",
-    focusedBackgroundColor: "#2d3748",
     textColor: "#e2e8f0",
-    focusedTextColor: "#f7fafc",
     selectedBackgroundColor: "#3b82f6",
     selectedTextColor: "#ffffff",
-    selectedDescriptionColor: "#cbd5e1",
+    descriptionColor: "#94a3b8",
     showDescription: true,
     showUnderline: true,
     showScrollArrows: true,
@@ -143,18 +142,15 @@ export function run(rendererInstance: CliRenderer): void {
 
   tabSelect.on(
     TabSelectRenderableEvents.SELECTION_CHANGED,
-    (index: number, option: TabSelectOption) => {
+    (_index: number, _option: TabOption) => {
       updateDisplays();
     },
   );
 
-  tabSelect.on(
-    TabSelectRenderableEvents.ITEM_SELECTED,
-    (index: number, option: TabSelectOption) => {
-      lastSelectedItem = option;
-      updateDisplays();
-    },
-  );
+  tabSelect.on(TabSelectRenderableEvents.ITEM_SELECTED, (_index: number, option: TabOption) => {
+    lastSelectedItem = option;
+    updateDisplays();
+  });
 
   tabSelect.on(RenderableEvents.FOCUSED, () => {
     updateDisplays();
@@ -174,16 +170,16 @@ export function run(rendererInstance: CliRenderer): void {
         tabSelect?.focus();
       }
     } else if (key.name === "u") {
-      tabSelect!.showUnderline = !tabSelect!.showUnderline;
+      if (tabSelect) tabSelect.showUnderline = !tabSelect.showUnderline;
       updateDisplays();
     } else if (key.name === "p") {
-      tabSelect!.showDescription = !tabSelect!.showDescription;
+      if (tabSelect) tabSelect.showDescription = !tabSelect.showDescription;
       updateDisplays();
     } else if (key.name === "s") {
-      tabSelect!.showScrollArrows = !tabSelect!.showScrollArrows;
+      if (tabSelect) tabSelect.showScrollArrows = !tabSelect.showScrollArrows;
       updateDisplays();
     } else if (key.name === "w") {
-      tabSelect!.wrapSelection = !tabSelect!.wrapSelection;
+      if (tabSelect) tabSelect.wrapSelection = !tabSelect.wrapSelection;
       updateDisplays();
     }
   };

@@ -1,14 +1,15 @@
-import { Renderable, RenderableEvents, type RenderableOptions } from "@bettertui/core";
-import type { OptimizedBuffer } from "@bettertui/core";
+import type { BoxOptions } from "@bettertui/core";
 import { BoxRenderable } from "@bettertui/core";
 import { TabSelectRenderable, TabSelectRenderableEvents } from "@bettertui/core";
-import type { CliRenderer, TabSelectOption } from "@bettertui/core";
-import { type ColorInput, parseColor } from "@bettertui/core";
+import type { CliRenderer, TabOption } from "@bettertui/core";
+import type { ColorInput } from "@bettertui/core";
+import { RenderableEvents } from "@bettertui/core";
+import { parseColor } from "@bettertui/core";
 
 export interface TabObject {
   title: string;
-  init(tabGroup: Renderable): void;
-  update?(deltaMs: number, tabGroup: Renderable): void;
+  init(tabGroup: BoxRenderable): void;
+  update?(deltaMs: number, tabGroup: BoxRenderable): void;
   show?(): void;
   hide?(): void;
 }
@@ -16,11 +17,11 @@ export interface TabObject {
 interface Tab {
   title: string;
   tabObject: TabObject;
-  group: Renderable;
+  group: BoxRenderable;
   initialized: boolean;
 }
 
-export interface TabControllerOptions extends RenderableOptions<TabControllerRenderable> {
+export interface TabControllerOptions extends BoxOptions {
   backgroundColor?: ColorInput;
   textColor?: ColorInput;
   tabBarHeight?: number;
@@ -37,32 +38,28 @@ export enum TabControllerEvents {
   TAB_CHANGED = "tabChanged",
 }
 
-export class TabControllerRenderable extends Renderable {
+export class TabControllerRenderable extends BoxRenderable {
   public tabs: Tab[] = [];
   private currentTabIndex = 0;
   private tabSelectElement: TabSelectRenderable;
-  private tabBarHeight: number;
-  private frameCallback: ((deltaMs: number) => Promise<void>) | null = null;
+  private _tabBarHeight: number;
+  private _frameCallback: ((deltaMs: number) => Promise<void>) | null = null;
+  private _renderer2: CliRenderer;
 
-  constructor(
-    id: string,
-    private renderer: CliRenderer,
-    options: TabControllerOptions,
-  ) {
-    super(renderer, { ...options, id, buffered: options.backgroundColor ? true : false });
-
-    this.tabBarHeight = options.tabBarHeight || 4;
+  constructor(id: string, renderer: CliRenderer, options: TabControllerOptions) {
+    super(renderer, { ...options, id });
+    this._renderer2 = renderer;
+    this._tabBarHeight = options.tabBarHeight || 4;
 
     this.tabSelectElement = new TabSelectRenderable(renderer, {
       id: `${id}-tabs`,
       width: "100%",
-      height: this.tabBarHeight,
+      height: this._tabBarHeight,
       options: [],
-      zIndex: this.zIndex + 100,
       selectedBackgroundColor: options.selectedBackgroundColor || "#333333",
       selectedTextColor: options.selectedTextColor || "#FFFF00",
       textColor: parseColor(options.textColor || "#FFFFFF"),
-      selectedDescriptionColor: options.selectedDescriptionColor || "#FFFFFF",
+      descriptionColor: options.selectedDescriptionColor || "#FFFFFF",
       backgroundColor: options.tabBarBackgroundColor || options.backgroundColor || "transparent",
       showDescription: options.showDescription ?? true,
       showUnderline: options.showUnderline ?? true,
@@ -75,18 +72,18 @@ export class TabControllerRenderable extends Renderable {
 
     this.add(this.tabSelectElement);
 
-    this.frameCallback = async (deltaMs) => {
-      this.update(deltaMs);
+    this._frameCallback = async (deltaMs) => {
+      this._update(deltaMs);
     };
-    this.renderer.setFrameCallback(this.frameCallback);
+    this._renderer2.setFrameCallback(this._frameCallback);
   }
 
   public addTab(tabObject: TabObject): Tab {
-    const tabGroup = new BoxRenderable(this.ctx, {
-      id: `${this.id}-tab-${this.tabs.length}`,
+    const tabGroup = new BoxRenderable(this._renderer2, {
+      id: `${this._id}-tab-${this.tabs.length}`,
       left: 0,
-      top: this.tabBarHeight,
-      zIndex: this.zIndex + 50,
+      top: this._tabBarHeight,
+      zIndex: (this._options.zIndex ?? 0) + 50,
       visible: false,
       width: "100%",
       height: 1,
@@ -107,13 +104,13 @@ export class TabControllerRenderable extends Renderable {
   }
 
   private updateTabSelectOptions(): void {
-    const options: TabSelectOption[] = this.tabs.map((tab, index) => ({
+    const opts: TabOption[] = this.tabs.map((tab, index) => ({
       name: tab.title,
       description: `Tab ${index + 1}/${this.tabs.length} - Use Left/Right arrows to navigate | Press Ctrl+C to exit | D: toggle debug`,
       value: index,
     }));
 
-    this.tabSelectElement.setOptions(options);
+    this.tabSelectElement.options = opts;
 
     if (this.tabs.length === 1) {
       const firstTab = this.getCurrentTab();
@@ -134,10 +131,12 @@ export class TabControllerRenderable extends Renderable {
   }
 
   public getCurrentTab(): Tab {
-    return this.tabs[this.currentTabIndex];
+    const tab = this.tabs[this.currentTabIndex];
+    if (!tab) throw new Error(`No tab at index ${this.currentTabIndex}`);
+    return tab;
   }
 
-  public getCurrentTabGroup(): Renderable {
+  public getCurrentTabGroup(): BoxRenderable {
     return this.getCurrentTab().group;
   }
 
@@ -152,7 +151,7 @@ export class TabControllerRenderable extends Renderable {
     }
 
     this.currentTabIndex = index;
-    this.tabSelectElement.setSelectedIndex(index);
+    this.tabSelectElement.selectedIndex = index;
 
     const newTab = this.getCurrentTab();
     newTab.group.visible = true;
@@ -174,9 +173,9 @@ export class TabControllerRenderable extends Renderable {
     this.switchToTab((this.currentTabIndex - 1 + this.tabs.length) % this.tabs.length);
   }
 
-  public update(deltaMs: number): void {
-    const currentTab = this.getCurrentTab();
-    if (currentTab && currentTab.tabObject.update) {
+  private _update(deltaMs: number): void {
+    const currentTab = this.tabs[this.currentTabIndex];
+    if (currentTab?.tabObject.update) {
       currentTab.tabObject.update(deltaMs, currentTab.group);
     }
   }
@@ -189,47 +188,34 @@ export class TabControllerRenderable extends Renderable {
     return this.tabSelectElement;
   }
 
-  public focus(): void {
+  override focus(): void {
     this.tabSelectElement.focus();
     this.emit(RenderableEvents.FOCUSED);
   }
 
-  public blur(): void {
+  override blur(): void {
     this.tabSelectElement.blur();
     this.emit(RenderableEvents.BLURRED);
   }
 
-  public get focused(): boolean {
-    return this.tabSelectElement.focused;
-  }
-
   public onResize(width: number, height: number): void {
-    if (this.width === width && this.height === height) return;
-
     this.width = width;
     this.height = height;
 
     this.tabSelectElement.width = width;
-    this.tabSelectElement.height = this.tabBarHeight;
+    this.tabSelectElement.height = this._tabBarHeight;
 
     for (const tab of this.tabs) {
-      tab.group.y = this.tabBarHeight;
-      tab.group.width = width;
-      tab.group.height = height - this.tabBarHeight;
+      tab.group.setLayout({ top: this._tabBarHeight, width, height: height - this._tabBarHeight });
     }
   }
 
-  protected renderSelf(buffer: OptimizedBuffer, deltaTime: number): void {
-    // TabController doesn't render content directly, it manages tab selection and tab content
-    // The tab select element and tab content groups handle their own rendering
-  }
+  override destroy(): void {
+    this.tabSelectElement.blur();
 
-  protected destroySelf(): void {
-    this.blur();
-
-    if (this.frameCallback) {
-      this.renderer.removeFrameCallback(this.frameCallback);
-      this.frameCallback = null;
+    if (this._frameCallback) {
+      this._renderer2.removeFrameCallback(this._frameCallback);
+      this._frameCallback = null;
     }
 
     for (const tab of this.tabs) {
@@ -239,5 +225,6 @@ export class TabControllerRenderable extends Renderable {
     this.tabSelectElement.destroy();
 
     this.removeAllListeners();
+    super.destroy();
   }
 }

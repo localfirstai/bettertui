@@ -19,6 +19,14 @@ import { ScrollBoxRenderable } from "@bettertui/core";
 import { InputRenderable, InputRenderableEvents } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
+/** Extended mouse event type matching the older API used in this example. */
+type AppMouseEvent = MouseEvent & {
+  type?: string;
+  x: number;
+  y: number;
+  stopPropagation(): void;
+};
+
 let mainContainer: BoxRenderable | null = null;
 let contentBox: BoxRenderable | null = null;
 let textBox: ScrollBoxRenderable | null = null;
@@ -97,10 +105,11 @@ function hideFileInput(): void {
 }
 
 // Mouse event handler for resizing
-function handleTextBoxMouse(event: MouseEvent): void {
+function handleTextBoxMouse(event: unknown): void {
+  const e = event as AppMouseEvent;
   if (!textBox) return;
 
-  switch (event.type) {
+  switch (e.type) {
     case "move":
     case "over": {
       if (!isResizing) {
@@ -108,12 +117,12 @@ function handleTextBoxMouse(event: MouseEvent): void {
         const boxLeft = textBox.x;
         const boxTop = textBox.y;
         const direction = getResizeDirection(
-          event.x,
-          event.y,
+          e.x,
+          e.y,
           boxLeft,
           boxTop,
-          textBox.width,
-          textBox.height,
+          typeof textBox.width === "number" ? textBox.width : 0,
+          typeof textBox.height === "number" ? textBox.height : 0,
         );
         resizeDirection = direction;
 
@@ -130,6 +139,7 @@ function handleTextBoxMouse(event: MouseEvent): void {
             e: "e-resize",
           } as const;
           // Note: OpenTUI may not support custom cursor styles yet, but we can still track the direction
+          void cursorMap;
         }
       }
       break;
@@ -138,16 +148,16 @@ function handleTextBoxMouse(event: MouseEvent): void {
     case "down": {
       if (resizeDirection) {
         isResizing = true;
-        resizeStartX = event.x;
-        resizeStartY = event.y;
-        resizeStartWidth = textBox.width;
-        resizeStartHeight = textBox.height;
+        resizeStartX = e.x;
+        resizeStartY = e.y;
+        resizeStartWidth = typeof textBox.width === "number" ? textBox.width : 0;
+        resizeStartHeight = typeof textBox.height === "number" ? textBox.height : 0;
         // Store the original position - convert from absolute screen coords to relative coords within contentBox
         // contentBox has padding: 1, so subtract padding to get relative coordinates
         const contentPadding = contentBox ? 1 : 0;
         resizeStartLeft = textBox.x - contentPadding;
         resizeStartTop = textBox.y - contentPadding;
-        event.stopPropagation();
+        e.stopPropagation();
       }
       break;
     }
@@ -176,14 +186,15 @@ function handleTextBoxMouse(event: MouseEvent): void {
 }
 
 // Global mouse handler for resize operations
-function handleGlobalMouse(event: MouseEvent): void {
-  switch (event.type) {
+function handleGlobalMouse(event: unknown): void {
+  const e = event as AppMouseEvent;
+  switch (e.type) {
     case "move":
     case "drag": {
       // Only handle if we're in a resize operation
       if (isResizing && resizeDirection && textBox) {
-        const deltaX = event.x - resizeStartX;
-        const deltaY = event.y - resizeStartY;
+        const deltaX = e.x - resizeStartX;
+        const deltaY = e.y - resizeStartY;
 
         let newWidth = resizeStartWidth;
         let newHeight = resizeStartHeight;
@@ -231,12 +242,14 @@ function handleGlobalMouse(event: MouseEvent): void {
         // Constrain to content box bounds (accounting for padding: 1)
         if (contentBox) {
           const contentPadding = 1;
-          const maxWidth = contentBox.width - 2 * contentPadding;
-          const maxHeight = contentBox.height - 2 * contentPadding;
+          const cbWidth = typeof contentBox.width === "number" ? contentBox.width : 0;
+          const cbHeight = typeof contentBox.height === "number" ? contentBox.height : 0;
+          const maxWidth = cbWidth - 2 * contentPadding;
+          const maxHeight = cbHeight - 2 * contentPadding;
           const minLeft = contentPadding;
           const minTop = contentPadding;
-          const maxLeft = contentBox.width - newWidth - contentPadding;
-          const maxTop = contentBox.height - newHeight - contentPadding;
+          const maxLeft = cbWidth - newWidth - contentPadding;
+          const maxTop = cbHeight - newHeight - contentPadding;
 
           newWidth = Math.min(newWidth, maxWidth);
           newHeight = Math.min(newHeight, maxHeight);
@@ -247,8 +260,7 @@ function handleGlobalMouse(event: MouseEvent): void {
         // Apply the new dimensions and position
         textBox.width = newWidth;
         textBox.height = newHeight;
-        textBox.left = newLeft;
-        textBox.top = newTop;
+        textBox.setPosition({ left: newLeft, top: newTop });
       }
       break;
     }
@@ -292,32 +304,32 @@ function createDemoText(): TextNodeRenderable {
     attributes: 1,
   });
 
-  const feature1Node = TextNodeRenderable.fromNodes([
+  const feature1Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
     TextNodeRenderable.fromString("Word-based wrapping", { fg: "#c0caf5", attributes: 1 }),
     TextNodeRenderable.fromString(" - Preserves word boundaries when breaking lines 📖", {
       fg: "#565f89",
     }),
-  ]);
+  );
 
-  const feature2Node = TextNodeRenderable.fromNodes([
+  const feature2Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
     TextNodeRenderable.fromString("Character-based wrapping", { fg: "#c0caf5", attributes: 1 }),
     TextNodeRenderable.fromString(" - Breaks at any character for precise control ✂️", {
       fg: "#565f89",
     }),
-  ]);
+  );
 
-  const feature3Node = TextNodeRenderable.fromNodes([
+  const feature3Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
     TextNodeRenderable.fromString("Dynamic resizing", { fg: "#c0caf5", attributes: 1 }),
     TextNodeRenderable.fromString(
       " - Text reflows automatically as container dimensions change 🔄",
       { fg: "#565f89" },
     ),
-  ]);
+  );
 
-  const feature4Node = TextNodeRenderable.fromNodes([
+  const feature4Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
     TextNodeRenderable.fromString("Rich styling", { fg: "#c0caf5", attributes: 1 }),
     TextNodeRenderable.fromString(
@@ -326,7 +338,7 @@ function createDemoText(): TextNodeRenderable {
         fg: "#565f89",
       },
     ),
-  ]);
+  );
 
   const demoTitle = TextNodeRenderable.fromString("\n\n🔧 How It Works:", {
     fg: "#bb9af7",
@@ -442,7 +454,7 @@ textRenderable.add(styledText);`,
     },
   );
 
-  return TextNodeRenderable.fromNodes([
+  return TextNodeRenderable.fromNodes(
     titleNode,
     introNode,
     highlightNode,
@@ -471,14 +483,14 @@ textRenderable.add(styledText);`,
     keyD,
     interactionCont3,
     conclusionNode,
-  ]);
+  );
 }
 
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#0a0a14");
 
   // Add global mouse handler for resize operations
-  renderer.root.onMouse = handleGlobalMouse;
+  (renderer.root as unknown as { onMouse: (event: unknown) => void }).onMouse = handleGlobalMouse;
 
   // Create main container (no border, just layout)
   mainContainer = new BoxRenderable(renderer, {
@@ -508,7 +520,7 @@ export function run(renderer: CliRenderer): void {
     top: 2,
     width: 80,
     height: 15,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#9ece6a",
     backgroundColor: "#11111b",
     onMouse: handleTextBoxMouse,
@@ -520,7 +532,7 @@ export function run(renderer: CliRenderer): void {
     fg: "#c0caf5",
     wrapMode: "word", // Enable text wrapping with word mode
   });
-  textRenderable.add(createDemoText());
+  textRenderable.content = createDemoText().toString();
   textBox.add(textRenderable);
 
   // Create instructions box with border
@@ -560,7 +572,7 @@ export function run(renderer: CliRenderer): void {
     marginTop: -2,
     zIndex: 200,
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#7aa2f7",
     backgroundColor: "#1e1e2e",
     visible: false,
@@ -581,12 +593,8 @@ export function run(renderer: CliRenderer): void {
     maxLength: 500,
     onKeyDown: (key) => {
       // If backspace is pressed and input is empty, close the prompt
-      if (
-        key.name === "backspace" &&
-        filePathInput &&
-        filePathInput.value === "" &&
-        isInputVisible
-      ) {
+      const k = key as { name: string };
+      if (k.name === "backspace" && filePathInput && filePathInput.value === "" && isInputVisible) {
         hideFileInput();
       }
     },
@@ -627,12 +635,13 @@ export function run(renderer: CliRenderer): void {
             fg: "#9ece6a",
           },
         );
-        textRenderable.add(headerNode);
+        textRenderable.addNode(headerNode);
 
         // Trigger lifecycle to commit header
         textRenderable.onLifecyclePass();
 
         // Load file directly into the text buffer
+        // biome-ignore lint/suspicious/noExplicitAny: accessing internal text buffer property
         const textBuffer = (textRenderable as any).textBuffer;
         textBuffer.loadFile(filePath);
 
@@ -657,7 +666,7 @@ export function run(renderer: CliRenderer): void {
 
       if (textRenderable) {
         textRenderable.clear();
-        textRenderable.add(errorTextNode);
+        textRenderable.addNode(errorTextNode);
       }
 
       if (instructionsText2) {
@@ -744,12 +753,13 @@ export function run(renderer: CliRenderer): void {
 
           // Replace the current content
           textRenderable.clear();
-          textRenderable.add(babylonTextNode);
+          textRenderable.addNode(babylonTextNode);
 
           // Trigger the lifecycle pass to commit text to buffer
           textRenderable.onLifecyclePass();
 
           // Get the text buffer size after loading (in bytes)
+          // biome-ignore lint/suspicious/noExplicitAny: accessing internal text buffer property
           const textBufferBytes = (textRenderable as any).textBuffer.byteSize;
           const textBufferMB = (textBufferBytes / (1024 * 1024)).toFixed(2);
 
@@ -764,7 +774,7 @@ export function run(renderer: CliRenderer): void {
   });
 }
 
-export function destroy(renderer: CliRenderer): void {
+export function destroy(_renderer: CliRenderer): void {
   mainContainer?.destroyRecursively();
   mainContainer = null;
   contentBox = null;

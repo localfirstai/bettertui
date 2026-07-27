@@ -3,15 +3,39 @@ import {
   CliRenderEvents,
   type CliRenderer,
   type KeyEvent,
-  type ScrollbackRenderContext,
-  type ScrollbackSnapshot,
-  type ScrollbackWriter,
   TextRenderable,
   TextareaRenderable,
   type ThemeMode,
   createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+
+// ── Local stubs for APIs not yet in @bettertui/core ──────────────────────────
+
+type ScrollbackRenderContext = {
+  renderContext: CliRenderer;
+  [key: string]: unknown;
+};
+
+type ScrollbackSnapshot = {
+  root: BoxRenderable;
+  width: number;
+  height: number;
+};
+
+type ScrollbackWriter = (ctx: ScrollbackRenderContext) => ScrollbackSnapshot;
+
+// Helper to access non-standard CliRenderer properties without TypeScript errors
+// biome-ignore lint/correctness/noUnusedVariables: extended renderer type for internal access pattern
+type AnyRenderer = CliRenderer & {
+  screenMode: string;
+  externalOutputMode: string;
+  footerHeight: number;
+  useMouse: boolean;
+  isDestroyed: boolean;
+  width: number;
+  writeToScrollback(write: ScrollbackWriter): void;
+};
 
 const DEFAULT_FOOTER_HEIGHT = 11;
 const MIN_FOOTER_HEIGHT = 8;
@@ -339,6 +363,7 @@ function roleHeadingColor(role: MessageRole, palette: DemoPalette): string {
   }
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: available for future heading styling use
 function roleHeadingAttributes(role: MessageRole): number {
   if (role === "stream") {
     return 5;
@@ -362,7 +387,7 @@ function buildSimpleTextBoxSnapshot(
   entry: BoxMessageEntry,
   ctx: ScrollbackRenderContext,
 ): ScrollbackSnapshot {
-  const maxTextWidth = Math.max(18, Math.min(ctx.width - 4, 90));
+  const maxTextWidth = Math.max(18, Math.min((ctx.width as number) - 4, 90));
   const headingCore = truncateToWidth(
     `${roleLabel(entry.role)} | ${formatTimestamp(entry.timestamp)}`,
     Math.max(1, maxTextWidth - 2),
@@ -375,7 +400,7 @@ function buildSimpleTextBoxSnapshot(
   const longestLine = Math.max(headingLine.length, longestBody);
 
   const textWidth = Math.min(maxTextWidth, Math.max(2, longestLine + 1));
-  const boxWidth = Math.min(ctx.width, Math.max(4, textWidth + 1));
+  const boxWidth = Math.min(ctx.width as number, Math.max(4, textWidth + 1));
   const boxHeight = Math.max(4, bodyLines.length + 3);
 
   const box = new BoxRenderable(ctx.renderContext, {
@@ -400,8 +425,7 @@ function buildSimpleTextBoxSnapshot(
     height: 1,
     content: headingLine,
     fg: roleHeadingColor(entry.role, entry.palette),
-    attributes: roleHeadingAttributes(entry.role),
-  });
+  } as import("@bettertui/core").TextOptions);
 
   const bodyText = new TextRenderable(ctx.renderContext, {
     id: `split-simple-body-${snapshotNodeCounter++}`,
@@ -454,18 +478,25 @@ class SplitFooterDemo {
   private statusMessage = "Ready";
   private destroyed = false;
 
+  /** Typed access to non-standard CliRenderer properties. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer properties
+  private get ra(): any {
+    return this.renderer;
+  }
+
   constructor(private renderer: CliRenderer) {
     this.palette = resolveDemoPalette(this.renderer.themeMode);
     this.desiredFooterHeight = this.clampFooterHeight(this.desiredFooterHeight);
 
-    if (this.renderer.screenMode !== "split-footer") {
-      this.renderer.screenMode = "split-footer";
+    if (this.ra.screenMode !== "split-footer") {
+      this.ra.screenMode = "split-footer";
     }
 
-    this.renderer.footerHeight = this.desiredFooterHeight;
+    this.ra.footerHeight = this.desiredFooterHeight;
 
-    if (this.renderer.externalOutputMode !== "capture-stdout") {
-      this.renderer.externalOutputMode = "capture-stdout";
+    if (this.ra.externalOutputMode !== "capture-stdout") {
+      this.ra.externalOutputMode = "capture-stdout";
     }
 
     this.mode = "split-footer";
@@ -530,12 +561,7 @@ class SplitFooterDemo {
       backgroundColor: this.palette.composerBackground,
       focusedBackgroundColor: this.palette.inputFocusedBackground,
       cursorColor: this.palette.inputCursor,
-      onSubmit: this.handleComposerSubmit,
-      keyBindings: [
-        { name: "return", ctrl: true, action: "submit" },
-        { name: "linefeed", ctrl: true, action: "submit" },
-      ],
-    });
+    } as import("@bettertui/core").TextareaOptions);
 
     this.statusRow = new BoxRenderable(this.renderer, {
       id: "split-footer-status-row",
@@ -616,10 +642,7 @@ class SplitFooterDemo {
   }
 
   private isSplitCaptureMode(): boolean {
-    return (
-      this.renderer.screenMode === "split-footer" &&
-      this.renderer.externalOutputMode === "capture-stdout"
-    );
+    return this.ra.screenMode === "split-footer" && this.ra.externalOutputMode === "capture-stdout";
   }
 
   private clampFooterHeight(requestedHeight: number): number {
@@ -638,12 +661,13 @@ class SplitFooterDemo {
     this.metaText.fg = this.palette.streamText;
     this.composerBox.borderColor = this.palette.composerBorder;
     this.composerBox.backgroundColor = this.palette.composerBackground;
-    this.composer.placeholderColor = this.palette.inputPlaceholder;
-    this.composer.textColor = this.palette.inputText;
-    this.composer.focusedTextColor = this.palette.inputFocusedText;
+    const c = this.composer as unknown as Record<string, unknown>;
+    c.placeholderColor = this.palette.inputPlaceholder;
+    c.textColor = this.palette.inputText;
+    c.focusedTextColor = this.palette.inputFocusedText;
     this.composer.backgroundColor = this.palette.composerBackground;
-    this.composer.focusedBackgroundColor = this.palette.inputFocusedBackground;
-    this.composer.cursorColor = this.palette.inputCursor;
+    c.focusedBackgroundColor = this.palette.inputFocusedBackground;
+    c.cursorColor = this.palette.inputCursor;
     this.controlsText.fg = this.palette.controlText;
   }
 
@@ -656,10 +680,9 @@ class SplitFooterDemo {
       this.statusMessage = message;
     }
 
-    const modeLabel =
-      this.mode === "split-footer" ? `split:${this.renderer.footerHeight}` : "fullscreen";
+    const modeLabel = this.mode === "split-footer" ? `split:${this.ra.footerHeight}` : "fullscreen";
     const streamLabel = this.streamEnabled ? `${this.streamIntervalMs}ms` : "off";
-    const mouseLabel = this.renderer.useMouse ? "mouse:on" : "mouse:off";
+    const mouseLabel = this.ra.useMouse ? "mouse:on" : "mouse:off";
     const typingLabel = this.assistantTyping ? "typing" : "idle";
 
     this.modeText.content = modeLabel;
@@ -672,14 +695,14 @@ class SplitFooterDemo {
   private activateSplitFooterMode(announce = true): void {
     this.desiredFooterHeight = this.clampFooterHeight(this.desiredFooterHeight);
 
-    if (this.renderer.screenMode !== "split-footer") {
-      this.renderer.screenMode = "split-footer";
+    if (this.ra.screenMode !== "split-footer") {
+      this.ra.screenMode = "split-footer";
     }
 
-    this.renderer.footerHeight = this.desiredFooterHeight;
+    this.ra.footerHeight = this.desiredFooterHeight;
 
-    if (this.renderer.externalOutputMode !== "capture-stdout") {
-      this.renderer.externalOutputMode = "capture-stdout";
+    if (this.ra.externalOutputMode !== "capture-stdout") {
+      this.ra.externalOutputMode = "capture-stdout";
     }
 
     this.mode = "split-footer";
@@ -689,19 +712,19 @@ class SplitFooterDemo {
     if (announce) {
       this.publishMessage(
         "system",
-        `Switched to split-footer mode (height ${this.renderer.footerHeight}). Stream capture is active.`,
+        `Switched to split-footer mode (height ${this.ra.footerHeight}). Stream capture is active.`,
         false,
       );
     }
   }
 
   private activateFullscreenMode(): void {
-    if (this.renderer.externalOutputMode !== "passthrough") {
-      this.renderer.externalOutputMode = "passthrough";
+    if (this.ra.externalOutputMode !== "passthrough") {
+      this.ra.externalOutputMode = "passthrough";
     }
 
-    if (this.renderer.screenMode !== "main-screen") {
-      this.renderer.screenMode = "main-screen";
+    if (this.ra.screenMode !== "main-screen") {
+      this.ra.screenMode = "main-screen";
     }
 
     this.mode = "fullscreen";
@@ -728,7 +751,7 @@ class SplitFooterDemo {
     }
 
     try {
-      this.renderer.writeToScrollback(write);
+      this.ra.writeToScrollback(write);
 
       if (this.destroyed) {
         return;
@@ -752,7 +775,7 @@ class SplitFooterDemo {
     const paletteSnapshot: DemoPalette = { ...this.palette };
 
     this.enqueueScrollback(
-      (ctx) =>
+      (ctx: ScrollbackRenderContext) =>
         buildSimpleTextBoxSnapshot(
           {
             role,
@@ -769,7 +792,9 @@ class SplitFooterDemo {
   private getPassage(index: number): WallLyricPassage {
     const total = WALL_STREAM_PASSAGES.length;
     const safeIndex = ((index % total) + total) % total;
-    return WALL_STREAM_PASSAGES[safeIndex]!;
+    const passage = WALL_STREAM_PASSAGES[safeIndex] ?? WALL_STREAM_PASSAGES[0];
+    if (!passage) throw new Error("WALL_STREAM_PASSAGES is empty");
+    return passage;
   }
 
   private passageText(passage: WallLyricPassage): string {
@@ -779,7 +804,7 @@ class SplitFooterDemo {
   private publishWelcomeMessages(): void {
     this.publishMessage(
       "system",
-      `Lyric cue pack loaded. Width ${this.renderer.width}. Use /demo for a guided mini medley.`,
+      `Lyric cue pack loaded. Width ${this.ra.width}. Use /demo for a guided mini medley.`,
       false,
     );
 
@@ -870,9 +895,9 @@ class SplitFooterDemo {
     const medleySequence = [0, 1, 2, 3, 4, 5, 6];
 
     this.publishMessage("system", "Mini medley:", false);
-    medleySequence.forEach((index) => {
+    for (const index of medleySequence) {
       this.publishMessage("assistant", this.passageText(this.getPassage(index)));
-    });
+    }
 
     this.publishMessage(
       "system",
@@ -961,14 +986,14 @@ class SplitFooterDemo {
         const option = (args[0] ?? "toggle").toLowerCase();
 
         if (option === "on") {
-          this.renderer.useMouse = true;
+          this.ra.useMouse = true;
         } else if (option === "off") {
-          this.renderer.useMouse = false;
+          this.ra.useMouse = false;
         } else {
-          this.renderer.useMouse = !this.renderer.useMouse;
+          this.ra.useMouse = !this.ra.useMouse;
         }
 
-        this.refreshStatus(`mouse ${this.renderer.useMouse ? "enabled" : "disabled"}`);
+        this.refreshStatus(`mouse ${this.ra.useMouse ? "enabled" : "disabled"}`);
         return;
       }
 
@@ -1032,7 +1057,7 @@ class SplitFooterDemo {
 
         this.desiredFooterHeight = this.clampFooterHeight(requested);
         if (this.mode === "split-footer") {
-          this.renderer.footerHeight = this.desiredFooterHeight;
+          this.ra.footerHeight = this.desiredFooterHeight;
           this.publishMessage("system", `footer height set to ${this.desiredFooterHeight}`, false);
         }
         this.refreshStatus(`footer target ${this.desiredFooterHeight}`);
@@ -1116,9 +1141,10 @@ class SplitFooterDemo {
       return this.passageText(this.getPassage(this.streamCount));
     }
 
-    return WALL_ASSISTANT_LINES[
-      (this.messageCount + userText.length) % WALL_ASSISTANT_LINES.length
-    ]!;
+    return (
+      WALL_ASSISTANT_LINES[(this.messageCount + userText.length) % WALL_ASSISTANT_LINES.length] ??
+      ""
+    );
   }
 
   private adjustFooterHeight(delta: number): void {
@@ -1127,14 +1153,14 @@ class SplitFooterDemo {
       return;
     }
 
-    const nextHeight = this.clampFooterHeight(this.renderer.footerHeight + delta);
-    if (nextHeight === this.renderer.footerHeight) {
+    const nextHeight = this.clampFooterHeight(this.ra.footerHeight + delta);
+    if (nextHeight === this.ra.footerHeight) {
       this.refreshStatus("footer already at limit");
       return;
     }
 
     this.desiredFooterHeight = nextHeight;
-    this.renderer.footerHeight = nextHeight;
+    this.ra.footerHeight = nextHeight;
     this.refreshStatus(`footer height ${nextHeight}`);
     this.publishMessage("system", `footer height adjusted to ${nextHeight}`, false);
   }
@@ -1148,7 +1174,7 @@ class SplitFooterDemo {
       return false;
     }
 
-    if (key.baseCode === 48) {
+    if ((key as unknown as Record<string, unknown>).baseCode === 48) {
       return true;
     }
 
@@ -1156,14 +1182,15 @@ class SplitFooterDemo {
       return true;
     }
 
-    return key.raw === "\u001b[27;5;48~" || key.raw === "\u001b[27;6;48~";
+    const raw = (key as unknown as Record<string, unknown>).raw as string | undefined;
+    return raw === "\u001b[27;5;48~" || raw === "\u001b[27;6;48~";
   }
 
   private handleKeyPress = (key: KeyEvent): void => {
     if (!key.ctrl && !key.meta && key.shift && key.name === "u") {
       key.preventDefault();
-      this.renderer.useMouse = !this.renderer.useMouse;
-      this.refreshStatus(`mouse ${this.renderer.useMouse ? "enabled" : "disabled"}`);
+      this.ra.useMouse = !this.ra.useMouse;
+      this.refreshStatus(`mouse ${this.ra.useMouse ? "enabled" : "disabled"}`);
       return;
     }
 
@@ -1230,8 +1257,8 @@ class SplitFooterDemo {
 
   private handleResize = (): void => {
     this.desiredFooterHeight = this.clampFooterHeight(this.desiredFooterHeight);
-    if (this.mode === "split-footer" && this.renderer.footerHeight !== this.desiredFooterHeight) {
-      this.renderer.footerHeight = this.desiredFooterHeight;
+    if (this.mode === "split-footer" && this.ra.footerHeight !== this.desiredFooterHeight) {
+      this.ra.footerHeight = this.desiredFooterHeight;
     }
 
     this.refreshStatus("layout resized");
@@ -1267,7 +1294,7 @@ class SplitFooterDemo {
     }
 
     this.composer.off("line-info-change", this.handleDraftChanged);
-    this.composer.onSubmit = undefined;
+    (this.composer as unknown as Record<string, unknown>).onSubmit = undefined;
     this.renderer.keyInput.off("keypress", this.handleKeyPress);
     this.renderer.off("resize", this.handleResize);
     this.renderer.off(CliRenderEvents.THEME_MODE, this.handleThemeMode);
@@ -1275,9 +1302,9 @@ class SplitFooterDemo {
 
     this.renderer.root.remove(this.shell);
 
-    if (!this.renderer.isDestroyed) {
-      this.renderer.externalOutputMode = "passthrough";
-      this.renderer.screenMode = "main-screen";
+    if (!this.ra.isDestroyed) {
+      this.ra.externalOutputMode = "passthrough";
+      this.ra.screenMode = "main-screen";
     }
   }
 }
@@ -1302,7 +1329,9 @@ export function destroy(_rendererInstance: CliRenderer): void {
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({
+  const renderer = await (
+    createCliRenderer as (opts: Record<string, unknown>) => Promise<CliRenderer>
+  )({
     targetFps: 30,
     exitOnCtrlC: true,
     useMouse: true,
@@ -1319,7 +1348,7 @@ if (import.meta.main) {
   // Used by capture scripts to bound each run to a fixed duration.
   if (AUTO_EXIT_MS > 0) {
     setTimeout(() => {
-      if (!renderer.isDestroyed) {
+      if (!(renderer as unknown as { isDestroyed: boolean }).isDestroyed) {
         renderer.destroy();
       }
     }, AUTO_EXIT_MS);

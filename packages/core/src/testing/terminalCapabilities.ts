@@ -34,6 +34,7 @@ export function createTerminalCapabilities(
     focus_events: options.focusEvents ?? true,
     mouse: options.mouse ?? true,
     osc52: options.osc52 ?? false,
+    osc52_support: options.osc52 ?? false,
     osc8: options.osc8 ?? false,
     sync: options.sync ?? true,
     sgr_pixel: options.sgrPixel ?? false,

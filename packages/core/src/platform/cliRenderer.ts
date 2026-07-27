@@ -4,6 +4,7 @@ import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
+import { CliRenderEvents } from "../lib/renderableEvents";
 import { StdinParser } from "../lib/stdinParser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import {
@@ -17,6 +18,8 @@ import {
 import type { DiagnosticSnapshot, LoggerConfig } from "./logger";
 import type { ExternalOutputMode, ScreenMode } from "./platform.types";
 
+export { CliRenderEvents };
+
 export interface RawKeyEvent {
   name: string;
   ctrl: boolean;
@@ -24,6 +27,7 @@ export interface RawKeyEvent {
   alt: boolean;
   meta: boolean;
   sequence: string;
+  preventDefault(): void;
 }
 
 export interface CliRendererOptions {
@@ -35,13 +39,12 @@ export interface CliRendererOptions {
   footerHeight?: number;
   externalOutputMode?: ExternalOutputMode;
   logger?: LoggerConfig;
-  /**
-   * Enable the in-core debug overlay/tooling (§6.4). Pass `true` for defaults or
-   * a {@link DevToolsOptions} object to configure it. When omitted/false, a
-   * zero-cost no-op DevTools is used (Principle #2). Env vars `BTUI_DEBUG` and
-   * `BTUI_SHOW_STATS` force it on regardless.
-   */
   debug?: boolean | DevToolsOptions;
+  onDestroy?: () => void;
+  enableMouseMovement?: boolean;
+  useMouse?: boolean;
+  autoFocus?: boolean;
+  backgroundColor?: string;
 }
 
 type KeyInputEvents = {
@@ -56,7 +59,7 @@ export class KeyInput extends EventEmitter<KeyInputEvents> {
   constructor() {
     super();
     this.stdinParser = new StdinParser({
-      useKittyKeyboard: false, // Keep disabled to match old behavior
+      useKittyKeyboard: false,
       onTimeoutFlush: () => {
         this.drain();
       },
@@ -92,24 +95,64 @@ export class KeyInput extends EventEmitter<KeyInputEvents> {
   private drain(): void {
     this.stdinParser.drain((event) => {
       if (event.type === "key") {
+        let _prevented = false;
         this.emit("keypress", {
           name: event.key.name,
           ctrl: event.key.ctrl,
           shift: event.key.shift,
-          alt: event.key.option, // option acts as alt
+          alt: event.key.option,
           meta: event.key.meta,
           sequence: event.key.sequence,
+          preventDefault() {
+            _prevented = true;
+          },
         });
       }
     });
   }
 }
 
-export class CliRenderer {
+/** Minimal console overlay stub. */
+export class TerminalConsole {
+  private _visible = false;
+  keyBindings: Record<string, unknown> = {};
+  onCopySelection?: () => void;
+
+  show(): void {
+    this._visible = true;
+  }
+  hide(): void {
+    this._visible = false;
+  }
+  toggle(): void {
+    this._visible = !this._visible;
+  }
+  get visible(): boolean {
+    return this._visible;
+  }
+}
+
+export type ThemeMode = "light" | "dark";
+
+type FrameCallback = (deltaTime: number) => void | Promise<void>;
+
+// Lazy import to avoid circular at module level
+let _RootRenderable: typeof import("../renderables/Box").RootRenderable | undefined;
+
+function getRootRenderable() {
+  if (!_RootRenderable) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    _RootRenderable = require("../renderables/Box").RootRenderable;
+  }
+  if (!_RootRenderable) throw new Error("RootRenderable could not be loaded");
+  return _RootRenderable;
+}
+
+export class CliRenderer extends EventEmitter {
   private engine: NapiEngine;
   private keymap: NapiKeymap;
   private _keyInput: KeyInput;
-  private capabilities: TerminalCapabilities;
+  private _capabilities: TerminalCapabilities;
   private width: number;
   private height: number;
   private renderOffset: number;
@@ -118,20 +161,29 @@ export class CliRenderer {
   private externalOutputBuffer: string[] = [];
   private nodes: Map<number, { parent: number | null; children: number[] }> = new Map();
   private running = false;
+  private paused = false;
   private _devtools: DevTools;
   private overlay: OverlayHost | null = null;
   private lastFrameTime = 0;
+  private _frameInterval: ReturnType<typeof setTimeout> | null = null;
+  private _frameCallbacks: Set<FrameCallback> = new Set();
+  private _root: import("../renderables/Box").RootRenderable | null = null;
+  private _console: TerminalConsole = new TerminalConsole();
+  private _themeMode: ThemeMode = "dark";
+  private _targetFps: number;
+  private _onDestroy: (() => void) | undefined;
+  private _pendingRender = false;
+  private _resizeHandler: (() => void) | null = null;
 
   constructor(options: CliRendererOptions = {}) {
+    super();
     if (options.logger) {
-      // Default `dev` from NODE_ENV so file logging lands in the repo-root
-      // `logs/` dir during development but stays off in production unless the
-      // caller passes an explicit `file` path. An explicit `dev` still wins.
       loggerInit({ dev: process.env.NODE_ENV !== "production", ...options.logger });
     }
-    this.capabilities = detectCapabilities();
-    this.width = options.width ?? this.capabilities.columns;
-    this.height = options.height ?? this.capabilities.rows;
+    this._capabilities = detectCapabilities();
+    this.width = options.width ?? this._capabilities.columns;
+    this.height = options.height ?? this._capabilities.rows;
+    this._targetFps = options.targetFps ?? 30;
 
     this._screenMode = options.screenMode ?? "alternate-screen";
     this._externalOutputMode =
@@ -144,13 +196,12 @@ export class CliRenderer {
     this.engine = createEngine(this.width, this.height);
     this.keymap = createKeymap();
     this._keyInput = new KeyInput();
+    this._onDestroy = options.onDestroy;
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
 
-    // ─── Debug tooling (§6.4) ────────────────────────────────────────────────
-    // Env vars mirror OpenTUI's OTUI_SHOW_STATS: BTUI_DEBUG / BTUI_SHOW_STATS
-    // force the overlay on regardless of the option.
+    // Debug tooling
     const envDebug =
       process.env.BTUI_DEBUG === "1" ||
       process.env.BTUI_DEBUG === "true" ||
@@ -162,18 +213,38 @@ export class CliRenderer {
       const devToolsOptions: DevToolsOptions =
         typeof debugOption === "object" ? { ...debugOption, enabled: true } : { enabled: true };
       this._devtools = createDevTools(devToolsOptions);
-      this._devtools.updateCapabilities(mapCapabilities(this.capabilities));
+      this._devtools.updateCapabilities(mapCapabilities(this._capabilities));
       this.overlay = new OverlayHost(this, this._devtools);
-      // Env-forced or bare `true` starts with the performance panel visible so
-      // the overlay is discoverable out of the box (like OTUI_SHOW_STATS).
       if (envDebug || debugOption === true) {
         this._devtools.show(DebugPanel.Performance);
       }
     } else {
-      // Zero-cost no-op keeps `renderer.devtools` always defined (Principle #2).
       this._devtools = createDevTools();
     }
+
+    // Ctrl+C exit handler
+    if (options.exitOnCtrlC !== false) {
+      this._keyInput.on("keypress", (key) => {
+        if (key.ctrl && key.name === "c") {
+          this.destroy();
+          process.exit(0);
+        }
+      });
+    }
+
+    // Resize handling
+    this._resizeHandler = () => {
+      const cols = process.stdout.columns || 80;
+      const rows = process.stdout.rows || 24;
+      if (cols !== this.width || rows !== this.height) {
+        this.resize(cols, rows);
+        this.emit(CliRenderEvents.RESIZE, cols, rows);
+      }
+    };
+    process.stdout.on("resize", this._resizeHandler);
   }
+
+  // ── Getters ─────────────────────────────────────────────────────────────────
 
   get terminalWidth(): number {
     return this.width;
@@ -199,6 +270,7 @@ export class CliRenderer {
     return this._keyInput;
   }
 
+  /** Alias for keyInput. */
   get keyHandler(): KeyInput {
     return this._keyInput;
   }
@@ -211,87 +283,288 @@ export class CliRenderer {
     return this.running;
   }
 
-  /**
-   * Snapshot the engine's diagnostic counters (render calls, frame times, cache
-   * hit/miss, etc.). Returns zeroed counters if the logger was never initialized.
-   */
+  /** The scene root renderable. All top-level renderables should be added here. */
+  get root(): import("../renderables/Box").RootRenderable {
+    if (!this._root) {
+      const Ctor = getRootRenderable();
+      this._root = new Ctor(this);
+    }
+    return this._root;
+  }
+
+  /** The terminal console overlay. */
+  get console(): TerminalConsole {
+    return this._console;
+  }
+
+  /** Current terminal theme mode (light/dark). */
+  get themeMode(): ThemeMode {
+    return this._themeMode;
+  }
+
+  /** Terminal capabilities detected at startup. */
+  get capabilities(): TerminalCapabilities {
+    return this._capabilities;
+  }
+
   getDiagnostics(): DiagnosticSnapshot {
     return loggerGetDiagnostics();
   }
 
-  /**
-   * The DevTools facade. Always defined — a zero-cost no-op instance unless the
-   * `debug` option (or `BTUI_DEBUG`/`BTUI_SHOW_STATS`) enabled it.
-   */
   get devtools(): DevTools {
     return this._devtools;
   }
 
-  /** Whether the debug overlay is active (enabled via option/env). */
   get debugEnabled(): boolean {
     return this.overlay !== null;
   }
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+  /** Start the render loop and keyboard input. */
+  start(): void {
+    if (this.running) return;
+    this.running = true;
+    this.paused = false;
+
+    if (this._screenMode === "alternate-screen") {
+      this.enterAlternateScreen();
+    }
+    this._keyInput.start();
+    this._startFrameLoop();
+  }
+
+  /** Stop the render loop and exit alternate screen. */
+  stop(): void {
+    if (!this.running) return;
+    this.running = false;
+    this._stopFrameLoop();
+    this._keyInput.stop();
+
+    if (this._screenMode === "split-footer") {
+      this.flushExternalOutput();
+    } else {
+      this.exitAlternateScreen();
+    }
+  }
+
   /**
-   * Toggle a debug panel (defaults to the performance panel). No-op unless the
-   * overlay was enabled. When toggling the last panel off, forces a full redraw
-   * so the vacated region is repainted cleanly.
+   * Auto-start / toggle mode.
+   * Starts if stopped, or pauses/resumes the loop if running.
    */
+  auto(): void {
+    if (!this.running) {
+      this.start();
+    } else if (this.paused) {
+      this.resume();
+    }
+  }
+
+  /** Pause the frame loop without stopping input. */
+  pause(): void {
+    this.paused = true;
+  }
+
+  /** Resume a paused frame loop. */
+  resume(): void {
+    this.paused = false;
+  }
+
+  /** Full suspend: stop input and frame loop. */
+  suspend(): void {
+    this.paused = true;
+    this._keyInput.stop();
+  }
+
+  /** Full cleanup: stop everything and destroy engine. */
+  destroy(): void {
+    this._onDestroy?.();
+    this._stopFrameLoop();
+    try {
+      this._keyInput.stop();
+    } catch {
+      /* ignore */
+    }
+    if (this._screenMode === "split-footer") {
+      try {
+        this.flushExternalOutput();
+      } catch {
+        /* ignore */
+      }
+    } else {
+      try {
+        this.exitAlternateScreen();
+      } catch {
+        /* ignore */
+      }
+    }
+    if (this._resizeHandler) {
+      process.stdout.off("resize", this._resizeHandler);
+      this._resizeHandler = null;
+    }
+    this.running = false;
+    this.emit(CliRenderEvents.DESTROY);
+    try {
+      this.engine.shutdown();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // ── Frame loop ────────────────────────────────────────────────────────────────
+
+  private _startFrameLoop(): void {
+    const msPerFrame = 1000 / this._targetFps;
+    let lastTime = performance.now();
+
+    const loop = () => {
+      if (!this.running) return;
+
+      const now = performance.now();
+      const dt = now - lastTime;
+      lastTime = now;
+
+      if (!this.paused) {
+        // Run frame callbacks
+        for (const cb of this._frameCallbacks) {
+          try {
+            cb(dt);
+          } catch (err) {
+            console.error("Frame callback error:", err);
+          }
+        }
+
+        // Emit frame event
+        this.emit(CliRenderEvents.FRAME, { frameId: this.lastFrameTime });
+
+        // Render
+        try {
+          this.render();
+        } catch {
+          /* ignore render errors */
+        }
+      }
+
+      this._frameInterval = setTimeout(loop, msPerFrame);
+    };
+
+    this._frameInterval = setTimeout(loop, msPerFrame);
+  }
+
+  private _stopFrameLoop(): void {
+    if (this._frameInterval !== null) {
+      clearTimeout(this._frameInterval);
+      this._frameInterval = null;
+    }
+  }
+
+  /** Register a frame callback (called every frame before render). */
+  setFrameCallback(cb: FrameCallback): void {
+    this._frameCallbacks.add(cb);
+  }
+
+  /** Remove a previously registered frame callback. */
+  removeFrameCallback(cb: FrameCallback): void {
+    this._frameCallbacks.delete(cb);
+  }
+
+  /** Clear all frame callbacks. */
+  clearFrameCallbacks(): void {
+    this._frameCallbacks.clear();
+  }
+
+  /** Request an immediate render (useful outside the frame loop). */
+  requestRender(): void {
+    if (!this._pendingRender) {
+      this._pendingRender = true;
+      setImmediate(() => {
+        this._pendingRender = false;
+        try {
+          this.render();
+        } catch {
+          /* ignore */
+        }
+      });
+    }
+  }
+
+  // ── Visual API ────────────────────────────────────────────────────────────────
+
+  /** Set the terminal window title via OSC 0 sequence. */
+  setTerminalTitle(title: string): void {
+    process.stdout.write(`\x1b]0;${title}\x07`);
+  }
+
+  setBackgroundColor(color: string): void {
+    try {
+      this.engine.setStyle(this.engine.root(), JSON.stringify({ bg: color }));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  dumpHitGrid(): void {
+    try {
+      this.engine.hitGridDump?.();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  copyToClipboardOSC52(text: string): void {
+    const encoded = Buffer.from(text).toString("base64");
+    process.stdout.write(`\x1b]52;c;${encoded}\x07`);
+  }
+
+  clearClipboardOSC52(): void {
+    process.stdout.write("\x1b]52;c;!\x07");
+  }
+
+  requestLive(): void {}
+  dropLive(): void {}
+  clearSelection(): void {}
+  getSelectionContainer(): null {
+    return null;
+  }
+  get hasSelection(): boolean {
+    return false;
+  }
+  setCursorPosition(_x: number, _y: number, _visible?: boolean): void {}
+
   toggleDebugOverlay(panel: DebugPanel = DebugPanel.Performance): void {
     if (!this.overlay) return;
     const nowVisible = this._devtools.toggle(panel);
     if (!nowVisible && !this.overlay.visible) {
-      // Last panel hidden: wipe the overlay region and repaint the full frame.
       this.overlay.clear();
       this.renderFull();
     }
   }
 
-  /** Configure the debug overlay (corner, panel width, body rows). No-op when disabled. */
   configureDebugOverlay(options: Parameters<OverlayHost["configure"]>[0]): void {
     this.overlay?.configure(options);
   }
 
-  /**
-   * Returns the native ID of the engine's root node.
-   * Used by the React adapter to append top-level elements to the engine root.
-   */
+  // ── Node management ───────────────────────────────────────────────────────────
+
   get rootNodeId(): number {
     return this.engine.root();
   }
 
-  /**
-   * Returns the native IDs of the direct children of a node.
-   * Used by the React adapter to iterate and clear children.
-   */
   getChildrenOf(id: number): number[] {
     return this.nodes.get(id)?.children ?? [];
   }
 
-  /**
-   * Set visual style properties on a native node.
-   * Called by the React reconciler after prop commits.
-   */
   setNodeStyle(id: number, style: Style): void {
     this.engine.setStyle(id, JSON.stringify(style));
   }
 
-  /**
-   * Set layout properties on a native node.
-   * Called by the React reconciler after prop commits.
-   */
   setNodeLayout(id: number, layout: LayoutConstraints): void {
     const layoutJson = layoutToEngineJson(layout);
     this.engine.setLayout(id, JSON.stringify(layoutJson));
   }
 
-  /**
-   * Insert `childId` immediately before `beforeId` in `parentId`'s children.
-   * Uses the direct `insertBefore` NAPI call (fast path — no JSON serialization).
-   */
   insertNodeBefore(parentId: number, childId: number, beforeId: number): void {
     this.engine.insertBefore(beforeId, childId);
-    // Keep our TS node tracking in sync
     const parentNode = this.nodes.get(parentId);
     if (parentNode) {
       const beforeIdx = parentNode.children.indexOf(beforeId);
@@ -303,49 +576,6 @@ export class CliRenderer {
       if (childNode) childNode.parent = parentId;
     }
   }
-
-  start(): void {
-    if (this.running) return;
-    this.running = true;
-
-    if (this._screenMode === "alternate-screen") {
-      this.enterAlternateScreen();
-    }
-    this._keyInput.start();
-  }
-
-  stop(): void {
-    if (!this.running) return;
-    this.running = false;
-    this._keyInput.stop();
-
-    if (this._screenMode === "split-footer") {
-      this.flushExternalOutput();
-    } else {
-      this.exitAlternateScreen();
-    }
-    this.engine.shutdown();
-  }
-
-  /** Flush captured external output above the footer region. */
-  private flushExternalOutput(): void {
-    if (this.externalOutputBuffer.length === 0) return;
-    // Move cursor above footer, replay output, restore footer position
-    const output = this.externalOutputBuffer.join("");
-    this.externalOutputBuffer = [];
-    process.stdout.write(`\x1b[${this.renderOffset + 1};1H${output}`);
-  }
-
-  /** Capture or passthrough stdout writes depending on mode. */
-  interceptStdoutWrite = (chunk: string | Uint8Array): boolean => {
-    if (this._externalOutputMode === "capture-stdout") {
-      this.externalOutputBuffer.push(
-        typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"),
-      );
-      return true;
-    }
-    return false;
-  };
 
   createNode(kind: string): number {
     const id = this.engine.createNode(kind);
@@ -380,7 +610,11 @@ export class CliRenderer {
       }
       this.nodes.delete(id);
     }
-    this.engine.removeNode(id);
+    try {
+      this.engine.removeNode(id);
+    } catch {
+      /* ignore */
+    }
   }
 
   setText(id: number, text: string): void {
@@ -397,7 +631,8 @@ export class CliRenderer {
     }
   }
 
-  /** Switch screen mode at runtime. */
+  // ── Screen modes ──────────────────────────────────────────────────────────────
+
   setScreenMode(mode: ScreenMode, footerHeight?: number): void {
     const oldMode = this._screenMode;
     this._screenMode = mode;
@@ -424,6 +659,8 @@ export class CliRenderer {
     }
   }
 
+  // ── Rendering ─────────────────────────────────────────────────────────────────
+
   render(): void {
     const start = performance.now();
     this.engine.beginFrame();
@@ -440,13 +677,6 @@ export class CliRenderer {
     this.writeFrame(frame, performance.now() - start);
   }
 
-  /**
-   * Shared frame write path for {@link render} and {@link renderFull}. Writes
-   * the engine's ANSI output, flushes captured external output, then (if the
-   * debug overlay is enabled) records the frame and composites the overlay on
-   * top. The overlay is written *after* engine output and outside the engine's
-   * dirty-diff, so it self-clears vacated rows (see {@link OverlayHost.paint}).
-   */
   private writeFrame(
     frame: { output_data: string; dirty_region_count?: number },
     renderDuration: number,
@@ -454,7 +684,6 @@ export class CliRenderer {
     if (frame.output_data) {
       const decoded = Buffer.from(frame.output_data, "base64");
       if (this._screenMode === "split-footer") {
-        // Paint only in the viewport region (above footer)
         process.stdout.write(`\x1b[1;1H${decoded.toString()}`);
       } else {
         process.stdout.write(decoded);
@@ -496,20 +725,13 @@ export class CliRenderer {
     this.width = width;
     this.height = height;
     if (this._screenMode === "split-footer") {
-      // Keep footer height stable, adjust viewport
       this.engine.resize(width, this.viewportHeight);
     } else {
       this.engine.resize(width, height);
     }
   }
 
-  private enterAlternateScreen(): void {
-    process.stdout.write("\x1b[?1049h\x1b[?25l");
-  }
-
-  private exitAlternateScreen(): void {
-    process.stdout.write("\x1b[?25h\x1b[?1049l");
-  }
+  // ── Key bindings ──────────────────────────────────────────────────────────────
 
   handleKey(sequence: string): string | null {
     return this.keymap.handleKey(sequence);
@@ -525,16 +747,41 @@ export class CliRenderer {
   ): boolean {
     return this.keymap.addBinding(layer, id, keys, command, description ?? null, priority);
   }
+
+  // ── Private helpers ───────────────────────────────────────────────────────────
+
+  private flushExternalOutput(): void {
+    if (this.externalOutputBuffer.length === 0) return;
+    const output = this.externalOutputBuffer.join("");
+    this.externalOutputBuffer = [];
+    process.stdout.write(`\x1b[${this.renderOffset + 1};1H${output}`);
+  }
+
+  interceptStdoutWrite = (chunk: string | Uint8Array): boolean => {
+    if (this._externalOutputMode === "capture-stdout") {
+      this.externalOutputBuffer.push(
+        typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"),
+      );
+      return true;
+    }
+    return false;
+  };
+
+  private enterAlternateScreen(): void {
+    process.stdout.write("\x1b[?1049h\x1b[?25l");
+  }
+
+  private exitAlternateScreen(): void {
+    process.stdout.write("\x1b[?25h\x1b[?1049l");
+  }
 }
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
   return new CliRenderer(options);
 }
 
-/**
- * Map the engine's snake_case {@link TerminalCapabilities} to the camelCase
- * shape the DevTools CapabilityInspector expects.
- */
+// ── Utility ───────────────────────────────────────────────────────────────────
+
 function mapCapabilities(caps: TerminalCapabilities): {
   trueColor: boolean;
   kittyKeyboard: boolean;
@@ -586,8 +833,11 @@ function layoutToEngineJson(layout: LayoutConstraints): Record<string, unknown> 
   if (layout.flexWrap !== undefined) j.flex_wrap = layout.flexWrap;
   if (layout.justifyContent !== undefined) j.justify = layout.justifyContent;
   if (layout.alignItems !== undefined) j.align = layout.alignItems;
+  if (layout.alignSelf !== undefined) j.align_self = layout.alignSelf;
   if (layout.flexGrow !== undefined) j.flex_grow = layout.flexGrow;
   if (layout.flexShrink !== undefined) j.flex_shrink = layout.flexShrink;
+  if (layout.flexBasis !== undefined) j.flex_basis = String(layout.flexBasis);
+  if (layout.display !== undefined) j.display = layout.display;
 
   if (layout.width !== undefined) j.width = String(layout.width);
   if (layout.height !== undefined) j.height = String(layout.height);
@@ -595,6 +845,23 @@ function layoutToEngineJson(layout: LayoutConstraints): Record<string, unknown> 
   if (layout.minHeight !== undefined) j.min_height = String(layout.minHeight);
   if (layout.maxWidth !== undefined) j.max_width = String(layout.maxWidth);
   if (layout.maxHeight !== undefined) j.max_height = String(layout.maxHeight);
+
+  // Position and insets
+  if (layout.position !== undefined) j.position = layout.position;
+  if (layout.top !== undefined) j.top = layout.top;
+  if (layout.right !== undefined) j.right = layout.right;
+  if (layout.bottom !== undefined) j.bottom = layout.bottom;
+  if (layout.left !== undefined) j.left = layout.left;
+  if (layout.zIndex !== undefined) j.z_index = layout.zIndex;
+  if (layout.overflow !== undefined) j.overflow = layout.overflow;
+
+  // Inset shorthand
+  if (layout.inset !== undefined) {
+    if (layout.inset.top !== undefined) j.top = layout.inset.top;
+    if (layout.inset.right !== undefined) j.right = layout.inset.right;
+    if (layout.inset.bottom !== undefined) j.bottom = layout.inset.bottom;
+    if (layout.inset.left !== undefined) j.left = layout.inset.left;
+  }
 
   // Padding
   const pt =

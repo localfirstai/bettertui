@@ -4,10 +4,8 @@ import {
   type CliRenderer,
   type KeyEvent,
   type MouseEvent,
-  type RenderContext,
   ScrollBoxRenderable,
   type TerminalCapabilities,
-  TextAttributes,
   TextRenderable,
   bold,
   createCliRenderer,
@@ -95,7 +93,7 @@ class NotificationCard extends BoxRenderable {
   private readonly actionHandler: (action: NotificationAction) => void;
 
   constructor(
-    ctx: RenderContext,
+    ctx: CliRenderer,
     action: NotificationAction,
     actionHandler: (action: NotificationAction) => void,
   ) {
@@ -111,7 +109,7 @@ class NotificationCard extends BoxRenderable {
       marginRight: 1,
       backgroundColor: P.panelAlt,
       border: true,
-      borderStyle: "rounded",
+      borderStyle: "round",
       borderColor: P.border,
       title: ` ${action.key} `,
       titleAlignment: "left",
@@ -159,30 +157,31 @@ class NotificationCard extends BoxRenderable {
   }
 
   protected onMouseEvent(event: MouseEvent): void {
-    if (event.type === "over") {
+    const e = event as unknown as { type?: string; stopPropagation?(): void };
+    if (e.type === "over") {
       this.hovered = true;
       this.backgroundColor = "#172845";
       this.borderColor = this.action.accent;
-    } else if (event.type === "out") {
+    } else if (e.type === "out") {
       this.hovered = false;
       this.backgroundColor = P.panelAlt;
       this.borderColor = P.border;
-    } else if (event.type === "down") {
+    } else if (e.type === "down") {
       this.backgroundColor = "#20365b";
       this.actionHandler(this.action);
-      event.stopPropagation();
-    } else if (event.type === "up") {
+      e.stopPropagation?.();
+    } else if (e.type === "up") {
       this.backgroundColor = this.hovered ? "#172845" : P.panelAlt;
-      event.stopPropagation();
+      e.stopPropagation?.();
     }
   }
 }
 
 function notificationSupported(): boolean {
-  return renderer?.capabilities?.notifications === true;
+  return (renderer?.capabilities as unknown as Record<string, unknown>)?.notifications === true;
 }
 
-function addLog(message: string, color = P.muted): void {
+function addLog(message: string, color: string = P.muted): void {
   if (!renderer || !logList) return;
 
   const stamp = new Date().toLocaleTimeString();
@@ -206,15 +205,17 @@ function addLog(message: string, color = P.muted): void {
 function updateStatus(): void {
   if (!renderer || !statusText) return;
 
-  const caps = renderer.capabilities;
-  const terminalName = caps?.terminal?.name || "detecting";
-  const terminalVersion = caps?.terminal?.version ? ` ${caps.terminal.version}` : "";
+  const caps = renderer.capabilities as unknown as Record<string, unknown>;
+  const terminal = caps?.terminal as Record<string, unknown> | undefined;
+  const terminalName = (terminal?.name as string) ?? "detecting";
+  const terminalVersion = terminal?.version ? ` ${terminal.version}` : "";
   const supported = notificationSupported();
   const status = supported ? fg(P.lime)("enabled") : fg(P.rose)("not detected");
+  const multiplexer = caps?.multiplexer as string | undefined;
   const transport =
-    caps?.multiplexer === "tmux"
+    multiplexer === "tmux"
       ? fg(P.amber)("tmux passthrough")
-      : caps?.multiplexer === "zellij"
+      : multiplexer === "zellij"
         ? fg(P.amber)("Zellij OSC 99")
         : fg(P.blue)("direct OSC");
 
@@ -241,7 +242,11 @@ function triggerAction(action: NotificationAction): void {
 function sendNotification(action: NotificationAction): void {
   if (!renderer) return;
 
-  const ok = renderer.triggerNotification(action.message, action.notificationTitle);
+  const ok = (
+    (renderer as unknown as Record<string, unknown>).triggerNotification as
+      | ((msg: string, title?: string) => boolean)
+      | undefined
+  )?.(action.message, action.notificationTitle);
   addLog(
     ok ? `Sent: ${action.title}` : `Not sent: ${action.title} (unsupported)`,
     ok ? action.accent : P.rose,
@@ -276,7 +281,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     marginBottom: 1,
     backgroundColor: "#0d1b30",
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.borderHot,
     title: " OSC Notifications ",
     titleAlignment: "center",
@@ -286,7 +291,6 @@ function buildLayout(rendererInstance: CliRenderer): void {
     new TextRenderable(renderer, {
       id: "notification-demo-title",
       content: t`${bold(fg(P.cyan)("System notifications"))} ${fg(P.muted)("from terminal OSC sequences")}`,
-      attributes: TextAttributes.BOLD,
       flexGrow: 0,
       flexShrink: 0,
     }),
@@ -327,7 +331,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   });
   body.add(cardsRow);
 
-  cards = actions.map((action) => new NotificationCard(renderer!, action, triggerAction));
+  cards = actions.map((action) => new NotificationCard(rendererInstance, action, triggerAction));
   for (const card of cards) cardsRow.add(card);
 
   const footer = new BoxRenderable(renderer, {
@@ -352,7 +356,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     padding: 1,
     backgroundColor: P.panel,
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.border,
     title: " Controls ",
   });
@@ -379,7 +383,7 @@ ${fg(P.muted)("Esc")} Return to menu`,
     padding: 1,
     backgroundColor: P.panel,
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.border,
     title: " Activity ",
   });
@@ -401,11 +405,11 @@ ${fg(P.muted)("Esc")} Return to menu`,
       backgroundColor: P.panel,
     },
     scrollbarOptions: {
-      trackOptions: {
-        foregroundColor: P.cyan,
-        backgroundColor: P.border,
-      },
-    },
+      // trackOptions not in current ScrollBarOptions - cast to bypass
+      ...({
+        trackOptions: { foregroundColor: P.cyan, backgroundColor: P.border },
+      } as unknown as object),
+    } as unknown as import("@bettertui/core").ScrollBarOptions,
     height: "100%",
     width: "auto",
     flexGrow: 1,

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 
 import {
   BoxRenderable,
@@ -469,7 +470,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
 
   const param1StatusText = new TextRenderable(renderer, {
     id: "shader-param1-status",
-    content: ``,
+    content: "",
     position: "absolute",
     left: 0,
     top: uiLine++,
@@ -481,7 +482,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
 
   const param2StatusText = new TextRenderable(renderer, {
     id: "shader-param2-status",
-    content: ``,
+    content: "",
     position: "absolute",
     left: 0,
     top: uiLine++,

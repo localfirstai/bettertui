@@ -19,7 +19,7 @@ let mainContainer: BoxRenderable | null = null;
 let demoText: TextRenderable | null = null;
 let instructionsText: TextRenderable | null = null;
 let statusText: TextRenderable | null = null;
-let updateInterval: Timer | null = null;
+let updateInterval: ReturnType<typeof setInterval> | null = null;
 
 function clearUpdateInterval(): void {
   if (updateInterval) {
@@ -140,17 +140,17 @@ function showExample1(): void {
   });
 
   // Create a container node that holds all the styled nodes
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNodeRenderable.fromNodes(
     titleNode,
     subtitleNode,
     redNode,
     blueNode,
     greenNode,
     yellowNode,
-  ]);
+  );
 
   // Add to TextRenderable
-  demoText.add(containerNode);
+  demoText.content = containerNode.toString();
 
   updateInstructions(
     "Example 1 - Basic TextNode Creation",
@@ -204,24 +204,24 @@ function showExample2(): void {
   });
 
   // Create a sentence that combines multiple styled parts
-  const sentenceNode = TextNodeRenderable.fromNodes([
+  const sentenceNode = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n\nThis demonstrates ", { fg: "#c9d1d9" }),
     highlightNode,
     TextNodeRenderable.fromString("and ", { fg: "#c9d1d9" }),
     highlightNode2,
     TextNodeRenderable.fromString(" within the same text flow.", { fg: "#c9d1d9" }),
-  ]);
+  );
 
   // Create the main container
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNodeRenderable.fromNodes(
     titleNode,
     introNode,
     codeBlock,
     commentNode,
     sentenceNode,
-  ]);
+  );
 
-  demoText.add(containerNode);
+  demoText.content = containerNode.toString();
 
   updateInstructions(
     "Example 2 - Nested TextNode Composition",
@@ -248,7 +248,7 @@ function showExample3(): void {
     fg: "#8b949e",
   });
 
-  const counterNode = TextNodeRenderable.fromString(`\n\nCounter: 0`, {
+  const counterNode = TextNodeRenderable.fromString("\n\nCounter: 0", {
     fg: "#56d364",
     attributes: 1, // bold
   });
@@ -262,15 +262,15 @@ function showExample3(): void {
   });
 
   // Store references to nodes that will be updated
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNodeRenderable.fromNodes(
     titleNode,
     introNode,
     counterNode,
     statusNode,
     progressNode,
-  ]);
+  );
 
-  demoText.add(containerNode);
+  demoText.content = containerNode.toString();
 
   // Set up dynamic updates for this example
   let example3Counter = 0;
@@ -285,19 +285,23 @@ function showExample3(): void {
     }
 
     // Update counter node
-    counterNode.children = [`\n\nCounter: ${example3Counter}`];
+    counterNode.clear();
+    counterNode.add(`\n\nCounter: ${example3Counter}`);
 
     // Update status based on counter
     const status =
       example3Counter < 5 ? "Starting" : example3Counter < 15 ? "Running" : "Finishing";
-    statusNode.children = [`\n\nStatus: ${status}`];
+    statusNode.clear();
+    statusNode.add(`\n\nStatus: ${status}`);
 
     // Update progress bar
     const progress = Math.floor((example3Counter / maxCount) * 10);
     const progressBar = "█".repeat(progress).padEnd(10, "░");
-    progressNode.children = [`\n\nProgress: [${progressBar}]`];
+    progressNode.clear();
+    progressNode.add(`\n\nProgress: [${progressBar}]`);
 
-    // TextRenderable will automatically update from TextNode changes
+    // Refresh the TextRenderable content from updated TextNode tree
+    demoText.content = containerNode.toString();
   }, 100);
 
   updateInstructions(
@@ -334,23 +338,23 @@ function showExample4(): void {
     attributes: 1, // bold
   });
 
-  const section1Node = TextNodeRenderable.fromNodes([
+  const section1Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n\n🚀 ", { fg: "#56d364" }),
     TextNodeRenderable.fromString("Progress", { fg: "#58a6ff", attributes: 1 }),
     TextNodeRenderable.fromString(": 85% complete", { fg: "#c9d1d9" }),
-  ]);
+  );
 
-  const section2Node = TextNodeRenderable.fromNodes([
+  const section2Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n\n⚠️  ", { fg: "#d29922" }),
     TextNodeRenderable.fromString("Issues", { fg: "#ff7b72", attributes: 1 }),
     TextNodeRenderable.fromString(": 2 minor issues found", { fg: "#c9d1d9" }),
-  ]);
+  );
 
-  const section3Node = TextNodeRenderable.fromNodes([
+  const section3Node = TextNodeRenderable.fromNodes(
     TextNodeRenderable.fromString("\n\n✅ ", { fg: "#56d364" }),
     TextNodeRenderable.fromString("Next Steps", { fg: "#58a6ff", attributes: 1 }),
     TextNodeRenderable.fromString(": Code review and testing", { fg: "#c9d1d9" }),
-  ]);
+  );
 
   const footerNode = TextNodeRenderable.fromString("\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", {
     fg: "#30363d",
@@ -362,7 +366,7 @@ function showExample4(): void {
   });
 
   // Combine all sections into the final document
-  const documentNode = TextNodeRenderable.fromNodes([
+  const documentNode = TextNodeRenderable.fromNodes(
     titleNode,
     introNode,
     headerNode,
@@ -371,9 +375,9 @@ function showExample4(): void {
     section3Node,
     footerNode,
     signatureNode,
-  ]);
+  );
 
-  demoText.add(documentNode);
+  demoText.content = documentNode.toString();
 
   updateInstructions(
     "Example 4 - Complex Document Structure",
@@ -416,7 +420,7 @@ function updateStatus(message: string): void {
   statusText.content = message;
 }
 
-export function destroy(renderer: CliRenderer): void {
+export function destroy(_renderer: CliRenderer): void {
   clearUpdateInterval();
 
   mainContainer?.destroyRecursively();

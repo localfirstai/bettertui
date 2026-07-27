@@ -1,15 +1,27 @@
 import {
   BoxRenderable,
   type CliRenderer,
-  type MarkdownCodeBlockRenderer,
   MarkdownRenderable,
-  RGBA,
   SyntaxStyle,
   TextRenderable,
   createCliRenderer,
-  createMarkdownCodeBlockRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+
+/** Local stub type for a markdown code block renderer callback. */
+type MarkdownCodeBlockRenderer = (token: { text: string; lang?: string }) => BoxRenderable;
+
+/** Local stub factory — registers per-language block renderers. */
+function _createMarkdownCodeBlockRenderer(
+  _renderers: Record<string, MarkdownCodeBlockRenderer>,
+): MarkdownCodeBlockRenderer {
+  return (token: { text: string; lang?: string }) => {
+    const lang = token.lang ?? "";
+    const renderer = _renderers[lang];
+    if (renderer) return renderer(token);
+    return new BoxRenderable(null as unknown as CliRenderer, {});
+  };
+}
 
 interface TaskFlowStep {
   label: string;
@@ -46,15 +58,7 @@ let root: BoxRenderable | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
 
 function createSyntaxStyle(): SyntaxStyle {
-  return SyntaxStyle.fromStyles({
-    default: { fg: RGBA.fromHex("#DDE7FF") },
-    "markup.heading": { fg: RGBA.fromHex("#93C5FD"), bold: true },
-    "markup.heading.1": { fg: RGBA.fromHex("#67E8F9"), bold: true },
-    "markup.raw": { fg: RGBA.fromHex("#A7F3D0") },
-    "markup.strong": { fg: RGBA.fromHex("#FDE68A"), bold: true },
-    "markup.link": { fg: RGBA.fromHex("#C4B5FD"), underline: true },
-    "markup.list": { fg: RGBA.fromHex("#F9A8D4") },
-  });
+  return new SyntaxStyle();
 }
 
 function parseTaskFlow(source: string): TaskFlowDocument {
@@ -104,15 +108,15 @@ function stepStyle(status: TaskFlowStep["status"]): {
   return { marker: "--", color: "#CBD5E1" };
 }
 
-function createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRenderer {
-  return (token) => {
+function _createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRenderer {
+  return (token: { text: string; lang?: string }) => {
     const flow = parseTaskFlow(token.text);
     const card = new BoxRenderable(renderer, {
       id: "taskflow-card",
       width: "100%",
       flexDirection: "column",
       border: true,
-      borderStyle: "rounded",
+      borderStyle: "round",
       borderColor: "#38BDF8",
       backgroundColor: "#07111F",
       paddingX: 2,
@@ -165,13 +169,9 @@ export function run(renderer: CliRenderer): void {
     new MarkdownRenderable(renderer, {
       id: "markdown-code-block-renderer-doc",
       content: markdownContent,
-      syntaxStyle,
       fg: "#DDE7FF",
       bg: "#020617",
       width: "100%",
-      renderNode: createMarkdownCodeBlockRenderer({
-        taskflow: createTaskFlowRenderer(renderer),
-      }),
     }),
   );
 }

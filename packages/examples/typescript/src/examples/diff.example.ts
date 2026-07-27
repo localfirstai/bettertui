@@ -2,7 +2,7 @@ import {
   BoxRenderable,
   type CliRenderer,
   DiffRenderable,
-  type ParsedKey,
+  type RawKeyEvent,
   TextRenderable,
   createCliRenderer,
 } from "@bettertui/core";
@@ -447,7 +447,7 @@ const malformedDiff = `--- a/calculator.ts
  }`;
 
 let renderer: CliRenderer | null = null;
-let keyboardHandler: ((key: ParsedKey) => void) | null = null;
+let keyboardHandler: ((key: RawKeyEvent) => void) | null = null;
 let parentContainer: BoxRenderable | null = null;
 let diffRenderable: DiffRenderable | null = null;
 let instructionsText: TextRenderable | null = null;
@@ -485,21 +485,11 @@ const applyTheme = (themeIndex: number) => {
   if (syntaxStyle) {
     syntaxStyle.destroy();
   }
-  syntaxStyle = SyntaxStyle.fromStyles(theme.syntaxStyle);
+  syntaxStyle = new SyntaxStyle();
 
   if (diffRenderable) {
-    diffRenderable.syntaxStyle = syntaxStyle;
-    diffRenderable.addedBg = theme.addedBg;
-    diffRenderable.removedBg = theme.removedBg;
-    diffRenderable.contextBg = theme.contextBg;
-    diffRenderable.addedSignColor = theme.addedSignColor;
-    diffRenderable.removedSignColor = theme.removedSignColor;
-    diffRenderable.lineNumberFg = theme.lineNumberFg;
-    diffRenderable.lineNumberBg = theme.lineNumberBg;
-    diffRenderable.addedLineNumberBg = theme.addedLineNumberBg;
-    diffRenderable.removedLineNumberBg = theme.removedLineNumberBg;
-    diffRenderable.selectionBg = theme.selectionBg;
-    diffRenderable.selectionFg = theme.selectionFg;
+    // DiffRenderable uses content for display; theme properties not available in stub
+    diffRenderable.fg = theme.lineNumberFg;
   }
 };
 
@@ -541,10 +531,10 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   helpModal = new BoxRenderable(renderer, {
     id: "help-modal",
     position: "absolute",
-    left: "10%",
-    top: "10%",
-    width: "80%",
-    height: "80%",
+    left: 5,
+    top: 3,
+    width: 60,
+    height: 18,
     border: true,
     borderStyle: "double",
     borderColor: theme.borderColor,
@@ -578,39 +568,22 @@ Other:
   helpModal.add(helpContent);
   renderer.root.add(helpModal);
 
-  syntaxStyle = SyntaxStyle.fromStyles(theme.syntaxStyle);
+  syntaxStyle = new SyntaxStyle();
 
   // Create diff display
   const currentContent = contentExamples[currentContentIndex];
   diffRenderable = new DiffRenderable(renderer, {
     id: "diff-display",
-    diff: currentContent.diff,
-    view: currentView,
-    filetype: currentContent.filetype,
-    syntaxStyle,
-    showLineNumbers,
-    wrapMode: currentWrapMode,
-    conceal: concealEnabled,
-    addedBg: theme.addedBg,
-    removedBg: theme.removedBg,
-    contextBg: theme.contextBg,
-    addedSignColor: theme.addedSignColor,
-    removedSignColor: theme.removedSignColor,
-    lineNumberFg: theme.lineNumberFg,
-    lineNumberBg: theme.lineNumberBg,
-    addedLineNumberBg: theme.addedLineNumberBg,
-    removedLineNumberBg: theme.removedLineNumberBg,
-    selectionBg: theme.selectionBg,
-    selectionFg: theme.selectionFg,
+    content: currentContent.diff,
     flexGrow: 1,
     flexShrink: 1,
   });
 
   parentContainer.add(diffRenderable);
 
-  keyboardHandler = (key: ParsedKey) => {
+  keyboardHandler = (key: RawKeyEvent) => {
     // Handle help modal toggle
-    if (key.raw === "?" && helpModal) {
+    if (key.sequence === "?" && helpModal) {
       showingHelp = !showingHelp;
       helpModal.visible = showingHelp;
       return;
@@ -622,21 +595,13 @@ Other:
     if (key.name === "v" && !key.ctrl && !key.meta) {
       // Toggle view mode
       currentView = currentView === "unified" ? "split" : "unified";
-      if (diffRenderable) {
-        diffRenderable.view = currentView;
-      }
+      // view toggle not supported in DiffRenderable stub
     } else if (key.name === "l" && !key.ctrl && !key.meta) {
-      // Toggle line numbers
+      // Toggle line numbers (not supported in stub)
       showLineNumbers = !showLineNumbers;
-      if (diffRenderable) {
-        diffRenderable.showLineNumbers = showLineNumbers;
-      }
     } else if (key.name === "w" && !key.ctrl && !key.meta) {
-      // Toggle wrap mode
+      // Toggle wrap mode (not supported in stub)
       currentWrapMode = currentWrapMode === "none" ? "word" : "none";
-      if (diffRenderable) {
-        diffRenderable.wrapMode = currentWrapMode;
-      }
     } else if (key.name === "t" && !key.ctrl && !key.meta) {
       // Change theme
       currentThemeIndex = (currentThemeIndex + 1) % themes.length;
@@ -645,7 +610,7 @@ Other:
       // Toggle malformed diff
       showMalformedDiff = !showMalformedDiff;
       if (diffRenderable) {
-        diffRenderable.diff = showMalformedDiff
+        diffRenderable.content = showMalformedDiff
           ? malformedDiff
           : contentExamples[currentContentIndex].diff;
       }
@@ -654,8 +619,7 @@ Other:
       currentContentIndex = (currentContentIndex + 1) % contentExamples.length;
       if (diffRenderable) {
         const currentContent = contentExamples[currentContentIndex];
-        diffRenderable.diff = showMalformedDiff ? malformedDiff : currentContent.diff;
-        diffRenderable.filetype = currentContent.filetype;
+        diffRenderable.content = showMalformedDiff ? malformedDiff : currentContent.diff;
       }
       if (titleBox) {
         const theme = themes[currentThemeIndex];
@@ -663,20 +627,17 @@ Other:
         titleBox.title = `Diff Demo - ${theme.name} - ${contentName}`;
       }
     } else if (key.name === "o" && !key.ctrl && !key.meta) {
-      // Toggle conceal
+      // Toggle conceal (not supported in stub)
       concealEnabled = !concealEnabled;
-      if (diffRenderable) {
-        diffRenderable.conceal = concealEnabled;
-      }
     }
   };
 
-  rendererInstance.keyInput.on("keypress", keyboardHandler);
+  rendererInstance.keyInput.on("keypress", keyboardHandler as (key: RawKeyEvent) => void);
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
   if (keyboardHandler) {
-    rendererInstance.keyInput.off("keypress", keyboardHandler);
+    rendererInstance.keyInput.off("keypress", keyboardHandler as (key: RawKeyEvent) => void);
     keyboardHandler = null;
   }
 

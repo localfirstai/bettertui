@@ -1,9 +1,11 @@
 import {
   BoxRenderable,
   type KeyEvent,
-  TextAttributes,
   TextRenderable,
+  bold,
   createCliRenderer,
+  t,
+  underline,
 } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -27,12 +29,11 @@ export function run(renderer: CliRenderer): void {
 
   const title = new TextRenderable(renderer, {
     id: "main-title",
-    content: "Relative Positioning Demo - Child positions are relative to parent",
+    content: t`${bold(underline("Relative Positioning Demo - Child positions are relative to parent"))}`,
     position: "absolute",
     left: 5,
     top: 1,
     fg: "#FFFF00",
-    attributes: TextAttributes.BOLD | TextAttributes.UNDERLINE,
     zIndex: 1000,
   });
   rootContainer.add(title);
@@ -133,7 +134,7 @@ export function run(renderer: CliRenderer): void {
     height: 10,
     backgroundColor: "#004422",
     zIndex: 1,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: "#44FF44",
     title: "Parent B (moves vertically)",
     titleAlignment: "center",
@@ -146,9 +147,8 @@ export function run(renderer: CliRenderer): void {
 
   const parentLabelB = new TextRenderable(renderer, {
     id: "parent-label-b",
-    content: "Parent B Position: (50, 8)",
+    content: t`${bold("Parent B Position: (50, 8)")}`,
     fg: "#44FF44",
-    attributes: TextAttributes.BOLD,
     zIndex: 2,
   });
   parentBoxB.add(parentLabelB);
@@ -215,12 +215,11 @@ export function run(renderer: CliRenderer): void {
 
   const explanation1 = new TextRenderable(renderer, {
     id: "explanation1",
-    content: "Key Concept: Parent A uses flex layout - children are arranged in a row",
+    content: t`${bold("Key Concept: Parent A uses flex layout - children are arranged in a row")}`,
     position: "absolute",
     left: 5,
     top: 30,
     fg: "#AAAAAA",
-    attributes: TextAttributes.BOLD,
     zIndex: 1000,
   });
   rootContainer.add(explanation1);
@@ -249,12 +248,11 @@ export function run(renderer: CliRenderer): void {
 
   const controls = new TextRenderable(renderer, {
     id: "controls",
-    content: "Controls: +/- to change animation speed",
+    content: t`${bold("Controls: +/- to change animation speed")}`,
     position: "absolute",
     left: 5,
     top: 34,
     fg: "#FFFFFF",
-    attributes: TextAttributes.BOLD,
     zIndex: 1000,
   });
   rootContainer.add(controls);
@@ -316,7 +314,6 @@ export function destroy(renderer: CliRenderer): void {
   if (rootContainer) renderer.root.remove(rootContainer);
 
   renderer.clearFrameCallbacks();
-  renderer.setCursorPosition(0, 0, false);
   animationTime = 0;
 }
 

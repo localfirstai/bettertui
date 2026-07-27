@@ -13,9 +13,7 @@
 import {
   BoxRenderable,
   type CliRenderer,
-  type MouseEvent,
   RGBA,
-  TextAttributes,
   TextRenderable,
   createCliRenderer,
 } from "@bettertui/core";
@@ -34,6 +32,7 @@ let lastFocusTime = "";
 let lastBlurTime = "";
 let lastMouseTime = "";
 let focused = true;
+// biome-ignore lint/suspicious/noExplicitAny: spy on internal renderer method
 let originalRestore: any = null;
 let focusHandler: (() => void) | null = null;
 let blurHandler: (() => void) | null = null;
@@ -129,7 +128,6 @@ export function run(renderer: CliRenderer): void {
     id: "focus-demo-title",
     content: "Focus Restore Demo - Mouse Tracking + Terminal Mode Restore",
     fg: RGBA.fromInts(72, 209, 204),
-    attributes: TextAttributes.BOLD,
     height: 2,
   });
   container.add(title);
@@ -150,7 +148,7 @@ export function run(renderer: CliRenderer): void {
     id: "focus-demo-status-box",
     border: true,
     borderColor: "#4ECDC4",
-    borderStyle: "rounded",
+    borderStyle: "round",
     title: "Terminal State",
     titleAlignment: "center",
     padding: 1,
@@ -196,7 +194,7 @@ export function run(renderer: CliRenderer): void {
     id: "focus-demo-log-box",
     border: true,
     borderColor: "#6BCF7F",
-    borderStyle: "rounded",
+    borderStyle: "round",
     title: "Event Log (latest 20)",
     titleAlignment: "center",
     padding: 1,
@@ -215,9 +213,10 @@ export function run(renderer: CliRenderer): void {
     width: "100%",
     height: "100%",
     zIndex: -1,
-    onMouse(event: MouseEvent) {
-      mouseX = event.x;
-      mouseY = event.y;
+    onMouse(event: unknown) {
+      const e = event as { x?: number; y?: number };
+      mouseX = e.x ?? 0;
+      mouseY = e.y ?? 0;
       mouseEvents++;
       lastMouseTime = ts();
       updateDisplay();
@@ -226,9 +225,12 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(mouseArea);
 
   // Spy on restoreTerminalModes to count restore calls
+  // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer property for testing
   originalRestore = (renderer as any).lib.restoreTerminalModes;
-  (renderer as any).lib.restoreTerminalModes = (...args: any[]) => {
+  // biome-ignore lint/suspicious/noExplicitAny: monkey-patching internal renderer method
+  (renderer as any).lib.restoreTerminalModes = (...args: unknown[]) => {
     restoreCount++;
+    // biome-ignore lint/suspicious/noExplicitAny: forwarding to original internal method
     return originalRestore.call((renderer as any).lib, ...args);
   };
 
@@ -273,6 +275,7 @@ export function run(renderer: CliRenderer): void {
 export function destroy(renderer: CliRenderer): void {
   // Restore spy
   if (originalRestore) {
+    // biome-ignore lint/suspicious/noExplicitAny: restoring internal renderer method
     (renderer as any).lib.restoreTerminalModes = originalRestore;
     originalRestore = null;
   }

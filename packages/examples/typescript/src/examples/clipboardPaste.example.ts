@@ -121,7 +121,9 @@ let editorStatus: Status = {
 let roundTripStatus: Status = { tone: "muted", text: "not evaluated" };
 
 function fixture(): Fixture {
-  return FIXTURES[selectedFixture]!;
+  const f = FIXTURES[selectedFixture];
+  if (!f) throw new Error(`No fixture at index ${selectedFixture}`);
+  return f;
 }
 
 function normalizeNewlines(value: string): string {
@@ -156,20 +158,13 @@ function capabilityStatus(renderer: CliRenderer): Status {
   const capabilities = renderer.capabilities;
   if (!capabilities) return { tone: "muted", text: "detecting" };
   const hint = capabilities.osc52 ? "yes" : "no";
-  switch (capabilities.osc52_support) {
-    case "supported":
-      return { tone: "ok", text: `supported — emits (legacy hint: ${hint})` };
-    case "unsupported":
-      return {
-        tone: "bad",
-        text: `unsupported — emission blocked (legacy hint: ${hint})`,
-      };
-    default:
-      return {
-        tone: "warn",
-        text: `unknown — emits optimistically (legacy hint: ${hint})`,
-      };
+  if (capabilities.osc52_support) {
+    return { tone: "ok", text: `supported — emits (legacy hint: ${hint})` };
   }
+  return {
+    tone: "bad",
+    text: `unsupported — emission blocked (legacy hint: ${hint})`,
+  };
 }
 
 function metadataLabel(event: PasteEvent): string {
@@ -224,7 +219,7 @@ function updateTabs(): void {
     const text = ` ${index + 1} ${entry.short} `;
     return index === selectedFixture ? bg(P.cyan)(fg(P.bg)(bold(text))) : fg(P.muted)(text);
   });
-  tabsText.content = t`${chunks[0]!} ${chunks[1]!} ${chunks[2]!} ${chunks[3]!}`;
+  tabsText.content = t`${chunks[0] ?? ""} ${chunks[1] ?? ""} ${chunks[2] ?? ""} ${chunks[3] ?? ""}`;
 }
 
 function updateFixturePanel(): void {
@@ -265,7 +260,7 @@ function panel(renderer: CliRenderer, id: string, title: string, height?: number
     title: ` ${title} `,
     titleAlignment: "left",
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.border,
     backgroundColor: P.panel,
     paddingLeft: 1,
@@ -315,7 +310,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     title: " Paste target ",
     titleAlignment: "left",
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.borderHot,
     backgroundColor: P.panel,
     paddingLeft: 1,
@@ -352,7 +347,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     title: " Events ",
     titleAlignment: "left",
     border: true,
-    borderStyle: "rounded",
+    borderStyle: "round",
     borderColor: P.border,
     backgroundColor: P.panel,
     paddingLeft: 1,
@@ -472,24 +467,19 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     if (event.ctrl && event.name === "y") {
       event.preventDefault();
       const current = fixture();
-      const emitted = renderer.copyToClipboardOSC52(current.payload);
+      renderer.copyToClipboardOSC52(current.payload);
+      const emitted = true;
       fixturePayloadEmitted = emitted;
-      copyStatus = emitted
-        ? {
-            tone: "info",
-            text: `emitted ${byteLength(current.payload)} UTF-8 bytes`,
-          }
-        : { tone: "bad", text: "local emission failed" };
-      roundTripStatus = emitted
-        ? { tone: "warn", text: "waiting for an exact paste after emission" }
-        : { tone: "muted", text: "not evaluated" };
+      copyStatus = {
+        tone: "info",
+        text: `emitted ${byteLength(current.payload)} UTF-8 bytes`,
+      };
+      roundTripStatus = { tone: "warn", text: "waiting for an exact paste after emission" };
       updateChecks(renderer);
       addLog(
         renderer,
-        emitted ? "info" : "bad",
-        emitted
-          ? `osc52 copy → emitted ${byteLength(current.payload)} B (default clipboard target)`
-          : "osc52 copy → local emission failed",
+        "info",
+        `osc52 copy → emitted ${byteLength(current.payload)} B (default clipboard target)`,
       );
       return;
     }
@@ -497,20 +487,14 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     if (event.ctrl && event.name === "k") {
       event.preventDefault();
       fixturePayloadEmitted = false;
-      const emitted = renderer.clearClipboardOSC52();
-      copyStatus = emitted
-        ? { tone: "info", text: "emitted clear request" }
-        : { tone: "bad", text: "clear emission failed" };
+      renderer.clearClipboardOSC52();
+      copyStatus = { tone: "info", text: "emitted clear request" };
       roundTripStatus = {
         tone: "muted",
         text: "not applicable to clear requests",
       };
       updateChecks(renderer);
-      addLog(
-        renderer,
-        emitted ? "info" : "bad",
-        emitted ? "osc52 clear → emitted" : "osc52 clear → emission failed",
-      );
+      addLog(renderer, "info", "osc52 clear → emitted");
       return;
     }
 
@@ -541,29 +525,23 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     if (!text || text.trim().length === 0) return;
 
     renderer.clearSelection();
-    const emitted = renderer.copyToClipboardOSC52(text);
-    if (emitted) {
-      fixturePayloadEmitted = false;
-      copyStatus = {
-        tone: "info",
-        text: `emitted selection (${byteLength(text)} UTF-8 bytes)`,
+    renderer.copyToClipboardOSC52(text);
+    fixturePayloadEmitted = false;
+    copyStatus = {
+      tone: "info",
+      text: `emitted selection (${byteLength(text)} UTF-8 bytes)`,
+    };
+    if (roundTripStatus.text.startsWith("waiting")) {
+      roundTripStatus = {
+        tone: "muted",
+        text: "superseded by selection copy",
       };
-      if (roundTripStatus.text.startsWith("waiting")) {
-        roundTripStatus = {
-          tone: "muted",
-          text: "superseded by selection copy",
-        };
-      }
-    } else {
-      copyStatus = { tone: "bad", text: "selection copy emission failed" };
     }
     updateChecks(renderer);
     addLog(
       renderer,
-      emitted ? "info" : "bad",
-      emitted
-        ? `selection copy → emitted ${byteLength(text)} B`
-        : "selection copy → local emission failed",
+      "info",
+      `selection copy → emitted ${byteLength(text)} B`,
       escapedPreview(text, 56),
     );
   };

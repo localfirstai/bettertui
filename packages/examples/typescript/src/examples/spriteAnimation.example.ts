@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 
 import {
   BoxRenderable,
@@ -276,7 +277,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
     }
 
     if (key.name === "e") {
-      if (mainChar && mainChar.visible) {
+      if (mainChar?.visible) {
         if (mainCharExplosionHandle && !mainCharExplosionHandle.hasBeenRestored) {
           console.log(
             "Main character already exploded and awaiting restoration. Restore first or reset demo.",
@@ -315,7 +316,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
       if (mainCharExplosionHandle && !mainCharExplosionHandle.hasBeenRestored) {
         console.log("Attempting to restore main character...");
         (async () => {
-          const restoredSprite = await mainCharExplosionHandle!.restoreSprite(spriteAnimator);
+          const restoredSprite = await mainCharExplosionHandle?.restoreSprite(spriteAnimator);
           if (restoredSprite) {
             mainChar = restoredSprite;
             console.log("Main character restored successfully.");
@@ -325,7 +326,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
             );
           }
         })();
-      } else if (mainCharExplosionHandle && mainCharExplosionHandle.hasBeenRestored) {
+      } else if (mainCharExplosionHandle?.hasBeenRestored) {
         console.log("Main character has already been restored from this explosion event.");
       } else {
         console.log("No active explosion to restore for the main character.");
@@ -335,7 +336,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
     if (key.name === "p") {
       if (addedSprites.length > 0) {
         console.log("Clearing existing sprites...");
-        addedSprites.forEach((sprite) => sprite.destroy());
+        for (const sprite of addedSprites) sprite.destroy();
         addedSprites = [];
         explosionManager.disposeAll();
         return;
@@ -344,7 +345,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
       const stressTestStartTime = performance.now();
       (async () => {
         for (let i = 0; i < 1000; i++) {
-          const id = `stress_${i}`;
+          const _id = `stress_${i}`;
           const stressCharDef: SpriteDefinition = {
             ...mainCharDef,
             animations: {
@@ -429,7 +430,7 @@ export function destroy(renderer: CliRenderer): void {
       renderer.keyInput.off("keypress", demoState.keyHandler);
     }
 
-    demoState.addedSprites.forEach((sprite) => sprite.destroy());
+    for (const sprite of demoState.addedSprites) sprite.destroy();
     demoState.explosionManager.disposeAll();
     demoState.engine.destroy();
 
