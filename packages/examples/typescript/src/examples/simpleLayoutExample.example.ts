@@ -86,7 +86,7 @@ function setupHorizontalLayout(): void {
   contentArea.flexDirection = "row";
   contentArea.setLayout({ alignItems: "stretch" });
 
-  const sidebarWidth = Math.max(15, Math.floor(renderer?.terminalWidth * 0.2));
+  const sidebarWidth = Math.max(15, Math.floor((renderer?.terminalWidth ?? 80) * 0.2));
   sidebar.flexBasis = sidebarWidth;
   sidebar.flexGrow = 0;
   sidebar.setLayout({ flexShrink: 0, minWidth: 15 });
@@ -117,7 +117,7 @@ function setupVerticalLayout(): void {
   contentArea.flexDirection = "column";
   contentArea.setLayout({ alignItems: "stretch" });
 
-  const contentHeight = renderer?.terminalHeight - 6;
+  const contentHeight = (renderer?.terminalHeight ?? 24) - 6;
   const topBarHeight = Math.max(3, Math.floor(contentHeight * 0.2));
   sidebar.flexBasis = topBarHeight;
   sidebar.flexGrow = 0;
@@ -148,13 +148,13 @@ function setupCenteredLayout(): void {
   contentArea.flexDirection = "row";
   contentArea.setLayout({ alignItems: "stretch", justifyContent: "center" });
 
-  const centerWidth = Math.max(30, Math.floor(renderer?.terminalWidth * 0.6));
+  const centerWidth = Math.max(30, Math.floor((renderer?.terminalWidth ?? 80) * 0.6));
   mainContent.flexBasis = centerWidth;
   mainContent.flexGrow = 0;
   mainContent.setLayout({
     flexShrink: 0,
     minWidth: 30,
-    maxWidth: Math.floor(renderer?.terminalWidth * 0.8),
+    maxWidth: Math.floor((renderer?.terminalWidth ?? 80) * 0.8),
   });
   mainContent.width = centerWidth;
   mainContent.height = "auto";
@@ -176,7 +176,7 @@ function setupThreeColumnLayout(): void {
   contentArea.flexDirection = "row";
   contentArea.setLayout({ alignItems: "stretch" });
 
-  const terminalWidth = renderer?.terminalWidth;
+  const terminalWidth = renderer?.terminalWidth ?? 80;
   const sidebarWidth = Math.max(12, Math.floor(terminalWidth * 0.15));
 
   sidebar.flexBasis = sidebarWidth;

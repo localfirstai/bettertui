@@ -63,13 +63,9 @@ export {
   clipboardDecode,
 } from "./binding";
 
-export { CliRenderer, KeyInput, createCliRenderer, TerminalConsole } from "./cliRenderer";
-export type {
-  CliRendererOptions,
-  RawKeyEvent,
-  RawKeyEvent as KeyEvent,
-  ThemeMode,
-} from "./cliRenderer";
+export { CliRenderer, createCliRenderer, TerminalConsole } from "./cliRenderer";
+export { KeyInput } from "../lib/keyInput";
+export type { CliRendererOptions, RawKeyEvent, ThemeMode } from "./cliRenderer";
 export { CliRenderEvents } from "./cliRenderer";
 export type { ScreenMode, ExternalOutputMode } from "./platform.types";
 export type { MouseEvent } from "./events";

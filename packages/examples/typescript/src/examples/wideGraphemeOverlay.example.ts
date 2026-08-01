@@ -131,7 +131,7 @@ class GraphemeBackground extends FrameBufferRenderable {
     const fgColor = RGBA.fromInts(220, 220, 220, 255);
     const bgColor = RGBA.fromInts(10, 14, 20, 255);
     this.frameBuffer.clear(bgColor);
-    for (let y = 0; y < height; y++) {
+    for (let y = 0; y < _height; y++) {
       const line = GRAPHEME_LINES[y % GRAPHEME_LINES.length];
       this.frameBuffer.drawText(line, 2, y, fgColor, bgColor);
     }

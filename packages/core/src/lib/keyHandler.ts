@@ -50,6 +50,11 @@ export class KeyEvent implements ParsedKey {
     if (key.repeated !== undefined) this.repeated = key.repeated;
   }
 
+  /** Alias for `option` — backward-compatible with RawKeyEvent.alt. */
+  get alt(): boolean {
+    return this.option;
+  }
+
   get defaultPrevented(): boolean {
     return this._defaultPrevented;
   }

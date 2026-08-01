@@ -4,8 +4,8 @@ import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
+import { KeyInput } from "../lib/keyInput";
 import { CliRenderEvents } from "../lib/renderableEvents";
-import { StdinParser } from "../lib/stdinParser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import {
   createEngine,
@@ -45,71 +45,6 @@ export interface CliRendererOptions {
   useMouse?: boolean;
   autoFocus?: boolean;
   backgroundColor?: string;
-}
-
-type KeyInputEvents = {
-  keypress: [RawKeyEvent];
-};
-
-export class KeyInput extends EventEmitter<KeyInputEvents> {
-  private stdinParser: StdinParser;
-  private rawMode = false;
-  private readonly onDataBound: (data: Buffer) => void;
-
-  constructor() {
-    super();
-    this.stdinParser = new StdinParser({
-      useKittyKeyboard: false,
-      onTimeoutFlush: () => {
-        this.drain();
-      },
-    });
-    this.onDataBound = this.onData.bind(this);
-  }
-
-  start(): void {
-    const stdin = process.stdin;
-    if (stdin.setRawMode && !this.rawMode) {
-      stdin.setRawMode(true);
-      this.rawMode = true;
-    }
-    stdin.resume();
-    stdin.on("data", this.onDataBound);
-  }
-
-  stop(): void {
-    process.stdin.off("data", this.onDataBound);
-    if (this.rawMode && process.stdin.setRawMode) {
-      process.stdin.setRawMode(false);
-      this.rawMode = false;
-    }
-    process.stdin.pause();
-    this.stdinParser.reset();
-  }
-
-  private onData(data: Buffer): void {
-    this.stdinParser.push(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
-    this.drain();
-  }
-
-  private drain(): void {
-    this.stdinParser.drain((event) => {
-      if (event.type === "key") {
-        let _prevented = false;
-        this.emit("keypress", {
-          name: event.key.name,
-          ctrl: event.key.ctrl,
-          shift: event.key.shift,
-          alt: event.key.option,
-          meta: event.key.meta,
-          sequence: event.key.sequence,
-          preventDefault() {
-            _prevented = true;
-          },
-        });
-      }
-    });
-  }
 }
 
 /** Minimal console overlay stub. */
@@ -174,11 +109,15 @@ export class CliRenderer extends EventEmitter {
   private _onDestroy: (() => void) | undefined;
   private _pendingRender = false;
   private _resizeHandler: (() => void) | null = null;
+  private _liveCount = 0;
 
   constructor(options: CliRendererOptions = {}) {
     super();
     if (options.logger) {
-      loggerInit({ dev: process.env.NODE_ENV !== "production", ...options.logger });
+      loggerInit({
+        dev: process.env.NODE_ENV !== "production",
+        ...options.logger,
+      });
     }
     this._capabilities = detectCapabilities();
     this.width = options.width ?? this._capabilities.columns;
@@ -520,8 +459,19 @@ export class CliRenderer extends EventEmitter {
     process.stdout.write("\x1b]52;c;!\x07");
   }
 
-  requestLive(): void {}
-  dropLive(): void {}
+  /** Increment the live render counter; starts the renderer if not running. */
+  requestLive(): void {
+    this._liveCount++;
+    if (!this.running) {
+      this.start();
+    }
+  }
+
+  /** Decrement the live render counter. */
+  dropLive(): void {
+    this._liveCount = Math.max(0, this._liveCount - 1);
+  }
+
   clearSelection(): void {}
   getSelectionContainer(): null {
     return null;
@@ -777,7 +727,9 @@ export class CliRenderer extends EventEmitter {
 }
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
-  return new CliRenderer(options);
+  const renderer = new CliRenderer(options);
+  renderer.start();
+  return renderer;
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────

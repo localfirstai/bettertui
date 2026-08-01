@@ -96,9 +96,41 @@ export interface BoxOptions {
   onKeyDown?: (key: unknown) => void;
   onClick?: (event: unknown) => void;
   onSizeChange?: () => void;
+  /**
+   * Called after each render frame with a buffer handle.
+   * Bound to the BoxRenderable instance (`this` = the renderable).
+   * Use this for custom per-frame drawing on top of the box.
+   */
+  renderAfter?: (this: BoxRenderable, buffer: unknown, deltaTime?: number) => void;
 }
 
 let _boxCounter = 0;
+
+/** Minimal stub buffer passed to renderAfter callbacks. */
+function createStubBuffer(box: BoxRenderable): unknown {
+  const bg = new Uint16Array(0);
+  const fg = new Uint16Array(0);
+  const char = new Uint32Array(0);
+  const attributes = new Uint32Array(0);
+  return {
+    get width() {
+      return typeof box._options.width === "number" ? box._options.width : 0;
+    },
+    get height() {
+      return typeof box._options.height === "number" ? box._options.height : 0;
+    },
+    buffers: { bg, fg, char, attributes },
+    setCell() {},
+    drawText() {},
+    fillRect() {},
+    colorMatrix() {},
+    pushScissorRect() {},
+    popScissorRect() {},
+    pushOpacity() {},
+    popOpacity() {},
+    clear() {},
+  };
+}
 
 export class BoxRenderable extends EventEmitter {
   protected readonly _renderer: CliRenderer;
@@ -120,6 +152,7 @@ export class BoxRenderable extends EventEmitter {
   protected _children: Map<string, BoxRenderable> = new Map();
   protected _childList: BoxRenderable[] = [];
   protected _options: BoxOptions;
+  private _renderAfterCallback: ((dt: number) => void) | null = null;
 
   constructor(renderer: CliRenderer, options: BoxOptions = {}, existingNodeId?: number) {
     super();
@@ -145,6 +178,17 @@ export class BoxRenderable extends EventEmitter {
 
     this._applyLayout(options);
     this._applyStyle();
+
+    // Register renderAfter frame callback if provided
+    if (options.renderAfter) {
+      const buf = createStubBuffer(this);
+      this._renderAfterCallback = (dt: number) => {
+        if (!this._isDestroyed && options.renderAfter) {
+          options.renderAfter.call(this, buf, dt);
+        }
+      };
+      renderer.setFrameCallback(this._renderAfterCallback);
+    }
   }
 
   get id(): string {
@@ -348,6 +392,10 @@ export class BoxRenderable extends EventEmitter {
     this._isDestroyed = true;
     this.emit(RenderableEvents.DESTROYED, this);
     this.removeAllListeners();
+    if (this._renderAfterCallback) {
+      this._renderer.removeFrameCallback(this._renderAfterCallback);
+      this._renderAfterCallback = null;
+    }
     try {
       this._renderer.removeNode(this._nodeId);
     } catch {
