@@ -114,10 +114,10 @@ function createStubBuffer(box: BoxRenderable): unknown {
   const attributes = new Uint32Array(0);
   return {
     get width() {
-      return typeof box._options.width === "number" ? box._options.width : 0;
+      return typeof box.width === "number" ? box.width : 0;
     },
     get height() {
-      return typeof box._options.height === "number" ? box._options.height : 0;
+      return typeof box.height === "number" ? box.height : 0;
     },
     buffers: { bg, fg, char, attributes },
     setCell() {},
@@ -248,7 +248,9 @@ export class BoxRenderable extends EventEmitter {
   set visible(value: boolean) {
     if (this._visible !== value) {
       this._visible = value;
-      this._renderer.setNodeLayout(this._nodeId, { display: value ? "flex" : "none" });
+      this._renderer.setNodeLayout(this._nodeId, {
+        display: value ? "flex" : "none",
+      });
     }
   }
 
@@ -490,6 +492,21 @@ export class BoxRenderable extends EventEmitter {
     if (ml !== undefined) layout.marginLeft = ml;
 
     if (options.visible === false) layout.display = "none";
+
+    // Border layout contribution: reserve space for border cells so the
+    // engine's box-sizing accounts for the border width.
+    const borderVal = this._options.border;
+    if (borderVal === true) {
+      layout.borderTop = 1;
+      layout.borderRight = 1;
+      layout.borderBottom = 1;
+      layout.borderLeft = 1;
+    } else if (Array.isArray(borderVal) && borderVal.length > 0) {
+      layout.borderTop = borderVal.includes("top") ? 1 : 0;
+      layout.borderRight = borderVal.includes("right") ? 1 : 0;
+      layout.borderBottom = borderVal.includes("bottom") ? 1 : 0;
+      layout.borderLeft = borderVal.includes("left") ? 1 : 0;
+    }
 
     this._renderer.setNodeLayout(this._nodeId, layout);
   }

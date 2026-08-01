@@ -3,13 +3,13 @@
  *
  * NativeSpanFeed write/drain throughput and backpressure behaviour.
  *
- * OpenTUI counterparts:
+ * Reference benchmarks:
  *   - `.opencode/references/opentui/packages/core/src/benchmark/native-span-feed-benchmark.ts`
  *     (596 LoC) — three suites: quick / default / large / all
  *   - `native-span-feed-async-benchmark.ts` — async variant
  *   - `native-span-feed-compare.ts` — cross-version comparison
  *
- * OpenTUI persists `latest-{quick,default,large,async,all}-bench-run.json`.
+ * The reference persists `latest-{quick,default,large,async,all}-bench-run.json`.
  * Once BetterTUI numbers are stable we should emit the same JSON shape for
  * direct cross-comparison.
  *

@@ -1,7 +1,7 @@
 //! Native hit grid for O(1) mouse event targeting.
 //!
 //! Double-buffered, screen-sized grid where each cell stores the
-//! renderable ID at that position. Mirrors OpenTUI's hit grid pattern
+//! renderable ID at that position. Follows the hit grid pattern
 //! with scissor clipping for overflow:hidden support.
 
 /// Axis-aligned clipping rectangle.

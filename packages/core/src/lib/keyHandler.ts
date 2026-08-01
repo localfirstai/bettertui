@@ -72,15 +72,27 @@ export class KeyEvent implements ParsedKey {
   }
 }
 
+/**
+ * Metadata attached to a {@link PasteEvent}. Used by consumers to decide
+ * whether to insert, filter, or transform pasted content (e.g. skip binary
+ * paste into a text field).
+ */
+export interface PasteMetadata {
+  /** MIME type if the terminal reported one (e.g. `text/plain`). */
+  mimeType?: string;
+  /** Coarse kind of the pasted payload. */
+  kind?: "text" | "binary" | "unknown";
+}
+
 export class PasteEvent {
   type = "paste" as const;
   bytes: Uint8Array;
   /** Optional metadata attached to the paste event (e.g. bracketed-paste info). */
-  metadata?: Record<string, unknown>;
+  metadata?: PasteMetadata;
   private _defaultPrevented = false;
   private _propagationStopped = false;
 
-  constructor(bytes: Uint8Array, metadata?: Record<string, unknown>) {
+  constructor(bytes: Uint8Array, metadata?: PasteMetadata) {
     this.bytes = bytes;
     this.metadata = metadata;
   }
@@ -130,9 +142,9 @@ export class KeyHandler extends EventEmitter<KeyHandlerEventMap> {
     return true;
   }
 
-  public processPaste(bytes: Uint8Array): void {
+  public processPaste(bytes: Uint8Array, metadata?: PasteMetadata): void {
     try {
-      this.emit("paste", new PasteEvent(bytes));
+      this.emit("paste", new PasteEvent(bytes, metadata));
     } catch (error) {
       console.error("[KeyHandler] Error processing paste:", error);
     }
@@ -142,9 +154,34 @@ export class KeyHandler extends EventEmitter<KeyHandlerEventMap> {
 /**
  * This class is used internally by the renderer to ensure global handlers
  * can preventDefault before renderable handlers process events.
+ *
+ * NOTE: `emit` is overridden to route every emission through `emitWithPriority`,
+ * so that global listeners always run before renderable listeners and can
+ * `preventDefault()` / `stopPropagation()` to short-circuit them. Previously
+ * this override was missing, which meant `processParsedKey`'s direct
+ * `this.emit("keypress", …)` bypassed priority dispatch entirely.
  */
 export class InternalKeyHandler extends KeyHandler {
   private renderableHandlers: Map<keyof KeyHandlerEventMap, Set<EventHandler>> = new Map();
+
+  /**
+   * Override `emit` so that all emissions for the three domain event types go
+   * through `emitWithPriority` (global listeners first, then renderable
+   * listeners, with propagation / defaultPrevented checks in between).
+   * Unknown event names fall through to the base `EventEmitter.emit` so that
+   * Node's internal events (e.g. `newListener`, `removeListener`) are not
+   * broken.
+   */
+  public emit(event: string | symbol, ...args: unknown[]): boolean {
+    if (event === "keypress" || event === "keyrelease" || event === "paste") {
+      return this.emitWithPriority(
+        event as keyof KeyHandlerEventMap,
+        // biome-ignore lint/suspicious/noExplicitAny: priority dispatch cast
+        ...(args as any),
+      );
+    }
+    return super.emit(event, ...args);
+  }
 
   public emitWithPriority<K extends keyof KeyHandlerEventMap>(
     event: K,

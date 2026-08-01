@@ -42,11 +42,11 @@ import * as liveStateExample from "./examples/liveState.example.js";
 import * as markdownDemo from "./examples/markdown.example.js";
 import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
 import * as mouseInteractionExample from "./examples/mouseInteraction.example.js";
+import * as multitabDemo from "./examples/multitab.example.js";
 import * as nativeAudioDemo from "./examples/nativeAudio.example.js";
 import * as nestedZIndexDemo from "./examples/nestedZindex.example.js";
 import * as notificationDemo from "./examples/notification.example.js";
 import * as opacityExample from "./examples/opacityExample.example.js";
-import * as opentuiDemo from "./examples/opentui.example.js";
 import * as qrcodeDemo from "./examples/qrcode.example.js";
 import * as relativePositioningDemo from "./examples/relativePositioning.example.js";
 import * as scrollExample from "./examples/scrollExample.example.js";
@@ -150,7 +150,7 @@ const DEFAULT_THEME_MODE: ThemeMode = "dark";
 const isBunRuntime = typeof process !== "undefined" && typeof process.versions?.bun === "string";
 const includeThreeExamples =
   typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean" ? OPENTUI_BUN_ONLY_EXAMPLES : isBunRuntime;
-const MENU_TERMINAL_TITLE = "OpenTUI Examples";
+const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "  ";
 const EXAMPLE_DESCRIPTION_INDENT = "    ";
@@ -347,10 +347,10 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "OpenTUI Demo",
+      name: "Multi-Tab Demo",
       description: "Multi-tab demo with various features",
-      run: opentuiDemo.run,
-      destroy: opentuiDemo.destroy,
+      run: multitabDemo.run,
+      destroy: multitabDemo.destroy,
     },
     {
       name: "Relative Positioning Demo",
@@ -845,7 +845,7 @@ class ExampleSelector {
   private title: ASCIIFontRenderable | null = null;
   private titleWidth = 0;
   private titleFont = "tiny";
-  private titleText = "OPENTUI EXAMPLES";
+  private titleText = "BETTERTUI EXAMPLES";
   private filterBox: BoxRenderable | null = null;
   private filterInput: InputRenderable | null = null;
   private instructions: TextRenderable | null = null;

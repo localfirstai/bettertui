@@ -1,10 +1,26 @@
 import { EventEmitter } from "node:events";
-import { KeyEvent } from "./keyHandler";
-import { StdinParser } from "./stdinParser";
+import { KeyEvent, PasteEvent } from "./keyHandler";
+import type { RawMouseEvent } from "./parseMouse";
+import { type StdinEvent, StdinParser } from "./stdinParser";
 
+/**
+ * Events emitted by {@link KeyInput}. Mirrors the four kinds of `StdinEvent`
+ * produced by the parser so that nothing read from stdin is silently dropped.
+ *
+ * Historical bug: `KeyInput.drain` previously handled only `type === "key"`
+ * and discarded every `mouse` / `paste` / `response` event, which made mouse
+ * input, bracketed paste, and terminal-capability replies unreachable from
+ * the renderer.
+ */
 type KeyInputEvents = {
   keypress: [KeyEvent];
+  keyrelease: [KeyEvent];
+  mouse: [RawMouseEvent, string];
+  paste: [PasteEvent];
+  response: [string, string];
 };
+
+export type { KeyInputEvents };
 
 export class KeyInput extends EventEmitter<KeyInputEvents> {
   private stdinParser: StdinParser;
@@ -48,9 +64,31 @@ export class KeyInput extends EventEmitter<KeyInputEvents> {
   }
 
   private drain(): void {
-    this.stdinParser.drain((event) => {
-      if (event.type === "key") {
-        this.emit("keypress", new KeyEvent(event.key));
+    this.stdinParser.drain((event: StdinEvent) => {
+      switch (event.type) {
+        case "key": {
+          const key = new KeyEvent(event.key);
+          if (event.key.eventType === "release") {
+            this.emit("keyrelease", key);
+          } else {
+            // Both "press" and "repeat" (normalized by the parser) surface as
+            // a `keypress` event.
+            this.emit("keypress", key);
+          }
+          break;
+        }
+        case "mouse": {
+          this.emit("mouse", event.event, event.raw);
+          break;
+        }
+        case "paste": {
+          this.emit("paste", new PasteEvent(event.bytes));
+          break;
+        }
+        case "response": {
+          this.emit("response", event.protocol, event.sequence);
+          break;
+        }
       }
     });
   }

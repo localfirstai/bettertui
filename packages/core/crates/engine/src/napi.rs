@@ -934,9 +934,8 @@ fn easing_from_str(name: &str) -> Easing {
     }
 }
 
-/// napi wrapper exposing the Rust animation [`Timeline`] to TypeScript — the
-/// BetterTUI equivalent of OpenTUI's `useTimeline`. Schedule scalar tweens at
-/// offsets, drive the timeline each frame with `update(dt)`, and read each
+/// napi wrapper exposing the Rust animation [`Timeline`] to TypeScript.
+/// Schedule scalar tweens at offsets, drive the timeline each frame with `update(dt)`, and read each
 /// tween's interpolated value with `animationValue(index)`.
 #[napi]
 pub struct NativeTimeline {
@@ -1080,8 +1079,7 @@ fn plugin_state_name(state: PluginState) -> &'static str {
 }
 
 /// napi wrapper exposing the plugin [`PluginHost`] and named string-valued
-/// [`SlotRegistry`]s to TypeScript — the BetterTUI equivalent of OpenTUI's
-/// plugin API + `SlotRegistry`. Slot values are strings (typically a node id or
+/// [`SlotRegistry`]s to TypeScript. Slot values are strings (typically a node id or
 /// a serialized descriptor); the TS side owns their meaning.
 #[napi]
 pub struct NativePluginHost {
@@ -2048,6 +2046,14 @@ impl StyleJson {
     }
 }
 
+/// Layout payload sent from TypeScript via `engine.setLayout(id, json)`.
+///
+/// This MUST round-trip every field of `taffy::LayoutProps` — anything omitted
+/// here is silently dropped because `serde(default)` ignores unknown keys and
+/// `into_layout` fills in defaults. Historical bug: only ~12 of ~25 fields were
+/// decoded, so `position: absolute`, `min/maxWidth/Height`, `flexBasis`,
+/// `alignSelf`, `overflow`, `display:none`, `aspectRatio`, `boxSizing`, and
+/// `border` were all non-functional from TypeScript.
 #[derive(serde::Deserialize)]
 struct LayoutJson {
     #[serde(default)]
@@ -2059,9 +2065,37 @@ struct LayoutJson {
     #[serde(default)]
     align: Option<String>,
     #[serde(default)]
+    align_content: Option<String>,
+    #[serde(default)]
+    align_self: Option<String>,
+    #[serde(default)]
+    display: Option<String>,
+    #[serde(default)]
+    position: Option<String>,
+    #[serde(default)]
+    overflow: Option<String>,
+    #[serde(default)]
+    box_sizing: Option<String>,
+    #[serde(default)]
     width: Option<String>,
     #[serde(default)]
     height: Option<String>,
+    #[serde(default)]
+    min_width: Option<String>,
+    #[serde(default)]
+    min_height: Option<String>,
+    #[serde(default)]
+    max_width: Option<String>,
+    #[serde(default)]
+    max_height: Option<String>,
+    #[serde(default)]
+    flex_basis: Option<String>,
+    #[serde(default)]
+    flex_grow: Option<f32>,
+    #[serde(default)]
+    flex_shrink: Option<f32>,
+    #[serde(default)]
+    aspect_ratio: Option<f32>,
     #[serde(default)]
     padding_top: Option<f32>,
     #[serde(default)]
@@ -2079,13 +2113,25 @@ struct LayoutJson {
     #[serde(default)]
     margin_left: Option<f32>,
     #[serde(default)]
+    border_top: Option<f32>,
+    #[serde(default)]
+    border_right: Option<f32>,
+    #[serde(default)]
+    border_bottom: Option<f32>,
+    #[serde(default)]
+    border_left: Option<f32>,
+    #[serde(default)]
+    top: Option<f32>,
+    #[serde(default)]
+    right: Option<f32>,
+    #[serde(default)]
+    bottom: Option<f32>,
+    #[serde(default)]
+    left: Option<f32>,
+    #[serde(default)]
     gap_row: Option<f32>,
     #[serde(default)]
     gap_column: Option<f32>,
-    #[serde(default)]
-    flex_grow: Option<f32>,
-    #[serde(default)]
-    flex_shrink: Option<f32>,
 }
 
 impl LayoutJson {
@@ -2094,13 +2140,15 @@ impl LayoutJson {
             Some("column") => crate::taffy::FlexDirection::Column,
             Some("column-reverse") => crate::taffy::FlexDirection::ColumnReverse,
             Some("row-reverse") => crate::taffy::FlexDirection::RowReverse,
-            _ => crate::taffy::FlexDirection::Row,
+            Some("row") => crate::taffy::FlexDirection::Row,
+            _ => crate::taffy::FlexDirection::default(),
         };
 
         let flex_wrap = match self.flex_wrap.as_deref() {
             Some("wrap") => crate::taffy::FlexWrap::Wrap,
             Some("wrap-reverse") => crate::taffy::FlexWrap::WrapReverse,
-            _ => crate::taffy::FlexWrap::NoWrap,
+            Some("nowrap") | Some("no-wrap") => crate::taffy::FlexWrap::NoWrap,
+            _ => crate::taffy::FlexWrap::default(),
         };
 
         let justify = match self.justify.as_deref() {
@@ -2109,28 +2157,106 @@ impl LayoutJson {
             Some("space-between") => crate::taffy::JustifyContent::SpaceBetween,
             Some("space-around") => crate::taffy::JustifyContent::SpaceAround,
             Some("space-evenly") => crate::taffy::JustifyContent::SpaceEvenly,
-            _ => crate::taffy::JustifyContent::FlexStart,
+            _ => crate::taffy::JustifyContent::default(),
         };
 
         let align = match self.align.as_deref() {
+            Some("flex-start") => crate::taffy::AlignItems::FlexStart,
             Some("flex-end") => crate::taffy::AlignItems::FlexEnd,
             Some("center") => crate::taffy::AlignItems::Center,
             Some("stretch") => crate::taffy::AlignItems::Stretch,
             Some("baseline") => crate::taffy::AlignItems::Baseline,
-            _ => crate::taffy::AlignItems::Stretch,
+            _ => crate::taffy::AlignItems::default(),
+        };
+
+        let align_content = self.align_content.as_deref().map(|s| match s {
+            "flex-start" => crate::taffy::AlignContent::FlexStart,
+            "flex-end" => crate::taffy::AlignContent::FlexEnd,
+            "center" => crate::taffy::AlignContent::Center,
+            "stretch" => crate::taffy::AlignContent::Stretch,
+            "space-between" => crate::taffy::AlignContent::SpaceBetween,
+            "space-around" => crate::taffy::AlignContent::SpaceAround,
+            _ => crate::taffy::AlignContent::default(),
+        });
+
+        let align_self = self.align_self.as_deref().map(|s| match s {
+            "flex-start" => crate::taffy::AlignSelf::FlexStart,
+            "flex-end" => crate::taffy::AlignSelf::FlexEnd,
+            "center" => crate::taffy::AlignSelf::Center,
+            "stretch" => crate::taffy::AlignSelf::Stretch,
+            "baseline" => crate::taffy::AlignSelf::Baseline,
+            "auto" => crate::taffy::AlignSelf::Stretch,
+            _ => crate::taffy::AlignSelf::Stretch,
+        });
+
+        // NOTE: `taffy::types::Display` currently has only `Flex` and `None`.
+        // CSS `contents`/`block` are accepted for forward-compat but map to Flex.
+        let display = match self.display.as_deref() {
+            Some("none") => crate::taffy::types::Display::None,
+            Some("flex") | Some("block") | Some("contents") | None => crate::taffy::types::Display::Flex,
+            _ => crate::taffy::types::Display::Flex,
+        };
+
+        let position = match self.position.as_deref() {
+            Some("absolute") => crate::taffy::Position::Absolute,
+            Some("static") => crate::taffy::Position::Static,
+            Some("relative") => crate::taffy::Position::Relative,
+            _ => crate::taffy::Position::default(),
+        };
+
+        let overflow = self.overflow.as_deref().map(|s| match s {
+            "hidden" => crate::taffy::LayoutOverflow::Hidden,
+            "scroll" => crate::taffy::LayoutOverflow::Scroll,
+            "visible" => crate::taffy::LayoutOverflow::Visible,
+            _ => crate::taffy::LayoutOverflow::default(),
+        });
+
+        let box_sizing = self.box_sizing.as_deref().map(|s| match s {
+            "border-box" => crate::taffy::BoxSizing::BorderBox,
+            "content-box" => crate::taffy::BoxSizing::ContentBox,
+            _ => crate::taffy::BoxSizing::default(),
+        });
+
+        // Inset: explicit `top/right/bottom/left` win over `inset` shorthand;
+        // `layoutToEngineJson` in cliRenderer.ts already explodes `inset` into
+        // the per-edge fields, so we only need to read the per-edge fields here.
+        let inset_present = self.top.is_some() || self.right.is_some() || self.bottom.is_some() || self.left.is_some();
+        let inset = if inset_present {
+            Some(crate::taffy::RectValues { top: self.top, right: self.right, bottom: self.bottom, left: self.left })
+        } else {
+            None
+        };
+
+        // Border: a per-edge value (typically 0 or 1 in terminal contexts).
+        // A single `border: true` from BoxOptions is translated to 1-per-edge
+        // on the TS side; here we accept any numeric per-edge width.
+        let border_present = self.border_top.is_some()
+            || self.border_right.is_some()
+            || self.border_bottom.is_some()
+            || self.border_left.is_some();
+        let border = if border_present {
+            Some(crate::taffy::RectValues {
+                top: self.border_top,
+                right: self.border_right,
+                bottom: self.border_bottom,
+                left: self.border_left,
+            })
+        } else {
+            None
         };
 
         crate::taffy::LayoutProps {
-            display: crate::taffy::types::Display::Flex,
+            display,
+            position,
             direction,
             flex_wrap,
             justify,
             align,
-            align_content: None,
-            align_self: None,
+            align_content,
+            align_self,
             flex_grow: self.flex_grow.unwrap_or(0.0),
             flex_shrink: self.flex_shrink.unwrap_or(1.0),
-            flex_basis: None,
+            flex_basis: self.flex_basis.as_deref().map(parse_sizing),
             gap: Some(crate::taffy::Gap { row: self.gap_row.unwrap_or(0.0), column: self.gap_column.unwrap_or(0.0) }),
             padding: Some(parse_rect_values(
                 self.padding_top.unwrap_or(0.0),
@@ -2144,18 +2270,17 @@ impl LayoutJson {
                 self.margin_bottom.unwrap_or(0.0),
                 self.margin_left.unwrap_or(0.0),
             )),
-            border: None,
-            width: self.width.map(|w| parse_sizing(&w)),
-            height: self.height.map(|h| parse_sizing(&h)),
-            min_width: None,
-            min_height: None,
-            max_width: None,
-            max_height: None,
-            position: crate::taffy::Position::Relative,
-            inset: None,
-            aspect_ratio: None,
-            overflow: None,
-            box_sizing: None,
+            border,
+            width: self.width.as_deref().map(parse_sizing),
+            height: self.height.as_deref().map(parse_sizing),
+            min_width: self.min_width.as_deref().map(parse_sizing),
+            min_height: self.min_height.as_deref().map(parse_sizing),
+            max_width: self.max_width.as_deref().map(parse_sizing),
+            max_height: self.max_height.as_deref().map(parse_sizing),
+            inset,
+            aspect_ratio: self.aspect_ratio,
+            overflow,
+            box_sizing,
         }
     }
 }
@@ -2609,5 +2734,155 @@ pub fn highlight_code(code: String, language: String) -> Vec<HighlightedLine> {
                     .collect(),
             })
             .collect(),
+    }
+}
+
+#[cfg(test)]
+mod layout_json_tests {
+    use super::*;
+
+    /// Regression: previously `LayoutJson` only deserialized ~12 fields and
+    /// `into_layout` hardcoded `position: Relative`, `inset: None`, etc.,
+    /// silently dropping absolute positioning, min/max sizing, flex-basis,
+    /// alignSelf, overflow, display:none, aspectRatio, boxSizing, and border.
+    #[test]
+    fn layout_json_round_trips_all_layout_props() {
+        let json = r#"{
+            "direction": "row",
+            "flex_wrap": "wrap-reverse",
+            "justify": "space-evenly",
+            "align": "baseline",
+            "align_content": "space-between",
+            "align_self": "flex-end",
+            "display": "none",
+            "position": "absolute",
+            "overflow": "hidden",
+            "box_sizing": "border-box",
+            "width": "50%",
+            "height": "20",
+            "min_width": "5",
+            "min_height": "3",
+            "max_width": "100",
+            "max_height": "40",
+            "flex_basis": "50%",
+            "flex_grow": 2.0,
+            "flex_shrink": 0.0,
+            "aspect_ratio": 1.6,
+            "padding_top": 1.0,
+            "padding_right": 2.0,
+            "padding_bottom": 3.0,
+            "padding_left": 4.0,
+            "margin_top": 0.5,
+            "margin_right": 0.0,
+            "margin_bottom": 0.0,
+            "margin_left": 0.0,
+            "border_top": 1.0,
+            "border_right": 1.0,
+            "border_bottom": 1.0,
+            "border_left": 1.0,
+            "top": 10.0,
+            "right": 20.0,
+            "bottom": 30.0,
+            "left": 40.0,
+            "gap_row": 1.0,
+            "gap_column": 2.0
+        }"#;
+        let parsed: LayoutJson = serde_json::from_str(json).expect("JSON must parse");
+        let layout = parsed.into_layout();
+
+        assert_eq!(layout.display, crate::taffy::types::Display::None);
+        assert_eq!(layout.position, crate::taffy::Position::Absolute);
+        assert_eq!(layout.direction, crate::taffy::FlexDirection::Row);
+        assert_eq!(layout.flex_wrap, crate::taffy::FlexWrap::WrapReverse);
+        assert_eq!(layout.justify, crate::taffy::JustifyContent::SpaceEvenly);
+        assert_eq!(layout.align, crate::taffy::AlignItems::Baseline);
+        assert_eq!(layout.align_content, Some(crate::taffy::AlignContent::SpaceBetween));
+        assert_eq!(layout.align_self, Some(crate::taffy::AlignSelf::FlexEnd));
+        assert_eq!(layout.flex_grow, 2.0);
+        assert_eq!(layout.flex_shrink, 0.0);
+        assert_eq!(layout.flex_basis, Some(crate::taffy::Sizing::Percent(0.5)));
+        assert_eq!(layout.width, Some(crate::taffy::Sizing::Percent(0.5)));
+        assert_eq!(layout.height, Some(crate::taffy::Sizing::Points(20.0)));
+        assert_eq!(layout.min_width, Some(crate::taffy::Sizing::Points(5.0)));
+        assert_eq!(layout.min_height, Some(crate::taffy::Sizing::Points(3.0)));
+        assert_eq!(layout.max_width, Some(crate::taffy::Sizing::Points(100.0)));
+        assert_eq!(layout.max_height, Some(crate::taffy::Sizing::Points(40.0)));
+        assert_eq!(layout.aspect_ratio, Some(1.6));
+        assert_eq!(layout.overflow, Some(crate::taffy::LayoutOverflow::Hidden));
+        assert_eq!(layout.box_sizing, Some(crate::taffy::BoxSizing::BorderBox));
+        assert_eq!(
+            layout.inset,
+            Some(crate::taffy::RectValues { top: Some(10.0), right: Some(20.0), bottom: Some(30.0), left: Some(40.0) })
+        );
+        assert_eq!(
+            layout.border,
+            Some(crate::taffy::RectValues { top: Some(1.0), right: Some(1.0), bottom: Some(1.0), left: Some(1.0) })
+        );
+        assert_eq!(layout.gap, Some(crate::taffy::Gap { row: 1.0, column: 2.0 }));
+        assert_eq!(
+            layout.padding,
+            Some(crate::taffy::RectValues { top: Some(1.0), right: Some(2.0), bottom: Some(3.0), left: Some(4.0) })
+        );
+        assert_eq!(
+            layout.margin,
+            Some(crate::taffy::RectValues { top: Some(0.5), right: Some(0.0), bottom: Some(0.0), left: Some(0.0) })
+        );
+    }
+
+    /// Regression: previously `position: "absolute"` was silently dropped,
+    /// always becoming `Relative` in the engine. Verify the round-trip.
+    #[test]
+    fn layout_json_position_absolute_round_trips() {
+        let json = r#"{ "position": "absolute", "top": 5.0, "left": 10.0 }"#;
+        let layout: LayoutJson = serde_json::from_str(json).expect("JSON must parse");
+        let props = layout.into_layout();
+        assert_eq!(props.position, crate::taffy::Position::Absolute);
+        assert_eq!(
+            props.inset,
+            Some(crate::taffy::RectValues { top: Some(5.0), left: Some(10.0), right: None, bottom: None })
+        );
+    }
+
+    /// Regression: previously `display: "none"` was dropped, always becoming
+    /// `Flex`. Verify the round-trip.
+    #[test]
+    fn layout_json_display_none_round_trips() {
+        let json = r#"{ "display": "none" }"#;
+        let layout: LayoutJson = serde_json::from_str(json).expect("JSON must parse");
+        let props = layout.into_layout();
+        assert_eq!(props.display, crate::taffy::types::Display::None);
+    }
+
+    /// Defaults: omitting fields should yield `LayoutProps::default()` shapes
+    /// (no `None` where the old code hard-coded `Relative`, etc.).
+    #[test]
+    fn layout_json_empty_payload_yields_defaults() {
+        let json = r#"{}"#;
+        let layout: LayoutJson = serde_json::from_str(json).expect("JSON must parse");
+        let props = layout.into_layout();
+        assert_eq!(props.display, crate::taffy::types::Display::Flex);
+        assert_eq!(props.position, crate::taffy::Position::Relative);
+        assert_eq!(props.direction, crate::taffy::FlexDirection::default());
+        assert_eq!(props.inset, None);
+        assert_eq!(props.min_width, None);
+        assert_eq!(props.max_width, None);
+        assert_eq!(props.flex_basis, None);
+        assert_eq!(props.overflow, None);
+        assert_eq!(props.box_sizing, None);
+    }
+
+    /// Regression: `flex_basis` previously dropped. Verify it parses both
+    /// points and percentages.
+    #[test]
+    fn layout_json_flex_basis_round_trips() {
+        for (json, expected) in [
+            (r#"{ "flex_basis": "100" }"#, crate::taffy::Sizing::Points(100.0)),
+            (r#"{ "flex_basis": "50%" }"#, crate::taffy::Sizing::Percent(0.5)),
+            (r#"{ "flex_basis": "auto" }"#, crate::taffy::Sizing::Auto),
+        ] {
+            let layout: LayoutJson = serde_json::from_str(json).expect("JSON must parse");
+            let props = layout.into_layout();
+            assert_eq!(props.flex_basis, Some(expected));
+        }
     }
 }

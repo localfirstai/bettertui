@@ -5,7 +5,7 @@
 //! chunk memory. The consumer reads SpanInfo descriptors (pointer + offset + len)
 //! pointing into these chunks — zero copy.
 //!
-//! Pattern adapted from OpenTUI's NativeSpanFeed.
+//! Pattern adapted from the reference implementation.
 
 use std::alloc::{Layout, alloc, dealloc};
 

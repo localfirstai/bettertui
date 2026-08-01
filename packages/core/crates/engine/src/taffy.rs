@@ -202,8 +202,8 @@ pub enum AlignSelf {
 /// Only applies when `flex_wrap` is `Wrap` or `WrapReverse`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum AlignContent {
-    FlexStart,
     #[default]
+    FlexStart,
     FlexEnd,
     Center,
     Stretch,
@@ -566,7 +566,7 @@ impl PaintContext {
 
 /// Binary search viewport culling for large scrollable lists.
 ///
-/// Pattern adapted from OpenTUI's `getObjectsInViewport`.
+/// Pattern adapted from reference implementation's `getObjectsInViewport`.
 /// Uses binary search + interval expansion to find visible children
 /// in O(log N + K) time where K is the number of visible objects.
 ///
@@ -581,7 +581,7 @@ pub struct PositionedChild {
 }
 
 /// Padding to apply when culling — keeps a buffer of visible objects
-/// just outside the viewport for smooth scrolling. Matches OpenTUI's padding.
+/// just outside the viewport for smooth scrolling.
 pub const CULLING_PADDING: u16 = 5;
 
 /// Returns children that intersect the given viewport along the primary axis.
@@ -753,7 +753,7 @@ fn viewport_end(vp: &Viewport, axis: PrimaryAxis) -> u16 {
 }
 
 // ============================================================================
-// CONFIG (matching OpenTUI's YGConfig)
+// CONFIG
 // ============================================================================
 
 /// Layout configuration controlling global layout behavior.
@@ -1181,7 +1181,7 @@ impl LayoutEngine {
                     None => return taffy::Size::ZERO,
                 };
 
-                // Check for per-node measure callback first (OpenTUI native measure path)
+                // Check for per-node measure callback first
                 if let Some(callback) = measure_callbacks.get(&our_id) {
                     let available_width = match available_space.width {
                         taffy::AvailableSpace::Definite(w) => w,
@@ -1288,7 +1288,10 @@ impl LayoutEngine {
 fn sizing_to_taffy(sizing: Option<Sizing>) -> taffy::Dimension {
     match sizing {
         Some(Sizing::Points(p)) => taffy::Dimension::Length(p),
-        Some(Sizing::Percent(p)) => taffy::Dimension::Percent(p.clamp(0.0, 1.0)),
+        // Note: do NOT clamp percentages to [0,1]. CSS and Yoga allow
+        // values > 100% (content overflows parent) and < 0% (negative offsets).
+        // Clamping was a latent bug that broke percentage-overflow layouts.
+        Some(Sizing::Percent(p)) => taffy::Dimension::Percent(p),
         Some(Sizing::Auto) | None => taffy::Dimension::Auto,
     }
 }

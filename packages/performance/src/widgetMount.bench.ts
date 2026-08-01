@@ -6,10 +6,10 @@
  * in the abstract `Renderable` base (`packages/core/src/renderable.ts`)
  * and per-widget option handling.
  *
- * OpenTUI counterpart: each individual widget is benchmarked under
+ * Reference benchmarks:
  * `.opencode/references/opentui/packages/core/src/benchmark/markdown-benchmark.ts`
  * (1,796 LoC) and `text-table-benchmark.ts` (948 LoC). BetterTUI widgets are
- * option-type-only today (see `tasks/reports/opentui-gap-analysis.md` W-7);
+ * option-type-only today;
  * once they grow full implementations this bench should be extended to cover
  * `renderCommands()` output cost per widget.
  *
@@ -46,8 +46,7 @@ function loop(
 describe("Widget construction — 1000 mounts per widget", () => {
   // Most BetterTUI widgets take an options object as the sole constructor arg.
   // `Text` and `Code` are special: they take a positional `content` string
-  // first, then options — matching their OpenTUI counterparts. The loops
-  // below use the correct arity for each.
+  // first, then options. The loops below use the correct arity for each.
   bench("Box", () => loop(Box, { border: "single" }, 1000));
   bench("Text", () => {
     for (let i = 0; i < 1000; i++) new Text("hello");

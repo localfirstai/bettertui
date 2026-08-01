@@ -115,8 +115,8 @@ function getGraphSnapshot(_keymap: unknown): GraphSnapshot<Renderable, KeyEvent>
   } as unknown as GraphSnapshot<Renderable, KeyEvent>;
 }
 
-/** Create the default OpenTUI keymap instance */
-function createDefaultOpenTuiKeymap(_renderer: unknown): Keymap {
+/** Create the default keymap instance */
+function createDefaultKeymap(_renderer: unknown): Keymap {
   return null as unknown as Keymap;
 }
 
@@ -228,9 +228,9 @@ const OPENCODE_LOGO = {
   ],
 } as const;
 
-type OpenTuiGraphSnapshot = GraphSnapshot<Renderable, KeyEvent>;
-type OpenTuiGraphBinding = GraphBinding<Renderable, KeyEvent>;
-type OpenTuiDispatchEvent = DispatchEvent<Renderable, KeyEvent>;
+type BetterTuiGraphSnapshot = GraphSnapshot<Renderable, KeyEvent>;
+type BetterTuiGraphBinding = GraphBinding<Renderable, KeyEvent>;
+type BetterTuiDispatchEvent = DispatchEvent<Renderable, KeyEvent>;
 
 interface SequencePartLike {
   match: string;
@@ -239,7 +239,7 @@ interface SequencePartLike {
 }
 
 interface TerminalGraphPulse {
-  phase: OpenTuiDispatchEvent["phase"];
+  phase: BetterTuiDispatchEvent["phase"];
   layerOrder?: number;
   bindingIndex?: number;
   command?: string;
@@ -925,7 +925,7 @@ function getLayerPulse(layerOrder: number): number {
   return pulseValue;
 }
 
-function getBindingPulse(binding: OpenTuiGraphBinding): number {
+function getBindingPulse(binding: BetterTuiGraphBinding): number {
   let pulseValue = 0;
   for (const pulse of graphPulses) {
     if (pulse.bindingIndex !== undefined) {
@@ -948,7 +948,7 @@ function getBindingPulse(binding: OpenTuiGraphBinding): number {
   return pulseValue;
 }
 
-function getCommandPulse(command: OpenTuiGraphSnapshot["commands"][number]): number {
+function getCommandPulse(command: BetterTuiGraphSnapshot["commands"][number]): number {
   let pulseValue = 0;
   for (const pulse of graphPulses) {
     if (pulse.command !== command.name) {
@@ -978,7 +978,9 @@ function pruneGraphPulses(): void {
   graphPulses = graphPulses.filter((pulse) => pulse.remainingMs > 0);
 }
 
-function getPulsePhase(binding: OpenTuiGraphBinding): OpenTuiDispatchEvent["phase"] | undefined {
+function getPulsePhase(
+  binding: BetterTuiGraphBinding,
+): BetterTuiDispatchEvent["phase"] | undefined {
   for (const pulse of graphPulses) {
     if (pulse.bindingIndex !== undefined) {
       if (pulse.layerOrder !== binding.sourceLayerOrder) {
@@ -1000,7 +1002,7 @@ function getPulsePhase(binding: OpenTuiGraphBinding): OpenTuiDispatchEvent["phas
   return undefined;
 }
 
-function getPulseMarker(pulse: number, phase: OpenTuiDispatchEvent["phase"] | undefined): string {
+function getPulseMarker(pulse: number, phase: BetterTuiDispatchEvent["phase"] | undefined): string {
   if (phase === "binding-reject") {
     return "!";
   }
@@ -1024,7 +1026,7 @@ function getPulseMarker(pulse: number, phase: OpenTuiDispatchEvent["phase"] | un
   return " ";
 }
 
-function getPendingBindingIds(snapshot: OpenTuiGraphSnapshot): Set<string> {
+function getPendingBindingIds(snapshot: BetterTuiGraphSnapshot): Set<string> {
   const ids = new Set<string>();
   const nodes = ((snapshot as unknown as Record<string, unknown>).sequenceNodes as unknown[]) ?? [];
   for (const node of nodes) {
@@ -1041,11 +1043,14 @@ function getPendingBindingIds(snapshot: OpenTuiGraphSnapshot): Set<string> {
   return ids;
 }
 
-function isBindingPending(binding: OpenTuiGraphBinding, snapshot: OpenTuiGraphSnapshot): boolean {
+function isBindingPending(
+  binding: BetterTuiGraphBinding,
+  snapshot: BetterTuiGraphSnapshot,
+): boolean {
   return getPendingBindingIds(snapshot).has(binding.id);
 }
 
-function formatGraphBindingKey(binding: OpenTuiGraphBinding): string {
+function formatGraphBindingKey(binding: BetterTuiGraphBinding): string {
   return formatKeySequence(binding.sequence, KEY_FORMAT_OPTIONS) || "bind";
 }
 
@@ -1054,8 +1059,8 @@ function getGraphCommandLabel(commandName: string): string {
 }
 
 function getGraphBindingCommandLabel(
-  binding: OpenTuiGraphBinding,
-  snapshot: OpenTuiGraphSnapshot,
+  binding: BetterTuiGraphBinding,
+  snapshot: BetterTuiGraphSnapshot,
 ): string {
   const resolved = binding.commandIds
     .map((id) => snapshot.commands.find((command) => command.id === id)?.name)
@@ -1102,13 +1107,13 @@ function getGraphTargetLabel(target: Renderable | undefined): string {
   return target.id.replace(/^keymap-demo-/, "");
 }
 
-function getGraphLayerLabel(layer: OpenTuiGraphSnapshot["layers"][number]): string {
+function getGraphLayerLabel(layer: BetterTuiGraphSnapshot["layers"][number]): string {
   return `${getGraphTargetLabel(layer.target)}:${layer.order}`;
 }
 
 function getGraphLayerRail(
-  snapshot: OpenTuiGraphSnapshot,
-  visibleBindings: readonly OpenTuiGraphBinding[],
+  snapshot: BetterTuiGraphSnapshot,
+  visibleBindings: readonly BetterTuiGraphBinding[],
 ): TextChunk[] {
   const visibleLayerIds = new Set(visibleBindings.map((binding) => binding.layerId));
   const visibleLayers = snapshot.layers.filter(
@@ -1146,9 +1151,9 @@ function getGraphPanelRows(): number {
 }
 
 function getVisibleGraphBindings(
-  snapshot: OpenTuiGraphSnapshot,
+  snapshot: BetterTuiGraphSnapshot,
   limit: number,
-): OpenTuiGraphBinding[] {
+): BetterTuiGraphBinding[] {
   const pendingBindingIds = getPendingBindingIds(snapshot);
 
   return [...snapshot.bindings]
@@ -1175,13 +1180,13 @@ function getVisibleGraphBindings(
 }
 
 function buildGraphBindingLine(
-  binding: OpenTuiGraphBinding,
-  snapshot: OpenTuiGraphSnapshot,
+  binding: BetterTuiGraphBinding,
+  snapshot: BetterTuiGraphSnapshot,
 ): TextChunk[] {
   const layer = snapshot.layers.find((candidate) => candidate.id === binding.layerId);
   const command = binding.commandIds
     .map((id) => snapshot.commands.find((candidate) => candidate.id === id))
-    .find((candidate): candidate is OpenTuiGraphSnapshot["commands"][number] => !!candidate);
+    .find((candidate): candidate is BetterTuiGraphSnapshot["commands"][number] => !!candidate);
   const bindingPulse = getBindingPulse(binding);
   const commandPulse = command ? getCommandPulse(command) : 0;
   const pending = isBindingPending(binding, snapshot);
@@ -1386,7 +1391,7 @@ function cleanupGraphAnimation(renderer: CliRenderer): void {
   stopGraphAnimation(renderer);
 }
 
-function addGraphPulse(renderer: CliRenderer, event: OpenTuiDispatchEvent): void {
+function addGraphPulse(renderer: CliRenderer, event: BetterTuiDispatchEvent): void {
   const command = typeof event.command === "string" ? event.command : undefined;
   const durationMs =
     event.phase === "binding-reject" ? GRAPH_REJECT_PULSE_DURATION_MS : GRAPH_PULSE_DURATION_MS;
@@ -2538,7 +2543,7 @@ function registerCommandLayers(
 
   disposers.push(
     keymapInstance.on("dispatch", (event: unknown) => {
-      addGraphPulse(renderer, event as OpenTuiDispatchEvent);
+      addGraphPulse(renderer, event as BetterTuiDispatchEvent);
     }),
   );
 
@@ -3059,7 +3064,7 @@ export function run(renderer: CliRenderer): void {
   });
   logoCard.add(logoOverlayHintText);
 
-  const keymapInstance = createDefaultOpenTuiKeymap(renderer);
+  const keymapInstance = createDefaultKeymap(renderer);
 
   registerCommandLayers(renderer, keymapInstance);
   addLog("Tab switches focus across panels and editors.");

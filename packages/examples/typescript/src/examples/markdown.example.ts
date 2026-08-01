@@ -13,7 +13,7 @@ import { SyntaxStyle } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Rich markdown example showcasing various features
-const markdownContent = `# OpenTUI Markdown Demo
+const markdownContent = `# BetterTUI Markdown Demo
 
 Welcome to the **MarkdownRenderable** showcase! This demonstrates automatic table alignment and syntax highlighting.
 
@@ -146,7 +146,7 @@ And a JSON configuration example:
 
 \`\`\`json
 {
-  "name": "opentui-markdown-demo",
+  "name": "bettertui-markdown-demo",
   "theme": "github",
   "features": ["table-alignment", "syntax-highlighting", "conceal-mode"],
   "streaming": {
@@ -215,7 +215,7 @@ status = "fallback text should stay readable"
 | Bold | \`**text**\` | **bold text** |
 | Italic | \`*text*\` | *italic text* |
 | Code | \`code\` | \`inline code\` |
-| Link | \`[text](url)\` | [OpenTUI](https://github.com) |
+| Link | \`[text](url)\` | [BetterTUI](https://github.com/anomalyco/bettertui) |
 
 ## Mixed Content
 
@@ -271,7 +271,12 @@ const themes = {
       "punctuation.bracket": { fg: parseColor("#24292F") },
       "punctuation.delimiter": { fg: parseColor("#57606A") },
       "markup.heading": { fg: parseColor("#0550AE"), bold: true },
-      "markup.heading.1": { fg: parseColor("#1A7F37"), bold: true, italic: true, underline: true },
+      "markup.heading.1": {
+        fg: parseColor("#1A7F37"),
+        bold: true,
+        italic: true,
+        underline: true,
+      },
       "markup.heading.2": { fg: parseColor("#0550AE"), bold: true },
       "markup.heading.3": { fg: parseColor("#8250DF") },
       "markup.bold": { fg: parseColor("#24292F"), bold: true },
@@ -280,8 +285,14 @@ const themes = {
       "markup.list": { fg: parseColor("#CF222E") },
       "markup.quote": { fg: parseColor("#6E7781"), italic: true },
       "markup.raw": { fg: parseColor("#24292F"), bg: parseColor("#F6F8FA") },
-      "markup.raw.block": { fg: parseColor("#24292F"), bg: parseColor("#F6F8FA") },
-      "markup.raw.inline": { fg: parseColor("#24292F"), bg: parseColor("#F6F8FA") },
+      "markup.raw.block": {
+        fg: parseColor("#24292F"),
+        bg: parseColor("#F6F8FA"),
+      },
+      "markup.raw.inline": {
+        fg: parseColor("#24292F"),
+        bg: parseColor("#F6F8FA"),
+      },
       "markup.link": { fg: parseColor("#0969DA"), underline: true },
       "markup.link.label": { fg: parseColor("#0A3069"), underline: true },
       "markup.link.url": { fg: parseColor("#0969DA"), underline: true },
@@ -309,7 +320,12 @@ const themes = {
       "punctuation.bracket": { fg: parseColor("#F0F6FC") },
       "punctuation.delimiter": { fg: parseColor("#C9D1D9") },
       "markup.heading": { fg: parseColor("#58A6FF"), bold: true },
-      "markup.heading.1": { fg: parseColor("#00FF88"), bold: true, italic: true, underline: true },
+      "markup.heading.1": {
+        fg: parseColor("#00FF88"),
+        bold: true,
+        italic: true,
+        underline: true,
+      },
       "markup.heading.2": { fg: parseColor("#00D7FF"), bold: true },
       "markup.heading.3": { fg: parseColor("#FF69B4") },
       "markup.bold": { fg: parseColor("#F0F6FC"), bold: true },
@@ -318,8 +334,14 @@ const themes = {
       "markup.list": { fg: parseColor("#FF7B72") },
       "markup.quote": { fg: parseColor("#8B949E"), italic: true },
       "markup.raw": { fg: parseColor("#A5D6FF"), bg: parseColor("#161B22") },
-      "markup.raw.block": { fg: parseColor("#A5D6FF"), bg: parseColor("#161B22") },
-      "markup.raw.inline": { fg: parseColor("#A5D6FF"), bg: parseColor("#161B22") },
+      "markup.raw.block": {
+        fg: parseColor("#A5D6FF"),
+        bg: parseColor("#161B22"),
+      },
+      "markup.raw.inline": {
+        fg: parseColor("#A5D6FF"),
+        bg: parseColor("#161B22"),
+      },
       "markup.link": { fg: parseColor("#58A6FF"), underline: true },
       "markup.link.label": { fg: parseColor("#A5D6FF"), underline: true },
       "markup.link.url": { fg: parseColor("#58A6FF"), underline: true },
@@ -347,7 +369,12 @@ const themes = {
       "punctuation.bracket": { fg: parseColor("#F8F8F2") },
       "punctuation.delimiter": { fg: parseColor("#F8F8F2") },
       "markup.heading": { fg: parseColor("#A6E22E"), bold: true },
-      "markup.heading.1": { fg: parseColor("#F92672"), bold: true, italic: true, underline: true },
+      "markup.heading.1": {
+        fg: parseColor("#F92672"),
+        bold: true,
+        italic: true,
+        underline: true,
+      },
       "markup.heading.2": { fg: parseColor("#66D9EF"), bold: true },
       "markup.heading.3": { fg: parseColor("#E6DB74") },
       "markup.bold": { fg: parseColor("#F8F8F2"), bold: true },
@@ -356,8 +383,14 @@ const themes = {
       "markup.list": { fg: parseColor("#F92672") },
       "markup.quote": { fg: parseColor("#75715E"), italic: true },
       "markup.raw": { fg: parseColor("#E6DB74"), bg: parseColor("#3E3D32") },
-      "markup.raw.block": { fg: parseColor("#E6DB74"), bg: parseColor("#3E3D32") },
-      "markup.raw.inline": { fg: parseColor("#E6DB74"), bg: parseColor("#3E3D32") },
+      "markup.raw.block": {
+        fg: parseColor("#E6DB74"),
+        bg: parseColor("#3E3D32"),
+      },
+      "markup.raw.inline": {
+        fg: parseColor("#E6DB74"),
+        bg: parseColor("#3E3D32"),
+      },
       "markup.link": { fg: parseColor("#66D9EF"), underline: true },
       "markup.link.label": { fg: parseColor("#E6DB74"), underline: true },
       "markup.link.url": { fg: parseColor("#66D9EF"), underline: true },
@@ -385,7 +418,12 @@ const themes = {
       "punctuation.bracket": { fg: parseColor("#ECEFF4") },
       "punctuation.delimiter": { fg: parseColor("#D8DEE9") },
       "markup.heading": { fg: parseColor("#88C0D0"), bold: true },
-      "markup.heading.1": { fg: parseColor("#8FBCBB"), bold: true, italic: true, underline: true },
+      "markup.heading.1": {
+        fg: parseColor("#8FBCBB"),
+        bold: true,
+        italic: true,
+        underline: true,
+      },
       "markup.heading.2": { fg: parseColor("#81A1C1"), bold: true },
       "markup.heading.3": { fg: parseColor("#B48EAD") },
       "markup.bold": { fg: parseColor("#ECEFF4"), bold: true },
@@ -394,8 +432,14 @@ const themes = {
       "markup.list": { fg: parseColor("#81A1C1") },
       "markup.quote": { fg: parseColor("#616E88"), italic: true },
       "markup.raw": { fg: parseColor("#A3BE8C"), bg: parseColor("#3B4252") },
-      "markup.raw.block": { fg: parseColor("#A3BE8C"), bg: parseColor("#3B4252") },
-      "markup.raw.inline": { fg: parseColor("#A3BE8C"), bg: parseColor("#3B4252") },
+      "markup.raw.block": {
+        fg: parseColor("#A3BE8C"),
+        bg: parseColor("#3B4252"),
+      },
+      "markup.raw.inline": {
+        fg: parseColor("#A3BE8C"),
+        bg: parseColor("#3B4252"),
+      },
       "markup.link": { fg: parseColor("#88C0D0"), underline: true },
       "markup.link.label": { fg: parseColor("#A3BE8C"), underline: true },
       "markup.link.url": { fg: parseColor("#88C0D0"), underline: true },

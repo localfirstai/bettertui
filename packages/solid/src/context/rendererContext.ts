@@ -1,7 +1,7 @@
 /**
  * Solid context that provides the active CliRenderer to all hooks.
  *
- * Naming follows OpenTUI's convention: `RendererContext` + `useRenderer()`.
+ * Naming convention: `RendererContext` + `useRenderer()`.
  * Components must be rendered inside a `RendererProvider` (set up by
  * `createRoot` automatically) to use hooks.
  */

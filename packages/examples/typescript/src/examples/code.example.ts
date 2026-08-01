@@ -117,29 +117,30 @@ function TodoApp() {
   {
     name: "Markdown",
     filetype: "markdown" as const,
-    code: `# OpenTUI Documentation
+    code: `# BetterTUI Documentation
 
 ## Getting Started
 
-OpenTUI is a modern terminal UI framework built on **tree-sitter** and WebGPU.
+BetterTUI is a modern terminal UI framework built in Rust with TypeScript bindings.
 
 ### Features
 
-- 🚀 Fast rendering with WebGPU
+- 🚀 Fast rendering with native Rust engine
 - 🎨 Syntax highlighting via tree-sitter
 - 📦 Component-based architecture
 - ⌨️ Rich keyboard input handling
+- 🖱️ Full mouse support
 
 ### Installation
 
 \`\`\`bash
-bun install opentui
+pnpm add @bettertui/core
 \`\`\`
 
 ### Quick Example
 
 \`\`\`typescript
-import { createCliRenderer, BoxRenderable } from 'opentui';
+import { createCliRenderer, BoxRenderable } from '@bettertui/core';
 
 const renderer = await createCliRenderer();
 const box = new BoxRenderable(renderer, {
@@ -151,23 +152,23 @@ renderer.root.add(box);
 
 ## API Reference
 
-### CodeRenderable
+### BoxRenderable
 
-The \`CodeRenderable\` component provides syntax highlighting:
+The \`BoxRenderable\` component provides styled boxes:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| content | string | Code to display |
-| filetype | string | Language type |
-| syntaxStyle | SyntaxStyle | Styling rules |
+| border | boolean | Show border |
+| title | string | Box title |
+| padding | number | Inner padding |
 
-> **Note**: Tree-sitter parsers are loaded lazily for performance.
+> **Note**: BetterTUI uses Taffy for layout computation.
 
 CJK: 알겠습니다. Task 에이전트에 ktlint + detekt 검사를 위임하겠습니다.
 
 ---
 
-For more info, visit [github.com/opentui](https://github.com)`,
+For more info, visit [github.com/anomalyco/bettertui](https://github.com/anomalyco/bettertui)`,
   },
   {
     name: "Zig",

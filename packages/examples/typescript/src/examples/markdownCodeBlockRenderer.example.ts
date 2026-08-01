@@ -9,7 +9,10 @@ import {
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 /** Local stub type for a markdown code block renderer callback. */
-type MarkdownCodeBlockRenderer = (token: { text: string; lang?: string }) => BoxRenderable;
+type MarkdownCodeBlockRenderer = (token: {
+  text: string;
+  lang?: string;
+}) => BoxRenderable;
 
 /** Local stub factory — registers per-language block renderers. */
 function _createMarkdownCodeBlockRenderer(
@@ -36,7 +39,7 @@ interface TaskFlowDocument {
 
 const markdownContent = `# Markdown Code Block Renderers
 
-This markdown document contains a fenced \`taskflow\` block. The source stays plain text, but the markdown renderer swaps that single language into a custom OpenTUI widget.
+This markdown document contains a fenced \`taskflow\` block. The source stays plain text, but the markdown renderer swaps that single language into a custom BetterTUI widget.
 
 \`\`\`taskflow
 title Ship markdown plug-ins

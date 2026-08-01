@@ -70,3 +70,4 @@ export { CliRenderEvents } from "./cliRenderer";
 export type { ScreenMode, ExternalOutputMode } from "./platform.types";
 export type { MouseEvent } from "./events";
 export * from "./logger";
+export { layoutToEngineJson } from "./layoutSerializer";

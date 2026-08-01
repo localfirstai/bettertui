@@ -13,6 +13,15 @@ export type JustifyContent =
 /** Alignment of children along the cross axis. */
 export type AlignItems = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
 
+/** Alignment of multiple lines along the cross axis (multi-line flex containers). */
+export type AlignContent =
+  | "flex-start"
+  | "center"
+  | "flex-end"
+  | "stretch"
+  | "space-between"
+  | "space-around";
+
 /** Alignment of a single child along the cross axis, overriding AlignItems. */
 export type AlignSelf = "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
 
@@ -69,6 +78,7 @@ export interface LayoutConstraints {
   alignItems?: AlignItems;
   alignSelf?: AlignSelf;
   flexWrap?: FlexWrap;
+  alignContent?: AlignContent;
   flexGrow?: number;
   flexShrink?: number;
   flexBasis?: Sizing;
@@ -98,4 +108,9 @@ export interface LayoutConstraints {
   zIndex?: number;
   visible?: boolean;
   overflow?: Overflow;
+  /** Layout space reserved for a border (0 or 1 cell per side, used with border-box sizing). */
+  borderTop?: number;
+  borderRight?: number;
+  borderBottom?: number;
+  borderLeft?: number;
 }

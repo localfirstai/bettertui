@@ -7,8 +7,9 @@
  * patterns (move, remove, re-insert) that the existing micro-bench doesn't
  * cover.
  *
- * OpenTUI counterpart: the layout + render-traversal benchmarks in OpenTUI
- * (`opentui/.../benchmark/layout-benchmark.ts` and `render-traversal-benchmark.ts`)
+ * Reference: the layout + render-traversal benchmarks
+ * (`.opencode/references/opentui/packages/core/src/benchmark/layout-benchmark.ts` and
+ * `render-traversal-benchmark.ts`)
  * operate against the Zig-side renderer directly; the BetterTUI equivalent
  * routes through `createReconciler` + `CommandBuffer`, which is the
  * abstraction level framework adapters will use.

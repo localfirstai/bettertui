@@ -45,7 +45,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(text);
 
-  setDemoTitle(renderer, "OpenTUI Test");
+  setDemoTitle(renderer, "BetterTUI Test");
   titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Terminal Title Demo"), 2000));
   titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Success!"), 4000));
 }
@@ -57,7 +57,10 @@ export function destroy(_renderer: CliRenderer): void {
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({ exitOnCtrlC: true, onDestroy: resetStandaloneState });
+  const renderer = await createCliRenderer({
+    exitOnCtrlC: true,
+    onDestroy: resetStandaloneState,
+  });
   setupCommonDemoKeys(renderer);
   run(renderer);
 }

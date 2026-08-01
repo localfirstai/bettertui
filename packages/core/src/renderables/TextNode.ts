@@ -1,11 +1,19 @@
 /**
  * TextNodeRenderable — building block for styled text composition.
+ *
+ * Design:
+ * - Children are `string | TextNodeRenderable` (heterogeneous).
+ * - Leaf text is stored as a string child, NOT a separate `_text` field.
+ *   This means `clear()` always wipes all content and `children` setter
+ *   works correctly for dynamic updates.
+ * - `fromNodes(nodes[], options?)` takes array + options signature.
+ * - `children` setter re-parents the new children and marks the node dirty.
  */
 
-import { EventEmitter } from "node:events";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import { type StyledText, type TextChunk, styledTextToAnsi } from "../lib/styledText";
 import { TextAttributes } from "../lib/styledText";
+import { StyledText as StyledTextClass } from "../lib/styledText";
 
 export interface TextNodeOptions {
   id?: string;
@@ -22,8 +30,12 @@ export interface TextNodeOptions {
 export interface StyleAttrs {
   fg?: ColorInput;
   bg?: ColorInput;
+  /** Pre-computed attribute bitmask (TextAttributes flags). */
   attributes?: number;
 }
+
+/** A child can be either a string (leaf text) or a nested node. */
+export type TextNodeChild = string | TextNodeRenderable;
 
 let _textNodeCounter = 0;
 
@@ -31,7 +43,7 @@ let _textNodeCounter = 0;
  * TextNodeRenderable — a lightweight styled-text composition node.
  * Can be used standalone or nested in TextRenderable.
  */
-export class TextNodeRenderable extends EventEmitter {
+export class TextNodeRenderable {
   private static _counter = 0;
   public readonly id: string;
   public _fg: RGBA | undefined;
@@ -39,11 +51,17 @@ export class TextNodeRenderable extends EventEmitter {
   public _attributes: number;
   public isDirty = false;
   public parent: TextNodeRenderable | null = null;
-  protected _children: TextNodeRenderable[] = [];
-  private _text: string;
+
+  /**
+   * Children are heterogeneous: strings are leaf text, TextNodeRenderables are
+   * nested nodes. Stored as a union array.
+   *
+   * NOTE: Do NOT store leaf text in a separate field — always use children.
+   * This ensures `clear()` wipes everything and the `children` setter works.
+   */
+  protected _children: TextNodeChild[] = [];
 
   constructor(options: TextNodeOptions = {}) {
-    super();
     _textNodeCounter++;
     this.id = options.id ?? `textnode-${_textNodeCounter}`;
     this._fg = options.fg ? parseColor(options.fg) : undefined;
@@ -55,24 +73,43 @@ export class TextNodeRenderable extends EventEmitter {
     if (options.dim) this._attributes |= TextAttributes.DIM;
     if (options.strikethrough) this._attributes |= TextAttributes.STRIKETHROUGH;
     if (options.blink) this._attributes |= TextAttributes.BLINK;
-    this._text = "";
   }
 
+  // ── Factory methods ────────────────────────────────────────────────────────
+
+  /**
+   * Create a leaf node from a plain string with optional style.
+   * Signature: `TextNodeRenderable.fromString(text, options?)`.
+   */
   static fromString(text: string, style?: StyleAttrs): TextNodeRenderable {
     const node = new TextNodeRenderable({
       fg: style?.fg,
       bg: style?.bg,
     });
-    node._text = text;
     if (style?.attributes) node._attributes = style.attributes;
+    // Store as a string child — this is the canonical storage location.
+    node._children = [text];
     return node;
   }
 
-  static fromNodes(...nodes: TextNodeRenderable[]): TextNodeRenderable {
-    const root = new TextNodeRenderable();
+  /**
+   * Create a container node from an array of child nodes with optional root style.
+   * Signature: `fromNodes(nodes: TextNodeRenderable[], options?)`.
+   *
+   * Previous implementation used variadic rest params and no options,
+   * which broke call sites that pass `([a,b,c], { fg: "..." })`.
+   */
+  static fromNodes(nodes: TextNodeRenderable[], options: StyleAttrs = {}): TextNodeRenderable {
+    const root = new TextNodeRenderable({
+      fg: options.fg,
+      bg: options.bg,
+    });
+    if (options.attributes) root._attributes = options.attributes;
     for (const node of nodes) root.add(node);
     return root;
   }
+
+  // ── Style getters / setters ────────────────────────────────────────────────
 
   get fg(): RGBA | undefined {
     return this._fg;
@@ -81,6 +118,7 @@ export class TextNodeRenderable extends EventEmitter {
   set fg(color: ColorInput) {
     this._fg = parseColor(color);
     this.isDirty = true;
+    this._bubbleDirty();
   }
 
   get bg(): RGBA | undefined {
@@ -90,6 +128,7 @@ export class TextNodeRenderable extends EventEmitter {
   set bg(color: ColorInput) {
     this._bg = parseColor(color);
     this.isDirty = true;
+    this._bubbleDirty();
   }
 
   get attributes(): number {
@@ -99,30 +138,72 @@ export class TextNodeRenderable extends EventEmitter {
   set attributes(v: number) {
     this._attributes = v;
     this.isDirty = true;
+    this._bubbleDirty();
   }
 
-  get children(): TextNodeRenderable[] {
+  // ── Children ──────────────────────────────────────────────────────────────
+
+  /**
+   * Read-only view of this node's children (strings + sub-nodes).
+   * For mutation use the setter or `add`/`remove`/`clear`.
+   */
+  get children(): readonly TextNodeChild[] {
     return this._children;
   }
 
-  add(child: TextNodeRenderable | StyledText | string, index?: number): number {
-    let node: TextNodeRenderable;
-    if (typeof child === "string") {
-      node = TextNodeRenderable.fromString(child);
-    } else if (child instanceof TextNodeRenderable) {
-      node = child;
-    } else {
-      // StyledText
-      node = new TextNodeRenderable();
-      node._text = styledTextToAnsi(child);
+  /**
+   * Replace all children with a new array of strings and/or nodes.
+   * The `children` setter: detaches old node children, adopts
+   * new ones, and marks the node dirty so the owner TextRenderable resyncs.
+   *
+   * Usage (dynamic update pattern):
+   * ```ts
+   * counterNode.children = [`\n\nCounter: ${n}`];
+   * ```
+   */
+  set children(newChildren: TextNodeChild[]) {
+    // Detach old node children
+    for (const child of this._children) {
+      if (child instanceof TextNodeRenderable) {
+        child.parent = null;
+      }
     }
-    node.parent = this;
-    if (index !== undefined) {
-      this._children.splice(index, 0, node);
+    // Adopt new node children
+    for (const child of newChildren) {
+      if (child instanceof TextNodeRenderable) {
+        child.parent = this;
+      }
+    }
+    this._children = [...newChildren];
+    this.isDirty = true;
+    this._bubbleDirty();
+  }
+
+  // ── Mutation methods ───────────────────────────────────────────────────────
+
+  /**
+   * Append a string, TextNodeRenderable, or StyledText as a child.
+   * Returns the index at which the child was inserted.
+   */
+  add(child: TextNodeChild | StyledText, index?: number): number {
+    let item: TextNodeChild;
+    if (typeof child === "string") {
+      item = child;
+    } else if (child instanceof TextNodeRenderable) {
+      child.parent = this;
+      item = child;
     } else {
-      this._children.push(node);
+      // StyledText — serialise to ANSI string and store as a leaf string child
+      item = styledTextToAnsi(child as StyledText);
+    }
+
+    if (index !== undefined) {
+      this._children.splice(index, 0, item);
+    } else {
+      this._children.push(item);
     }
     this.isDirty = true;
+    this._bubbleDirty();
     return index ?? this._children.length - 1;
   }
 
@@ -132,43 +213,62 @@ export class TextNodeRenderable extends EventEmitter {
       this._children.splice(idx, 1);
       child.parent = null;
       this.isDirty = true;
+      this._bubbleDirty();
     }
   }
 
-  insertBefore(child: TextNodeRenderable | string, anchor?: TextNodeRenderable): void {
-    let node: TextNodeRenderable;
-    if (typeof child === "string") {
-      node = TextNodeRenderable.fromString(child);
-    } else {
-      node = child;
-    }
+  /**
+   * Insert `child` before `anchor`. Throws if `anchor` is provided but not
+   * found — strict contract (helps catch anchor mismatches).
+   */
+  insertBefore(child: TextNodeChild | StyledText, anchor?: TextNodeRenderable): void {
+    const item =
+      typeof child === "string" || child instanceof TextNodeRenderable
+        ? child
+        : styledTextToAnsi(child as StyledText);
+
     if (!anchor) {
-      this._children.unshift(node);
+      this._children.unshift(item);
     } else {
       const idx = this._children.indexOf(anchor);
-      if (idx !== -1) {
-        this._children.splice(idx, 0, node);
-      } else {
-        this._children.push(node);
+      if (idx === -1) {
+        throw new Error(
+          `[TextNodeRenderable] insertBefore: anchor node (id=${anchor.id}) not found among children`,
+        );
       }
+      this._children.splice(idx, 0, item);
     }
-    node.parent = this;
+    if (item instanceof TextNodeRenderable) item.parent = this;
     this.isDirty = true;
+    this._bubbleDirty();
   }
 
+  /**
+   * Remove all children and mark the node dirty.
+   * Unlike the old implementation there is NO separate `_text` field to miss.
+   */
   clear(): void {
     for (const child of this._children) {
-      child.parent = null;
+      if (child instanceof TextNodeRenderable) {
+        child.parent = null;
+      }
     }
     this._children = [];
     this.isDirty = true;
+    this._bubbleDirty();
   }
 
-  getChildren(): TextNodeRenderable[] {
+  getChildren(): readonly TextNodeChild[] {
     return this._children;
   }
 
-  /** Collect all text from this node and descendants as styled chunks. */
+  // ── Rendering helpers ─────────────────────────────────────────────────────
+
+  /**
+   * Walk this node and all descendants, accumulating {@link TextChunk}s with
+   * inherited style applied. Called by `TextRenderable.onLifecyclePass` to
+   * build the flat chunk array that goes to the engine.
+   */
   gatherWithInheritedStyle(inherited: {
     fg?: RGBA;
     bg?: RGBA;
@@ -183,42 +283,80 @@ export class TextNodeRenderable extends EventEmitter {
       ? (inherited.attributes ?? 0) | this._attributes
       : inherited.attributes;
 
-    if (this._text) {
-      chunks.push({
-        __isChunk: true,
-        text: this._text,
-        fg,
-        bg,
-        attributes: attrs,
-      });
-    }
-
     for (const child of this._children) {
-      chunks.push(
-        ...child.gatherWithInheritedStyle({ fg, bg, attributes: attrs, link: inherited.link }),
-      );
+      if (typeof child === "string") {
+        // Leaf string child — emit as a chunk with current inherited style
+        if (child) {
+          chunks.push({
+            __isChunk: true,
+            text: child,
+            fg,
+            bg,
+            attributes: attrs,
+          });
+        }
+      } else {
+        // Nested node — recurse
+        chunks.push(
+          ...child.gatherWithInheritedStyle({
+            fg,
+            bg,
+            attributes: attrs,
+            link: inherited.link,
+          }),
+        );
+      }
     }
 
     return chunks;
   }
 
-  /** Convert this node tree to a string. */
+  /** Serialise this node tree to an ANSI-escaped string. */
   toString(): string {
     const chunks = this.gatherWithInheritedStyle({});
-    const st = new (require("../lib/styledText").StyledText)(chunks);
+    const st = new StyledTextClass(chunks);
     return styledTextToAnsi(st);
+  }
+
+  // ── Internal ──────────────────────────────────────────────────────────────
+
+  /** Walk up the parent chain and mark all ancestors dirty. */
+  private _bubbleDirty(): void {
+    let p = this.parent;
+    while (p) {
+      p.isDirty = true;
+      // If we reach a RootTextNodeRenderable, notify it so it can signal its
+      // owning TextRenderable to resync on the next lifecycle pass.
+      if (p instanceof RootTextNodeRenderable) {
+        p.markDirtyFromChild();
+        break;
+      }
+      p = p.parent;
+    }
   }
 }
 
 /**
  * RootTextNodeRenderable — the root text node for a TextRenderable.
+ * When any descendant calls `_bubbleDirty()` and the dirty flag reaches this
+ * root, the `onDirty` callback is invoked so the owning `TextRenderable` can
+ * schedule a re-sync to the engine on the next lifecycle pass.
  */
 export class RootTextNodeRenderable extends TextNodeRenderable {
-  constructor(
-    _ctx: unknown,
-    options: TextNodeOptions = {},
-    public readonly owner?: unknown,
-  ) {
+  private readonly _onDirty: (() => void) | undefined;
+
+  constructor(options: TextNodeOptions = {}, onDirty?: () => void) {
     super(options);
+    this._onDirty = onDirty;
+  }
+
+  /**
+   * Overrides the private `_bubbleDirty` propagation: when this root is
+   * reached, fire the `onDirty` callback instead of (or in addition to)
+   * walking further up (there is no parent above the root).
+   */
+  markDirtyFromChild(): void {
+    this.isDirty = true;
+    this._onDirty?.();
   }
 }

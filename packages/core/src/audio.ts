@@ -1,7 +1,7 @@
 /**
  * Audio API stubs for BetterTUI.
  *
- * These provide the full TypeScript interface matching OpenTUI's audio API so
+ * These provide the full TypeScript interface for audio so
  * that examples compile and run without crashing.  Actual playback requires
  * the native audio engine which is not yet implemented.
  */
@@ -202,7 +202,7 @@ export class Audio extends EventEmitter {
     this.sampleRate = options.sampleRate ?? 48_000;
   }
 
-  /** Factory — matches OpenTUI's `Audio.create()` API. */
+  /** Factory — creates a new Audio instance. */
   static create(options: AudioSetupOptions = {}): Audio {
     return new Audio(options);
   }
@@ -234,7 +234,6 @@ export class Audio extends EventEmitter {
 
   /**
    * Create an audio group.  Returns the group id (a small integer starting at 1).
-   * Matches both OpenTUI's `audio.createGroup()` and the example's `audio.group()` call.
    */
   private _groupCounter = 0;
 

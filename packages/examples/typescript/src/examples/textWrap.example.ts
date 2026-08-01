@@ -138,7 +138,7 @@ function handleTextBoxMouse(event: unknown): void {
             w: "w-resize",
             e: "e-resize",
           } as const;
-          // Note: OpenTUI may not support custom cursor styles yet, but we can still track the direction
+          // Note: Custom cursor styles are tracked for direction
           void cursorMap;
         }
       }
@@ -278,7 +278,7 @@ function handleGlobalMouse(event: unknown): void {
 
 // Create styled demo text using TextNodes
 function createDemoText(): TextNodeRenderable {
-  const titleNode = TextNodeRenderable.fromString("🎨 OpenTUI Text Wrapping Demo", {
+  const titleNode = TextNodeRenderable.fromString("🎨 BetterTUI Text Wrapping Demo", {
     fg: "#7aa2f7",
     attributes: 1, // bold
   });
@@ -293,7 +293,7 @@ function createDemoText(): TextNodeRenderable {
   });
 
   const introContNode = TextNodeRenderable.fromString(
-    ". This example showcases how OpenTUI handles automatic text wrapping with styled content using TextNodes.",
+    ". This example showcases how BetterTUI handles automatic text wrapping with styled content using TextNodes.",
     {
       fg: "#c0caf5",
     },
@@ -304,41 +304,53 @@ function createDemoText(): TextNodeRenderable {
     attributes: 1,
   });
 
-  const feature1Node = TextNodeRenderable.fromNodes(
+  const feature1Node = TextNodeRenderable.fromNodes([
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Word-based wrapping", { fg: "#c0caf5", attributes: 1 }),
+    TextNodeRenderable.fromString("Word-based wrapping", {
+      fg: "#c0caf5",
+      attributes: 1,
+    }),
     TextNodeRenderable.fromString(" - Preserves word boundaries when breaking lines 📖", {
       fg: "#565f89",
     }),
-  );
+  ]);
 
-  const feature2Node = TextNodeRenderable.fromNodes(
+  const feature2Node = TextNodeRenderable.fromNodes([
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Character-based wrapping", { fg: "#c0caf5", attributes: 1 }),
+    TextNodeRenderable.fromString("Character-based wrapping", {
+      fg: "#c0caf5",
+      attributes: 1,
+    }),
     TextNodeRenderable.fromString(" - Breaks at any character for precise control ✂️", {
       fg: "#565f89",
     }),
-  );
+  ]);
 
-  const feature3Node = TextNodeRenderable.fromNodes(
+  const feature3Node = TextNodeRenderable.fromNodes([
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Dynamic resizing", { fg: "#c0caf5", attributes: 1 }),
+    TextNodeRenderable.fromString("Dynamic resizing", {
+      fg: "#c0caf5",
+      attributes: 1,
+    }),
     TextNodeRenderable.fromString(
       " - Text reflows automatically as container dimensions change 🔄",
       { fg: "#565f89" },
     ),
-  );
+  ]);
 
-  const feature4Node = TextNodeRenderable.fromNodes(
+  const feature4Node = TextNodeRenderable.fromNodes([
     TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Rich styling", { fg: "#c0caf5", attributes: 1 }),
+    TextNodeRenderable.fromString("Rich styling", {
+      fg: "#c0caf5",
+      attributes: 1,
+    }),
     TextNodeRenderable.fromString(
       " - Individual text segments can have different colors and attributes 🎨",
       {
         fg: "#565f89",
       },
     ),
-  );
+  ]);
 
   const demoTitle = TextNodeRenderable.fromString("\n\n🔧 How It Works:", {
     fg: "#bb9af7",
@@ -447,14 +459,14 @@ textRenderable.add(styledText);`,
   );
 
   const conclusionNode = TextNodeRenderable.fromString(
-    "\n\n🚀 This demonstrates the power of OpenTUI's flexible text rendering system, combining rich styling with dynamic layout capabilities! ✨🎨📝",
+    "\n\n🚀 This demonstrates the power of BetterTUI's flexible text rendering system, combining rich styling with dynamic layout capabilities! ✨🎨📝",
     {
       fg: "#9ece6a",
       attributes: 1,
     },
   );
 
-  return TextNodeRenderable.fromNodes(
+  return TextNodeRenderable.fromNodes([
     titleNode,
     introNode,
     highlightNode,
@@ -483,7 +495,7 @@ textRenderable.add(styledText);`,
     keyD,
     interactionCont3,
     conclusionNode,
-  );
+  ]);
 }
 
 export function run(renderer: CliRenderer): void {

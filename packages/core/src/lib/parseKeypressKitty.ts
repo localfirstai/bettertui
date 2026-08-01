@@ -291,11 +291,13 @@ function parseKittySpecialKey(sequence: string): ParsedKey | null {
     }
   }
 
-  // Parse event type: 1 = press, 2 = repeat, 3 = release
+  // Parse event type: 1 = press, 2 = repeat, 3 = release.
+  // We map repeat to `"press"` + `repeated: true` so downstream
+  // KeyHandler delivers it as a `keypress`.
   if (eventTypeStr === "1" || !eventTypeStr) {
     key.eventType = "press";
   } else if (eventTypeStr === "2") {
-    key.eventType = "repeat";
+    key.eventType = "press";
     key.repeated = true;
   } else if (eventTypeStr === "3") {
     key.eventType = "release";
@@ -397,11 +399,12 @@ export function parseKittyKeyboard(sequence: string): ParsedKey | null {
       }
     }
 
-    // Parse event type: 1 = press (default), 2 = repeat, 3 = release
+    // Parse event type: 1 = press (default), 2 = repeat, 3 = release.
+    // We map repeat to `"press"` + `repeated: true`.
     if (eventTypeStr === "1" || !eventTypeStr) {
       key.eventType = "press";
     } else if (eventTypeStr === "2") {
-      key.eventType = "repeat";
+      key.eventType = "press";
       key.repeated = true;
     } else if (eventTypeStr === "3") {
       key.eventType = "release";

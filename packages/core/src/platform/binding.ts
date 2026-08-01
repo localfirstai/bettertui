@@ -883,7 +883,7 @@ export type SlotMode = "append" | "single-winner" | "replace";
 
 /**
  * TypeScript wrapper around the native plugin host + slot registry — the
- * BetterTUI equivalent of OpenTUI's plugin API and `SlotRegistry`. Lifecycle
+ * BetterTUI plugin API.
  * methods return an error string when the transition is illegal, else `null`.
  * Slot values are strings (typically a node id or serialized descriptor).
  */

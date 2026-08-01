@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // @ts-nocheck
 //
-// OpenTUI x xterm.js -- shared Pong in the browser.
+// BetterTUI x xterm.js -- shared Pong in the browser.
 //
 // Starts a Bun HTTP + WebSocket server that serves xterm.js and mirrors one
 // server-side Pong match across every connected browser tab. Each tab gets its
@@ -764,7 +764,11 @@ function createSessionStreams(
   ws: ServerWebSocket<Session>,
   initialCols: number,
   initialRows: number,
-): { stdin: NodeJS.ReadStream; stdout: NodeJS.WriteStream; rawStdin: Readable } {
+): {
+  stdin: NodeJS.ReadStream;
+  stdout: NodeJS.WriteStream;
+  rawStdin: Readable;
+} {
   // Renderer attaches a `data` listener to stdin and expects bytes.
   // A no-op `read()` keeps the stream in flowing mode without auto-end.
   const stdin = new Readable({ read() {} });
@@ -828,7 +832,7 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
     backgroundColor: session.theme.cardColor,
     borderStyle: "double",
     borderColor: session.theme.borderColor,
-    title: " OpenTUI web pong ",
+    title: " BetterTUI web pong ",
     titleAlignment: "center",
     border: true,
     flexDirection: "column",
@@ -992,7 +996,9 @@ const server = Bun.serve<Session>({
       return ok ? undefined : new Response("WebSocket upgrade failed", { status: 400 });
     }
     if (url.pathname === "/" || url.pathname === "/index.html") {
-      return new Response(INDEX_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(INDEX_HTML, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
     }
     return new Response("Not found", { status: 404 });
   },
@@ -1060,4 +1066,4 @@ const server = Bun.serve<Session>({
   },
 });
 
-console.log(`OpenTUI web pong ready on http://localhost:${server.port}/`);
+console.log(`BetterTUI web pong ready on http://localhost:${server.port}/`);
