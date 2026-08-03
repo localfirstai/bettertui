@@ -87,9 +87,6 @@ export type {
   TestBinding,
 } from "./testing";
 
-// Framework-agnostic widget option types
-export * from "./widgets";
-
 // Animation utilities: easing, Tween, Spring, lerp helpers
 export * from "./animations";
 

@@ -16,7 +16,6 @@ Micro and end-to-end benchmark suite for BetterTUI.
 | `spanFeed.bench.ts` | Span feed operations |
 | `textBuffer.bench.ts` | Text buffer operations |
 | `theme.bench.ts` | Theme resolution |
-| `widgetMount.bench.ts` | Widget mount/unmount |
 
 ## Running
 

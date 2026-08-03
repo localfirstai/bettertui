@@ -17,7 +17,7 @@ export type ASCIIFont = "tiny" | "block" | "shade" | "slick" | string;
 export interface ASCIIFontOptions extends BoxOptions {
   text?: string;
   font?: ASCIIFont;
-  color?: RGBA | RGBA[];
+  color?: ColorInput | ColorInput[];
   backgroundColor?: ColorInput;
   selectionBg?: ColorInput;
   selectionFg?: ColorInput;
@@ -50,10 +50,13 @@ export class ASCIIFontRenderable extends BoxRenderable {
 
     this._text = options.text ?? "";
     this._font = options.font ?? "block";
-    this._color = Array.isArray(options.color)
-      ? options.color
-      : options.color
-        ? [options.color]
+    const rawColor = options.color;
+    const toRGBA = (c: ColorInput): RGBA =>
+      c !== null && typeof c === "object" && "r" in c ? c : parseColor(c);
+    this._color = Array.isArray(rawColor)
+      ? rawColor.map(toRGBA)
+      : rawColor
+        ? [toRGBA(rawColor)]
         : [{ r: 255, g: 255, b: 255, a: 255 }];
 
     this._contentNodeId = renderer.createNode("Text");
