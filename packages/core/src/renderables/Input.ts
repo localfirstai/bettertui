@@ -262,10 +262,22 @@ export class InputRenderable extends BoxRenderable {
 
     let display: string;
 
-    if (this._value === "" && !this._focused) {
-      // Show placeholder
-      const ph = this._placeholder;
-      display = `\x1b[38;2;${this._placeholderColor.r};${this._placeholderColor.g};${this._placeholderColor.b}m${ph}\x1b[0m`;
+    if (this._value === "") {
+      const ph = this._placeholder !== "" ? this._placeholder : " ";
+      const pc = `${this._placeholderColor.r};${this._placeholderColor.g};${this._placeholderColor.b}`;
+
+      if (this._focused && this._showCursor) {
+        const before = ph.slice(0, this._cursorPos);
+        const cursorChar = ph[this._cursorPos] ?? " ";
+        const after = ph.slice(this._cursorPos + 1);
+        const cc = `${this._cursorColor.r};${this._cursorColor.g};${this._cursorColor.b}`;
+        display =
+          `\x1b[38;2;${pc}m${before}` +
+          `\x1b[38;2;${cc}m\x1b[7m${cursorChar}\x1b[0m` +
+          `\x1b[38;2;${pc}m${after}\x1b[0m`;
+      } else {
+        display = `\x1b[38;2;${pc}m${ph}\x1b[0m`;
+      }
     } else {
       const displayValue = this._password ? "•".repeat(this._value.length) : this._value;
       const textColor = this._focused ? this._focusedTextColor : this._textColor;

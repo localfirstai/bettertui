@@ -3,6 +3,7 @@
  * These provide type-correct APIs that compile, with simplified functionality.
  */
 
+import { renderFontToText } from "../lib/asciiFont";
 import { type ColorInput, RGBA, parseColor } from "../lib/rgba";
 import type { StyledText, TextChunk } from "../lib/styledText";
 import type { CliRenderer } from "../platform/cliRenderer";
@@ -89,10 +90,8 @@ export class ASCIIFontRenderable extends BoxRenderable {
 
   private _render(): void {
     if (this._isDestroyed) return;
-    // For now, render as plain colored text with font indicators
-    const c = this._color[0] ?? { r: 255, g: 255, b: 255, a: 255 };
-    const ansi = `\x1b[38;2;${c.r};${c.g};${c.b}m${this._text}\x1b[0m`;
-    this._renderer.setText(this._contentNodeId, ansi);
+    const renderedText = renderFontToText(this._text, this._font, this._color);
+    this._renderer.setText(this._contentNodeId, renderedText);
   }
 
   override destroy(): void {

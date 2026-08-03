@@ -197,6 +197,8 @@ export type {
 
 // ── Additional utility exports ─────────────────────────────────────────────────
 
+import { measureFontText } from "./lib/asciiFont";
+
 /** Measure the display width and height of text. */
 export function measureText(opts: { text: string; font?: string }): {
   width: number;
@@ -204,16 +206,9 @@ export function measureText(opts: { text: string; font?: string }): {
 } {
   const { text, font } = opts;
   if (font) {
-    const fontSizes: Record<string, { w: number; h: number }> = {
-      tiny: { w: 3, h: 1 },
-      block: { w: 4, h: 4 },
-      shade: { w: 4, h: 4 },
-      slick: { w: 4, h: 3 },
-    };
-    const size = fontSizes[font] ?? { w: 1, h: 1 };
     // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences require ESC character
     const stripped = text.replace(/\x1b\[[^m]*m/g, "");
-    return { width: stripped.length * size.w, height: size.h };
+    return measureFontText(stripped, font);
   }
   // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences require ESC character
   const stripped = text.replace(/\x1b\[[^m]*m|\x1b\][^\x07\x1b]*[\x07\x1b\\]/g, "");

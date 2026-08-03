@@ -200,6 +200,7 @@ export class SelectRenderable extends BoxRenderable {
     } else {
       next = Math.max(0, next);
     }
+    next = this._skipNonSelectable(next, -1);
     if (next !== prev) {
       this._selectedIndex = next;
       this._updateScroll();
@@ -217,6 +218,7 @@ export class SelectRenderable extends BoxRenderable {
     } else {
       next = Math.min(this._selectOptions.length - 1, next);
     }
+    next = this._skipNonSelectable(next, 1);
     if (next !== prev) {
       this._selectedIndex = next;
       this._updateScroll();
@@ -224,6 +226,31 @@ export class SelectRenderable extends BoxRenderable {
       const opt = this.getSelectedOption();
       if (opt) this.emit(SelectRenderableEvents.SELECTION_CHANGED, next, opt);
     }
+  }
+
+  private _isNonSelectable(index: number): boolean {
+    const opt = this._selectOptions[index];
+    if (!opt) return true;
+    const kind = (opt.value as { kind?: string } | undefined)?.kind;
+    return kind === "spacer" || kind === "category";
+  }
+
+  private _skipNonSelectable(index: number, direction: 1 | -1): number {
+    const len = this._selectOptions.length;
+    let i = index;
+    let attempts = 0;
+    while (this._isNonSelectable(i) && attempts < len) {
+      if (this._wrapSelection) {
+        i = (((i + direction) % len) + len) % len;
+      } else {
+        i += direction;
+        if (i < 0 || i >= len) {
+          return this._selectedIndex; // stay put if no selectable item found
+        }
+      }
+      attempts++;
+    }
+    return attempts >= len ? this._selectedIndex : i;
   }
 
   // ── Focus ─────────────────────────────────────────────────────────────────────
@@ -298,10 +325,24 @@ export class SelectRenderable extends BoxRenderable {
 
     const start = this._scrollOffset;
     const end = Math.min(start + visibleCount, this._selectOptions.length);
+    const rowWidth = Math.max(40, this._renderer.terminalWidth - 4);
 
     for (let i = start; i < end; i++) {
       const opt = this._selectOptions[i];
       if (!opt) continue;
+
+      // Handle spacer and category menu options
+      const kind = (opt.value as { kind?: string } | undefined)?.kind;
+      if (kind === "spacer") {
+        lines.push("");
+        continue;
+      }
+
+      if (kind === "category") {
+        lines.push(`\x1b[1;38;2;255;255;255m${opt.name}\x1b[0m`);
+        continue;
+      }
+
       const isSelected = i === this._selectedIndex;
 
       const textColor = isSelected
@@ -316,7 +357,8 @@ export class SelectRenderable extends BoxRenderable {
       let line: string;
       if (isSelected) {
         const bg = `${this._selectedBgColor.r};${this._selectedBgColor.g};${this._selectedBgColor.b}`;
-        line = `\x1b[48;2;${bg}m\x1b[38;2;${tc}m${indicator}${opt.name}\x1b[0m`;
+        const titleText = (indicator + opt.name).padEnd(rowWidth);
+        line = `\x1b[48;2;${bg}m\x1b[38;2;${tc}m${titleText}\x1b[0m`;
       } else {
         line = `\x1b[38;2;${tc}m${indicator}${opt.name}\x1b[0m`;
       }
@@ -325,8 +367,15 @@ export class SelectRenderable extends BoxRenderable {
       if (this._showDescription) {
         const descColor = isSelected ? this._selectedDescriptionColor : this._descriptionColor;
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
-        const desc = `  \x1b[38;2;${dc}m${opt.description}\x1b[0m`;
-        lines.push(desc);
+        if (isSelected) {
+          const bg = `${this._selectedBgColor.r};${this._selectedBgColor.g};${this._selectedBgColor.b}`;
+          const descText = opt.description.padEnd(rowWidth);
+          const desc = `\x1b[48;2;${bg}m\x1b[38;2;${dc}m${descText}\x1b[0m`;
+          lines.push(desc);
+        } else {
+          const desc = `\x1b[38;2;${dc}m${opt.description}\x1b[0m`;
+          lines.push(desc);
+        }
       }
 
       // Item spacing
