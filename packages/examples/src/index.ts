@@ -17,7 +17,6 @@ import {
   TimeToFirstDrawRenderable,
   createCliRenderer,
 } from "@bettertui/core";
-import { measureText } from "@bettertui/core";
 import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
 import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
 import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
@@ -80,8 +79,7 @@ type ExampleCategory =
   | "Text & Documents"
   | "Rendering & Effects"
   | "Runtime & Tooling"
-  | "Terminal & Native"
-  | "3D & Physics";
+  | "Terminal & Native";
 
 interface ExampleDefinition {
   name: string;
@@ -99,13 +97,6 @@ interface ExampleSection {
   category: ExampleCategory;
   examples: readonly ExampleDefinition[];
 }
-
-interface ExampleModule {
-  run?: (renderer: CliRenderer) => void | Promise<void>;
-  destroy?: (renderer: CliRenderer) => void;
-}
-
-declare const OPENTUI_BUN_ONLY_EXAMPLES: boolean | undefined;
 
 interface CategoryMenuValue {
   kind: "category";
@@ -147,9 +138,6 @@ interface ExampleTheme {
 }
 
 const DEFAULT_THEME_MODE: ThemeMode = "dark";
-const isBunRuntime = typeof process !== "undefined" && typeof process.versions?.bun === "string";
-const includeThreeExamples =
-  typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean" ? OPENTUI_BUN_ONLY_EXAMPLES : isBunRuntime;
 const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "  ";
@@ -162,42 +150,7 @@ const CATEGORY_LABELS: Record<ExampleCategory, string> = {
   "Rendering & Effects": "Rendering",
   "Runtime & Tooling": "Runtime",
   "Terminal & Native": "Terminal",
-  "3D & Physics": "3D",
 };
-
-function unavailableThreeExample(name: string, description: string): ExampleDefinition {
-  return {
-    name,
-    description: `${description} (Requires @bettertui/core in Node.js)`,
-    unavailableMessage:
-      "This example requires @bettertui/core and remains disabled in the Node.js examples bundle.",
-  };
-}
-
-function threeExample(
-  name: string,
-  description: string,
-  load: () => Promise<ExampleModule>,
-): ExampleDefinition {
-  let loaded: ExampleModule | null = null;
-
-  async function loadModule(): Promise<ExampleModule> {
-    loaded ??= await load();
-    return loaded;
-  }
-
-  return {
-    name,
-    description,
-    async run(renderer) {
-      const module = await loadModule();
-      return module.run?.(renderer);
-    },
-    destroy(renderer) {
-      loaded?.destroy?.(renderer);
-    },
-  };
-}
 
 function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
   return [...examples].sort((left, right) => left.name.localeCompare(right.name));
@@ -212,84 +165,6 @@ function section(
     examples: sortExampleDefinitions(examples),
   };
 }
-
-const THREE_EXAMPLES: ExampleDefinition[] = includeThreeExamples
-  ? [
-      threeExample(
-        "Draggable ThreeRenderable",
-        "Draggable WebGPU cube with live animation",
-        () => import("./examples/draggableThree.example.js"),
-      ),
-      threeExample(
-        "Fractal Shader",
-        "Fractal rendering with shaders",
-        () => import("./examples/fractalShader.example.js"),
-      ),
-      threeExample(
-        "Golden Star Demo",
-        "3D golden star with particle effects and animated text celebrating 5000 stars",
-        () => import("./examples/goldenStar.example.js"),
-      ),
-      threeExample(
-        "Physics Planck",
-        "2D physics with Planck.js",
-        () => import("./examples/physxPlanck2d.example.js"),
-      ),
-      threeExample(
-        "Physics Rapier",
-        "2D physics with Rapier",
-        () => import("./examples/physxRapier2d.example.js"),
-      ),
-      threeExample(
-        "Phong Lighting",
-        "Phong lighting model demo",
-        () => import("./examples/lightsPhong.example.js"),
-      ),
-      threeExample(
-        "Shader Cube",
-        "3D cube with custom shaders",
-        () => import("./examples/shaderCube.example.js"),
-      ),
-      threeExample(
-        "Sprite Animation",
-        "Animated sprite sequences",
-        () => import("./examples/spriteAnimation.example.js"),
-      ),
-      threeExample(
-        "Sprite Particles",
-        "Particle system with sprites",
-        () => import("./examples/spriteParticleGenerator.example.js"),
-      ),
-      threeExample(
-        "Static Sprite",
-        "Static sprite rendering demo",
-        () => import("./examples/staticSprite.example.js"),
-      ),
-      threeExample(
-        "Texture Loading",
-        "Loading and displaying textures",
-        () => import("./examples/textureLoading.example.js"),
-      ),
-    ]
-  : [
-      unavailableThreeExample(
-        "Draggable ThreeRenderable",
-        "Draggable WebGPU cube with live animation",
-      ),
-      unavailableThreeExample("Fractal Shader", "Fractal rendering with shaders"),
-      unavailableThreeExample(
-        "Golden Star Demo",
-        "3D golden star with particle effects and animated text celebrating 5000 stars",
-      ),
-      unavailableThreeExample("Physics Planck", "2D physics with Planck.js"),
-      unavailableThreeExample("Physics Rapier", "2D physics with Rapier"),
-      unavailableThreeExample("Phong Lighting", "Phong lighting model demo"),
-      unavailableThreeExample("Shader Cube", "3D cube with custom shaders"),
-      unavailableThreeExample("Sprite Animation", "Animated sprite sequences"),
-      unavailableThreeExample("Sprite Particles", "Particle system with sprites"),
-      unavailableThreeExample("Static Sprite", "Static sprite rendering demo"),
-      unavailableThreeExample("Texture Loading", "Loading and displaying textures"),
-    ];
 
 const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
   dark: {
@@ -675,7 +550,6 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: terminalTitleDemo.destroy,
     },
   ]),
-  section("3D & Physics", THREE_EXAMPLES),
 ];
 
 export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(({ category, examples }) =>
@@ -878,7 +752,6 @@ class ExampleSelector {
   }
 
   private createLayout(): void {
-    const width = this.renderer.terminalWidth;
     const theme = MENU_THEMES[this.themeMode];
 
     // Menu container with column layout
@@ -893,17 +766,12 @@ class ExampleSelector {
     // Title
     const titleText = this.titleText;
     const titleFont = this.titleFont;
-    const { width: titleWidth } = measureText({
-      text: titleText,
-      font: titleFont,
-    });
-    this.titleWidth = titleWidth;
-    const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);
 
     this.title = new ASCIIFontRenderable(this.renderer, {
       id: "example-index-title",
-      left: centerX,
-      margin: 1,
+      alignSelf: "center",
+      marginTop: 1,
+      marginBottom: 1,
       text: titleText,
       font: titleFont,
       color: theme.titleColor,
@@ -1251,12 +1119,7 @@ class ExampleSelector {
     }
   }
 
-  private handleResize(width: number, _height: number): void {
-    if (this.title) {
-      const centerX = Math.floor(width / 2) - Math.floor(this.titleWidth / 2);
-      this.title.setPosition({ left: centerX });
-    }
-
+  private handleResize(_width: number, _height: number): void {
     this.renderer.requestRender();
   }
 

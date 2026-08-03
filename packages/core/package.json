@@ -17,8 +17,8 @@
   "files": ["dist", "bettertui_engine.node"],
   "scripts": {
     "build": "tsdown && pnpm run build:native",
-    "build:native": "napi build --manifest-path crates/engine/Cargo.toml --features napi --release --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
-    "build:native:debug": "napi build --manifest-path crates/engine/Cargo.toml --features napi --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
+    "build:native": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --release --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
+    "build:native:debug": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "dev": "tsdown --watch",
     "lint": "biome check src/",
     "format": "biome format --write src/",
