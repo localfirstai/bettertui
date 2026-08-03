@@ -20,7 +20,10 @@ export function useTimeline(options: TimelineOptions = {}): Timeline {
   const _renderer = useRuntime(); // validates we are inside a root
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: timeline stable ref
-  const timeline = useMemo(() => new Timeline(options), []);
+  const timeline = useMemo(
+    () => new Timeline((options as { duration?: number }).duration ?? 1, options),
+    [],
+  );
 
   useEffect(() => {
     return () => {

@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "coverage", "target", ".turbo", "**/.astro"]
+    "ignore": ["dist", "coverage", "target", ".turbo", "**/.astro", ".opencode", ".agents"]
   },
   "organizeImports": {
     "enabled": true

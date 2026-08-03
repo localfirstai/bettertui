@@ -56,7 +56,7 @@ function addAsciiRenderable(i: number) {
     `ASCII FONT RENDERABLE #${i + 1} - ${font.toUpperCase()} STYLE - This is an extremely long piece of text that will definitely exceed the width of the scrollbox and trigger horizontal scrolling functionality. `.repeat(
       15,
     ) +
-    `Additional content includes: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. `.repeat(
+    "Additional content includes: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ".repeat(
       12,
     ) +
     `The quick brown fox jumps over the lazy dog while the sly red panda silently observes from the treetops, contemplating the mysteries of the universe and wondering about the meaning of life. Meanwhile, technology continues to advance at an unprecedented rate, bringing both amazing opportunities and challenging ethical dilemmas to humanity's doorstep. From artificial intelligence to quantum computing, the future holds limitless possibilities that our ancestors could only dream of in their wildest imaginations.`.repeat(
@@ -183,8 +183,8 @@ export function run(rendererInstance: CliRenderer): void {
   rendererInstance.keyInput.on("keypress", (key) => {
     if (key.name === "a" && scrollBox) {
       const currentState = scrollBox.verticalScrollBar?.showArrows ?? false;
-      scrollBox.verticalScrollBar!.showArrows = !currentState;
-      scrollBox.horizontalScrollBar!.showArrows = !currentState;
+      if (scrollBox.verticalScrollBar) scrollBox.verticalScrollBar.showArrows = !currentState;
+      if (scrollBox.horizontalScrollBar) scrollBox.horizontalScrollBar.showArrows = !currentState;
       console.log(`Arrows ${!currentState ? "enabled" : "disabled"}`);
     } else if (key.name === "v" && scrollBox) {
       const currentState = scrollBox.verticalScrollBar.visible;

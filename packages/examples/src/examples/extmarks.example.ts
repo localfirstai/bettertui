@@ -121,7 +121,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
         }
 
         statusText.content = `Line ${cursor.row + 1}, Col ${cursor.col + 1}, Offset ${offset} | Virtual extmarks: ${virtualCount}${extmarkInfo}`;
-      } catch (error) {
+      } catch (_error) {
         // Ignore errors during shutdown
       }
     }
@@ -158,7 +158,8 @@ function findAndMarkVirtualRanges(): void {
   const pattern = /\[(VIRTUAL|LINK:[^\]]+|TAG:[^\]]+|MARKER)\]/g;
   let match: RegExpExecArray | null;
 
-  while ((match = pattern.exec(text)) !== null) {
+  match = pattern.exec(text);
+  while (match !== null) {
     const start = match.index;
     const end = match.index + match[0].length;
 
@@ -169,6 +170,7 @@ function findAndMarkVirtualRanges(): void {
       styleId: virtualStyleId,
       data: { type: "auto-detected", content: match[0] },
     });
+    match = pattern.exec(text);
   }
 }
 

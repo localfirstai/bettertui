@@ -15,7 +15,15 @@ import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let selectElement: SelectRenderable | null = null;
 let renderer: CliRenderer | null = null;
-let keyboardHandler: ((key: any) => void) | null = null;
+let keyboardHandler:
+  | ((key: {
+      name?: string;
+      sequence?: string;
+      ctrl?: boolean;
+      meta?: boolean;
+      shift?: boolean;
+    }) => void)
+  | null = null;
 let keyLegendDisplay: TextRenderable | null = null;
 let statusDisplay: TextRenderable | null = null;
 let lastActionText = "Welcome to SelectRenderable demo! Use the controls to test features.";
@@ -153,14 +161,14 @@ export function run(rendererInstance: CliRenderer): void {
 
   selectElement.on(
     SelectRenderableEvents.SELECTION_CHANGED,
-    (index: number, option: SelectOption) => {
+    (_index: number, option: SelectOption) => {
       lastActionText = `Navigation: Moved to "${option.name}"`;
       lastActionColor = "#FFCC00";
       updateDisplays();
     },
   );
 
-  selectElement.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+  selectElement.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, option: SelectOption) => {
     lastActionText = `*** ACTIVATED: ${option.name} (${option.value}) ***`;
     lastActionColor = "#FF00FF";
     updateDisplays();
@@ -191,21 +199,21 @@ export function run(rendererInstance: CliRenderer): void {
       }
       lastActionColor = "#FFCC00";
       updateDisplays();
-    } else if (key.name === "d") {
-      const newState = !selectElement?.showDescription;
-      selectElement!.showDescription = newState;
+    } else if (key.name === "d" && selectElement) {
+      const newState = !selectElement.showDescription;
+      selectElement.showDescription = newState;
       lastActionText = `Descriptions ${newState ? "enabled" : "disabled"}`;
       lastActionColor = "#FFCC00";
       updateDisplays();
-    } else if (key.name === "s") {
-      const newState = !selectElement?.showScrollIndicator;
-      selectElement!.showScrollIndicator = newState;
+    } else if (key.name === "s" && selectElement) {
+      const newState = !selectElement.showScrollIndicator;
+      selectElement.showScrollIndicator = newState;
       lastActionText = `Scroll indicator ${newState ? "enabled" : "disabled"}`;
       lastActionColor = "#FFCC00";
       updateDisplays();
-    } else if (key.name === "w") {
-      const newState = !selectElement?.wrapSelection;
-      selectElement!.wrapSelection = newState;
+    } else if (key.name === "w" && selectElement) {
+      const newState = !selectElement.wrapSelection;
+      selectElement.wrapSelection = newState;
       lastActionText = `Wrap selection ${newState ? "enabled" : "disabled"}`;
       lastActionColor = "#FFCC00";
       updateDisplays();

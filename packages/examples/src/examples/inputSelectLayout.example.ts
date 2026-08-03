@@ -298,30 +298,33 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 function setupEventHandlers(): void {
   if (!leftSelect || !rightSelect || !textInput) return;
 
-  leftSelect.on(SelectRenderableEvents.SELECTION_CHANGED, (index: number, option: SelectOption) => {
-    updateDisplay();
-  });
+  leftSelect.on(
+    SelectRenderableEvents.SELECTION_CHANGED,
+    (_index: number, _option: SelectOption) => {
+      updateDisplay();
+    },
+  );
 
-  leftSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+  leftSelect.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
     updateDisplay();
   });
 
   rightSelect.on(
     SelectRenderableEvents.SELECTION_CHANGED,
-    (index: number, option: SelectOption) => {
+    (_index: number, _option: SelectOption) => {
       updateDisplay();
     },
   );
 
-  rightSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+  rightSelect.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
     updateDisplay();
   });
 
-  textInput.on(InputRenderableEvents.INPUT, (value: string) => {
+  textInput.on(InputRenderableEvents.INPUT, (_value: string) => {
     updateDisplay();
   });
 
-  textInput.on(InputRenderableEvents.CHANGE, (value: string) => {
+  textInput.on(InputRenderableEvents.CHANGE, (_value: string) => {
     updateDisplay();
   });
 }
@@ -347,21 +350,23 @@ function updateDisplay(): void {
   inputLabel.content = displayText;
 }
 
-function handleResize(width: number, height: number): void {
+function handleResize(_width: number, _height: number): void {
   // Root layout is automatically resized by the renderer
 }
 
 function updateFocus(): void {
-  focusableElements.forEach((element) => element.blur());
-  focusableBoxes.forEach((box) => {
+  for (const element of focusableElements) {
+    element.blur();
+  }
+  for (const box of focusableBoxes) {
     if (box) box.blur();
-  });
+  }
 
   if (focusableElements[currentFocusIndex]) {
     focusableElements[currentFocusIndex].focus();
   }
   if (focusableBoxes[currentFocusIndex]) {
-    focusableBoxes[currentFocusIndex]!.focus();
+    focusableBoxes[currentFocusIndex]?.focus();
   }
 }
 

@@ -15,9 +15,9 @@
   },
   "type": "module",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "start": "pnpm build && tsx src/index.ts",
     "dev": "tsx src/index.ts",
-    "build": "tsc --noEmit",
+    "build": "node scripts/build.ts",
     "lint": "biome check src/",
     "format": "biome format --write src/",
     "format:check": "biome format src/",

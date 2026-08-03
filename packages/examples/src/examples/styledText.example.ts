@@ -121,7 +121,7 @@ ${bold(fg("#F1C40F")("Controls:"))} ${fg("#BDC3C7")("↑/↓ = Speed, ESC = Exit
   });
   dashboardBox.add(complexDisplay);
 
-  frameCallback = async (deltaTime) => {
+  frameCallback = async (_deltaTime) => {
     counter++;
     complexTemplateCounter++;
 
@@ -230,7 +230,7 @@ ${underline("Features demonstrated:")}
   const typesText = t`${bold("Type Examples:")}
 Number: ${green(42)}
 Boolean: ${red(true)}
-Float: ${blue((3.14159).toFixed(2))}
+Float: ${blue(Math.PI.toFixed(2))}
 Calculated: ${fg("#00FFFF")(Math.floor(Math.random() * 100))}`;
 
   const typesDisplay = new TextRenderable(renderer, {

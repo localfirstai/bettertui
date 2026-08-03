@@ -180,8 +180,8 @@ declare module "solid-js" {
       tab_select: TabSelectProps;
       timeline: BaseProps & { duration?: number; looping?: boolean; autoPlay?: boolean };
       diff: DiffProps;
-      // biome-ignore lint/suspicious/noExplicitAny: intentional override of conflicting HTML style type
       image: Omit<BaseProps, "style"> & {
+        // biome-ignore lint/suspicious/noExplicitAny: intentional override of conflicting HTML style type
         style?: any;
         data?: Buffer;
         width?: number;

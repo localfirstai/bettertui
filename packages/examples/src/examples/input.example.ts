@@ -17,7 +17,15 @@ let emailInput: InputRenderable | null = null;
 let passwordInput: InputRenderable | null = null;
 let commentInput: InputRenderable | null = null;
 let renderer: CliRenderer | null = null;
-let keyboardHandler: ((key: any) => void) | null = null;
+let keyboardHandler:
+  | ((key: {
+      name?: string;
+      sequence?: string;
+      ctrl?: boolean;
+      meta?: boolean;
+      shift?: boolean;
+    }) => void)
+  | null = null;
 let keyLegendDisplay: TextRenderable | null = null;
 let statusDisplay: TextRenderable | null = null;
 let lastActionText = "Welcome to InputRenderable demo! Use Tab to navigate between fields.";
@@ -123,10 +131,10 @@ function navigateToInput(index: number): void {
 }
 
 function resetInputs(): void {
-  nameInput!.value = "";
-  emailInput!.value = "";
-  passwordInput!.value = "";
-  commentInput!.value = "";
+  if (nameInput) nameInput.value = "";
+  if (emailInput) emailInput.value = "";
+  if (passwordInput) passwordInput.value = "";
+  if (commentInput) commentInput.value = "";
 
   lastActionText = "All inputs reset to empty values";
   lastActionColor = "#FF00FF";
@@ -250,7 +258,7 @@ export function run(rendererInstance: CliRenderer): void {
   parentContainer.add(statusDisplay);
 
   // Set up event handlers for all inputs
-  inputElements.forEach((input, index) => {
+  inputElements.forEach((input, _index) => {
     input.on(InputRenderableEvents.INPUT, (value: string) => {
       lastActionText = `${getInputName(input)} input: "${value}"`;
       lastActionColor = "#00FFFF";
@@ -299,7 +307,7 @@ export function run(rendererInstance: CliRenderer): void {
   updateDisplays();
 
   keyboardHandler = (key) => {
-    const anyInputFocused = inputElements.some((input) => input.focused);
+    const _anyInputFocused = inputElements.some((input) => input.focused);
 
     if (key.name === "tab") {
       if (key.shift) {
@@ -346,12 +354,12 @@ export function destroy(rendererInstance: CliRenderer): void {
     keyboardHandler = null;
   }
 
-  inputElements.forEach((input) => {
+  for (const input of inputElements) {
     if (input) {
       rendererInstance.root.remove(input);
       input.destroy();
     }
-  });
+  }
   inputElements.length = 0;
 
   const parentContainer = rendererInstance.root.getRenderable("parent-container");

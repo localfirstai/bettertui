@@ -101,10 +101,10 @@ export function run(renderer: CliRenderer): void {
 }
 
 export function destroy(renderer: CliRenderer): void {
-  renderer.root.getChildren().forEach((child) => {
+  for (const child of renderer.root.getChildren()) {
     renderer.root.remove(child);
     child.destroyRecursively();
-  });
+  }
   scrollBox = null;
   statusText = null;
   hoveredItem = null;

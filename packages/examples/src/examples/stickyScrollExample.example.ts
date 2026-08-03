@@ -101,7 +101,7 @@ ${fg("#565f89")("Status:")} ${fg("#9ece6a")("ACTIVE")}`;
     }
 
     const progress = age / duration;
-    const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+    const easeProgress = 1 - (1 - progress) ** 3; // Ease out cubic
 
     // Interpolate background color (bright to normal)
     const brightBg = "#4c4f69";
@@ -275,7 +275,7 @@ export function run(rendererInstance: CliRenderer): void {
       // Update status display
       if (instructionsBox && instructionsBox.getChildren().length >= 3) {
         const statusText = instructionsBox.getChildren()[2] as TextRenderable;
-        statusText.content = t`${bold(fg("#7aa2f7")("Status:"))} ${fg("#c0caf5")("Sticky Scroll:")} ${(scrollBox as any).stickyScroll ? fg("#9ece6a")("ENABLED") : fg("#f7768e")("DISABLED")}`;
+        statusText.content = t`${bold(fg("#7aa2f7")("Status:"))} ${fg("#c0caf5")("Sticky Scroll:")} ${scrollBox.stickyScroll ? fg("#9ece6a")("ENABLED") : fg("#f7768e")("DISABLED")}`;
       }
     } else if (key.name === "t" && scrollBox) {
       addItem(true); // Add at top
