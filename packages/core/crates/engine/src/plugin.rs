@@ -230,8 +230,8 @@ pub struct SlotEntry<T> {
     pub value: T,
 }
 
-/// A named composition point that plugins contribute to — the BetterTUI
-/// equivalent of OpenTUI's `SlotRegistry<T>`. Used to compose core UI regions
+/// A named composition point that plugins contribute to.
+/// Used to compose core UI regions
 /// (status bar, header, footer) from multiple plugins.
 ///
 /// Registration returns a token; dropping it is not automatic (call

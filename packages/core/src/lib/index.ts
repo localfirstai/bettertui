@@ -43,9 +43,11 @@ export {
 export { MouseParser } from "./parseMouse";
 export type { MouseEventType, RawMouseEvent, ScrollInfo } from "./parseMouse";
 
-export { KeyHandler, InternalKeyHandler, PasteEvent } from "./KeyHandler";
-export { KeyEvent as KeyboardEvent } from "./KeyHandler";
-export type { KeyHandlerEventMap } from "./KeyHandler";
+export { KeyHandler, InternalKeyHandler, PasteEvent } from "./keyHandler";
+export { KeyEvent as KeyboardEvent, KeyEvent } from "./keyHandler";
+export type { KeyHandlerEventMap } from "./keyHandler";
+
+export { KeyInput } from "./keyInput";
 
 export { StdinParser } from "./stdinParser";
 export type {
@@ -120,7 +122,12 @@ export {
   LayoutEvents,
 } from "./renderableEvents";
 
-export { env, registerEnvVar, getEnvVarConfig, getAllEnvVarConfigs } from "./env";
+export {
+  env,
+  registerEnvVar,
+  getEnvVarConfig,
+  getAllEnvVarConfigs,
+} from "./env";
 export type { EnvVarConfig } from "./env";
 
 export { Timeline, createTimeline } from "./timeline";

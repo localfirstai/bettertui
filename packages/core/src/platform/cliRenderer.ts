@@ -4,8 +4,8 @@ import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
+import { KeyInput } from "../lib/keyInput";
 import { CliRenderEvents } from "../lib/renderableEvents";
-import { StdinParser } from "../lib/stdinParser";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
 import {
   createEngine,
@@ -15,6 +15,7 @@ import {
   loggerGetDiagnostics,
   loggerInit,
 } from "./binding";
+import { layoutToEngineJson } from "./layoutSerializer";
 import type { DiagnosticSnapshot, LoggerConfig } from "./logger";
 import type { ExternalOutputMode, ScreenMode } from "./platform.types";
 
@@ -45,71 +46,6 @@ export interface CliRendererOptions {
   useMouse?: boolean;
   autoFocus?: boolean;
   backgroundColor?: string;
-}
-
-type KeyInputEvents = {
-  keypress: [RawKeyEvent];
-};
-
-export class KeyInput extends EventEmitter<KeyInputEvents> {
-  private stdinParser: StdinParser;
-  private rawMode = false;
-  private readonly onDataBound: (data: Buffer) => void;
-
-  constructor() {
-    super();
-    this.stdinParser = new StdinParser({
-      useKittyKeyboard: false,
-      onTimeoutFlush: () => {
-        this.drain();
-      },
-    });
-    this.onDataBound = this.onData.bind(this);
-  }
-
-  start(): void {
-    const stdin = process.stdin;
-    if (stdin.setRawMode && !this.rawMode) {
-      stdin.setRawMode(true);
-      this.rawMode = true;
-    }
-    stdin.resume();
-    stdin.on("data", this.onDataBound);
-  }
-
-  stop(): void {
-    process.stdin.off("data", this.onDataBound);
-    if (this.rawMode && process.stdin.setRawMode) {
-      process.stdin.setRawMode(false);
-      this.rawMode = false;
-    }
-    process.stdin.pause();
-    this.stdinParser.reset();
-  }
-
-  private onData(data: Buffer): void {
-    this.stdinParser.push(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
-    this.drain();
-  }
-
-  private drain(): void {
-    this.stdinParser.drain((event) => {
-      if (event.type === "key") {
-        let _prevented = false;
-        this.emit("keypress", {
-          name: event.key.name,
-          ctrl: event.key.ctrl,
-          shift: event.key.shift,
-          alt: event.key.option,
-          meta: event.key.meta,
-          sequence: event.key.sequence,
-          preventDefault() {
-            _prevented = true;
-          },
-        });
-      }
-    });
-  }
 }
 
 /** Minimal console overlay stub. */
@@ -165,8 +101,10 @@ export class CliRenderer extends EventEmitter {
   private _devtools: DevTools;
   private overlay: OverlayHost | null = null;
   private lastFrameTime = 0;
+  private _frameId = 0;
   private _frameInterval: ReturnType<typeof setTimeout> | null = null;
   private _frameCallbacks: Set<FrameCallback> = new Set();
+  private _lifecyclePasses: Set<() => void> = new Set();
   private _root: import("../renderables/Box").RootRenderable | null = null;
   private _console: TerminalConsole = new TerminalConsole();
   private _themeMode: ThemeMode = "dark";
@@ -174,11 +112,15 @@ export class CliRenderer extends EventEmitter {
   private _onDestroy: (() => void) | undefined;
   private _pendingRender = false;
   private _resizeHandler: (() => void) | null = null;
+  private _liveCount = 0;
 
   constructor(options: CliRendererOptions = {}) {
     super();
     if (options.logger) {
-      loggerInit({ dev: process.env.NODE_ENV !== "production", ...options.logger });
+      loggerInit({
+        dev: process.env.NODE_ENV !== "production",
+        ...options.logger,
+      });
     }
     this._capabilities = detectCapabilities();
     this.width = options.width ?? this._capabilities.columns;
@@ -245,6 +187,10 @@ export class CliRenderer extends EventEmitter {
   }
 
   // ── Getters ─────────────────────────────────────────────────────────────────
+
+  get frameId(): number {
+    return this._frameId;
+  }
 
   get terminalWidth(): number {
     return this.width;
@@ -435,7 +381,17 @@ export class CliRenderer extends EventEmitter {
         }
 
         // Emit frame event
-        this.emit(CliRenderEvents.FRAME, { frameId: this.lastFrameTime });
+        this._frameId++;
+        this.emit(CliRenderEvents.FRAME, { frameId: this._frameId });
+
+        // Run lifecycle passes (e.g. TextRenderable syncing its node tree to the engine)
+        for (const pass of this._lifecyclePasses) {
+          try {
+            pass();
+          } catch (err) {
+            console.error("Lifecycle pass error:", err);
+          }
+        }
 
         // Render
         try {
@@ -471,6 +427,16 @@ export class CliRenderer extends EventEmitter {
   /** Clear all frame callbacks. */
   clearFrameCallbacks(): void {
     this._frameCallbacks.clear();
+  }
+
+  /** Register a function to be called once per frame before render (lifecycle pass). */
+  registerLifecyclePass(fn: () => void): void {
+    this._lifecyclePasses.add(fn);
+  }
+
+  /** Unregister a previously registered lifecycle pass function. */
+  unregisterLifecyclePass(fn: () => void): void {
+    this._lifecyclePasses.delete(fn);
   }
 
   /** Request an immediate render (useful outside the frame loop). */
@@ -520,8 +486,19 @@ export class CliRenderer extends EventEmitter {
     process.stdout.write("\x1b]52;c;!\x07");
   }
 
-  requestLive(): void {}
-  dropLive(): void {}
+  /** Increment the live render counter; starts the renderer if not running. */
+  requestLive(): void {
+    this._liveCount++;
+    if (!this.running) {
+      this.start();
+    }
+  }
+
+  /** Decrement the live render counter. */
+  dropLive(): void {
+    this._liveCount = Math.max(0, this._liveCount - 1);
+  }
+
   clearSelection(): void {}
   getSelectionContainer(): null {
     return null;
@@ -777,7 +754,9 @@ export class CliRenderer extends EventEmitter {
 }
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
-  return new CliRenderer(options);
+  const renderer = new CliRenderer(options);
+  renderer.start();
+  return renderer;
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
@@ -821,93 +800,3 @@ function mapCapabilities(caps: TerminalCapabilities): {
 }
 
 export { getVersion, detectCapabilities };
-
-/**
- * Convert a TypeScript {@link LayoutConstraints} object to the snake_case JSON
- * shape expected by the Rust engine's `setLayout` command.
- */
-function layoutToEngineJson(layout: LayoutConstraints): Record<string, unknown> {
-  const j: Record<string, unknown> = {};
-
-  if (layout.flexDirection !== undefined) j.direction = layout.flexDirection;
-  if (layout.flexWrap !== undefined) j.flex_wrap = layout.flexWrap;
-  if (layout.justifyContent !== undefined) j.justify = layout.justifyContent;
-  if (layout.alignItems !== undefined) j.align = layout.alignItems;
-  if (layout.alignSelf !== undefined) j.align_self = layout.alignSelf;
-  if (layout.flexGrow !== undefined) j.flex_grow = layout.flexGrow;
-  if (layout.flexShrink !== undefined) j.flex_shrink = layout.flexShrink;
-  if (layout.flexBasis !== undefined) j.flex_basis = String(layout.flexBasis);
-  if (layout.display !== undefined) j.display = layout.display;
-
-  if (layout.width !== undefined) j.width = String(layout.width);
-  if (layout.height !== undefined) j.height = String(layout.height);
-  if (layout.minWidth !== undefined) j.min_width = String(layout.minWidth);
-  if (layout.minHeight !== undefined) j.min_height = String(layout.minHeight);
-  if (layout.maxWidth !== undefined) j.max_width = String(layout.maxWidth);
-  if (layout.maxHeight !== undefined) j.max_height = String(layout.maxHeight);
-
-  // Position and insets
-  if (layout.position !== undefined) j.position = layout.position;
-  if (layout.top !== undefined) j.top = layout.top;
-  if (layout.right !== undefined) j.right = layout.right;
-  if (layout.bottom !== undefined) j.bottom = layout.bottom;
-  if (layout.left !== undefined) j.left = layout.left;
-  if (layout.zIndex !== undefined) j.z_index = layout.zIndex;
-  if (layout.overflow !== undefined) j.overflow = layout.overflow;
-
-  // Inset shorthand
-  if (layout.inset !== undefined) {
-    if (layout.inset.top !== undefined) j.top = layout.inset.top;
-    if (layout.inset.right !== undefined) j.right = layout.inset.right;
-    if (layout.inset.bottom !== undefined) j.bottom = layout.inset.bottom;
-    if (layout.inset.left !== undefined) j.left = layout.inset.left;
-  }
-
-  // Padding
-  const pt =
-    layout.paddingTop ??
-    (typeof layout.padding === "number" ? layout.padding : layout.padding?.top);
-  const pr =
-    layout.paddingRight ??
-    (typeof layout.padding === "number" ? layout.padding : layout.padding?.right);
-  const pb =
-    layout.paddingBottom ??
-    (typeof layout.padding === "number" ? layout.padding : layout.padding?.bottom);
-  const pl =
-    layout.paddingLeft ??
-    (typeof layout.padding === "number" ? layout.padding : layout.padding?.left);
-  if (pt !== undefined) j.padding_top = pt;
-  if (pr !== undefined) j.padding_right = pr;
-  if (pb !== undefined) j.padding_bottom = pb;
-  if (pl !== undefined) j.padding_left = pl;
-
-  // Margin
-  const mt =
-    layout.marginTop ?? (typeof layout.margin === "number" ? layout.margin : layout.margin?.top);
-  const mr =
-    layout.marginRight ??
-    (typeof layout.margin === "number" ? layout.margin : layout.margin?.right);
-  const mb =
-    layout.marginBottom ??
-    (typeof layout.margin === "number" ? layout.margin : layout.margin?.bottom);
-  const ml =
-    layout.marginLeft ?? (typeof layout.margin === "number" ? layout.margin : layout.margin?.left);
-  if (mt !== undefined) j.margin_top = mt;
-  if (mr !== undefined) j.margin_right = mr;
-  if (mb !== undefined) j.margin_bottom = mb;
-  if (ml !== undefined) j.margin_left = ml;
-
-  // Gap
-  const gapVal = layout.gap;
-  if (gapVal !== undefined) {
-    if (typeof gapVal === "number") {
-      j.gap_row = gapVal;
-      j.gap_column = gapVal;
-    } else {
-      if (gapVal.row !== undefined) j.gap_row = gapVal.row;
-      if (gapVal.column !== undefined) j.gap_column = gapVal.column;
-    }
-  }
-
-  return j;
-}

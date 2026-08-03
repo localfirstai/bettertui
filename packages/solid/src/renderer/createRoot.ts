@@ -14,7 +14,7 @@
  * root.unmount();
  * ```
  *
- * Following OpenTUI's pattern, a top-level `render()` convenience function is
+ * A top-level `render()` convenience function is
  * also exported from `index.ts`.
  */
 

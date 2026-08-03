@@ -8,8 +8,8 @@
  *   - `parse.mouse.ts`       (249 LoC) — SGR / X10 / urxvt mouse
  *   - `stdin-parser.ts`      (1,683 LoC) — full stdin state machine
  *
- * OpenTUI counterpart: `keypress-debug-demo.ts` is the closest, but OpenTUI
- * benchmarks these informally through `lib/parse.keypress.test.ts` etc.
+ * Reference counterpart: `keypress-debug-demo.ts` is the closest, but the
+ * reference benchmarks these informally through `lib/parse.keypress.test.ts` etc.
  *
  * Preconditions: none (pure-TS, no native round-trip).
  */

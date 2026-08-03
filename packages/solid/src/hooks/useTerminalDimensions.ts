@@ -1,7 +1,7 @@
 /**
  * useTerminalDimensions — reactive terminal width and height.
  *
- * Returns a Solid `Signal` accessor (following OpenTUI's Solid convention of
+ * Returns a Solid `Signal` accessor.
  * returning reactive signals rather than plain objects). The signal updates
  * whenever the terminal is resized (process SIGWINCH).
  */

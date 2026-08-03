@@ -123,8 +123,7 @@ export declare class NativeKeymap {
 
 /**
  * napi wrapper exposing the plugin [`PluginHost`] and named string-valued
- * [`SlotRegistry`]s to TypeScript — the BetterTUI equivalent of OpenTUI's
- * plugin API + `SlotRegistry`. Slot values are strings (typically a node id or
+ * [`SlotRegistry`]s to TypeScript. Slot values are strings (typically a node id or
  * a serialized descriptor); the TS side owns their meaning.
  */
 export declare class NativePluginHost {
@@ -221,9 +220,8 @@ export declare class NativeTextEngine {
 }
 
 /**
- * napi wrapper exposing the Rust animation [`Timeline`] to TypeScript — the
- * BetterTUI equivalent of OpenTUI's `useTimeline`. Schedule scalar tweens at
- * offsets, drive the timeline each frame with `update(dt)`, and read each
+ * napi wrapper exposing the Rust animation [`Timeline`] to TypeScript.
+ * Schedule scalar tweens at offsets, drive the timeline each frame with `update(dt)`, and read each
  * tween's interpolated value with `animationValue(index)`.
  */
 export declare class NativeTimeline {

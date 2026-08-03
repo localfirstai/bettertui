@@ -5,7 +5,7 @@
  * (`bettertui_engine.node`) + Rust layout (`taffy.rs`) + framebuffer diff
  * (`framebuffer.rs` + `dirty_diff.rs`).
  *
- * OpenTUI counterpart: `.opencode/references/opentui/packages/core/src/benchmark/render-traversal-benchmark.ts`
+ * Reference: `.opencode/references/opentui/packages/core/src/benchmark/render-traversal-benchmark.ts`
  * (928 LoC) and `layout-benchmark.ts` (2,547 LoC).
  *
  * Preconditions: `@bettertui/core` must be built (`pnpm --filter @bettertui/core build`)

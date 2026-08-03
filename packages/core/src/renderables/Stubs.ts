@@ -3,7 +3,7 @@
  * These provide type-correct APIs that compile, with simplified functionality.
  */
 
-import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
+import { type ColorInput, RGBA, parseColor } from "../lib/rgba";
 import type { StyledText, TextChunk } from "../lib/styledText";
 import type { CliRenderer } from "../platform/cliRenderer";
 import { type BorderStyleKind, type BoxOptions, BoxRenderable } from "./Box";
@@ -704,6 +704,8 @@ export class TimeToFirstDrawRenderable extends BoxRenderable {
     this._startTime = Date.now();
     this._contentNodeId = renderer.createNode("Text");
     renderer.appendChild(this._nodeId, this._contentNodeId);
+    // Apply the foreground color to the text node using setNodeStyle
+    renderer.setNodeStyle(this._contentNodeId, { fg: RGBA.toHex(this._color) });
     this._render();
   }
 
@@ -714,6 +716,9 @@ export class TimeToFirstDrawRenderable extends BoxRenderable {
   set fg(color: ColorInput) {
     this._fg = parseColor(color);
     this._color = this._fg;
+    this._renderer.setNodeStyle(this._contentNodeId, {
+      fg: RGBA.toHex(this._color),
+    });
     this._render();
   }
 
@@ -723,14 +728,17 @@ export class TimeToFirstDrawRenderable extends BoxRenderable {
 
   set color(v: RGBA) {
     this._color = v;
+    this._renderer.setNodeStyle(this._contentNodeId, {
+      fg: RGBA.toHex(this._color),
+    });
     this._render();
   }
 
   private _render(): void {
     if (this._isDestroyed) return;
     const elapsed = Date.now() - this._startTime;
-    const c = `${this._color.r};${this._color.g};${this._color.b}`;
-    this._renderer.setText(this._contentNodeId, `\x1b[38;2;${c}mTTFD: ${elapsed}ms\x1b[0m`);
+    // Use plain text - colors should be applied via style system, not ANSI codes
+    this._renderer.setText(this._contentNodeId, `Time to first draw: ${elapsed}ms`);
   }
 
   override destroy(): void {

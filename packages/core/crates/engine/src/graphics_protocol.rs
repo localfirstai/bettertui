@@ -4,7 +4,7 @@
 //! [`GraphicsContext`](crate::graphics::GraphicsContext) draws into the cell
 //! grid; this module is orthogonal — it produces the terminal escape sequences
 //! that transmit *pixel* images (RGB/RGBA blobs or pre-encoded PNG bytes) to
-//! terminals that support one of the graphics protocols. It mirrors OpenTUI's
+//! terminals that support one of the graphics protocols. It follows the
 //! `graphicsWrite` / `graphicsSixelWrite` / `graphicsItermWrite` /
 //! `graphicsQuery` surface.
 //!

@@ -508,7 +508,7 @@ impl RenderObject {
 
 /// Render commands for structured rendering pipeline.
 ///
-/// This enum matches OpenTUI's render command pattern, allowing
+/// This enum follows the render command pattern, allowing
 /// proper stacking of scissor rects and opacity values.
 #[derive(Debug, Clone)]
 pub enum RenderCommand {
@@ -678,7 +678,7 @@ impl RenderTree {
 
     /// Collect render commands with proper scissor/opacity stacking.
     ///
-    /// This follows OpenTUI's pattern:
+    /// The pattern:
     /// 1. Push opacity if < 1.0
     /// 2. Push render command
     /// 3. Push scissor rect if overflow !== visible

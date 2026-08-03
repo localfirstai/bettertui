@@ -4,9 +4,9 @@
  * Returns a reactive `isFocused` signal accessor and `focus`/`blur` functions.
  * If `autoFocus` is true the element focuses immediately on mount.
  *
- * Note: naming follows OpenTUI Solid convention — use `useFocus` (not
+ * Note: naming follows BetterTUI Solid convention — use `useFocus` (not
  * `onFocus`) for state-bearing focus, while `onFocus`/`onBlur` are separate
- * event-only hooks in the OpenTUI pattern.
+ * event-only hooks.
  */
 
 import { createSignal, onCleanup, onMount } from "solid-js";

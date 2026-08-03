@@ -391,7 +391,7 @@ mod segment {
 mod theme {
     use super::*;
 
-    /// A single scope-to-style mapping, matching OpenTUI's `ThemeTokenStyle`.
+    /// A single scope-to-style mapping.
     pub struct ThemeScope {
         pub scopes: Vec<String>,
         pub fg: Option<Color>,

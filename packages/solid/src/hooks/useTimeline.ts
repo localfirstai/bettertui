@@ -11,7 +11,7 @@ import type { TimelineOptions } from "@bettertui/shared";
 import { onCleanup, onMount } from "solid-js";
 
 export function useTimeline(options: TimelineOptions = {}): Timeline {
-  const timeline = new Timeline(options);
+  const timeline = new Timeline((options as { duration?: number }).duration ?? 1, options);
 
   onMount(() => {
     if (options.autoPlay !== false) {

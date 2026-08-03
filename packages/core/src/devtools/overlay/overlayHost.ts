@@ -20,7 +20,7 @@ export interface OverlayRenderer {
 }
 
 export interface OverlayHostOptions {
-  /** Corner to anchor panels to. Defaults to top-right (OpenTUI-style). */
+  /** Corner to anchor panels to. Defaults to top-right. */
   corner?: OverlayCorner;
   /** Inner width of each panel in columns. Defaults to 28. */
   panelWidth?: number;

@@ -26,7 +26,7 @@ re-exported from `@bettertui/core`. See the
    full `DevTools` facade.
 4. **Pure-TS overlay.** The Rust engine returns finished base64 ANSI bytes —
    there is no TypeScript-accessible cell buffer. The debug overlay is
-   absolute-positioned ANSI text written *after* the engine output via
+   absolute-positioned ANSI text written _after_ the engine output via
    `CliRenderer.writeFrame()`. No Rust changes are needed to add a new panel.
 5. **Exportable.** All diagnostic data can be serialised to a `DiagnosticExport`
    JSON blob for offline analysis or issue reports.
@@ -69,23 +69,23 @@ packages/core/src/devtools/
 
 ## Module Responsibilities
 
-| Module | Purpose |
-|--------|---------|
-| `devtools.types.ts` | Single source of truth for all payload types: `LogEntry`, `RecordedCommand`, `RecordedEvent`, `FrameMetrics`, `PerformanceSnapshot`, `TreeSnapshot`, `SnapshotDiff`, `DiagnosticExport`, `MemoryStats`, etc. |
-| `logger.ts` | Ring-buffer structured logger. Levels: trace / debug / info / warn / error. Named categories, level filtering, `getEntriesByCategory()`, exportable. |
-| `commandInspector.ts` | Wraps every flush of `CommandBuffer`. Records command type, payload size, and emit duration. Configurable `maxCommands` ring. |
-| `eventInspector.ts` | Tracks keyboard, mouse, focus, resize, and lifecycle events with timestamps. Configurable `maxEvents` ring. |
-| `performance.ts` | Sliding-window frame-timing ring. Computes current FPS, min/max/avg frame time, and dropped-frame count. `startProfiling()` / `stopProfiling()` accumulate session stats. |
-| `treeInspector.ts` | Records render-tree snapshots on demand. Stores node id, kind, props, layout geometry (x/y/width/height), and children recursively. `getNode(id)` for targeted lookup. |
-| `schedulerInspector.ts` | Mirrors `NativeScheduler` state: frame budget used, is-idle, pending callbacks, animation frame request queue depth. |
-| `focusInspector.ts` | Wraps `NativeFocusManager`. Records focus/blur history, exposes current focused id and ordered tab list. |
-| `capabilityInspector.ts` | One-shot snapshot of `TerminalCapabilities` (true-color, Kitty, Sixel, OSC-52, mouse, etc.). Updated on resize/re-detect. |
-| `timeline.ts` | Chronological log of commands, renders, and events in insertion order. Filterable by type. Used by the export layer. |
-| `snapshot.ts` | `captureSnapshot(name)` freezes the tree; `diffSnapshots(a, b)` returns a `SnapshotDiff` highlighting added/removed/changed nodes. |
-| `export.ts` | `createExport()` assembles a `DiagnosticExport` from all active inspectors. `exportToJson()` serialises it. `createSummary()` returns a human-readable text summary. |
+| Module                   | Purpose                                                                                                                                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `devtools.types.ts`      | Single source of truth for all payload types: `LogEntry`, `RecordedCommand`, `RecordedEvent`, `FrameMetrics`, `PerformanceSnapshot`, `TreeSnapshot`, `SnapshotDiff`, `DiagnosticExport`, `MemoryStats`, etc.            |
+| `logger.ts`              | Ring-buffer structured logger. Levels: trace / debug / info / warn / error. Named categories, level filtering, `getEntriesByCategory()`, exportable.                                                                    |
+| `commandInspector.ts`    | Wraps every flush of `CommandBuffer`. Records command type, payload size, and emit duration. Configurable `maxCommands` ring.                                                                                           |
+| `eventInspector.ts`      | Tracks keyboard, mouse, focus, resize, and lifecycle events with timestamps. Configurable `maxEvents` ring.                                                                                                             |
+| `performance.ts`         | Sliding-window frame-timing ring. Computes current FPS, min/max/avg frame time, and dropped-frame count. `startProfiling()` / `stopProfiling()` accumulate session stats.                                               |
+| `treeInspector.ts`       | Records render-tree snapshots on demand. Stores node id, kind, props, layout geometry (x/y/width/height), and children recursively. `getNode(id)` for targeted lookup.                                                  |
+| `schedulerInspector.ts`  | Mirrors `NativeScheduler` state: frame budget used, is-idle, pending callbacks, animation frame request queue depth.                                                                                                    |
+| `focusInspector.ts`      | Wraps `NativeFocusManager`. Records focus/blur history, exposes current focused id and ordered tab list.                                                                                                                |
+| `capabilityInspector.ts` | One-shot snapshot of `TerminalCapabilities` (true-color, Kitty, Sixel, OSC-52, mouse, etc.). Updated on resize/re-detect.                                                                                               |
+| `timeline.ts`            | Chronological log of commands, renders, and events in insertion order. Filterable by type. Used by the export layer.                                                                                                    |
+| `snapshot.ts`            | `captureSnapshot(name)` freezes the tree; `diffSnapshots(a, b)` returns a `SnapshotDiff` highlighting added/removed/changed nodes.                                                                                      |
+| `export.ts`              | `createExport()` assembles a `DiagnosticExport` from all active inspectors. `exportToJson()` serialises it. `createSummary()` returns a human-readable text summary.                                                    |
 | `overlay/overlayHost.ts` | Draws visible panels on each frame using absolute ANSI positioning. Tracks previously-painted regions; clears rows vacated since the last frame to prevent trails. Forces `renderFull()` when the last panel is hidden. |
-| `overlay/ansi.utils.ts` | Stateless helpers: `moveTo(row, col)`, `drawBox(...)`, `truncate(str, width)`, `sparkline(values)`, color escape builders. |
-| `overlay/panels/` | Each panel is a pure function `(PanelContext) → string[]` (one string per visible line). The `OverlayHost` calls each visible panel and writes the returned lines at their assigned position. |
+| `overlay/ansi.utils.ts`  | Stateless helpers: `moveTo(row, col)`, `drawBox(...)`, `truncate(str, width)`, `sparkline(values)`, color escape builders.                                                                                              |
+| `overlay/panels/`        | Each panel is a pure function `(PanelContext) → string[]` (one string per visible line). The `OverlayHost` calls each visible panel and writes the returned lines at their assigned position.                           |
 
 ---
 
@@ -123,19 +123,19 @@ const fps = renderer.devtools.performance.currentFps();
 ```
 
 `BTUI_DEBUG=1` and `BTUI_SHOW_STATS=1` environment variables force the overlay
-on at startup (mirroring OpenTUI's `OTUI_SHOW_STATS`).
+on at startup.
 
 ---
 
 ## Panels
 
-| Panel (`DebugPanel` enum) | Content |
-|---------------------------|---------|
-| `Performance` | Current FPS, avg/min/max frame time (ms), dropped frames, command count per frame, RSS memory |
-| `Tree` | Render tree node hierarchy (display-only; click-to-inspect deferred, see §Deferred) |
-| `Layout` | Per-node layout geometry: id, kind, x/y, width × height |
-| `Events` | Last N keyboard / mouse / focus / resize events with timestamps |
-| `DirtyRegions` | Per-frame dirty-region count (per-cell highlighting deferred, see §Deferred) |
+| Panel (`DebugPanel` enum) | Content                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
+| `Performance`             | Current FPS, avg/min/max frame time (ms), dropped frames, command count per frame, RSS memory |
+| `Tree`                    | Render tree node hierarchy (display-only; click-to-inspect deferred, see §Deferred)           |
+| `Layout`                  | Per-node layout geometry: id, kind, x/y, width × height                                       |
+| `Events`                  | Last N keyboard / mouse / focus / resize events with timestamps                               |
+| `DirtyRegions`            | Per-frame dirty-region count (per-cell highlighting deferred, see §Deferred)                  |
 
 ---
 

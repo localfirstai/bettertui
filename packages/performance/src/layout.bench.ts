@@ -4,7 +4,7 @@
  * Tree-only layout benchmark via the Rust taffy integration. Bypasses the
  * framebuffer / ANSI encoder to isolate the layout pass cost.
  *
- * OpenTUI counterpart: `.opencode/references/opentui/packages/core/src/benchmark/layout-benchmark.ts`
+ * Reference: `.opencode/references/opentui/packages/core/src/benchmark/layout-benchmark.ts`
  * (2,547 LoC) — that benchmark drives Yoga Wasm directly via the TS-side
  * `OptimizedBuffer`. Here we route through `NativeEngine.processCommands` so
  * the napi cost is included; the rendering step is skipped.

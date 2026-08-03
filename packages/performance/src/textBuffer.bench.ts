@@ -3,8 +3,8 @@
  *
  * NativeTextEngine insert/delete/undo/redo benchmark.
  *
- * OpenTUI counterpart: `.opencode/references/opentui/packages/core/src/benchmark/text-buffer-render-benchmark.ts`
- * (874 LoC). OpenTUI drives the Zig-side text buffer via FFI; here we route
+ * Reference: `.opencode/references/opentui/packages/core/src/benchmark/text-buffer-render-benchmark.ts`
+ * (874 LoC). The reference drives the Zig-side text buffer via FFI; here we route
  * through the napi `NativeTextEngine` wrapper exported from
  * `packages/core/src/platform/binding.ts`.
  *

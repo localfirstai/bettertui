@@ -8,6 +8,11 @@
       "inputs": ["src/**", "package.json", "tsconfig.json", "tsdown.config.ts"],
       "outputs": ["dist/**"]
     },
+    "start": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
     "dev": {
       "cache": false,
       "persistent": true

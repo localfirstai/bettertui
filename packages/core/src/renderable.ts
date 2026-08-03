@@ -152,7 +152,11 @@ export abstract class Renderable<TOptions = Record<string, unknown>> {
       if (value === undefined || value === null) continue;
       switch (key) {
         case "flexDirection":
-          cmds.push({ type: "SetFlexDirection", id, direction: value as never });
+          cmds.push({
+            type: "SetFlexDirection",
+            id,
+            direction: value as never,
+          });
           break;
         case "justifyContent":
           cmds.push({ type: "SetJustifyContent", id, value: value as never });
@@ -274,5 +278,3 @@ export abstract class Renderable<TOptions = Record<string, unknown>> {
     return cmds;
   }
 }
-
-export type { KeyEvent, MouseEvent };

@@ -109,6 +109,32 @@ export {
 // In-core debug tooling (moved from the retired @bettertui/devtools package).
 export * from "./devtools";
 
+// Audio API (stub implementations; native playback requires native engine)
+export {
+  Audio,
+  AudioStream,
+  AudioStreamError,
+} from "./audio";
+export type {
+  AudioGroup,
+  AudioStreamAction,
+  AudioStreamErrorContext,
+  AudioStreamState,
+  AudioStreamStats,
+  AudioStreamMetadata,
+  AudioStreamMetadataFormat,
+  AudioStreamReconnectEvent,
+  AudioStreamUrlOptions,
+  AudioPlaybackDevice,
+  AudioSound,
+  AudioVoice,
+  AudioSetupOptions,
+  AudioStartOptions,
+  AudioPlayOptions,
+  AudioStats,
+  AudioTapResult,
+} from "./audio";
+
 // ── Renderable widgets (high-level CliRenderer-backed UI components) ──────────
 
 export {
@@ -294,7 +320,20 @@ export type RenderContext = {
 export type OptimizedBuffer = {
   width: number;
   height: number;
+  buffers: {
+    bg: Uint16Array;
+    fg: Uint16Array;
+    char: Uint32Array;
+    attributes: Uint32Array;
+  };
   setCell(x: number, y: number, char: string, fg?: unknown, bg?: unknown): void;
-  drawText(text: string, x: number, y: number, color?: unknown): void;
+  drawText(
+    text: string,
+    x: number,
+    y: number,
+    fg?: unknown,
+    bg?: unknown,
+    attributes?: number,
+  ): void;
   fillRect(x: number, y: number, w: number, h: number, color: unknown): void;
 };
