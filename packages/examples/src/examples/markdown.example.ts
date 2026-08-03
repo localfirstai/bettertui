@@ -13,7 +13,7 @@ import { SyntaxStyle } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Rich markdown example showcasing various features
-const markdownContent = `# BetterTUI Markdown Demo
+const markdownContent = `# OpenTUI Markdown Demo
 
 Welcome to the **MarkdownRenderable** showcase! This demonstrates automatic table alignment and syntax highlighting.
 
@@ -215,7 +215,7 @@ status = "fallback text should stay readable"
 | Bold | \`**text**\` | **bold text** |
 | Italic | \`*text*\` | *italic text* |
 | Code | \`code\` | \`inline code\` |
-| Link | \`[text](url)\` | [BetterTUI](https://github.com/anomalyco/bettertui) |
+| Link | \`[text](url)\` | [OpenTUI](https://github.com/anomalyco/opentui) |
 
 ## Mixed Content
 

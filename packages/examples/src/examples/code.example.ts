@@ -117,11 +117,11 @@ function TodoApp() {
   {
     name: "Markdown",
     filetype: "markdown" as const,
-    code: `# BetterTUI Documentation
+    code: `# OpenTUI Documentation
 
 ## Getting Started
 
-BetterTUI is a modern terminal UI framework built in Rust with TypeScript bindings.
+OpenTUI is a modern terminal UI framework built on **tree-sitter** and WebGPU.
 
 ### Features
 
@@ -162,7 +162,7 @@ The \`BoxRenderable\` component provides styled boxes:
 | title | string | Box title |
 | padding | number | Inner padding |
 
-> **Note**: BetterTUI uses Taffy for layout computation.
+> **Note**: Tree-sitter parsers are loaded lazily for performance.
 
 CJK: 알겠습니다. Task 에이전트에 ktlint + detekt 검사를 위임하겠습니다.
 

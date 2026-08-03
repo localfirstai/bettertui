@@ -278,7 +278,7 @@ function handleGlobalMouse(event: unknown): void {
 
 // Create styled demo text using TextNodes
 function createDemoText(): TextNodeRenderable {
-  const titleNode = TextNodeRenderable.fromString("🎨 BetterTUI Text Wrapping Demo", {
+  const titleNode = TextNodeRenderable.fromString("🎨 OpenTUI Text Wrapping Demo", {
     fg: "#7aa2f7",
     attributes: 1, // bold
   });
@@ -293,7 +293,7 @@ function createDemoText(): TextNodeRenderable {
   });
 
   const introContNode = TextNodeRenderable.fromString(
-    ". This example showcases how BetterTUI handles automatic text wrapping with styled content using TextNodes.",
+    ". This example showcases how OpenTUI handles automatic text wrapping with styled content using TextNodes.",
     {
       fg: "#c0caf5",
     },
@@ -459,7 +459,7 @@ textRenderable.add(styledText);`,
   );
 
   const conclusionNode = TextNodeRenderable.fromString(
-    "\n\n🚀 This demonstrates the power of BetterTUI's flexible text rendering system, combining rich styling with dynamic layout capabilities! ✨🎨📝",
+    "\n\n🚀 This demonstrates the power of OpenTUI's flexible text rendering system, combining rich styling with dynamic layout capabilities! ✨🎨📝",
     {
       fg: "#9ece6a",
       attributes: 1,

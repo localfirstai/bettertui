@@ -45,7 +45,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(text);
 
-  setDemoTitle(renderer, "BetterTUI Test");
+  setDemoTitle(renderer, "OpenTUI Test");
   titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Terminal Title Demo"), 2000));
   titleTimers.push(setTimeout(() => setDemoTitle(renderer, "Success!"), 4000));
 }

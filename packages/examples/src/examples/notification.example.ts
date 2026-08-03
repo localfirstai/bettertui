@@ -46,14 +46,14 @@ const actions: NotificationAction[] = [
     title: "Quick ping",
     subtitle: "Body-only notification",
     accent: P.cyan,
-    message: "BetterTUI notification ping sent.",
+    message: "OpenTUI notification ping delivered.",
   },
   {
     key: "2",
     title: "Build complete",
     subtitle: "Title and body",
     accent: P.lime,
-    notificationTitle: "BetterTUI build",
+    notificationTitle: "OpenTUI build",
     message: "The example build finished successfully.",
   },
   {

@@ -150,7 +150,7 @@ const DEFAULT_THEME_MODE: ThemeMode = "dark";
 const isBunRuntime = typeof process !== "undefined" && typeof process.versions?.bun === "string";
 const includeThreeExamples =
   typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean" ? OPENTUI_BUN_ONLY_EXAMPLES : isBunRuntime;
-const MENU_TERMINAL_TITLE = "BetterTUI Examples";
+const MENU_TERMINAL_TITLE = "OpenTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "  ";
 const EXAMPLE_DESCRIPTION_INDENT = "    ";
@@ -347,7 +347,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "Multi-Tab Demo",
+      name: "OpenTUI Demo",
       description: "Multi-tab demo with various features",
       run: multitabDemo.run,
       destroy: multitabDemo.destroy,
@@ -845,7 +845,7 @@ class ExampleSelector {
   private title: ASCIIFontRenderable | null = null;
   private titleWidth = 0;
   private titleFont = "tiny";
-  private titleText = "BETTERTUI EXAMPLES";
+  private titleText = "OPENTUI EXAMPLES";
   private filterBox: BoxRenderable | null = null;
   private filterInput: InputRenderable | null = null;
   private instructions: TextRenderable | null = null;

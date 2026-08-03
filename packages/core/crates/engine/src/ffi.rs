@@ -1,4 +1,5 @@
 //! C ABI bindings for node:ffi.
+#![allow(clippy::missing_safety_doc, clippy::collapsible_if, clippy::manual_clamp)]
 //! Every function is `extern "C"` with `#[unsafe(no_mangle)]`.
 //! Handles are opaque u64 values into global type-safe stores.
 //! String returns are `*mut c_char` (caller must free with `ffi_free_string`).

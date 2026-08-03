@@ -1674,19 +1674,6 @@ fn event_to_json(e: &crate::event_bus::Event) -> serde_json::Value {
             "prev_width": re.previous_width,
             "prev_height": re.previous_height,
         }),
-        crate::event_bus::Event::Mouse(me) => serde_json::json!({
-            "type": "mouse",
-            "button": format!("{:?}", me.button).to_lowercase(),
-            "x": me.position.x,
-            "y": me.position.y,
-        }),
-        crate::event_bus::Event::Resize(re) => serde_json::json!({
-            "type": "resize",
-            "width": re.width,
-            "height": re.height,
-            "prev_width": re.previous_width,
-            "prev_height": re.previous_height,
-        }),
         _ => serde_json::json!({"type": "unknown"}),
     }
 }
