@@ -39,7 +39,7 @@ interface TaskFlowDocument {
 
 const markdownContent = `# Markdown Code Block Renderers
 
-This markdown document contains a fenced \`taskflow\` block. The source stays plain text, but the markdown renderer swaps that single language into a custom OpenTUI widget.
+This markdown document contains a fenced \`taskflow\` block. The source stays plain text, but the markdown renderer swaps that single language into a custom BetterTUI widget.
 
 \`\`\`taskflow
 title Ship markdown plug-ins

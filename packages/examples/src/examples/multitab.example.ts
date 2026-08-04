@@ -290,7 +290,7 @@ export function run(renderer: CliRenderer): void {
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
       const title = new Text(renderer, {
-        id: "opentui-title",
+        id: "bettertui-title",
         content: "Basic CLI Renderer Demo",
         position: "absolute",
         left: 10,

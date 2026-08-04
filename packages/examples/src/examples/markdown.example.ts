@@ -13,7 +13,7 @@ import { SyntaxStyle } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Rich markdown example showcasing various features
-const markdownContent = `# OpenTUI Markdown Demo
+const markdownContent = `# BetterTUI Markdown Demo
 
 Welcome to the **Markdown** showcase! This demonstrates automatic table alignment and syntax highlighting.
 
@@ -99,7 +99,7 @@ Final paragraph after a second fence with \`inline code\`, **bold text**, and _e
 + const renderer = experimentalMarkdown
 \`\`\`
 
-Final paragraph with [docs](https://opentui.dev) and \`https://example.com/from-code\`.
+Final paragraph with [docs](https://github.com/localfirstai/bettertui/tree/main/docs) and \`https://example.com/from-code\`.
 
 ---
 
@@ -215,7 +215,7 @@ status = "fallback text should stay readable"
 | Bold | \`**text**\` | **bold text** |
 | Italic | \`*text*\` | *italic text* |
 | Code | \`code\` | \`inline code\` |
-| Link | \`[text](url)\` | [OpenTUI](https://github.com/anomalyco/opentui) |
+| Link | \`[text](url)\` | [BetterTUI](https://github.com/localfirstai/bettertui) |
 
 ## Mixed Content
 

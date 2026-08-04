@@ -226,7 +226,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "OpenTUI Demo",
+      name: "BetterTUI Demo",
       description: "Multi-tab demo with various features",
       run: multitabDemo.run,
       destroy: multitabDemo.destroy,
@@ -718,7 +718,7 @@ function findNearestExampleOptionIndex(
   return -1;
 }
 
-class ExampleSelector {
+export class ExampleSelector {
   private renderer: CliRenderer;
   private currentExample: Example | null = null;
   private inMenu = true;

@@ -85,3 +85,8 @@
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
 - The only Rust crate with a unit-test suite co-located in `#[cfg(test)]` blocks is `bettertui-engine`. (The engine test build currently has a compilation issue in `terminal/vt.rs` that must be fixed before the suite is green.)
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.
+
+## Debugging and Logging Conventions
+
+- **Debugging Code:** ALL debugging scripts and tools must be placed inside `packages/examples/src/debug/` ONLY. Never write standalone debug scripts in the root directory or under `scripts/`.
+- **Log Files:** ALL application and debug log files MUST be placed in `logs/*` ONLY. Never write `.log` files to the root directory or outside `logs/`.

@@ -1694,6 +1694,7 @@ impl NodeArena {
             self.nodes[self.root].children.clear();
             return;
         }
+        self.detach(id);
         self.remove_subtree_recursive(id);
         self.generation += 1;
         self.mark_changed();

@@ -73,25 +73,25 @@ const FIXTURES: readonly Fixture[] = [
     name: "Unicode + LF",
     short: "Unicode + LF",
     purpose: "UTF-8 decoding and multiline insertion",
-    payload: "OpenTUI clipboard round-trip\nUnicode: 世界 café 🚀\nLine endings: LF\nEnd",
+    payload: "BetterTUI clipboard round-trip\nUnicode: 世界 café 🚀\nLine endings: LF\nEnd",
   },
   {
     name: "CRLF + lone CR",
     short: "CRLF + CR",
     purpose: "Raw transport preserves CR; the editor normalizes to LF",
-    payload: "OpenTUI newline fixture\r\nCRLF line\rLone CR line\nLF line",
+    payload: "BetterTUI newline fixture\r\nCRLF line\rLone CR line\nLF line",
   },
   {
     name: "ANSI text",
     short: "ANSI",
     purpose: "Raw event preserves ANSI; the textarea strips it on insertion",
-    payload: "OpenTUI ANSI fixture: \x1b[31mred\x1b[0m plain",
+    payload: "BetterTUI ANSI fixture: \x1b[31mred\x1b[0m plain",
   },
   {
     name: "Large (16 KiB)",
     short: "Large 16 KiB",
     purpose: "Exercises OSC 52 beyond the former fixed-buffer limit",
-    payload: `OpenTUI large OSC 52 payload\n${"0123456789abcdef".repeat(1024)}`,
+    payload: `BetterTUI large OSC 52 payload\n${"0123456789abcdef".repeat(1024)}`,
   },
 ];
 

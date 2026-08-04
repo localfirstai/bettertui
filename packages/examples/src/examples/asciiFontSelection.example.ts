@@ -57,7 +57,7 @@ export function run(renderer: CliRenderer): void {
 
   const blockFont = new ASCIIFont(renderer, {
     id: "blockFont",
-    text: "opentui",
+    text: "bettertui",
     font: "block",
     color: [RGBA.fromInts(255, 100, 100, 255), RGBA.fromInts(100, 255, 100, 255)],
     backgroundColor: RGBA.fromInts(0, 0, 40, 255),

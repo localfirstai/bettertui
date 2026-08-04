@@ -498,7 +498,9 @@ export class CliRenderer extends EventEmitter {
 
       const processingTime = performance.now() - frameStart;
       const delay = Math.max(0, msPerFrame - processingTime);
-      this._frameInterval = setTimeout(loop, Math.round(delay));
+      if (this.running) {
+        this._frameInterval = setTimeout(loop, Math.round(delay));
+      }
     };
 
     this._frameInterval = setTimeout(loop, 0);

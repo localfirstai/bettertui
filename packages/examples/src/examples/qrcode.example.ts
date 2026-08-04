@@ -86,10 +86,13 @@ interface PresetUrl {
 }
 
 const PRESET_URLS: PresetUrl[] = [
-  { label: "OpenTUI", url: "https://opentui.com" },
-  { label: "GitHub", url: "https://github.com/anomalyco/opentui" },
-  { label: "Docs", url: "https://opentui.com/docs" },
-  { label: "Examples", url: "https://opentui.com/examples" },
+  { label: "BetterTUI", url: "https://github.com/localfirstai/bettertui" },
+  { label: "GitHub", url: "https://github.com/localfirstai/bettertui" },
+  { label: "Docs", url: "https://github.com/localfirstai/bettertui/tree/main/docs" },
+  {
+    label: "Examples",
+    url: "https://github.com/localfirstai/bettertui/tree/main/packages/examples",
+  },
   { label: "QR Spec", url: "https://www.iso.org/standard/83389.html" },
   { label: "Terminal Art", url: "https://en.wikipedia.org/wiki/ANSI_art" },
   { label: "Matrix", url: "https://matrix.org" },

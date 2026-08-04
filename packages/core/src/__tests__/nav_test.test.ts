@@ -25,6 +25,7 @@ function setup(width = 80, height = 24) {
 
   const cleanup = () => {
     renderer.stop();
+    renderer.destroy();
     spy.mockRestore();
     Object.defineProperty(process, "stdin", {
       value: origStdin,

@@ -1667,10 +1667,7 @@ impl Renderer {
 
         let root_id = arena.root();
         for (id, _node) in arena.iter() {
-            let children = arena.children(id);
-            if !children.is_empty() {
-                self.layout_sync.sync_children(arena, id);
-            }
+            self.layout_sync.sync_children(arena, id);
         }
         let vp_height = self.viewport_height();
         let _ = self.layout_sync.compute(root_id, self.width, vp_height);

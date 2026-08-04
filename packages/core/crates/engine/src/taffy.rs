@@ -1530,6 +1530,12 @@ impl LayoutTreeSync {
     }
 
     pub fn sync_full(&mut self, arena: &NodeArena) {
+        let stale_ids: Vec<NodeId> = self.layout.node_map.keys().filter(|&&id| !arena.contains(id)).copied().collect();
+        for id in stale_ids {
+            self.layout.remove_node(id);
+            self.results.remove(&id);
+        }
+
         for (id, node) in arena.iter() {
             if !self.layout.has_node(id) {
                 if let Some(text) = &node.text {

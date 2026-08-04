@@ -117,11 +117,11 @@ function TodoApp() {
   {
     name: "Markdown",
     filetype: "markdown" as const,
-    code: `# OpenTUI Documentation
+    code: `# BetterTUI Documentation
 
 ## Getting Started
 
-OpenTUI is a modern terminal UI framework built on **tree-sitter** and WebGPU.
+BetterTUI is a modern terminal UI framework built on **tree-sitter** and WebGPU.
 
 ### Features
 
