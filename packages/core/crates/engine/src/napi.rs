@@ -2028,6 +2028,7 @@ struct StyleJson {
     #[serde(default, alias = "text_align")]
     text_align: Option<String>,
     #[serde(default, alias = "text_wrap")]
+    #[allow(dead_code)]
     text_wrap: Option<bool>,
 }
 

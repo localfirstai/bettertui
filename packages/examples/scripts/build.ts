@@ -35,7 +35,7 @@ if (!existsSync(distDir)) {
 // Step 3: Bundle examples
 try {
   console.log("  [2/2] Transpiling @bettertui/examples...");
-  execSync("npx tsdown --entry src/index.ts --format esm --out-dir dist --clean", {
+  execSync("pnpm exec tsdown --entry src/index.ts --format esm --out-dir dist --clean", {
     cwd: examplesDir,
     stdio: "inherit",
   });

@@ -6,5 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["solid-js", "solid-js/web", "solid-js/store", "bettertui_engine"],
+  deps: {
+    neverBundle: ["solid-js", "solid-js/web", "solid-js/store", "bettertui_engine"],
+  },
 });
