@@ -10,7 +10,7 @@ const origWrite = process.stdout.write.bind(process.stdout);
 };
 
 // Now import and run the real example
-await import("../index.js");
+await import("../index.ts");
 
 // Wait for a few frames
 await new Promise((r) => setTimeout(r, 1000));

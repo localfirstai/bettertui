@@ -7,6 +7,7 @@ import {
   Input,
   InputEvents,
   type KeyEvent,
+  type LogLevel,
   RGBA,
   RenderableEvents,
   Select,
@@ -121,6 +122,7 @@ type MenuOption = Omit<SelectOption, "value"> & { value: MenuOptionValue };
 type MenuFocusArea = "filter" | "list";
 
 interface ExampleTheme {
+  appBackgroundColor: string;
   titleColor: RGBA;
   borderColor: string;
   focusedBorderColor: string;
@@ -168,6 +170,7 @@ function section(
 
 const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
   dark: {
+    appBackgroundColor: "#181B24",
     titleColor: RGBA.fromInts(248, 250, 252, 255),
     borderColor: "#334155",
     focusedBorderColor: "#38BDF8",
@@ -184,6 +187,7 @@ const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
     notImplementedColor: "#FACC15",
   },
   light: {
+    appBackgroundColor: "#181B24",
     titleColor: RGBA.fromInts(248, 250, 252, 255),
     borderColor: "#334155",
     focusedBorderColor: "#38BDF8",
@@ -759,6 +763,7 @@ class ExampleSelector {
       flexDirection: "column",
       width: "100%",
       height: "100%",
+      backgroundColor: theme.appBackgroundColor,
     });
     this.renderer.root.add(this.menuContainer);
 
@@ -908,6 +913,11 @@ class ExampleSelector {
   private applyTheme(mode: ThemeMode | null): void {
     this.themeMode = mode ?? DEFAULT_THEME_MODE;
     const theme = MENU_THEMES[this.themeMode];
+
+    this.renderer.setBackgroundColor(theme.appBackgroundColor);
+    if (this.menuContainer) {
+      this.menuContainer.backgroundColor = theme.appBackgroundColor;
+    }
 
     if (this.title) {
       this.title.color = theme.titleColor;
@@ -1303,7 +1313,7 @@ class ExampleSelector {
     this.renderer.pause();
     this.renderer.auto();
     this.showMenuElements();
-    this.renderer.setBackgroundColor("transparent");
+    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].appBackgroundColor);
     this.renderer.requestRender();
   }
 
@@ -1324,11 +1334,18 @@ class ExampleSelector {
   }
 }
 
+const logLevel = (process.env.BTUI_LOG_LEVEL as LogLevel) ?? "info";
+const logFile = process.env.BTUI_LOG_FILE ?? "logs/examples.log";
+
 const renderer = await createCliRenderer({
   exitOnCtrlC: false,
   targetFps: 60,
-  // useAlternateScreen: false,
+  logger: {
+    dev: true,
+    level: logLevel,
+    file: logFile,
+  },
 });
 
-renderer.setBackgroundColor("transparent");
+renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].appBackgroundColor);
 new ExampleSelector(renderer);
