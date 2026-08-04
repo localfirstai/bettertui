@@ -14,6 +14,7 @@ export declare class NativeEngine {
   printTree(): string;
   validate(): boolean;
   shutdown(): void;
+  setBackgroundColor(color: string): void;
   setStyle(id: number, styleJson: string): void;
   setLayout(id: number, layoutJson: string): void;
   getNode(id: number): string;
