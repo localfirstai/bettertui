@@ -1,24 +1,16 @@
 #!/usr/bin/env bun
-import {
-  BoxRenderable,
-  type CliRenderer,
-  TextRenderable,
-  bold,
-  createCliRenderer,
-  fg,
-  t,
-} from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
+import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let scrollBox: ScrollBoxRenderable | null = null;
-let statusText: TextRenderable | null = null;
+let scrollBox: ScrollBox | null = null;
+let statusText: Text | null = null;
 let hoveredItem: string | null = null;
 
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#1a1b26");
 
-  const mainContainer = new BoxRenderable(renderer, {
+  const mainContainer = new Box(renderer, {
     id: "main-container",
     flexGrow: 1,
     maxHeight: "100%",
@@ -27,7 +19,7 @@ export function run(renderer: CliRenderer): void {
     backgroundColor: "#1a1b26",
   });
 
-  const header = new BoxRenderable(renderer, {
+  const header = new Box(renderer, {
     id: "header",
     width: "100%",
     height: 3,
@@ -36,17 +28,17 @@ export function run(renderer: CliRenderer): void {
     flexShrink: 0,
   });
 
-  const title = new TextRenderable(renderer, {
+  const title = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("ScrollBox Mouse Hit Test"))} - Scroll and hover items to test hit detection`,
   });
   header.add(title);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     content: t`${fg("#565f89")("Hovered:")} ${fg("#c0caf5")("none")}`,
   });
   header.add(statusText);
 
-  scrollBox = new ScrollBoxRenderable(renderer, {
+  scrollBox = new ScrollBox(renderer, {
     id: "scroll-box",
     rootOptions: {
       backgroundColor: "#24283b",
@@ -58,7 +50,7 @@ export function run(renderer: CliRenderer): void {
   });
 
   for (let i = 0; i < 50; i++) {
-    const item = new BoxRenderable(renderer, {
+    const item = new Box(renderer, {
       id: `item-${i}`,
       width: "100%",
       height: 2,
@@ -79,7 +71,7 @@ export function run(renderer: CliRenderer): void {
       },
     });
 
-    const text = new TextRenderable(renderer, {
+    const text = new Text(renderer, {
       content: t`${fg("#7aa2f7")(`[${i.toString().padStart(2, "0")}]`)} ${fg("#c0caf5")(`Item ${i} - Hover over me to test hit detection`)}`,
     });
     item.add(text);

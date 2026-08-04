@@ -1,6 +1,6 @@
 import type { BoxOptions } from "@bettertui/core";
-import { BoxRenderable } from "@bettertui/core";
-import { TabSelectRenderable, TabSelectRenderableEvents } from "@bettertui/core";
+import { Box } from "@bettertui/core";
+import { TabSelect, TabSelectEvents } from "@bettertui/core";
 import type { CliRenderer, TabOption } from "@bettertui/core";
 import type { ColorInput } from "@bettertui/core";
 import { RenderableEvents } from "@bettertui/core";
@@ -8,8 +8,8 @@ import { parseColor } from "@bettertui/core";
 
 export interface TabObject {
   title: string;
-  init(tabGroup: BoxRenderable): void;
-  update?(deltaMs: number, tabGroup: BoxRenderable): void;
+  init(tabGroup: Box): void;
+  update?(deltaMs: number, tabGroup: Box): void;
   show?(): void;
   hide?(): void;
 }
@@ -17,7 +17,7 @@ export interface TabObject {
 interface Tab {
   title: string;
   tabObject: TabObject;
-  group: BoxRenderable;
+  group: Box;
   initialized: boolean;
 }
 
@@ -38,10 +38,10 @@ export enum TabControllerEvents {
   TAB_CHANGED = "tabChanged",
 }
 
-export class TabControllerRenderable extends BoxRenderable {
+export class TabController extends Box {
   public tabs: Tab[] = [];
   private currentTabIndex = 0;
-  private tabSelectElement: TabSelectRenderable;
+  private tabSelectElement: TabSelect;
   private _tabBarHeight: number;
   private _frameCallback: ((deltaMs: number) => Promise<void>) | null = null;
   private _renderer2: CliRenderer;
@@ -51,7 +51,7 @@ export class TabControllerRenderable extends BoxRenderable {
     this._renderer2 = renderer;
     this._tabBarHeight = options.tabBarHeight || 4;
 
-    this.tabSelectElement = new TabSelectRenderable(renderer, {
+    this.tabSelectElement = new TabSelect(renderer, {
       id: `${id}-tabs`,
       width: "100%",
       height: this._tabBarHeight,
@@ -66,7 +66,7 @@ export class TabControllerRenderable extends BoxRenderable {
       showScrollArrows: options.showScrollArrows ?? true,
     });
 
-    this.tabSelectElement.on(TabSelectRenderableEvents.SELECTION_CHANGED, (index: number) => {
+    this.tabSelectElement.on(TabSelectEvents.SELECTION_CHANGED, (index: number) => {
       this.switchToTab(index);
     });
 
@@ -79,7 +79,7 @@ export class TabControllerRenderable extends BoxRenderable {
   }
 
   public addTab(tabObject: TabObject): Tab {
-    const tabGroup = new BoxRenderable(this._renderer2, {
+    const tabGroup = new Box(this._renderer2, {
       id: `${this._id}-tab-${this.tabs.length}`,
       left: 0,
       top: this._tabBarHeight,
@@ -136,7 +136,7 @@ export class TabControllerRenderable extends BoxRenderable {
     return tab;
   }
 
-  public getCurrentTabGroup(): BoxRenderable {
+  public getCurrentTabGroup(): Box {
     return this.getCurrentTab().group;
   }
 
@@ -184,7 +184,7 @@ export class TabControllerRenderable extends BoxRenderable {
     return this.currentTabIndex;
   }
 
-  public getTabSelectElement(): TabSelectRenderable {
+  public getTabSelectElement(): TabSelect {
     return this.tabSelectElement;
   }
 

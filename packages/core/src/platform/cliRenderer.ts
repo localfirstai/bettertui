@@ -73,15 +73,15 @@ export type ThemeMode = "light" | "dark";
 type FrameCallback = (deltaTime: number) => void | Promise<void>;
 
 // Lazy import to avoid circular at module level
-let _RootRenderable: typeof import("../renderables/Box").RootRenderable | undefined;
+let _Root: typeof import("../renderables/Box").Root | undefined;
 
-function getRootRenderable() {
-  if (!_RootRenderable) {
+function getRoot() {
+  if (!_Root) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    _RootRenderable = require("../renderables/Box").RootRenderable;
+    _Root = require("../renderables/Box").Root;
   }
-  if (!_RootRenderable) throw new Error("RootRenderable could not be loaded");
-  return _RootRenderable;
+  if (!_Root) throw new Error("Root could not be loaded");
+  return _Root;
 }
 
 export class CliRenderer extends EventEmitter {
@@ -105,7 +105,7 @@ export class CliRenderer extends EventEmitter {
   private _frameInterval: ReturnType<typeof setTimeout> | null = null;
   private _frameCallbacks: Set<FrameCallback> = new Set();
   private _lifecyclePasses: Set<() => void> = new Set();
-  private _root: import("../renderables/Box").RootRenderable | null = null;
+  private _root: import("../renderables/Box").Root | null = null;
   private _console: TerminalConsole = new TerminalConsole();
   private _themeMode: ThemeMode = "dark";
   private _targetFps: number;
@@ -230,9 +230,9 @@ export class CliRenderer extends EventEmitter {
   }
 
   /** The scene root renderable. All top-level renderables should be added here. */
-  get root(): import("../renderables/Box").RootRenderable {
+  get root(): import("../renderables/Box").Root {
     if (!this._root) {
-      const Ctor = getRootRenderable();
+      const Ctor = getRoot();
       this._root = new Ctor(this);
     }
     return this._root;
@@ -384,7 +384,7 @@ export class CliRenderer extends EventEmitter {
         this._frameId++;
         this.emit(CliRenderEvents.FRAME, { frameId: this._frameId });
 
-        // Run lifecycle passes (e.g. TextRenderable syncing its node tree to the engine)
+        // Run lifecycle passes (e.g. Text syncing its node tree to the engine)
         for (const pass of this._lifecyclePasses) {
           try {
             pass();

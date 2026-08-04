@@ -1,14 +1,14 @@
 /**
- * SliderRenderable — a horizontal or vertical slider widget.
+ * Slider — a horizontal or vertical slider widget.
  */
 
-import { RenderableEvents, SliderRenderableEvents } from "../lib/renderableEvents";
+import { RenderableEvents, SliderEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
-export interface SliderRenderableOptions extends BoxOptions {
+export interface SliderOptions extends BoxOptions {
   orientation?: "horizontal" | "vertical";
   min?: number;
   max?: number;
@@ -21,9 +21,11 @@ export interface SliderRenderableOptions extends BoxOptions {
   onChange?: (value: number) => void;
 }
 
+export type SliderRenderableOptions = SliderOptions;
+
 let _sliderCounter = 0;
 
-export class SliderRenderable extends BoxRenderable {
+export class Slider extends Box {
   private _orientation: "horizontal" | "vertical";
   private _min: number;
   private _max: number;
@@ -37,7 +39,7 @@ export class SliderRenderable extends BoxRenderable {
   private _contentNodeId: number;
   private readonly _keyHandler: (key: RawKeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: SliderRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: SliderOptions = {}) {
     _sliderCounter++;
     super(renderer, {
       ...options,
@@ -73,7 +75,7 @@ export class SliderRenderable extends BoxRenderable {
       this._value = clamped;
       this._render();
       this._onChange?.(this._value);
-      this.emit(SliderRenderableEvents.CHANGE, this._value);
+      this.emit(SliderEvents.CHANGE, this._value);
     }
   }
 
@@ -212,4 +214,4 @@ export class SliderRenderable extends BoxRenderable {
   }
 }
 
-export { SliderRenderableEvents };
+export { SliderEvents };

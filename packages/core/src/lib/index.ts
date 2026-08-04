@@ -115,10 +115,10 @@ export type { TextChunk, StylableInput } from "./styledText";
 export {
   CliRenderEvents,
   RenderableEvents,
-  InputRenderableEvents,
-  SelectRenderableEvents,
-  TabSelectRenderableEvents,
-  SliderRenderableEvents,
+  InputEvents,
+  SelectEvents,
+  TabSelectEvents,
+  SliderEvents,
   LayoutEvents,
 } from "./renderableEvents";
 

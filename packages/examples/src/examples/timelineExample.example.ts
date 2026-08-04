@@ -1,11 +1,5 @@
 import { type Timeline, createTimeline } from "@bettertui/core";
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Local type extensions for APIs not yet in the core Timeline
@@ -36,19 +30,19 @@ class TimelineExample {
   private _subTimeline1: ExtendedTimeline;
   private _subTimeline2: ExtendedTimeline;
   private renderer: CliRenderer;
-  private boxObject: BoxRenderable;
-  private alternatingObject: BoxRenderable;
-  private parentContainer: BoxRenderable;
+  private boxObject: Box;
+  private alternatingObject: Box;
+  private parentContainer: Box;
 
-  private statusLine1: TextRenderable;
-  private statusLine2: TextRenderable;
-  private statusLine3: TextRenderable;
-  private statusLine4: TextRenderable;
-  private statusLine5: TextRenderable;
-  private statusLine6: TextRenderable;
-  private statusLine7: TextRenderable;
-  private statusLine8: TextRenderable;
-  private statusLine9: TextRenderable;
+  private statusLine1: Text;
+  private statusLine2: Text;
+  private statusLine3: Text;
+  private statusLine4: Text;
+  private statusLine5: Text;
+  private statusLine6: Text;
+  private statusLine7: Text;
+  private statusLine8: Text;
+  private statusLine9: Text;
 
   constructor(renderer: CliRenderer) {
     this.renderer = renderer;
@@ -70,13 +64,13 @@ class TimelineExample {
     this._mainTimeline.sync(this._subTimeline1, 0);
     this._mainTimeline.sync(this._subTimeline2, 3000);
 
-    this.parentContainer = new BoxRenderable(renderer, {
+    this.parentContainer = new Box(renderer, {
       id: "timeline-container",
       zIndex: 10,
     });
     this.renderer.root.add(this.parentContainer);
 
-    this.boxObject = new BoxRenderable(renderer, {
+    this.boxObject = new Box(renderer, {
       id: "box-object",
       position: "absolute",
       left: 10,
@@ -92,7 +86,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.boxObject);
 
-    const colorObject = new BoxRenderable(renderer, {
+    const colorObject = new Box(renderer, {
       id: "color-object",
       position: "absolute",
       left: 25,
@@ -108,7 +102,7 @@ class TimelineExample {
     });
     this.parentContainer.add(colorObject);
 
-    const physicsObject = new BoxRenderable(renderer, {
+    const physicsObject = new Box(renderer, {
       id: "physics-object",
       position: "absolute",
       left: 45,
@@ -124,7 +118,7 @@ class TimelineExample {
     });
     this.parentContainer.add(physicsObject);
 
-    this.alternatingObject = new BoxRenderable(renderer, {
+    this.alternatingObject = new Box(renderer, {
       id: "alternating-object",
       position: "absolute",
       left: 1,
@@ -140,7 +134,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.alternatingObject);
 
-    const mainTimelineBox = new BoxRenderable(renderer, {
+    const mainTimelineBox = new Box(renderer, {
       id: "main-timeline",
       position: "absolute",
       left: 2,
@@ -156,7 +150,7 @@ class TimelineExample {
     });
     this.parentContainer.add(mainTimelineBox);
 
-    const subTimeline1Box = new BoxRenderable(renderer, {
+    const subTimeline1Box = new Box(renderer, {
       id: "sub-timeline-1",
       position: "absolute",
       left: 2,
@@ -172,7 +166,7 @@ class TimelineExample {
     });
     this.parentContainer.add(subTimeline1Box);
 
-    const subTimeline2Box = new BoxRenderable(renderer, {
+    const subTimeline2Box = new Box(renderer, {
       id: "sub-timeline-2",
       position: "absolute",
       left: 35,
@@ -188,7 +182,7 @@ class TimelineExample {
     });
     this.parentContainer.add(subTimeline2Box);
 
-    const statusBox = new BoxRenderable(renderer, {
+    const statusBox = new Box(renderer, {
       id: "status",
       position: "absolute",
       left: 2,
@@ -204,7 +198,7 @@ class TimelineExample {
     });
     this.parentContainer.add(statusBox);
 
-    this.statusLine1 = new TextRenderable(renderer, {
+    this.statusLine1 = new Text(renderer, {
       id: "status-line1",
       content: "Timeline: Initializing...",
       position: "absolute",
@@ -215,7 +209,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine1);
 
-    this.statusLine2 = new TextRenderable(renderer, {
+    this.statusLine2 = new Text(renderer, {
       id: "status-line2",
       content: "Box Position: x=0.0, y=0.0",
       position: "absolute",
@@ -226,7 +220,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine2);
 
-    this.statusLine3 = new TextRenderable(renderer, {
+    this.statusLine3 = new Text(renderer, {
       id: "status-line3",
       content: "Box Scale/Rot: scale=1.0, rot=0.0",
       position: "absolute",
@@ -237,7 +231,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine3);
 
-    this.statusLine4 = new TextRenderable(renderer, {
+    this.statusLine4 = new Text(renderer, {
       id: "status-line4",
       content: "Color: rgb(255, 0, 0)",
       position: "absolute",
@@ -248,7 +242,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine4);
 
-    this.statusLine5 = new TextRenderable(renderer, {
+    this.statusLine5 = new Text(renderer, {
       id: "status-line5",
       content: "Color Opacity: 1.0",
       position: "absolute",
@@ -259,7 +253,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine5);
 
-    this.statusLine6 = new TextRenderable(renderer, {
+    this.statusLine6 = new Text(renderer, {
       id: "status-line6",
       content: "Physics: v=0.0, a=0.0, m=1.0",
       position: "absolute",
@@ -270,7 +264,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine6);
 
-    this.statusLine7 = new TextRenderable(renderer, {
+    this.statusLine7 = new Text(renderer, {
       id: "status-line7",
       content: "Progress: Main=0% Sub1=0% Sub2=0%",
       position: "absolute",
@@ -281,7 +275,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine7);
 
-    this.statusLine8 = new TextRenderable(renderer, {
+    this.statusLine8 = new Text(renderer, {
       id: "status-line8",
       content: "Example Value: 0.000 (0.0 → 0.5)",
       position: "absolute",
@@ -292,7 +286,7 @@ class TimelineExample {
     });
     this.parentContainer.add(this.statusLine8);
 
-    this.statusLine9 = new TextRenderable(renderer, {
+    this.statusLine9 = new Text(renderer, {
       id: "status-line9",
       content: "Alternating: x=65 (left/right loop=5)",
       position: "absolute",
@@ -317,11 +311,11 @@ class TimelineExample {
     const sub2Progress = (this._subTimeline2.currentTime / this._subTimeline2.duration) * 25;
 
     // Create progress indicators
-    const mainProgressBox = this.parentContainer.getRenderable("main-progress") as BoxRenderable;
+    const mainProgressBox = this.parentContainer.getRenderable("main-progress") as Box;
     if (mainProgressBox) {
       mainProgressBox.width = Math.max(1, Math.floor(mainProgress));
     } else {
-      const newMainProgressBox = new BoxRenderable(this.renderer, {
+      const newMainProgressBox = new Box(this.renderer, {
         id: "main-progress",
         position: "absolute",
         left: 3,
@@ -334,11 +328,11 @@ class TimelineExample {
       this.parentContainer.add(newMainProgressBox);
     }
 
-    const sub1ProgressBox = this.parentContainer.getRenderable("sub1-progress") as BoxRenderable;
+    const sub1ProgressBox = this.parentContainer.getRenderable("sub1-progress") as Box;
     if (sub1ProgressBox) {
       sub1ProgressBox.width = Math.max(1, Math.floor(sub1Progress));
     } else {
-      const newSub1ProgressBox = new BoxRenderable(this.renderer, {
+      const newSub1ProgressBox = new Box(this.renderer, {
         id: "sub1-progress",
         position: "absolute",
         left: 3,
@@ -351,11 +345,11 @@ class TimelineExample {
       this.parentContainer.add(newSub1ProgressBox);
     }
 
-    const sub2ProgressBox = this.parentContainer.getRenderable("sub2-progress") as BoxRenderable;
+    const sub2ProgressBox = this.parentContainer.getRenderable("sub2-progress") as Box;
     if (sub2ProgressBox) {
       sub2ProgressBox.width = Math.max(1, Math.floor(sub2Progress));
     } else {
-      const newSub2ProgressBox = new BoxRenderable(this.renderer, {
+      const newSub2ProgressBox = new Box(this.renderer, {
         id: "sub2-progress",
         position: "absolute",
         left: 36,
@@ -502,7 +496,7 @@ class TimelineExample {
           const b = Math.round(values.targets[0].blue);
 
           const hexColor = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-          const colorObject = this.parentContainer.getRenderable("color-object") as BoxRenderable;
+          const colorObject = this.parentContainer.getRenderable("color-object") as Box;
           if (colorObject) {
             colorObject.backgroundColor = hexColor;
           }
@@ -543,7 +537,7 @@ class TimelineExample {
           const opacity = values.targets[0].opacity;
 
           const hexColor = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-          const colorObject = this.parentContainer.getRenderable("color-object") as BoxRenderable;
+          const colorObject = this.parentContainer.getRenderable("color-object") as Box;
           if (colorObject) {
             colorObject.backgroundColor = hexColor;
           }
@@ -606,9 +600,7 @@ class TimelineExample {
           const acceleration = values.targets[0].acceleration;
           const mass = values.targets[0].mass;
           const velocityHeight = Math.max(1, Math.round(velocity / 6));
-          const physicsObject = this.parentContainer.getRenderable(
-            "physics-object",
-          ) as BoxRenderable;
+          const physicsObject = this.parentContainer.getRenderable("physics-object") as Box;
           if (physicsObject) {
             physicsObject.height = Math.min(6, velocityHeight);
           }
@@ -633,9 +625,7 @@ class TimelineExample {
           const mass = values.targets[0].mass;
 
           const velocityHeight = Math.max(1, Math.abs(Math.round(velocity / 4)));
-          const physicsObject = this.parentContainer.getRenderable(
-            "physics-object",
-          ) as BoxRenderable;
+          const physicsObject = this.parentContainer.getRenderable("physics-object") as Box;
           if (physicsObject) {
             physicsObject.height = Math.min(6, velocityHeight);
           }

@@ -1,12 +1,12 @@
 /**
- * SelectRenderable — a keyboard-navigable list selector.
+ * Select — a keyboard-navigable list selector.
  */
 
-import { RenderableEvents, SelectRenderableEvents } from "../lib/renderableEvents";
+import { RenderableEvents, SelectEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
 export interface SelectOption {
   name: string;
@@ -14,7 +14,7 @@ export interface SelectOption {
   value?: unknown;
 }
 
-export interface SelectRenderableOptions extends BoxOptions {
+export interface SelectOptions extends BoxOptions {
   options?: SelectOption[];
   selectedIndex?: number;
   backgroundColor?: ColorInput;
@@ -33,9 +33,11 @@ export interface SelectRenderableOptions extends BoxOptions {
   itemSpacing?: number;
 }
 
+export type SelectRenderableOptions = SelectOptions;
+
 let _selectCounter = 0;
 
-export class SelectRenderable extends BoxRenderable {
+export class Select extends Box {
   private _selectOptions: SelectOption[];
   private _selectedIndex: number;
   private _scrollOffset: number;
@@ -55,7 +57,7 @@ export class SelectRenderable extends BoxRenderable {
   private _contentNodeId: number;
   private readonly _keyHandler: (key: RawKeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: SelectRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: SelectOptions = {}) {
     _selectCounter++;
     super(renderer, {
       ...options,
@@ -186,7 +188,7 @@ export class SelectRenderable extends BoxRenderable {
   selectCurrent(): void {
     const opt = this.getSelectedOption();
     if (opt) {
-      this.emit(SelectRenderableEvents.ITEM_SELECTED, this._selectedIndex, opt);
+      this.emit(SelectEvents.ITEM_SELECTED, this._selectedIndex, opt);
     }
   }
 
@@ -206,7 +208,7 @@ export class SelectRenderable extends BoxRenderable {
       this._updateScroll();
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(SelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(SelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
@@ -224,7 +226,7 @@ export class SelectRenderable extends BoxRenderable {
       this._updateScroll();
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(SelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(SelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
@@ -399,4 +401,4 @@ export class SelectRenderable extends BoxRenderable {
   }
 }
 
-export { SelectRenderableEvents };
+export { SelectEvents };

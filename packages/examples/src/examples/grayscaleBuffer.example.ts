@@ -2,8 +2,8 @@
 
 import {
   type CliRenderer,
+  FrameBuffer,
   type FrameBufferLike,
-  FrameBufferRenderable,
   type KeyEvent,
   RGBA,
   createCliRenderer,
@@ -153,7 +153,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   let time = 0;
   let paused = false;
 
-  const framebufferRenderable = new FrameBufferRenderable(renderer, {
+  const framebufferRenderable = new FrameBuffer(renderer, {
     id: "grayscale-demo",
     width: WIDTH,
     height: HEIGHT,

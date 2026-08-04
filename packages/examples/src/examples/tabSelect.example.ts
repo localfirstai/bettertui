@@ -1,25 +1,25 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   RenderableEvents,
   type TabOption,
-  TabSelectRenderable,
-  TabSelectRenderableEvents,
+  TabSelect,
+  TabSelectEvents,
   bold,
   createCliRenderer,
   fg,
   t,
 } from "@bettertui/core";
-import { TextRenderable } from "@bettertui/core";
+import { Text } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let tabSelect: TabSelectRenderable | null = null;
+let tabSelect: TabSelect | null = null;
 let renderer: CliRenderer | null = null;
 // biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler
 let keyboardHandler: ((key: any) => void) | null = null;
-let parentContainer: BoxRenderable | null = null;
-let keyLegendDisplay: TextRenderable | null = null;
-let statusDisplay: TextRenderable | null = null;
+let parentContainer: Box | null = null;
+let keyLegendDisplay: Text | null = null;
+let statusDisplay: Text | null = null;
 let lastSelectedItem: TabOption | null = null;
 
 const tabOptions: TabOption[] = [
@@ -86,13 +86,13 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#001122");
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "tab-select-container",
     zIndex: 10,
   });
   renderer.root.add(parentContainer);
 
-  tabSelect = new TabSelectRenderable(renderer, {
+  tabSelect = new TabSelect(renderer, {
     id: "main-tabs",
     position: "absolute",
     left: 5,
@@ -114,7 +114,7 @@ export function run(rendererInstance: CliRenderer): void {
 
   renderer.root.add(tabSelect);
 
-  keyLegendDisplay = new TextRenderable(renderer, {
+  keyLegendDisplay = new Text(renderer, {
     id: "key-legend",
     content: t``,
     width: 40,
@@ -128,7 +128,7 @@ export function run(rendererInstance: CliRenderer): void {
   parentContainer.add(keyLegendDisplay);
 
   // Create status display
-  statusDisplay = new TextRenderable(renderer, {
+  statusDisplay = new Text(renderer, {
     id: "status-display",
     content: t``,
     width: 80,
@@ -140,14 +140,11 @@ export function run(rendererInstance: CliRenderer): void {
   });
   parentContainer.add(statusDisplay);
 
-  tabSelect.on(
-    TabSelectRenderableEvents.SELECTION_CHANGED,
-    (_index: number, _option: TabOption) => {
-      updateDisplays();
-    },
-  );
+  tabSelect.on(TabSelectEvents.SELECTION_CHANGED, (_index: number, _option: TabOption) => {
+    updateDisplays();
+  });
 
-  tabSelect.on(TabSelectRenderableEvents.ITEM_SELECTED, (_index: number, option: TabOption) => {
+  tabSelect.on(TabSelectEvents.ITEM_SELECTED, (_index: number, option: TabOption) => {
     lastSelectedItem = option;
     updateDisplays();
   });

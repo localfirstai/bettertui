@@ -1,10 +1,4 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 interface LayoutDemo {
@@ -14,21 +8,21 @@ interface LayoutDemo {
 }
 
 let renderer: CliRenderer | null = null;
-let header: BoxRenderable | null = null;
-let headerText: TextRenderable | null = null;
-let contentArea: BoxRenderable | null = null;
-let sidebar: BoxRenderable | null = null;
-let sidebarText: TextRenderable | null = null;
-let mainContent: BoxRenderable | null = null;
-let mainContentText: TextRenderable | null = null;
-let rightSidebar: BoxRenderable | null = null;
-let rightSidebarText: TextRenderable | null = null;
-let footer: BoxRenderable | null = null;
-let footerText: TextRenderable | null = null;
-let moveableElement: BoxRenderable | null = null;
-let moveableText: TextRenderable | null = null;
-let absolutePositionedBox: BoxRenderable | null = null;
-let absolutePositionedText: TextRenderable | null = null;
+let header: Box | null = null;
+let headerText: Text | null = null;
+let contentArea: Box | null = null;
+let sidebar: Box | null = null;
+let sidebarText: Text | null = null;
+let mainContent: Box | null = null;
+let mainContentText: Text | null = null;
+let rightSidebar: Box | null = null;
+let rightSidebarText: Text | null = null;
+let footer: Box | null = null;
+let footerText: Text | null = null;
+let moveableElement: Box | null = null;
+let moveableText: Text | null = null;
+let absolutePositionedBox: Box | null = null;
+let absolutePositionedText: Text | null = null;
 let currentDemoIndex = 0;
 let autoAdvanceTimeout: ReturnType<typeof setTimeout> | null = null;
 let autoplayEnabled = true;
@@ -59,7 +53,7 @@ const layoutDemos: LayoutDemo[] = [
   },
 ];
 
-function resetElementLayout(element: BoxRenderable): void {
+function resetElementLayout(element: Box): void {
   element.flexBasis = "auto";
   element.flexGrow = 0;
   element.width = "auto";
@@ -208,7 +202,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#001122");
 
-  header = new BoxRenderable(renderer, {
+  header = new Box(renderer, {
     id: "header",
     zIndex: 0,
     width: "auto",
@@ -219,7 +213,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  headerText = new TextRenderable(renderer, {
+  headerText = new Text(renderer, {
     id: "header-text",
     content: "LAYOUT DEMO",
     fg: "#ffffff",
@@ -229,7 +223,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   header.add(headerText);
 
-  contentArea = new BoxRenderable(renderer, {
+  contentArea = new Box(renderer, {
     id: "content-area",
     zIndex: 0,
     width: "auto",
@@ -239,7 +233,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     flexShrink: 1,
   });
 
-  sidebar = new BoxRenderable(renderer, {
+  sidebar = new Box(renderer, {
     id: "sidebar",
     zIndex: 0,
     width: "auto",
@@ -254,7 +248,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  sidebarText = new TextRenderable(renderer, {
+  sidebarText = new Text(renderer, {
     id: "sidebar-text",
     content: "SIDEBAR",
     fg: "#ffffff",
@@ -264,7 +258,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   sidebar.add(sidebarText);
 
-  mainContent = new BoxRenderable(renderer, {
+  mainContent = new Box(renderer, {
     id: "main-content",
     zIndex: 0,
     width: "auto",
@@ -279,7 +273,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  mainContentText = new TextRenderable(renderer, {
+  mainContentText = new Text(renderer, {
     id: "main-content-text",
     content: "MAIN CONTENT",
     fg: "#1e293b",
@@ -289,7 +283,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   mainContent.add(mainContentText);
 
-  rightSidebar = new BoxRenderable(renderer, {
+  rightSidebar = new Box(renderer, {
     id: "right-sidebar",
     zIndex: 0,
     width: "auto",
@@ -304,7 +298,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  rightSidebarText = new TextRenderable(renderer, {
+  rightSidebarText = new Text(renderer, {
     id: "right-sidebar-text",
     content: "RIGHT",
     fg: "#ffffff",
@@ -314,7 +308,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   rightSidebar.add(rightSidebarText);
 
-  footer = new BoxRenderable(renderer, {
+  footer = new Box(renderer, {
     id: "footer",
     zIndex: 0,
     width: "auto",
@@ -329,7 +323,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  footerText = new TextRenderable(renderer, {
+  footerText = new Text(renderer, {
     id: "footer-text",
     content: "",
     fg: "#ffffff",
@@ -339,7 +333,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   footer.add(footerText);
 
-  moveableElement = new BoxRenderable(renderer, {
+  moveableElement = new Box(renderer, {
     id: "moveable",
     zIndex: 100,
     width: 8,
@@ -356,7 +350,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  moveableText = new TextRenderable(renderer, {
+  moveableText = new Text(renderer, {
     id: "moveable-text",
     content: "MOVE",
     fg: "#ffffff",
@@ -366,7 +360,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   moveableElement.add(moveableText);
 
-  absolutePositionedBox = new BoxRenderable(renderer, {
+  absolutePositionedBox = new Box(renderer, {
     id: "absolute-positioned-box",
     zIndex: 150,
     width: 20,
@@ -383,7 +377,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  absolutePositionedText = new TextRenderable(renderer, {
+  absolutePositionedText = new Text(renderer, {
     id: "absolute-positioned-text",
     content: "BOTTOM RIGHT",
     fg: "#ffffff",

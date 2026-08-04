@@ -1,15 +1,15 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  LineNumberRenderable,
+  LineNumber,
   type RawKeyEvent,
-  TextRenderable,
-  TextareaRenderable,
+  Text,
+  Textarea,
   createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-const initialContent = `Welcome to the TextareaRenderable Demo!
+const initialContent = `Welcome to the Textarea Demo!
 
 This is an interactive text editor powered by EditBuffer and EditorView.
 
@@ -73,10 +73,10 @@ FEATURES:
 Press ESC to return to main menu`;
 
 let renderer: CliRenderer | null = null;
-let parentContainer: BoxRenderable | null = null;
-let editor: TextareaRenderable | null = null;
-let editorWithLines: LineNumberRenderable | null = null;
-let statusText: TextRenderable | null = null;
+let parentContainer: Box | null = null;
+let editor: Textarea | null = null;
+let editorWithLines: LineNumber | null = null;
+let statusText: Text | null = null;
 let highlightsEnabled = false;
 let diagnosticsEnabled = false;
 let localWrapMode: "word" | "char" | "none" = "word";
@@ -87,26 +87,26 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#0D1117");
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  const editorBox = new BoxRenderable(renderer, {
+  const editorBox = new Box(renderer, {
     id: "editor-box",
     borderStyle: "single",
     borderColor: "#6BCF7F",
     backgroundColor: "#0D1117",
-    title: "Interactive Editor (TextareaRenderable)",
+    title: "Interactive Editor (Textarea)",
     titleAlignment: "left",
     border: true,
   });
   parentContainer.add(editorBox);
 
   // Create interactive editor
-  editor = new TextareaRenderable(renderer, {
+  editor = new Textarea(renderer, {
     id: "editor",
     initialValue: initialContent,
     textColor: "#F0F6FC",
@@ -116,7 +116,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     placeholder: "Enter text here...",
   });
 
-  editorWithLines = new LineNumberRenderable(renderer, {
+  editorWithLines = new LineNumber(renderer, {
     id: "editor-lines",
     target: editor,
     minWidth: 3,
@@ -129,7 +129,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
 
   editorBox.add(editorWithLines);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "status",
     content: "",
     fg: "#A5D6FF",

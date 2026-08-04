@@ -2,15 +2,15 @@
 
 import { writeFile } from "node:fs/promises";
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
   type PasteEvent,
-  TextRenderable,
+  Text,
   createCliRenderer,
   decodePasteBytes,
 } from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
 import { env, registerEnvVar } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
@@ -72,15 +72,15 @@ interface SavedEventRecord {
   event: DebugSnapshot;
 }
 
-let mainContainer: BoxRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let footerText: TextRenderable | null = null;
-let eventFeed: ScrollBoxRenderable | null = null;
-let eventListText: TextRenderable | null = null;
-let detailFeed: ScrollBoxRenderable | null = null;
-let detailText: TextRenderable | null = null;
-let helpModal: BoxRenderable | null = null;
-let helpContent: TextRenderable | null = null;
+let mainContainer: Box | null = null;
+let statusText: Text | null = null;
+let footerText: Text | null = null;
+let eventFeed: ScrollBox | null = null;
+let eventListText: Text | null = null;
+let detailFeed: ScrollBox | null = null;
+let detailText: Text | null = null;
+let helpModal: Box | null = null;
+let helpContent: Text | null = null;
 
 let showingHelp = false;
 let showJson = false;
@@ -540,7 +540,7 @@ export function run(renderer: CliRenderer): void {
     lastRawInput = cachedDebugInputs[cachedDebugInputs.length - 1] ?? null;
   }
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "keypress-debug-main",
     width: "100%",
     height: "100%",
@@ -548,7 +548,7 @@ export function run(renderer: CliRenderer): void {
     flexDirection: "column",
   });
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "keypress-debug-status",
     width: "100%",
     height: 2,
@@ -558,7 +558,7 @@ export function run(renderer: CliRenderer): void {
     selectable: false,
   });
 
-  const body = new BoxRenderable(renderer, {
+  const body = new Box(renderer, {
     id: "keypress-debug-body",
     width: "100%",
     flexGrow: 1,
@@ -566,7 +566,7 @@ export function run(renderer: CliRenderer): void {
     flexDirection: "row",
   });
 
-  eventFeed = new ScrollBoxRenderable(renderer, {
+  eventFeed = new ScrollBox(renderer, {
     id: "keypress-debug-feed",
     flexGrow: 1,
     flexShrink: 1,
@@ -584,7 +584,7 @@ export function run(renderer: CliRenderer): void {
   // biome-ignore lint/suspicious/noExplicitAny: setting internal ScrollBox option
   (eventFeed as any).verticalScrollbarOptions = { visible: false };
 
-  eventListText = new TextRenderable(renderer, {
+  eventListText = new Text(renderer, {
     id: "keypress-debug-feed-text",
     width: "100%",
     wrapMode: "none",
@@ -594,7 +594,7 @@ export function run(renderer: CliRenderer): void {
   });
   eventFeed.add(eventListText);
 
-  detailFeed = new ScrollBoxRenderable(renderer, {
+  detailFeed = new ScrollBox(renderer, {
     id: "keypress-debug-detail-feed",
     width: "42%",
     flexShrink: 0,
@@ -611,7 +611,7 @@ export function run(renderer: CliRenderer): void {
   // biome-ignore lint/suspicious/noExplicitAny: setting internal ScrollBox option
   (detailFeed as any).verticalScrollbarOptions = { visible: false };
 
-  detailText = new TextRenderable(renderer, {
+  detailText = new Text(renderer, {
     id: "keypress-debug-detail-text",
     width: "100%",
     wrapMode: "word",
@@ -620,7 +620,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailFeed.add(detailText);
 
-  footerText = new TextRenderable(renderer, {
+  footerText = new Text(renderer, {
     id: "keypress-debug-footer",
     width: "100%",
     height: 1,
@@ -636,7 +636,7 @@ export function run(renderer: CliRenderer): void {
   mainContainer.add(footerText);
   renderer.root.add(mainContainer);
 
-  helpModal = new BoxRenderable(renderer, {
+  helpModal = new Box(renderer, {
     id: "keypress-debug-help-modal",
     position: "absolute",
     left: "12%",
@@ -654,7 +654,7 @@ export function run(renderer: CliRenderer): void {
     zIndex: 100,
   });
 
-  helpContent = new TextRenderable(renderer, {
+  helpContent = new Text(renderer, {
     id: "keypress-debug-help-content",
     width: "100%",
     wrapMode: "word",

@@ -1,10 +1,4 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
 import { parseColor } from "@bettertui/core";
 import { type HASTElement, hastToStyledText } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
@@ -15,21 +9,21 @@ const typedExampleHAST = exampleHAST as HASTElement;
 
 let renderer: CliRenderer | null = null;
 let keyboardHandler: ((key: KeyEvent) => void) | null = null;
-let parentContainer: BoxRenderable | null = null;
+let parentContainer: Box | null = null;
 
 export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.start();
   renderer.setBackgroundColor("#0D1117");
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  const titleBox = new BoxRenderable(renderer, {
+  const titleBox = new Box(renderer, {
     id: "title-box",
     height: 3,
     borderStyle: "double",
@@ -41,7 +35,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
   parentContainer.add(titleBox);
 
-  const instructionsText = new TextRenderable(renderer, {
+  const instructionsText = new Text(renderer, {
     id: "instructions",
     content:
       "ESC to return | R to re-transform | Demonstrating HAST tree conversion to syntax-highlighted text",
@@ -49,7 +43,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
   titleBox.add(instructionsText);
 
-  const codeBox = new BoxRenderable(renderer, {
+  const codeBox = new Box(renderer, {
     id: "code-box",
     borderStyle: "single",
     borderColor: "#6BCF7F",
@@ -79,7 +73,7 @@ export function run(rendererInstance: CliRenderer): void {
   const transformEnd = performance.now();
   const transformTime = (transformEnd - transformStart).toFixed(2);
 
-  const codeDisplay = new TextRenderable(renderer, {
+  const codeDisplay = new Text(renderer, {
     id: "code-display",
     content: styledText,
     bg: "#0D1117",
@@ -89,7 +83,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
   codeBox.add(codeDisplay);
 
-  const timingText = new TextRenderable(renderer, {
+  const timingText = new Text(renderer, {
     id: "timing-display",
     content: `HAST transformation time: ${transformTime}ms (Cache: ${syntaxStyle.getCacheSize()} entries) (Press 'R' to re-transform)`,
     fg: "#A8E6CF",

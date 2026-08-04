@@ -1,12 +1,12 @@
 /**
- * ScrollBoxRenderable — a scrollable container widget.
+ * ScrollBox — a scrollable container widget.
  */
 
 import { RenderableEvents } from "../lib/renderableEvents";
 import type { ColorInput } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
 export interface ScrollBarOptions extends BoxOptions {
   orientation?: "vertical" | "horizontal";
@@ -19,7 +19,7 @@ export interface ScrollBarOptions extends BoxOptions {
   };
 }
 
-export class ScrollBarRenderable extends BoxRenderable {
+export class ScrollBar extends Box {
   private _orientation: "vertical" | "horizontal";
   private _showArrows: boolean;
   private _scrollPosition = 0;
@@ -82,11 +82,11 @@ export interface ScrollBoxOptions extends BoxOptions {
 
 let _scrollBoxCounter = 0;
 
-export class ScrollBoxRenderable extends BoxRenderable {
-  public readonly content: BoxRenderable;
-  public readonly viewport: BoxRenderable;
-  public readonly verticalScrollBar: ScrollBarRenderable;
-  public readonly horizontalScrollBar: ScrollBarRenderable;
+export class ScrollBox extends Box {
+  public readonly content: Box;
+  public readonly viewport: Box;
+  public readonly verticalScrollBar: ScrollBar;
+  public readonly horizontalScrollBar: ScrollBar;
   private _scrollTop = 0;
   private _scrollLeft = 0;
   private _stickyScroll: boolean;
@@ -102,7 +102,7 @@ export class ScrollBoxRenderable extends BoxRenderable {
     });
 
     // Create viewport (clip container)
-    this.viewport = new BoxRenderable(renderer, {
+    this.viewport = new Box(renderer, {
       id: `${this._id}-viewport`,
       width: "100%",
       height: "100%",
@@ -112,7 +112,7 @@ export class ScrollBoxRenderable extends BoxRenderable {
     super.add(this.viewport);
 
     // Create content (scrollable inner)
-    this.content = new BoxRenderable(renderer, {
+    this.content = new Box(renderer, {
       id: `${this._id}-content`,
       flexDirection: "column",
       ...(options.contentOptions ?? {}),
@@ -120,7 +120,7 @@ export class ScrollBoxRenderable extends BoxRenderable {
     this.viewport.add(this.content);
 
     // Scroll bars
-    this.verticalScrollBar = new ScrollBarRenderable(renderer, {
+    this.verticalScrollBar = new ScrollBar(renderer, {
       id: `${this._id}-vscroll`,
       orientation: "vertical",
       width: 1,
@@ -128,7 +128,7 @@ export class ScrollBoxRenderable extends BoxRenderable {
       ...(options.verticalScrollbarOptions ?? options.scrollbarOptions ?? {}),
     });
 
-    this.horizontalScrollBar = new ScrollBarRenderable(renderer, {
+    this.horizontalScrollBar = new ScrollBar(renderer, {
       id: `${this._id}-hscroll`,
       orientation: "horizontal",
       height: 1,
@@ -175,15 +175,15 @@ export class ScrollBoxRenderable extends BoxRenderable {
   }
 
   // Delegate add/remove to content
-  override add(child: BoxRenderable, index?: number): void {
+  override add(child: Box, index?: number): void {
     this.content.add(child, index);
   }
 
-  override remove(child: BoxRenderable): void {
+  override remove(child: Box): void {
     this.content.remove(child);
   }
 
-  override getRenderable(id: string): BoxRenderable | undefined {
+  override getRenderable(id: string): Box | undefined {
     if (this._id === id) return this;
     return this.viewport.getRenderable(id) ?? super.getRenderable(id);
   }

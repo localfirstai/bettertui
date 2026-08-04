@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 
 import {
+  Box,
   type BoxOptions,
-  BoxRenderable,
   type CliRenderer,
-  FrameBufferRenderable,
+  FrameBuffer,
   type MouseEvent,
   RGBA,
-  TextRenderable,
+  Text,
   createCliRenderer,
   createTimeline,
   t,
@@ -22,9 +22,9 @@ interface TrailCell {
 }
 
 let demoContainer: MouseInteractionFrameBuffer | null = null;
-let titleText: TextRenderable | null = null;
-let instructionsText: TextRenderable | null = null;
-let draggableBoxes: BoxRenderable[] = [];
+let titleText: Text | null = null;
+let instructionsText: Text | null = null;
+let draggableBoxes: Box[] = [];
 let nextZIndex = 101;
 
 function DraggableBox(
@@ -37,8 +37,8 @@ function DraggableBox(
     color: RGBA;
     label: string;
   },
-  _children?: BoxRenderable,
-): BoxRenderable {
+  _children?: Box,
+): Box {
   const bgColor = RGBA.fromValues(props.color.r, props.color.g, props.color.b, 0.8);
   const borderColor = RGBA.fromValues(
     Math.min(1, props.color.r * 1.2),
@@ -61,7 +61,7 @@ function DraggableBox(
   let dragOffsetX = 0;
   let dragOffsetY = 0;
 
-  const box = new BoxRenderable(rendererArg, {
+  const box = new Box(rendererArg, {
     ...props,
     position: "absolute",
     left: props.x,
@@ -132,7 +132,7 @@ function DraggableBox(
   return box;
 }
 
-class MouseInteractionFrameBuffer extends FrameBufferRenderable {
+class MouseInteractionFrameBuffer extends FrameBuffer {
   private readonly trailCells = new Map<string, TrailCell>();
   private readonly activatedCells = new Set<string>();
   private readonly TRAIL_FADE_DURATION = 3000;
@@ -247,13 +247,13 @@ export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor("#0f0f23");
 
-  const mainGroup = new BoxRenderable(renderer, {
+  const mainGroup = new Box(renderer, {
     id: "mouse-demo-main-group",
     zIndex: 10,
   });
   renderer.root.add(mainGroup);
 
-  titleText = new TextRenderable(renderer, {
+  titleText = new Text(renderer, {
     id: "mouse_demo_title",
     content: "Mouse Interaction Demo with Draggable Objects",
     width: "100%",
@@ -265,7 +265,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(titleText);
 
-  instructionsText = new TextRenderable(renderer, {
+  instructionsText = new Text(renderer, {
     id: "mouse_demo_instructions",
     content: t`Drag boxes around • Move mouse: turquoise trails
 Hold + move: orange drag trails • Click cells: toggle pink

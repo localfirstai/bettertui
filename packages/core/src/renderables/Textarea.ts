@@ -1,12 +1,12 @@
 /**
- * TextareaRenderable — a multi-line text editor widget.
+ * Textarea — a multi-line text editor widget.
  */
 
-import { InputRenderableEvents, RenderableEvents } from "../lib/renderableEvents";
+import { InputEvents, RenderableEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
 /** Minimal extmarks controller stub for type compatibility. */
 export interface ExtmarksController {
@@ -64,7 +64,7 @@ export interface TextareaOptions extends BoxOptions {
 
 let _textareaCounter = 0;
 
-export class TextareaRenderable extends BoxRenderable {
+export class Textarea extends Box {
   protected _text: string;
   protected _cursorLine = 0;
   protected _cursorCol = 0;
@@ -152,7 +152,7 @@ export class TextareaRenderable extends BoxRenderable {
     this._text = lines.join("\n");
     this._cursorCol += text.length;
     this._render();
-    this.emit(InputRenderableEvents.INPUT, this._text);
+    this.emit(InputEvents.INPUT, this._text);
   }
 
   newLine(): boolean {
@@ -166,14 +166,14 @@ export class TextareaRenderable extends BoxRenderable {
     this._cursorLine++;
     this._cursorCol = 0;
     this._render();
-    this.emit(InputRenderableEvents.INPUT, this._text);
+    this.emit(InputEvents.INPUT, this._text);
     return true;
   }
 
   submit(): boolean {
     const current = this._text;
-    this.emit(InputRenderableEvents.CHANGE, current);
-    this.emit(InputRenderableEvents.ENTER, current);
+    this.emit(InputEvents.CHANGE, current);
+    this.emit(InputEvents.ENTER, current);
     return true;
   }
 
@@ -203,7 +203,7 @@ export class TextareaRenderable extends BoxRenderable {
       });
     }
     this._render();
-    this.emit(InputRenderableEvents.CHANGE, current);
+    this.emit(InputEvents.CHANGE, current);
     this.emit(RenderableEvents.BLURRED, this);
   }
 
@@ -261,7 +261,7 @@ export class TextareaRenderable extends BoxRenderable {
         this._text = lines.join("\n");
         this._cursorCol--;
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._text);
+        this.emit(InputEvents.INPUT, this._text);
       } else if (this._cursorLine > 0) {
         const prevLine = lines[this._cursorLine - 1] ?? "";
         const curLine = lines[this._cursorLine] ?? "";
@@ -271,7 +271,7 @@ export class TextareaRenderable extends BoxRenderable {
         this._cursorLine--;
         this._cursorCol = newCol;
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._text);
+        this.emit(InputEvents.INPUT, this._text);
       }
       return;
     }
@@ -323,4 +323,4 @@ export class TextareaRenderable extends BoxRenderable {
   }
 }
 
-export { InputRenderableEvents };
+export { InputEvents };

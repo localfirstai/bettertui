@@ -1,41 +1,33 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  TextRenderable,
-  bold,
-  createCliRenderer,
-  fg,
-  t,
-} from "@bettertui/core";
-import { SliderRenderable } from "@bettertui/core";
+import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
+import { Slider } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let horizontalSlider1: SliderRenderable | null = null;
-let horizontalSlider2: SliderRenderable | null = null;
-let horizontalSlider3: SliderRenderable | null = null;
-let verticalSlider1: SliderRenderable | null = null;
-let verticalSlider2: SliderRenderable | null = null;
-let verticalSlider3: SliderRenderable | null = null;
-let animatedVerticalSlider: SliderRenderable | null = null;
+let horizontalSlider1: Slider | null = null;
+let horizontalSlider2: Slider | null = null;
+let horizontalSlider3: Slider | null = null;
+let verticalSlider1: Slider | null = null;
+let verticalSlider2: Slider | null = null;
+let verticalSlider3: Slider | null = null;
+let animatedVerticalSlider: Slider | null = null;
 let renderer: CliRenderer | null = null;
-let mainContainer: BoxRenderable | null = null;
-let instructionsBox: BoxRenderable | null = null;
+let mainContainer: Box | null = null;
+let instructionsBox: Box | null = null;
 // biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler signature
 let keyboardHandler: ((key: any) => void) | null = null;
 let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
 let animationTime = 0;
 
-let _lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
+let _lastActionText = "Welcome to Slider demo! Use mouse to interact with sliders.";
 let _lastActionColor = "#FFCC00";
 
 // Value display elements
-let h1ValueText: TextRenderable | null = null;
-let h2ValueText: TextRenderable | null = null;
-let h3ValueText: TextRenderable | null = null;
-let v1ValueText: TextRenderable | null = null;
-let v2ValueText: TextRenderable | null = null;
-let v3ValueText: TextRenderable | null = null;
-let vAValueText: TextRenderable | null = null;
+let h1ValueText: Text | null = null;
+let h2ValueText: Text | null = null;
+let h3ValueText: Text | null = null;
+let v1ValueText: Text | null = null;
+let v2ValueText: Text | null = null;
+let v3ValueText: Text | null = null;
+let vAValueText: Text | null = null;
 
 function updateDisplays() {
   // Update individual slider value displays
@@ -91,7 +83,7 @@ function focusSlider(index: number) {
   verticalSlider3?.blur();
   animatedVerticalSlider?.blur();
 
-  let slider: SliderRenderable | null = null;
+  let slider: Slider | null = null;
   let sliderName = "";
 
   switch (index) {
@@ -138,7 +130,7 @@ export function run(rendererInstance: CliRenderer): void {
   renderer.setBackgroundColor("#1a1b26");
   renderer.start();
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "slider-demo-main-container",
     flexGrow: 1,
     maxHeight: "100%",
@@ -149,7 +141,7 @@ export function run(rendererInstance: CliRenderer): void {
   renderer.root.add(mainContainer);
 
   // Create sliders container
-  const slidersContainer = new BoxRenderable(renderer, {
+  const slidersContainer = new Box(renderer, {
     id: "sliders-container",
     width: "100%",
     flexGrow: 1,
@@ -159,7 +151,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
 
   // Horizontal Slider 1 - 1-height (very thin) - now H1
-  const h1Container = new BoxRenderable(renderer, {
+  const h1Container = new Box(renderer, {
     id: "h1-container",
     width: "100%",
     flexDirection: "column",
@@ -168,15 +160,15 @@ export function run(rendererInstance: CliRenderer): void {
     padding: 1,
   });
 
-  const h1Label = new TextRenderable(renderer, {
+  const h1Label = new Text(renderer, {
     content: t`${bold(fg("#e0af68")("H1"))} ${fg("#565f89")("- 1h×100w (0-50)")}`,
   });
 
-  h1ValueText = new TextRenderable(renderer, {
+  h1ValueText = new Text(renderer, {
     content: t`${bold(fg("#e0af68")("Value:"))} 25.0`,
   });
 
-  horizontalSlider1 = new SliderRenderable(renderer, {
+  horizontalSlider1 = new Slider(renderer, {
     id: "horizontal-slider-1",
     orientation: "horizontal",
     width: "100%",
@@ -199,7 +191,7 @@ export function run(rendererInstance: CliRenderer): void {
   h1Container.add(horizontalSlider1);
 
   // Horizontal Slider 2 - 5-height (thick) - now H2
-  const h2Container = new BoxRenderable(renderer, {
+  const h2Container = new Box(renderer, {
     id: "h2-container",
     width: "100%",
     flexDirection: "column",
@@ -208,15 +200,15 @@ export function run(rendererInstance: CliRenderer): void {
     padding: 1,
   });
 
-  const h2Label = new TextRenderable(renderer, {
+  const h2Label = new Text(renderer, {
     content: t`${bold(fg("#bb9af7")("H2"))} ${fg("#565f89")("- 5h×100w (0-200)")}`,
   });
 
-  h2ValueText = new TextRenderable(renderer, {
+  h2ValueText = new Text(renderer, {
     content: t`${bold(fg("#bb9af7")("Value:"))} 100.0`,
   });
 
-  horizontalSlider2 = new SliderRenderable(renderer, {
+  horizontalSlider2 = new Slider(renderer, {
     id: "horizontal-slider-2",
     orientation: "horizontal",
     width: "100%",
@@ -239,7 +231,7 @@ export function run(rendererInstance: CliRenderer): void {
   h2Container.add(horizontalSlider2);
 
   // Horizontal Slider 3 - Animated (sub-cell rendering) - now H3
-  const h3Container = new BoxRenderable(renderer, {
+  const h3Container = new Box(renderer, {
     id: "h3-container",
     width: "100%",
     flexDirection: "column",
@@ -248,15 +240,15 @@ export function run(rendererInstance: CliRenderer): void {
     padding: 1,
   });
 
-  const h3Label = new TextRenderable(renderer, {
+  const h3Label = new Text(renderer, {
     content: t`${bold(fg("#FF6B6B")("H3"))} ${fg("#565f89")("- 1h×80w (animated, sub-cell rendering)")}`,
   });
 
-  h3ValueText = new TextRenderable(renderer, {
+  h3ValueText = new Text(renderer, {
     content: t`${bold(fg("#FF6B6B")("Value:"))} 25.00`,
   });
 
-  horizontalSlider3 = new SliderRenderable(renderer, {
+  horizontalSlider3 = new Slider(renderer, {
     id: "horizontal-slider-3",
     orientation: "horizontal",
     height: 1,
@@ -277,7 +269,7 @@ export function run(rendererInstance: CliRenderer): void {
   h3Container.add(horizontalSlider3);
 
   // Vertical sliders container
-  const verticalContainer = new BoxRenderable(renderer, {
+  const verticalContainer = new Box(renderer, {
     id: "vertical-container",
     width: "100%",
     height: 17,
@@ -288,7 +280,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
 
   // Vertical Slider 1 - 1-width (very narrow)
-  const v1Container = new BoxRenderable(renderer, {
+  const v1Container = new Box(renderer, {
     id: "v1-container",
     width: 8,
     height: "100%",
@@ -299,20 +291,20 @@ export function run(rendererInstance: CliRenderer): void {
     padding: 1,
   });
 
-  const v1SliderWrapper = new BoxRenderable(renderer, {
+  const v1SliderWrapper = new Box(renderer, {
     id: "v1-slider-wrapper",
     flexDirection: "row",
     height: "100%",
     flexGrow: 1,
   });
 
-  const v1Label = new TextRenderable(renderer, {
+  const v1Label = new Text(renderer, {
     content: t`${bold(fg("#f7768e")("V1"))}
 ${fg("#565f89")("1w")}`,
     width: 3,
   });
 
-  verticalSlider1 = new SliderRenderable(renderer, {
+  verticalSlider1 = new Slider(renderer, {
     id: "vertical-slider-1",
     orientation: "vertical",
     width: 1,
@@ -330,7 +322,7 @@ ${fg("#565f89")("1w")}`,
     },
   });
 
-  v1ValueText = new TextRenderable(renderer, {
+  v1ValueText = new Text(renderer, {
     content: t`${bold(fg("#f7768e")("0.0"))}`,
   });
 
@@ -340,7 +332,7 @@ ${fg("#565f89")("1w")}`,
   v1Container.add(v1ValueText);
 
   // Vertical Slider 2 - 3-width (medium)
-  const v2Container = new BoxRenderable(renderer, {
+  const v2Container = new Box(renderer, {
     id: "v2-container",
     width: 10,
     height: "100%",
@@ -351,20 +343,20 @@ ${fg("#565f89")("1w")}`,
     padding: 1,
   });
 
-  const v2SliderWrapper = new BoxRenderable(renderer, {
+  const v2SliderWrapper = new Box(renderer, {
     id: "v2-slider-wrapper",
     flexDirection: "row",
     height: "100%",
     flexGrow: 1,
   });
 
-  const v2Label = new TextRenderable(renderer, {
+  const v2Label = new Text(renderer, {
     content: t`${bold(fg("#ff9e64")("V2"))}
 ${fg("#565f89")("3w")}`,
     width: 3,
   });
 
-  verticalSlider2 = new SliderRenderable(renderer, {
+  verticalSlider2 = new Slider(renderer, {
     id: "vertical-slider-2",
     orientation: "vertical",
     width: 3,
@@ -382,7 +374,7 @@ ${fg("#565f89")("3w")}`,
     },
   });
 
-  v2ValueText = new TextRenderable(renderer, {
+  v2ValueText = new Text(renderer, {
     content: t`${bold(fg("#ff9e64")("0.0"))}`,
   });
 
@@ -392,7 +384,7 @@ ${fg("#565f89")("3w")}`,
   v2Container.add(v2ValueText);
 
   // Vertical Slider 3 - 5-width (wide)
-  const v3Container = new BoxRenderable(renderer, {
+  const v3Container = new Box(renderer, {
     id: "v3-container",
     width: 12,
     height: "100%",
@@ -403,20 +395,20 @@ ${fg("#565f89")("3w")}`,
     padding: 1,
   });
 
-  const v3SliderWrapper = new BoxRenderable(renderer, {
+  const v3SliderWrapper = new Box(renderer, {
     id: "v3-slider-wrapper",
     flexDirection: "row",
     height: "100%",
     flexGrow: 1,
   });
 
-  const v3Label = new TextRenderable(renderer, {
+  const v3Label = new Text(renderer, {
     content: t`${bold(fg("#73daca")("V3"))}
 ${fg("#565f89")("5w")}`,
     width: 3,
   });
 
-  verticalSlider3 = new SliderRenderable(renderer, {
+  verticalSlider3 = new Slider(renderer, {
     id: "vertical-slider-3",
     orientation: "vertical",
     width: 5,
@@ -434,7 +426,7 @@ ${fg("#565f89")("5w")}`,
     },
   });
 
-  v3ValueText = new TextRenderable(renderer, {
+  v3ValueText = new Text(renderer, {
     content: t`${bold(fg("#73daca")("50.0"))}`,
   });
 
@@ -444,7 +436,7 @@ ${fg("#565f89")("5w")}`,
   v3Container.add(v3ValueText);
 
   // Animated Vertical Slider - demonstrates sub-cell rendering
-  const animatedVContainer = new BoxRenderable(renderer, {
+  const animatedVContainer = new Box(renderer, {
     id: "animated-v-container",
     width: 10,
     height: "100%",
@@ -455,20 +447,20 @@ ${fg("#565f89")("5w")}`,
     padding: 1,
   });
 
-  const animatedVSliderWrapper = new BoxRenderable(renderer, {
+  const animatedVSliderWrapper = new Box(renderer, {
     id: "animated-v-slider-wrapper",
     flexDirection: "row",
     height: "100%",
     flexGrow: 1,
   });
 
-  const animatedVLabel = new TextRenderable(renderer, {
+  const animatedVLabel = new Text(renderer, {
     content: t`${bold(fg("#FF6B6B")("VA"))}
 ${fg("#565f89")("2w")}`,
     width: 3,
   });
 
-  animatedVerticalSlider = new SliderRenderable(renderer, {
+  animatedVerticalSlider = new Slider(renderer, {
     id: "animated-vertical-slider",
     orientation: "vertical",
     width: 2,
@@ -485,7 +477,7 @@ ${fg("#565f89")("2w")}`,
     },
   });
 
-  vAValueText = new TextRenderable(renderer, {
+  vAValueText = new Text(renderer, {
     content: t`${bold(fg("#FF6B6B")("50.00"))}`,
   });
 
@@ -500,7 +492,7 @@ ${fg("#565f89")("2w")}`,
   verticalContainer.add(animatedVContainer);
 
   // Add some spacing
-  const spacer = new BoxRenderable(renderer, {
+  const spacer = new Box(renderer, {
     id: "spacer",
     width: "100%",
     flexGrow: 1,
@@ -513,7 +505,7 @@ ${fg("#565f89")("2w")}`,
   slidersContainer.add(spacer);
 
   // Instructions box
-  instructionsBox = new BoxRenderable(renderer, {
+  instructionsBox = new Box(renderer, {
     id: "instructions",
     width: "100%",
     flexDirection: "column",
@@ -521,11 +513,11 @@ ${fg("#565f89")("2w")}`,
     paddingLeft: 1,
   });
 
-  const instructionsText1 = new TextRenderable(renderer, {
+  const instructionsText1 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Slider Demo"))} ${fg("#565f89")("-")} ${bold(fg("#FFFF00")("Mouse"))} ${fg("#c0caf5")("Click & drag on sliders")} ${fg("#565f89")("|")} ${bold(fg("#FFAA00")("R"))} ${fg("#c0caf5")("Reset all")} ${fg("#565f89")("|")} ${bold(fg("#00FF00")("1-7"))} ${fg("#c0caf5")("Focus sliders")}`,
   });
 
-  const instructionsText2 = new TextRenderable(renderer, {
+  const instructionsText2 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Features:"))} ${fg("#c0caf5")("Different ranges, step sizes, orientations & dimensions (1-5 height/width)")}`,
   });
 
@@ -612,7 +604,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   frameCallback = null;
   animationTime = 0;
 
-  _lastActionText = "Welcome to SliderRenderable demo! Use mouse to interact with sliders.";
+  _lastActionText = "Welcome to Slider demo! Use mouse to interact with sliders.";
   _lastActionColor = "#FFCC00";
 }
 

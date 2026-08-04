@@ -1,20 +1,20 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type MouseEvent,
   RGBA,
-  TextRenderable,
+  Text,
   createCliRenderer,
   rgbaToEngineColor,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let titleText: TextRenderable | null = null;
-let instructionsText: TextRenderable | null = null;
+let titleText: Text | null = null;
+let instructionsText: Text | null = null;
 let consoleButtons: ConsoleButton[] = [];
-let statusText: TextRenderable | null = null;
+let statusText: Text | null = null;
 let buttonCounters = {
   log: 0,
   info: 0,
@@ -23,7 +23,7 @@ let buttonCounters = {
   debug: 0,
 };
 
-class ConsoleButton extends BoxRenderable {
+class ConsoleButton extends Box {
   private isHovered = false;
   private isPressed = false;
   private originalBg: RGBA;
@@ -198,7 +198,7 @@ export function run(renderer: CliRenderer): void {
   const backgroundColor = RGBA.fromInts(18, 22, 35, 255);
   renderer.setBackgroundColor(rgbaToEngineColor(backgroundColor));
 
-  titleText = new TextRenderable(renderer, {
+  titleText = new Text(renderer, {
     id: "console_demo_title",
     content: "Console Logging Demo",
     position: "absolute",
@@ -209,7 +209,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(titleText);
 
-  instructionsText = new TextRenderable(renderer, {
+  instructionsText = new Text(renderer, {
     id: "console_demo_instructions",
     content:
       "Click buttons to trigger different console log levels • Press ` to toggle console • Ctrl+Y to copy selection • Escape: return to menu",
@@ -221,7 +221,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(instructionsText);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "console_demo_status",
     content: "Click any button to start logging...",
     position: "absolute",
@@ -305,7 +305,7 @@ export function run(renderer: CliRenderer): void {
     renderer.root.add(button);
   }
 
-  const decorText1 = new TextRenderable(renderer, {
+  const decorText1 = new Text(renderer, {
     id: "decor1",
     content: "✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦",
     position: "absolute",
@@ -316,7 +316,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(decorText1);
 
-  const decorText2 = new TextRenderable(renderer, {
+  const decorText2 = new Text(renderer, {
     id: "decor2",
     content:
       "Console will appear at the bottom. Use Ctrl+P/Ctrl+O to change position, +/- to resize.",

@@ -1,20 +1,20 @@
 #!/usr/bin/env bun
 
 import {
-  ASCIIFontRenderable,
-  BoxRenderable,
+  ASCIIFont,
+  Box,
   type CliRenderer,
-  InputRenderable,
-  InputRenderableEvents,
+  Input,
+  InputEvents,
   type KeyEvent,
   RGBA,
   RenderableEvents,
+  Select,
+  SelectEvents,
   type SelectOption,
-  SelectRenderable,
-  SelectRenderableEvents,
-  TextRenderable,
+  Text,
   type ThemeMode,
-  TimeToFirstDrawRenderable,
+  TimeToFirstDraw,
   createCliRenderer,
 } from "@bettertui/core";
 import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
@@ -263,8 +263,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Editor Demo",
-      description:
-        "Interactive text editor with TextareaRenderable - supports full editing capabilities",
+      description: "Interactive text editor with Textarea - supports full editing capabilities",
       run: editorDemo.run,
       destroy: editorDemo.destroy,
     },
@@ -356,7 +355,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     {
       name: "Code Demo",
       description:
-        "Code viewer with line numbers, diff highlights, and diagnostics using CodeRenderable + LineNumberRenderable",
+        "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
       run: codeDemo.run,
       destroy: codeDemo.destroy,
     },
@@ -715,18 +714,18 @@ class ExampleSelector {
   private inMenu = true;
   private themeMode: ThemeMode = DEFAULT_THEME_MODE;
 
-  private menuContainer: BoxRenderable | null = null;
-  private title: ASCIIFontRenderable | null = null;
+  private menuContainer: Box | null = null;
+  private title: ASCIIFont | null = null;
   private titleWidth = 0;
   private titleFont = "tiny";
   private titleText = "BETTERTUI EXAMPLES";
-  private filterBox: BoxRenderable | null = null;
-  private filterInput: InputRenderable | null = null;
-  private instructions: TextRenderable | null = null;
-  private timeToFirstDrawText: TimeToFirstDrawRenderable | null = null;
-  private selectElement: SelectRenderable | null = null;
-  private selectBox: BoxRenderable | null = null;
-  private notImplementedText: TextRenderable | null = null;
+  private filterBox: Box | null = null;
+  private filterInput: Input | null = null;
+  private instructions: Text | null = null;
+  private timeToFirstDrawText: TimeToFirstDraw | null = null;
+  private selectElement: Select | null = null;
+  private selectBox: Box | null = null;
+  private notImplementedText: Text | null = null;
   private readonly allExamples: Example[] = examples;
   private selectedExampleName: string | null = examples[0]?.name ?? null;
   private menuFocusArea: MenuFocusArea = "filter";
@@ -755,7 +754,7 @@ class ExampleSelector {
     const theme = MENU_THEMES[this.themeMode];
 
     // Menu container with column layout
-    this.menuContainer = new BoxRenderable(this.renderer, {
+    this.menuContainer = new Box(this.renderer, {
       id: "example-menu-container",
       flexDirection: "column",
       width: "100%",
@@ -767,7 +766,7 @@ class ExampleSelector {
     const titleText = this.titleText;
     const titleFont = this.titleFont;
 
-    this.title = new ASCIIFontRenderable(this.renderer, {
+    this.title = new ASCIIFont(this.renderer, {
       id: "example-index-title",
       alignSelf: "center",
       marginTop: 1,
@@ -780,7 +779,7 @@ class ExampleSelector {
     this.menuContainer.add(this.title);
 
     // Filter box with border (grows with content)
-    this.filterBox = new BoxRenderable(this.renderer, {
+    this.filterBox = new Box(this.renderer, {
       id: "example-index-filter-box",
       marginLeft: 1,
       marginRight: 1,
@@ -793,7 +792,7 @@ class ExampleSelector {
     this.menuContainer.add(this.filterBox);
 
     // Filter input inside the box (transparent bg so box bg shows through)
-    this.filterInput = new InputRenderable(this.renderer, {
+    this.filterInput = new Input(this.renderer, {
       id: "example-index-filter-input",
       width: "100%",
       placeholder: "Filter examples...",
@@ -807,13 +806,13 @@ class ExampleSelector {
     });
     this.filterBox.add(this.filterInput);
 
-    this.filterInput.on(InputRenderableEvents.INPUT, (value: string) => {
+    this.filterInput.on(InputEvents.INPUT, (value: string) => {
       this.filterText = value;
       this.filterExamples();
     });
 
     // Select box (grows to fill remaining space)
-    this.selectBox = new BoxRenderable(this.renderer, {
+    this.selectBox = new Box(this.renderer, {
       id: "example-selector-box",
       marginLeft: 1,
       marginRight: 1,
@@ -833,7 +832,7 @@ class ExampleSelector {
     const selectOptions = createMenuOptions(this.allExamples);
     const initialSelectedIndex = Math.max(0, getFirstExampleOptionIndex(selectOptions));
 
-    this.selectElement = new SelectRenderable(this.renderer, {
+    this.selectElement = new Select(this.renderer, {
       id: "example-selector",
       height: "100%",
       options: selectOptions,
@@ -864,42 +863,36 @@ class ExampleSelector {
       this.updateMenuFocusStyles();
     });
 
-    this.selectElement.on(
-      SelectRenderableEvents.SELECTION_CHANGED,
-      (index: number, option: SelectOption) => {
-        const selectedExample = getExampleFromOption(option);
-        if (!selectedExample) {
-          this.focusNearestExampleOption(index, 1);
-          return;
-        }
+    this.selectElement.on(SelectEvents.SELECTION_CHANGED, (index: number, option: SelectOption) => {
+      const selectedExample = getExampleFromOption(option);
+      if (!selectedExample) {
+        this.focusNearestExampleOption(index, 1);
+        return;
+      }
 
-        this.selectedExampleName = selectedExample.name;
-      },
-    );
+      this.selectedExampleName = selectedExample.name;
+    });
 
-    this.selectElement.on(
-      SelectRenderableEvents.ITEM_SELECTED,
-      (index: number, option: SelectOption) => {
-        const selectedExample = getExampleFromOption(option);
-        if (!selectedExample) {
-          this.focusNearestExampleOption(index, 1);
-          return;
-        }
+    this.selectElement.on(SelectEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+      const selectedExample = getExampleFromOption(option);
+      if (!selectedExample) {
+        this.focusNearestExampleOption(index, 1);
+        return;
+      }
 
-        void this.runSelected(selectedExample);
-      },
-    );
+      void this.runSelected(selectedExample);
+    });
 
     this.setMenuFocus("filter");
 
-    this.timeToFirstDrawText = new TimeToFirstDrawRenderable(this.renderer, {
+    this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
       fg: theme.instructionsColor,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
 
     // Instructions at the bottom
-    this.instructions = new TextRenderable(this.renderer, {
+    this.instructions = new Text(this.renderer, {
       id: "example-index-instructions",
       height: 1,
       flexShrink: 0,
@@ -1222,7 +1215,7 @@ class ExampleSelector {
         const theme = MENU_THEMES[this.themeMode];
         const unavailableMessage =
           selected.unavailableMessage ?? `${selected.name} is not implemented yet.`;
-        this.notImplementedText = new TextRenderable(this.renderer, {
+        this.notImplementedText = new Text(this.renderer, {
           id: "not-implemented",
           position: "absolute",
           left: 10,

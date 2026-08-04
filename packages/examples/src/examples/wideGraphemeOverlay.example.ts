@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  FrameBufferRenderable,
+  FrameBuffer,
   type KeyEvent,
   RGBA,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
@@ -26,10 +26,10 @@ const HEADER_HEIGHT = 2;
 let nextZIndex = 101;
 let draggableBoxes: DraggableBox[] = [];
 let scrimVisible = false;
-let scrim: BoxRenderable | null = null;
-let headerDisplay: TextRenderable | null = null;
+let scrim: Box | null = null;
+let headerDisplay: Text | null = null;
 
-class DraggableBox extends BoxRenderable {
+class DraggableBox extends Box {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -61,7 +61,7 @@ class DraggableBox extends BoxRenderable {
     const alphaText = `${this.alphaPercentage}%`;
     const w = typeof width === "number" ? width : 0;
     const h = typeof height === "number" ? height : 0;
-    const label = new TextRenderable(ctx, {
+    const label = new Text(ctx, {
       id: `${id}-label`,
       content: alphaText,
       position: "absolute",
@@ -113,7 +113,7 @@ class DraggableBox extends BoxRenderable {
   }
 }
 
-class GraphemeBackground extends FrameBufferRenderable {
+class GraphemeBackground extends FrameBuffer {
   constructor(ctx: CliRenderer, id: string, width: number, height: number) {
     super(ctx, {
       id,
@@ -155,11 +155,11 @@ export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor("#0A0E14");
 
-  const root = new BoxRenderable(renderer, { id: "wg-overlay-root" });
+  const root = new Box(renderer, { id: "wg-overlay-root" });
   renderer.root.add(root);
 
   // Header row
-  headerDisplay = new TextRenderable(renderer, {
+  headerDisplay = new Text(renderer, {
     id: "wg-header",
     height: HEADER_HEIGHT,
     position: "absolute",
@@ -181,7 +181,7 @@ export function run(renderer: CliRenderer): void {
   root.add(background);
 
   // Full-screen dimming scrim (same as opencode dialog backdrop: RGBA(0,0,0,150))
-  scrim = new BoxRenderable(renderer, {
+  scrim = new Box(renderer, {
     id: "wg-scrim",
     position: "absolute",
     left: 0,

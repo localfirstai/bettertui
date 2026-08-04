@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   cyan,
@@ -15,22 +15,22 @@ import {
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let mainContainer: BoxRenderable | null = null;
-let floatingBox: BoxRenderable | null = null;
-let leftGroup: BoxRenderable | null = null;
-let rightGroup: BoxRenderable | null = null;
-let statusBox: BoxRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let selectionStartText: TextRenderable | null = null;
-let selectionMiddleText: TextRenderable | null = null;
-let selectionEndText: TextRenderable | null = null;
-let debugText: TextRenderable | null = null;
-let allTextRenderables: (TextRenderable | TextRenderable)[] = [];
+let mainContainer: Box | null = null;
+let floatingBox: Box | null = null;
+let leftGroup: Box | null = null;
+let rightGroup: Box | null = null;
+let statusBox: Box | null = null;
+let statusText: Text | null = null;
+let selectionStartText: Text | null = null;
+let selectionMiddleText: Text | null = null;
+let selectionEndText: Text | null = null;
+let debugText: Text | null = null;
+let allTextRenderables: (Text | Text)[] = [];
 
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#0d1117");
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "mainContainer",
     position: "absolute",
     left: 1,
@@ -46,7 +46,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(mainContainer);
 
-  leftGroup = new BoxRenderable(renderer, {
+  leftGroup = new Box(renderer, {
     id: "leftGroup",
     position: "absolute",
     left: 2,
@@ -55,7 +55,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainContainer.add(leftGroup);
 
-  const box1 = new BoxRenderable(renderer, {
+  const box1 = new Box(renderer, {
     id: "box1",
     width: 45,
     height: 7,
@@ -69,7 +69,7 @@ export function run(renderer: CliRenderer): void {
   });
   leftGroup.add(box1);
 
-  const text1 = new TextRenderable(renderer, {
+  const text1 = new Text(renderer, {
     id: "text1",
     content: "This is a paragraph in the first box.",
     zIndex: 21,
@@ -78,7 +78,7 @@ export function run(renderer: CliRenderer): void {
   box1.add(text1);
   allTextRenderables.push(text1);
 
-  const text2 = new TextRenderable(renderer, {
+  const text2 = new Text(renderer, {
     id: "text2",
     content: "It contains multiple lines of text",
     zIndex: 21,
@@ -87,7 +87,7 @@ export function run(renderer: CliRenderer): void {
   box1.add(text2);
   allTextRenderables.push(text2);
 
-  const text3 = new TextRenderable(renderer, {
+  const text3 = new Text(renderer, {
     id: "text3",
     content: "that can be selected independently.",
     zIndex: 21,
@@ -96,7 +96,7 @@ export function run(renderer: CliRenderer): void {
   box1.add(text3);
   allTextRenderables.push(text3);
 
-  const text4 = new TextRenderable(renderer, {
+  const text4 = new Text(renderer, {
     id: "text4",
     content: "世界, 你好世界, 中文, 한글",
     zIndex: 21,
@@ -105,7 +105,7 @@ export function run(renderer: CliRenderer): void {
   box1.add(text4);
   allTextRenderables.push(text4);
 
-  const nestedBox = new BoxRenderable(renderer, {
+  const nestedBox = new Box(renderer, {
     id: "nestedBox",
     left: 2,
     top: 1,
@@ -119,7 +119,7 @@ export function run(renderer: CliRenderer): void {
   });
   leftGroup.add(nestedBox);
 
-  const nestedText = new TextRenderable(renderer, {
+  const nestedText = new Text(renderer, {
     id: "nestedText",
     content: t`${yellow("Important:")} ${bold(cyan("Nested content"))} ${italic(green("with styles"))}`,
     width: 27,
@@ -129,7 +129,7 @@ export function run(renderer: CliRenderer): void {
   nestedBox.add(nestedText);
   allTextRenderables.push(nestedText);
 
-  rightGroup = new BoxRenderable(renderer, {
+  rightGroup = new Box(renderer, {
     id: "rightGroup",
     position: "absolute",
     left: 48,
@@ -138,7 +138,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainContainer.add(rightGroup);
 
-  const box2 = new BoxRenderable(renderer, {
+  const box2 = new Box(renderer, {
     id: "box2",
     left: 2,
     top: 0,
@@ -155,7 +155,7 @@ export function run(renderer: CliRenderer): void {
   });
   rightGroup.add(box2);
 
-  const codeText1 = new TextRenderable(renderer, {
+  const codeText1 = new Text(renderer, {
     id: "codeText1",
     content: t`${magenta("function")} ${cyan("handleSelection")}() {`,
     zIndex: 21,
@@ -163,7 +163,7 @@ export function run(renderer: CliRenderer): void {
   box2.add(codeText1);
   allTextRenderables.push(codeText1);
 
-  const codeText2 = new TextRenderable(renderer, {
+  const codeText2 = new Text(renderer, {
     id: "codeText2",
     content: t`  ${magenta("const")} selected = ${cyan("getSelectedText")}()`,
     zIndex: 21,
@@ -171,7 +171,7 @@ export function run(renderer: CliRenderer): void {
   box2.add(codeText2);
   allTextRenderables.push(codeText2);
 
-  const codeText3 = new TextRenderable(renderer, {
+  const codeText3 = new Text(renderer, {
     id: "codeText3",
     content: t`  ${yellow("console")}.${green("log")}(selected)`,
     zIndex: 21,
@@ -179,7 +179,7 @@ export function run(renderer: CliRenderer): void {
   box2.add(codeText3);
   allTextRenderables.push(codeText3);
 
-  const codeText4 = new TextRenderable(renderer, {
+  const codeText4 = new Text(renderer, {
     id: "codeText4",
     content: "}",
     zIndex: 21,
@@ -188,7 +188,7 @@ export function run(renderer: CliRenderer): void {
   box2.add(codeText4);
   allTextRenderables.push(codeText4);
 
-  floatingBox = new BoxRenderable(renderer, {
+  floatingBox = new Box(renderer, {
     id: "floatingBox",
     position: "absolute",
     left: 90,
@@ -204,7 +204,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(floatingBox);
 
-  const multilineText = new TextRenderable(renderer, {
+  const multilineText = new Text(renderer, {
     id: "multilineText",
     content: t`${bold(cyan("Selection Demo"))}
 ${green("✓")} Cross-renderable selection
@@ -215,7 +215,7 @@ ${green("✓")} Styled text support`,
   floatingBox.add(multilineText);
   allTextRenderables.push(multilineText);
 
-  const instructions = new TextRenderable(renderer, {
+  const instructions = new Text(renderer, {
     id: "instructions",
     content: "Click and drag to select text across any elements. Press 'C' to clear selection.",
     left: 2,
@@ -226,7 +226,7 @@ ${green("✓")} Styled text support`,
   mainContainer.add(instructions);
   allTextRenderables.push(instructions);
 
-  statusBox = new BoxRenderable(renderer, {
+  statusBox = new Box(renderer, {
     id: "statusBox",
     position: "absolute",
     left: 1,
@@ -243,7 +243,7 @@ ${green("✓")} Styled text support`,
   });
   renderer.root.add(statusBox);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "statusText",
     content: "No selection - try selecting across different nested elements",
     zIndex: 2,
@@ -251,7 +251,7 @@ ${green("✓")} Styled text support`,
   });
   statusBox.add(statusText);
 
-  selectionStartText = new TextRenderable(renderer, {
+  selectionStartText = new Text(renderer, {
     id: "selectionStartText",
     content: "",
     zIndex: 2,
@@ -259,7 +259,7 @@ ${green("✓")} Styled text support`,
   });
   statusBox.add(selectionStartText);
 
-  selectionMiddleText = new TextRenderable(renderer, {
+  selectionMiddleText = new Text(renderer, {
     id: "selectionMiddleText",
     content: "",
     zIndex: 2,
@@ -267,7 +267,7 @@ ${green("✓")} Styled text support`,
   });
   statusBox.add(selectionMiddleText);
 
-  selectionEndText = new TextRenderable(renderer, {
+  selectionEndText = new Text(renderer, {
     id: "selectionEndText",
     content: "",
     zIndex: 2,
@@ -275,7 +275,7 @@ ${green("✓")} Styled text support`,
   });
   statusBox.add(selectionEndText);
 
-  debugText = new TextRenderable(renderer, {
+  debugText = new Text(renderer, {
     id: "debugText",
     content: "",
     zIndex: 2,

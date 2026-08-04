@@ -1,10 +1,10 @@
-import { InputRenderableEvents, RenderableEvents } from "../lib/renderableEvents";
+import { InputEvents, RenderableEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
-export interface InputRenderableOptions extends BoxOptions {
+export interface InputOptions extends BoxOptions {
   value?: string;
   placeholder?: string;
   placeholderColor?: ColorInput;
@@ -19,9 +19,11 @@ export interface InputRenderableOptions extends BoxOptions {
   password?: boolean;
 }
 
+export type InputRenderableOptions = InputOptions;
+
 let _inputCounter = 0;
 
-export class InputRenderable extends BoxRenderable {
+export class Input extends Box {
   private _value: string;
   private _placeholder: string;
   private _placeholderColor: RGBA;
@@ -38,7 +40,7 @@ export class InputRenderable extends BoxRenderable {
   private _textNodeId: number;
   private readonly _keyHandler: (key: RawKeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: InputRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: InputOptions = {}) {
     _inputCounter++;
     super(renderer, {
       ...options,
@@ -82,7 +84,7 @@ export class InputRenderable extends BoxRenderable {
       this._value = newVal;
       this._cursorPos = Math.min(this._cursorPos, newVal.length);
       this._render();
-      this.emit(InputRenderableEvents.INPUT, newVal);
+      this.emit(InputEvents.INPUT, newVal);
     }
   }
 
@@ -151,7 +153,7 @@ export class InputRenderable extends BoxRenderable {
     const current = this._value;
     if (current !== this._lastCommittedValue) {
       this._lastCommittedValue = current;
-      this.emit(InputRenderableEvents.CHANGE, current);
+      this.emit(InputEvents.CHANGE, current);
     }
     this._focused = false;
     if (this._focusedBackgroundColor && this._backgroundColor) {
@@ -205,12 +207,12 @@ export class InputRenderable extends BoxRenderable {
           this._value.slice(0, this._cursorPos - 1) + this._value.slice(this._cursorPos);
         this._cursorPos--;
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._value);
+        this.emit(InputEvents.INPUT, this._value);
       } else if (key.name === "delete" && this._cursorPos < this._value.length) {
         this._value =
           this._value.slice(0, this._cursorPos) + this._value.slice(this._cursorPos + 1);
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._value);
+        this.emit(InputEvents.INPUT, this._value);
       }
       return;
     }
@@ -219,7 +221,7 @@ export class InputRenderable extends BoxRenderable {
     if (key.ctrl && key.name === "k") {
       this._value = this._value.slice(0, this._cursorPos);
       this._render();
-      this.emit(InputRenderableEvents.INPUT, this._value);
+      this.emit(InputEvents.INPUT, this._value);
       return;
     }
 
@@ -228,7 +230,7 @@ export class InputRenderable extends BoxRenderable {
       this._value = this._value.slice(this._cursorPos);
       this._cursorPos = 0;
       this._render();
-      this.emit(InputRenderableEvents.INPUT, this._value);
+      this.emit(InputEvents.INPUT, this._value);
       return;
     }
 
@@ -241,7 +243,7 @@ export class InputRenderable extends BoxRenderable {
             this._value.slice(0, this._cursorPos) + char + this._value.slice(this._cursorPos);
           this._cursorPos++;
           this._render();
-          this.emit(InputRenderableEvents.INPUT, this._value);
+          this.emit(InputEvents.INPUT, this._value);
         }
       }
     }
@@ -252,9 +254,9 @@ export class InputRenderable extends BoxRenderable {
     const current = this._value;
     if (current !== this._lastCommittedValue) {
       this._lastCommittedValue = current;
-      this.emit(InputRenderableEvents.CHANGE, current);
+      this.emit(InputEvents.CHANGE, current);
     }
-    this.emit(InputRenderableEvents.ENTER, current);
+    this.emit(InputEvents.ENTER, current);
   }
 
   private _render(): void {
@@ -313,4 +315,4 @@ export class InputRenderable extends BoxRenderable {
   }
 }
 
-export { InputRenderableEvents };
+export { InputEvents };

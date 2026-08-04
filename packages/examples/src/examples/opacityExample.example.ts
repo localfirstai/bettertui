@@ -1,17 +1,11 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let renderer: CliRenderer | null = null;
-let header: BoxRenderable | null = null;
-let container: BoxRenderable | null = null;
-let infoText: TextRenderable | null = null;
-let boxes: BoxRenderable[] = [];
+let header: Box | null = null;
+let container: Box | null = null;
+let infoText: Text | null = null;
+let boxes: Box[] = [];
 const opacityValues = [1.0, 0.8, 0.5, 0.3];
 let animationInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -20,7 +14,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
   renderer.setBackgroundColor("#1a1a2e");
 
   // Info header
-  header = new BoxRenderable(renderer, {
+  header = new Box(renderer, {
     id: "opacity-demo-header",
     width: "auto",
     height: 3,
@@ -31,7 +25,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
     justifyContent: "center",
   });
 
-  infoText = new TextRenderable(renderer, {
+  infoText = new Text(renderer, {
     id: "info",
     content: "OPACITY DEMO | 1-4: Toggle opacity | A: Animate | Ctrl+C: Exit",
     fg: "#e94560",
@@ -40,7 +34,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
   header.add(infoText);
 
   // Main container
-  container = new BoxRenderable(renderer, {
+  container = new Box(renderer, {
     id: "opacity-demo-container",
     width: "auto",
     height: "auto",
@@ -56,7 +50,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
   const labels = ["Box 1", "Box 2", "Box 3", "Box 4"];
 
   for (let i = 0; i < 4; i++) {
-    const box = new BoxRenderable(renderer, {
+    const box = new Box(renderer, {
       id: `box-${i}`,
       width: 20,
       height: 8,
@@ -73,14 +67,14 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
       flexDirection: "column",
     });
 
-    const label = new TextRenderable(renderer, {
+    const label = new Text(renderer, {
       id: `label-${i}`,
       content: labels[i],
       fg: "#ffffff",
       bg: "transparent",
     });
 
-    const opacityLabel = new TextRenderable(renderer, {
+    const opacityLabel = new Text(renderer, {
       id: `opacity-${i}`,
       content: `Opacity: ${opacityValues[i].toFixed(1)}`,
       fg: "#ffffff",
@@ -94,7 +88,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
   }
 
   // Nested opacity demo
-  const nestedContainer = new BoxRenderable(renderer, {
+  const nestedContainer = new Box(renderer, {
     id: "nested-container",
     width: 35,
     height: 10,
@@ -109,14 +103,14 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
     flexDirection: "column",
   });
 
-  const nestedLabel = new TextRenderable(renderer, {
+  const nestedLabel = new Text(renderer, {
     id: "nested-label",
     content: "Parent: 0.7 opacity",
     fg: "#ffffff",
     bg: "transparent",
   });
 
-  const nestedChild = new BoxRenderable(renderer, {
+  const nestedChild = new Box(renderer, {
     id: "nested-child",
     width: "auto",
     height: 5,
@@ -128,14 +122,14 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
     flexDirection: "column",
   });
 
-  const childLabel = new TextRenderable(renderer, {
+  const childLabel = new Text(renderer, {
     id: "child-label",
     content: "Child: 0.5 opacity",
     fg: "#ffffff",
     bg: "transparent",
   });
 
-  const effectiveLabel = new TextRenderable(renderer, {
+  const effectiveLabel = new Text(renderer, {
     id: "effective-label",
     content: "Effective: 0.35",
     fg: "#ffcc00",
@@ -154,7 +148,7 @@ function createOpacityDemo(rendererInstance: CliRenderer): void {
 
 function updateOpacityLabels(): void {
   for (let i = 0; i < boxes.length; i++) {
-    const opacityLabel = boxes[i].getRenderable(`opacity-${i}`) as TextRenderable | undefined;
+    const opacityLabel = boxes[i].getRenderable(`opacity-${i}`) as Text | undefined;
     if (opacityLabel) {
       opacityLabel.content = `Opacity: ${boxes[i].opacity.toFixed(1)}`;
     }

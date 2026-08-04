@@ -1,5 +1,5 @@
 /**
- * BoxRenderable — the primary container widget.
+ * Box — the primary container widget.
  * Wraps an engine "Box" node with layout, styling, and event support.
  */
 
@@ -98,16 +98,16 @@ export interface BoxOptions {
   onSizeChange?: () => void;
   /**
    * Called after each render frame with a buffer handle.
-   * Bound to the BoxRenderable instance (`this` = the renderable).
+   * Bound to the Box instance (`this` = the renderable).
    * Use this for custom per-frame drawing on top of the box.
    */
-  renderAfter?: (this: BoxRenderable, buffer: unknown, deltaTime?: number) => void;
+  renderAfter?: (this: Box, buffer: unknown, deltaTime?: number) => void;
 }
 
 let _boxCounter = 0;
 
 /** Minimal stub buffer passed to renderAfter callbacks. */
-function createStubBuffer(box: BoxRenderable): unknown {
+function createStubBuffer(box: Box): unknown {
   const bg = new Uint16Array(0);
   const fg = new Uint16Array(0);
   const char = new Uint32Array(0);
@@ -132,7 +132,7 @@ function createStubBuffer(box: BoxRenderable): unknown {
   };
 }
 
-export class BoxRenderable extends EventEmitter {
+export class Box extends EventEmitter {
   protected readonly _renderer: CliRenderer;
   protected _nodeId: number;
   protected readonly _id: string;
@@ -149,8 +149,8 @@ export class BoxRenderable extends EventEmitter {
   protected _title: string | undefined;
   protected _titleColor: RGBA | undefined;
   protected _titleAlignment: "left" | "center" | "right";
-  protected _children: Map<string, BoxRenderable> = new Map();
-  protected _childList: BoxRenderable[] = [];
+  protected _children: Map<string, Box> = new Map();
+  protected _childList: Box[] = [];
   protected _options: BoxOptions;
   private _renderAfterCallback: ((dt: number) => void) | null = null;
 
@@ -339,7 +339,7 @@ export class BoxRenderable extends EventEmitter {
     this._renderer.setNodeLayout(this._nodeId, { zIndex: value });
   }
 
-  add(child: BoxRenderable, index?: number): void {
+  add(child: Box, index?: number): void {
     if (this._isDestroyed) return;
     this._children.set(child.id, child);
     if (index !== undefined) {
@@ -350,7 +350,7 @@ export class BoxRenderable extends EventEmitter {
     this._renderer.appendChild(this._nodeId, child._nodeId);
   }
 
-  remove(child: BoxRenderable): void {
+  remove(child: Box): void {
     if (this._isDestroyed) return;
     this._children.delete(child.id);
     const idx = this._childList.indexOf(child);
@@ -358,7 +358,7 @@ export class BoxRenderable extends EventEmitter {
     this._renderer.removeNode(child._nodeId);
   }
 
-  getRenderable(id: string): BoxRenderable | undefined {
+  getRenderable(id: string): Box | undefined {
     if (this._id === id) return this;
     for (const child of this._childList) {
       const found = child.getRenderable(id);
@@ -367,7 +367,7 @@ export class BoxRenderable extends EventEmitter {
     return undefined;
   }
 
-  getChildren(): BoxRenderable[] {
+  getChildren(): Box[] {
     return [...this._childList];
   }
 
@@ -546,10 +546,10 @@ export class BoxRenderable extends EventEmitter {
 }
 
 /**
- * RootRenderable — the scene root, wrapping the engine's root node.
+ * Root — the scene root, wrapping the engine's root node.
  * Created automatically by CliRenderer and exposed as `renderer.root`.
  */
-export class RootRenderable extends BoxRenderable {
+export class Root extends Box {
   constructor(renderer: CliRenderer) {
     super(renderer, { flexDirection: "column" }, renderer.rootNodeId);
   }

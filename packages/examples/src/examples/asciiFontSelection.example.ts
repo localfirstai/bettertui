@@ -1,29 +1,23 @@
 #!/usr/bin/env bun
 
-import {
-  BoxRenderable,
-  type CliRenderer,
-  RGBA,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
-import { ASCIIFontRenderable } from "@bettertui/core";
+import { Box, type CliRenderer, RGBA, Text, createCliRenderer } from "@bettertui/core";
+import { ASCIIFont } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let mainContainer: BoxRenderable | null = null;
-let fontGroup: BoxRenderable | null = null;
-let statusBox: BoxRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let selectionStartText: TextRenderable | null = null;
-let selectionMiddleText: TextRenderable | null = null;
-let selectionEndText: TextRenderable | null = null;
-let debugText: TextRenderable | null = null;
-let allFontRenderables: ASCIIFontRenderable[] = [];
+let mainContainer: Box | null = null;
+let fontGroup: Box | null = null;
+let statusBox: Box | null = null;
+let statusText: Text | null = null;
+let selectionStartText: Text | null = null;
+let selectionMiddleText: Text | null = null;
+let selectionEndText: Text | null = null;
+let debugText: Text | null = null;
+let allFontRenderables: ASCIIFont[] = [];
 
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#0d1117");
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "mainContainer",
     position: "absolute",
     left: 1,
@@ -39,7 +33,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(mainContainer);
 
-  fontGroup = new BoxRenderable(renderer, {
+  fontGroup = new Box(renderer, {
     id: "fontGroup",
     position: "absolute",
     left: 2,
@@ -48,7 +42,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainContainer.add(fontGroup);
 
-  const tinyFont = new ASCIIFontRenderable(renderer, {
+  const tinyFont = new ASCIIFont(renderer, {
     id: "tinyFont",
     text: "TINY FONT DEMO",
     font: "tiny",
@@ -61,7 +55,7 @@ export function run(renderer: CliRenderer): void {
   fontGroup.add(tinyFont);
   allFontRenderables.push(tinyFont);
 
-  const blockFont = new ASCIIFontRenderable(renderer, {
+  const blockFont = new ASCIIFont(renderer, {
     id: "blockFont",
     text: "opentui",
     font: "block",
@@ -74,7 +68,7 @@ export function run(renderer: CliRenderer): void {
   fontGroup.add(blockFont);
   allFontRenderables.push(blockFont);
 
-  const shadeFont = new ASCIIFontRenderable(renderer, {
+  const shadeFont = new ASCIIFont(renderer, {
     id: "shadeFont",
     text: "SHADE",
     font: "shade",
@@ -87,7 +81,7 @@ export function run(renderer: CliRenderer): void {
   fontGroup.add(shadeFont);
   allFontRenderables.push(shadeFont);
 
-  const slickFont = new ASCIIFontRenderable(renderer, {
+  const slickFont = new ASCIIFont(renderer, {
     id: "slickFont",
     text: "SLICK",
     font: "slick",
@@ -100,7 +94,7 @@ export function run(renderer: CliRenderer): void {
   fontGroup.add(slickFont);
   allFontRenderables.push(slickFont);
 
-  const instructions = new TextRenderable(renderer, {
+  const instructions = new Text(renderer, {
     id: "ascii-font-instructions",
     content:
       "Click and drag to select text across any ASCII font elements. Press 'C' to clear selection.",
@@ -111,7 +105,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainContainer.add(instructions);
 
-  statusBox = new BoxRenderable(renderer, {
+  statusBox = new Box(renderer, {
     id: "statusBox",
     position: "absolute",
     left: 1,
@@ -126,14 +120,14 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(statusBox);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "statusText",
     content: "No selection - try selecting across different ASCII fonts",
     fg: "#f0f6fc",
   });
   statusBox.add(statusText);
 
-  selectionStartText = new TextRenderable(renderer, {
+  selectionStartText = new Text(renderer, {
     id: "selectionStartText",
     content: "",
     left: 3,
@@ -142,7 +136,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(selectionStartText);
 
-  selectionMiddleText = new TextRenderable(renderer, {
+  selectionMiddleText = new Text(renderer, {
     id: "selectionMiddleText",
     content: "",
     left: 3,
@@ -151,7 +145,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(selectionMiddleText);
 
-  selectionEndText = new TextRenderable(renderer, {
+  selectionEndText = new Text(renderer, {
     id: "selectionEndText",
     content: "",
     left: 3,
@@ -160,7 +154,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(selectionEndText);
 
-  debugText = new TextRenderable(renderer, {
+  debugText = new Text(renderer, {
     id: "debugText",
     content: "",
     left: 3,

@@ -1,9 +1,9 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
   RGBA,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
@@ -78,7 +78,7 @@ function colorToString(color: string | RGBA): string {
   return RGBA.toHex(color);
 }
 
-class DraggableTransparentBox extends BoxRenderable {
+class DraggableTransparentBox extends Box {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -108,11 +108,11 @@ class DraggableTransparentBox extends BoxRenderable {
     this.alphaPercentage = Math.round(bg.a * 100);
     this.labelColor = THEMES.dark.boxLabelColor;
 
-    // Alpha percentage label as a child TextRenderable
+    // Alpha percentage label as a child Text
     const alphaText = `${this.alphaPercentage}%`;
     const w = typeof width === "number" ? width : 0;
     const h = typeof height === "number" ? height : 0;
-    const label = new TextRenderable(ctx, {
+    const label = new Text(ctx, {
       id: `${id}-label`,
       content: alphaText,
       position: "absolute",
@@ -180,13 +180,13 @@ export function run(renderer: CliRenderer): void {
     colorToString(getThemeBackgroundColor(currentTheme, currentThemeMode)),
   );
 
-  const parentContainer = new BoxRenderable(renderer, {
+  const parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
   });
   renderer.root.add(parentContainer);
 
-  const headerDisplay = new TextRenderable(renderer, {
+  const headerDisplay = new Text(renderer, {
     id: "header-text",
     content: getHeaderText(currentTheme),
     width: 85,
@@ -198,7 +198,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(headerDisplay);
 
-  const textUnderAlpha = new TextRenderable(renderer, {
+  const textUnderAlpha = new Text(renderer, {
     id: "text-under-alpha",
     content: t`${bold("This text should not be selectable")}`,
     position: "absolute",
@@ -209,7 +209,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(textUnderAlpha);
 
-  const moreTextUnder = new TextRenderable(renderer, {
+  const moreTextUnder = new Text(renderer, {
     id: "more-text-under",
     content: t`${bold("Selectable text to show character preservation")}`,
     position: "absolute",

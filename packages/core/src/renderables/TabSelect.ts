@@ -1,12 +1,12 @@
 /**
- * TabSelectRenderable — a horizontal tab navigation widget.
+ * TabSelect — a horizontal tab navigation widget.
  */
 
-import { RenderableEvents, TabSelectRenderableEvents } from "../lib/renderableEvents";
+import { RenderableEvents, TabSelectEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
 import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
 export interface TabOption {
   name: string;
@@ -14,7 +14,7 @@ export interface TabOption {
   value?: unknown;
 }
 
-export interface TabSelectRenderableOptions extends BoxOptions {
+export interface TabSelectOptions extends BoxOptions {
   options?: TabOption[];
   selectedIndex?: number;
   tabWidth?: number;
@@ -31,9 +31,11 @@ export interface TabSelectRenderableOptions extends BoxOptions {
   descriptionColor?: ColorInput;
 }
 
+export type TabSelectRenderableOptions = TabSelectOptions;
+
 let _tabSelectCounter = 0;
 
-export class TabSelectRenderable extends BoxRenderable {
+export class TabSelect extends Box {
   private _tabOptions: TabOption[];
   private _selectedIndex: number;
   private _tabWidth: number;
@@ -50,7 +52,7 @@ export class TabSelectRenderable extends BoxRenderable {
   private _contentNodeId: number;
   private readonly _keyHandler: (key: RawKeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: TabSelectRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: TabSelectOptions = {}) {
     _tabSelectCounter++;
     super(renderer, {
       ...options,
@@ -147,7 +149,7 @@ export class TabSelectRenderable extends BoxRenderable {
   selectCurrent(): void {
     const opt = this.getSelectedOption();
     if (opt) {
-      this.emit(TabSelectRenderableEvents.ITEM_SELECTED, this._selectedIndex, opt);
+      this.emit(TabSelectEvents.ITEM_SELECTED, this._selectedIndex, opt);
     }
   }
 
@@ -163,7 +165,7 @@ export class TabSelectRenderable extends BoxRenderable {
       this._selectedIndex = next;
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(TabSelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(TabSelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
@@ -179,7 +181,7 @@ export class TabSelectRenderable extends BoxRenderable {
       this._selectedIndex = next;
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(TabSelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(TabSelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
@@ -280,4 +282,4 @@ export class TabSelectRenderable extends BoxRenderable {
   }
 }
 
-export { TabSelectRenderableEvents };
+export { TabSelectEvents };

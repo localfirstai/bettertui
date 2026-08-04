@@ -1,9 +1,9 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  MarkdownRenderable,
+  Markdown,
   SyntaxStyle,
-  TextRenderable,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -12,7 +12,7 @@ import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 type MarkdownCodeBlockRenderer = (token: {
   text: string;
   lang?: string;
-}) => BoxRenderable;
+}) => Box;
 
 /** Local stub factory — registers per-language block renderers. */
 function _createMarkdownCodeBlockRenderer(
@@ -22,7 +22,7 @@ function _createMarkdownCodeBlockRenderer(
     const lang = token.lang ?? "";
     const renderer = _renderers[lang];
     if (renderer) return renderer(token);
-    return new BoxRenderable(null as unknown as CliRenderer, {});
+    return new Box(null as unknown as CliRenderer, {});
   };
 }
 
@@ -57,7 +57,7 @@ const renderNode = createMarkdownCodeBlockRenderer({ taskflow: renderTaskFlow })
 \`\`\`
 `;
 
-let root: BoxRenderable | null = null;
+let root: Box | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
 
 function createSyntaxStyle(): SyntaxStyle {
@@ -114,7 +114,7 @@ function stepStyle(status: TaskFlowStep["status"]): {
 function _createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRenderer {
   return (token: { text: string; lang?: string }) => {
     const flow = parseTaskFlow(token.text);
-    const card = new BoxRenderable(renderer, {
+    const card = new Box(renderer, {
       id: "taskflow-card",
       width: "100%",
       flexDirection: "column",
@@ -130,7 +130,7 @@ function _createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRender
     });
 
     card.add(
-      new TextRenderable(renderer, {
+      new Text(renderer, {
         content: `owner ${flow.owner}  |  ${flow.steps.length} steps`,
         fg: "#93A4B8",
         width: "100%",
@@ -140,7 +140,7 @@ function _createTaskFlowRenderer(renderer: CliRenderer): MarkdownCodeBlockRender
     for (const step of flow.steps) {
       const style = stepStyle(step.status);
       card.add(
-        new TextRenderable(renderer, {
+        new Text(renderer, {
           content: `${style.marker} ${step.label.padEnd(28)} ${step.status}`,
           fg: style.color,
           width: "100%",
@@ -157,7 +157,7 @@ export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#020617");
   syntaxStyle = createSyntaxStyle();
 
-  root = new BoxRenderable(renderer, {
+  root = new Box(renderer, {
     id: "markdown-code-block-renderer-root",
     width: "100%",
     height: "100%",
@@ -169,7 +169,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(root);
 
   root.add(
-    new MarkdownRenderable(renderer, {
+    new Markdown(renderer, {
       id: "markdown-code-block-renderer-doc",
       content: markdownContent,
       fg: "#DDE7FF",

@@ -1,21 +1,21 @@
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type RawKeyEvent,
-  ScrollBoxRenderable,
-  TextRenderable,
+  ScrollBox,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import { parseColor } from "@bettertui/core";
-import { MarkdownRenderable } from "@bettertui/core";
+import { Markdown } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Rich markdown example showcasing various features
 const markdownContent = `# OpenTUI Markdown Demo
 
-Welcome to the **MarkdownRenderable** showcase! This demonstrates automatic table alignment and syntax highlighting.
+Welcome to the **Markdown** showcase! This demonstrates automatic table alignment and syntax highlighting.
 
 \`\`\`ts
 interface StreamChunk {
@@ -40,7 +40,7 @@ export function renderStreamingPreview(chunks: StreamChunk[]): string {
 }
 \`\`\`
 
-The fenced block above appears near the top so streaming mode exercises a larger CodeRenderable before the rest of the document arrives.
+The fenced block above appears near the top so streaming mode exercises a larger Code before the rest of the document arrives.
 
 ## Features
 
@@ -131,9 +131,9 @@ This paragraph follows the numeric list and should align like ordinary body text
 Here's how to use it:
 
 \`\`\`typescript
-import { MarkdownRenderable } from "@bettertui/core"
+import { Markdown } from "@bettertui/core"
 
-const md = new MarkdownRenderable(renderer, {
+const md = new Markdown(renderer, {
   content: "# Hello World",
   syntaxStyle: mySyntaxStyle,
   fg: "#24292F",
@@ -205,7 +205,7 @@ status = "fallback text should stay readable"
 
 | Method | Parameters | Returns | Description |
 |---|---|---|---|
-| \`constructor\` | \`ctx, options\` | \`MarkdownRenderable\` | Create new instance |
+| \`constructor\` | \`ctx, options\` | \`Markdown\` | Create new instance |
 | \`clearCache\` | none | \`void\` | Force re-render content |
 
 ## Inline Formatting Examples
@@ -464,12 +464,12 @@ const themeKeys = [
 let renderer: CliRenderer | null = null;
 let keyboardHandler: ((key: RawKeyEvent) => void) | null = null;
 let selectionHandler: ((selection: { getSelectedText: () => string }) => void) | null = null;
-let parentContainer: BoxRenderable | null = null;
-let markdownScrollBox: ScrollBoxRenderable | null = null;
-let markdownDisplay: MarkdownRenderable | null = null;
-let statusText: TextRenderable | null = null;
+let parentContainer: Box | null = null;
+let markdownScrollBox: ScrollBox | null = null;
+let markdownDisplay: Markdown | null = null;
+let statusText: Text | null = null;
 let _syntaxStyle: SyntaxStyle | null = null;
-let helpModal: BoxRenderable | null = null;
+let helpModal: Box | null = null;
 let currentThemeIndex = 0;
 let concealEnabled = true;
 let showingHelp = false;
@@ -618,14 +618,14 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   const theme = getCurrentTheme();
   renderer.setBackgroundColor(theme.bg);
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  const titleBox = new BoxRenderable(renderer, {
+  const titleBox = new Box(renderer, {
     id: "title-box",
     height: 3,
     borderStyle: "double",
@@ -637,7 +637,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   });
   parentContainer.add(titleBox);
 
-  const instructionsText = new TextRenderable(renderer, {
+  const instructionsText = new Text(renderer, {
     id: "instructions",
     content: "ESC to return | Press ? for keybindings",
     fg: "#888888",
@@ -645,7 +645,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   titleBox.add(instructionsText);
 
   // Create help modal (hidden by default)
-  helpModal = new BoxRenderable(renderer, {
+  helpModal = new Box(renderer, {
     id: "help-modal",
     position: "absolute",
     left: 10,
@@ -663,7 +663,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     visible: false,
   });
 
-  const helpContent = new TextRenderable(renderer, {
+  const helpContent = new Text(renderer, {
     id: "help-content",
     content: `Theme:
   T : Cycle through themes
@@ -687,13 +687,13 @@ Other:
   helpModal.add(helpContent);
   renderer.root.add(helpModal);
 
-  markdownScrollBox = new ScrollBoxRenderable(renderer, {
+  markdownScrollBox = new ScrollBox(renderer, {
     id: "markdown-scroll-box",
     borderStyle: "single",
 
     borderColor: "#6BCF7F",
     backgroundColor: theme.bg,
-    title: `MarkdownRenderable - ${theme.name}`,
+    title: `Markdown - ${theme.name}`,
     titleAlignment: "left",
     border: true,
     scrollY: true,
@@ -709,8 +709,8 @@ Other:
   // Create syntax style from current theme
   _syntaxStyle = new SyntaxStyle();
 
-  // Create markdown display using MarkdownRenderable
-  markdownDisplay = new MarkdownRenderable(renderer, {
+  // Create markdown display using Markdown
+  markdownDisplay = new Markdown(renderer, {
     id: "markdown-display",
     content: markdownContent,
     fg: getThemeTextColor(theme),
@@ -720,7 +720,7 @@ Other:
 
   markdownScrollBox.add(markdownDisplay);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "status-display",
     content: "",
     fg: "#A5D6FF",
@@ -743,7 +743,7 @@ Other:
     }
 
     if (markdownScrollBox) {
-      markdownScrollBox.title = `MarkdownRenderable - ${theme.name}`;
+      markdownScrollBox.title = `Markdown - ${theme.name}`;
       markdownScrollBox.backgroundColor = theme.bg;
     }
 

@@ -1,17 +1,17 @@
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type Keymap as CoreKeymap,
-  InputRenderable,
-  InputRenderableEvents,
+  Input,
+  InputEvents,
   type KeyEvent,
   type Renderable,
-  ScrollBoxRenderable,
+  ScrollBox,
   StyledText,
+  Text,
   type TextChunk,
-  TextRenderable,
-  TextareaRenderable,
+  Textarea,
   bg,
   bold,
   createCliRenderer,
@@ -248,36 +248,36 @@ interface TerminalGraphPulse {
   remainingMs: number;
 }
 
-let root: BoxRenderable | null = null;
-let alphaPanel: BoxRenderable | null = null;
-let betaPanel: BoxRenderable | null = null;
-let alphaText: TextRenderable | null = null;
-let betaText: TextRenderable | null = null;
-let editorFrames: BoxRenderable[] = [];
-let editors: TextareaRenderable[] = [];
-let commandPromptShell: BoxRenderable | null = null;
-let commandPromptBox: BoxRenderable | null = null;
-let commandPromptSuggestionsBox: BoxRenderable | null = null;
-let commandPromptInput: InputRenderable | null = null;
-let logoOverlayShell: BoxRenderable | null = null;
-let logoOverlayLogoText: TextRenderable | null = null;
-let logoOverlayHintText: TextRenderable | null = null;
-let commandPromptHintText: TextRenderable | null = null;
-let commandPromptUsageText: TextRenderable | null = null;
-let commandPromptSuggestionsText: TextRenderable | null = null;
-let statusFocusedText: TextRenderable | null = null;
-let statusInfoText: TextRenderable | null = null;
-let statusLeaderText: TextRenderable | null = null;
-let statusPendingText: TextRenderable | null = null;
-let statusLastText: TextRenderable | null = null;
-let helpBox: BoxRenderable | null = null;
-let helpText: TextRenderable | null = null;
-let whichKeyHeaderText: TextRenderable | null = null;
-let whichKeyScrollBox: ScrollBoxRenderable | null = null;
-let whichKeyEntriesText: TextRenderable | null = null;
-let graphText: TextRenderable | null = null;
-let _logBox: BoxRenderable | null = null;
-let logText: TextRenderable | null = null;
+let root: Box | null = null;
+let alphaPanel: Box | null = null;
+let betaPanel: Box | null = null;
+let alphaText: Text | null = null;
+let betaText: Text | null = null;
+let editorFrames: Box[] = [];
+let editors: Textarea[] = [];
+let commandPromptShell: Box | null = null;
+let commandPromptBox: Box | null = null;
+let commandPromptSuggestionsBox: Box | null = null;
+let commandPromptInput: Input | null = null;
+let logoOverlayShell: Box | null = null;
+let logoOverlayLogoText: Text | null = null;
+let logoOverlayHintText: Text | null = null;
+let commandPromptHintText: Text | null = null;
+let commandPromptUsageText: Text | null = null;
+let commandPromptSuggestionsText: Text | null = null;
+let statusFocusedText: Text | null = null;
+let statusInfoText: Text | null = null;
+let statusLeaderText: Text | null = null;
+let statusPendingText: Text | null = null;
+let statusLastText: Text | null = null;
+let helpBox: Box | null = null;
+let helpText: Text | null = null;
+let whichKeyHeaderText: Text | null = null;
+let whichKeyScrollBox: ScrollBox | null = null;
+let whichKeyEntriesText: Text | null = null;
+let graphText: Text | null = null;
+let _logBox: Box | null = null;
+let logText: Text | null = null;
 let keymap: Keymap<Renderable, KeyEvent> | null = null;
 
 let alphaCount = 0;
@@ -326,7 +326,7 @@ interface LogoPulse {
 interface LogoTileState {
   x: number;
   y: number;
-  renderable: BoxRenderable;
+  renderable: Box;
   hitMs: number;
   color: string;
   accent: number;
@@ -1780,13 +1780,13 @@ function openCommandPrompt(renderer: CliRenderer): void {
   setStatus(renderer, "Opened ex prompt");
 }
 
-function getFocusableTargets(): Array<BoxRenderable | TextareaRenderable> {
+function getFocusableTargets(): Array<Box | Textarea> {
   return [alphaPanel, betaPanel, ...editors].filter(
-    (target): target is BoxRenderable | TextareaRenderable => target !== null,
+    (target): target is Box | Textarea => target !== null,
   );
 }
 
-function getFocusableLabel(target: BoxRenderable | TextareaRenderable): string {
+function getFocusableLabel(target: Box | Textarea): string {
   if (target === alphaPanel) {
     return "Alpha panel";
   }
@@ -2614,7 +2614,7 @@ export function run(renderer: CliRenderer): void {
   editorFrames = [];
   editors = [];
 
-  root = new BoxRenderable(renderer, {
+  root = new Box(renderer, {
     id: "keymap-demo-root",
     flexDirection: "column",
     flexGrow: 1,
@@ -2623,14 +2623,14 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(root);
 
-  const panelsRow = new BoxRenderable(renderer, {
+  const panelsRow = new Box(renderer, {
     id: "keymap-demo-panels",
     flexDirection: "row",
     height: 4,
   });
   root.add(panelsRow);
 
-  alphaPanel = new BoxRenderable(renderer, {
+  alphaPanel = new Box(renderer, {
     id: "keymap-demo-alpha",
     border: true,
     borderStyle: "single",
@@ -2646,14 +2646,14 @@ export function run(renderer: CliRenderer): void {
   });
   panelsRow.add(alphaPanel);
 
-  alphaText = new TextRenderable(renderer, {
+  alphaText = new Text(renderer, {
     id: "keymap-demo-alpha-text",
     content: "",
     fg: P.text,
   });
   alphaPanel.add(alphaText);
 
-  betaPanel = new BoxRenderable(renderer, {
+  betaPanel = new Box(renderer, {
     id: "keymap-demo-beta",
     border: true,
     borderStyle: "single",
@@ -2669,14 +2669,14 @@ export function run(renderer: CliRenderer): void {
   });
   panelsRow.add(betaPanel);
 
-  betaText = new TextRenderable(renderer, {
+  betaText = new Text(renderer, {
     id: "keymap-demo-beta-text",
     content: "",
     fg: P.text,
   });
   betaPanel.add(betaText);
 
-  const editorsRow = new BoxRenderable(renderer, {
+  const editorsRow = new Box(renderer, {
     id: "keymap-demo-editors",
     flexDirection: "row",
     height: 5,
@@ -2684,7 +2684,7 @@ export function run(renderer: CliRenderer): void {
   root.add(editorsRow);
 
   for (const [index, spec] of editorSpecs.entries()) {
-    const frame = new BoxRenderable(renderer, {
+    const frame = new Box(renderer, {
       id: `keymap-demo-editor-frame-${spec.id}`,
       border: true,
       borderStyle: "single",
@@ -2699,7 +2699,7 @@ export function run(renderer: CliRenderer): void {
     });
     editorsRow.add(frame);
 
-    const editor = new TextareaRenderable(renderer, {
+    const editor = new Textarea(renderer, {
       id: `keymap-demo-editor-${index + 1}`,
       width: "100%",
       height: "100%",
@@ -2720,7 +2720,7 @@ export function run(renderer: CliRenderer): void {
     editors.push(editor);
   }
 
-  const footer = new BoxRenderable(renderer, {
+  const footer = new Box(renderer, {
     id: "keymap-demo-footer",
     border: true,
     borderStyle: "single",
@@ -2734,7 +2734,7 @@ export function run(renderer: CliRenderer): void {
   });
   root.add(footer);
 
-  const detailsColumn = new BoxRenderable(renderer, {
+  const detailsColumn = new Box(renderer, {
     id: "keymap-demo-details-column",
     flexGrow: 1,
     minWidth: 0,
@@ -2742,7 +2742,7 @@ export function run(renderer: CliRenderer): void {
   });
   footer.add(detailsColumn);
 
-  statusFocusedText = new TextRenderable(renderer, {
+  statusFocusedText = new Text(renderer, {
     id: "keymap-demo-status-focused",
     content: "",
     fg: P.text,
@@ -2750,7 +2750,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(statusFocusedText);
 
-  statusInfoText = new TextRenderable(renderer, {
+  statusInfoText = new Text(renderer, {
     id: "keymap-demo-status-info",
     content: "",
     fg: P.text,
@@ -2758,7 +2758,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(statusInfoText);
 
-  statusLeaderText = new TextRenderable(renderer, {
+  statusLeaderText = new Text(renderer, {
     id: "keymap-demo-status-leader",
     content: "",
     fg: P.text,
@@ -2766,7 +2766,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(statusLeaderText);
 
-  statusPendingText = new TextRenderable(renderer, {
+  statusPendingText = new Text(renderer, {
     id: "keymap-demo-status-pending",
     content: "",
     fg: P.text,
@@ -2774,7 +2774,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(statusPendingText);
 
-  statusLastText = new TextRenderable(renderer, {
+  statusLastText = new Text(renderer, {
     id: "keymap-demo-status-last",
     content: "",
     fg: P.text,
@@ -2782,14 +2782,14 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(statusLastText);
 
-  helpBox = new BoxRenderable(renderer, {
+  helpBox = new Box(renderer, {
     id: "keymap-demo-help",
     flexDirection: "column",
     marginTop: 1,
   });
   detailsColumn.add(helpBox);
 
-  helpText = new TextRenderable(renderer, {
+  helpText = new Text(renderer, {
     id: "keymap-demo-help-text",
     content: buildHelpContent(),
     fg: P.text,
@@ -2797,7 +2797,7 @@ export function run(renderer: CliRenderer): void {
   });
   helpBox.add(helpText);
 
-  const graphBox = new BoxRenderable(renderer, {
+  const graphBox = new Box(renderer, {
     id: "keymap-demo-graph",
     border: true,
     borderStyle: "single",
@@ -2814,7 +2814,7 @@ export function run(renderer: CliRenderer): void {
   });
   detailsColumn.add(graphBox);
 
-  graphText = new TextRenderable(renderer, {
+  graphText = new Text(renderer, {
     id: "keymap-demo-graph-text",
     content: "",
     fg: P.text,
@@ -2831,7 +2831,7 @@ export function run(renderer: CliRenderer): void {
   setupGraphAnimation(renderer);
   scheduleGraphRefresh(renderer);
 
-  const whichKeyColumn = new BoxRenderable(renderer, {
+  const whichKeyColumn = new Box(renderer, {
     id: "keymap-demo-which-key-column",
     width: "40%",
     minWidth: 30,
@@ -2841,7 +2841,7 @@ export function run(renderer: CliRenderer): void {
   });
   footer.add(whichKeyColumn);
 
-  whichKeyHeaderText = new TextRenderable(renderer, {
+  whichKeyHeaderText = new Text(renderer, {
     id: "keymap-demo-wk-header-text",
     content: "",
     fg: P.text,
@@ -2849,7 +2849,7 @@ export function run(renderer: CliRenderer): void {
   });
   whichKeyColumn.add(whichKeyHeaderText);
 
-  whichKeyScrollBox = new ScrollBoxRenderable(renderer, {
+  whichKeyScrollBox = new ScrollBox(renderer, {
     id: "keymap-demo-wk-scrollbox",
     flexGrow: 1,
     flexShrink: 1,
@@ -2863,7 +2863,7 @@ export function run(renderer: CliRenderer): void {
   (whichKeyScrollBox as any).horizontalScrollbarOptions = { visible: false };
   whichKeyColumn.add(whichKeyScrollBox);
 
-  whichKeyEntriesText = new TextRenderable(renderer, {
+  whichKeyEntriesText = new Text(renderer, {
     id: "keymap-demo-wk-entries-text",
     content: "",
     fg: P.text,
@@ -2872,7 +2872,7 @@ export function run(renderer: CliRenderer): void {
   });
   whichKeyScrollBox.add(whichKeyEntriesText);
 
-  commandPromptShell = new BoxRenderable(renderer, {
+  commandPromptShell = new Box(renderer, {
     id: "keymap-demo-ex-prompt-shell",
     position: "absolute",
     left: "50%",
@@ -2886,7 +2886,7 @@ export function run(renderer: CliRenderer): void {
   });
   root.add(commandPromptShell);
 
-  commandPromptBox = new BoxRenderable(renderer, {
+  commandPromptBox = new Box(renderer, {
     id: "keymap-demo-ex-prompt",
     width: EX_PROMPT_WIDTH,
     height: EX_PROMPT_CHROME_ROWS,
@@ -2902,7 +2902,7 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptShell.add(commandPromptBox);
 
-  commandPromptHintText = new TextRenderable(renderer, {
+  commandPromptHintText = new Text(renderer, {
     id: "keymap-demo-ex-prompt-hint",
     content: "",
     fg: P.textMuted,
@@ -2910,7 +2910,7 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptBox.add(commandPromptHintText);
 
-  commandPromptInput = new InputRenderable(renderer, {
+  commandPromptInput = new Input(renderer, {
     id: "keymap-demo-ex-input",
     width: "100%",
     value: ":",
@@ -2923,7 +2923,7 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptBox.add(commandPromptInput);
 
-  commandPromptUsageText = new TextRenderable(renderer, {
+  commandPromptUsageText = new Text(renderer, {
     id: "keymap-demo-ex-prompt-usage",
     content: "",
     fg: P.text,
@@ -2931,7 +2931,7 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptBox.add(commandPromptUsageText);
 
-  commandPromptSuggestionsBox = new BoxRenderable(renderer, {
+  commandPromptSuggestionsBox = new Box(renderer, {
     id: "keymap-demo-ex-prompt-list",
     width: EX_PROMPT_WIDTH,
     height: getCommandPromptSuggestionRows(),
@@ -2942,7 +2942,7 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptShell.add(commandPromptSuggestionsBox);
 
-  commandPromptSuggestionsText = new TextRenderable(renderer, {
+  commandPromptSuggestionsText = new Text(renderer, {
     id: "keymap-demo-ex-prompt-suggestions",
     content: "",
     fg: P.text,
@@ -2950,13 +2950,13 @@ export function run(renderer: CliRenderer): void {
   });
   commandPromptSuggestionsBox.add(commandPromptSuggestionsText);
 
-  commandPromptInput.on(InputRenderableEvents.INPUT, (value: string) => {
+  commandPromptInput.on(InputEvents.INPUT, (value: string) => {
     commandPromptValue = value;
     commandPromptSelection = 0;
     renderAll(renderer);
   });
 
-  logoOverlayShell = new BoxRenderable(renderer, {
+  logoOverlayShell = new Box(renderer, {
     id: "keymap-demo-logo-overlay",
     position: "absolute",
     left: 0,
@@ -2968,7 +2968,7 @@ export function run(renderer: CliRenderer): void {
   });
   root.add(logoOverlayShell);
 
-  const logoScrim = new BoxRenderable(renderer, {
+  const logoScrim = new Box(renderer, {
     id: "keymap-demo-logo-overlay-scrim",
     position: "absolute",
     left: 0,
@@ -2980,7 +2980,7 @@ export function run(renderer: CliRenderer): void {
   });
   logoOverlayShell.add(logoScrim);
 
-  const logoTileGrid = new BoxRenderable(renderer, {
+  const logoTileGrid = new Box(renderer, {
     id: "keymap-demo-logo-overlay-tile-grid",
     position: "absolute",
     left: 0,
@@ -2993,7 +2993,7 @@ export function run(renderer: CliRenderer): void {
   logoOverlayShell.add(logoTileGrid);
 
   for (let y = 0; y < LOGO_TILE_ROWS; y += 1) {
-    const row = new BoxRenderable(renderer, {
+    const row = new Box(renderer, {
       id: `keymap-demo-logo-overlay-tile-row-${y}`,
       flexDirection: "row",
       flexGrow: 1,
@@ -3003,7 +3003,7 @@ export function run(renderer: CliRenderer): void {
     logoTileGrid.add(row);
 
     for (let x = 0; x < LOGO_TILE_COLUMNS; x += 1) {
-      const tile = new BoxRenderable(renderer, {
+      const tile = new Box(renderer, {
         id: `keymap-demo-logo-overlay-tile-${x}-${y}`,
         flexGrow: 1,
         flexBasis: 0,
@@ -3024,7 +3024,7 @@ export function run(renderer: CliRenderer): void {
   }
   resetLogoTiles();
 
-  const logoCard = new BoxRenderable(renderer, {
+  const logoCard = new Box(renderer, {
     id: "keymap-demo-logo-overlay-card",
     position: "absolute",
     left: "50%",
@@ -3049,7 +3049,7 @@ export function run(renderer: CliRenderer): void {
   });
   logoOverlayShell.add(logoCard);
 
-  logoOverlayLogoText = new TextRenderable(renderer, {
+  logoOverlayLogoText = new Text(renderer, {
     id: "keymap-demo-logo-overlay-logo",
     content: buildOpencodeLogoContent(),
     height: OPENCODE_LOGO.left.length,
@@ -3057,7 +3057,7 @@ export function run(renderer: CliRenderer): void {
   });
   logoCard.add(logoOverlayLogoText);
 
-  logoOverlayHintText = new TextRenderable(renderer, {
+  logoOverlayHintText = new Text(renderer, {
     id: "keymap-demo-logo-overlay-hint",
     content: buildLogoOverlayHint(),
     height: 1,

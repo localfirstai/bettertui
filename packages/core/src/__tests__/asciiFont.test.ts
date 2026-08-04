@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { measureFontText, renderFontToText } from "../lib/asciiFont";
 import type { CliRenderer } from "../platform/cliRenderer";
-import { ASCIIFontRenderable } from "../renderables/Stubs";
+import { ASCIIFont } from "../renderables/Stubs";
 
 describe("cfonts ASCII Font Rendering", () => {
   it("renders normal text with tiny font", () => {
@@ -29,7 +29,7 @@ describe("cfonts ASCII Font Rendering", () => {
     }
   });
 
-  it("ASCIIFontRenderable handles arbitrary normal text", () => {
+  it("ASCIIFont handles arbitrary normal text", () => {
     const mockRenderer = {
       createNode: () => 1,
       appendChild: () => {},
@@ -39,7 +39,7 @@ describe("cfonts ASCII Font Rendering", () => {
       setText: () => {},
     };
 
-    const renderable = new ASCIIFontRenderable(mockRenderer as unknown as CliRenderer, {
+    const renderable = new ASCIIFont(mockRenderer as unknown as CliRenderer, {
       text: "CUSTOM USER INPUT",
       font: "tiny",
       color: "#38BDF8",

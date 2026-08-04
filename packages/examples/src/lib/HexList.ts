@@ -1,5 +1,5 @@
 import { RGBA } from "@bettertui/core";
-import { type FrameBufferOptions, FrameBufferRenderable } from "@bettertui/core";
+import { FrameBuffer, type FrameBufferOptions } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
 
 export interface HexListOptions extends Omit<FrameBufferOptions, "width" | "height"> {
@@ -10,7 +10,7 @@ export interface HexListOptions extends Omit<FrameBufferOptions, "width" | "heig
   maxHeight?: number;
 }
 
-export class HexListRenderable extends FrameBufferRenderable {
+export class HexList extends FrameBuffer {
   private _colors: string[];
   private _columns: number;
   private _blockWidth: number;

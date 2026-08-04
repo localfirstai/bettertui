@@ -1,9 +1,9 @@
 import {
-  ASCIIFontRenderable,
-  BoxRenderable,
+  ASCIIFont,
+  Box,
   type CliRenderer,
   RGBA,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
@@ -11,19 +11,19 @@ import {
   t,
   underline,
 } from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let scrollBox: ScrollBoxRenderable | null = null;
+let scrollBox: ScrollBox | null = null;
 let renderer: CliRenderer | null = null;
-let mainContainer: BoxRenderable | null = null;
-let instructionsBox: BoxRenderable | null = null;
+let mainContainer: Box | null = null;
+let instructionsBox: Box | null = null;
 let nextIndex = 1000;
 
 function addBox(i: number) {
   if (!renderer || !scrollBox) return;
 
-  const box = new BoxRenderable(renderer, {
+  const box = new Box(renderer, {
     id: `box-${i + 1}`,
     width: "auto",
     padding: 1,
@@ -32,7 +32,7 @@ function addBox(i: number) {
   });
 
   const content = makeMultilineContent(i);
-  const text = new TextRenderable(renderer, {
+  const text = new Text(renderer, {
     content,
   });
 
@@ -63,7 +63,7 @@ function addAsciiRenderable(i: number) {
       8,
     );
 
-  const asciiRenderable = new ASCIIFontRenderable(renderer, {
+  const asciiRenderable = new ASCIIFont(renderer, {
     id: `ascii-${i + 1}`,
     text: longText,
     font: font,
@@ -108,7 +108,7 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#1a1b26");
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "main-container",
     flexGrow: 1,
     maxHeight: "100%",
@@ -117,7 +117,7 @@ export function run(rendererInstance: CliRenderer): void {
     backgroundColor: "#1a1b26",
   });
 
-  scrollBox = new ScrollBoxRenderable(renderer, {
+  scrollBox = new ScrollBox(renderer, {
     id: "scroll-box",
     rootOptions: {
       backgroundColor: "#24283b",
@@ -141,7 +141,7 @@ export function run(rendererInstance: CliRenderer): void {
     },
   });
 
-  instructionsBox = new BoxRenderable(renderer, {
+  instructionsBox = new Box(renderer, {
     id: "instructions",
     width: "100%",
     flexDirection: "column",
@@ -150,11 +150,11 @@ export function run(rendererInstance: CliRenderer): void {
     flexShrink: 0,
   });
 
-  const instructionsText1 = new TextRenderable(renderer, {
+  const instructionsText1 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Controls:"))} ${fg("#c0caf5")("↑/↓/PgUp/PgDn/Home/End")} ${fg("#565f89")("|")} ${bold(fg("#9ece6a")("A"))} ${fg("#c0caf5")("Toggle arrows")} ${fg("#565f89")("|")} ${bold(fg("#bb9af7")("Tab"))} ${fg("#c0caf5")("Focus scrollbox")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("N"))} ${fg("#c0caf5")("Add child")}`,
   });
 
-  const instructionsText2 = new TextRenderable(renderer, {
+  const instructionsText2 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Scrollbars:"))} ${bold(fg("#e0af68")("V"))} ${fg("#c0caf5")("Toggle vertical")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("H"))} ${fg("#c0caf5")("Toggle horizontal")}`,
   });
 

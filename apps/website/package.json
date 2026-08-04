@@ -30,6 +30,7 @@
     "@opentui/core": "0.4.3",
     "@opentui/react": "0.4.3",
     "@phosphor-icons/react": "^2.1.7",
+    "@radix-ui/react-slot": "^1.1.2",
     "@tailwindcss/vite": "^4.3.2",
     "astro": "^7.0.7",
     "class-variance-authority": "0.7.1",

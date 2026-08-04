@@ -1,15 +1,15 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type KeyEvent,
   type PasteEvent,
-  ScrollBoxRenderable,
+  ScrollBox,
   type Selection,
-  TextRenderable,
-  TextareaRenderable,
+  Text,
+  Textarea,
   bg,
   bold,
   createCliRenderer,
@@ -97,13 +97,13 @@ const FIXTURES: readonly Fixture[] = [
 
 const encoder = new TextEncoder();
 
-let container: BoxRenderable | null = null;
-let tabsText: TextRenderable | null = null;
-let fixtureText: TextRenderable | null = null;
-let editor: TextareaRenderable | null = null;
-let checksText: TextRenderable | null = null;
-let logList: ScrollBoxRenderable | null = null;
-let logRows: TextRenderable[] = [];
+let container: Box | null = null;
+let tabsText: Text | null = null;
+let fixtureText: Text | null = null;
+let editor: Textarea | null = null;
+let checksText: Text | null = null;
+let logList: ScrollBox | null = null;
+let logRows: Text[] = [];
 let logRowId = 0;
 let keypressHandler: ((event: KeyEvent) => void) | null = null;
 let pasteHandler: ((event: PasteEvent) => void) | null = null;
@@ -183,7 +183,7 @@ function label(text: string) {
 function addLog(renderer: CliRenderer, tone: Tone, message: string, detail?: string): void {
   if (!logList) return;
 
-  const row = new TextRenderable(renderer, {
+  const row = new Text(renderer, {
     id: `clipboard-paste-log-${logRowId++}`,
     content: t`${fg(P.muted)(timestamp())} ${fg(TONE_COLOR[tone])(`${TONE_ICON[tone]} ${message}`)}`,
     flexGrow: 0,
@@ -195,7 +195,7 @@ function addLog(renderer: CliRenderer, tone: Tone, message: string, detail?: str
   logRows.push(row);
 
   if (detail) {
-    const detailRow = new TextRenderable(renderer, {
+    const detailRow = new Text(renderer, {
       id: `clipboard-paste-log-${logRowId++}`,
       content: t`${fg(P.muted)(`             ${detail}`)}`,
       flexGrow: 0,
@@ -254,8 +254,8 @@ function resetTest(renderer: CliRenderer, reason: string): void {
   addLog(renderer, "muted", `${reason} — editor cleared, checks idle`);
 }
 
-function panel(renderer: CliRenderer, id: string, title: string, height?: number): BoxRenderable {
-  return new BoxRenderable(renderer, {
+function panel(renderer: CliRenderer, id: string, title: string, height?: number): Box {
+  return new Box(renderer, {
     id,
     title: ` ${title} `,
     titleAlignment: "left",
@@ -272,7 +272,7 @@ function panel(renderer: CliRenderer, id: string, title: string, height?: number
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor(P.bg);
 
-  container = new BoxRenderable(renderer, {
+  container = new Box(renderer, {
     id: "clipboard-paste-container",
     width: "100%",
     height: "100%",
@@ -281,7 +281,7 @@ export function run(renderer: CliRenderer): void {
     backgroundColor: P.bg,
   });
 
-  const header = new TextRenderable(renderer, {
+  const header = new Text(renderer, {
     id: "clipboard-paste-header",
     height: 2,
     marginBottom: 1,
@@ -289,7 +289,7 @@ export function run(renderer: CliRenderer): void {
 ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+Y"))} ${fg(P.muted)("copy")}  ${bold(fg(P.amber)("Ctrl+K"))} ${fg(P.muted)("clear")}  ${bold(fg(P.amber)("Ctrl+R"))} ${fg(P.muted)("reset")}  ${bold(fg(P.amber)("drag-select"))} ${fg(P.muted)("copies via OSC 52")}`,
   });
 
-  tabsText = new TextRenderable(renderer, {
+  tabsText = new Text(renderer, {
     id: "clipboard-paste-tabs",
     height: 1,
     content: "",
@@ -297,7 +297,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
 
   const fixturePanel = panel(renderer, "clipboard-paste-fixture-panel", "Fixture", 5);
   fixturePanel.marginBottom = 1;
-  fixtureText = new TextRenderable(renderer, {
+  fixtureText = new Text(renderer, {
     id: "clipboard-paste-fixture",
     content: "",
     selectionBg: SELECTION_BG,
@@ -305,7 +305,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
   });
   fixturePanel.add(fixtureText);
 
-  const editorPanel = new BoxRenderable(renderer, {
+  const editorPanel = new Box(renderer, {
     id: "clipboard-paste-editor-box",
     title: " Paste target ",
     titleAlignment: "left",
@@ -319,7 +319,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     marginBottom: 1,
   });
 
-  editor = new TextareaRenderable(renderer, {
+  editor = new Textarea(renderer, {
     id: "clipboard-paste-editor",
     width: "100%",
     height: "100%",
@@ -334,7 +334,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
 
   const checksPanel = panel(renderer, "clipboard-paste-checks-panel", "Checks", 7);
   checksPanel.marginBottom = 1;
-  checksText = new TextRenderable(renderer, {
+  checksText = new Text(renderer, {
     id: "clipboard-paste-checks",
     content: "",
     selectionBg: SELECTION_BG,
@@ -342,7 +342,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
   });
   checksPanel.add(checksText);
 
-  const logPanel = new BoxRenderable(renderer, {
+  const logPanel = new Box(renderer, {
     id: "clipboard-paste-log-panel",
     title: " Events ",
     titleAlignment: "left",
@@ -358,7 +358,7 @@ ${bold(fg(P.amber)("1-4"))} ${fg(P.muted)("fixture")}  ${bold(fg(P.amber)("Ctrl+
     flexDirection: "column",
   });
 
-  logList = new ScrollBoxRenderable(renderer, {
+  logList = new ScrollBox(renderer, {
     id: "clipboard-paste-log-list",
     stickyScroll: true,
     stickyStart: "bottom",

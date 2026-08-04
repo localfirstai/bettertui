@@ -1,34 +1,28 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
-import { InputRenderable, InputRenderableEvents } from "@bettertui/core";
-import { type SelectOption, SelectRenderable, SelectRenderableEvents } from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
+import { Input, InputEvents } from "@bettertui/core";
+import { Select, SelectEvents, type SelectOption } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let renderer: CliRenderer | null = null;
-let header: TextRenderable | null = null;
-let headerBox: BoxRenderable | null = null;
-let selectContainer: BoxRenderable | null = null;
-let selectContainerBox: BoxRenderable | null = null;
-let leftSelect: SelectRenderable | null = null;
-let leftSelectBox: BoxRenderable | null = null;
-let rightSelect: SelectRenderable | null = null;
-let rightSelectBox: BoxRenderable | null = null;
-let inputContainer: BoxRenderable | null = null;
-let inputContainerBox: BoxRenderable | null = null;
-let inputLabel: TextRenderable | null = null;
-let textInput: InputRenderable | null = null;
-let textInputBox: BoxRenderable | null = null;
-let footer: TextRenderable | null = null;
-let footerBox: BoxRenderable | null = null;
+let header: Text | null = null;
+let headerBox: Box | null = null;
+let selectContainer: Box | null = null;
+let selectContainerBox: Box | null = null;
+let leftSelect: Select | null = null;
+let leftSelectBox: Box | null = null;
+let rightSelect: Select | null = null;
+let rightSelectBox: Box | null = null;
+let inputContainer: Box | null = null;
+let inputContainerBox: Box | null = null;
+let inputLabel: Text | null = null;
+let textInput: Input | null = null;
+let textInputBox: Box | null = null;
+let footer: Text | null = null;
+let footerBox: Box | null = null;
 let currentFocusIndex = 0;
 
-const focusableElements: Array<InputRenderable | SelectRenderable> = [];
-const focusableBoxes: Array<BoxRenderable | null> = [];
+const focusableElements: Array<Input | Select> = [];
+const focusableBoxes: Array<Box | null> = [];
 
 const colorOptions: SelectOption[] = [
   { name: "Red", description: "A warm primary color", value: "#ff0000" },
@@ -50,7 +44,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#001122");
 
-  headerBox = new BoxRenderable(renderer, {
+  headerBox = new Box(renderer, {
     id: "header-box",
     zIndex: 0,
     width: "auto",
@@ -63,7 +57,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  header = new TextRenderable(renderer, {
+  header = new Text(renderer, {
     id: "header",
     content: "INPUT & SELECT LAYOUT DEMO",
     fg: "#ffffff",
@@ -75,7 +69,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   headerBox.add(header);
 
-  selectContainerBox = new BoxRenderable(renderer, {
+  selectContainerBox = new Box(renderer, {
     id: "select-container-box",
     zIndex: 0,
     width: "auto",
@@ -89,7 +83,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  selectContainer = new BoxRenderable(renderer, {
+  selectContainer = new Box(renderer, {
     id: "select-container",
     zIndex: 1,
     width: "auto",
@@ -101,7 +95,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   selectContainerBox.add(selectContainer);
 
-  leftSelectBox = new BoxRenderable(renderer, {
+  leftSelectBox = new Box(renderer, {
     id: "color-select-box",
     zIndex: 0,
     width: "auto",
@@ -118,7 +112,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  leftSelect = new SelectRenderable(renderer, {
+  leftSelect = new Select(renderer, {
     id: "color-select",
     zIndex: 1,
     width: "auto",
@@ -142,7 +136,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   leftSelectBox.add(leftSelect);
 
-  rightSelectBox = new BoxRenderable(renderer, {
+  rightSelectBox = new Box(renderer, {
     id: "size-select-box",
     zIndex: 0,
     width: "auto",
@@ -159,7 +153,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  rightSelect = new SelectRenderable(renderer, {
+  rightSelect = new Select(renderer, {
     id: "size-select",
     zIndex: 1,
     width: "auto",
@@ -183,7 +177,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   rightSelectBox.add(rightSelect);
 
-  inputContainerBox = new BoxRenderable(renderer, {
+  inputContainerBox = new Box(renderer, {
     id: "input-container-box",
     zIndex: 0,
     width: "auto",
@@ -196,7 +190,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  inputContainer = new BoxRenderable(renderer, {
+  inputContainer = new Box(renderer, {
     id: "input-container",
     zIndex: 1,
     width: "auto",
@@ -208,7 +202,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   inputContainerBox.add(inputContainer);
 
-  inputLabel = new TextRenderable(renderer, {
+  inputLabel = new Text(renderer, {
     id: "input-label",
     content: "Enter your text:",
     fg: "#f1f5f9",
@@ -218,7 +212,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     flexShrink: 0,
   });
 
-  textInputBox = new BoxRenderable(renderer, {
+  textInputBox = new Box(renderer, {
     id: "text-input-box",
     zIndex: 0,
     width: "auto",
@@ -233,7 +227,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  textInput = new InputRenderable(renderer, {
+  textInput = new Input(renderer, {
     id: "text-input",
     zIndex: 1,
     width: "auto",
@@ -252,7 +246,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 
   textInputBox.add(textInput);
 
-  footerBox = new BoxRenderable(renderer, {
+  footerBox = new Box(renderer, {
     id: "footer-box",
     zIndex: 0,
     width: "auto",
@@ -265,7 +259,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     border: true,
   });
 
-  footer = new TextRenderable(renderer, {
+  footer = new Text(renderer, {
     id: "footer",
     content: "TAB: focus next | SHIFT+TAB: focus prev | ARROWS/JK: navigate | ESC: quit",
     fg: "#dbeafe",
@@ -298,33 +292,27 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
 function setupEventHandlers(): void {
   if (!leftSelect || !rightSelect || !textInput) return;
 
-  leftSelect.on(
-    SelectRenderableEvents.SELECTION_CHANGED,
-    (_index: number, _option: SelectOption) => {
-      updateDisplay();
-    },
-  );
-
-  leftSelect.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
+  leftSelect.on(SelectEvents.SELECTION_CHANGED, (_index: number, _option: SelectOption) => {
     updateDisplay();
   });
 
-  rightSelect.on(
-    SelectRenderableEvents.SELECTION_CHANGED,
-    (_index: number, _option: SelectOption) => {
-      updateDisplay();
-    },
-  );
-
-  rightSelect.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
+  leftSelect.on(SelectEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
     updateDisplay();
   });
 
-  textInput.on(InputRenderableEvents.INPUT, (_value: string) => {
+  rightSelect.on(SelectEvents.SELECTION_CHANGED, (_index: number, _option: SelectOption) => {
     updateDisplay();
   });
 
-  textInput.on(InputRenderableEvents.CHANGE, (_value: string) => {
+  rightSelect.on(SelectEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
+    updateDisplay();
+  });
+
+  textInput.on(InputEvents.INPUT, (_value: string) => {
+    updateDisplay();
+  });
+
+  textInput.on(InputEvents.CHANGE, (_value: string) => {
     updateDisplay();
   });
 }

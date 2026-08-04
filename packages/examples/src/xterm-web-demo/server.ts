@@ -25,13 +25,13 @@ import { fileURLToPath } from "node:url";
 import type { ServerWebSocket } from "bun";
 
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type KeyEvent,
   StyledText,
+  Text,
   type TextChunk,
-  TextRenderable,
   createCliRenderer,
   dim,
   fg,
@@ -44,12 +44,12 @@ interface Session {
   renderer: CliRenderer | null;
   stdin: Readable | null;
   stdout: NodeJS.WriteStream | null;
-  card: BoxRenderable | null;
-  boardBox: BoxRenderable | null;
-  scoreText: TextRenderable | null;
-  metaText: TextRenderable | null;
-  boardText: TextRenderable | null;
-  hintText: TextRenderable | null;
+  card: Box | null;
+  boardBox: Box | null;
+  scoreText: Text | null;
+  metaText: Text | null;
+  boardText: Text | null;
+  hintText: Text | null;
   cols: number;
   rows: number;
   sessionId: string;
@@ -172,7 +172,7 @@ function finishPendingWrite(session: Session) {
   pendingWrite();
 }
 
-function setTextContent(renderable: TextRenderable | null, content: StyledText | string) {
+function setTextContent(renderable: Text | null, content: StyledText | string) {
   if (!renderable) return;
   try {
     renderable.content = content;
@@ -182,7 +182,7 @@ function setTextContent(renderable: TextRenderable | null, content: StyledText |
   }
 }
 
-function setBoxSize(renderable: BoxRenderable | null, width: number, height: number) {
+function setBoxSize(renderable: Box | null, width: number, height: number) {
   if (!renderable) return;
   renderable.width = width;
   renderable.height = height;
@@ -812,7 +812,7 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
   renderer.setBackgroundColor("#08111f");
   const layout = calculateSessionLayout(session);
 
-  const container = new BoxRenderable(renderer, {
+  const container = new Box(renderer, {
     id: "xterm-demo-root",
     position: "absolute",
     left: 0,
@@ -825,7 +825,7 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
     zIndex: 0,
   });
 
-  const card = new BoxRenderable(renderer, {
+  const card = new Box(renderer, {
     id: "xterm-demo-card",
     width: layout.cardWidth,
     height: layout.cardHeight,
@@ -841,21 +841,21 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
     padding: 1,
   });
 
-  const scoreText = new TextRenderable(renderer, {
+  const scoreText = new Text(renderer, {
     id: "xterm-demo-score",
     content: "",
     fg: session.theme.scoreColor,
   });
   card.add(scoreText);
 
-  const metaText = new TextRenderable(renderer, {
+  const metaText = new Text(renderer, {
     id: "xterm-demo-meta",
     content: "",
     fg: session.theme.accentColor,
   });
   card.add(metaText);
 
-  const boardBox = new BoxRenderable(renderer, {
+  const boardBox = new Box(renderer, {
     id: "xterm-demo-board-box",
     width: layout.boardWidth + 2,
     height: layout.boardHeight + 2,
@@ -865,7 +865,7 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
     border: true,
   });
 
-  const boardText = new TextRenderable(renderer, {
+  const boardText = new Text(renderer, {
     id: "xterm-demo-board",
     content: "",
     fg: "#cbd5e1",
@@ -873,7 +873,7 @@ function setupPongUI(ws: ServerWebSocket<Session>, renderer: CliRenderer, sessio
   boardBox.add(boardText);
   card.add(boardBox);
 
-  const hintText = new TextRenderable(renderer, {
+  const hintText = new Text(renderer, {
     id: "xterm-demo-hint",
     content: "arrows or j/k   space play   r reset   q quit",
     fg: "#94a3b8",

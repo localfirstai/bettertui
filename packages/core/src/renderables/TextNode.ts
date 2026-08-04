@@ -1,8 +1,8 @@
 /**
- * TextNodeRenderable — building block for styled text composition.
+ * TextNode — building block for styled text composition.
  *
  * Design:
- * - Children are `string | TextNodeRenderable` (heterogeneous).
+ * - Children are `string | TextNode` (heterogeneous).
  * - Leaf text is stored as a string child, NOT a separate `_text` field.
  *   This means `clear()` always wipes all content and `children` setter
  *   works correctly for dynamic updates.
@@ -35,22 +35,22 @@ export interface StyleAttrs {
 }
 
 /** A child can be either a string (leaf text) or a nested node. */
-export type TextNodeChild = string | TextNodeRenderable;
+export type TextNodeChild = string | TextNode;
 
 let _textNodeCounter = 0;
 
 /**
- * TextNodeRenderable — a lightweight styled-text composition node.
- * Can be used standalone or nested in TextRenderable.
+ * TextNode — a lightweight styled-text composition node.
+ * Can be used standalone or nested in Text.
  */
-export class TextNodeRenderable {
+export class TextNode {
   private static _counter = 0;
   public readonly id: string;
   public _fg: RGBA | undefined;
   public _bg: RGBA | undefined;
   public _attributes: number;
   public isDirty = false;
-  public parent: TextNodeRenderable | null = null;
+  public parent: TextNode | null = null;
 
   /**
    * Children are heterogeneous: strings are leaf text, TextNodeRenderables are
@@ -79,10 +79,10 @@ export class TextNodeRenderable {
 
   /**
    * Create a leaf node from a plain string with optional style.
-   * Signature: `TextNodeRenderable.fromString(text, options?)`.
+   * Signature: `TextNode.fromString(text, options?)`.
    */
-  static fromString(text: string, style?: StyleAttrs): TextNodeRenderable {
-    const node = new TextNodeRenderable({
+  static fromString(text: string, style?: StyleAttrs): TextNode {
+    const node = new TextNode({
       fg: style?.fg,
       bg: style?.bg,
     });
@@ -94,13 +94,13 @@ export class TextNodeRenderable {
 
   /**
    * Create a container node from an array of child nodes with optional root style.
-   * Signature: `fromNodes(nodes: TextNodeRenderable[], options?)`.
+   * Signature: `fromNodes(nodes: TextNode[], options?)`.
    *
    * Previous implementation used variadic rest params and no options,
    * which broke call sites that pass `([a,b,c], { fg: "..." })`.
    */
-  static fromNodes(nodes: TextNodeRenderable[], options: StyleAttrs = {}): TextNodeRenderable {
-    const root = new TextNodeRenderable({
+  static fromNodes(nodes: TextNode[], options: StyleAttrs = {}): TextNode {
+    const root = new TextNode({
       fg: options.fg,
       bg: options.bg,
     });
@@ -154,7 +154,7 @@ export class TextNodeRenderable {
   /**
    * Replace all children with a new array of strings and/or nodes.
    * The `children` setter: detaches old node children, adopts
-   * new ones, and marks the node dirty so the owner TextRenderable resyncs.
+   * new ones, and marks the node dirty so the owner Text resyncs.
    *
    * Usage (dynamic update pattern):
    * ```ts
@@ -164,13 +164,13 @@ export class TextNodeRenderable {
   set children(newChildren: TextNodeChild[]) {
     // Detach old node children
     for (const child of this._children) {
-      if (child instanceof TextNodeRenderable) {
+      if (child instanceof TextNode) {
         child.parent = null;
       }
     }
     // Adopt new node children
     for (const child of newChildren) {
-      if (child instanceof TextNodeRenderable) {
+      if (child instanceof TextNode) {
         child.parent = this;
       }
     }
@@ -182,14 +182,14 @@ export class TextNodeRenderable {
   // ── Mutation methods ───────────────────────────────────────────────────────
 
   /**
-   * Append a string, TextNodeRenderable, or StyledText as a child.
+   * Append a string, TextNode, or StyledText as a child.
    * Returns the index at which the child was inserted.
    */
   add(child: TextNodeChild | StyledText, index?: number): number {
     let item: TextNodeChild;
     if (typeof child === "string") {
       item = child;
-    } else if (child instanceof TextNodeRenderable) {
+    } else if (child instanceof TextNode) {
       child.parent = this;
       item = child;
     } else {
@@ -207,7 +207,7 @@ export class TextNodeRenderable {
     return index ?? this._children.length - 1;
   }
 
-  remove(child: TextNodeRenderable): void {
+  remove(child: TextNode): void {
     const idx = this._children.indexOf(child);
     if (idx !== -1) {
       this._children.splice(idx, 1);
@@ -221,9 +221,9 @@ export class TextNodeRenderable {
    * Insert `child` before `anchor`. Throws if `anchor` is provided but not
    * found — strict contract (helps catch anchor mismatches).
    */
-  insertBefore(child: TextNodeChild | StyledText, anchor?: TextNodeRenderable): void {
+  insertBefore(child: TextNodeChild | StyledText, anchor?: TextNode): void {
     const item =
-      typeof child === "string" || child instanceof TextNodeRenderable
+      typeof child === "string" || child instanceof TextNode
         ? child
         : styledTextToAnsi(child as StyledText);
 
@@ -233,12 +233,12 @@ export class TextNodeRenderable {
       const idx = this._children.indexOf(anchor);
       if (idx === -1) {
         throw new Error(
-          `[TextNodeRenderable] insertBefore: anchor node (id=${anchor.id}) not found among children`,
+          `[TextNode] insertBefore: anchor node (id=${anchor.id}) not found among children`,
         );
       }
       this._children.splice(idx, 0, item);
     }
-    if (item instanceof TextNodeRenderable) item.parent = this;
+    if (item instanceof TextNode) item.parent = this;
     this.isDirty = true;
     this._bubbleDirty();
   }
@@ -249,7 +249,7 @@ export class TextNodeRenderable {
    */
   clear(): void {
     for (const child of this._children) {
-      if (child instanceof TextNodeRenderable) {
+      if (child instanceof TextNode) {
         child.parent = null;
       }
     }
@@ -266,7 +266,7 @@ export class TextNodeRenderable {
 
   /**
    * Walk this node and all descendants, accumulating {@link TextChunk}s with
-   * inherited style applied. Called by `TextRenderable.onLifecyclePass` to
+   * inherited style applied. Called by `Text.onLifecyclePass` to
    * build the flat chunk array that goes to the engine.
    */
   gatherWithInheritedStyle(inherited: {
@@ -325,9 +325,9 @@ export class TextNodeRenderable {
     let p = this.parent;
     while (p) {
       p.isDirty = true;
-      // If we reach a RootTextNodeRenderable, notify it so it can signal its
-      // owning TextRenderable to resync on the next lifecycle pass.
-      if (p instanceof RootTextNodeRenderable) {
+      // If we reach a RootTextNode, notify it so it can signal its
+      // owning Text to resync on the next lifecycle pass.
+      if (p instanceof RootTextNode) {
         p.markDirtyFromChild();
         break;
       }
@@ -337,12 +337,12 @@ export class TextNodeRenderable {
 }
 
 /**
- * RootTextNodeRenderable — the root text node for a TextRenderable.
+ * RootTextNode — the root text node for a Text.
  * When any descendant calls `_bubbleDirty()` and the dirty flag reaches this
- * root, the `onDirty` callback is invoked so the owning `TextRenderable` can
+ * root, the `onDirty` callback is invoked so the owning `Text` can
  * schedule a re-sync to the engine on the next lifecycle pass.
  */
-export class RootTextNodeRenderable extends TextNodeRenderable {
+export class RootTextNode extends TextNode {
   private readonly _onDirty: (() => void) | undefined;
 
   constructor(options: TextNodeOptions = {}, onDirty?: () => void) {

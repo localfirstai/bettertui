@@ -9,13 +9,13 @@ import {
   type AudioPlaybackDevice,
   type AudioSound,
   type AudioVoice,
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
+  Select,
+  SelectEvents,
   type SelectOption,
-  SelectRenderable,
-  SelectRenderableEvents,
-  TextRenderable,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import type { OptimizedBuffer } from "@bettertui/core";
@@ -97,19 +97,19 @@ for (let i = 0; i < FFT_SIZE; i += 1) {
   fftWindow[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (FFT_SIZE - 1)));
 }
 
-let root: BoxRenderable | null = null;
-let titleText: TextRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let mixText: TextRenderable | null = null;
-let deviceText: TextRenderable | null = null;
-let statsText: TextRenderable | null = null;
-let meterText: TextRenderable | null = null;
-let bgmFileText: TextRenderable | null = null;
-let controlsText: TextRenderable | null = null;
-let outputText: TextRenderable | null = null;
-let filePickerContainer: BoxRenderable | null = null;
-let filePickerTitleText: TextRenderable | null = null;
-let filePickerSelect: SelectRenderable | null = null;
+let root: Box | null = null;
+let titleText: Text | null = null;
+let statusText: Text | null = null;
+let mixText: Text | null = null;
+let deviceText: Text | null = null;
+let statsText: Text | null = null;
+let meterText: Text | null = null;
+let bgmFileText: Text | null = null;
+let controlsText: Text | null = null;
+let outputText: Text | null = null;
+let filePickerContainer: Box | null = null;
+let filePickerTitleText: Text | null = null;
+let filePickerSelect: Select | null = null;
 
 let keyHandler: ((event: KeyEvent) => void) | null = null;
 
@@ -1220,7 +1220,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   activePlaybackChannels = selectedPlaybackChannels();
   await initializeAudioForOutputConfig(activeSampleRate, activePlaybackChannels, false);
 
-  root = new BoxRenderable(renderer, {
+  root = new Box(renderer, {
     id: "native-audio-demo-root",
     width: "100%",
     height: "100%",
@@ -1230,7 +1230,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   renderer.root.add(root);
 
-  titleText = new TextRenderable(renderer, {
+  titleText = new Text(renderer, {
     id: "native-audio-demo-title",
     content: "Audio Demo - selectable mix controls",
     fg: "#FFFFFF",
@@ -1238,7 +1238,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(titleText);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "native-audio-demo-status",
     content: "Action: Ready",
     fg: "#EAB308",
@@ -1246,7 +1246,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(statusText);
 
-  mixText = new TextRenderable(renderer, {
+  mixText = new Text(renderer, {
     id: "native-audio-demo-mix",
     content: "Select j/k item | h/l volume | H/L pan",
     fg: "#67E8F9",
@@ -1255,7 +1255,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(mixText);
 
-  deviceText = new TextRenderable(renderer, {
+  deviceText = new Text(renderer, {
     id: "native-audio-demo-devices",
     content:
       "Rate n/m select | g apply (48000 Hz -> 48000 Hz)\nChannels y/i select | t apply (2 ch -> 2 ch)\nDevices u/o select | p apply | r refresh\n(no playback devices found)",
@@ -1265,7 +1265,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(deviceText);
 
-  meterText = new TextRenderable(renderer, {
+  meterText = new Text(renderer, {
     id: "native-audio-demo-meter",
     content:
       "Peak [----------------------------] 0.000\nRMS  [----------------------------] 0.000\nFFT  [------][------][------][------][------][------][------][------]\nBand   63    160    400    1k    2.5k    6k    12k    16k",
@@ -1275,7 +1275,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(meterText);
 
-  statsText = new TextRenderable(renderer, {
+  statsText = new Text(renderer, {
     id: "native-audio-demo-stats",
     content: "sounds=0 voices=0 frames=0 lockMisses=0",
     fg: "#A78BFA",
@@ -1284,7 +1284,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(statsText);
 
-  outputText = new TextRenderable(renderer, {
+  outputText = new Text(renderer, {
     id: "native-audio-demo-output",
     content: "Output: OFF",
     fg: "#FCA5A5",
@@ -1293,7 +1293,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(outputText);
 
-  bgmFileText = new TextRenderable(renderer, {
+  bgmFileText = new Text(renderer, {
     id: "native-audio-demo-bgm-file",
     content: "BGM file: none selected | F choose audio file | B play/stop selected file",
     fg: "#FDE68A",
@@ -1302,7 +1302,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(bgmFileText);
 
-  controlsText = new TextRenderable(renderer, {
+  controlsText = new Text(renderer, {
     id: "native-audio-demo-controls",
     content:
       "1/2/3 trigger effects | F choose BGM file | B bgm on/off | J/K mix target | H/L vol | Shift+H/Shift+L pan\nU/O device cursor | P apply device | R refresh devices | N/M sample rate | G apply rate | Y/I channels | T apply channels | Esc back",
@@ -1312,7 +1312,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   root.add(controlsText);
 
-  filePickerContainer = new BoxRenderable(renderer, {
+  filePickerContainer = new Box(renderer, {
     id: "native-audio-demo-file-picker",
     position: "absolute",
     left: "50%",
@@ -1331,7 +1331,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
     visible: false,
   });
 
-  filePickerTitleText = new TextRenderable(renderer, {
+  filePickerTitleText = new Text(renderer, {
     id: "native-audio-demo-file-picker-title",
     content: "Choose BGM audio file",
     fg: "#FDE68A",
@@ -1339,7 +1339,7 @@ export async function run(renderer: CliRenderer): Promise<void> {
   });
   filePickerContainer.add(filePickerTitleText);
 
-  filePickerSelect = new SelectRenderable(renderer, {
+  filePickerSelect = new Select(renderer, {
     id: "native-audio-demo-file-picker-select",
     width: "100%",
     height: FILE_PICKER_SELECT_HEIGHT,
@@ -1357,12 +1357,9 @@ export async function run(renderer: CliRenderer): Promise<void> {
     wrapSelection: false,
     fastScrollStep: 5,
   });
-  filePickerSelect.on(
-    SelectRenderableEvents.ITEM_SELECTED,
-    (_index: number, option: SelectOption) => {
-      void handleFilePickerOption(option);
-    },
-  );
+  filePickerSelect.on(SelectEvents.ITEM_SELECTED, (_index: number, option: SelectOption) => {
+    void handleFilePickerOption(option);
+  });
   filePickerContainer.add(filePickerSelect);
   root.add(filePickerContainer);
 

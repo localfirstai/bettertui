@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type MouseEvent,
   RGBA,
   type StyledText,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
@@ -19,7 +19,7 @@ let nextZIndex = 100;
 let draggableBoxes: DraggableBox[] = [];
 let dragModeEnabled = false;
 
-class DraggableBox extends BoxRenderable {
+class DraggableBox extends Box {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -104,7 +104,7 @@ export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor("#0f172a"); // Deep slate blue background
 
-  const container = new BoxRenderable(renderer, {
+  const container = new Box(renderer, {
     id: "main-container",
     width: "100%",
     height: "100%",
@@ -112,7 +112,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(container);
 
   // Header
-  const header = new TextRenderable(renderer, {
+  const header = new Text(renderer, {
     id: "header",
     content: getHeaderContent(),
     position: "absolute",
@@ -186,7 +186,7 @@ ${link("https://discord.gg/Fc8UPAeV")(fg("#818cf8")("Discord Community"))}`,
 
 function createCard(
   renderer: CliRenderer,
-  container: BoxRenderable,
+  container: Box,
   id: string,
   x: number,
   y: number,
@@ -197,7 +197,7 @@ function createCard(
 ) {
   const card = new DraggableBox(renderer, id, x, y, width, height, bg);
 
-  const text = new TextRenderable(renderer, {
+  const text = new Text(renderer, {
     id: `${id}-text`,
     content: content,
     width: width - 2, // Account for padding

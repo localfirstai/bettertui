@@ -1,10 +1,10 @@
-import { type CliRenderer, TextRenderable, createCliRenderer } from "@bettertui/core";
+import { type CliRenderer, Text, createCliRenderer } from "@bettertui/core";
 
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 const DEMO_TEXT_ID = "terminal-title-demo-text";
 
-let text: TextRenderable | null = null;
+let text: Text | null = null;
 let titleTimers: ReturnType<typeof setTimeout>[] = [];
 
 function clearTitleTimers(): void {
@@ -38,7 +38,7 @@ export function run(renderer: CliRenderer): void {
   clearTitleTimers();
 
   text?.destroy();
-  text = new TextRenderable(renderer, {
+  text = new Text(renderer, {
     id: DEMO_TEXT_ID,
     content: "Cycling terminal titles...",
     margin: 2,
