@@ -123,10 +123,20 @@ export {
 } from "./renderableEvents";
 
 export {
+  singleton,
+  getSingleton,
+  destroySingleton,
+  hasSingleton,
+} from "./singleton";
+
+export {
   env,
   registerEnvVar,
   getEnvVarConfig,
   getAllEnvVarConfigs,
+  clearEnvCache,
+  generateEnvMarkdown,
+  generateEnvColored,
 } from "./env";
 export type { EnvVarConfig } from "./env";
 

@@ -2,9 +2,13 @@ import { type CliRenderer, type RawKeyEvent, resolveRenderLib } from "@bettertui
 
 export function setupCommonDemoKeys(renderer: CliRenderer) {
   renderer.keyInput.on("keypress", (key: RawKeyEvent) => {
-    if (key.name === "`" || key.name === '"') {
+    if (key.name === "`" || (key.ctrl && key.name === "f12")) {
       renderer.console.toggle();
-    } else if (key.name === ".") {
+    } else if (
+      key.name === "f12" ||
+      (key.ctrl && key.shift && key.name === "d") ||
+      key.name === "."
+    ) {
       renderer.toggleDebugOverlay();
     } else if (key.name === "g" && key.ctrl) {
       console.log("dumping hit grid");

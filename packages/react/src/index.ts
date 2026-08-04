@@ -18,7 +18,8 @@ export {
 } from "./hooks/index";
 export type { TerminalDimensions, ThemeMode, UseKeyboardOptions } from "./hooks/index";
 
-// ── JSX types (augments global JSX namespace) ─────────────────────────────────
+// ── DevTools ──────────────────────────────────────────────────────────────────
+export { initReactDevTools } from "./reconciler/devtools";
 export type {
   BaseProps,
   BoxProps,

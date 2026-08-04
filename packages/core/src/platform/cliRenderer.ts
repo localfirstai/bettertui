@@ -1,9 +1,13 @@
 import { EventEmitter } from "node:events";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
+import { type ConsoleLogEntry, terminalConsoleCache } from "../devtools/consoleCapture";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
+import { env } from "../lib/env";
 import { KeyInput } from "../lib/keyInput";
 import { CliRenderEvents } from "../lib/renderableEvents";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
@@ -48,23 +52,74 @@ export interface CliRendererOptions {
   backgroundColor?: string;
 }
 
-/** Minimal console overlay stub. */
-export class TerminalConsole {
+/** Interactive terminal console overlay for capturing and inspecting console log output. */
+export class TerminalConsole extends EventEmitter {
   private _visible = false;
+  private _renderer: CliRenderer | null = null;
   keyBindings: Record<string, unknown> = {};
   onCopySelection?: () => void;
 
+  constructor(renderer?: CliRenderer) {
+    super();
+    this._renderer = renderer ?? null;
+    if (env.BTUI_USE_CONSOLE) {
+      terminalConsoleCache.activate();
+    }
+  }
+
+  attachRenderer(renderer: CliRenderer): void {
+    this._renderer = renderer;
+  }
+
   show(): void {
     this._visible = true;
+    terminalConsoleCache.activate();
+    this.emit("show");
   }
+
   hide(): void {
     this._visible = false;
+    this.emit("hide");
   }
+
   toggle(): void {
     this._visible = !this._visible;
+    if (this._visible) {
+      this.show();
+    } else {
+      this.hide();
+    }
   }
+
   get visible(): boolean {
     return this._visible;
+  }
+
+  clear(): void {
+    terminalConsoleCache.clearConsole();
+  }
+
+  entries(): readonly ConsoleLogEntry[] {
+    return terminalConsoleCache.cachedLogs;
+  }
+
+  saveLogsToFile(filepath?: string): string | null {
+    try {
+      const timestamp = Date.now();
+      const targetPath = filepath || join(process.cwd(), `_console_${timestamp}.log`);
+      const formatArg = (arg: unknown) =>
+        typeof arg === "object" && arg !== null ? JSON.stringify(arg) : String(arg);
+      const logs = terminalConsoleCache.cachedLogs
+        .map(
+          ([date, level, args]) =>
+            `[${date.toISOString()}] [${level}] ${args.map(formatArg).join(" ")}`,
+        )
+        .join("\n");
+      writeFileSync(targetPath, logs, "utf8");
+      return targetPath;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -164,15 +219,25 @@ export class CliRenderer extends EventEmitter {
       this._devtools = createDevTools();
     }
 
-    // Ctrl+C exit handler
-    if (options.exitOnCtrlC !== false) {
-      this._keyInput.on("keypress", (key) => {
-        if (key.ctrl && key.name === "c") {
-          this.destroy();
-          process.exit(0);
-        }
-      });
-    }
+    this._console.attachRenderer(this);
+
+    // Ctrl+C exit handler & Debug shortcut handlers
+    this._keyInput.on("keypress", (key) => {
+      if (options.exitOnCtrlC !== false && key.ctrl && key.name === "c") {
+        this.destroy();
+        process.exit(0);
+      }
+
+      // Backtick (` ` `) or Ctrl+F12 toggles console overlay
+      if (key.name === "`" || (key.ctrl && key.name === "f12")) {
+        this._console.toggle();
+      }
+
+      // F12 or Ctrl+Shift+D toggles performance debug overlay
+      if ((key.name === "f12" && !key.ctrl) || (key.ctrl && key.shift && key.name === "d")) {
+        this.toggleDebugOverlay();
+      }
+    });
 
     // Resize handling
     this._resizeHandler = () => {
