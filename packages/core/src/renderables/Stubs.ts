@@ -91,6 +91,15 @@ export class ASCIIFont extends Box {
     this._render();
   }
 
+  override getEstimatedHeight(): number {
+    const renderedText = renderFontToText(this._text, this._font, this._color);
+    const lines = renderedText ? renderedText.split("\n").length : 3;
+    let h = lines;
+    if (typeof this._options.marginTop === "number") h += this._options.marginTop;
+    if (typeof this._options.marginBottom === "number") h += this._options.marginBottom;
+    return h;
+  }
+
   private _render(): void {
     if (this._isDestroyed) return;
     const renderedText = renderFontToText(this._text, this._font, this._color);

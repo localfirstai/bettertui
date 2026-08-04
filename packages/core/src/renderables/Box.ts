@@ -25,6 +25,8 @@ const BORDER_CHARS: Record<BorderStyleKind, string[]> = {
 
 export interface BoxOptions {
   id?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: allow component options prop
+  options?: any;
   width?: number | string;
   height?: number | string;
   minWidth?: number | string;
@@ -151,6 +153,7 @@ export class Box extends EventEmitter {
   protected _titleAlignment: "left" | "center" | "right";
   protected _children: Map<string, Box> = new Map();
   protected _childList: Box[] = [];
+  protected _parent: Box | null = null;
   protected _options: BoxOptions;
   private _renderAfterCallback: ((dt: number) => void) | null = null;
 
@@ -220,6 +223,41 @@ export class Box extends EventEmitter {
   }
   get renderer(): CliRenderer {
     return this._renderer;
+  }
+  get boxOptions(): BoxOptions {
+    return this._options;
+  }
+  get parent(): Box | null {
+    return this._parent;
+  }
+
+  getEstimatedHeight(): number {
+    if (typeof this._options.height === "number") {
+      return this._options.height;
+    }
+    let h = 0;
+    if (this._options.border) h += 2;
+    if (typeof this._options.marginTop === "number") h += this._options.marginTop;
+    if (typeof this._options.marginBottom === "number") h += this._options.marginBottom;
+    if (typeof this._options.paddingTop === "number") h += this._options.paddingTop;
+    if (typeof this._options.paddingBottom === "number") h += this._options.paddingBottom;
+    if (typeof this._options.padding === "number") h += this._options.padding * 2;
+    if (typeof this._options.margin === "number") h += this._options.margin * 2;
+
+    if (this._childList.length === 0) {
+      return Math.max(1, h + 1);
+    }
+
+    let childrenHeight = 0;
+    for (const child of this._childList) {
+      const ch = child.getEstimatedHeight();
+      if (this._options.flexDirection === "row") {
+        childrenHeight = Math.max(childrenHeight, ch);
+      } else {
+        childrenHeight += ch;
+      }
+    }
+    return Math.max(1, h + childrenHeight);
   }
 
   /** Computed layout width (from options; not the engine-resolved value). */
@@ -340,6 +378,7 @@ export class Box extends EventEmitter {
 
   add(child: Box, index?: number): void {
     if (this._isDestroyed) return;
+    child._parent = this;
     this._children.set(child.id, child);
     if (index !== undefined) {
       this._childList.splice(index, 0, child);
@@ -351,6 +390,7 @@ export class Box extends EventEmitter {
 
   remove(child: Box): void {
     if (this._isDestroyed) return;
+    child._parent = null;
     this._children.delete(child.id);
     const idx = this._childList.indexOf(child);
     if (idx !== -1) this._childList.splice(idx, 1);
