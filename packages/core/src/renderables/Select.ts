@@ -341,7 +341,8 @@ export class Select extends Box {
       }
 
       if (kind === "category") {
-        lines.push(`\x1b[1;38;2;255;255;255m${opt.name}\x1b[0m`);
+        const catColor = `${this._textColor.r};${this._textColor.g};${this._textColor.b}`;
+        lines.push(`\x1b[1;38;2;${catColor}m  ${opt.name}\x1b[0m`);
         continue;
       }
 
@@ -354,7 +355,7 @@ export class Select extends Box {
           : this._textColor;
 
       const tc = `${textColor.r};${textColor.g};${textColor.b}`;
-      const indicator = this._showSelectionIndicator ? (isSelected ? "▶ " : "  ") : "";
+      const indicator = this._showSelectionIndicator ? (isSelected ? "► " : "  ") : "";
 
       let line: string;
       if (isSelected) {

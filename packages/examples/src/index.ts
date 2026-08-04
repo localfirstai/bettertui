@@ -140,7 +140,7 @@ interface ExampleTheme {
 const DEFAULT_THEME_MODE: ThemeMode = "dark";
 const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
-const EXAMPLE_NAME_INDENT = "  ";
+const EXAMPLE_NAME_INDENT = "";
 const EXAMPLE_DESCRIPTION_INDENT = "    ";
 const CATEGORY_LABELS: Record<ExampleCategory, string> = {
   "Layout & Composition": "Layout",
@@ -168,36 +168,36 @@ function section(
 
 const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
   dark: {
-    titleColor: RGBA.fromInts(240, 248, 255, 255),
-    borderColor: "#475569",
-    focusedBorderColor: "#60A5FA",
-    inputTextColor: "#E2E8F0",
-    inputFocusedTextColor: "#F8FAFC",
-    inputPlaceholderColor: "#94A3B8",
-    inputCursorColor: "#60A5FA",
+    titleColor: RGBA.fromInts(248, 250, 252, 255),
+    borderColor: "#334155",
+    focusedBorderColor: "#38BDF8",
+    inputTextColor: "#F8FAFC",
+    inputFocusedTextColor: "#FFFFFF",
+    inputPlaceholderColor: "#64748B",
+    inputCursorColor: "#38BDF8",
     selectSelectedBackgroundColor: "#1E3A5F",
     selectTextColor: "#E2E8F0",
     selectSelectedTextColor: "#38BDF8",
     selectDescriptionColor: "#64748B",
     selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#94A3B8",
+    instructionsColor: "#64748B",
     notImplementedColor: "#FACC15",
   },
   light: {
-    titleColor: RGBA.fromInts(15, 23, 42, 255),
-    borderColor: "#CBD5E1",
-    focusedBorderColor: "#2563EB",
-    inputTextColor: "#0F172A",
-    inputFocusedTextColor: "#0B1221",
+    titleColor: RGBA.fromInts(248, 250, 252, 255),
+    borderColor: "#334155",
+    focusedBorderColor: "#38BDF8",
+    inputTextColor: "#F8FAFC",
+    inputFocusedTextColor: "#FFFFFF",
     inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#2563EB",
-    selectSelectedBackgroundColor: "#DBEAFE",
-    selectTextColor: "#0F172A",
-    selectSelectedTextColor: "#1D4ED8",
-    selectDescriptionColor: "#475569",
-    selectSelectedDescriptionColor: "#1E40AF",
-    instructionsColor: "#475569",
-    notImplementedColor: "#B45309",
+    inputCursorColor: "#38BDF8",
+    selectSelectedBackgroundColor: "#1E3A5F",
+    selectTextColor: "#E2E8F0",
+    selectSelectedTextColor: "#38BDF8",
+    selectDescriptionColor: "#64748B",
+    selectSelectedDescriptionColor: "#94A3B8",
+    instructionsColor: "#64748B",
+    notImplementedColor: "#FACC15",
   },
 };
 
@@ -887,6 +887,7 @@ class ExampleSelector {
 
     this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
+      alignSelf: "center",
       fg: theme.instructionsColor,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
