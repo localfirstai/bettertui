@@ -307,12 +307,40 @@ export class Select extends Box {
 
   private _updateScroll(): void {
     if (this._selectOptions.length === 0) return;
+
     const viewHeight = this._getViewHeight();
-    const linesPerItem = (this._showDescription ? 2 : 1) + this._itemSpacing;
-    const visibleCount = Math.max(1, Math.floor(viewHeight / linesPerItem));
-    const maxOffset = Math.max(0, this._selectOptions.length - visibleCount);
-    const halfVisible = Math.floor(visibleCount / 2);
-    this._scrollOffset = Math.max(0, Math.min(this._selectedIndex - halfVisible, maxOffset));
+    this._selectedIndex = Math.max(
+      0,
+      Math.min(this._selectOptions.length - 1, this._selectedIndex),
+    );
+    this._selectedIndex = this._skipNonSelectable(this._selectedIndex, 1);
+
+    if (this._selectedIndex < this._scrollOffset) {
+      this._scrollOffset = this._selectedIndex;
+      return;
+    }
+
+    let linesUsed = 0;
+    for (let i = this._scrollOffset; i <= this._selectedIndex; i++) {
+      const opt = this._selectOptions[i];
+      const kind = (opt?.value as { kind?: string } | undefined)?.kind;
+      const h =
+        kind === "spacer" || kind === "category" || !this._showDescription
+          ? 1
+          : 2 + this._itemSpacing;
+      linesUsed += h;
+    }
+
+    while (linesUsed > viewHeight && this._scrollOffset < this._selectedIndex) {
+      const firstOpt = this._selectOptions[this._scrollOffset];
+      const kind = (firstOpt?.value as { kind?: string } | undefined)?.kind;
+      const firstH =
+        kind === "spacer" || kind === "category" || !this._showDescription
+          ? 1
+          : 2 + this._itemSpacing;
+      linesUsed -= firstH;
+      this._scrollOffset++;
+    }
   }
 
   private _getViewHeight(): number {
@@ -372,39 +400,45 @@ export class Select extends Box {
     if (this._isDestroyed) return;
 
     const viewHeight = this._getViewHeight();
-    const linesPerItem = (this._showDescription ? 2 : 1) + this._itemSpacing;
-    const visibleCount = Math.max(1, Math.floor(viewHeight / linesPerItem));
-
     const totalItems = this._selectOptions.length;
-    const maxOffset = Math.max(0, totalItems - visibleCount);
-    this._scrollOffset = Math.max(0, Math.min(this._scrollOffset, maxOffset));
 
-    const start = this._scrollOffset;
-    const end = Math.min(start + visibleCount, totalItems);
-    const rowWidth = Math.max(40, this._renderer.terminalWidth - 4);
+    let totalContentLines = 0;
+    for (let i = 0; i < totalItems; i++) {
+      const opt = this._selectOptions[i];
+      const kind = (opt?.value as { kind?: string } | undefined)?.kind;
+      totalContentLines +=
+        kind === "spacer" || kind === "category" || !this._showDescription
+          ? 1
+          : 2 + this._itemSpacing;
+    }
 
-    const hasScrollbar = this._showScrollIndicator && totalItems > visibleCount;
-    const contentWidth = hasScrollbar ? rowWidth - 1 : rowWidth;
+    this._scrollOffset = Math.max(0, Math.min(this._scrollOffset, totalItems - 1));
 
     const rawLines: { text: string; bg?: string; fg: string; isCategory?: boolean }[] = [];
+    let currIdx = this._scrollOffset;
 
-    for (let i = start; i < end; i++) {
-      const opt = this._selectOptions[i];
-      if (!opt) continue;
+    while (currIdx < totalItems && rawLines.length < viewHeight) {
+      const opt = this._selectOptions[currIdx];
+      if (!opt) {
+        currIdx++;
+        continue;
+      }
 
       const kind = (opt.value as { kind?: string } | undefined)?.kind;
       if (kind === "spacer") {
         rawLines.push({ text: "", fg: "0;0;0" });
+        currIdx++;
         continue;
       }
 
       if (kind === "category") {
         const catColor = `${this._textColor.r};${this._textColor.g};${this._textColor.b}`;
         rawLines.push({ text: `  ${opt.name}`, fg: catColor, isCategory: true });
+        currIdx++;
         continue;
       }
 
-      const isSelected = i === this._selectedIndex;
+      const isSelected = currIdx === this._selectedIndex;
       const textColor = isSelected
         ? this._selectedTextColor
         : this._focused
@@ -418,35 +452,42 @@ export class Select extends Box {
         ? `${this._selectedBgColor.r};${this._selectedBgColor.g};${this._selectedBgColor.b}`
         : undefined;
 
-      rawLines.push({
-        text: indicator + opt.name,
-        bg,
-        fg: tc,
-      });
+      rawLines.push({ text: indicator + opt.name, bg, fg: tc });
 
-      if (this._showDescription) {
+      if (this._showDescription && rawLines.length < viewHeight) {
         const descColor = isSelected ? this._selectedDescriptionColor : this._descriptionColor;
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
-        rawLines.push({
-          text: opt.description,
-          bg,
-          fg: dc,
-        });
+        rawLines.push({ text: opt.description, bg, fg: dc });
       }
 
-      for (let s = 0; s < this._itemSpacing; s++) {
+      for (let s = 0; s < this._itemSpacing && rawLines.length < viewHeight; s++) {
         rawLines.push({ text: "", fg: "0;0;0" });
       }
+
+      currIdx++;
     }
 
+    const hasScrollbar = this._showScrollIndicator && totalContentLines > viewHeight;
+    const rowWidth = Math.max(40, this._renderer.terminalWidth - 4);
+    const contentWidth = hasScrollbar ? rowWidth - 1 : rowWidth;
+
     const trackHeight = viewHeight;
-    const thumbSize = Math.max(
-      1,
-      Math.round((visibleCount / Math.max(1, totalItems)) * trackHeight),
-    );
+    const visibleRatio = Math.min(1, viewHeight / Math.max(1, totalContentLines));
+    const thumbSize = Math.max(1, Math.round(visibleRatio * trackHeight));
     const maxThumbPos = Math.max(0, trackHeight - thumbSize);
-    const scrollRatio =
-      maxOffset > 0 ? Math.min(1, Math.max(0, this._scrollOffset / maxOffset)) : 0;
+
+    let linesBeforeScrollOffset = 0;
+    for (let i = 0; i < this._scrollOffset; i++) {
+      const opt = this._selectOptions[i];
+      const kind = (opt?.value as { kind?: string } | undefined)?.kind;
+      linesBeforeScrollOffset +=
+        kind === "spacer" || kind === "category" || !this._showDescription
+          ? 1
+          : 2 + this._itemSpacing;
+    }
+
+    const maxScrollableLines = Math.max(1, totalContentLines - viewHeight);
+    const scrollRatio = Math.min(1, Math.max(0, linesBeforeScrollOffset / maxScrollableLines));
     const thumbPos = Math.min(maxThumbPos, Math.round(scrollRatio * maxThumbPos));
 
     const lines: string[] = [];
@@ -469,11 +510,12 @@ export class Select extends Box {
 
       if (hasScrollbar) {
         const isThumb = lineIdx >= thumbPos && lineIdx < thumbPos + thumbSize;
-        const barChar = isThumb ? "█" : "│";
-        const barColor = isThumb
-          ? `${this._selectedBgColor.r};${this._selectedBgColor.g};${this._selectedBgColor.b}`
-          : `${this._descriptionColor.r};${this._descriptionColor.g};${this._descriptionColor.b}`;
-        lineText += `\x1b[38;2;${barColor}m${barChar}\x1b[0m`;
+        if (isThumb) {
+          const thumbFg = `${this._descriptionColor.r};${this._descriptionColor.g};${this._descriptionColor.b}`;
+          lineText += `\x1b[38;2;${thumbFg}m█\x1b[0m`;
+        } else {
+          lineText += " ";
+        }
       }
 
       lines.push(lineText);
