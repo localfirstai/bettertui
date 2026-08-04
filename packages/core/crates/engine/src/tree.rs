@@ -312,7 +312,8 @@ impl Color {
             "blue" => Some(Self::Named(NamedColor::Blue)),
             "magenta" | "purple" => Some(Self::Named(NamedColor::Magenta)),
             "cyan" | "teal" => Some(Self::Named(NamedColor::Cyan)),
-            "white" | "default" => Some(Self::Named(NamedColor::White)),
+            "white" => Some(Self::Named(NamedColor::White)),
+            "default" | "transparent" | "none" => Some(Self::Default),
             "gray" | "grey" | "dark_gray" | "darkgrey" => Some(Self::Named(NamedColor::BrightBlack)),
             "bright_red" | "light_red" => Some(Self::Named(NamedColor::BrightRed)),
             "bright_green" | "light_green" => Some(Self::Named(NamedColor::BrightGreen)),
@@ -517,7 +518,7 @@ impl Style {
     pub fn resolve(&self, parent: &Style) -> ResolvedStyle {
         ResolvedStyle {
             fg: self.fg.or(parent.fg),
-            bg: self.bg.or(parent.bg),
+            bg: self.bg,
             underline_color: self.underline_color.or(parent.underline_color),
             bold: self.bold.or(parent.bold).unwrap_or(false),
             italic: self.italic.or(parent.italic).unwrap_or(false),
@@ -533,6 +534,69 @@ impl Style {
             overflow: self.overflow.or(parent.overflow).unwrap_or(Overflow::Visible),
             opacity: self.opacity.or(parent.opacity).unwrap_or(255),
             text_align: self.text_align.or(parent.text_align).unwrap_or(crate::text::TextAlign::Left),
+        }
+    }
+
+    /// Merges another style into this one. Only fields that are `Some` in
+    /// `other` overwrite the corresponding field in `self`. Fields that are
+    /// `None` in `other` leave `self` unchanged.
+    pub fn merge(&mut self, other: &Style) {
+        if other.fg.is_some() {
+            self.fg = other.fg;
+        }
+        if other.bg.is_some() {
+            self.bg = other.bg;
+        }
+        if other.underline_color.is_some() {
+            self.underline_color = other.underline_color;
+        }
+        if other.bold.is_some() {
+            self.bold = other.bold;
+        }
+        if other.italic.is_some() {
+            self.italic = other.italic;
+        }
+        if other.underline.is_some() {
+            self.underline = other.underline;
+        }
+        if other.dim.is_some() {
+            self.dim = other.dim;
+        }
+        if other.strikethrough.is_some() {
+            self.strikethrough = other.strikethrough;
+        }
+        if other.inverse.is_some() {
+            self.inverse = other.inverse;
+        }
+        if other.hidden.is_some() {
+            self.hidden = other.hidden;
+        }
+        if other.grid_columns.is_some() {
+            self.grid_columns = other.grid_columns;
+        }
+        if other.grid_rows.is_some() {
+            self.grid_rows = other.grid_rows;
+        }
+        if other.border_style.is_some() {
+            self.border_style = other.border_style;
+        }
+        if other.border_color.is_some() {
+            self.border_color = other.border_color;
+        }
+        if other.border_width.is_some() {
+            self.border_width = other.border_width;
+        }
+        if other.rounded_corners.is_some() {
+            self.rounded_corners = other.rounded_corners;
+        }
+        if other.overflow.is_some() {
+            self.overflow = other.overflow;
+        }
+        if other.opacity.is_some() {
+            self.opacity = other.opacity;
+        }
+        if other.text_align.is_some() {
+            self.text_align = other.text_align;
         }
     }
 

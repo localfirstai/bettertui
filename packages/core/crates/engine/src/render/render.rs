@@ -351,7 +351,8 @@ impl AnsiBackend {
 
 impl RenderBackend for AnsiBackend {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
-        self.buffer.clear();
+        // NOTE: Do NOT clear self.buffer here — begin_frame() already wrote
+        // sync/mode sequences into it. Clearing would destroy that output.
         self.cursor_x = u16::MAX;
         self.cursor_y = u16::MAX;
         self.current_link = 0;
@@ -396,6 +397,10 @@ impl RenderBackend for AnsiBackend {
     }
 
     fn begin_frame(&mut self, screen_mode: &ScreenMode, _width: u16, height: u16) {
+        // Clear the output buffer at frame start so stale data from the
+        // previous frame is gone. encode() will append cell data after this.
+        self.buffer.clear();
+
         self.begin_sync();
 
         let mode_changed = *screen_mode != self.previous_mode;

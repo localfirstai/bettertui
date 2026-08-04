@@ -1774,7 +1774,7 @@ fn build_node(
     let resolved_style = node.style.resolve(parent_style);
 
     let mut flags = PaintFlags::empty();
-    if resolved_style.bg.is_some() {
+    if matches!(resolved_style.bg, Some(c) if c != crate::tree::Color::Default) {
         flags |= PaintFlags::BACKGROUND;
     }
     if resolved_style.border_style != crate::tree::BorderStyle::None {

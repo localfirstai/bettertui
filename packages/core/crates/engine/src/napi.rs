@@ -1780,7 +1780,8 @@ fn parse_color(s: &str) -> crate::tree::Color {
         "blue" => crate::tree::Color::Named(crate::tree::NamedColor::Blue),
         "magenta" | "purple" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
         "cyan" | "teal" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
-        "white" | "default" => crate::tree::Color::Named(crate::tree::NamedColor::White),
+        "white" => crate::tree::Color::Named(crate::tree::NamedColor::White),
+        "default" | "transparent" | "none" => crate::tree::Color::Default,
         _ => crate::tree::Color::Default,
     }
 }
@@ -2014,6 +2015,38 @@ struct StyleJson {
     inverse: Option<bool>,
     #[serde(default)]
     hidden: Option<bool>,
+    #[serde(default, alias = "border")]
+    border_style: Option<String>,
+    #[serde(default, alias = "border_color")]
+    border_color: Option<String>,
+    #[serde(default)]
+    border_width: Option<f32>,
+    #[serde(default, alias = "rounded_corners")]
+    rounded_corners: Option<bool>,
+    #[serde(default)]
+    opacity: Option<f32>,
+    #[serde(default, alias = "text_align")]
+    text_align: Option<String>,
+    #[serde(default, alias = "text_wrap")]
+    text_wrap: Option<bool>,
+}
+
+fn parse_border_style(s: &str) -> crate::tree::BorderStyle {
+    match s {
+        "single" | "solid" | "round" | "rounded" | "thick" | "ascii" => crate::tree::BorderStyle::Solid,
+        "double" => crate::tree::BorderStyle::Double,
+        "dashed" => crate::tree::BorderStyle::Dashed,
+        "dotted" => crate::tree::BorderStyle::Dotted,
+        _ => crate::tree::BorderStyle::None,
+    }
+}
+
+fn parse_text_align(s: &str) -> crate::text::TextAlign {
+    match s {
+        "center" => crate::text::TextAlign::Center,
+        "right" => crate::text::TextAlign::Right,
+        _ => crate::text::TextAlign::Left,
+    }
 }
 
 impl StyleJson {
@@ -2028,6 +2061,12 @@ impl StyleJson {
             dim: self.dim,
             inverse: self.inverse,
             hidden: self.hidden,
+            border_style: self.border_style.map(|s| parse_border_style(&s)),
+            border_color: self.border_color.map(|c| parse_color(&c)),
+            border_width: self.border_width.map(|w| w as u16),
+            rounded_corners: self.rounded_corners,
+            opacity: self.opacity.map(|f| (f.clamp(0.0, 1.0) * 255.0) as u8),
+            text_align: self.text_align.map(|s| parse_text_align(&s)),
             ..Default::default()
         }
     }

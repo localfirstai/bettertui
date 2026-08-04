@@ -981,7 +981,7 @@ impl CommandProcessor {
             // ─── Style Commands ───────────────────────────────────
             Command::SetStyle { id, style } => {
                 let node = self.get_node_mut(id)?;
-                node.style = style;
+                node.style.merge(&style);
                 node.state.mark_dirty();
                 self.arena.mark_changed();
                 Ok(())

@@ -1811,7 +1811,7 @@ impl From<ColorJson> for Color {
                 "light_yellow" | "lightyellow" => Color::Named(NamedColor::BrightYellow),
                 "light_cyan" | "lightcyan" => Color::Named(NamedColor::BrightCyan),
                 "light_magenta" | "lightmagenta" => Color::Named(NamedColor::BrightMagenta),
-                _ => Color::parse(&name).unwrap_or(Color::Named(NamedColor::White)),
+                _ => Color::parse(&name).unwrap_or(Color::Default),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
         }
