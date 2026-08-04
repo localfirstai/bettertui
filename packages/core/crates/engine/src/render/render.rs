@@ -959,19 +959,95 @@ impl Painter {
                 break;
             }
             let mut col = line.x;
-            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true) {
-                if col >= content.x + content.width {
+            let mut active_fg = fg;
+            let mut active_bg = bg;
+            let mut active_attrs = attrs;
+
+            let line_str = line.text.as_str();
+            let bytes = line_str.as_bytes();
+            let len = bytes.len();
+            let mut byte_idx = 0;
+
+            while byte_idx < len {
+                if bytes[byte_idx] == 0x1b {
+                    byte_idx += 1;
+                    if byte_idx < len && bytes[byte_idx] == b'[' {
+                        byte_idx += 1;
+                        let param_start = byte_idx;
+                        while byte_idx < len && !(0x40..=0x7e).contains(&bytes[byte_idx]) {
+                            byte_idx += 1;
+                        }
+                        if byte_idx < len {
+                            let final_byte = bytes[byte_idx];
+                            let param_slice = &line_str[param_start..byte_idx];
+                            byte_idx += 1;
+                            if final_byte == b'm' {
+                                let params: Vec<u32> =
+                                    param_slice.split(';').filter_map(|p| p.parse::<u32>().ok()).collect();
+                                let sgr_attrs = crate::ansi::parse_sgr(&params);
+                                for sgr in sgr_attrs {
+                                    match sgr {
+                                        crate::ansi::SgrAttribute::Reset => {
+                                            active_fg = fg;
+                                            active_bg = bg;
+                                            active_attrs = attrs;
+                                        }
+                                        crate::ansi::SgrAttribute::Bold => active_attrs |= CellAttributes::BOLD,
+                                        crate::ansi::SgrAttribute::Dim => active_attrs |= CellAttributes::DIM,
+                                        crate::ansi::SgrAttribute::Italic => active_attrs |= CellAttributes::ITALIC,
+                                        crate::ansi::SgrAttribute::Underline => {
+                                            active_attrs |= CellAttributes::UNDERLINE
+                                        }
+                                        crate::ansi::SgrAttribute::Inverse => active_attrs |= CellAttributes::INVERSE,
+                                        crate::ansi::SgrAttribute::Hidden => active_attrs |= CellAttributes::HIDDEN,
+                                        crate::ansi::SgrAttribute::Strikethrough => {
+                                            active_attrs |= CellAttributes::STRIKETHROUGH
+                                        }
+                                        crate::ansi::SgrAttribute::Foreground(fg_val) => {
+                                            active_fg = Color::from(fg_val);
+                                        }
+                                        crate::ansi::SgrAttribute::Background(bg_val) => {
+                                            active_bg = Color::from(bg_val);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                    } else if byte_idx < len && bytes[byte_idx] == b']' {
+                        byte_idx += 1;
+                        while byte_idx < len {
+                            if bytes[byte_idx] == 0x07 {
+                                byte_idx += 1;
+                                break;
+                            }
+                            if bytes[byte_idx] == 0x1b && byte_idx + 1 < len && bytes[byte_idx + 1] == b'\\' {
+                                byte_idx += 2;
+                                break;
+                            }
+                            byte_idx += 1;
+                        }
+                    }
+                    continue;
+                }
+
+                let slice = &line_str[byte_idx..];
+                let g = match unicode_segmentation::UnicodeSegmentation::graphemes(slice, true).next() {
+                    Some(g) => g,
+                    None => break,
+                };
+                byte_idx += g.len();
+
+                if col >= content.x + content.width || col >= self.buffer.width() {
                     break;
                 }
-                if col >= self.buffer.width() {
-                    break;
-                }
+
                 let w = unicode_width::UnicodeWidthStr::width(g) as u16;
                 if let Some(ch) = g.chars().next() {
-                    let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                    let cell = Cell::new(ch).with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
                     self.buffer.set(col, y, cell);
                     if w == 2 && col + 1 < self.buffer.width() {
-                        let space = Cell::new(' ').with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        let space = Cell::new(' ').with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
                         self.buffer.set(col + 1, y, space);
                     }
                 }

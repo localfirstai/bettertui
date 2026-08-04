@@ -906,6 +906,8 @@ pub struct LayoutEngine {
     measure_callbacks: HashMap<NodeId, MeasureCallback>,
     /// Layout configuration.
     config: LayoutConfig,
+    last_root_width: Option<f32>,
+    last_root_height: Option<f32>,
 }
 
 impl Default for LayoutEngine {
@@ -924,6 +926,8 @@ impl LayoutEngine {
             dirtied_handler: None,
             measure_callbacks: HashMap::new(),
             config: LayoutConfig::default(),
+            last_root_width: None,
+            last_root_height: None,
         }
     }
 
@@ -1156,8 +1160,14 @@ impl LayoutEngine {
     pub fn compute_layout(&mut self, root: NodeId, width: f32, height: f32) -> Result<(), LayoutError> {
         let &taffy_root = self.node_map.get(&root).ok_or(LayoutError::NodeNotRegistered(root))?;
 
-        if !self.taffy.dirty(taffy_root).unwrap_or(false) {
+        let size_changed = self.last_root_width != Some(width) || self.last_root_height != Some(height);
+        if !self.taffy.dirty(taffy_root).unwrap_or(false) && !size_changed {
             return Ok(());
+        }
+        if size_changed {
+            let _ = self.taffy.mark_dirty(taffy_root);
+            self.last_root_width = Some(width);
+            self.last_root_height = Some(height);
         }
 
         let size = taffy::Size {
@@ -1482,6 +1492,8 @@ pub struct LayoutTreeSync {
     generation: u64,
     /// Revision counter for structural changes (child add/remove, visibility, etc.)
     revision: u64,
+    last_width: Option<u16>,
+    last_height: Option<u16>,
 }
 
 impl Default for LayoutTreeSync {
@@ -1492,7 +1504,14 @@ impl Default for LayoutTreeSync {
 
 impl LayoutTreeSync {
     pub fn new() -> Self {
-        Self { layout: LayoutEngine::new(), results: HashMap::new(), generation: 0, revision: 0 }
+        Self {
+            layout: LayoutEngine::new(),
+            results: HashMap::new(),
+            generation: 0,
+            revision: 0,
+            last_width: None,
+            last_height: None,
+        }
     }
 
     /// Get current layout generation.
@@ -1562,8 +1581,14 @@ impl LayoutTreeSync {
     }
 
     pub fn compute(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
-        if !self.layout.is_dirty(root) {
+        let size_changed = self.last_width != Some(width) || self.last_height != Some(height);
+        if !self.layout.is_dirty(root) && !size_changed {
             return Ok(());
+        }
+        if size_changed {
+            self.layout.mark_dirty(root);
+            self.last_width = Some(width);
+            self.last_height = Some(height);
         }
         self.layout.compute_layout(root, width as f32, height as f32)?;
         self.results = self.layout.collect_results();

@@ -551,7 +551,11 @@ export class Box extends EventEmitter {
  */
 export class Root extends Box {
   constructor(renderer: CliRenderer) {
-    super(renderer, { flexDirection: "column" }, renderer.rootNodeId);
+    super(
+      renderer,
+      { flexDirection: "column", width: "100%", height: "100%" },
+      renderer.rootNodeId,
+    );
   }
 
   destroy(): void {
