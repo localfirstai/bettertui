@@ -38,6 +38,7 @@ export interface RawKeyEvent {
 export interface CliRendererOptions {
   width?: number;
   height?: number;
+  autoStart?: boolean;
   exitOnCtrlC?: boolean;
   targetFps?: number;
   screenMode?: ScreenMode;
@@ -250,6 +251,10 @@ export class CliRenderer extends EventEmitter {
       }
     };
     process.stdout.on("resize", this._resizeHandler);
+
+    if (options.autoStart !== false) {
+      this.start();
+    }
   }
 
   // ── Getters ─────────────────────────────────────────────────────────────────
@@ -824,7 +829,6 @@ export class CliRenderer extends EventEmitter {
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
   const renderer = new CliRenderer(options);
-  renderer.start();
   return renderer;
 }
 

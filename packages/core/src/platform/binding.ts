@@ -79,6 +79,7 @@ interface NativeEngine {
   render(): string;
   renderFull(): string;
   setScreenMode(mode: string, footerHeight?: number | null): void;
+  setBackgroundColor?(color: string): void;
   resize(width: number, height: number): void;
   nodeCount(): number;
   frameCount(): number;
