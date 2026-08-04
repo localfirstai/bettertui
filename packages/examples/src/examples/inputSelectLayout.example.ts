@@ -22,14 +22,16 @@ import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 // Each constant is the TOTAL outer height of that panel (border included).
 //
 //   HEADER           3  = 1 border + 1 content + 1 border
-//   PREVIEW          5  = 1 border + 3 content + 1 border  (title is in the border)
+//   PREVIEW          4  = 1 border + 2 content + 1 border  (meta line + sample line)
+//                      previewBox uses height:"auto" so Taffy fits it to content;
+//                      this constant is only used for calcSelectHeight overhead.
 //   INPUT_CONTAINER  6  = 1 border + 1 label + 1 border + 1 input + 1 border + 1 border
 //                      → inputLabel(1) + inputWrapper(h:3, border) = 4 inner rows
 //   FOOTER           3  = 1 border + 1 content + 1 border
 //
 // selectArea fills all remaining rows via flexGrow:1 — no fixed height needed.
 const HEADER_HEIGHT = 3;
-const PREVIEW_HEIGHT = 5;
+const PREVIEW_HEIGHT = 4;
 const INPUT_CONTAINER_HEIGHT = 6;
 const FOOTER_HEIGHT = 3;
 
@@ -366,6 +368,7 @@ function buildLayout(r: CliRenderer): void {
     wrapSelection: true,
     showDescription: true,
     showSelectionIndicator: false,
+    itemSpacing: 1,
     fastScrollStep: 3,
     zIndex: 1,
   });
@@ -408,6 +411,7 @@ function buildLayout(r: CliRenderer): void {
     wrapSelection: false,
     showDescription: true,
     showSelectionIndicator: false,
+    itemSpacing: 1,
     fastScrollStep: 3,
     zIndex: 1,
   });
@@ -423,7 +427,7 @@ function buildLayout(r: CliRenderer): void {
   previewBox = new Box(r, {
     id: "isl-preview-box",
     width: "auto",
-    height: PREVIEW_HEIGHT,
+    height: "auto",
     backgroundColor: "#0d1525",
     borderStyle: "single",
     borderColor: "#1e293b",
