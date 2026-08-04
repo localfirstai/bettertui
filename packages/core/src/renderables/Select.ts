@@ -509,7 +509,7 @@ export class Select extends Box {
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
         const trimmedDesc = opt.description.trim();
         if (trimmedDesc) {
-          rawLines.push({ text: `    ${trimmedDesc}`, bg, fg: dc });
+          rawLines.push({ text: `      ${trimmedDesc}`, bg, fg: dc });
         }
       }
 

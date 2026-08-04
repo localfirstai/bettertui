@@ -142,15 +142,16 @@ interface ExampleTheme {
 const DEFAULT_THEME_MODE: ThemeMode = "dark";
 const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
-const EXAMPLE_NAME_INDENT = "";
+const EXAMPLE_NAME_INDENT = "  ";
+const EXAMPLE_DESCRIPTION_INDENT = "    ";
 const CATEGORY_LABELS: Record<ExampleCategory, string> = {
-  "Layout & Composition": "Layout",
-  "Input & Editing": "Input",
-  "Scroll & Navigation": "Scroll",
-  "Text & Documents": "Text",
-  "Rendering & Effects": "Rendering",
-  "Runtime & Tooling": "Runtime",
-  "Terminal & Native": "Terminal",
+  "Layout & Composition": "Layout & Composition",
+  "Input & Editing": "Input & Editing",
+  "Scroll & Navigation": "Scroll & Navigation",
+  "Text & Documents": "Text & Documents",
+  "Rendering & Effects": "Rendering & Effects",
+  "Runtime & Tooling": "Runtime & Tooling",
+  "Terminal & Native": "Terminal & Native",
 };
 
 function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
@@ -602,7 +603,7 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
     for (const example of sectionExamples) {
       options.push({
         name: `${EXAMPLE_NAME_INDENT}${example.name}`,
-        description: example.description,
+        description: `${EXAMPLE_DESCRIPTION_INDENT}${example.description}`,
         value: { kind: "example", example },
       });
     }
