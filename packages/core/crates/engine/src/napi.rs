@@ -409,6 +409,14 @@ impl NativeEngine {
     }
 
     #[napi]
+    pub fn set_background_color(&self, color: String) {
+        if let Ok(mut state) = self.state.lock() {
+            let parsed = parse_color(&color);
+            state.renderer.set_background_color(parsed);
+        }
+    }
+
+    #[napi]
     pub fn set_style(&self, id: i64, style_json: String) {
         if let Ok(mut state) = self.state.lock() {
             if let Ok(style) = serde_json::from_str::<StyleJson>(&style_json) {
@@ -1769,19 +1777,77 @@ enum CommandJson {
 }
 
 fn parse_color(s: &str) -> crate::tree::Color {
+    let s = s.trim();
+    if s.is_empty() {
+        return crate::tree::Color::Default;
+    }
+
     if let Some(rgba) = crate::tree::Rgba::from_hex(s) {
+        if rgba.a == 0 {
+            return crate::tree::Color::Default;
+        }
         return rgba.into();
     }
-    match s.to_lowercase().as_str() {
+
+    let lower = s.to_lowercase();
+    if lower == "default" || lower == "transparent" || lower == "none" {
+        return crate::tree::Color::Default;
+    }
+
+    if (lower.starts_with("rgb(") || lower.starts_with("rgba(")) && lower.ends_with(')') {
+        let content = if lower.starts_with("rgba(") { &lower[5..lower.len() - 1] } else { &lower[4..lower.len() - 1] };
+        let parts: Vec<&str> = content.split(',').map(|p| p.trim()).collect();
+        if parts.len() >= 3 {
+            let r = parts[0].parse::<u8>().ok();
+            let g = parts[1].parse::<u8>().ok();
+            let b = parts[2].parse::<u8>().ok();
+            if let (Some(r), Some(g), Some(b)) = (r, g, b) {
+                if parts.len() >= 4 {
+                    if let Some(a) = parts[3].parse::<f32>().ok() {
+                        if a == 0.0 {
+                            return crate::tree::Color::Default;
+                        }
+                    }
+                }
+                return crate::tree::Color::Rgb { r, g, b };
+            }
+        }
+    }
+
+    match lower.as_str() {
         "black" => crate::tree::Color::Named(crate::tree::NamedColor::Black),
         "red" => crate::tree::Color::Named(crate::tree::NamedColor::Red),
         "green" => crate::tree::Color::Named(crate::tree::NamedColor::Green),
         "yellow" => crate::tree::Color::Named(crate::tree::NamedColor::Yellow),
         "blue" => crate::tree::Color::Named(crate::tree::NamedColor::Blue),
-        "magenta" | "purple" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
-        "cyan" | "teal" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
+        "magenta" | "purple" | "fuchsia" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
+        "cyan" | "teal" | "aqua" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
         "white" => crate::tree::Color::Named(crate::tree::NamedColor::White),
-        "default" | "transparent" | "none" => crate::tree::Color::Default,
+        "gray" | "grey" | "darkgray" | "darkgrey" | "brightblack" | "bright_black" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightBlack)
+        }
+        "brightred" | "bright_red" | "lightred" | "light_red" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightRed)
+        }
+        "brightgreen" | "bright_green" | "lightgreen" | "light_green" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightGreen)
+        }
+        "brightyellow" | "bright_yellow" | "lightyellow" | "light_yellow" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightYellow)
+        }
+        "brightblue" | "bright_blue" | "lightblue" | "light_blue" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightBlue)
+        }
+        "brightmagenta" | "bright_magenta" | "lightmagenta" | "light_magenta" | "pink" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightMagenta)
+        }
+        "brightcyan" | "bright_cyan" | "lightcyan" | "light_cyan" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightCyan)
+        }
+        "brightwhite" | "bright_white" | "silver" | "lightgray" | "lightgrey" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightWhite)
+        }
+        "orange" | "darkorange" => crate::tree::Color::Rgb { r: 255, g: 165, b: 0 },
         _ => crate::tree::Color::Default,
     }
 }

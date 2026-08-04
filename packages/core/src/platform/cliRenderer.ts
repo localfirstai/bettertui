@@ -197,6 +197,7 @@ export class CliRenderer extends EventEmitter {
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
+    this.setNodeLayout(rootId, { width: "100%", height: "100%" });
 
     // Debug tooling
     const envDebug =
@@ -530,6 +531,7 @@ export class CliRenderer extends EventEmitter {
 
   setBackgroundColor(color: string): void {
     try {
+      this.engine.setBackgroundColor?.(color);
       this.engine.setStyle(this.engine.root(), JSON.stringify({ bg: color }));
     } catch {
       /* ignore */

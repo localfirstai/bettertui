@@ -298,30 +298,70 @@ impl Color {
 
     /// Parse color from string (hex, named, etc.)
     pub fn parse(s: &str) -> Option<Self> {
-        // Try hex first
+        let s = s.trim();
+        if s.is_empty() {
+            return Some(Self::Default);
+        }
+
         if let Some(rgba) = Rgba::from_hex(s) {
+            if rgba.a == 0 {
+                return Some(Self::Default);
+            }
             return Some(rgba.into());
         }
 
-        // Try named colors
-        match s.to_lowercase().as_str() {
+        let lower = s.to_lowercase();
+        if lower == "default" || lower == "transparent" || lower == "none" {
+            return Some(Self::Default);
+        }
+
+        if (lower.starts_with("rgb(") || lower.starts_with("rgba(")) && lower.ends_with(')') {
+            let content =
+                if lower.starts_with("rgba(") { &lower[5..lower.len() - 1] } else { &lower[4..lower.len() - 1] };
+            let parts: Vec<&str> = content.split(',').map(|p| p.trim()).collect();
+            if parts.len() >= 3 {
+                let r = parts[0].parse::<u8>().ok();
+                let g = parts[1].parse::<u8>().ok();
+                let b = parts[2].parse::<u8>().ok();
+                if let (Some(r), Some(g), Some(b)) = (r, g, b) {
+                    if parts.len() >= 4 {
+                        if let Some(a) = parts[3].parse::<f32>().ok() {
+                            if a == 0.0 {
+                                return Some(Self::Default);
+                            }
+                        }
+                    }
+                    return Some(Self::Rgb { r, g, b });
+                }
+            }
+        }
+
+        match lower.as_str() {
             "black" => Some(Self::Named(NamedColor::Black)),
             "red" => Some(Self::Named(NamedColor::Red)),
             "green" => Some(Self::Named(NamedColor::Green)),
             "yellow" => Some(Self::Named(NamedColor::Yellow)),
             "blue" => Some(Self::Named(NamedColor::Blue)),
-            "magenta" | "purple" => Some(Self::Named(NamedColor::Magenta)),
-            "cyan" | "teal" => Some(Self::Named(NamedColor::Cyan)),
+            "magenta" | "purple" | "fuchsia" => Some(Self::Named(NamedColor::Magenta)),
+            "cyan" | "teal" | "aqua" => Some(Self::Named(NamedColor::Cyan)),
             "white" => Some(Self::Named(NamedColor::White)),
-            "default" | "transparent" | "none" => Some(Self::Default),
-            "gray" | "grey" | "dark_gray" | "darkgrey" => Some(Self::Named(NamedColor::BrightBlack)),
-            "bright_red" | "light_red" => Some(Self::Named(NamedColor::BrightRed)),
-            "bright_green" | "light_green" => Some(Self::Named(NamedColor::BrightGreen)),
-            "bright_yellow" | "light_yellow" => Some(Self::Named(NamedColor::BrightYellow)),
-            "bright_blue" | "light_blue" => Some(Self::Named(NamedColor::BrightBlue)),
-            "bright_magenta" | "light_magenta" | "pink" => Some(Self::Named(NamedColor::BrightMagenta)),
-            "bright_cyan" | "light_cyan" => Some(Self::Named(NamedColor::BrightCyan)),
-            "bright_white" | "light_gray" | "lightgrey" | "lightgray" => Some(Self::Named(NamedColor::BrightWhite)),
+            "gray" | "grey" | "dark_gray" | "darkgray" | "darkgrey" | "brightblack" | "bright_black" => {
+                Some(Self::Named(NamedColor::BrightBlack))
+            }
+            "bright_red" | "brightred" | "light_red" | "lightred" => Some(Self::Named(NamedColor::BrightRed)),
+            "bright_green" | "brightgreen" | "light_green" | "lightgreen" => Some(Self::Named(NamedColor::BrightGreen)),
+            "bright_yellow" | "brightyellow" | "light_yellow" | "lightyellow" => {
+                Some(Self::Named(NamedColor::BrightYellow))
+            }
+            "bright_blue" | "brightblue" | "light_blue" | "lightblue" => Some(Self::Named(NamedColor::BrightBlue)),
+            "bright_magenta" | "brightmagenta" | "light_magenta" | "lightmagenta" | "pink" => {
+                Some(Self::Named(NamedColor::BrightMagenta))
+            }
+            "bright_cyan" | "brightcyan" | "light_cyan" | "lightcyan" => Some(Self::Named(NamedColor::BrightCyan)),
+            "bright_white" | "brightwhite" | "silver" | "light_gray" | "lightgray" | "lightgrey" => {
+                Some(Self::Named(NamedColor::BrightWhite))
+            }
+            "orange" | "darkorange" => Some(Self::Rgb { r: 255, g: 165, b: 0 }),
             _ => None,
         }
     }

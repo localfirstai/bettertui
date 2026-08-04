@@ -1849,12 +1849,27 @@ fn build_node(
     let child_accum_tx = accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
     let child_accum_ty = accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
 
+    let accumulated_parent_style = crate::tree::Style {
+        fg: resolved_style.fg,
+        bg: resolved_style.bg,
+        underline_color: resolved_style.underline_color,
+        bold: Some(resolved_style.bold),
+        italic: Some(resolved_style.italic),
+        underline: Some(resolved_style.underline),
+        dim: Some(resolved_style.dim),
+        strikethrough: Some(resolved_style.strikethrough),
+        inverse: Some(resolved_style.inverse),
+        hidden: Some(resolved_style.hidden),
+        border_color: resolved_style.border_color,
+        ..node.style
+    };
+
     for &child_id in &child_ids {
         build_node(
             arena,
             layout_results,
             child_id,
-            &node.style,
+            &accumulated_parent_style,
             child_clip_x,
             child_clip_y,
             opacity,

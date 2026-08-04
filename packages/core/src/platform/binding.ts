@@ -242,6 +242,7 @@ export interface NapiEngine {
   renderFull(): RenderResult;
   resize(width: number, height: number): void;
   setScreenMode(mode: string, footerHeight?: number | null): void;
+  setBackgroundColor?(color: string): void;
   setStyle(id: number, styleJson: string): void;
   setLayout(id: number, layoutJson: string): void;
   getNode(id: number): string;
@@ -375,6 +376,9 @@ class EngineWrapper implements NapiEngine {
   }
   setScreenMode(mode: string, footerHeight?: number | null): void {
     this.engine.setScreenMode(mode, footerHeight ?? null);
+  }
+  setBackgroundColor(color: string): void {
+    this.engine.setBackgroundColor?.(color);
   }
   setStyle(id: number, styleJson: string): void {
     this.engine.setStyle(id, styleJson);

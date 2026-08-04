@@ -126,6 +126,7 @@ impl AnsiBackend {
 
     fn encode_cell(&mut self, cell: &Cell) {
         self.begin_sgr();
+        self.buffer.push(b'0');
         self.push_fg_sgr(cell.fg);
         self.push_bg_sgr(cell.bg);
         self.push_attrs_sgr(cell.attributes);
@@ -732,6 +733,7 @@ impl RenderTree {
 
 pub struct Painter {
     buffer: FrameBuffer,
+    background_color: Color,
     opacity_stack: Vec<f32>,
     scissor_stack: Vec<ClipBounds>,
 }
@@ -746,9 +748,18 @@ impl Painter {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             buffer: FrameBuffer::new(width, height),
+            background_color: Color::Default,
             opacity_stack: Vec::with_capacity(8),
             scissor_stack: Vec::with_capacity(8),
         }
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.background_color
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
@@ -811,7 +822,7 @@ impl Painter {
 
     pub fn paint_with_clear(&mut self, tree: &RenderTree, ctx: &PaintContext, full_clear: bool) {
         if full_clear {
-            self.buffer.clear();
+            self.buffer.clear_with_bg(self.background_color);
         }
         let sorted = tree.sorted_by_z_index();
         for idx in &sorted {
@@ -822,7 +833,7 @@ impl Painter {
 
     /// Paint from render commands with proper stacking.
     pub fn paint_commands(&mut self, commands: &[RenderCommand], ctx: &PaintContext) {
-        self.buffer.clear();
+        self.buffer.clear_with_bg(self.background_color);
         self.opacity_stack.clear();
         self.scissor_stack.clear();
 
@@ -1092,6 +1103,20 @@ impl Painter {
 
         // Draw top border
         if bounds.border_top > 0 {
+            let title_chars: Vec<char> = obj.text.as_deref().unwrap_or("").chars().collect();
+            let title_len = title_chars.len() as u16;
+            let avail = w.saturating_sub(2);
+            let draw_title = !title_chars.is_empty() && avail >= title_len;
+            let title_start = if draw_title {
+                match obj.text_align {
+                    crate::text::TextAlign::Center => 1 + (avail.saturating_sub(title_len)) / 2,
+                    crate::text::TextAlign::Right => 1 + avail.saturating_sub(title_len),
+                    _ => 1,
+                }
+            } else {
+                u16::MAX
+            };
+
             for row in 0..bounds.border_top {
                 for col in 0..w {
                     let ch = if row == 0 {
@@ -1099,6 +1124,8 @@ impl Painter {
                             tl
                         } else if col == w - 1 && bounds.border_right > 0 {
                             tr
+                        } else if col >= title_start && (col - title_start) < title_len {
+                            title_chars[(col - title_start) as usize]
                         } else if bounds.border_top > 1 && row < bounds.border_top - 1 {
                             ' '
                         } else {
@@ -1401,6 +1428,7 @@ fn node_id_to_u64(id: NodeId) -> u64 {
 pub struct Renderer {
     width: u16,
     height: u16,
+    background_color: Color,
     render_offset: u16,
     screen_mode: ScreenMode,
     layout_sync: LayoutTreeSync,
@@ -1432,6 +1460,7 @@ impl Renderer {
         Self {
             width,
             height,
+            background_color: Color::Default,
             render_offset: 0,
             screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
@@ -1457,6 +1486,7 @@ impl Renderer {
         Self {
             width,
             height,
+            background_color: Color::Default,
             render_offset: 0,
             screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
@@ -1473,6 +1503,16 @@ impl Renderer {
             cursor_state: CursorState::default(),
             hit_grid: HitGrid::new(vw, vh),
         }
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
+        self.painter.set_background_color(color);
+        self.needs_full_repaint = true;
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.background_color
     }
 
     pub fn with_fps(fps: u32) -> Self {
