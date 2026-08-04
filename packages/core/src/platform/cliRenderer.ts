@@ -8,6 +8,7 @@ import { type ConsoleLogEntry, terminalConsoleCache } from "../devtools/consoleC
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
 import { env } from "../lib/env";
+import { InternalKeyHandler } from "../lib/keyHandler";
 import { KeyInput } from "../lib/keyInput";
 import { CliRenderEvents } from "../lib/renderableEvents";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
@@ -144,6 +145,7 @@ export class CliRenderer extends EventEmitter {
   private engine: NapiEngine;
   private keymap: NapiKeymap;
   private _keyInput: KeyInput;
+  private _keyDispatch: InternalKeyHandler;
   private _capabilities: TerminalCapabilities;
   private width: number;
   private height: number;
@@ -194,7 +196,18 @@ export class CliRenderer extends EventEmitter {
     this.engine = createEngine(this.width, this.height);
     this.keymap = createKeymap();
     this._keyInput = new KeyInput();
+    this._keyDispatch = new InternalKeyHandler();
     this._onDestroy = options.onDestroy;
+
+    // Bridge raw key/paste events from _keyInput through the priority dispatcher.
+    // Global handlers registered via renderer.keyHandler.on() (tier-1) fire first
+    // and can call key.preventDefault() / key.stopPropagation() before the focused
+    // widget's handler (tier-2, registered via onInternal()) sees the event.
+    this._keyInput.on("keypress", (key) => this._keyDispatch.processParsedKey(key));
+    this._keyInput.on("keyrelease", (key) => this._keyDispatch.processParsedKey(key));
+    this._keyInput.on("paste", (event) =>
+      this._keyDispatch.processPaste(event.bytes, event.metadata),
+    );
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
@@ -223,8 +236,8 @@ export class CliRenderer extends EventEmitter {
 
     this._console.attachRenderer(this);
 
-    // Ctrl+C exit handler & Debug shortcut handlers
-    this._keyInput.on("keypress", (key) => {
+    // Ctrl+C exit handler & Debug shortcut handlers (tier-1 global listener)
+    this._keyDispatch.on("keypress", (key) => {
       if (options.exitOnCtrlC !== false && key.ctrl && key.name === "c") {
         this.destroy();
         process.exit(0);
@@ -287,9 +300,20 @@ export class CliRenderer extends EventEmitter {
     return this._keyInput;
   }
 
-  /** Alias for keyInput. */
-  get keyHandler(): KeyInput {
-    return this._keyInput;
+  /**
+   * Two-tier priority key dispatcher.
+   *
+   * - `.on("keypress", fn)` → tier-1 global handler (fires before any focused
+   *   widget).  Can call `key.preventDefault()` / `key.stopPropagation()`.
+   * - `.onInternal("keypress", fn)` → tier-2 renderable handler (used by
+   *   focusable widgets; only fires when no global handler stopped propagation).
+   *
+   * Example code that needs to intercept keys before the focused widget should
+   * use `renderer.keyHandler.on(...)`.  Widgets must use
+   * `renderer.keyHandler.onInternal(...)` inside `focus()`.
+   */
+  get keyHandler(): InternalKeyHandler {
+    return this._keyDispatch;
   }
 
   get version(): string {

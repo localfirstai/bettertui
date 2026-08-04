@@ -2,10 +2,10 @@
  * Slider — a horizontal or vertical slider widget.
  */
 
+import type { KeyEvent } from "../lib/keyHandler";
 import { RenderableEvents, SliderEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
 import { Box, type BoxOptions } from "./Box";
 
 export interface SliderOptions extends BoxOptions {
@@ -37,7 +37,7 @@ export class Slider extends Box {
   private _activeTrackColor: RGBA;
   private _onChange: ((value: number) => void) | undefined;
   private _contentNodeId: number;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
   constructor(renderer: CliRenderer, options: SliderOptions = {}) {
     _sliderCounter++;
@@ -116,20 +116,20 @@ export class Slider extends Box {
     this._focused = true;
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.off("keypress", this._keyHandler);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     if (!this._focused) return;
     this._focused = false;
     this._render();
     this.emit(RenderableEvents.BLURRED, this);
   }
 
-  private _handleKey(key: RawKeyEvent): void {
+  private _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
     if (this._orientation === "horizontal") {
@@ -206,7 +206,7 @@ export class Slider extends Box {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     try {
       this._renderer.removeNode(this._contentNodeId);
     } catch {

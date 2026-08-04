@@ -2,10 +2,10 @@
  * ScrollBox — a scrollable container widget.
  */
 
+import type { KeyEvent } from "../lib/keyHandler";
 import { RenderableEvents } from "../lib/renderableEvents";
 import type { ColorInput } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
 import { Box, type BoxOptions } from "./Box";
 
 export interface ScrollBarOptions extends BoxOptions {
@@ -90,7 +90,7 @@ export class ScrollBox extends Box {
   private _scrollTop = 0;
   private _scrollLeft = 0;
   private _stickyScroll: boolean;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
   constructor(renderer: CliRenderer, options: ScrollBoxOptions = {}) {
     _scrollBoxCounter++;
@@ -192,13 +192,13 @@ export class ScrollBox extends Box {
     if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.off("keypress", this._keyHandler);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     if (!this._focused) return;
     this._focused = false;
     this.emit(RenderableEvents.BLURRED, this);
@@ -220,7 +220,7 @@ export class ScrollBox extends Box {
     });
   }
 
-  private _handleKey(key: RawKeyEvent): void {
+  private _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
     if (key.name === "up" || (key.ctrl && key.name === "p")) {
@@ -241,7 +241,7 @@ export class ScrollBox extends Box {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     this.viewport.destroyRecursively();
     this.verticalScrollBar.destroy();
     this.horizontalScrollBar.destroy();

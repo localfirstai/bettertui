@@ -2,10 +2,10 @@
  * Textarea — a multi-line text editor widget.
  */
 
+import type { KeyEvent } from "../lib/keyHandler";
 import { InputEvents, RenderableEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
 import { Box, type BoxOptions } from "./Box";
 
 /** Minimal extmarks controller stub for type compatibility. */
@@ -79,7 +79,7 @@ export class Textarea extends Box {
   private _readonly: boolean;
   private _textNodeId: number;
   private _scrollOffset = 0;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
   /** Extmarks controller stub — override or replace in subclasses for full functionality. */
   public extmarks: ExtmarksControllerStub = new ExtmarksControllerStub();
@@ -189,13 +189,13 @@ export class Textarea extends Box {
     }
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.off("keypress", this._keyHandler);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     if (!this._focused) return;
     const current = this._text;
     this._focused = false;
@@ -211,7 +211,7 @@ export class Textarea extends Box {
 
   // ── Key handling ──────────────────────────────────────────────────────────────
 
-  protected _handleKey(key: RawKeyEvent): void {
+  protected _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
     const lines = this._text.split("\n");
@@ -315,7 +315,7 @@ export class Textarea extends Box {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     try {
       this._renderer.removeNode(this._textNodeId);
     } catch {
