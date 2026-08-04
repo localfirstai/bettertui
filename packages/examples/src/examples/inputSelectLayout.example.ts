@@ -258,12 +258,10 @@ function updatePreview(): void {
   const sizeName = size?.name ?? "—";
   const sizePx = (size?.value as number) ?? 12;
   const sampleText = text || "Type something below to see it styled here…";
-  const sep = "─".repeat(Math.max(0, (renderer?.terminalWidth ?? 80) - 4));
 
   // All styled values are interpolated directly inside t`` — using a plain
   // backtick template would call .toString() on StyledText → "[object Object]".
-  previewText.content = t` ${fg("#334155")(sep)}
- ${fg("#64748b")("color:")} ${fg(colorHex)(colorName)} ${fg("#475569")(`(${colorHex})`)}   ${fg("#64748b")("size:")} ${fg("#facc15")(sizeName)} ${fg("#475569")(`(${sizePx}px)`)}
+  previewText.content = t` ${fg("#475569")("Preview |")} ${fg("#64748b")("color:")} ${fg(colorHex)(colorName)} ${fg("#475569")(`(${colorHex})`)}   ${fg("#64748b")("size:")} ${fg("#facc15")(sizeName)} ${fg("#475569")(`(${sizePx}px)`)}
  ${fg(colorHex)(bold(sampleText))}`;
 }
 
