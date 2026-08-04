@@ -248,9 +248,8 @@ export class Box extends EventEmitter {
   set visible(value: boolean) {
     if (this._visible !== value) {
       this._visible = value;
-      this._renderer.setNodeLayout(this._nodeId, {
-        display: value ? "flex" : "none",
-      });
+      this._applyLayout(this._options);
+      this._applyStyle();
     }
   }
 
@@ -491,7 +490,7 @@ export class Box extends EventEmitter {
     if (mb !== undefined) layout.marginBottom = mb;
     if (ml !== undefined) layout.marginLeft = ml;
 
-    if (options.visible === false) layout.display = "none";
+    if (options.visible === false || !this._visible) layout.display = "none";
 
     // Border layout contribution: reserve space for border cells so the
     // engine's box-sizing accounts for the border width.

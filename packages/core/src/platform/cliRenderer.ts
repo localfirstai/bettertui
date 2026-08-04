@@ -180,7 +180,7 @@ export class CliRenderer extends EventEmitter {
     this._capabilities = detectCapabilities();
     this.width = options.width ?? this._capabilities.columns;
     this.height = options.height ?? this._capabilities.rows;
-    this._targetFps = options.targetFps ?? 30;
+    this._targetFps = options.targetFps ?? 60;
 
     this._screenMode = options.screenMode ?? "alternate-screen";
     this._externalOutputMode =
@@ -431,9 +431,9 @@ export class CliRenderer extends EventEmitter {
     const loop = () => {
       if (!this.running) return;
 
-      const now = performance.now();
-      const dt = now - lastTime;
-      lastTime = now;
+      const frameStart = performance.now();
+      const dt = frameStart - lastTime;
+      lastTime = frameStart;
 
       if (!this.paused) {
         // Run frame callbacks
@@ -466,10 +466,12 @@ export class CliRenderer extends EventEmitter {
         }
       }
 
-      this._frameInterval = setTimeout(loop, msPerFrame);
+      const processingTime = performance.now() - frameStart;
+      const delay = Math.max(0, msPerFrame - processingTime);
+      this._frameInterval = setTimeout(loop, Math.round(delay));
     };
 
-    this._frameInterval = setTimeout(loop, msPerFrame);
+    this._frameInterval = setTimeout(loop, 0);
   }
 
   private _stopFrameLoop(): void {
