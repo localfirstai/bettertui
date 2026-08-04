@@ -600,6 +600,12 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
       value: { kind: "category", category: section.category },
     });
 
+    options.push({
+      name: "",
+      description: "",
+      value: { kind: "spacer" },
+    });
+
     for (const example of sectionExamples) {
       options.push({
         name: `${EXAMPLE_NAME_INDENT}${example.name}`,
