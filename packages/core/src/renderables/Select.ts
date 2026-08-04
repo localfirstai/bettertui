@@ -28,6 +28,8 @@ export interface SelectOptions extends BoxOptions {
   showScrollIndicator?: boolean;
   showDescription?: boolean;
   showSelectionIndicator?: boolean;
+  selectionIndicator?: string;
+  unselectedIndicator?: string;
   wrapSelection?: boolean;
   fastScrollStep?: number;
   itemSpacing?: number;
@@ -51,6 +53,8 @@ export class Select extends Box {
   private _showScrollIndicator: boolean;
   private _showDescription: boolean;
   private _showSelectionIndicator: boolean;
+  private _selectionIndicator: string;
+  private _unselectedIndicator: string;
   private _wrapSelection: boolean;
   private _fastScrollStep: number;
   private _itemSpacing: number;
@@ -78,6 +82,8 @@ export class Select extends Box {
     this._showScrollIndicator = options.showScrollIndicator ?? false;
     this._showDescription = options.showDescription !== false;
     this._showSelectionIndicator = options.showSelectionIndicator !== false;
+    this._selectionIndicator = options.selectionIndicator ?? "❯ ";
+    this._unselectedIndicator = options.unselectedIndicator ?? "  ";
     this._wrapSelection = options.wrapSelection ?? false;
     this._fastScrollStep = options.fastScrollStep ?? 5;
     this._itemSpacing = options.itemSpacing ?? 0;
@@ -145,6 +151,33 @@ export class Select extends Box {
 
   set wrapSelection(v: boolean) {
     this._wrapSelection = v;
+  }
+
+  get showSelectionIndicator(): boolean {
+    return this._showSelectionIndicator;
+  }
+
+  set showSelectionIndicator(v: boolean) {
+    this._showSelectionIndicator = v;
+    this._render();
+  }
+
+  get selectionIndicator(): string {
+    return this._selectionIndicator;
+  }
+
+  set selectionIndicator(v: string) {
+    this._selectionIndicator = v;
+    this._render();
+  }
+
+  get unselectedIndicator(): string {
+    return this._unselectedIndicator;
+  }
+
+  set unselectedIndicator(v: string) {
+    this._unselectedIndicator = v;
+    this._render();
   }
 
   set selectedBackgroundColor(color: ColorInput) {
@@ -316,7 +349,11 @@ export class Select extends Box {
     this._selectedIndex = this._skipNonSelectable(this._selectedIndex, 1);
 
     if (this._selectedIndex < this._scrollOffset) {
-      this._scrollOffset = this._selectedIndex;
+      let targetOffset = this._selectedIndex;
+      while (targetOffset > 0 && this._isNonSelectable(targetOffset - 1)) {
+        targetOffset--;
+      }
+      this._scrollOffset = targetOffset;
       return;
     }
 
@@ -414,7 +451,12 @@ export class Select extends Box {
 
     this._scrollOffset = Math.max(0, Math.min(this._scrollOffset, totalItems - 1));
 
-    const rawLines: { text: string; bg?: string; fg: string; isCategory?: boolean }[] = [];
+    const rawLines: {
+      text: string;
+      bg?: string;
+      fg: string;
+      isCategory?: boolean;
+    }[] = [];
     let currIdx = this._scrollOffset;
 
     while (currIdx < totalItems && rawLines.length < viewHeight) {
@@ -433,7 +475,11 @@ export class Select extends Box {
 
       if (kind === "category") {
         const catColor = `${this._textColor.r};${this._textColor.g};${this._textColor.b}`;
-        rawLines.push({ text: `  ${opt.name}`, fg: catColor, isCategory: true });
+        rawLines.push({
+          text: `  ${opt.name}`,
+          fg: catColor,
+          isCategory: true,
+        });
         currIdx++;
         continue;
       }
@@ -446,7 +492,11 @@ export class Select extends Box {
           : this._textColor;
 
       const tc = `${textColor.r};${textColor.g};${textColor.b}`;
-      const indicator = this._showSelectionIndicator ? (isSelected ? "► " : "  ") : "";
+      const indicator = this._showSelectionIndicator
+        ? isSelected
+          ? this._selectionIndicator
+          : this._unselectedIndicator
+        : "";
 
       const bg = isSelected
         ? `${this._selectedBgColor.r};${this._selectedBgColor.g};${this._selectedBgColor.b}`
@@ -454,10 +504,13 @@ export class Select extends Box {
 
       rawLines.push({ text: indicator + opt.name, bg, fg: tc });
 
-      if (this._showDescription && rawLines.length < viewHeight) {
+      if (this._showDescription && opt.description && rawLines.length < viewHeight) {
         const descColor = isSelected ? this._selectedDescriptionColor : this._descriptionColor;
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
-        rawLines.push({ text: opt.description, bg, fg: dc });
+        const trimmedDesc = opt.description.trim();
+        if (trimmedDesc) {
+          rawLines.push({ text: `    ${trimmedDesc}`, bg, fg: dc });
+        }
       }
 
       for (let s = 0; s < this._itemSpacing && rawLines.length < viewHeight; s++) {

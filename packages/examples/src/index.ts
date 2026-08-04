@@ -143,7 +143,6 @@ const DEFAULT_THEME_MODE: ThemeMode = "dark";
 const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "";
-const EXAMPLE_DESCRIPTION_INDENT = "    ";
 const CATEGORY_LABELS: Record<ExampleCategory, string> = {
   "Layout & Composition": "Layout",
   "Input & Editing": "Input",
@@ -603,7 +602,7 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
     for (const example of sectionExamples) {
       options.push({
         name: `${EXAMPLE_NAME_INDENT}${example.name}`,
-        description: `${EXAMPLE_DESCRIPTION_INDENT}${example.description}`,
+        description: example.description,
         value: { kind: "example", example },
       });
     }

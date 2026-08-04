@@ -21,6 +21,8 @@ export interface TabSelectOptions extends BoxOptions {
   showDescription?: boolean;
   showUnderline?: boolean;
   showScrollArrows?: boolean;
+  scrollArrowLeft?: string;
+  scrollArrowRight?: string;
   wrapSelection?: boolean;
   backgroundColor?: ColorInput;
   textColor?: ColorInput;
@@ -42,6 +44,8 @@ export class TabSelect extends Box {
   private _showDescription: boolean;
   private _showUnderline: boolean;
   private _showScrollArrows: boolean;
+  private _scrollArrowLeft: string;
+  private _scrollArrowRight: string;
   private _wrapSelection: boolean;
   private _textColor: RGBA;
   private _selectedTextColor: RGBA;
@@ -66,6 +70,8 @@ export class TabSelect extends Box {
     this._showDescription = options.showDescription !== false;
     this._showUnderline = options.showUnderline !== false;
     this._showScrollArrows = options.showScrollArrows !== false;
+    this._scrollArrowLeft = options.scrollArrowLeft ?? "◀";
+    this._scrollArrowRight = options.scrollArrowRight ?? "▶";
     this._wrapSelection = options.wrapSelection ?? false;
     this._textColor = parseColor(options.textColor ?? "#888888");
     this._selectedTextColor = parseColor(options.selectedTextColor ?? "#ffffff");
@@ -127,6 +133,24 @@ export class TabSelect extends Box {
 
   set showScrollArrows(v: boolean) {
     this._showScrollArrows = v;
+    this._render();
+  }
+
+  get scrollArrowLeft(): string {
+    return this._scrollArrowLeft;
+  }
+
+  set scrollArrowLeft(v: string) {
+    this._scrollArrowLeft = v;
+    this._render();
+  }
+
+  get scrollArrowRight(): string {
+    return this._scrollArrowRight;
+  }
+
+  set scrollArrowRight(v: string) {
+    this._scrollArrowRight = v;
     this._render();
   }
 
@@ -222,7 +246,7 @@ export class TabSelect extends Box {
     const tabLine: string[] = [];
 
     if (this._showScrollArrows) {
-      tabLine.push("\x1b[38;2;100;100;100m◀\x1b[0m");
+      tabLine.push(`\x1b[38;2;100;100;100m${this._scrollArrowLeft}\x1b[0m`);
     }
 
     for (let i = 0; i < this._tabOptions.length; i++) {
@@ -243,7 +267,7 @@ export class TabSelect extends Box {
     }
 
     if (this._showScrollArrows) {
-      tabLine.push("\x1b[38;2;100;100;100m▶\x1b[0m");
+      tabLine.push(`\x1b[38;2;100;100;100m${this._scrollArrowRight}\x1b[0m`);
     }
 
     lines.push(tabLine.join(""));
