@@ -509,7 +509,13 @@ export class Select extends Box {
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
         const trimmedDesc = opt.description.trim();
         if (trimmedDesc) {
-          rawLines.push({ text: `      ${trimmedDesc}`, bg, fg: dc });
+          // Indent matches the indicator width so description text starts at
+          // the same column as the name. When showSelectionIndicator is false
+          // the indent is "" — fully left-aligned with no leading spaces.
+          const indent = this._showSelectionIndicator
+            ? " ".repeat(this._selectionIndicator.length)
+            : "";
+          rawLines.push({ text: `${indent}${trimmedDesc}`, bg, fg: dc });
         }
       }
 

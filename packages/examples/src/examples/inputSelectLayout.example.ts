@@ -1,428 +1,693 @@
-import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
-import { Input, InputEvents } from "@bettertui/core";
-import { Select, SelectEvents, type SelectOption } from "@bettertui/core";
+import {
+  Box,
+  type CliRenderer,
+  Input,
+  InputEvents,
+  type KeyEvent,
+  type RawMouseEvent,
+  RenderableEvents,
+  Select,
+  SelectEvents,
+  type SelectOption,
+  Text,
+  bold,
+  createCliRenderer,
+  fg,
+  t,
+} from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let renderer: CliRenderer | null = null;
-let header: Text | null = null;
-let headerBox: Box | null = null;
-let selectContainer: Box | null = null;
-let selectContainerBox: Box | null = null;
-let leftSelect: Select | null = null;
-let leftSelectBox: Box | null = null;
-let rightSelect: Select | null = null;
-let rightSelectBox: Box | null = null;
-let inputContainer: Box | null = null;
-let inputContainerBox: Box | null = null;
-let inputLabel: Text | null = null;
-let textInput: Input | null = null;
-let textInputBox: Box | null = null;
-let footer: Text | null = null;
-let footerBox: Box | null = null;
-let currentFocusIndex = 0;
+// ── Layout height constants ────────────────────────────────────────────────────
+//
+// Each constant is the TOTAL outer height of that panel (border included).
+//
+//   HEADER           3  = 1 border + 1 content + 1 border
+//   PREVIEW          5  = 1 border + 3 content + 1 border  (title is in the border)
+//   INPUT_CONTAINER  6  = 1 border + 1 label + 1 border + 1 input + 1 border + 1 border
+//                      → inputLabel(1) + inputWrapper(h:3, border) = 4 inner rows
+//   FOOTER           3  = 1 border + 1 content + 1 border
+//
+// selectArea fills all remaining rows via flexGrow:1 — no fixed height needed.
+const HEADER_HEIGHT = 3;
+const PREVIEW_HEIGHT = 5;
+const INPUT_CONTAINER_HEIGHT = 6;
+const FOOTER_HEIGHT = 3;
 
-const focusableElements: Array<Input | Select> = [];
+// ── Module-level state ────────────────────────────────────────────────────────
+let renderer: CliRenderer | null = null;
+
+// Boxes (refs needed for destroy)
+let headerBox: Box | null = null;
+let selectArea: Box | null = null; // flex-row, direct child of root, flexGrow:1
+let colorSelectBox: Box | null = null;
+let sizeSelectBox: Box | null = null;
+let previewBox: Box | null = null;
+let inputContainerBox: Box | null = null;
+let footerBox: Box | null = null;
+
+// Widgets
+let colorSelect: Select | null = null;
+let sizeSelect: Select | null = null;
+let textInput: Input | null = null;
+
+// Text nodes
+let headerTitle: Text | null = null;
+let previewText: Text | null = null;
+let inputLabel: Text | null = null;
+let footerText: Text | null = null;
+
+// Focus management
+let currentFocusIndex = 0;
+const focusableWidgets: Array<Select | Input> = [];
 const focusableBoxes: Array<Box | null> = [];
 
+// Event handler refs for cleanup
+let mouseHandler: ((event: RawMouseEvent) => void) | null = null;
+let keyHandler: ((key: KeyEvent) => void) | null = null;
+let resizeHandler: ((_w: number, _h: number) => void) | null = null;
+
+// ── Options ───────────────────────────────────────────────────────────────────
+
 const colorOptions: SelectOption[] = [
-  { name: "Red", description: "A warm primary color", value: "#ff0000" },
-  { name: "Blue", description: "A cool primary color", value: "#0066ff" },
-  { name: "Green", description: "A natural color", value: "#00aa00" },
-  { name: "Purple", description: "A regal color", value: "#8a2be2" },
-  { name: "Orange", description: "A vibrant color", value: "#ff8c00" },
-  { name: "Teal", description: "A calming color", value: "#008080" },
+  {
+    name: "Crimson",
+    description: "Bold, passionate red — #dc2626",
+    value: "#dc2626",
+  },
+  {
+    name: "Sapphire",
+    description: "Deep professional blue — #2563eb",
+    value: "#2563eb",
+  },
+  {
+    name: "Emerald",
+    description: "Fresh natural green — #059669",
+    value: "#059669",
+  },
+  {
+    name: "Amber",
+    description: "Warm energetic gold — #d97706",
+    value: "#d97706",
+  },
+  {
+    name: "Violet",
+    description: "Creative regal purple — #7c3aed",
+    value: "#7c3aed",
+  },
+  {
+    name: "Coral",
+    description: "Friendly vivid orange — #ea580c",
+    value: "#ea580c",
+  },
+  {
+    name: "Rose",
+    description: "Soft romantic pink — #db2777",
+    value: "#db2777",
+  },
+  {
+    name: "Teal",
+    description: "Calm oceanic cyan — #0891b2",
+    value: "#0891b2",
+  },
+  {
+    name: "Slate",
+    description: "Neutral cool grey — #475569",
+    value: "#475569",
+  },
+  {
+    name: "Lime",
+    description: "Vibrant electric green — #65a30d",
+    value: "#65a30d",
+  },
 ];
 
 const sizeOptions: SelectOption[] = [
-  { name: "Small", description: "Compact size (8px)", value: 8 },
-  { name: "Medium", description: "Standard size (12px)", value: 12 },
-  { name: "Large", description: "Big size (16px)", value: 16 },
-  { name: "Extra Large", description: "Huge size (20px)", value: 20 },
+  { name: "Tiny", description: "Compact: 8px — dense dashboards", value: 8 },
+  {
+    name: "Small",
+    description: "Readable: 10px — secondary content",
+    value: 10,
+  },
+  { name: "Regular", description: "Standard: 12px — default body", value: 12 },
+  { name: "Medium", description: "Comfortable: 14px — body copy", value: 14 },
+  { name: "Large", description: "Prominent: 16px — headlines", value: 16 },
+  { name: "XL", description: "Display: 20px — section headings", value: 20 },
+  { name: "XXL", description: "Hero: 24px — major titles", value: 24 },
 ];
 
-function createLayoutElements(rendererInstance: CliRenderer): void {
-  renderer = rendererInstance;
-  renderer.setBackgroundColor("#001122");
+// ── Mouse helpers ─────────────────────────────────────────────────────────────
 
-  headerBox = new Box(renderer, {
-    id: "header-box",
-    zIndex: 0,
+/** Enable SGR mouse button + scroll tracking in the terminal. */
+function enableMouseTracking(): void {
+  process.stdout.write("\x1b[?1000h\x1b[?1006h");
+}
+
+/** Disable mouse tracking on cleanup. */
+function disableMouseTracking(): void {
+  process.stdout.write("\x1b[?1006l\x1b[?1000l");
+}
+
+// ── Hit-zone mapping ──────────────────────────────────────────────────────────
+
+/**
+ * Map a click position to a focusable-element index:
+ *   0  → colorSelect (left half of selectArea)
+ *   1  → sizeSelect  (right half of selectArea)
+ *   2  → textInput
+ *  -1  → non-focusable zone (header / preview / footer)
+ *
+ * Uses the fixed-height constants to derive zone boundaries.
+ */
+function zoneForPosition(x: number, y: number): number {
+  if (!renderer) return -1;
+  const h = renderer.terminalHeight;
+  const w = renderer.terminalWidth;
+
+  const selectTop = HEADER_HEIGHT;
+  const selectBottom = h - PREVIEW_HEIGHT - INPUT_CONTAINER_HEIGHT - FOOTER_HEIGHT;
+  const inputTop = selectBottom + PREVIEW_HEIGHT;
+  const inputBottom = inputTop + INPUT_CONTAINER_HEIGHT;
+
+  if (y >= selectTop && y < selectBottom) {
+    return x < Math.floor(w / 2) ? 0 : 1;
+  }
+  if (y >= inputTop && y < inputBottom) {
+    return 2;
+  }
+  return -1;
+}
+
+// ── Focus helpers ─────────────────────────────────────────────────────────────
+
+function blurAll(): void {
+  for (const w of focusableWidgets) w.blur();
+  for (const b of focusableBoxes) b?.blur();
+}
+
+function focusIndex(idx: number): void {
+  blurAll();
+  const len = focusableWidgets.length;
+  currentFocusIndex = ((idx % len) + len) % len;
+  focusableWidgets[currentFocusIndex]?.focus();
+  focusableBoxes[currentFocusIndex]?.focus();
+  updateHeader();
+}
+
+// ── Select height calculation ─────────────────────────────────────────────────
+
+/**
+ * Compute the explicit height the Select widgets need.
+ *
+ * `Select._getViewHeight()` falls back to a viewport-walking heuristic when
+ * `height` is "auto"; that heuristic under-counts on short terminals because it
+ * can't see the Taffy-computed flex height.  Passing an explicit number
+ * short-circuits the heuristic.
+ *
+ * Overhead:
+ *   HEADER + PREVIEW + INPUT_CONTAINER + FOOTER  = fixed panel rows
+ *   + 2  (colorSelectBox / sizeSelectBox border)
+ *
+ * No outer selectContainerBox border is added here because we removed that
+ * wrapper — selectArea is a borderless flex-row directly in root.
+ */
+function calcSelectHeight(r: CliRenderer): number {
+  const fixed = HEADER_HEIGHT + PREVIEW_HEIGHT + INPUT_CONTAINER_HEIGHT + FOOTER_HEIGHT;
+  return Math.max(4, r.terminalHeight - fixed - 2);
+}
+
+/** Re-apply explicit heights after a terminal resize and force re-render. */
+function refreshSelectHeights(r: CliRenderer): void {
+  if (!colorSelect || !sizeSelect) return;
+  const h = calcSelectHeight(r);
+  colorSelect.height = h;
+  sizeSelect.height = h;
+  // moveUp(0) calls _render() internally without changing the selected index.
+  colorSelect.moveUp(0);
+  sizeSelect.moveUp(0);
+}
+
+// ── Live display helpers ──────────────────────────────────────────────────────
+
+function getFocusName(): string {
+  switch (currentFocusIndex) {
+    case 0:
+      return "Color Select";
+    case 1:
+      return "Size Select";
+    case 2:
+      return "Text Input";
+    default:
+      return "—";
+  }
+}
+
+function updateHeader(): void {
+  if (!headerTitle) return;
+  headerTitle.content = t`${bold(fg("#ffffff")(" INPUT & SELECT LAYOUT"))}   ${fg("#94a3b8")("focus:")} ${fg("#38bdf8")(getFocusName())}`;
+}
+
+function updatePreview(): void {
+  if (!previewText || !colorSelect || !sizeSelect || !textInput) return;
+
+  const color = colorSelect.getSelectedOption();
+  const size = sizeSelect.getSelectedOption();
+  const text = textInput.value.trim();
+
+  const colorHex = (color?.value as string) ?? "#e2e8f0";
+  const colorName = color?.name ?? "—";
+  const sizeName = size?.name ?? "—";
+  const sizePx = (size?.value as number) ?? 12;
+  const sampleText = text || "Type something below to see it styled here…";
+  const sep = "─".repeat(Math.max(0, (renderer?.terminalWidth ?? 80) - 4));
+
+  // All styled values are interpolated directly inside t`` — using a plain
+  // backtick template would call .toString() on StyledText → "[object Object]".
+  previewText.content = t` ${fg("#334155")(sep)}
+ ${fg("#64748b")("color:")} ${fg(colorHex)(colorName)} ${fg("#475569")(`(${colorHex})`)}   ${fg("#64748b")("size:")} ${fg("#facc15")(sizeName)} ${fg("#475569")(`(${sizePx}px)`)}
+ ${fg(colorHex)(bold(sampleText))}`;
+}
+
+function updateInputLabel(): void {
+  if (!inputLabel || !textInput) return;
+  const val = textInput.value;
+  if (val.length === 0) {
+    inputLabel.content = "  Enter text:";
+    return;
+  }
+  const remaining = 80 - val.length;
+  const filled = Math.round((val.length / 80) * 20);
+  const bar = "█".repeat(filled);
+  const empty = "░".repeat(20 - filled);
+  inputLabel.content = t`  ${fg("#94a3b8")("Enter text:")}  ${fg("#22d3ee")(`${val.length}/80`)}  ${fg("#3b82f6")(bar)}${fg("#1e293b")(empty)}  ${fg(remaining > 0 ? "#64748b" : "#ef4444")(`${remaining} remaining`)}`;
+}
+
+// ── Layout factory ────────────────────────────────────────────────────────────
+
+function buildLayout(r: CliRenderer): void {
+  renderer = r;
+  r.setBackgroundColor("#0a0f1e");
+
+  // ── Header ──────────────────────────────────────────────────────────────────
+  // height: HEADER_HEIGHT, flexShrink: 0 so it never yields rows to flex layout
+  headerBox = new Box(r, {
+    id: "isl-header",
     width: "auto",
-    height: 3,
-    backgroundColor: "#3b82f6",
+    height: HEADER_HEIGHT,
+    backgroundColor: "#1e3a5f",
     borderStyle: "single",
     borderColor: "#2563eb",
+    border: true,
+    overflow: "hidden",
     flexGrow: 0,
     flexShrink: 0,
-    border: true,
+    paddingLeft: 1,
+    zIndex: 0,
   });
 
-  header = new Text(renderer, {
-    id: "header",
-    content: "INPUT & SELECT LAYOUT DEMO",
+  headerTitle = new Text(r, {
+    id: "isl-header-title",
+    content: "",
     fg: "#ffffff",
     bg: "transparent",
-    zIndex: 1,
     flexGrow: 1,
     flexShrink: 1,
-  });
-
-  headerBox.add(header);
-
-  selectContainerBox = new Box(renderer, {
-    id: "select-container-box",
-    zIndex: 0,
-    width: "auto",
-    height: "auto",
-    flexGrow: 1,
-    flexShrink: 1,
-    minHeight: 10,
-    backgroundColor: "#1e293b",
-    borderStyle: "single",
-    borderColor: "#475569",
-    border: true,
-  });
-
-  selectContainer = new Box(renderer, {
-    id: "select-container",
     zIndex: 1,
+  });
+  headerBox.add(headerTitle);
+
+  // ── Select area ─────────────────────────────────────────────────────────────
+  // Borderless flex-row that grows to fill all space not taken by fixed panels.
+  // Each half (colorSelectBox / sizeSelectBox) has flexGrow:1 so they share
+  // available width equally and stretch to fill the row's height automatically.
+  selectArea = new Box(r, {
+    id: "isl-select-area",
     width: "auto",
     height: "auto",
     flexDirection: "row",
     flexGrow: 1,
     flexShrink: 1,
-  });
-
-  selectContainerBox.add(selectContainer);
-
-  leftSelectBox = new Box(renderer, {
-    id: "color-select-box",
-    zIndex: 0,
-    width: "auto",
-    height: "auto",
     minHeight: 8,
-    borderStyle: "single",
-    borderColor: "#475569",
-    focusedBorderColor: "#3b82f6",
-    title: "Color Selection",
-    titleAlignment: "center",
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: "transparent",
-    border: true,
-  });
-
-  leftSelect = new Select(renderer, {
-    id: "color-select",
-    zIndex: 1,
-    width: "auto",
-    height: "auto",
-    minHeight: 6,
-    options: colorOptions,
-    backgroundColor: "#1e293b",
-    focusedBackgroundColor: "#2d3748",
-    textColor: "#e2e8f0",
-    focusedTextColor: "#f7fafc",
-    selectedBackgroundColor: "#3b82f6",
-    selectedTextColor: "#ffffff",
-    descriptionColor: "#94a3b8",
-    selectedDescriptionColor: "#cbd5e1",
-    showScrollIndicator: true,
-    wrapSelection: true,
-    showDescription: true,
-    flexGrow: 1,
-    flexShrink: 1,
-  });
-
-  leftSelectBox.add(leftSelect);
-
-  rightSelectBox = new Box(renderer, {
-    id: "size-select-box",
+    overflow: "hidden",
     zIndex: 0,
-    width: "auto",
-    height: "auto",
-    minHeight: 8,
-    borderStyle: "single",
-    borderColor: "#475569",
-    focusedBorderColor: "#059669",
-    title: "Size Selection",
-    titleAlignment: "center",
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: "transparent",
-    border: true,
   });
 
-  rightSelect = new Select(renderer, {
-    id: "size-select",
-    zIndex: 1,
+  // Left panel — Color
+  colorSelectBox = new Box(r, {
+    id: "isl-color-select-box",
     width: "auto",
     height: "auto",
-    minHeight: 6,
-    options: sizeOptions,
-    backgroundColor: "#1e293b",
-    focusedBackgroundColor: "#2d3748",
-    textColor: "#e2e8f0",
-    focusedTextColor: "#f7fafc",
-    selectedBackgroundColor: "#059669",
-    selectedTextColor: "#ffffff",
-    descriptionColor: "#94a3b8",
-    selectedDescriptionColor: "#cbd5e1",
-    showScrollIndicator: true,
-    wrapSelection: true,
-    showDescription: true,
-    flexGrow: 1,
-    flexShrink: 1,
-  });
-
-  rightSelectBox.add(rightSelect);
-
-  inputContainerBox = new Box(renderer, {
-    id: "input-container-box",
-    zIndex: 0,
-    width: "auto",
-    height: 7,
-    flexGrow: 0,
-    flexShrink: 0,
-    backgroundColor: "#0f172a",
-    borderStyle: "single",
+    borderStyle: "round",
     borderColor: "#334155",
-    border: true,
-  });
-
-  inputContainer = new Box(renderer, {
-    id: "input-container",
-    zIndex: 1,
-    width: "auto",
-    height: "auto",
-    flexDirection: "column",
+    focusedBorderColor: "#3b82f6",
+    title: " Color ",
+    titleAlignment: "center",
     flexGrow: 1,
     flexShrink: 1,
+    overflow: "hidden",
+    backgroundColor: "#0a0f1e",
+    border: true,
+    zIndex: 0,
   });
 
-  inputContainerBox.add(inputContainer);
+  colorSelect = new Select(r, {
+    id: "isl-color-select",
+    width: "auto",
+    height: calcSelectHeight(r),
+    flexGrow: 1,
+    flexShrink: 1,
+    options: colorOptions,
+    backgroundColor: "#0d1525",
+    focusedBackgroundColor: "#111827",
+    textColor: "#94a3b8",
+    focusedTextColor: "#e2e8f0",
+    selectedBackgroundColor: "#1d4ed8",
+    selectedTextColor: "#ffffff",
+    descriptionColor: "#475569",
+    selectedDescriptionColor: "#93c5fd",
+    showScrollIndicator: true,
+    wrapSelection: true,
+    showDescription: true,
+    showSelectionIndicator: false,
+    fastScrollStep: 3,
+    zIndex: 1,
+  });
+  colorSelectBox.add(colorSelect);
 
-  inputLabel = new Text(renderer, {
-    id: "input-label",
-    content: "Enter your text:",
-    fg: "#f1f5f9",
-    bg: "#0f172a",
+  // Right panel — Size
+  sizeSelectBox = new Box(r, {
+    id: "isl-size-select-box",
+    width: "auto",
+    height: "auto",
+    borderStyle: "round",
+    borderColor: "#334155",
+    focusedBorderColor: "#059669",
+    title: " Size ",
+    titleAlignment: "center",
+    flexGrow: 1,
+    flexShrink: 1,
+    overflow: "hidden",
+    backgroundColor: "#0a0f1e",
+    border: true,
     zIndex: 0,
+  });
+
+  sizeSelect = new Select(r, {
+    id: "isl-size-select",
+    width: "auto",
+    height: calcSelectHeight(r),
+    flexGrow: 1,
+    flexShrink: 1,
+    options: sizeOptions,
+    backgroundColor: "#0d1525",
+    focusedBackgroundColor: "#111827",
+    textColor: "#94a3b8",
+    focusedTextColor: "#e2e8f0",
+    selectedBackgroundColor: "#065f46",
+    selectedTextColor: "#ffffff",
+    descriptionColor: "#475569",
+    selectedDescriptionColor: "#6ee7b7",
+    showScrollIndicator: true,
+    wrapSelection: false,
+    showDescription: true,
+    showSelectionIndicator: false,
+    fastScrollStep: 3,
+    zIndex: 1,
+  });
+  sizeSelectBox.add(sizeSelect);
+
+  selectArea.add(colorSelectBox);
+  selectArea.add(sizeSelectBox);
+
+  // ── Preview ─────────────────────────────────────────────────────────────────
+  // Fixed-height panel; title is rendered in the border so the 3 inner rows are
+  // fully available for content (sep + meta + sample).  overflow:"hidden" clips
+  // any text that overruns the box.
+  previewBox = new Box(r, {
+    id: "isl-preview-box",
+    width: "auto",
+    height: PREVIEW_HEIGHT,
+    backgroundColor: "#0d1525",
+    borderStyle: "single",
+    borderColor: "#1e293b",
+    title: " Preview ",
+    titleAlignment: "left",
+    border: true,
+    overflow: "hidden",
     flexGrow: 0,
     flexShrink: 0,
+    zIndex: 0,
   });
 
-  textInputBox = new Box(renderer, {
-    id: "text-input-box",
+  previewText = new Text(r, {
+    id: "isl-preview-text",
+    content: "",
+    fg: "#e2e8f0",
+    bg: "transparent",
+    flexGrow: 1,
+    flexShrink: 1,
+    zIndex: 1,
+  });
+  previewBox.add(previewText);
+
+  // ── Input container ─────────────────────────────────────────────────────────
+  // Height: 6 = 1(border) + 1(label) + 1(inner-border) + 1(input) +
+  //              1(inner-border) + 1(border)
+  // overflow:"hidden" prevents the inputWrapper from visually spilling out.
+  inputContainerBox = new Box(r, {
+    id: "isl-input-container",
+    width: "auto",
+    height: INPUT_CONTAINER_HEIGHT,
+    backgroundColor: "#060d1a",
+    borderStyle: "single",
+    borderColor: "#1e293b",
+    title: " Text Input ",
+    titleAlignment: "left",
+    flexDirection: "column",
+    flexGrow: 0,
+    flexShrink: 0,
+    border: true,
+    overflow: "hidden",
     zIndex: 0,
+  });
+
+  inputLabel = new Text(r, {
+    id: "isl-input-label",
+    content: "  Enter text:",
+    fg: "#94a3b8",
+    bg: "transparent",
+    flexGrow: 0,
+    flexShrink: 0,
+    zIndex: 0,
+  });
+
+  // inputWrapper: height:3 = border(1) + input(1) + border(1).
+  // marginLeft/Right give breathing room inside the container.
+  const inputWrapper = new Box(r, {
+    id: "isl-input-wrapper",
     width: "auto",
     height: 3,
-    borderStyle: "single",
-    borderColor: "#475569",
-    focusedBorderColor: "#eab308",
+    borderStyle: "round",
+    borderColor: "#334155",
+    focusedBorderColor: "#facc15",
     flexGrow: 0,
     flexShrink: 0,
-    marginTop: 1,
+    marginLeft: 1,
+    marginRight: 1,
+    overflow: "hidden",
     backgroundColor: "transparent",
     border: true,
+    zIndex: 0,
   });
 
-  textInput = new Input(renderer, {
-    id: "text-input",
-    zIndex: 1,
+  textInput = new Input(r, {
+    id: "isl-text-input",
     width: "auto",
     height: 1,
-    placeholder: "Type something here...",
-    backgroundColor: "#1e293b",
-    focusedBackgroundColor: "#334155",
-    textColor: "#f1f5f9",
+    placeholder: "Type something and watch the preview update…",
+    backgroundColor: "#060d1a",
+    focusedBackgroundColor: "#0f1f35",
+    textColor: "#e2e8f0",
     focusedTextColor: "#ffffff",
-    placeholderColor: "#64748b",
-    cursorColor: "#f1f5f9",
-    maxLength: 100,
+    placeholderColor: "#334155",
+    cursorColor: "#facc15",
+    maxLength: 80,
     flexGrow: 1,
     flexShrink: 1,
+    zIndex: 1,
   });
 
-  textInputBox.add(textInput);
+  inputWrapper.add(textInput);
+  inputContainerBox.add(inputLabel);
+  inputContainerBox.add(inputWrapper);
 
-  footerBox = new Box(renderer, {
-    id: "footer-box",
-    zIndex: 0,
+  // ── Footer ──────────────────────────────────────────────────────────────────
+  footerBox = new Box(r, {
+    id: "isl-footer",
     width: "auto",
-    height: 3,
-    backgroundColor: "#1e40af",
+    height: FOOTER_HEIGHT,
+    backgroundColor: "#0f172a",
     borderStyle: "single",
-    borderColor: "#1d4ed8",
+    borderColor: "#1e293b",
     flexGrow: 0,
     flexShrink: 0,
+    overflow: "hidden",
     border: true,
+    paddingLeft: 1,
+    zIndex: 0,
   });
 
-  footer = new Text(renderer, {
-    id: "footer",
-    content: "TAB: focus next | SHIFT+TAB: focus prev | ARROWS/JK: navigate | ESC: quit",
-    fg: "#dbeafe",
+  footerText = new Text(r, {
+    id: "isl-footer-text",
+    content: t`${fg("#64748b")("TAB")} next  ${fg("#64748b")("SHIFT+TAB")} prev  ${fg("#64748b")("↑↓/jk")} navigate  ${fg("#64748b")("ENTER")} select  ${fg("#64748b")("MOUSE")} click·scroll  ${fg("#64748b")("ESC")} quit`,
+    fg: "#64748b",
     bg: "transparent",
-    zIndex: 1,
     flexGrow: 1,
     flexShrink: 1,
+    zIndex: 1,
   });
+  footerBox.add(footerText);
 
-  footerBox.add(footer);
+  // ── Wire into root ────────────────────────────────────────────────────────
+  r.root.add(headerBox);
+  r.root.add(selectArea);
+  r.root.add(previewBox);
+  r.root.add(inputContainerBox);
+  r.root.add(footerBox);
 
-  selectContainer.add(leftSelectBox);
-  selectContainer.add(rightSelectBox);
-  inputContainer.add(inputLabel);
-  inputContainer.add(textInputBox);
-
-  renderer.root.add(headerBox);
-  renderer.root.add(selectContainerBox);
-  renderer.root.add(inputContainerBox);
-  renderer.root.add(footerBox);
-
-  focusableElements.push(leftSelect, rightSelect, textInput);
-  focusableBoxes.push(leftSelectBox, rightSelectBox, textInputBox);
-  setupEventHandlers();
-  updateFocus();
-
-  renderer.on("resize", handleResize);
+  // ── Focusable registry ────────────────────────────────────────────────────
+  focusableWidgets.push(colorSelect, sizeSelect, textInput);
+  focusableBoxes.push(colorSelectBox, sizeSelectBox, inputWrapper);
 }
 
-function setupEventHandlers(): void {
-  if (!leftSelect || !rightSelect || !textInput) return;
+// ── Event wiring ──────────────────────────────────────────────────────────────
 
-  leftSelect.on(SelectEvents.SELECTION_CHANGED, (_index: number, _option: SelectOption) => {
-    updateDisplay();
+function wireEvents(r: CliRenderer): void {
+  if (!colorSelect || !sizeSelect || !textInput) return;
+
+  // Select changes → live preview
+  colorSelect.on(SelectEvents.SELECTION_CHANGED, () => updatePreview());
+  colorSelect.on(SelectEvents.ITEM_SELECTED, () => updatePreview());
+  sizeSelect.on(SelectEvents.SELECTION_CHANGED, () => updatePreview());
+  sizeSelect.on(SelectEvents.ITEM_SELECTED, () => updatePreview());
+
+  // Input changes → label + preview
+  textInput.on(InputEvents.INPUT, () => {
+    updateInputLabel();
+    updatePreview();
+  });
+  textInput.on(InputEvents.CHANGE, () => {
+    updateInputLabel();
+    updatePreview();
   });
 
-  leftSelect.on(SelectEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
-    updateDisplay();
-  });
-
-  rightSelect.on(SelectEvents.SELECTION_CHANGED, (_index: number, _option: SelectOption) => {
-    updateDisplay();
-  });
-
-  rightSelect.on(SelectEvents.ITEM_SELECTED, (_index: number, _option: SelectOption) => {
-    updateDisplay();
-  });
-
-  textInput.on(InputEvents.INPUT, (_value: string) => {
-    updateDisplay();
-  });
-
-  textInput.on(InputEvents.CHANGE, (_value: string) => {
-    updateDisplay();
-  });
-}
-
-function updateDisplay(): void {
-  if (!leftSelect || !rightSelect || !textInput || !inputLabel) return;
-
-  const selectedColor = leftSelect.getSelectedOption();
-  const selectedSize = rightSelect.getSelectedOption();
-  const inputValue = textInput.value;
-
-  let displayText = "Enter your text:";
-  if (inputValue) {
-    displayText += ` "${inputValue}"`;
-  }
-  if (selectedColor) {
-    displayText += ` in ${selectedColor.name}`;
-  }
-  if (selectedSize) {
-    displayText += ` (${selectedSize.name})`;
+  // Focus changes → header badge
+  for (const w of focusableWidgets) {
+    w.on(RenderableEvents.FOCUSED, () => updateHeader());
+    w.on(RenderableEvents.BLURRED, () => updateHeader());
   }
 
-  inputLabel.content = displayText;
-}
+  // ── Resize: update explicit Select heights ─────────────────────────────────
+  resizeHandler = (_w: number, _h: number) => {
+    refreshSelectHeights(r);
+    updatePreview();
+  };
+  r.on("resize", resizeHandler);
 
-function handleResize(_width: number, _height: number): void {
-  // Root layout is automatically resized by the renderer
-}
-
-function updateFocus(): void {
-  for (const element of focusableElements) {
-    element.blur();
-  }
-  for (const box of focusableBoxes) {
-    if (box) box.blur();
-  }
-
-  if (focusableElements[currentFocusIndex]) {
-    focusableElements[currentFocusIndex].focus();
-  }
-  if (focusableBoxes[currentFocusIndex]) {
-    focusableBoxes[currentFocusIndex]?.focus();
-  }
-}
-
-function handleKeyPress(key: KeyEvent): void {
-  if (key.name === "tab") {
-    if (key.shift) {
-      currentFocusIndex =
-        (currentFocusIndex - 1 + focusableElements.length) % focusableElements.length;
-    } else {
-      currentFocusIndex = (currentFocusIndex + 1) % focusableElements.length;
+  // ── Keyboard ───────────────────────────────────────────────────────────────
+  keyHandler = (key: KeyEvent) => {
+    if (key.name === "tab") {
+      focusIndex(key.shift ? currentFocusIndex - 1 : currentFocusIndex + 1);
+      return;
     }
-    updateFocus();
-    return;
-  }
+    if (key.name === "escape" || (key.ctrl && key.name === "q")) {
+      r.destroy();
+      process.exit(0);
+    }
+  };
+  r.keyInput.on("keypress", keyHandler);
+
+  // ── Mouse: click → focus, scroll → navigate ────────────────────────────────
+  mouseHandler = (event: RawMouseEvent) => {
+    if (event.type === "down") {
+      const zone = zoneForPosition(event.x, event.y);
+      if (zone >= 0) focusIndex(zone);
+      return;
+    }
+    if (event.type === "scroll" && event.scroll) {
+      const focused = focusableWidgets[currentFocusIndex];
+      if (focused instanceof Select) {
+        if (event.scroll.direction === "up") focused.moveUp(event.scroll.delta);
+        else if (event.scroll.direction === "down") focused.moveDown(event.scroll.delta);
+      }
+    }
+  };
+  r.keyInput.on("mouse", mouseHandler);
 }
+
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export function run(rendererInstance: CliRenderer): void {
-  createLayoutElements(rendererInstance);
-  rendererInstance.keyInput.on("keypress", handleKeyPress);
-  updateDisplay();
+  buildLayout(rendererInstance);
+  wireEvents(rendererInstance);
+  enableMouseTracking();
+  focusIndex(0);
+  updatePreview();
+  updateInputLabel();
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
-  rendererInstance.keyInput.off("keypress", handleKeyPress);
+  disableMouseTracking();
 
-  if (renderer) {
-    renderer.off("resize", handleResize);
+  if (keyHandler) {
+    rendererInstance.keyInput.off("keypress", keyHandler);
+    keyHandler = null;
   }
+  if (mouseHandler) {
+    rendererInstance.keyInput.off("mouse", mouseHandler);
+    mouseHandler = null;
+  }
+  if (renderer && resizeHandler) {
+    renderer.off("resize", resizeHandler);
+  }
+  resizeHandler = null;
 
-  // Properly destroy all elements that need cleanup
-  if (leftSelect) leftSelect.destroy();
-  if (rightSelect) rightSelect.destroy();
-  if (textInput) textInput.destroy();
+  colorSelect?.destroy();
+  sizeSelect?.destroy();
+  textInput?.destroy();
 
-  // Clean up elements directly from root
   if (headerBox) rendererInstance.root.remove(headerBox);
-  if (selectContainerBox) rendererInstance.root.remove(selectContainerBox);
+  if (selectArea) rendererInstance.root.remove(selectArea);
+  if (previewBox) rendererInstance.root.remove(previewBox);
   if (inputContainerBox) rendererInstance.root.remove(inputContainerBox);
   if (footerBox) rendererInstance.root.remove(footerBox);
 
-  // Clean up all elements
-  header = null;
+  renderer = null;
   headerBox = null;
-  selectContainer = null;
-  selectContainerBox = null;
-  leftSelect = null;
-  leftSelectBox = null;
-  rightSelect = null;
-  rightSelectBox = null;
-  inputContainer = null;
+  headerTitle = null;
+  selectArea = null;
+  colorSelectBox = null;
+  sizeSelectBox = null;
+  colorSelect = null;
+  sizeSelect = null;
+  previewBox = null;
+  previewText = null;
   inputContainerBox = null;
   inputLabel = null;
   textInput = null;
-  textInputBox = null;
-  footer = null;
   footerBox = null;
-  renderer = null;
-  currentFocusIndex = 0;
-  focusableElements.length = 0;
+  footerText = null;
+
+  focusableWidgets.length = 0;
   focusableBoxes.length = 0;
+  currentFocusIndex = 0;
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({
+  const r = await createCliRenderer({
     exitOnCtrlC: true,
     targetFps: 30,
   });
-  run(renderer);
-  setupCommonDemoKeys(renderer);
-  renderer.start();
+  run(r);
+  setupCommonDemoKeys(r);
+  r.start();
 }
