@@ -134,7 +134,7 @@ export class Input extends Box {
   // ── Focus ─────────────────────────────────────────────────────────────────────
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this._lastCommittedValue = this._value;
     if (this._focusedBackgroundColor) {
@@ -144,12 +144,14 @@ export class Input extends Box {
     }
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
+    this._renderer.keyInput.off("keypress", this._keyHandler);
     this._renderer.keyInput.on("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
     this._renderer.keyInput.off("keypress", this._keyHandler);
+    if (!this._focused) return;
     const current = this._value;
     if (current !== this._lastCommittedValue) {
       this._lastCommittedValue = current;
@@ -172,7 +174,7 @@ export class Input extends Box {
   private _handleKey(key: RawKeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
-    if (key.name === "return" || key.name === "linefeed") {
+    if (key.name === "return" || key.name === "linefeed" || key.name === "enter") {
       this._submit();
       return;
     }

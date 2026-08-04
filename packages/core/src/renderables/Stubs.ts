@@ -217,10 +217,10 @@ class SimpleFrameBuffer implements FrameBufferLike {
       for (let x = 0; x < this.width; x++) {
         const cell = this.cells[y * this.width + x];
         if (!cell) continue;
-        if (cell.fg) {
+        if (cell.fg && cell.fg.a > 0) {
           result += `\x1b[38;2;${cell.fg.r};${cell.fg.g};${cell.fg.b}m`;
         }
-        if (cell.bg) {
+        if (cell.bg && cell.bg.a > 0) {
           result += `\x1b[48;2;${cell.bg.r};${cell.bg.g};${cell.bg.b}m`;
         }
         result += cell.char;

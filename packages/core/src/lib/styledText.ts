@@ -203,8 +203,10 @@ export function styledTextToAnsi(styledText: StyledText | string): string {
     let prefix = "";
     const suffix_parts: string[] = [];
 
-    if (chunk.fg) prefix += `\x1b[38;2;${chunk.fg.r};${chunk.fg.g};${chunk.fg.b}m`;
-    if (chunk.bg) prefix += `\x1b[48;2;${chunk.bg.r};${chunk.bg.g};${chunk.bg.b}m`;
+    if (chunk.fg && chunk.fg.a > 0)
+      prefix += `\x1b[38;2;${chunk.fg.r};${chunk.fg.g};${chunk.fg.b}m`;
+    if (chunk.bg && chunk.bg.a > 0)
+      prefix += `\x1b[48;2;${chunk.bg.r};${chunk.bg.g};${chunk.bg.b}m`;
 
     const attrs = chunk.attributes ?? 0;
     if (attrs & TextAttributes.BOLD) prefix += "\x1b[1m";

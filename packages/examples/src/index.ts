@@ -1152,18 +1152,6 @@ class ExampleSelector {
       const printableText = getPrintableKeyText(key);
 
       if (this.menuFocusArea === "list") {
-        if (key.name === "up" || key.name === "k") {
-          key.preventDefault();
-          this.moveSelection(-1, key.shift ? 5 : 1);
-          return;
-        }
-
-        if (key.name === "down" || key.name === "j") {
-          key.preventDefault();
-          this.moveSelection(1, key.shift ? 5 : 1);
-          return;
-        }
-
         if (printableText === "/") {
           key.preventDefault();
           this.setMenuFocus("filter");
@@ -1184,7 +1172,7 @@ class ExampleSelector {
           return;
         }
 
-        if (key.name === "return" || key.name === "linefeed") {
+        if (key.name === "return" || key.name === "linefeed" || key.name === "enter") {
           key.preventDefault();
           this.selectElement.selectCurrent();
           return;

@@ -67,7 +67,7 @@ export class Select extends Box {
     });
 
     this._selectOptions = options.options ?? [];
-    this._selectedIndex = options.selectedIndex ?? 0;
+    this._selectedIndex = this._skipNonSelectable(options.selectedIndex ?? 0, 1);
     this._scrollOffset = 0;
     this._textColor = parseColor(options.textColor ?? "#e2e8f0");
     this._focusedTextColor = parseColor(options.focusedTextColor ?? "#f7fafc");
@@ -101,7 +101,8 @@ export class Select extends Box {
 
   set options(opts: SelectOption[]) {
     this._selectOptions = opts;
-    this._selectedIndex = Math.min(this._selectedIndex, Math.max(0, opts.length - 1));
+    const clamped = Math.min(this._selectedIndex, Math.max(0, opts.length - 1));
+    this._selectedIndex = this._skipNonSelectable(clamped, 1);
     this._updateScroll();
     this._render();
   }
@@ -112,8 +113,9 @@ export class Select extends Box {
 
   set selectedIndex(idx: number) {
     const clamped = this._clampIndex(idx);
-    if (clamped !== this._selectedIndex) {
-      this._selectedIndex = clamped;
+    const validIndex = this._skipNonSelectable(clamped, idx >= this._selectedIndex ? 1 : -1);
+    if (validIndex !== this._selectedIndex) {
+      this._selectedIndex = validIndex;
       this._updateScroll();
       this._render();
     }
@@ -258,16 +260,18 @@ export class Select extends Box {
   // ── Focus ─────────────────────────────────────────────────────────────────────
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
+    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyInput.on("keypress", this._keyHandler);
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
     this._renderer.keyInput.off("keypress", this._keyHandler);
+    if (!this._focused) return;
     this._focused = false;
     this._render();
     this.emit(RenderableEvents.BLURRED, this);
@@ -282,7 +286,7 @@ export class Select extends Box {
       this.moveUp(key.shift ? this._fastScrollStep : 1);
     } else if (key.name === "down" || key.name === "j") {
       this.moveDown(key.shift ? this._fastScrollStep : 1);
-    } else if (key.name === "return" || key.name === "linefeed") {
+    } else if (key.name === "return" || key.name === "linefeed" || key.name === "enter") {
       this.selectCurrent();
     } else if (key.name === "pageup") {
       this.moveUp(this._fastScrollStep * 2);

@@ -414,7 +414,9 @@ impl FrameBuffer {
             let idx = self.index(x, y);
             self.cells.chars[idx] = cell.ch;
             self.cells.fg[idx] = cell.fg;
-            self.cells.bg[idx] = cell.bg;
+            if cell.bg != Color::Default || self.cells.bg[idx] == Color::Default {
+                self.cells.bg[idx] = cell.bg;
+            }
             self.cells.underline_color[idx] = cell.underline_color;
             self.cells.attrs[idx] = cell.attributes;
             self.cells.link_id[idx] = cell.link_id;

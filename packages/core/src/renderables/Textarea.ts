@@ -180,7 +180,7 @@ export class Textarea extends Box {
   // ── Focus ─────────────────────────────────────────────────────────────────────
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     if (this._focusedBgColor) {
       this._renderer.setNodeStyle(this._nodeId, {
@@ -189,12 +189,14 @@ export class Textarea extends Box {
     }
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
+    this._renderer.keyInput.off("keypress", this._keyHandler);
     this._renderer.keyInput.on("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
     this._renderer.keyInput.off("keypress", this._keyHandler);
+    if (!this._focused) return;
     const current = this._text;
     this._focused = false;
     if (this._focusedBgColor && this._backgroundColor) {

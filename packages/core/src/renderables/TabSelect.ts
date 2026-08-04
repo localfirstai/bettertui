@@ -186,16 +186,18 @@ export class TabSelect extends Box {
   }
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
+    this._renderer.keyInput.off("keypress", this._keyHandler);
     this._renderer.keyInput.on("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
     this._renderer.keyInput.off("keypress", this._keyHandler);
+    if (!this._focused) return;
     this._focused = false;
     this._render();
     this.emit(RenderableEvents.BLURRED, this);
