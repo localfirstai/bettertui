@@ -542,7 +542,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     zIndex: 150,
     width: 20,
     height: 3,
-    backgroundColor: colors.absoluteBg,
+    backgroundColor: colors.slate,
     borderStyle: "single",
     borderColor: colors.absoluteBorder,
     position: "absolute",
