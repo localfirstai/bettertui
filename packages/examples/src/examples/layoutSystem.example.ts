@@ -633,11 +633,13 @@ function handleThemeMode(mode: ThemeMode): void {
 // ── Public lifecycle ───────────────────────────────────────────────────────────
 
 export function run(rendererInstance: CliRenderer): void {
+  rendererInstance.start();
   createLayoutElements(rendererInstance);
   rendererInstance.keyInput.on("keypress", handleKeyPress);
   rendererInstance.on("theme_mode", handleThemeMode);
   currentDemoIndex = 0;
   applyCurrentDemo();
+  rendererInstance.renderFull();
 }
 
 export function destroy(rendererInstance: CliRenderer): void {
@@ -668,6 +670,7 @@ export function destroy(rendererInstance: CliRenderer): void {
   absolutePositionedBox = null;
   absolutePositionedText = null;
   currentDemoIndex = 0;
+  autoplayEnabled = true;
 }
 
 if (import.meta.main) {
