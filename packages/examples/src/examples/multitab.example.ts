@@ -8,7 +8,8 @@ import {
   createCliRenderer,
   parseColor,
 } from "@bettertui/core";
-import type { CliRenderer } from "@bettertui/core";
+import type { CliRenderer, ThemeMode } from "@bettertui/core";
+import { DEFAULT_THEME_MODE, getComponentTheme, getThemeTokens } from "../constants/theme";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 import { TabController } from "../lib/tabController";
 
@@ -80,21 +81,46 @@ let globalKeyboardHandler: ((key: RawKeyEvent) => void) | null = null;
 
 // ── Colors ──────────────────────────────────────────────────────────────────────
 
-const theme = {
-  bg: "#000028",
-  headerBg: "#1a1a3e",
-  headerFg: "#FFFF00",
-  footerBg: "#1a1a3e",
-  footerFg: "#888888",
-  cardBg: "#1e1e3e",
-  cardBorder: "#666688",
-  accent1: "#FFFF00",
-  accent2: "#00FF00",
-  accent3: "#FF6464",
-  accent4: "#8888FF",
-  muted: "#CCCCCC",
-  textWhite: "#FFFFFF",
-};
+/** Semantic demo colors derived from the Saha theme tokens. */
+interface DemoThemeColors {
+  bg: string;
+  headerBg: string;
+  headerFg: string;
+  footerBg: string;
+  footerFg: string;
+  cardBg: string;
+  cardBorder: string;
+  accent1: string;
+  accent2: string;
+  accent3: string;
+  accent4: string;
+  muted: string;
+  textWhite: string;
+}
+
+/** Module-level colors, rebuilt from the active theme mode inside run(). */
+let theme: DemoThemeColors = buildTheme(DEFAULT_THEME_MODE);
+
+/** Map the Saha theme tokens onto this demo's semantic color roles. */
+function buildTheme(mode: ThemeMode): DemoThemeColors {
+  const tokens = getThemeTokens(mode);
+  const comp = getComponentTheme(mode);
+  return {
+    bg: tokens.background,
+    headerBg: tokens.secondary,
+    headerFg: tokens.foreground,
+    footerBg: tokens.muted,
+    footerFg: tokens.mutedForeground,
+    cardBg: tokens.secondary,
+    cardBorder: comp.border,
+    accent1: tokens.primary,
+    accent2: tokens.success,
+    accent3: tokens.destructive,
+    accent4: tokens.info,
+    muted: tokens.mutedForeground,
+    textWhite: tokens.foreground,
+  };
+}
 
 // ── Tab init functions ─────────────────────────────────────────────────────────
 // These standalone functions are superseded by the inline tab definitions in
@@ -356,7 +382,7 @@ function initBasicsTab(tabGroup: Box, renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 5,
-    backgroundColor: "#333366",
+    backgroundColor: theme.cardBg,
     borderStyle: "single",
     borderColor: theme.textWhite,
     border: true,
@@ -379,7 +405,7 @@ function initBasicsTab(tabGroup: Box, renderer: CliRenderer): void {
     border: true,
     borderStyle: "double",
     borderColor: theme.accent1,
-    backgroundColor: "#663333",
+    backgroundColor: theme.cardBg,
     paddingX: 1,
     paddingY: 1,
     gap: 1,
@@ -492,7 +518,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#222244",
+    backgroundColor: theme.cardBg,
     borderStyle: "single",
     borderColor: theme.textWhite,
     border: true,
@@ -511,7 +537,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#442222",
+    backgroundColor: theme.cardBg,
     borderStyle: "double",
     borderColor: theme.textWhite,
     border: true,
@@ -530,7 +556,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#224422",
+    backgroundColor: theme.cardBg,
     borderStyle: "round",
     borderColor: theme.textWhite,
     border: true,
@@ -573,7 +599,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#222244",
+    backgroundColor: theme.cardBg,
     borderStyle: "single",
     borderColor: theme.textWhite,
     border: ["left"],
@@ -593,7 +619,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     justifyContent: "center",
     flexGrow: 1,
     height: 3,
-    backgroundColor: "#334455",
+    backgroundColor: theme.cardBg,
     borderStyle: "single",
     borderColor: theme.textWhite,
     border: true,
@@ -609,7 +635,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
   const partialPhase = new Text(_renderer, {
     id: "partial-phase",
     content: "Phase: 1/8",
-    fg: "#AAAAAA",
+    fg: theme.muted,
     zIndex: 10,
   });
   rightCol.add(partialPhase);
@@ -634,7 +660,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#222244",
+    backgroundColor: theme.cardBg,
     borderStyle: "ascii",
     borderColor: theme.textWhite,
     border: true,
@@ -653,7 +679,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#442222",
+    backgroundColor: theme.cardBg,
     borderStyle: "thick",
     borderColor: theme.textWhite,
     border: true,
@@ -672,7 +698,7 @@ function initBordersTab(tabGroup: Box, _renderer: CliRenderer): void {
     alignItems: "center",
     justifyContent: "center",
     height: 3,
-    backgroundColor: "#224422",
+    backgroundColor: theme.cardBg,
     borderStyle: "dashed",
     borderColor: theme.textWhite,
     border: true,
@@ -767,9 +793,9 @@ function initAnimationTab(tabGroup: Box, _renderer: CliRenderer): void {
     top: 5,
     width: 10,
     height: 3,
-    backgroundColor: "#550055",
+    backgroundColor: theme.cardBg,
     borderStyle: "round",
-    borderColor: "#FF00FF",
+    borderColor: theme.accent4,
     border: true,
   });
   tabGroup.add(animatedBox);
@@ -783,7 +809,7 @@ function initAnimationTab(tabGroup: Box, _renderer: CliRenderer): void {
     border: true,
     borderStyle: "double",
     borderColor: theme.textWhite,
-    backgroundColor: "#550055",
+    backgroundColor: theme.cardBg,
     paddingX: 1,
     paddingY: 1,
     gap: 1,
@@ -862,7 +888,7 @@ function initTitlesTab(tabGroup: Box, _renderer: CliRenderer): void {
     justifyContent: "center",
     width: 20,
     height: 5,
-    backgroundColor: "#222244",
+    backgroundColor: theme.cardBg,
     borderStyle: "single",
     borderColor: theme.textWhite,
     title: "Left Aligned",
@@ -878,7 +904,7 @@ function initTitlesTab(tabGroup: Box, _renderer: CliRenderer): void {
     justifyContent: "center",
     width: 20,
     height: 5,
-    backgroundColor: "#442222",
+    backgroundColor: theme.cardBg,
     borderStyle: "double",
     borderColor: theme.textWhite,
     title: "Centered Title",
@@ -894,7 +920,7 @@ function initTitlesTab(tabGroup: Box, _renderer: CliRenderer): void {
     justifyContent: "center",
     width: 20,
     height: 5,
-    backgroundColor: "#224422",
+    backgroundColor: theme.cardBg,
     borderStyle: "round",
     borderColor: theme.textWhite,
     title: "Right Aligned",
@@ -950,7 +976,7 @@ function initInteractiveTab(tabGroup: Box, _renderer: CliRenderer): void {
     flexGrow: 0,
     flexShrink: 0,
     height: 8,
-    backgroundColor: "#333344",
+    backgroundColor: theme.cardBg,
     borderStyle: "double",
     borderColor: theme.textWhite,
     border: true,
@@ -1012,7 +1038,7 @@ function initInteractiveTab(tabGroup: Box, _renderer: CliRenderer): void {
   const borderState = new Text(_renderer, {
     id: "border-state",
     content: "Active borders: All",
-    fg: "#AAAAAA",
+    fg: theme.muted,
     zIndex: 10,
   });
   rightCol.add(borderState);
@@ -1041,6 +1067,8 @@ function initInteractiveTab(tabGroup: Box, _renderer: CliRenderer): void {
 // ── Run ────────────────────────────────────────────────────────────────────────
 
 export function run(renderer: CliRenderer): void {
+  theme = buildTheme(renderer.themeMode ?? DEFAULT_THEME_MODE);
+
   renderer.start();
   renderer.setBackgroundColor(theme.bg);
 
@@ -1117,7 +1145,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(textTitle);
@@ -1128,7 +1156,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 8,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(attrBold);
@@ -1139,7 +1167,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 9,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(attrItalic);
@@ -1150,7 +1178,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 10,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(attrUnderline);
@@ -1161,7 +1189,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 11,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(attrDim);
@@ -1172,7 +1200,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 12,
-        fg: "#FF6464",
+        fg: theme.accent3,
         zIndex: 10,
       });
       g.add(attrCombined);
@@ -1183,7 +1211,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 15,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(gradientTitle);
@@ -1284,7 +1312,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(title);
@@ -1296,10 +1324,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 20,
         height: 8,
-        backgroundColor: "#333366",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(box1);
@@ -1310,7 +1338,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 12,
         top: 10,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(box1Title);
@@ -1322,10 +1350,10 @@ export function run(renderer: CliRenderer): void {
         top: 10,
         width: 25,
         height: 6,
-        backgroundColor: "#663333",
+        backgroundColor: theme.cardBg,
         zIndex: 1,
         borderStyle: "double",
-        borderColor: "#FFFF00",
+        borderColor: theme.accent1,
         border: true,
       });
       g.add(box2);
@@ -1336,7 +1364,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 37,
         top: 12,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(box2Title);
@@ -1347,7 +1375,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 18,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(description);
@@ -1358,7 +1386,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 20,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(cursorInfo);
@@ -1421,7 +1449,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(borderTitle);
@@ -1433,10 +1461,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 15,
         height: 5,
-        backgroundColor: "#222244",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(singleBox);
@@ -1446,7 +1474,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 12,
         top: 10,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(singleLabel);
@@ -1458,10 +1486,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 15,
         height: 5,
-        backgroundColor: "#442222",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(doubleBox);
@@ -1471,7 +1499,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 32,
         top: 10,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(doubleLabel);
@@ -1483,10 +1511,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 15,
         height: 5,
-        backgroundColor: "#224422",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "round",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(roundedBox);
@@ -1496,7 +1524,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 52,
         top: 10,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(roundedLabel);
@@ -1507,7 +1535,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 15,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(partialTitle);
@@ -1519,10 +1547,10 @@ export function run(renderer: CliRenderer): void {
         top: 17,
         width: 12,
         height: 4,
-        backgroundColor: "#222244",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: ["left"],
       });
       g.add(partialLeft);
@@ -1532,7 +1560,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 12,
         top: 18,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(partialLeftLabel);
@@ -1544,10 +1572,10 @@ export function run(renderer: CliRenderer): void {
         top: 17,
         width: 20,
         height: 4,
-        backgroundColor: "#334455",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(partialAnimated);
@@ -1557,7 +1585,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 32,
         top: 18,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(partialAnimatedLabel);
@@ -1568,7 +1596,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 30,
         top: 22,
-        fg: "#AAAAAA",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(partialPhase);
@@ -1579,7 +1607,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 25,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(customBorderTitle);
@@ -1591,10 +1619,10 @@ export function run(renderer: CliRenderer): void {
         top: 27,
         width: 15,
         height: 5,
-        backgroundColor: "#222244",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "ascii",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(asciiBox);
@@ -1604,7 +1632,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 12,
         top: 29,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(asciiLabel);
@@ -1616,10 +1644,10 @@ export function run(renderer: CliRenderer): void {
         top: 27,
         width: 15,
         height: 5,
-        backgroundColor: "#442222",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "thick",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(blockBox);
@@ -1629,7 +1657,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 32,
         top: 29,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(blockLabel);
@@ -1641,10 +1669,10 @@ export function run(renderer: CliRenderer): void {
         top: 27,
         width: 15,
         height: 5,
-        backgroundColor: "#224422",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "dashed",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(starBox);
@@ -1654,7 +1682,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 52,
         top: 29,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(starLabel);
@@ -1702,7 +1730,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(animTitle);
@@ -1713,7 +1741,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: animPosition,
         top: 8,
-        fg: "#00FF00",
+        fg: theme.accent2,
         zIndex: 10,
       });
       g.add(movingText);
@@ -1725,10 +1753,10 @@ export function run(renderer: CliRenderer): void {
         top: 10,
         width: 10,
         height: 3,
-        backgroundColor: "#550055",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "round",
-        borderColor: "#FF00FF",
+        borderColor: theme.accent4,
         border: true,
       });
       g.add(animatedBox);
@@ -1740,10 +1768,10 @@ export function run(renderer: CliRenderer): void {
         top: 12,
         width: 18,
         height: 5,
-        backgroundColor: "#550055",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(colorBox);
@@ -1754,7 +1782,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 52,
         top: 14,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(colorBoxTitle);
@@ -1807,7 +1835,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(layoutTitle);
@@ -1819,10 +1847,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 20,
         height: 5,
-        backgroundColor: "#222244",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         title: "Left Aligned",
         titleAlignment: "left",
         border: true,
@@ -1836,10 +1864,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 20,
         height: 5,
-        backgroundColor: "#442222",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         title: "Centered Title",
         titleAlignment: "center",
         border: true,
@@ -1853,10 +1881,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 20,
         height: 5,
-        backgroundColor: "#224422",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "round",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         title: "Right Aligned",
         titleAlignment: "right",
         border: true,
@@ -1883,7 +1911,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 5,
-        fg: "#FFFF00",
+        fg: theme.accent1,
         zIndex: 10,
       });
       g.add(interactiveTitle);
@@ -1895,10 +1923,10 @@ export function run(renderer: CliRenderer): void {
         top: 8,
         width: 40,
         height: 8,
-        backgroundColor: "#333344",
+        backgroundColor: theme.cardBg,
         zIndex: 0,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
+        borderColor: theme.textWhite,
         border: true,
       });
       g.add(interactiveBorder);
@@ -1909,7 +1937,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 22,
         top: 12,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(interactiveLabel);
@@ -1920,7 +1948,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 18,
-        fg: "#FFFFFF",
+        fg: theme.textWhite,
         zIndex: 10,
       });
       g.add(interactiveInstructions);
@@ -1931,7 +1959,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 19,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(keyT);
@@ -1942,7 +1970,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 20,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(keyR);
@@ -1953,7 +1981,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 21,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(keyB);
@@ -1964,7 +1992,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 22,
-        fg: "#CCCCCC",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(keyL);
@@ -1975,7 +2003,7 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 10,
         top: 24,
-        fg: "#AAAAAA",
+        fg: theme.muted,
         zIndex: 10,
       });
       g.add(borderState);
