@@ -8,16 +8,22 @@ import {
   InputEvents,
   type KeyEvent,
   type LogLevel,
-  RGBA,
   RenderableEvents,
   Select,
   SelectEvents,
   type SelectOption,
   Text,
-  type ThemeMode,
   TimeToFirstDraw,
   createCliRenderer,
 } from "@bettertui/core";
+import {
+  CATEGORY_LABELS,
+  DEFAULT_THEME_MODE,
+  EXAMPLES_BOX_TITLE,
+  EXAMPLES_INDENT,
+  MENU_TERMINAL_TITLE,
+  MENU_THEMES,
+} from "./constants/index.js";
 import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
 import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
 import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
@@ -72,87 +78,18 @@ import * as transparencyDemo from "./examples/transparency.example.js";
 import * as vnodeCompositionDemo from "./examples/vnodeComposition.example.js";
 import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example.js";
 import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
+import type {
+  Example,
+  ExampleDefinition,
+  ExampleMenuValue,
+  ExampleSection,
+  MenuFocusArea,
+  MenuOption,
+  MenuOptionValue,
+  ThemeMode,
+} from "./types/exampleList.types.js";
 
-type ExampleCategory =
-  | "Layout & Composition"
-  | "Input & Editing"
-  | "Scroll & Navigation"
-  | "Text & Documents"
-  | "Rendering & Effects"
-  | "Runtime & Tooling"
-  | "Terminal & Native";
-
-interface ExampleDefinition {
-  name: string;
-  description: string;
-  run?: (renderer: CliRenderer) => void | Promise<void>;
-  destroy?: (renderer: CliRenderer) => void;
-  unavailableMessage?: string;
-}
-
-interface Example extends ExampleDefinition {
-  category: ExampleCategory;
-}
-
-interface ExampleSection {
-  category: ExampleCategory;
-  examples: readonly ExampleDefinition[];
-}
-
-interface CategoryMenuValue {
-  kind: "category";
-  category: ExampleCategory;
-}
-
-interface SpacerMenuValue {
-  kind: "spacer";
-}
-
-interface MessageMenuValue {
-  kind: "message";
-}
-
-interface ExampleMenuValue {
-  kind: "example";
-  example: Example;
-}
-
-type MenuOptionValue = CategoryMenuValue | SpacerMenuValue | MessageMenuValue | ExampleMenuValue;
-type MenuOption = Omit<SelectOption, "value"> & { value: MenuOptionValue };
-type MenuFocusArea = "filter" | "list";
-
-interface ExampleTheme {
-  appBackgroundColor: string;
-  titleColor: RGBA;
-  borderColor: string;
-  focusedBorderColor: string;
-  inputTextColor: string;
-  inputFocusedTextColor: string;
-  inputPlaceholderColor: string;
-  inputCursorColor: string;
-  selectSelectedBackgroundColor: string;
-  selectTextColor: string;
-  selectSelectedTextColor: string;
-  selectDescriptionColor: string;
-  selectSelectedDescriptionColor: string;
-  instructionsColor: string;
-  notImplementedColor: string;
-}
-
-const DEFAULT_THEME_MODE: ThemeMode = "dark";
-const MENU_TERMINAL_TITLE = "BetterTUI Examples";
-const EXAMPLES_BOX_TITLE = "Examples";
-const EXAMPLE_NAME_INDENT = "  ";
-const EXAMPLE_DESCRIPTION_INDENT = "    ";
-const CATEGORY_LABELS: Record<ExampleCategory, string> = {
-  "Layout & Composition": "Layout & Composition",
-  "Input & Editing": "Input & Editing",
-  "Scroll & Navigation": "Scroll & Navigation",
-  "Text & Documents": "Text & Documents",
-  "Rendering & Effects": "Rendering & Effects",
-  "Runtime & Tooling": "Runtime & Tooling",
-  "Terminal & Native": "Terminal & Native",
-};
+import type { ExampleCategory } from "./types/exampleList.types.js";
 
 function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
   return [...examples].sort((left, right) => left.name.localeCompare(right.name));
@@ -167,43 +104,6 @@ function section(
     examples: sortExampleDefinitions(examples),
   };
 }
-
-const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
-  dark: {
-    appBackgroundColor: "#181B24",
-    titleColor: RGBA.fromInts(248, 250, 252, 255),
-    borderColor: "#334155",
-    focusedBorderColor: "#38BDF8",
-    inputTextColor: "#F8FAFC",
-    inputFocusedTextColor: "#FFFFFF",
-    inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#38BDF8",
-    selectSelectedBackgroundColor: "#1E3A5F",
-    selectTextColor: "#E2E8F0",
-    selectSelectedTextColor: "#38BDF8",
-    selectDescriptionColor: "#64748B",
-    selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#64748B",
-    notImplementedColor: "#FACC15",
-  },
-  light: {
-    appBackgroundColor: "#181B24",
-    titleColor: RGBA.fromInts(248, 250, 252, 255),
-    borderColor: "#334155",
-    focusedBorderColor: "#38BDF8",
-    inputTextColor: "#F8FAFC",
-    inputFocusedTextColor: "#FFFFFF",
-    inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#38BDF8",
-    selectSelectedBackgroundColor: "#1E3A5F",
-    selectTextColor: "#E2E8F0",
-    selectSelectedTextColor: "#38BDF8",
-    selectDescriptionColor: "#64748B",
-    selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#64748B",
-    notImplementedColor: "#FACC15",
-  },
-};
 
 const EXAMPLE_SECTIONS: ExampleSection[] = [
   section("Layout & Composition", [
@@ -608,8 +508,8 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
 
     for (const example of sectionExamples) {
       options.push({
-        name: `${EXAMPLE_NAME_INDENT}${example.name}`,
-        description: `${EXAMPLE_DESCRIPTION_INDENT}${example.description}`,
+        name: example.name,
+        description: `${EXAMPLES_INDENT}${example.description}`,
         value: { kind: "example", example },
       });
     }
@@ -761,7 +661,7 @@ export class ExampleSelector {
   }
 
   private createLayout(): void {
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
     // Menu container with column layout
     this.menuContainer = new Box(this.renderer, {
@@ -769,7 +669,7 @@ export class ExampleSelector {
       flexDirection: "column",
       width: "100%",
       height: "100%",
-      backgroundColor: theme.appBackgroundColor,
+      backgroundColor: theme.appBackground,
     });
     this.renderer.root.add(this.menuContainer);
 
@@ -784,7 +684,7 @@ export class ExampleSelector {
       marginBottom: 1,
       text: titleText,
       font: titleFont,
-      color: theme.titleColor,
+      color: theme.title,
       backgroundColor: "transparent",
     });
     this.menuContainer.add(this.title);
@@ -798,7 +698,7 @@ export class ExampleSelector {
       backgroundColor: "transparent",
       border: true,
       borderStyle: "single",
-      borderColor: theme.borderColor,
+      borderColor: theme.border,
     });
     this.menuContainer.add(this.filterBox);
 
@@ -807,13 +707,13 @@ export class ExampleSelector {
       id: "example-index-filter-input",
       width: "100%",
       placeholder: "Filter examples...",
-      placeholderColor: theme.inputPlaceholderColor,
+      placeholderColor: theme.inputPlaceholder,
       backgroundColor: "transparent",
       focusedBackgroundColor: "transparent",
-      textColor: theme.inputTextColor,
-      focusedTextColor: theme.inputFocusedTextColor,
+      textColor: theme.inputText,
+      focusedTextColor: theme.inputFocusedText,
       showCursor: true,
-      cursorColor: theme.inputCursorColor,
+      cursorColor: theme.inputCursor,
     });
     this.filterBox.add(this.filterInput);
 
@@ -830,8 +730,8 @@ export class ExampleSelector {
       marginBottom: 1,
       flexGrow: 1,
       borderStyle: "single",
-      borderColor: theme.borderColor,
-      focusedBorderColor: theme.focusedBorderColor,
+      borderColor: theme.border,
+      focusedBorderColor: theme.focusedBorder,
       title: EXAMPLES_BOX_TITLE,
       titleAlignment: "center",
       backgroundColor: "transparent",
@@ -850,12 +750,12 @@ export class ExampleSelector {
       selectedIndex: initialSelectedIndex,
       backgroundColor: "transparent",
       focusedBackgroundColor: "transparent",
-      focusedTextColor: theme.selectTextColor,
-      selectedBackgroundColor: theme.selectSelectedBackgroundColor,
-      textColor: theme.selectTextColor,
-      selectedTextColor: theme.selectSelectedTextColor,
-      descriptionColor: theme.selectDescriptionColor,
-      selectedDescriptionColor: theme.selectSelectedDescriptionColor,
+      focusedTextColor: theme.selectText,
+      selectedBackgroundColor: theme.selectSelectedBackground,
+      textColor: theme.selectText,
+      selectedTextColor: theme.selectSelectedText,
+      descriptionColor: theme.selectDescription,
+      selectedDescriptionColor: theme.selectSelectedDescription,
       showScrollIndicator: true,
       wrapSelection: false,
       showDescription: true,
@@ -899,7 +799,7 @@ export class ExampleSelector {
     this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
       alignSelf: "center",
-      fg: theme.instructionsColor,
+      fg: theme.instructions,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
 
@@ -911,58 +811,58 @@ export class ExampleSelector {
       alignSelf: "center",
       content:
         "Tab/Esc switch focus | Type in filter | ↑↓/j/k list | Enter run | / filter | ctrl+c quit",
-      fg: theme.instructionsColor,
+      fg: theme.instructions,
     });
     this.menuContainer.add(this.instructions);
   }
 
   private applyTheme(mode: ThemeMode | null): void {
     this.themeMode = mode ?? DEFAULT_THEME_MODE;
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
-    this.renderer.setBackgroundColor(theme.appBackgroundColor);
+    this.renderer.setBackgroundColor(theme.appBackground);
     if (this.menuContainer) {
-      this.menuContainer.backgroundColor = theme.appBackgroundColor;
+      this.menuContainer.backgroundColor = theme.appBackground;
     }
 
     if (this.title) {
-      this.title.color = theme.titleColor;
+      this.title.color = theme.title;
     }
 
     if (this.filterInput) {
-      this.filterInput.textColor = theme.inputTextColor;
-      this.filterInput.focusedTextColor = theme.inputFocusedTextColor;
-      this.filterInput.placeholderColor = theme.inputPlaceholderColor;
-      this.filterInput.cursorColor = theme.inputCursorColor;
+      this.filterInput.textColor = theme.inputText;
+      this.filterInput.focusedTextColor = theme.inputFocusedText;
+      this.filterInput.placeholderColor = theme.inputPlaceholder;
+      this.filterInput.cursorColor = theme.inputCursor;
     }
 
     if (this.filterBox) {
-      this.filterBox.borderColor = theme.borderColor;
+      this.filterBox.borderColor = theme.border;
     }
 
     if (this.selectBox) {
-      this.selectBox.focusedBorderColor = theme.focusedBorderColor;
+      this.selectBox.focusedBorderColor = theme.focusedBorder;
     }
 
     if (this.selectElement) {
-      this.selectElement.selectedBackgroundColor = theme.selectSelectedBackgroundColor;
-      this.selectElement.textColor = theme.selectTextColor;
-      this.selectElement.focusedTextColor = theme.selectTextColor;
-      this.selectElement.selectedTextColor = theme.selectSelectedTextColor;
-      this.selectElement.descriptionColor = theme.selectDescriptionColor;
-      this.selectElement.selectedDescriptionColor = theme.selectSelectedDescriptionColor;
+      this.selectElement.selectedBackgroundColor = theme.selectSelectedBackground;
+      this.selectElement.textColor = theme.selectText;
+      this.selectElement.focusedTextColor = theme.selectText;
+      this.selectElement.selectedTextColor = theme.selectSelectedText;
+      this.selectElement.descriptionColor = theme.selectDescription;
+      this.selectElement.selectedDescriptionColor = theme.selectSelectedDescription;
     }
 
     if (this.instructions) {
-      this.instructions.fg = theme.instructionsColor;
+      this.instructions.fg = theme.instructions;
     }
 
     if (this.timeToFirstDrawText) {
-      this.timeToFirstDrawText.fg = theme.instructionsColor;
+      this.timeToFirstDrawText.fg = theme.instructions;
     }
 
     if (this.notImplementedText) {
-      this.notImplementedText.fg = theme.notImplementedColor;
+      this.notImplementedText.fg = theme.notImplemented;
     }
 
     this.updateMenuFocusStyles();
@@ -985,16 +885,16 @@ export class ExampleSelector {
   }
 
   private updateMenuFocusStyles(): void {
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
     if (this.filterBox) {
       this.filterBox.borderColor =
-        this.menuFocusArea === "filter" ? theme.focusedBorderColor : theme.borderColor;
+        this.menuFocusArea === "filter" ? theme.focusedBorder : theme.border;
     }
 
     if (this.selectBox) {
-      this.selectBox.borderColor =
-        this.menuFocusArea === "list" ? theme.focusedBorderColor : theme.borderColor;
+      this.selectBox.focusedBorderColor =
+        this.menuFocusArea === "list" ? theme.focusedBorder : theme.border;
     }
   }
 
@@ -1217,7 +1117,7 @@ export class ExampleSelector {
       await selected.run(this.renderer);
     } else {
       if (!this.notImplementedText) {
-        const theme = MENU_THEMES[this.themeMode];
+        const theme = MENU_THEMES[this.themeMode].components;
         const unavailableMessage =
           selected.unavailableMessage ?? `${selected.name} is not implemented yet.`;
         this.notImplementedText = new Text(this.renderer, {
@@ -1226,7 +1126,7 @@ export class ExampleSelector {
           left: 10,
           top: 10,
           content: `${unavailableMessage} Press Escape to return.`,
-          fg: theme.notImplementedColor,
+          fg: theme.notImplemented,
           zIndex: 10,
         });
         this.renderer.root.add(this.notImplementedText);
@@ -1307,7 +1207,7 @@ export class ExampleSelector {
     this.renderer.pause();
     this.renderer.auto();
     this.showMenuElements();
-    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].appBackgroundColor);
+    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].components.appBackgroundColor);
     this.renderer.requestRender();
   }
 
@@ -1341,5 +1241,5 @@ const renderer = await createCliRenderer({
   },
 });
 
-renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].appBackgroundColor);
+renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].components.appBackground);
 new ExampleSelector(renderer);
