@@ -12,7 +12,13 @@ export { Input } from "./Input";
 export type { InputOptions, InputRenderableOptions } from "./Input";
 
 export { Select } from "./Select";
-export type { SelectOption, SelectOptions, SelectRenderableOptions } from "./Select";
+export type {
+  SelectOption,
+  SelectOptions,
+  SelectRenderableOptions,
+  SelectAction,
+  SelectKeyBinding,
+} from "./Select";
 
 export { ScrollBox, ScrollBar } from "./ScrollBox";
 export type { ScrollBoxOptions, ScrollBarOptions } from "./ScrollBox";
