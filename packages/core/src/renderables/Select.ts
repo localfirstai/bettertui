@@ -700,7 +700,7 @@ export class Select extends Box {
       if (this._showDescription && opt.description && rawLines.length < viewHeight) {
         const descColor = isSelected ? this._selectedDescriptionColor : this._descriptionColor;
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
-        const trimmedDesc = opt.description.trim();
+        const trimmedDesc = opt.description.trimEnd();
         if (trimmedDesc) {
           const descIndent = this._showSelectionIndicator
             ? " ".repeat(Select.displayWidth(indicator))

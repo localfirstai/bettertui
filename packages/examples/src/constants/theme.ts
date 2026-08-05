@@ -212,8 +212,8 @@ function createSahaDarkTheme(): AppTheme {
       // Brand green on dark green — clear activation signal
       selectSelectedText: tokens.accentForeground,
       selectDescription: tokens.mutedForeground,
-      // Mid-green description — hierarchy within the selected row
-      selectSelectedDescription: "#52C47E",
+      // Muted gray — clearly subordinate to the brand-green title on the dark-green bg
+      selectSelectedDescription: tokens.mutedForeground,
       instructions: tokens.mutedForeground,
       notImplemented: "#D29922",
     },
@@ -284,7 +284,8 @@ function createSahaLightTheme(): AppTheme {
       selectText: tokens.foreground,
       selectSelectedText: tokens.primaryForeground,
       selectDescription: tokens.mutedForeground,
-      selectSelectedDescription: tokens.primaryForeground,
+      // Dark forest green — subordinate to the white title on the green selection bg
+      selectSelectedDescription: "#0D2B1E",
       instructions: tokens.mutedForeground,
       notImplemented: "#C99D00",
     },

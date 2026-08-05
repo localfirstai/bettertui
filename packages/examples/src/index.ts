@@ -862,7 +862,7 @@ export class ExampleSelector {
     }
 
     if (this.selectBox) {
-      this.selectBox.focusedBorderColor = theme.focusedBorder;
+      this.selectBox.borderColor = theme.border;
     }
 
     if (this.selectElement) {
@@ -914,7 +914,7 @@ export class ExampleSelector {
     }
 
     if (this.selectBox) {
-      this.selectBox.focusedBorderColor =
+      this.selectBox.borderColor =
         this.menuFocusArea === "list" ? theme.focusedBorder : theme.border;
     }
   }
