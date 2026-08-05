@@ -64,7 +64,6 @@ interface DemoColors {
 // ── Module-level state ─────────────────────────────────────────────────────────
 
 let renderer: CliRenderer | null = null;
-/** Screen manages the full-terminal container, header, body, and footer. */
 let screen: Screen | null = null;
 let headerText: Text | null = null;
 let sidebar: Box | null = null;
@@ -96,15 +95,12 @@ function buildColors(mode: ThemeMode): DemoColors {
     textOnBright: tokens.primaryForeground,
     textOnDark: tokens.foreground,
     appBg: tokens.background,
-    // Header: elevated secondary surface, brand-ring border
     headerBg: tokens.secondary,
     headerFg: tokens.foreground,
     headerBorder: tokens.ring,
-    // Footer: muted surface, de-emphasised hint text
     footerBg: tokens.muted,
     footerFg: tokens.mutedForeground,
     footerBorder: comp.border,
-    // BOTTOM RIGHT: success green — clearly distinct from the muted footer
     absoluteBg: tokens.success,
     absoluteFg: tokens.primaryForeground,
     absoluteBorder: tokens.ring,
@@ -112,12 +108,6 @@ function buildColors(mode: ThemeMode): DemoColors {
 }
 
 // ── Layout demos ───────────────────────────────────────────────────────────────
-//
-// Each setup function calls screen.setBodyLayout() for the body container and
-// ONE comprehensive setLayout() per panel — both approaches are atomic (all
-// needed props in one call) to prevent the engine from resetting unspecified
-// fields to their CSS defaults.
-
 function setupHorizontalLayout(): void {
   if (!screen || !sidebar || !mainContent || !rightSidebar) return;
 
@@ -382,7 +372,6 @@ function applyColors(): void {
   if (!renderer || !screen) return;
   renderer.setBackgroundColor(colors.appBg);
 
-  // Screen helper — only touches backgroundColor / borderColor, never layout.
   screen.applyHeaderOptions({
     backgroundColor: colors.headerBg,
     borderColor: colors.headerBorder,
@@ -410,9 +399,6 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   colors = buildColors(mode);
   renderer.setBackgroundColor(colors.appBg);
 
-  // Screen — one call creates the full-terminal container with header/body/footer.
-  // All slot layouts are atomic (one constructor options object each), so no
-  // field can be silently reset to a CSS default by a subsequent partial call.
   screen = new Screen(renderer, {
     id: "layout-demo",
     backgroundColor: colors.appBg,
@@ -459,7 +445,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   footerText = new Text(renderer, {
     id: "footer-text",
     content: "",
-    fg: colors.footerFg, // mutedForeground — quiet hint text
+    fg: colors.footerFg,
     bg: "transparent",
     zIndex: 1,
     flexGrow: 1,
@@ -536,7 +522,6 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   screen.body.add(mainContent);
   screen.body.add(rightSidebar);
 
-  // BOTTOM RIGHT overlay — absolute-positioned, floats above the Screen container.
   absolutePositionedBox = new Box(renderer, {
     id: "absolute-positioned-box",
     zIndex: 150,
@@ -651,8 +636,6 @@ export function destroy(rendererInstance: CliRenderer): void {
   rendererInstance.keyInput.off("keypress", handleKeyPress);
   rendererInstance.off("theme_mode", handleThemeMode);
 
-  // screen.destroy() removes the container from root and cleans up its resize
-  // listener in one call — no need to manually remove header/body/footer.
   screen?.destroy();
 
   if (absolutePositionedBox) rendererInstance.root.remove(absolutePositionedBox);
