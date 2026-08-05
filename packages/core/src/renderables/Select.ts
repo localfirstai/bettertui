@@ -476,7 +476,7 @@ export class Select extends Box {
       if (kind === "category") {
         const catColor = `${this._textColor.r};${this._textColor.g};${this._textColor.b}`;
         rawLines.push({
-          text: `  ${opt.name}`,
+          text: opt.name,
           fg: catColor,
           isCategory: true,
         });
@@ -509,13 +509,10 @@ export class Select extends Box {
         const dc = `${descColor.r};${descColor.g};${descColor.b}`;
         const trimmedDesc = opt.description.trim();
         if (trimmedDesc) {
-          // Indent matches the indicator width so description text starts at
-          // the same column as the name. When showSelectionIndicator is false
-          // the indent is "" — fully left-aligned with no leading spaces.
-          const indent = this._showSelectionIndicator
-            ? " ".repeat(this._selectionIndicator.length)
+          const descIndent = this._showSelectionIndicator
+            ? " ".repeat(Select.displayWidth(indicator))
             : "";
-          rawLines.push({ text: `${indent}${trimmedDesc}`, bg, fg: dc });
+          rawLines.push({ text: `${descIndent}${trimmedDesc}`, bg, fg: dc });
         }
       }
 
@@ -581,6 +578,31 @@ export class Select extends Box {
     }
 
     this._renderer.setText(this._contentNodeId, lines.join("\n"));
+  }
+
+  private static displayWidth(text: string): number {
+    let width = 0;
+    for (const char of text) {
+      const cp = char.codePointAt(0);
+      if (cp === undefined) continue;
+      if (
+        (cp >= 0x1100 && cp <= 0x115f) ||
+        (cp >= 0x2e80 && cp <= 0xa4cf && cp !== 0x303f) ||
+        (cp >= 0xac00 && cp <= 0xd7a3) ||
+        (cp >= 0xf900 && cp <= 0xfaff) ||
+        (cp >= 0xfe10 && cp <= 0xfe19) ||
+        (cp >= 0xfe30 && cp <= 0xfe6f) ||
+        (cp >= 0xff01 && cp <= 0xff60) ||
+        (cp >= 0xffe0 && cp <= 0xffe6) ||
+        (cp >= 0x20000 && cp <= 0x2fffd) ||
+        (cp >= 0x30000 && cp <= 0x3fffd)
+      ) {
+        width += 2;
+      } else {
+        width += 1;
+      }
+    }
+    return width;
   }
 
   override destroy(): void {
