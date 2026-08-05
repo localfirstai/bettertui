@@ -91,17 +91,13 @@ import type {
 
 import type { ExampleCategory } from "./types/exampleList.types";
 
-function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
-  return [...examples].sort((left, right) => left.name.localeCompare(right.name));
-}
-
 function section(
   category: ExampleCategory,
   examples: readonly ExampleDefinition[],
 ): ExampleSection {
   return {
     category,
-    examples: sortExampleDefinitions(examples),
+    examples: examples,
   };
 }
 
@@ -663,7 +659,7 @@ export class ExampleSelector {
   private createLayout(): void {
     const theme = MENU_THEMES[this.themeMode].components;
 
-    // Menu container with column layout
+    // ── Root column — fills the entire terminal ───────────────────────────
     this.menuContainer = new Box(this.renderer, {
       id: "example-menu-container",
       flexDirection: "column",
@@ -673,13 +669,14 @@ export class ExampleSelector {
     });
     this.renderer.root.add(this.menuContainer);
 
-    // Title
+    // ── HEADER — product name ─────────────────────────────────────────────
     const titleText = this.titleText;
     const titleFont = this.titleFont;
 
     this.title = new ASCIIFont(this.renderer, {
       id: "example-index-title",
       alignSelf: "center",
+      flexShrink: 0,
       marginTop: 1,
       marginBottom: 1,
       text: titleText,
@@ -689,11 +686,12 @@ export class ExampleSelector {
     });
     this.menuContainer.add(this.title);
 
-    // Filter box with border (grows with content)
+    // ── HERO — filter input ───────────────────────────────────────────────
     this.filterBox = new Box(this.renderer, {
       id: "example-index-filter-box",
-      marginLeft: 1,
-      marginRight: 1,
+      marginLeft: 2,
+      marginRight: 2,
+      marginBottom: 1,
       flexShrink: 0,
       backgroundColor: "transparent",
       border: true,
@@ -702,7 +700,6 @@ export class ExampleSelector {
     });
     this.menuContainer.add(this.filterBox);
 
-    // Filter input inside the box (transparent bg so box bg shows through)
     this.filterInput = new Input(this.renderer, {
       id: "example-index-filter-input",
       width: "100%",
@@ -722,13 +719,22 @@ export class ExampleSelector {
       this.filterExamples();
     });
 
-    // Select box (grows to fill remaining space)
+    // ── MAIN — example list ───────────────────────────────────────────────
+    // flexGrow: 1 fills all remaining space after header + hero + footer.
+    // flexBasis: 0 + minHeight: 0 are the bettertui equivalent of OpenTUI's
+    // shouldFill: true — they force the flex base-size to zero so Taffy never
+    // inflates this box to the terminal height during distribution (which would
+    // happen because selectElement uses height:"100%" and Taffy resolves that
+    // percentage up to the first ancestor with a definite size — menuContainer).
     this.selectBox = new Box(this.renderer, {
       id: "example-selector-box",
-      marginLeft: 1,
-      marginRight: 1,
+      marginLeft: 2,
+      marginRight: 2,
       marginBottom: 1,
       flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 0,
+      minHeight: 0,
       borderStyle: "single",
       borderColor: theme.border,
       focusedBorderColor: theme.focusedBorder,
@@ -736,16 +742,19 @@ export class ExampleSelector {
       titleAlignment: "center",
       backgroundColor: "transparent",
       border: true,
+      overflow: "hidden",
     });
     this.menuContainer.add(this.selectBox);
 
-    // Select element
     const selectOptions = createMenuOptions(this.allExamples);
     const initialSelectedIndex = Math.max(0, getFirstExampleOptionIndex(selectOptions));
 
     this.selectElement = new Select(this.renderer, {
       id: "example-selector",
-      height: "100%",
+      // No height here — syncSelectHeight() sets an explicit number after layout
+      // so _getViewHeight() uses the fast-path (typeof h === "number") instead of
+      // its parent-walk heuristic, which underestimates sibling heights and renders
+      // 3-4 extra rows that overflow the selectBox border.
       options: selectOptions,
       selectedIndex: initialSelectedIndex,
       backgroundColor: "transparent",
@@ -796,24 +805,36 @@ export class ExampleSelector {
 
     this.setMenuFocus("filter");
 
+    // ── FOOTER — navigation hints ────────────────────────────────────────
+    // Both items carry an explicit height: 1 + flexShrink: 0 so Taffy always
+    // reserves their rows before distributing free space to selectBox above.
+    // A nested wrapper box was tried but Taffy cannot resolve its height
+    // until its children lay out, giving it a hypothetical size of 0 during
+    // flex-grow distribution — so selectBox ate the entire screen.
     this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
+      height: 1,
+      flexShrink: 0,
       alignSelf: "center",
+      marginTop: 1,
       fg: theme.instructions,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
 
-    // Instructions at the bottom
     this.instructions = new Text(this.renderer, {
       id: "example-index-instructions",
       height: 1,
       flexShrink: 0,
       alignSelf: "center",
+      marginBottom: 1,
       content:
-        "Tab/Esc switch focus | Type in filter | ↑↓/j/k list | Enter run | / filter | ctrl+c quit",
+        "Tab/Esc switch focus | Type in filter | \u2191\u2193/j/k list | Enter run | / filter | ctrl+c quit",
       fg: theme.instructions,
     });
     this.menuContainer.add(this.instructions);
+
+    // Sync the select element's row count with the actual available content area.
+    this.syncSelectHeight(this.renderer.terminalHeight);
   }
 
   private applyTheme(mode: ThemeMode | null): void {
@@ -1029,8 +1050,26 @@ export class ExampleSelector {
     }
   }
 
-  private handleResize(_width: number, _height: number): void {
+  private handleResize(_width: number, height: number): void {
+    this.syncSelectHeight(height);
     this.renderer.requestRender();
+  }
+
+  /**
+   * Set selectElement.height to an exact number so Select._getViewHeight() hits
+   * its fast-path and never runs its parent-walk heuristic.
+   *
+   * Formula (all in terminal rows):
+   *   titleH   = title.getEstimatedHeight()   → font(2) + marginTop(1) + marginBottom(1) = 4
+   *   heroH    = 4  → filterBox border(1) + input(1) + border(1) + marginBottom(1)
+   *   footerH  = 4  → ttfd.marginTop(1) + ttfd(1) + instructions(1) + instructions.marginBottom(1)
+   *   boxOver  = 3  → selectBox border-top(1) + border-bottom(1) + marginBottom(1)
+   */
+  private syncSelectHeight(terminalHeight: number): void {
+    if (!this.selectElement) return;
+    const titleH = this.title?.getEstimatedHeight() ?? 4;
+    const h = Math.max(1, terminalHeight - titleH - 4 - 4 - 3);
+    this.selectElement.height = h;
   }
 
   private setupKeyboardHandling(): void {
