@@ -43,6 +43,7 @@ import * as inputExample from "./examples/input.example";
 import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example";
 import * as keymapDemo from "./examples/keymap.example";
 import * as keypressDebugDemo from "./examples/keypressDebug.example";
+import * as layoutSystemExample from "./examples/layoutSystem.example";
 import * as linkDemo from "./examples/link.example";
 import * as liveStateExample from "./examples/liveState.example";
 import * as markdownDemo from "./examples/markdown.example";
@@ -59,7 +60,6 @@ import * as scrollExample from "./examples/scrollExample.example";
 import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example";
 import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example";
 import * as selectExample from "./examples/select.example";
-import * as layoutExample from "./examples/simpleLayoutExample.example";
 import * as sliderDemo from "./examples/slider.example";
 import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
 import * as splitModeExample from "./examples/splitMode.example";
@@ -112,8 +112,8 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     {
       name: "Layout System Demo",
       description: "Flex layout system with multiple configurations",
-      run: layoutExample.run,
-      destroy: layoutExample.destroy,
+      run: layoutSystemExample.run,
+      destroy: layoutSystemExample.destroy,
     },
     {
       name: "Nested Z-Index Demo",
