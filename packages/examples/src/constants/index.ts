@@ -1,2 +1,2 @@
-export * from "./theme.js";
-export * from "./exampleList.const.js";
+export * from "./theme";
+export * from "./exampleList.const";

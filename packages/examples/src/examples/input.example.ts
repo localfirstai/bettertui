@@ -10,7 +10,7 @@ import {
   t,
 } from "@bettertui/core";
 import { Text } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let nameInput: Input | null = null;
 let emailInput: Input | null = null;

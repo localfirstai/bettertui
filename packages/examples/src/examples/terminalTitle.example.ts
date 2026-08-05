@@ -1,6 +1,6 @@
 import { type CliRenderer, Text, createCliRenderer } from "@bettertui/core";
 
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const DEMO_TEXT_ID = "terminal-title-demo-text";
 

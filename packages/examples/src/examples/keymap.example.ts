@@ -17,7 +17,7 @@ import {
   createCliRenderer,
   fg,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Local type stubs for APIs not exported from @bettertui/core ───────────────
 

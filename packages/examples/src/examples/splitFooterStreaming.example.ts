@@ -13,7 +13,7 @@ import { RGBA, parseColor } from "@bettertui/core";
 import type { TextTableContent } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
 import type { TextChunk } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Stubs for APIs not yet in @bettertui/core ────────────────────────────────
 

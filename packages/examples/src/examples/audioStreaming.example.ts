@@ -23,7 +23,7 @@ import {
   t,
 } from "@bettertui/core";
 import FFT from "fft.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const DEMO_STATIONS = [
   { name: "FIP", url: "https://icecast.radiofrance.fr/fip-midfi.mp3" },

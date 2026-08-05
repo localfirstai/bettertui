@@ -1,6 +1,6 @@
 import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let scrollBox: ScrollBox | null = null;
 let renderer: CliRenderer | null = null;

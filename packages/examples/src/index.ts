@@ -23,61 +23,61 @@ import {
   EXAMPLES_INDENT,
   MENU_TERMINAL_TITLE,
   MENU_THEMES,
-} from "./constants/index.js";
-import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
-import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
-import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
-import * as codeDemo from "./examples/code.example.js";
-import * as consoleExample from "./examples/console.example.js";
-import * as corePluginSlotsDemo from "./examples/corePluginSlots.example.js";
-import * as diffDemo from "./examples/diff.example.js";
-import * as editorDemo from "./examples/editor.example.js";
-import * as extmarksDemo from "./examples/extmarks.example.js";
-import * as focusRestoreDemo from "./examples/focusRestore.example.js";
-import * as boxExample from "./examples/fonts.example.js";
-import * as framebufferExample from "./examples/framebuffer.example.js";
-import * as fullUnicodeExample from "./examples/fullUnicode.example.js";
-import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example.js";
-import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example.js";
-import * as inputExample from "./examples/input.example.js";
-import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example.js";
-import * as keymapDemo from "./examples/keymap.example.js";
-import * as keypressDebugDemo from "./examples/keypressDebug.example.js";
-import * as linkDemo from "./examples/link.example.js";
-import * as liveStateExample from "./examples/liveState.example.js";
-import * as markdownDemo from "./examples/markdown.example.js";
-import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
-import * as mouseInteractionExample from "./examples/mouseInteraction.example.js";
-import * as multitabDemo from "./examples/multitab.example.js";
-import * as nativeAudioDemo from "./examples/nativeAudio.example.js";
-import * as nestedZIndexDemo from "./examples/nestedZindex.example.js";
-import * as notificationDemo from "./examples/notification.example.js";
-import * as opacityExample from "./examples/opacityExample.example.js";
-import * as qrcodeDemo from "./examples/qrcode.example.js";
-import * as relativePositioningDemo from "./examples/relativePositioning.example.js";
-import * as scrollExample from "./examples/scrollExample.example.js";
-import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example.js";
-import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example.js";
-import * as selectExample from "./examples/select.example.js";
-import * as layoutExample from "./examples/simpleLayoutExample.example.js";
-import * as sliderDemo from "./examples/slider.example.js";
-import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example.js";
-import * as splitModeExample from "./examples/splitMode.example.js";
-import * as stickyScrollExample from "./examples/stickyScrollExample.example.js";
-import * as styledTextExample from "./examples/styledText.example.js";
-import * as tabSelectExample from "./examples/tabSelect.example.js";
-import * as terminalDemo from "./examples/terminal.example.js";
-import * as terminalTitleDemo from "./examples/terminalTitle.example.js";
-import * as textNodeDemo from "./examples/textNode.example.js";
-import * as textSelectionExample from "./examples/textSelection.example.js";
-import * as textTableExample from "./examples/textTable.example.js";
-import * as textTruncationDemo from "./examples/textTruncation.example.js";
-import * as textWrapExample from "./examples/textWrap.example.js";
-import * as timelineExample from "./examples/timelineExample.example.js";
-import * as transparencyDemo from "./examples/transparency.example.js";
-import * as vnodeCompositionDemo from "./examples/vnodeComposition.example.js";
-import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example.js";
-import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
+} from "./constants";
+import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example";
+import * as audioStreamingDemo from "./examples/audioStreaming.example";
+import * as clipboardPasteDemo from "./examples/clipboardPaste.example";
+import * as codeDemo from "./examples/code.example";
+import * as consoleExample from "./examples/console.example";
+import * as corePluginSlotsDemo from "./examples/corePluginSlots.example";
+import * as diffDemo from "./examples/diff.example";
+import * as editorDemo from "./examples/editor.example";
+import * as extmarksDemo from "./examples/extmarks.example";
+import * as focusRestoreDemo from "./examples/focusRestore.example";
+import * as boxExample from "./examples/fonts.example";
+import * as framebufferExample from "./examples/framebuffer.example";
+import * as fullUnicodeExample from "./examples/fullUnicode.example";
+import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example";
+import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example";
+import * as inputExample from "./examples/input.example";
+import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example";
+import * as keymapDemo from "./examples/keymap.example";
+import * as keypressDebugDemo from "./examples/keypressDebug.example";
+import * as linkDemo from "./examples/link.example";
+import * as liveStateExample from "./examples/liveState.example";
+import * as markdownDemo from "./examples/markdown.example";
+import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example";
+import * as mouseInteractionExample from "./examples/mouseInteraction.example";
+import * as multitabDemo from "./examples/multitab.example";
+import * as nativeAudioDemo from "./examples/nativeAudio.example";
+import * as nestedZIndexDemo from "./examples/nestedZindex.example";
+import * as notificationDemo from "./examples/notification.example";
+import * as opacityExample from "./examples/opacityExample.example";
+import * as qrcodeDemo from "./examples/qrcode.example";
+import * as relativePositioningDemo from "./examples/relativePositioning.example";
+import * as scrollExample from "./examples/scrollExample.example";
+import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example";
+import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example";
+import * as selectExample from "./examples/select.example";
+import * as layoutExample from "./examples/simpleLayoutExample.example";
+import * as sliderDemo from "./examples/slider.example";
+import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
+import * as splitModeExample from "./examples/splitMode.example";
+import * as stickyScrollExample from "./examples/stickyScrollExample.example";
+import * as styledTextExample from "./examples/styledText.example";
+import * as tabSelectExample from "./examples/tabSelect.example";
+import * as terminalDemo from "./examples/terminal.example";
+import * as terminalTitleDemo from "./examples/terminalTitle.example";
+import * as textNodeDemo from "./examples/textNode.example";
+import * as textSelectionExample from "./examples/textSelection.example";
+import * as textTableExample from "./examples/textTable.example";
+import * as textTruncationDemo from "./examples/textTruncation.example";
+import * as textWrapExample from "./examples/textWrap.example";
+import * as timelineExample from "./examples/timelineExample.example";
+import * as transparencyDemo from "./examples/transparency.example";
+import * as vnodeCompositionDemo from "./examples/vnodeComposition.example";
+import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example";
+import { setupCommonDemoKeys } from "./lib/standaloneKeys";
 import type {
   Example,
   ExampleDefinition,
@@ -87,9 +87,9 @@ import type {
   MenuOption,
   MenuOptionValue,
   ThemeMode,
-} from "./types/exampleList.types.js";
+} from "./types/exampleList.types";
 
-import type { ExampleCategory } from "./types/exampleList.types.js";
+import type { ExampleCategory } from "./types/exampleList.types";
 
 function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
   return [...examples].sort((left, right) => left.name.localeCompare(right.name));
@@ -1207,7 +1207,7 @@ export class ExampleSelector {
     this.renderer.pause();
     this.renderer.auto();
     this.showMenuElements();
-    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].components.appBackgroundColor);
+    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].components.appBackground);
     this.renderer.requestRender();
   }
 

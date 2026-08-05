@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createCliRenderer } from "@bettertui/core";
-import * as inputSelectLayoutExample from "../examples/inputSelectLayout.example.js";
+import * as inputSelectLayoutExample from "../examples/inputSelectLayout.example";
 
 const logsDir = path.resolve(process.cwd(), "logs");
 if (!fs.existsSync(logsDir)) {

@@ -17,7 +17,7 @@ import {
 import { TextNode } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
 import { Input, InputEvents } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 /** Extended mouse event type matching the older API used in this example. */
 type AppMouseEvent = MouseEvent & {

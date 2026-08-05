@@ -9,7 +9,7 @@ import {
   createCliRenderer,
 } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // Code examples to cycle through
 const examples = [

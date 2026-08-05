@@ -9,7 +9,7 @@ import {
   createCliRenderer,
   rgbaToEngineColor,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let titleText: Text | null = null;
 let instructionsText: Text | null = null;

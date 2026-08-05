@@ -7,7 +7,7 @@ import {
   Text,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 function renderFontToFrameBuffer(_fb: unknown, _opts: Record<string, unknown>): void {}
 

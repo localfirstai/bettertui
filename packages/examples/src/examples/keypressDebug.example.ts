@@ -12,7 +12,7 @@ import {
 } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
 import { env, registerEnvVar } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 registerEnvVar({
   name: "OTUI_KEYPRESS_DEBUG_SHOW_JSON",

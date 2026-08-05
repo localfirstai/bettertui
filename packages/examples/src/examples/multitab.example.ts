@@ -8,8 +8,8 @@ import {
   parseColor,
 } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
-import { TabController } from "../lib/tabController.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { TabController } from "../lib/tabController";
 
 // ── Local stubs for missing @bettertui/core exports ────────────────────────
 

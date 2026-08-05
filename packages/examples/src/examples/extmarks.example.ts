@@ -9,7 +9,7 @@ import {
 } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
 import { RGBA } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const initialContent = `Welcome to the Extmarks Demo!
 

@@ -20,7 +20,7 @@ import {
 } from "@bettertui/core";
 import type { OptimizedBuffer } from "@bettertui/core";
 import FFT from "fft.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 type SoundPreset = {
   name: string;

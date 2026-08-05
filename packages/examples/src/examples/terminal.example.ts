@@ -12,9 +12,9 @@ import {
   rgbaToEngineColor,
 } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
-import { HexList } from "../lib/HexList.js";
-import { PaletteGrid } from "../lib/PaletteGrid.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { HexList } from "../lib/HexList";
+import { PaletteGrid } from "../lib/PaletteGrid";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // Local stub for TerminalColors (not exported from @bettertui/core)
 type TerminalColors = {

@@ -13,7 +13,7 @@ import {
   t,
   underline,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let nextZIndex = 100;
 let draggableBoxes: DraggableBox[] = [];

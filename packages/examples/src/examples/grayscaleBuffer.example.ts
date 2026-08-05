@@ -8,7 +8,7 @@ import {
   RGBA,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let framebuffer: FrameBufferLike | null = null;
 let keyListener: ((key: KeyEvent) => void) | null = null;

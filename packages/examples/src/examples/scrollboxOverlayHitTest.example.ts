@@ -10,7 +10,7 @@ import {
   t,
 } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let overlay: Box | null = null;
 let dialog: Box | null = null;

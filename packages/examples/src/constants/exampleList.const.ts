@@ -1,4 +1,4 @@
-import type { ExampleCategory } from "../types/exampleList.types.js";
+import type { ExampleCategory } from "../types/exampleList.types";
 import {
   APP_THEME,
   type AppTheme,
@@ -6,10 +6,10 @@ import {
   DEFAULT_THEME_MODE,
   MENU_THEMES,
   type ThemeMode,
-} from "./theme.js";
+} from "./theme";
 
 export { APP_THEME, DEFAULT_THEME, DEFAULT_THEME_MODE, MENU_THEMES };
-export { getTheme, getComponentTheme, getThemeTokens } from "./theme.js";
+export { getTheme, getComponentTheme, getThemeTokens } from "./theme";
 
 export const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 export const EXAMPLES_BOX_TITLE = "Examples";

@@ -15,7 +15,7 @@ import {
   fg,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Layout height constants ────────────────────────────────────────────────────
 //

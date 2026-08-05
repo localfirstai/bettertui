@@ -1,5 +1,5 @@
 import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Local type stubs for core plugin/slot API (not yet exported from @bettertui/core) ──
 

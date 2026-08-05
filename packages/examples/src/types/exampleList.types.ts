@@ -6,7 +6,7 @@ export type {
   ComponentTheme,
   ThemeMode,
   ThemeTokens,
-} from "../constants/theme.js";
+} from "../constants/theme";
 
 export type ExampleCategory =
   | "Layout & Composition"
@@ -65,4 +65,4 @@ export type MenuOption = Omit<SelectOption, "value"> & {
 export type MenuFocusArea = "filter" | "list";
 
 // ExampleTheme is now just ComponentTheme for backward compatibility
-export type ExampleTheme = import("../constants/theme.js").ComponentTheme;
+export type ExampleTheme = import("../constants/theme").ComponentTheme;

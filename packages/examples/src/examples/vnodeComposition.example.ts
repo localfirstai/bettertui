@@ -13,7 +13,7 @@ import {
 } from "@bettertui/core";
 import type { FrameBufferLike } from "@bettertui/core";
 import { RGBA, parseColor } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const textColor = parseColor("#FFFFFF");
 const globalbgColor = parseColor("#333333");

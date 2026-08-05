@@ -1,6 +1,6 @@
 import { Box, type KeyEvent, Text, bold, createCliRenderer, t, underline } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let globalKeyboardHandler: ((key: KeyEvent) => void) | null = null;
 let zIndexPhase = 0;

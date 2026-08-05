@@ -18,7 +18,7 @@ import {
   stripAnsiSequences,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const P = {
   bg: "#08111f",

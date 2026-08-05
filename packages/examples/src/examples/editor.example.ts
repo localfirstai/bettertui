@@ -7,7 +7,7 @@ import {
   Textarea,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const initialContent = `Welcome to the Textarea Demo!
 

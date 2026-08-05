@@ -8,7 +8,7 @@ import {
   type ThemeMode,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Local stubs for APIs not yet in @bettertui/core ──────────────────────────
 
