@@ -1,19 +1,19 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  FrameBufferRenderable,
-  InputRenderable,
-  InputRenderableEvents,
+  FrameBuffer,
+  Input,
+  InputEvents,
   RGBA,
-  TextRenderable,
+  Text,
   createCliRenderer,
   rgbaToEngineColor,
 } from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
-import { HexListRenderable } from "../lib/HexList.js";
-import { PaletteGridRenderable } from "../lib/PaletteGrid.js";
+import { ScrollBox } from "@bettertui/core";
+import { HexList } from "../lib/HexList.js";
+import { PaletteGrid } from "../lib/PaletteGrid.js";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // Local stub for TerminalColors (not exported from @bettertui/core)
@@ -37,19 +37,19 @@ type TerminalColors = {
  * Enter a palette size (1-256) in the input field and press Enter to fetch colors.
  */
 
-let scrollBox: ScrollBoxRenderable | null = null;
-let contentContainer: BoxRenderable | null = null;
-let paletteGrid: PaletteGridRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let diagnosticsText: TextRenderable | null = null;
-let rawOscText: TextRenderable | null = null;
-let hexList: HexListRenderable | null = null;
-let specialColorsBuffer: FrameBufferRenderable | null = null;
-let ansiComparisonBuffer: FrameBufferRenderable | null = null;
+let scrollBox: ScrollBox | null = null;
+let contentContainer: Box | null = null;
+let paletteGrid: PaletteGrid | null = null;
+let statusText: Text | null = null;
+let diagnosticsText: Text | null = null;
+let rawOscText: Text | null = null;
+let hexList: HexList | null = null;
+let specialColorsBuffer: FrameBuffer | null = null;
+let ansiComparisonBuffer: FrameBuffer | null = null;
 let terminalColors: TerminalColors | null = null;
 // biome-ignore lint/suspicious/noExplicitAny: key event type not narrowed in handler
 let keyboardHandler: ((key: any) => void) | null = null;
-let paletteSizeInput: InputRenderable | null = null;
+let paletteSizeInput: Input | null = null;
 let oscUnsubscribe: (() => void) | null = null;
 
 const recentColorOscResponses: string[] = [];
@@ -60,14 +60,14 @@ export function run(renderer: CliRenderer): void {
   const backgroundColor = RGBA.fromInts(15, 23, 42); // Slate-900 inspired
   renderer.setBackgroundColor(rgbaToEngineColor(backgroundColor));
 
-  const mainContainer = new BoxRenderable(renderer, {
+  const mainContainer = new Box(renderer, {
     id: "main-container",
     flexGrow: 1,
     flexDirection: "column",
   });
   renderer.root.add(mainContainer);
 
-  scrollBox = new ScrollBoxRenderable(renderer, {
+  scrollBox = new ScrollBox(renderer, {
     id: "terminal-scroll-box",
     stickyScroll: false,
     border: true,
@@ -82,14 +82,14 @@ export function run(renderer: CliRenderer): void {
   });
   mainContainer.add(scrollBox);
 
-  contentContainer = new BoxRenderable(renderer, {
+  contentContainer = new Box(renderer, {
     id: "terminal-palette-container",
     width: "auto",
     flexDirection: "column",
   });
   scrollBox.add(contentContainer);
 
-  const subtitleText = new TextRenderable(renderer, {
+  const subtitleText = new Text(renderer, {
     id: "terminal_subtitle",
     content:
       "Enter palette size (1-256) and press Enter to fetch | 'r' fresh fetch | 'c' clear cache | Watch OSC 10/11 diagnostics below",
@@ -98,21 +98,21 @@ export function run(renderer: CliRenderer): void {
   contentContainer.add(subtitleText);
 
   // Add input field for palette size
-  const inputContainer = new BoxRenderable(renderer, {
+  const inputContainer = new Box(renderer, {
     id: "input-container",
     flexDirection: "row",
     marginTop: 1,
   });
   contentContainer.add(inputContainer);
 
-  const inputLabel = new TextRenderable(renderer, {
+  const inputLabel = new Text(renderer, {
     id: "input-label",
     content: "Palette Size: ",
     fg: RGBA.fromInts(148, 163, 184),
   });
   inputContainer.add(inputLabel);
 
-  paletteSizeInput = new InputRenderable(renderer, {
+  paletteSizeInput = new Input(renderer, {
     id: "palette-size-input",
     width: 10,
     backgroundColor: RGBA.fromInts(30, 41, 59),
@@ -125,7 +125,7 @@ export function run(renderer: CliRenderer): void {
   });
   inputContainer.add(paletteSizeInput);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "terminal_status",
     content: "Status: Ready to fetch palette",
     marginTop: 1,
@@ -133,7 +133,7 @@ export function run(renderer: CliRenderer): void {
   });
   contentContainer.add(statusText);
 
-  diagnosticsText = new TextRenderable(renderer, {
+  diagnosticsText = new Text(renderer, {
     id: "terminal_diagnostics",
     content: "Diagnostics: fetching the default 16-color palette...",
     marginTop: 1,
@@ -141,7 +141,7 @@ export function run(renderer: CliRenderer): void {
   });
   contentContainer.add(diagnosticsText);
 
-  rawOscText = new TextRenderable(renderer, {
+  rawOscText = new Text(renderer, {
     id: "terminal_raw_osc",
     content: "Recent raw OSC color replies: none yet",
     marginTop: 1,
@@ -149,7 +149,7 @@ export function run(renderer: CliRenderer): void {
   });
   contentContainer.add(rawOscText);
 
-  const instructionsText = new TextRenderable(renderer, {
+  const instructionsText = new Text(renderer, {
     id: "terminal_instructions",
     content: "Press Escape to return to menu",
     marginTop: 1,
@@ -158,8 +158,8 @@ export function run(renderer: CliRenderer): void {
   contentContainer.add(instructionsText);
 
   // Create palette grid - will be populated when palette is fetched
-  // biome-ignore lint/suspicious/noExplicitAny: PaletteGridRenderable accepts extended renderer type
-  paletteGrid = new PaletteGridRenderable(renderer as any, {
+  // biome-ignore lint/suspicious/noExplicitAny: PaletteGrid accepts extended renderer type
+  paletteGrid = new PaletteGrid(renderer as any, {
     id: "palette-grid",
     colors: [],
     marginTop: 2,
@@ -167,7 +167,7 @@ export function run(renderer: CliRenderer): void {
   contentContainer.add(paletteGrid);
 
   // Set up input submit handler
-  paletteSizeInput.on(InputRenderableEvents.ENTER, async (value: string) => {
+  paletteSizeInput.on(InputEvents.ENTER, async (value: string) => {
     const size = Number.parseInt(value, 10);
     if (Number.isNaN(size) || size < 1 || size > 256) {
       if (statusText) {
@@ -295,7 +295,7 @@ function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size
   const specialBufferHeight = specialColors.length * 2;
 
   if (!specialColorsBuffer) {
-    specialColorsBuffer = new FrameBufferRenderable(renderer, {
+    specialColorsBuffer = new FrameBuffer(renderer, {
       id: "special-colors-buffer",
       width: specialBufferWidth,
       height: specialBufferHeight,
@@ -346,8 +346,8 @@ function drawPalette(renderer: CliRenderer, terminalColors: TerminalColors, size
 
   // Update the hex list with new colors
   if (!hexList) {
-    // biome-ignore lint/suspicious/noExplicitAny: HexListRenderable accepts extended renderer type
-    hexList = new HexListRenderable(renderer as any, {
+    // biome-ignore lint/suspicious/noExplicitAny: HexList accepts extended renderer type
+    hexList = new HexList(renderer as any, {
       id: "hex-list",
       colors: colors,
       marginTop: 2,
@@ -370,7 +370,7 @@ function drawAnsiComparison(renderer: CliRenderer, colors: TerminalColors): void
   const bgColor = RGBA.fromInts(30, 41, 59);
 
   if (!ansiComparisonBuffer) {
-    ansiComparisonBuffer = new FrameBufferRenderable(renderer, {
+    ansiComparisonBuffer = new FrameBuffer(renderer, {
       id: "ansi-comparison-buffer",
       width,
       height,

@@ -906,6 +906,8 @@ pub struct LayoutEngine {
     measure_callbacks: HashMap<NodeId, MeasureCallback>,
     /// Layout configuration.
     config: LayoutConfig,
+    last_root_width: Option<f32>,
+    last_root_height: Option<f32>,
 }
 
 impl Default for LayoutEngine {
@@ -924,6 +926,8 @@ impl LayoutEngine {
             dirtied_handler: None,
             measure_callbacks: HashMap::new(),
             config: LayoutConfig::default(),
+            last_root_width: None,
+            last_root_height: None,
         }
     }
 
@@ -1156,8 +1160,14 @@ impl LayoutEngine {
     pub fn compute_layout(&mut self, root: NodeId, width: f32, height: f32) -> Result<(), LayoutError> {
         let &taffy_root = self.node_map.get(&root).ok_or(LayoutError::NodeNotRegistered(root))?;
 
-        if !self.taffy.dirty(taffy_root).unwrap_or(false) {
+        let size_changed = self.last_root_width != Some(width) || self.last_root_height != Some(height);
+        if !self.taffy.dirty(taffy_root).unwrap_or(false) && !size_changed {
             return Ok(());
+        }
+        if size_changed {
+            let _ = self.taffy.mark_dirty(taffy_root);
+            self.last_root_width = Some(width);
+            self.last_root_height = Some(height);
         }
 
         let size = taffy::Size {
@@ -1482,6 +1492,8 @@ pub struct LayoutTreeSync {
     generation: u64,
     /// Revision counter for structural changes (child add/remove, visibility, etc.)
     revision: u64,
+    last_width: Option<u16>,
+    last_height: Option<u16>,
 }
 
 impl Default for LayoutTreeSync {
@@ -1492,7 +1504,14 @@ impl Default for LayoutTreeSync {
 
 impl LayoutTreeSync {
     pub fn new() -> Self {
-        Self { layout: LayoutEngine::new(), results: HashMap::new(), generation: 0, revision: 0 }
+        Self {
+            layout: LayoutEngine::new(),
+            results: HashMap::new(),
+            generation: 0,
+            revision: 0,
+            last_width: None,
+            last_height: None,
+        }
     }
 
     /// Get current layout generation.
@@ -1511,6 +1530,12 @@ impl LayoutTreeSync {
     }
 
     pub fn sync_full(&mut self, arena: &NodeArena) {
+        let stale_ids: Vec<NodeId> = self.layout.node_map.keys().filter(|&&id| !arena.contains(id)).copied().collect();
+        for id in stale_ids {
+            self.layout.remove_node(id);
+            self.results.remove(&id);
+        }
+
         for (id, node) in arena.iter() {
             if !self.layout.has_node(id) {
                 if let Some(text) = &node.text {
@@ -1562,8 +1587,14 @@ impl LayoutTreeSync {
     }
 
     pub fn compute(&mut self, root: NodeId, width: u16, height: u16) -> Result<(), LayoutError> {
-        if !self.layout.is_dirty(root) {
+        let size_changed = self.last_width != Some(width) || self.last_height != Some(height);
+        if !self.layout.is_dirty(root) && !size_changed {
             return Ok(());
+        }
+        if size_changed {
+            self.layout.mark_dirty(root);
+            self.last_width = Some(width);
+            self.last_height = Some(height);
         }
         self.layout.compute_layout(root, width as f32, height as f32)?;
         self.results = self.layout.collect_results();
@@ -1749,7 +1780,7 @@ fn build_node(
     let resolved_style = node.style.resolve(parent_style);
 
     let mut flags = PaintFlags::empty();
-    if resolved_style.bg.is_some() {
+    if matches!(resolved_style.bg, Some(c) if c != crate::tree::Color::Default) {
         flags |= PaintFlags::BACKGROUND;
     }
     if resolved_style.border_style != crate::tree::BorderStyle::None {
@@ -1824,12 +1855,27 @@ fn build_node(
     let child_accum_tx = accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
     let child_accum_ty = accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
 
+    let accumulated_parent_style = crate::tree::Style {
+        fg: resolved_style.fg,
+        bg: resolved_style.bg,
+        underline_color: resolved_style.underline_color,
+        bold: Some(resolved_style.bold),
+        italic: Some(resolved_style.italic),
+        underline: Some(resolved_style.underline),
+        dim: Some(resolved_style.dim),
+        strikethrough: Some(resolved_style.strikethrough),
+        inverse: Some(resolved_style.inverse),
+        hidden: Some(resolved_style.hidden),
+        border_color: resolved_style.border_color,
+        ..node.style
+    };
+
     for &child_id in &child_ids {
         build_node(
             arena,
             layout_results,
             child_id,
-            &node.style,
+            &accumulated_parent_style,
             child_clip_x,
             child_clip_y,
             opacity,

@@ -4,22 +4,24 @@
  */
 
 import type { CliRenderer } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "../renderables/Box";
-import { InputRenderable, type InputRenderableOptions } from "../renderables/Input";
-import { SelectRenderable, type SelectRenderableOptions } from "../renderables/Select";
-import { type CodeOptions, CodeRenderable } from "../renderables/Stubs";
+import { Box as BoxClass, type BoxOptions } from "../renderables/Box";
+import { Input as InputClass, type InputOptions } from "../renderables/Input";
+import { Select as SelectClass, type SelectOptions } from "../renderables/Select";
 import {
+  ASCIIFont as ASCIIFontClass,
+  type ASCIIFontOptions,
+  Code as CodeClass,
+  type CodeOptions,
+  FrameBuffer as FrameBufferClass,
   type FrameBufferLike,
   type FrameBufferOptions,
-  FrameBufferRenderable,
 } from "../renderables/Stubs";
-import { type ASCIIFontOptions, ASCIIFontRenderable } from "../renderables/Stubs";
-import { TabSelectRenderable, type TabSelectRenderableOptions } from "../renderables/TabSelect";
-import { type TextOptions, TextRenderable } from "../renderables/Text";
+import { TabSelect as TabSelectClass, type TabSelectOptions } from "../renderables/TabSelect";
+import { Text as TextClass, type TextOptions } from "../renderables/Text";
 
 /** A VNode (virtual node) — a lazy description of a renderable. */
 export interface VNode {
-  _type: string | (new (renderer: CliRenderer, options: Record<string, unknown>) => BoxRenderable);
+  _type: string | (new (renderer: CliRenderer, options: Record<string, unknown>) => BoxClass);
   _props: Record<string, unknown>;
   _children: VNode[];
 }
@@ -28,7 +30,7 @@ export interface VNode {
  * Create a VNode.
  */
 export function h(
-  type: string | (new (renderer: CliRenderer, options: Record<string, unknown>) => BoxRenderable),
+  type: string | (new (renderer: CliRenderer, options: Record<string, unknown>) => BoxClass),
   props?: Record<string, unknown> | null,
   ...children: (VNode | string | null | undefined)[]
 ): VNode {
@@ -44,10 +46,10 @@ export function h(
 /**
  * Instantiate a VNode tree into real renderables.
  */
-export function instantiate(ctx: CliRenderer, vnode: VNode): BoxRenderable {
+export function instantiate(ctx: CliRenderer, vnode: VNode): BoxClass {
   const { _type: type, _props: props, _children: children } = vnode;
 
-  let instance: BoxRenderable;
+  let instance: BoxClass;
 
   if (typeof type === "function") {
     // Custom component class
@@ -55,41 +57,41 @@ export function instantiate(ctx: CliRenderer, vnode: VNode): BoxRenderable {
       type as new (
         renderer: CliRenderer,
         options: Record<string, unknown>,
-      ) => BoxRenderable
+      ) => BoxClass
     )(ctx, props);
   } else {
     // Built-in type
     switch (type) {
       case "Text":
-        instance = new TextRenderable(ctx, props as TextOptions);
+        instance = new TextClass(ctx, props as TextOptions);
         break;
       case "Input":
-        instance = new InputRenderable(ctx, props as InputRenderableOptions);
+        instance = new InputClass(ctx, props as InputOptions);
         break;
       case "Select":
-        instance = new SelectRenderable(ctx, props as SelectRenderableOptions);
+        instance = new SelectClass(ctx, props as SelectOptions);
         break;
       case "TabSelect":
-        instance = new TabSelectRenderable(ctx, props as TabSelectRenderableOptions);
+        instance = new TabSelectClass(ctx, props as TabSelectOptions);
         break;
       case "Code":
-        instance = new CodeRenderable(ctx, props as CodeOptions);
+        instance = new CodeClass(ctx, props as CodeOptions);
         break;
       case "FrameBuffer":
       case "Generic": {
         // Generic: uses a render function prop
         const renderFn = props.render as FrameBufferOptions["drawFn"];
-        instance = new FrameBufferRenderable(ctx, {
+        instance = new FrameBufferClass(ctx, {
           ...props,
           drawFn: renderFn,
         } as FrameBufferOptions);
         break;
       }
       case "ASCIIFont":
-        instance = new ASCIIFontRenderable(ctx, props as ASCIIFontOptions);
+        instance = new ASCIIFontClass(ctx, props as ASCIIFontOptions);
         break;
       default:
-        instance = new BoxRenderable(ctx, props as BoxOptions);
+        instance = new BoxClass(ctx, props as BoxOptions);
     }
   }
 
@@ -116,18 +118,18 @@ export function delegate(targets: string | string[], vnode: VNode): VNode {
 }
 
 /** Maybe create a renderable from a VNode or return existing renderable. */
-export function maybeMakeRenderable(ctx: CliRenderer, input: VNode | BoxRenderable): BoxRenderable {
-  if (input instanceof BoxRenderable) return input;
+export function maybeMakeRenderable(ctx: CliRenderer, input: VNode | BoxClass): BoxClass {
+  if (input instanceof BoxClass) return input;
   return instantiate(ctx, input as VNode);
 }
 
 // ── Functional VNode constructors ─────────────────────────────────────────────
 
-export function Box(props?: BoxOptions, ...children: VNode[]): VNode {
+export function BoxVNode(props?: BoxOptions, ...children: VNode[]): VNode {
   return { _type: "Box", _props: (props ?? {}) as Record<string, unknown>, _children: children };
 }
 
-export function Text(props?: TextOptions, ...children: (VNode | string)[]): VNode {
+export function TextVNode(props?: TextOptions, ...children: (VNode | string)[]): VNode {
   const processedChildren = children.map((c) =>
     typeof c === "string" ? h("Text", { content: c }) : c,
   );
@@ -138,15 +140,15 @@ export function Text(props?: TextOptions, ...children: (VNode | string)[]): VNod
   };
 }
 
-export function Input(props?: InputRenderableOptions, ...children: VNode[]): VNode {
+export function InputVNode(props?: InputOptions, ...children: VNode[]): VNode {
   return { _type: "Input", _props: (props ?? {}) as Record<string, unknown>, _children: children };
 }
 
-export function Select(props?: SelectRenderableOptions, ...children: VNode[]): VNode {
+export function SelectVNode(props?: SelectOptions, ...children: VNode[]): VNode {
   return { _type: "Select", _props: (props ?? {}) as Record<string, unknown>, _children: children };
 }
 
-export function TabSelect(props?: TabSelectRenderableOptions, ...children: VNode[]): VNode {
+export function TabSelectVNode(props?: TabSelectOptions, ...children: VNode[]): VNode {
   return {
     _type: "TabSelect",
     _props: (props ?? {}) as Record<string, unknown>,
@@ -154,12 +156,22 @@ export function TabSelect(props?: TabSelectRenderableOptions, ...children: VNode
   };
 }
 
-export function Code(props?: CodeOptions, ...children: VNode[]): VNode {
+export function CodeVNode(props?: CodeOptions, ...children: VNode[]): VNode {
   return { _type: "Code", _props: (props ?? {}) as Record<string, unknown>, _children: children };
 }
 
-export function Generic(
-  props?: BoxOptions & { render?: (buffer: FrameBufferLike, dt: number, r: BoxRenderable) => void },
+export {
+  BoxVNode as Box,
+  TextVNode as Text,
+  InputVNode as Input,
+  SelectVNode as Select,
+  TabSelectVNode as TabSelect,
+  CodeVNode as Code,
+  GenericVNode as Generic,
+};
+
+export function GenericVNode(
+  props?: BoxOptions & { render?: (buffer: FrameBufferLike, dt: number, r: BoxClass) => void },
   ...children: VNode[]
 ): VNode {
   return {

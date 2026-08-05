@@ -313,7 +313,7 @@ impl<T: Clone> SlotRegistry<T> {
         match self.mode {
             SlotMode::Append => {
                 let mut ordered: Vec<&SlotEntry<T>> = self.entries.iter().collect();
-                ordered.sort_by(|a, b| b.priority.cmp(&a.priority));
+                ordered.sort_by_key(|b| std::cmp::Reverse(b.priority));
                 ordered.into_iter().map(|e| e.value.clone()).collect()
             }
             SlotMode::SingleWinner => self

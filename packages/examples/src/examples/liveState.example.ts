@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   RGBA,
-  TextRenderable,
+  Text,
   blue,
   bold,
   createCliRenderer,
@@ -18,20 +18,20 @@ import {
 import type { BoxOptions } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let mainGroup: BoxRenderable | null = null;
-let titleText: TextRenderable | null = null;
-let instructionsText: TextRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let rendererStateText: TextRenderable | null = null;
-let renderableStateText: TextRenderable | null = null;
+let mainGroup: Box | null = null;
+let titleText: Text | null = null;
+let instructionsText: Text | null = null;
+let statusText: Text | null = null;
+let rendererStateText: Text | null = null;
+let renderableStateText: Text | null = null;
 let liveButtons: ReturnType<typeof LiveButton>[] = [];
-let demoRenderable: BoxRenderable | null = null;
+let demoRenderable: Box | null = null;
 let currentRenderer: CliRenderer | null = null;
 let frameCounter = 0;
 let animationCounter = 0;
 let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
 
-function LiveButton(options: BoxOptions & { label: string }): BoxRenderable {
+function LiveButton(options: BoxOptions & { label: string }): Box {
   const base = parseColor(options.backgroundColor ?? "transparent");
   const hoverBg = RGBA.fromValues(
     Math.min(1.0, base.r * 1.4),
@@ -42,11 +42,11 @@ function LiveButton(options: BoxOptions & { label: string }): BoxRenderable {
   const pressBg = RGBA.fromValues(base.r * 0.6, base.g * 0.6, base.b * 0.6, base.a);
   const _labelText = options.label;
   if (!currentRenderer) throw new Error("LiveButton requires an active renderer");
-  return new BoxRenderable(currentRenderer, {
+  return new Box(currentRenderer, {
     ...options,
     onMouse(event: unknown) {
       const e = event as { type?: string; stopPropagation?(): void };
-      const box = this as BoxRenderable;
+      const box = this as Box;
       switch (e.type) {
         case "down":
           box.backgroundColor = pressBg;
@@ -111,7 +111,7 @@ function addDemoRenderable(renderer: CliRenderer): void {
     return;
   }
 
-  demoRenderable = new BoxRenderable(renderer, {
+  demoRenderable = new Box(renderer, {
     id: "demo-renderable",
     position: "absolute",
     left: 60,
@@ -144,7 +144,7 @@ function removeDemoRenderable(renderer: CliRenderer): void {
 export function run(renderer: CliRenderer): void {
   currentRenderer = renderer;
 
-  mainGroup = new BoxRenderable(renderer, {
+  mainGroup = new Box(renderer, {
     id: "live-demo-main-group",
     zIndex: 10,
   });
@@ -153,7 +153,7 @@ export function run(renderer: CliRenderer): void {
   const backgroundColor = RGBA.fromInts(25, 30, 45, 255);
   renderer.setBackgroundColor(rgbaToEngineColor(backgroundColor));
 
-  titleText = new TextRenderable(renderer, {
+  titleText = new Text(renderer, {
     id: "live_demo_title",
     content: "Live State Management Demo",
     position: "absolute",
@@ -164,7 +164,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(titleText);
 
-  instructionsText = new TextRenderable(renderer, {
+  instructionsText = new Text(renderer, {
     id: "live_demo_instructions",
     content: "Test the live state management system • Escape: return to menu",
     position: "absolute",
@@ -175,7 +175,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(instructionsText);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "live_demo_status",
     content: "Ready - Click buttons to test live state management",
     position: "absolute",
@@ -186,7 +186,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(statusText);
 
-  rendererStateText = new TextRenderable(renderer, {
+  rendererStateText = new Text(renderer, {
     id: "renderer_state",
     content: "",
     position: "absolute",
@@ -197,7 +197,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(rendererStateText);
 
-  renderableStateText = new TextRenderable(renderer, {
+  renderableStateText = new Text(renderer, {
     id: "renderable_state",
     content: "",
     position: "absolute",
@@ -388,7 +388,7 @@ export function run(renderer: CliRenderer): void {
   }
 
   // Add section labels
-  const rendererLabel = new TextRenderable(renderer, {
+  const rendererLabel = new Text(renderer, {
     id: "renderer_label",
     content: "Renderer Control:",
     position: "absolute",
@@ -399,7 +399,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(rendererLabel);
 
-  const renderableLabel = new TextRenderable(renderer, {
+  const renderableLabel = new Text(renderer, {
     id: "renderable_label",
     content: "Renderable Management:",
     position: "absolute",
@@ -410,7 +410,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(renderableLabel);
 
-  const liveLabel = new TextRenderable(renderer, {
+  const liveLabel = new Text(renderer, {
     id: "live_label",
     content: "Live State Control:",
     position: "absolute",
@@ -421,7 +421,7 @@ export function run(renderer: CliRenderer): void {
   });
   mainGroup.add(liveLabel);
 
-  const visibilityLabel = new TextRenderable(renderer, {
+  const visibilityLabel = new Text(renderer, {
     id: "visibility_label",
     content: "Visibility Control:",
     position: "absolute",

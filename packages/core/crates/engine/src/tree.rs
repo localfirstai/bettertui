@@ -298,29 +298,70 @@ impl Color {
 
     /// Parse color from string (hex, named, etc.)
     pub fn parse(s: &str) -> Option<Self> {
-        // Try hex first
+        let s = s.trim();
+        if s.is_empty() {
+            return Some(Self::Default);
+        }
+
         if let Some(rgba) = Rgba::from_hex(s) {
+            if rgba.a == 0 {
+                return Some(Self::Default);
+            }
             return Some(rgba.into());
         }
 
-        // Try named colors
-        match s.to_lowercase().as_str() {
+        let lower = s.to_lowercase();
+        if lower == "default" || lower == "transparent" || lower == "none" {
+            return Some(Self::Default);
+        }
+
+        if (lower.starts_with("rgb(") || lower.starts_with("rgba(")) && lower.ends_with(')') {
+            let content =
+                if lower.starts_with("rgba(") { &lower[5..lower.len() - 1] } else { &lower[4..lower.len() - 1] };
+            let parts: Vec<&str> = content.split(',').map(|p| p.trim()).collect();
+            if parts.len() >= 3 {
+                let r = parts[0].parse::<u8>().ok();
+                let g = parts[1].parse::<u8>().ok();
+                let b = parts[2].parse::<u8>().ok();
+                if let (Some(r), Some(g), Some(b)) = (r, g, b) {
+                    if parts.len() >= 4 {
+                        if let Some(a) = parts[3].parse::<f32>().ok() {
+                            if a == 0.0 {
+                                return Some(Self::Default);
+                            }
+                        }
+                    }
+                    return Some(Self::Rgb { r, g, b });
+                }
+            }
+        }
+
+        match lower.as_str() {
             "black" => Some(Self::Named(NamedColor::Black)),
             "red" => Some(Self::Named(NamedColor::Red)),
             "green" => Some(Self::Named(NamedColor::Green)),
             "yellow" => Some(Self::Named(NamedColor::Yellow)),
             "blue" => Some(Self::Named(NamedColor::Blue)),
-            "magenta" | "purple" => Some(Self::Named(NamedColor::Magenta)),
-            "cyan" | "teal" => Some(Self::Named(NamedColor::Cyan)),
-            "white" | "default" => Some(Self::Named(NamedColor::White)),
-            "gray" | "grey" | "dark_gray" | "darkgrey" => Some(Self::Named(NamedColor::BrightBlack)),
-            "bright_red" | "light_red" => Some(Self::Named(NamedColor::BrightRed)),
-            "bright_green" | "light_green" => Some(Self::Named(NamedColor::BrightGreen)),
-            "bright_yellow" | "light_yellow" => Some(Self::Named(NamedColor::BrightYellow)),
-            "bright_blue" | "light_blue" => Some(Self::Named(NamedColor::BrightBlue)),
-            "bright_magenta" | "light_magenta" | "pink" => Some(Self::Named(NamedColor::BrightMagenta)),
-            "bright_cyan" | "light_cyan" => Some(Self::Named(NamedColor::BrightCyan)),
-            "bright_white" | "light_gray" | "lightgrey" | "lightgray" => Some(Self::Named(NamedColor::BrightWhite)),
+            "magenta" | "purple" | "fuchsia" => Some(Self::Named(NamedColor::Magenta)),
+            "cyan" | "teal" | "aqua" => Some(Self::Named(NamedColor::Cyan)),
+            "white" => Some(Self::Named(NamedColor::White)),
+            "gray" | "grey" | "dark_gray" | "darkgray" | "darkgrey" | "brightblack" | "bright_black" => {
+                Some(Self::Named(NamedColor::BrightBlack))
+            }
+            "bright_red" | "brightred" | "light_red" | "lightred" => Some(Self::Named(NamedColor::BrightRed)),
+            "bright_green" | "brightgreen" | "light_green" | "lightgreen" => Some(Self::Named(NamedColor::BrightGreen)),
+            "bright_yellow" | "brightyellow" | "light_yellow" | "lightyellow" => {
+                Some(Self::Named(NamedColor::BrightYellow))
+            }
+            "bright_blue" | "brightblue" | "light_blue" | "lightblue" => Some(Self::Named(NamedColor::BrightBlue)),
+            "bright_magenta" | "brightmagenta" | "light_magenta" | "lightmagenta" | "pink" => {
+                Some(Self::Named(NamedColor::BrightMagenta))
+            }
+            "bright_cyan" | "brightcyan" | "light_cyan" | "lightcyan" => Some(Self::Named(NamedColor::BrightCyan)),
+            "bright_white" | "brightwhite" | "silver" | "light_gray" | "lightgray" | "lightgrey" => {
+                Some(Self::Named(NamedColor::BrightWhite))
+            }
+            "orange" | "darkorange" => Some(Self::Rgb { r: 255, g: 165, b: 0 }),
             _ => None,
         }
     }
@@ -517,7 +558,7 @@ impl Style {
     pub fn resolve(&self, parent: &Style) -> ResolvedStyle {
         ResolvedStyle {
             fg: self.fg.or(parent.fg),
-            bg: self.bg.or(parent.bg),
+            bg: self.bg,
             underline_color: self.underline_color.or(parent.underline_color),
             bold: self.bold.or(parent.bold).unwrap_or(false),
             italic: self.italic.or(parent.italic).unwrap_or(false),
@@ -533,6 +574,69 @@ impl Style {
             overflow: self.overflow.or(parent.overflow).unwrap_or(Overflow::Visible),
             opacity: self.opacity.or(parent.opacity).unwrap_or(255),
             text_align: self.text_align.or(parent.text_align).unwrap_or(crate::text::TextAlign::Left),
+        }
+    }
+
+    /// Merges another style into this one. Only fields that are `Some` in
+    /// `other` overwrite the corresponding field in `self`. Fields that are
+    /// `None` in `other` leave `self` unchanged.
+    pub fn merge(&mut self, other: &Style) {
+        if other.fg.is_some() {
+            self.fg = other.fg;
+        }
+        if other.bg.is_some() {
+            self.bg = other.bg;
+        }
+        if other.underline_color.is_some() {
+            self.underline_color = other.underline_color;
+        }
+        if other.bold.is_some() {
+            self.bold = other.bold;
+        }
+        if other.italic.is_some() {
+            self.italic = other.italic;
+        }
+        if other.underline.is_some() {
+            self.underline = other.underline;
+        }
+        if other.dim.is_some() {
+            self.dim = other.dim;
+        }
+        if other.strikethrough.is_some() {
+            self.strikethrough = other.strikethrough;
+        }
+        if other.inverse.is_some() {
+            self.inverse = other.inverse;
+        }
+        if other.hidden.is_some() {
+            self.hidden = other.hidden;
+        }
+        if other.grid_columns.is_some() {
+            self.grid_columns = other.grid_columns;
+        }
+        if other.grid_rows.is_some() {
+            self.grid_rows = other.grid_rows;
+        }
+        if other.border_style.is_some() {
+            self.border_style = other.border_style;
+        }
+        if other.border_color.is_some() {
+            self.border_color = other.border_color;
+        }
+        if other.border_width.is_some() {
+            self.border_width = other.border_width;
+        }
+        if other.rounded_corners.is_some() {
+            self.rounded_corners = other.rounded_corners;
+        }
+        if other.overflow.is_some() {
+            self.overflow = other.overflow;
+        }
+        if other.opacity.is_some() {
+            self.opacity = other.opacity;
+        }
+        if other.text_align.is_some() {
+            self.text_align = other.text_align;
         }
     }
 
@@ -1590,6 +1694,7 @@ impl NodeArena {
             self.nodes[self.root].children.clear();
             return;
         }
+        self.detach(id);
         self.remove_subtree_recursive(id);
         self.generation += 1;
         self.mark_changed();

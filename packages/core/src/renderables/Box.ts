@@ -1,5 +1,5 @@
 /**
- * BoxRenderable — the primary container widget.
+ * Box — the primary container widget.
  * Wraps an engine "Box" node with layout, styling, and event support.
  */
 
@@ -25,6 +25,8 @@ const BORDER_CHARS: Record<BorderStyleKind, string[]> = {
 
 export interface BoxOptions {
   id?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: allow component options prop
+  options?: any;
   width?: number | string;
   height?: number | string;
   minWidth?: number | string;
@@ -98,16 +100,16 @@ export interface BoxOptions {
   onSizeChange?: () => void;
   /**
    * Called after each render frame with a buffer handle.
-   * Bound to the BoxRenderable instance (`this` = the renderable).
+   * Bound to the Box instance (`this` = the renderable).
    * Use this for custom per-frame drawing on top of the box.
    */
-  renderAfter?: (this: BoxRenderable, buffer: unknown, deltaTime?: number) => void;
+  renderAfter?: (this: Box, buffer: unknown, deltaTime?: number) => void;
 }
 
 let _boxCounter = 0;
 
 /** Minimal stub buffer passed to renderAfter callbacks. */
-function createStubBuffer(box: BoxRenderable): unknown {
+function createStubBuffer(box: Box): unknown {
   const bg = new Uint16Array(0);
   const fg = new Uint16Array(0);
   const char = new Uint32Array(0);
@@ -132,7 +134,7 @@ function createStubBuffer(box: BoxRenderable): unknown {
   };
 }
 
-export class BoxRenderable extends EventEmitter {
+export class Box extends EventEmitter {
   protected readonly _renderer: CliRenderer;
   protected _nodeId: number;
   protected readonly _id: string;
@@ -149,8 +151,9 @@ export class BoxRenderable extends EventEmitter {
   protected _title: string | undefined;
   protected _titleColor: RGBA | undefined;
   protected _titleAlignment: "left" | "center" | "right";
-  protected _children: Map<string, BoxRenderable> = new Map();
-  protected _childList: BoxRenderable[] = [];
+  protected _children: Map<string, Box> = new Map();
+  protected _childList: Box[] = [];
+  protected _parent: Box | null = null;
   protected _options: BoxOptions;
   private _renderAfterCallback: ((dt: number) => void) | null = null;
 
@@ -221,6 +224,41 @@ export class BoxRenderable extends EventEmitter {
   get renderer(): CliRenderer {
     return this._renderer;
   }
+  get boxOptions(): BoxOptions {
+    return this._options;
+  }
+  get parent(): Box | null {
+    return this._parent;
+  }
+
+  getEstimatedHeight(): number {
+    if (typeof this._options.height === "number") {
+      return this._options.height;
+    }
+    let h = 0;
+    if (this._options.border) h += 2;
+    if (typeof this._options.marginTop === "number") h += this._options.marginTop;
+    if (typeof this._options.marginBottom === "number") h += this._options.marginBottom;
+    if (typeof this._options.paddingTop === "number") h += this._options.paddingTop;
+    if (typeof this._options.paddingBottom === "number") h += this._options.paddingBottom;
+    if (typeof this._options.padding === "number") h += this._options.padding * 2;
+    if (typeof this._options.margin === "number") h += this._options.margin * 2;
+
+    if (this._childList.length === 0) {
+      return Math.max(1, h + 1);
+    }
+
+    let childrenHeight = 0;
+    for (const child of this._childList) {
+      const ch = child.getEstimatedHeight();
+      if (this._options.flexDirection === "row") {
+        childrenHeight = Math.max(childrenHeight, ch);
+      } else {
+        childrenHeight += ch;
+      }
+    }
+    return Math.max(1, h + childrenHeight);
+  }
 
   /** Computed layout width (from options; not the engine-resolved value). */
   get width(): number | string | undefined {
@@ -248,9 +286,8 @@ export class BoxRenderable extends EventEmitter {
   set visible(value: boolean) {
     if (this._visible !== value) {
       this._visible = value;
-      this._renderer.setNodeLayout(this._nodeId, {
-        display: value ? "flex" : "none",
-      });
+      this._applyLayout(this._options);
+      this._applyStyle();
     }
   }
 
@@ -339,8 +376,9 @@ export class BoxRenderable extends EventEmitter {
     this._renderer.setNodeLayout(this._nodeId, { zIndex: value });
   }
 
-  add(child: BoxRenderable, index?: number): void {
+  add(child: Box, index?: number): void {
     if (this._isDestroyed) return;
+    child._parent = this;
     this._children.set(child.id, child);
     if (index !== undefined) {
       this._childList.splice(index, 0, child);
@@ -350,15 +388,16 @@ export class BoxRenderable extends EventEmitter {
     this._renderer.appendChild(this._nodeId, child._nodeId);
   }
 
-  remove(child: BoxRenderable): void {
+  remove(child: Box): void {
     if (this._isDestroyed) return;
+    child._parent = null;
     this._children.delete(child.id);
     const idx = this._childList.indexOf(child);
     if (idx !== -1) this._childList.splice(idx, 1);
     this._renderer.removeNode(child._nodeId);
   }
 
-  getRenderable(id: string): BoxRenderable | undefined {
+  getRenderable(id: string): Box | undefined {
     if (this._id === id) return this;
     for (const child of this._childList) {
       const found = child.getRenderable(id);
@@ -367,7 +406,7 @@ export class BoxRenderable extends EventEmitter {
     return undefined;
   }
 
-  getChildren(): BoxRenderable[] {
+  getChildren(): Box[] {
     return [...this._childList];
   }
 
@@ -491,7 +530,7 @@ export class BoxRenderable extends EventEmitter {
     if (mb !== undefined) layout.marginBottom = mb;
     if (ml !== undefined) layout.marginLeft = ml;
 
-    if (options.visible === false) layout.display = "none";
+    if (options.visible === false || !this._visible) layout.display = "none";
 
     // Border layout contribution: reserve space for border cells so the
     // engine's box-sizing accounts for the border width.
@@ -546,12 +585,16 @@ export class BoxRenderable extends EventEmitter {
 }
 
 /**
- * RootRenderable — the scene root, wrapping the engine's root node.
+ * Root — the scene root, wrapping the engine's root node.
  * Created automatically by CliRenderer and exposed as `renderer.root`.
  */
-export class RootRenderable extends BoxRenderable {
+export class Root extends Box {
   constructor(renderer: CliRenderer) {
-    super(renderer, { flexDirection: "column" }, renderer.rootNodeId);
+    super(
+      renderer,
+      { flexDirection: "column", width: "100%", height: "100%" },
+      renderer.rootNodeId,
+    );
   }
 
   destroy(): void {

@@ -26,27 +26,27 @@ export enum RenderableEvents {
   DESTROYED = "destroyed",
 }
 
-/** Events emitted by InputRenderable. */
-export enum InputRenderableEvents {
+/** Events emitted by Input. */
+export enum InputEvents {
   INPUT = "input",
   CHANGE = "change",
   ENTER = "enter",
 }
 
-/** Events emitted by SelectRenderable. */
-export enum SelectRenderableEvents {
+/** Events emitted by Select. */
+export enum SelectEvents {
   SELECTION_CHANGED = "selection_changed",
   ITEM_SELECTED = "item_selected",
 }
 
-/** Events emitted by TabSelectRenderable. */
-export enum TabSelectRenderableEvents {
+/** Events emitted by TabSelect. */
+export enum TabSelectEvents {
   SELECTION_CHANGED = "selection_changed",
   ITEM_SELECTED = "item_selected",
 }
 
-/** Events emitted by SliderRenderable. */
-export enum SliderRenderableEvents {
+/** Events emitted by Slider. */
+export enum SliderEvents {
   CHANGE = "change",
 }
 

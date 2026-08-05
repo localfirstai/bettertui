@@ -1,9 +1,9 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  DiffRenderable,
+  Diff,
   type RawKeyEvent,
-  TextRenderable,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import { type RGBA, parseColor } from "@bettertui/core";
@@ -448,12 +448,12 @@ const malformedDiff = `--- a/calculator.ts
 
 let renderer: CliRenderer | null = null;
 let keyboardHandler: ((key: RawKeyEvent) => void) | null = null;
-let parentContainer: BoxRenderable | null = null;
-let diffRenderable: DiffRenderable | null = null;
-let instructionsText: TextRenderable | null = null;
-let titleBox: BoxRenderable | null = null;
+let parentContainer: Box | null = null;
+let diffRenderable: Diff | null = null;
+let instructionsText: Text | null = null;
+let titleBox: Box | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
-let helpModal: BoxRenderable | null = null;
+let helpModal: Box | null = null;
 let currentView: "unified" | "split" = "unified";
 let showLineNumbers = true;
 let currentWrapMode: "none" | "word" = "none";
@@ -488,7 +488,7 @@ const applyTheme = (themeIndex: number) => {
   syntaxStyle = new SyntaxStyle();
 
   if (diffRenderable) {
-    // DiffRenderable uses content for display; theme properties not available in stub
+    // Diff uses content for display; theme properties not available in stub
     diffRenderable.fg = theme.lineNumberFg;
   }
 };
@@ -501,14 +501,14 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   const theme = themes[currentThemeIndex];
   renderer.setBackgroundColor(theme.backgroundColor);
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  titleBox = new BoxRenderable(renderer, {
+  titleBox = new Box(renderer, {
     id: "title-box",
     height: 3,
     borderStyle: "double",
@@ -520,7 +520,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   });
   parentContainer.add(titleBox);
 
-  instructionsText = new TextRenderable(renderer, {
+  instructionsText = new Text(renderer, {
     id: "instructions",
     content: "ESC to return | Press ? for keybindings",
     fg: "#888888",
@@ -528,7 +528,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   titleBox.add(instructionsText);
 
   // Create help modal (hidden by default)
-  helpModal = new BoxRenderable(renderer, {
+  helpModal = new Box(renderer, {
     id: "help-modal",
     position: "absolute",
     left: 5,
@@ -546,7 +546,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     visible: false,
   });
 
-  const helpContent = new TextRenderable(renderer, {
+  const helpContent = new Text(renderer, {
     id: "help-content",
     content: `View Controls:
   V : Toggle view mode (Unified/Split)
@@ -572,7 +572,7 @@ Other:
 
   // Create diff display
   const currentContent = contentExamples[currentContentIndex];
-  diffRenderable = new DiffRenderable(renderer, {
+  diffRenderable = new Diff(renderer, {
     id: "diff-display",
     content: currentContent.diff,
     flexGrow: 1,
@@ -595,7 +595,7 @@ Other:
     if (key.name === "v" && !key.ctrl && !key.meta) {
       // Toggle view mode
       currentView = currentView === "unified" ? "split" : "unified";
-      // view toggle not supported in DiffRenderable stub
+      // view toggle not supported in Diff stub
     } else if (key.name === "l" && !key.ctrl && !key.meta) {
       // Toggle line numbers (not supported in stub)
       showLineNumbers = !showLineNumbers;

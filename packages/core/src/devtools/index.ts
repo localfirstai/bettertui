@@ -41,6 +41,13 @@ export { SnapshotManager } from "./snapshot";
 export type { SnapshotOptions } from "./snapshot";
 export { createExport, exportToJson, createSummary } from "./export";
 export type { ExportOptions, ExportData } from "./export";
+export {
+  TerminalConsoleCache,
+  terminalConsoleCache,
+  ConsoleLogLevel,
+  capture,
+} from "./consoleCapture";
+export type { ConsoleLogEntry, CallerInfo } from "./consoleCapture";
 
 // ─── Overlay ─────────────────────────────────────────────────────────────────
 export { OverlayHost } from "./overlay/overlayHost";

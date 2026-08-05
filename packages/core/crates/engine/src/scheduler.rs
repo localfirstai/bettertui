@@ -336,11 +336,11 @@ impl Scheduler {
 
         if self.has_scheduled_frame {
             // Already have a pending frame — just promote priority if higher.
-            if let Some(top) = self.priority_queue.peek() {
-                if priority > top.priority {
-                    self.priority_queue.pop();
-                    self.priority_queue.push(FrameRequest::new(priority));
-                }
+            if let Some(top) = self.priority_queue.peek()
+                && priority > top.priority
+            {
+                self.priority_queue.pop();
+                self.priority_queue.push(FrameRequest::new(priority));
             }
             return;
         }

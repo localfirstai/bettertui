@@ -1,10 +1,10 @@
-import { InputRenderableEvents, RenderableEvents } from "../lib/renderableEvents";
+import type { KeyEvent } from "../lib/keyHandler";
+import { InputEvents, RenderableEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
-export interface InputRenderableOptions extends BoxOptions {
+export interface InputOptions extends BoxOptions {
   value?: string;
   placeholder?: string;
   placeholderColor?: ColorInput;
@@ -19,9 +19,11 @@ export interface InputRenderableOptions extends BoxOptions {
   password?: boolean;
 }
 
+export type InputRenderableOptions = InputOptions;
+
 let _inputCounter = 0;
 
-export class InputRenderable extends BoxRenderable {
+export class Input extends Box {
   private _value: string;
   private _placeholder: string;
   private _placeholderColor: RGBA;
@@ -36,9 +38,9 @@ export class InputRenderable extends BoxRenderable {
   private _cursorPos: number;
   private _lastCommittedValue: string;
   private _textNodeId: number;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: InputRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: InputOptions = {}) {
     _inputCounter++;
     super(renderer, {
       ...options,
@@ -82,7 +84,7 @@ export class InputRenderable extends BoxRenderable {
       this._value = newVal;
       this._cursorPos = Math.min(this._cursorPos, newVal.length);
       this._render();
-      this.emit(InputRenderableEvents.INPUT, newVal);
+      this.emit(InputEvents.INPUT, newVal);
     }
   }
 
@@ -132,7 +134,7 @@ export class InputRenderable extends BoxRenderable {
   // ── Focus ─────────────────────────────────────────────────────────────────────
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this._lastCommittedValue = this._value;
     if (this._focusedBackgroundColor) {
@@ -142,16 +144,18 @@ export class InputRenderable extends BoxRenderable {
     }
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    if (!this._focused) return;
     const current = this._value;
     if (current !== this._lastCommittedValue) {
       this._lastCommittedValue = current;
-      this.emit(InputRenderableEvents.CHANGE, current);
+      this.emit(InputEvents.CHANGE, current);
     }
     this._focused = false;
     if (this._focusedBackgroundColor && this._backgroundColor) {
@@ -167,10 +171,10 @@ export class InputRenderable extends BoxRenderable {
 
   // ── Key handling ──────────────────────────────────────────────────────────────
 
-  private _handleKey(key: RawKeyEvent): void {
+  private _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
-    if (key.name === "return" || key.name === "linefeed") {
+    if (key.name === "return" || key.name === "linefeed" || key.name === "enter") {
       this._submit();
       return;
     }
@@ -205,12 +209,12 @@ export class InputRenderable extends BoxRenderable {
           this._value.slice(0, this._cursorPos - 1) + this._value.slice(this._cursorPos);
         this._cursorPos--;
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._value);
+        this.emit(InputEvents.INPUT, this._value);
       } else if (key.name === "delete" && this._cursorPos < this._value.length) {
         this._value =
           this._value.slice(0, this._cursorPos) + this._value.slice(this._cursorPos + 1);
         this._render();
-        this.emit(InputRenderableEvents.INPUT, this._value);
+        this.emit(InputEvents.INPUT, this._value);
       }
       return;
     }
@@ -219,7 +223,7 @@ export class InputRenderable extends BoxRenderable {
     if (key.ctrl && key.name === "k") {
       this._value = this._value.slice(0, this._cursorPos);
       this._render();
-      this.emit(InputRenderableEvents.INPUT, this._value);
+      this.emit(InputEvents.INPUT, this._value);
       return;
     }
 
@@ -228,7 +232,7 @@ export class InputRenderable extends BoxRenderable {
       this._value = this._value.slice(this._cursorPos);
       this._cursorPos = 0;
       this._render();
-      this.emit(InputRenderableEvents.INPUT, this._value);
+      this.emit(InputEvents.INPUT, this._value);
       return;
     }
 
@@ -241,7 +245,7 @@ export class InputRenderable extends BoxRenderable {
             this._value.slice(0, this._cursorPos) + char + this._value.slice(this._cursorPos);
           this._cursorPos++;
           this._render();
-          this.emit(InputRenderableEvents.INPUT, this._value);
+          this.emit(InputEvents.INPUT, this._value);
         }
       }
     }
@@ -252,9 +256,9 @@ export class InputRenderable extends BoxRenderable {
     const current = this._value;
     if (current !== this._lastCommittedValue) {
       this._lastCommittedValue = current;
-      this.emit(InputRenderableEvents.CHANGE, current);
+      this.emit(InputEvents.CHANGE, current);
     }
-    this.emit(InputRenderableEvents.ENTER, current);
+    this.emit(InputEvents.ENTER, current);
   }
 
   private _render(): void {
@@ -262,10 +266,22 @@ export class InputRenderable extends BoxRenderable {
 
     let display: string;
 
-    if (this._value === "" && !this._focused) {
-      // Show placeholder
-      const ph = this._placeholder;
-      display = `\x1b[38;2;${this._placeholderColor.r};${this._placeholderColor.g};${this._placeholderColor.b}m${ph}\x1b[0m`;
+    if (this._value === "") {
+      const ph = this._placeholder !== "" ? this._placeholder : " ";
+      const pc = `${this._placeholderColor.r};${this._placeholderColor.g};${this._placeholderColor.b}`;
+
+      if (this._focused && this._showCursor) {
+        const before = ph.slice(0, this._cursorPos);
+        const cursorChar = ph[this._cursorPos] ?? " ";
+        const after = ph.slice(this._cursorPos + 1);
+        const cc = `${this._cursorColor.r};${this._cursorColor.g};${this._cursorColor.b}`;
+        display =
+          `\x1b[38;2;${pc}m${before}` +
+          `\x1b[38;2;${cc}m\x1b[7m${cursorChar}\x1b[0m` +
+          `\x1b[38;2;${pc}m${after}\x1b[0m`;
+      } else {
+        display = `\x1b[38;2;${pc}m${ph}\x1b[0m`;
+      }
     } else {
       const displayValue = this._password ? "•".repeat(this._value.length) : this._value;
       const textColor = this._focused ? this._focusedTextColor : this._textColor;
@@ -291,7 +307,7 @@ export class InputRenderable extends BoxRenderable {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     try {
       this._renderer.removeNode(this._textNodeId);
     } catch {
@@ -301,4 +317,4 @@ export class InputRenderable extends BoxRenderable {
   }
 }
 
-export { InputRenderableEvents };
+export { InputEvents };

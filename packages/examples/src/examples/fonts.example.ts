@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  FrameBufferRenderable,
+  FrameBuffer,
   type KeyEvent,
   RGBA,
-  TextRenderable,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
@@ -13,9 +13,9 @@ function renderFontToFrameBuffer(_fb: unknown, _opts: Record<string, unknown>): 
 
 let scrollY = 0;
 const contentHeight = 56;
-let buffer: FrameBufferRenderable | null = null;
+let buffer: FrameBuffer | null = null;
 let renderer: CliRenderer | null = null;
-let parentContainer: BoxRenderable | null = null;
+let parentContainer: Box | null = null;
 
 function updateScrollPosition(): void {
   if (!buffer || !renderer) return;
@@ -48,14 +48,14 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#000028");
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "fonts-container",
     zIndex: 15,
     visible: true,
   });
   renderer.root.add(parentContainer);
 
-  buffer = new FrameBufferRenderable(renderer, {
+  buffer = new FrameBuffer(renderer, {
     id: "ascii-demo",
     width: renderer.terminalWidth,
     height: contentHeight,
@@ -196,7 +196,7 @@ export function run(rendererInstance: CliRenderer): void {
     font: "slick",
   });
 
-  const scrollInstructions = new TextRenderable(renderer, {
+  const scrollInstructions = new Text(renderer, {
     id: "scroll-instructions",
     content: "USE J/K OR ARROW KEYS TO SCROLL",
     position: "absolute",

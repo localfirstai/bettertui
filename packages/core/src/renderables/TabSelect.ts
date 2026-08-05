@@ -1,12 +1,12 @@
 /**
- * TabSelectRenderable — a horizontal tab navigation widget.
+ * TabSelect — a horizontal tab navigation widget.
  */
 
-import { RenderableEvents, TabSelectRenderableEvents } from "../lib/renderableEvents";
+import type { KeyEvent } from "../lib/keyHandler";
+import { RenderableEvents, TabSelectEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
 export interface TabOption {
   name: string;
@@ -14,13 +14,15 @@ export interface TabOption {
   value?: unknown;
 }
 
-export interface TabSelectRenderableOptions extends BoxOptions {
+export interface TabSelectOptions extends BoxOptions {
   options?: TabOption[];
   selectedIndex?: number;
   tabWidth?: number;
   showDescription?: boolean;
   showUnderline?: boolean;
   showScrollArrows?: boolean;
+  scrollArrowLeft?: string;
+  scrollArrowRight?: string;
   wrapSelection?: boolean;
   backgroundColor?: ColorInput;
   textColor?: ColorInput;
@@ -31,15 +33,19 @@ export interface TabSelectRenderableOptions extends BoxOptions {
   descriptionColor?: ColorInput;
 }
 
+export type TabSelectRenderableOptions = TabSelectOptions;
+
 let _tabSelectCounter = 0;
 
-export class TabSelectRenderable extends BoxRenderable {
+export class TabSelect extends Box {
   private _tabOptions: TabOption[];
   private _selectedIndex: number;
   private _tabWidth: number;
   private _showDescription: boolean;
   private _showUnderline: boolean;
   private _showScrollArrows: boolean;
+  private _scrollArrowLeft: string;
+  private _scrollArrowRight: string;
   private _wrapSelection: boolean;
   private _textColor: RGBA;
   private _selectedTextColor: RGBA;
@@ -48,9 +54,9 @@ export class TabSelectRenderable extends BoxRenderable {
   private _inactiveUnderlineColor: RGBA;
   private _descriptionColor: RGBA;
   private _contentNodeId: number;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: TabSelectRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: TabSelectOptions = {}) {
     _tabSelectCounter++;
     super(renderer, {
       ...options,
@@ -64,6 +70,8 @@ export class TabSelectRenderable extends BoxRenderable {
     this._showDescription = options.showDescription !== false;
     this._showUnderline = options.showUnderline !== false;
     this._showScrollArrows = options.showScrollArrows !== false;
+    this._scrollArrowLeft = options.scrollArrowLeft ?? "◀";
+    this._scrollArrowRight = options.scrollArrowRight ?? "▶";
     this._wrapSelection = options.wrapSelection ?? false;
     this._textColor = parseColor(options.textColor ?? "#888888");
     this._selectedTextColor = parseColor(options.selectedTextColor ?? "#ffffff");
@@ -128,6 +136,24 @@ export class TabSelectRenderable extends BoxRenderable {
     this._render();
   }
 
+  get scrollArrowLeft(): string {
+    return this._scrollArrowLeft;
+  }
+
+  set scrollArrowLeft(v: string) {
+    this._scrollArrowLeft = v;
+    this._render();
+  }
+
+  get scrollArrowRight(): string {
+    return this._scrollArrowRight;
+  }
+
+  set scrollArrowRight(v: string) {
+    this._scrollArrowRight = v;
+    this._render();
+  }
+
   get wrapSelection(): boolean {
     return this._wrapSelection;
   }
@@ -147,7 +173,7 @@ export class TabSelectRenderable extends BoxRenderable {
   selectCurrent(): void {
     const opt = this.getSelectedOption();
     if (opt) {
-      this.emit(TabSelectRenderableEvents.ITEM_SELECTED, this._selectedIndex, opt);
+      this.emit(TabSelectEvents.ITEM_SELECTED, this._selectedIndex, opt);
     }
   }
 
@@ -163,7 +189,7 @@ export class TabSelectRenderable extends BoxRenderable {
       this._selectedIndex = next;
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(TabSelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(TabSelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
@@ -179,27 +205,29 @@ export class TabSelectRenderable extends BoxRenderable {
       this._selectedIndex = next;
       this._render();
       const opt = this.getSelectedOption();
-      if (opt) this.emit(TabSelectRenderableEvents.SELECTION_CHANGED, next, opt);
+      if (opt) this.emit(TabSelectEvents.SELECTION_CHANGED, next, opt);
     }
   }
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    if (!this._focused) return;
     this._focused = false;
     this._render();
     this.emit(RenderableEvents.BLURRED, this);
   }
 
-  private _handleKey(key: RawKeyEvent): void {
+  private _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
     if (key.name === "left" || (key.shift && key.name === "tab")) {
@@ -218,7 +246,7 @@ export class TabSelectRenderable extends BoxRenderable {
     const tabLine: string[] = [];
 
     if (this._showScrollArrows) {
-      tabLine.push("\x1b[38;2;100;100;100m◀\x1b[0m");
+      tabLine.push(`\x1b[38;2;100;100;100m${this._scrollArrowLeft}\x1b[0m`);
     }
 
     for (let i = 0; i < this._tabOptions.length; i++) {
@@ -239,7 +267,7 @@ export class TabSelectRenderable extends BoxRenderable {
     }
 
     if (this._showScrollArrows) {
-      tabLine.push("\x1b[38;2;100;100;100m▶\x1b[0m");
+      tabLine.push(`\x1b[38;2;100;100;100m${this._scrollArrowRight}\x1b[0m`);
     }
 
     lines.push(tabLine.join(""));
@@ -270,7 +298,7 @@ export class TabSelectRenderable extends BoxRenderable {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     try {
       this._renderer.removeNode(this._contentNodeId);
     } catch {
@@ -280,4 +308,4 @@ export class TabSelectRenderable extends BoxRenderable {
   }
 }
 
-export { TabSelectRenderableEvents };
+export { TabSelectEvents };

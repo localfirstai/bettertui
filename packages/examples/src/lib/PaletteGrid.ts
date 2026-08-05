@@ -1,5 +1,5 @@
 import { RGBA } from "@bettertui/core";
-import { type FrameBufferOptions, FrameBufferRenderable } from "@bettertui/core";
+import { FrameBuffer, type FrameBufferOptions } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
 
 export interface PaletteGridOptions extends Omit<FrameBufferOptions, "width" | "height"> {
@@ -10,7 +10,7 @@ export interface PaletteGridOptions extends Omit<FrameBufferOptions, "width" | "
   maxHeight?: number;
 }
 
-export class PaletteGridRenderable extends FrameBufferRenderable {
+export class PaletteGrid extends FrameBuffer {
   private _colors: string[];
   private _blockWidth: number;
   private _blockHeight: number;

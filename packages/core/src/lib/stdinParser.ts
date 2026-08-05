@@ -1583,18 +1583,34 @@ export class StdinParser {
   private emitKeyOrResponse(protocol: StdinResponseProtocol, sequence: string): void {
     if (sequence === "") return;
 
-    if (protocol !== "unknown") {
+    // "unknown" protocol: always attempt key parsing (original behaviour).
+    if (protocol === "unknown") {
+      const key = parseKeypress(sequence, { useKittyKeyboard: this.useKittyKeyboard });
+      if (!key) {
+        this.events.push({ type: "response", protocol: "unknown", sequence });
+        return;
+      }
+      this.events.push({ type: "key", raw: sequence, key });
+      return;
+    }
+
+    // "csi" protocol: covers plain CSI sequences such as arrow keys, F-keys,
+    // Home/End/PageUp/PageDown, and modifier combos (e.g. \x1b[1;5A).
+    // Try key parsing first; only fall back to a response event when the
+    // sequence is an unrecognised terminal capability reply (empty key name).
+    if (protocol === "csi") {
+      const key = parseKeypress(sequence, { useKittyKeyboard: this.useKittyKeyboard });
+      if (key && key.name !== "") {
+        this.events.push({ type: "key", raw: sequence, key });
+        return;
+      }
+      // Unrecognised CSI: treat as a terminal response (capability reply etc.)
       this.events.push({ type: "response", protocol, sequence });
       return;
     }
 
-    const key = parseKeypress(sequence, { useKittyKeyboard: this.useKittyKeyboard });
-    if (!key) {
-      this.events.push({ type: "response", protocol: "unknown", sequence });
-      return;
-    }
-
-    this.events.push({ type: "key", raw: sequence, key });
+    // All other protocols (cpr, osc, dcs, apc) are terminal responses.
+    this.events.push({ type: "response", protocol, sequence });
   }
 
   private emitOpaqueResponse(protocol: StdinResponseProtocol, bytes: Uint8Array): void {

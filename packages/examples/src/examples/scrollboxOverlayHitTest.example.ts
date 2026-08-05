@@ -1,22 +1,22 @@
 #!/usr/bin/env bun
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
   t,
 } from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let overlay: BoxRenderable | null = null;
-let dialog: BoxRenderable | null = null;
-let scrollBox: ScrollBoxRenderable | null = null;
-let baseStatusText: TextRenderable | null = null;
-let dialogStatusText: TextRenderable | null = null;
+let overlay: Box | null = null;
+let dialog: Box | null = null;
+let scrollBox: ScrollBox | null = null;
+let baseStatusText: Text | null = null;
+let dialogStatusText: Text | null = null;
 let keyHandler: ((key: KeyEvent) => void) | null = null;
 let dialogOpen = false;
 let lastClick = "none";
@@ -46,7 +46,7 @@ const setLastClick = (value: string) => {
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#1a1b26");
 
-  const app = new BoxRenderable(renderer, {
+  const app = new Box(renderer, {
     id: "app",
     flexDirection: "column",
     width: "100%",
@@ -58,22 +58,22 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(app);
 
-  const title = new TextRenderable(renderer, {
+  const title = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Scrollbox Overlay Hit Test"))}`,
   });
   app.add(title);
 
-  const instructions = new TextRenderable(renderer, {
+  const instructions = new Text(renderer, {
     content: t`${fg("#c0caf5")("Press 'd' to toggle dialog, 'esc' to close, 'q' to quit")}`,
   });
   app.add(instructions);
 
-  baseStatusText = new TextRenderable(renderer, {
+  baseStatusText = new Text(renderer, {
     content: t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`,
   });
   app.add(baseStatusText);
 
-  overlay = new BoxRenderable(renderer, {
+  overlay = new Box(renderer, {
     id: "overlay",
     position: "absolute",
     top: 0,
@@ -90,7 +90,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(overlay);
 
-  dialog = new BoxRenderable(renderer, {
+  dialog = new Box(renderer, {
     id: "dialog",
     position: "absolute",
     top: "25%",
@@ -110,22 +110,22 @@ export function run(renderer: CliRenderer): void {
   });
   overlay.add(dialog);
 
-  const dialogTitle = new TextRenderable(renderer, {
+  const dialogTitle = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Dialog"))} ${fg("#565f89")("- scroll, then click outside the list")}`,
   });
   dialog.add(dialogTitle);
 
-  const dialogHint = new TextRenderable(renderer, {
+  const dialogHint = new Text(renderer, {
     content: t`${fg("#c0caf5")("Click the red overlay above/below the dialog to close it")}`,
   });
   dialog.add(dialogHint);
 
-  dialogStatusText = new TextRenderable(renderer, {
+  dialogStatusText = new Text(renderer, {
     content: t`${fg("#9aa5ce")("Last click:")} ${fg("#9ece6a")(lastClick)}`,
   });
   dialog.add(dialogStatusText);
 
-  scrollBox = new ScrollBoxRenderable(renderer, {
+  scrollBox = new ScrollBox(renderer, {
     id: "scrollbox",
     flexGrow: 1,
     scrollY: true,
@@ -145,14 +145,14 @@ export function run(renderer: CliRenderer): void {
   dialog.add(scrollBox);
 
   for (let i = 0; i < 50; i++) {
-    const item = new BoxRenderable(renderer, {
+    const item = new Box(renderer, {
       id: `line-${i}`,
       width: "100%",
       height: 1,
       paddingLeft: 1,
       backgroundColor: i % 2 === 0 ? "#1f2937" : "#111827",
     });
-    const text = new TextRenderable(renderer, {
+    const text = new Text(renderer, {
       content: t`${fg("#cbd5f5")(`Line ${i + 1}: This is some content`)}`,
     });
     item.add(text);

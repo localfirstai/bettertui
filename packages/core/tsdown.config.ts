@@ -8,5 +8,7 @@ export default defineConfig({
   // running tsdown alone does not delete bettertui_engine.node.
   clean: ["dist/*.mjs", "dist/*.mts", "dist/*.d.ts", "dist/*.map"],
   sourcemap: true,
-  external: ["bettertui_engine"],
+  deps: {
+    neverBundle: ["bettertui_engine"],
+  },
 });

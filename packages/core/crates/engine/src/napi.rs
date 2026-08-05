@@ -409,6 +409,14 @@ impl NativeEngine {
     }
 
     #[napi]
+    pub fn set_background_color(&self, color: String) {
+        if let Ok(mut state) = self.state.lock() {
+            let parsed = parse_color(&color);
+            state.renderer.set_background_color(parsed);
+        }
+    }
+
+    #[napi]
     pub fn set_style(&self, id: i64, style_json: String) {
         if let Ok(mut state) = self.state.lock() {
             if let Ok(style) = serde_json::from_str::<StyleJson>(&style_json) {
@@ -1674,19 +1682,6 @@ fn event_to_json(e: &crate::event_bus::Event) -> serde_json::Value {
             "prev_width": re.previous_width,
             "prev_height": re.previous_height,
         }),
-        crate::event_bus::Event::Mouse(me) => serde_json::json!({
-            "type": "mouse",
-            "button": format!("{:?}", me.button).to_lowercase(),
-            "x": me.position.x,
-            "y": me.position.y,
-        }),
-        crate::event_bus::Event::Resize(re) => serde_json::json!({
-            "type": "resize",
-            "width": re.width,
-            "height": re.height,
-            "prev_width": re.previous_width,
-            "prev_height": re.previous_height,
-        }),
         _ => serde_json::json!({"type": "unknown"}),
     }
 }
@@ -1782,18 +1777,77 @@ enum CommandJson {
 }
 
 fn parse_color(s: &str) -> crate::tree::Color {
+    let s = s.trim();
+    if s.is_empty() {
+        return crate::tree::Color::Default;
+    }
+
     if let Some(rgba) = crate::tree::Rgba::from_hex(s) {
+        if rgba.a == 0 {
+            return crate::tree::Color::Default;
+        }
         return rgba.into();
     }
-    match s.to_lowercase().as_str() {
+
+    let lower = s.to_lowercase();
+    if lower == "default" || lower == "transparent" || lower == "none" {
+        return crate::tree::Color::Default;
+    }
+
+    if (lower.starts_with("rgb(") || lower.starts_with("rgba(")) && lower.ends_with(')') {
+        let content = if lower.starts_with("rgba(") { &lower[5..lower.len() - 1] } else { &lower[4..lower.len() - 1] };
+        let parts: Vec<&str> = content.split(',').map(|p| p.trim()).collect();
+        if parts.len() >= 3 {
+            let r = parts[0].parse::<u8>().ok();
+            let g = parts[1].parse::<u8>().ok();
+            let b = parts[2].parse::<u8>().ok();
+            if let (Some(r), Some(g), Some(b)) = (r, g, b) {
+                if parts.len() >= 4 {
+                    if let Some(a) = parts[3].parse::<f32>().ok() {
+                        if a == 0.0 {
+                            return crate::tree::Color::Default;
+                        }
+                    }
+                }
+                return crate::tree::Color::Rgb { r, g, b };
+            }
+        }
+    }
+
+    match lower.as_str() {
         "black" => crate::tree::Color::Named(crate::tree::NamedColor::Black),
         "red" => crate::tree::Color::Named(crate::tree::NamedColor::Red),
         "green" => crate::tree::Color::Named(crate::tree::NamedColor::Green),
         "yellow" => crate::tree::Color::Named(crate::tree::NamedColor::Yellow),
         "blue" => crate::tree::Color::Named(crate::tree::NamedColor::Blue),
-        "magenta" | "purple" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
-        "cyan" | "teal" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
-        "white" | "default" => crate::tree::Color::Named(crate::tree::NamedColor::White),
+        "magenta" | "purple" | "fuchsia" => crate::tree::Color::Named(crate::tree::NamedColor::Magenta),
+        "cyan" | "teal" | "aqua" => crate::tree::Color::Named(crate::tree::NamedColor::Cyan),
+        "white" => crate::tree::Color::Named(crate::tree::NamedColor::White),
+        "gray" | "grey" | "darkgray" | "darkgrey" | "brightblack" | "bright_black" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightBlack)
+        }
+        "brightred" | "bright_red" | "lightred" | "light_red" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightRed)
+        }
+        "brightgreen" | "bright_green" | "lightgreen" | "light_green" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightGreen)
+        }
+        "brightyellow" | "bright_yellow" | "lightyellow" | "light_yellow" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightYellow)
+        }
+        "brightblue" | "bright_blue" | "lightblue" | "light_blue" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightBlue)
+        }
+        "brightmagenta" | "bright_magenta" | "lightmagenta" | "light_magenta" | "pink" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightMagenta)
+        }
+        "brightcyan" | "bright_cyan" | "lightcyan" | "light_cyan" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightCyan)
+        }
+        "brightwhite" | "bright_white" | "silver" | "lightgray" | "lightgrey" => {
+            crate::tree::Color::Named(crate::tree::NamedColor::BrightWhite)
+        }
+        "orange" | "darkorange" => crate::tree::Color::Rgb { r: 255, g: 165, b: 0 },
         _ => crate::tree::Color::Default,
     }
 }
@@ -2027,6 +2081,39 @@ struct StyleJson {
     inverse: Option<bool>,
     #[serde(default)]
     hidden: Option<bool>,
+    #[serde(default, alias = "border")]
+    border_style: Option<String>,
+    #[serde(default, alias = "border_color")]
+    border_color: Option<String>,
+    #[serde(default)]
+    border_width: Option<f32>,
+    #[serde(default, alias = "rounded_corners")]
+    rounded_corners: Option<bool>,
+    #[serde(default)]
+    opacity: Option<f32>,
+    #[serde(default, alias = "text_align")]
+    text_align: Option<String>,
+    #[serde(default, alias = "text_wrap")]
+    #[allow(dead_code)]
+    text_wrap: Option<bool>,
+}
+
+fn parse_border_style(s: &str) -> crate::tree::BorderStyle {
+    match s {
+        "single" | "solid" | "round" | "rounded" | "thick" | "ascii" => crate::tree::BorderStyle::Solid,
+        "double" => crate::tree::BorderStyle::Double,
+        "dashed" => crate::tree::BorderStyle::Dashed,
+        "dotted" => crate::tree::BorderStyle::Dotted,
+        _ => crate::tree::BorderStyle::None,
+    }
+}
+
+fn parse_text_align(s: &str) -> crate::text::TextAlign {
+    match s {
+        "center" => crate::text::TextAlign::Center,
+        "right" => crate::text::TextAlign::Right,
+        _ => crate::text::TextAlign::Left,
+    }
 }
 
 impl StyleJson {
@@ -2041,6 +2128,12 @@ impl StyleJson {
             dim: self.dim,
             inverse: self.inverse,
             hidden: self.hidden,
+            border_style: self.border_style.map(|s| parse_border_style(&s)),
+            border_color: self.border_color.map(|c| parse_color(&c)),
+            border_width: self.border_width.map(|w| w as u16),
+            rounded_corners: self.rounded_corners,
+            opacity: self.opacity.map(|f| (f.clamp(0.0, 1.0) * 255.0) as u8),
+            text_align: self.text_align.map(|s| parse_text_align(&s)),
             ..Default::default()
         }
     }

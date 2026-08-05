@@ -2,48 +2,45 @@
  * Barrel export for all renderable classes.
  */
 
-export { BoxRenderable, RootRenderable, BORDER_CHARS } from "./Box";
+export { Box, Root, BORDER_CHARS } from "./Box";
 export type { BoxOptions, BorderSide, BorderStyleKind } from "./Box";
 
-export { TextRenderable } from "./Text";
+export { Text } from "./Text";
 export type { TextOptions } from "./Text";
 
-export { InputRenderable, InputRenderableEvents } from "./Input";
-export type { InputRenderableOptions } from "./Input";
+export { Input } from "./Input";
+export type { InputOptions, InputRenderableOptions } from "./Input";
 
-export { SelectRenderable, SelectRenderableEvents } from "./Select";
-export type { SelectOption, SelectRenderableOptions } from "./Select";
+export { Select } from "./Select";
+export type { SelectOption, SelectOptions, SelectRenderableOptions } from "./Select";
 
-export {
-  ScrollBoxRenderable,
-  ScrollBarRenderable,
-} from "./ScrollBox";
+export { ScrollBox, ScrollBar } from "./ScrollBox";
 export type { ScrollBoxOptions, ScrollBarOptions } from "./ScrollBox";
 
-export { TextareaRenderable, ExtmarksControllerStub } from "./Textarea";
+export { Textarea, ExtmarksControllerStub } from "./Textarea";
 export type { TextareaOptions, ExtmarksController } from "./Textarea";
 
-export { TabSelectRenderable, TabSelectRenderableEvents } from "./TabSelect";
-export type { TabOption, TabSelectRenderableOptions } from "./TabSelect";
+export { TabSelect } from "./TabSelect";
+export type { TabOption, TabSelectOptions, TabSelectRenderableOptions } from "./TabSelect";
 
-export { SliderRenderable, SliderRenderableEvents } from "./Slider";
-export type { SliderRenderableOptions } from "./Slider";
+export { Slider } from "./Slider";
+export type { SliderOptions, SliderRenderableOptions } from "./Slider";
 
-export { TextNodeRenderable, RootTextNodeRenderable } from "./TextNode";
+export { TextNode, RootTextNode } from "./TextNode";
 export type { TextNodeOptions } from "./TextNode";
 
 export {
-  ASCIIFontRenderable,
-  FrameBufferRenderable,
-  CodeRenderable,
-  DiffRenderable,
-  MarkdownRenderable,
-  TextTableRenderable,
-  LineNumberRenderable,
-  TimeToFirstDrawRenderable,
+  ASCIIFont,
+  FrameBuffer,
+  Code,
+  Diff,
+  Markdown,
+  TextTable,
+  LineNumber,
+  TimeToFirstDraw,
 } from "./Stubs";
 export type {
-  ASCIIFont,
+  ASCIIFontKind,
   ASCIIFontOptions,
   FrameBufferOptions,
   FrameBufferLike,

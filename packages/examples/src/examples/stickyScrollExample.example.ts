@@ -1,26 +1,18 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  TextRenderable,
-  bold,
-  createCliRenderer,
-  fg,
-  t,
-} from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
+import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let scrollBox: ScrollBoxRenderable | null = null;
+let scrollBox: ScrollBox | null = null;
 let renderer: CliRenderer | null = null;
-let mainContainer: BoxRenderable | null = null;
-let instructionsBox: BoxRenderable | null = null;
+let mainContainer: Box | null = null;
+let instructionsBox: Box | null = null;
 let itemCount = 0;
 let animationInterval: ReturnType<typeof setInterval> | null = null;
 
 // Track items with their creation time for animation
 interface AnimatedItem {
-  box: BoxRenderable;
-  text: TextRenderable;
+  box: Box;
+  text: Text;
   createdAt: number;
   originalContent: string;
   normalBgColor: string;
@@ -139,7 +131,7 @@ function addItem(atTop = false) {
   const normalBgColor = itemCount % 2 === 0 ? "#24283b" : "#1f2335";
 
   // Start with flashy colors
-  const box = new BoxRenderable(renderer, {
+  const box = new Box(renderer, {
     id: boxId,
     width: "auto",
     padding: 1,
@@ -160,7 +152,7 @@ ${fg("#565f89")("Added at:")} ${timeString}
 ${fg("#565f89")("Position:")} ${atTop ? "TOP" : "BOTTOM"}
 ${fg("#565f89")("Status:")} ${fg("#9ece6a")("ACTIVE")}`;
 
-  const text = new TextRenderable(renderer, {
+  const text = new Text(renderer, {
     content: flashyContent,
   });
 
@@ -192,7 +184,7 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#0a0a14");
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "main-container",
     flexGrow: 1,
     maxHeight: "100%",
@@ -201,7 +193,7 @@ export function run(rendererInstance: CliRenderer): void {
     backgroundColor: "#0f0f23",
   });
 
-  scrollBox = new ScrollBoxRenderable(renderer, {
+  scrollBox = new ScrollBox(renderer, {
     id: "sticky-scroll-box",
     stickyScroll: true,
     stickyStart: "bottom",
@@ -228,7 +220,7 @@ export function run(rendererInstance: CliRenderer): void {
     },
   });
 
-  instructionsBox = new BoxRenderable(renderer, {
+  instructionsBox = new Box(renderer, {
     id: "instructions",
     width: "100%",
     flexDirection: "column",
@@ -237,15 +229,15 @@ export function run(rendererInstance: CliRenderer): void {
     flexShrink: 0,
   });
 
-  const instructionsText1 = new TextRenderable(renderer, {
+  const instructionsText1 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Sticky Scroll Demo"))} ${fg("#565f89")("-")} ${bold(fg("#9ece6a")("S"))} ${fg("#c0caf5")("Toggle sticky scroll")} ${fg("#565f89")("|")} ${bold(fg("#bb9af7")("T"))} ${fg("#c0caf5")("Add item at top")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("B"))} ${fg("#c0caf5")("Add item at bottom")} ${fg("#565f89")("|")} ${bold(fg("#e0af68")("E"))} ${fg("#c0caf5")("Clear all items")}`,
   });
 
-  const instructionsText2 = new TextRenderable(renderer, {
+  const instructionsText2 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Behavior:"))} ${fg("#c0caf5")("Scroll to top/bottom, then add items to see sticky behavior")}`,
   });
 
-  const instructionsText3 = new TextRenderable(renderer, {
+  const instructionsText3 = new Text(renderer, {
     content: t`${bold(fg("#7aa2f7")("Status:"))} ${fg("#c0caf5")("Sticky Scroll:")} ${scrollBox.stickyScroll ? fg("#9ece6a")("ENABLED") : fg("#f7768e")("DISABLED")}`,
   });
 
@@ -274,7 +266,7 @@ export function run(rendererInstance: CliRenderer): void {
 
       // Update status display
       if (instructionsBox && instructionsBox.getChildren().length >= 3) {
-        const statusText = instructionsBox.getChildren()[2] as TextRenderable;
+        const statusText = instructionsBox.getChildren()[2] as Text;
         statusText.content = t`${bold(fg("#7aa2f7")("Status:"))} ${fg("#c0caf5")("Sticky Scroll:")} ${scrollBox.stickyScroll ? fg("#9ece6a")("ENABLED") : fg("#f7768e")("DISABLED")}`;
       }
     } else if (key.name === "t" && scrollBox) {

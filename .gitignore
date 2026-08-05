@@ -8,6 +8,7 @@ dist/
 build/
 out/
 target/
+.pnpm-store/
 
 # Turbo
 .turbo/

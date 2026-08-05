@@ -8,15 +8,15 @@ import {
   AudioStreamError,
   type AudioStreamMetadata,
   type AudioStreamStats,
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  InputRenderable,
-  InputRenderableEvents,
+  Input,
+  InputEvents,
   type KeyEvent,
   type OptimizedBuffer,
   RGBA,
+  Text,
   TextAttributes,
-  TextRenderable,
   bold,
   createCliRenderer,
   fg,
@@ -112,14 +112,14 @@ function writeBufferRgb(
 
 class AudioStreamingDemo {
   private readonly renderer: CliRenderer;
-  private readonly root: BoxRenderable;
-  private readonly urlInput: InputRenderable;
+  private readonly root: Box;
+  private readonly urlInput: Input;
   private readonly stationButtons: Array<{
-    box: BoxRenderable;
-    label: TextRenderable;
+    box: Box;
+    label: Text;
   }> = [];
-  private readonly statsText: TextRenderable;
-  private readonly controlsText: TextRenderable;
+  private readonly statsText: Text;
+  private readonly controlsText: Text;
   private readonly audio: Audio;
   private readonly fullGroup: AudioGroup;
   private readonly dimGroup: AudioGroup;
@@ -162,7 +162,7 @@ class AudioStreamingDemo {
       this.fftWindowSum += windowValue;
     }
 
-    this.root = new BoxRenderable(renderer, {
+    this.root = new Box(renderer, {
       id: "audio-streaming-demo-root",
       width: "100%",
       height: "100%",
@@ -171,7 +171,7 @@ class AudioStreamingDemo {
       backgroundColor: PALETTE.background,
     });
 
-    const inputPanel = new BoxRenderable(renderer, {
+    const inputPanel = new Box(renderer, {
       id: "audio-streaming-demo-input-panel",
       title: " LIVE MP3 STREAM / URL + station presets ",
       width: "100%",
@@ -186,7 +186,7 @@ class AudioStreamingDemo {
       paddingRight: 1,
       flexShrink: 0,
     });
-    this.urlInput = new InputRenderable(renderer, {
+    this.urlInput = new Input(renderer, {
       id: "audio-streaming-demo-url",
       width: "100%",
       flexShrink: 0,
@@ -202,7 +202,7 @@ class AudioStreamingDemo {
     });
     inputPanel.add(this.urlInput);
 
-    const stationRow = new BoxRenderable(renderer, {
+    const stationRow = new Box(renderer, {
       id: "audio-streaming-demo-stations",
       width: "100%",
       height: 3,
@@ -211,7 +211,7 @@ class AudioStreamingDemo {
       flexShrink: 0,
     });
     for (const [index, station] of DEMO_STATIONS.entries()) {
-      const box = new BoxRenderable(renderer, {
+      const box = new Box(renderer, {
         id: `audio-streaming-demo-station-${index + 1}`,
         border: true,
         borderStyle: "single",
@@ -227,7 +227,7 @@ class AudioStreamingDemo {
           this.selectStation(index);
         },
       });
-      const label = new TextRenderable(renderer, {
+      const label = new Text(renderer, {
         id: `audio-streaming-demo-station-label-${index + 1}`,
         content: `${index + 1} ${station.name}`,
         fg: index === this.selectedStationIndex ? PALETTE.signal : PALETTE.muted,
@@ -240,7 +240,7 @@ class AudioStreamingDemo {
     inputPanel.add(stationRow);
     this.root.add(inputPanel);
 
-    const body = new BoxRenderable(renderer, {
+    const body = new Box(renderer, {
       id: "audio-streaming-demo-body",
       width: "100%",
       flexDirection: "row",
@@ -251,7 +251,7 @@ class AudioStreamingDemo {
     });
 
     const demo = this;
-    const spectrumPanel = new BoxRenderable(renderer, {
+    const spectrumPanel = new Box(renderer, {
       id: "audio-streaming-demo-spectrum-panel",
       title: " Master mix spectrum ",
       border: true,
@@ -268,7 +268,7 @@ class AudioStreamingDemo {
       },
     });
 
-    const statsPanel = new BoxRenderable(renderer, {
+    const statsPanel = new Box(renderer, {
       id: "audio-streaming-demo-stats-panel",
       title: " Stream telemetry ",
       border: true,
@@ -281,7 +281,7 @@ class AudioStreamingDemo {
       flexBasis: 0,
       minWidth: 40,
     });
-    this.statsText = new TextRenderable(renderer, {
+    this.statsText = new Text(renderer, {
       id: "audio-streaming-demo-stats",
       content: "",
       fg: PALETTE.text,
@@ -294,7 +294,7 @@ class AudioStreamingDemo {
     body.add(statsPanel);
     this.root.add(body);
 
-    const controlsPanel = new BoxRenderable(renderer, {
+    const controlsPanel = new Box(renderer, {
       id: "audio-streaming-demo-controls-panel",
       title: " Controls ",
       width: "100%",
@@ -307,7 +307,7 @@ class AudioStreamingDemo {
       paddingRight: 1,
       flexShrink: 0,
     });
-    this.controlsText = new TextRenderable(renderer, {
+    this.controlsText = new Text(renderer, {
       id: "audio-streaming-demo-controls",
       content: "",
       fg: PALETTE.muted,
@@ -343,7 +343,7 @@ class AudioStreamingDemo {
       this.statusMessage = "Audio mixer could not start";
     }
 
-    this.urlInput.on(InputRenderableEvents.ENTER, (value: string) => {
+    this.urlInput.on(InputEvents.ENTER, (value: string) => {
       this.urlInput.blur();
       this.refreshControls();
       void this.connect(value);
@@ -706,7 +706,7 @@ class AudioStreamingDemo {
     }
   }
 
-  private renderSpectrum(buffer: OptimizedBuffer, panel: BoxRenderable): void {
+  private renderSpectrum(buffer: OptimizedBuffer, panel: Box): void {
     const innerX = panel.x + 1;
     const innerY = panel.y + 1;
     const innerWidth = Math.max(0, panel.width - 2);

@@ -5,18 +5,18 @@ import { readFile, stat, writeFile } from "node:fs/promises";
  * Demonstrates automatic text wrapping when the wrap option is enabled
  */
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type MouseEvent,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
   t,
 } from "@bettertui/core";
-import { TextNodeRenderable } from "@bettertui/core";
-import { ScrollBoxRenderable } from "@bettertui/core";
-import { InputRenderable, InputRenderableEvents } from "@bettertui/core";
+import { TextNode } from "@bettertui/core";
+import { ScrollBox } from "@bettertui/core";
+import { Input, InputEvents } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 /** Extended mouse event type matching the older API used in this example. */
@@ -27,15 +27,15 @@ type AppMouseEvent = MouseEvent & {
   stopPropagation(): void;
 };
 
-let mainContainer: BoxRenderable | null = null;
-let contentBox: BoxRenderable | null = null;
-let textBox: ScrollBoxRenderable | null = null;
-let textRenderable: TextRenderable | null = null;
-let instructionsBox: BoxRenderable | null = null;
-let instructionsText1: TextRenderable | null = null;
-let instructionsText2: TextRenderable | null = null;
-let filePathInput: InputRenderable | null = null;
-let fileInputContainer: BoxRenderable | null = null;
+let mainContainer: Box | null = null;
+let contentBox: Box | null = null;
+let textBox: ScrollBox | null = null;
+let textRenderable: Text | null = null;
+let instructionsBox: Box | null = null;
+let instructionsText1: Text | null = null;
+let instructionsText2: Text | null = null;
+let filePathInput: Input | null = null;
+let fileInputContainer: Box | null = null;
 let isInputVisible = false;
 
 // Resize state
@@ -277,133 +277,129 @@ function handleGlobalMouse(event: unknown): void {
 }
 
 // Create styled demo text using TextNodes
-function createDemoText(): TextNodeRenderable {
-  const titleNode = TextNodeRenderable.fromString("🎨 BetterTUI Text Wrapping Demo", {
+function createDemoText(): TextNode {
+  const titleNode = TextNode.fromString("🎨 BetterTUI Text Wrapping Demo", {
     fg: "#7aa2f7",
     attributes: 1, // bold
   });
 
-  const introNode = TextNodeRenderable.fromString("\n\nWelcome to the ", {
+  const introNode = TextNode.fromString("\n\nWelcome to the ", {
     fg: "#c0caf5",
   });
 
-  const highlightNode = TextNodeRenderable.fromString("text wrapping demonstration", {
+  const highlightNode = TextNode.fromString("text wrapping demonstration", {
     fg: "#9ece6a",
     attributes: 1, // bold
   });
 
-  const introContNode = TextNodeRenderable.fromString(
+  const introContNode = TextNode.fromString(
     ". This example showcases how BetterTUI handles automatic text wrapping with styled content using TextNodes.",
     {
       fg: "#c0caf5",
     },
   );
 
-  const featuresTitle = TextNodeRenderable.fromString("\n\n✨ Key Features:", {
+  const featuresTitle = TextNode.fromString("\n\n✨ Key Features:", {
     fg: "#bb9af7",
     attributes: 1,
   });
 
-  const feature1Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Word-based wrapping", {
+  const feature1Node = TextNode.fromNodes([
+    TextNode.fromString("\n• ", { fg: "#9ece6a" }),
+    TextNode.fromString("Word-based wrapping", {
       fg: "#c0caf5",
       attributes: 1,
     }),
-    TextNodeRenderable.fromString(" - Preserves word boundaries when breaking lines 📖", {
+    TextNode.fromString(" - Preserves word boundaries when breaking lines 📖", {
       fg: "#565f89",
     }),
   ]);
 
-  const feature2Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Character-based wrapping", {
+  const feature2Node = TextNode.fromNodes([
+    TextNode.fromString("\n• ", { fg: "#9ece6a" }),
+    TextNode.fromString("Character-based wrapping", {
       fg: "#c0caf5",
       attributes: 1,
     }),
-    TextNodeRenderable.fromString(" - Breaks at any character for precise control ✂️", {
+    TextNode.fromString(" - Breaks at any character for precise control ✂️", {
       fg: "#565f89",
     }),
   ]);
 
-  const feature3Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Dynamic resizing", {
+  const feature3Node = TextNode.fromNodes([
+    TextNode.fromString("\n• ", { fg: "#9ece6a" }),
+    TextNode.fromString("Dynamic resizing", {
       fg: "#c0caf5",
       attributes: 1,
     }),
-    TextNodeRenderable.fromString(
-      " - Text reflows automatically as container dimensions change 🔄",
-      { fg: "#565f89" },
-    ),
+    TextNode.fromString(" - Text reflows automatically as container dimensions change 🔄", {
+      fg: "#565f89",
+    }),
   ]);
 
-  const feature4Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n• ", { fg: "#9ece6a" }),
-    TextNodeRenderable.fromString("Rich styling", {
+  const feature4Node = TextNode.fromNodes([
+    TextNode.fromString("\n• ", { fg: "#9ece6a" }),
+    TextNode.fromString("Rich styling", {
       fg: "#c0caf5",
       attributes: 1,
     }),
-    TextNodeRenderable.fromString(
-      " - Individual text segments can have different colors and attributes 🎨",
-      {
-        fg: "#565f89",
-      },
-    ),
+    TextNode.fromString(" - Individual text segments can have different colors and attributes 🎨", {
+      fg: "#565f89",
+    }),
   ]);
 
-  const demoTitle = TextNodeRenderable.fromString("\n\n🔧 How It Works:", {
+  const demoTitle = TextNode.fromString("\n\n🔧 How It Works:", {
     fg: "#bb9af7",
     attributes: 1,
   });
 
-  const demoText = TextNodeRenderable.fromString(
+  const demoText = TextNode.fromString(
     "\n\nTextNodes are created with specific styling and then composed together to form rich, formatted text content. Each node can contain different foreground colors, background colors, and text attributes like ",
     {
       fg: "#c0caf5",
     },
   );
 
-  const boldExample = TextNodeRenderable.fromString("bold", {
+  const boldExample = TextNode.fromString("bold", {
     fg: "#f7768e",
     attributes: 1,
   });
 
-  const demoCont = TextNodeRenderable.fromString(", ", {
+  const demoCont = TextNode.fromString(", ", {
     fg: "#c0caf5",
   });
 
-  const italicExample = TextNodeRenderable.fromString("italic", {
+  const italicExample = TextNode.fromString("italic", {
     fg: "#f7768e",
     attributes: 2,
   });
 
-  const demoCont2 = TextNodeRenderable.fromString(", and ", {
+  const demoCont2 = TextNode.fromString(", and ", {
     fg: "#c0caf5",
   });
 
-  const underlineExample = TextNodeRenderable.fromString("underline", {
+  const underlineExample = TextNode.fromString("underline", {
     fg: "#f7768e",
     attributes: 4,
   });
 
-  const demoCont3 = TextNodeRenderable.fromString(
+  const demoCont3 = TextNode.fromString(
     ". When the container is resized, the text automatically reflows to fit the new dimensions while maintaining the specified wrapping mode.",
     {
       fg: "#c0caf5",
     },
   );
 
-  const codeTitle = TextNodeRenderable.fromString("\n\n💻 Example Code: 🖥️", {
+  const codeTitle = TextNode.fromString("\n\n💻 Example Code: 🖥️", {
     fg: "#bb9af7",
     attributes: 1,
   });
 
-  const codeBlock = TextNodeRenderable.fromString(
-    `\n\nconst styledText = TextNodeRenderable.fromNodes([
-  TextNodeRenderable.fromString("Hello ", { fg: "#9ece6a" }),
-  TextNodeRenderable.fromString("World", { fg: "#7aa2f7", attributes: 1 }),
-  TextNodeRenderable.fromString("!", { fg: "#f7768e" })
+  const codeBlock = TextNode.fromString(
+    `\n\nconst styledText = TextNode.fromNodes([
+  TextNode.fromString("Hello ", { fg: "#9ece6a" }),
+  TextNode.fromString("World", { fg: "#7aa2f7", attributes: 1 }),
+  TextNode.fromString("!", { fg: "#f7768e" })
 ]);
 
 textRenderable.add(styledText);`,
@@ -413,52 +409,52 @@ textRenderable.add(styledText);`,
     },
   );
 
-  const interactionTitle = TextNodeRenderable.fromString("\n\n🎮 Try It Out:", {
+  const interactionTitle = TextNode.fromString("\n\n🎮 Try It Out:", {
     fg: "#bb9af7",
     attributes: 1,
   });
 
-  const interactionText = TextNodeRenderable.fromString(
+  const interactionText = TextNode.fromString(
     "\n\nDrag the borders or corners of this text box to resize it and watch how the text wrapping adapts in real-time. Press ",
     {
       fg: "#c0caf5",
     },
   );
 
-  const keyW = TextNodeRenderable.fromString("W", {
+  const keyW = TextNode.fromString("W", {
     fg: "#9ece6a",
     attributes: 1,
   });
 
-  const interactionCont = TextNodeRenderable.fromString(" to toggle wrapping on/off, ", {
+  const interactionCont = TextNode.fromString(" to toggle wrapping on/off, ", {
     fg: "#c0caf5",
   });
 
-  const keyM = TextNodeRenderable.fromString("M", {
+  const keyM = TextNode.fromString("M", {
     fg: "#bb9af7",
     attributes: 1,
   });
 
-  const interactionCont2 = TextNodeRenderable.fromString(
+  const interactionCont2 = TextNode.fromString(
     " to switch between word and character wrapping modes, and ",
     {
       fg: "#c0caf5",
     },
   );
 
-  const keyD = TextNodeRenderable.fromString("D", {
+  const keyD = TextNode.fromString("D", {
     fg: "#f7768e",
     attributes: 1,
   });
 
-  const interactionCont3 = TextNodeRenderable.fromString(
+  const interactionCont3 = TextNode.fromString(
     " to download and display the Babylon.js library source code. The text will reflow instantly to demonstrate the different wrapping behaviors.",
     {
       fg: "#c0caf5",
     },
   );
 
-  const conclusionNode = TextNodeRenderable.fromString(
+  const conclusionNode = TextNode.fromString(
     "\n\n🚀 This demonstrates the power of BetterTUI's flexible text rendering system, combining rich styling with dynamic layout capabilities! ✨🎨📝",
     {
       fg: "#9ece6a",
@@ -466,7 +462,7 @@ textRenderable.add(styledText);`,
     },
   );
 
-  return TextNodeRenderable.fromNodes([
+  return TextNode.fromNodes([
     titleNode,
     introNode,
     highlightNode,
@@ -505,7 +501,7 @@ export function run(renderer: CliRenderer): void {
   (renderer.root as unknown as { onMouse: (event: unknown) => void }).onMouse = handleGlobalMouse;
 
   // Create main container (no border, just layout)
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "mainContainer",
     flexGrow: 1,
     maxHeight: "100%",
@@ -516,7 +512,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(mainContainer);
 
   // Create content box for main demonstration area
-  contentBox = new BoxRenderable(renderer, {
+  contentBox = new Box(renderer, {
     id: "content-box",
     flexGrow: 1,
     backgroundColor: "#1e1e2e",
@@ -525,7 +521,7 @@ export function run(renderer: CliRenderer): void {
     padding: 1,
   });
 
-  textBox = new ScrollBoxRenderable(renderer, {
+  textBox = new ScrollBox(renderer, {
     id: "text-box",
     position: "absolute",
     left: 2,
@@ -539,7 +535,7 @@ export function run(renderer: CliRenderer): void {
   });
   contentBox.add(textBox);
 
-  textRenderable = new TextRenderable(renderer, {
+  textRenderable = new Text(renderer, {
     id: "text-renderable",
     fg: "#c0caf5",
     wrapMode: "word", // Enable text wrapping with word mode
@@ -548,7 +544,7 @@ export function run(renderer: CliRenderer): void {
   textBox.add(textRenderable);
 
   // Create instructions box with border
-  instructionsBox = new BoxRenderable(renderer, {
+  instructionsBox = new Box(renderer, {
     id: "instructions-box",
     width: "100%",
     flexDirection: "column",
@@ -559,12 +555,12 @@ export function run(renderer: CliRenderer): void {
   });
 
   // Instructions with styled text
-  instructionsText1 = new TextRenderable(renderer, {
+  instructionsText1 = new Text(renderer, {
     id: "instructions-1",
     content: t`${bold(fg("#7aa2f7")("Text Wrap Demo"))} ${fg("#565f89")("-")} ${bold(fg("#9ece6a")("W"))} ${fg("#c0caf5")("Cycle wrap mode")} ${fg("#565f89")("|")} ${bold(fg("#bb9af7")("M"))} ${fg("#c0caf5")("Toggle char/word")} ${fg("#565f89")("|")} ${bold(fg("#f7768e")("D"))} ${fg("#c0caf5")("Download Babylon.js")} ${fg("#565f89")("|")} ${bold(fg("#e0af68")("L"))} ${fg("#c0caf5")("Load file")} ${fg("#565f89")("|")} ${bold(fg("#ff9e64")("Drag"))} ${fg("#c0caf5")("borders/corners to resize")}`,
   });
 
-  instructionsText2 = new TextRenderable(renderer, {
+  instructionsText2 = new Text(renderer, {
     id: "instructions-2",
     content: t`${bold(fg("#7aa2f7")("Status:"))} ${fg("#c0caf5")("Wrap mode:")} ${fg("#bb9af7")("word")}`,
   });
@@ -573,7 +569,7 @@ export function run(renderer: CliRenderer): void {
   instructionsBox.add(instructionsText2);
 
   // Create file path input container (hidden by default, centered with border)
-  fileInputContainer = new BoxRenderable(renderer, {
+  fileInputContainer = new Box(renderer, {
     id: "file-input-container",
     position: "absolute",
     left: "50%",
@@ -592,7 +588,7 @@ export function run(renderer: CliRenderer): void {
   mainContainer.add(fileInputContainer);
 
   // Create file path input
-  filePathInput = new InputRenderable(renderer, {
+  filePathInput = new Input(renderer, {
     id: "file-path-input",
     width: "100%",
     height: "100%",
@@ -614,7 +610,7 @@ export function run(renderer: CliRenderer): void {
   fileInputContainer.add(filePathInput);
 
   // Handle file path input submission
-  filePathInput.on(InputRenderableEvents.ENTER, async (value: string) => {
+  filePathInput.on(InputEvents.ENTER, async (value: string) => {
     if (!value.trim()) {
       hideFileInput();
       return;
@@ -641,7 +637,7 @@ export function run(renderer: CliRenderer): void {
         textRenderable.clear();
 
         // Add header text node
-        const headerNode = TextNodeRenderable.fromString(
+        const headerNode = TextNode.fromString(
           `// Loaded from: ${filePath}\n// Size: ${fileSizeMB} MB\n\n`,
           {
             fg: "#9ece6a",
@@ -669,12 +665,9 @@ export function run(renderer: CliRenderer): void {
     } catch (error) {
       // Show error in text renderable
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      const errorTextNode = TextNodeRenderable.fromString(
-        `ERROR: ${errorMessage}\n\nPress L to try again.`,
-        {
-          fg: "#f7768e",
-        },
-      );
+      const errorTextNode = TextNode.fromString(`ERROR: ${errorMessage}\n\nPress L to try again.`, {
+        fg: "#f7768e",
+      });
 
       if (textRenderable) {
         textRenderable.clear();
@@ -755,8 +748,8 @@ export function run(renderer: CliRenderer): void {
           // Load it back from disk
           const loadedContent = await readFile(filePath, "utf8");
 
-          // Create a new TextNodeRenderable with the downloaded content
-          const babylonTextNode = TextNodeRenderable.fromString(
+          // Create a new TextNode with the downloaded content
+          const babylonTextNode = TextNode.fromString(
             `// Downloaded Babylon.js (${loadedContent.length.toLocaleString()} chars, ${fileSizeMB} MB)\n// Stored at: ${filePath}\n\n${loadedContent}`,
             {
               fg: "#c0caf5",

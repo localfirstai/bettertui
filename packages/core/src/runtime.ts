@@ -107,7 +107,9 @@ export class CommandRuntime {
         cb(delta);
       }
       this.flush();
-      this.frameHandle = this.clock.setTimeout(tick, this.frameIntervalMs);
+      if (this.running) {
+        this.frameHandle = this.clock.setTimeout(tick, this.frameIntervalMs);
+      }
     };
     tick();
   }

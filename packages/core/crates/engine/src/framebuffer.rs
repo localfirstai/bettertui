@@ -347,9 +347,14 @@ impl FrameBuffer {
 
     /// Clears all cells to their default state.
     pub fn clear(&mut self) {
+        self.clear_with_bg(Color::Default);
+    }
+
+    /// Clears all cells to spaces with the given background color.
+    pub fn clear_with_bg(&mut self, bg: Color) {
         self.cells.chars.fill(' ');
         self.cells.fg.fill(Color::Default);
-        self.cells.bg.fill(Color::Default);
+        self.cells.bg.fill(bg);
         self.cells.underline_color.fill(Color::Default);
         self.cells.attrs.fill(CellAttributes::empty());
         self.cells.link_id.fill(0);
@@ -414,7 +419,9 @@ impl FrameBuffer {
             let idx = self.index(x, y);
             self.cells.chars[idx] = cell.ch;
             self.cells.fg[idx] = cell.fg;
-            self.cells.bg[idx] = cell.bg;
+            if cell.bg != Color::Default || self.cells.bg[idx] == Color::Default {
+                self.cells.bg[idx] = cell.bg;
+            }
             self.cells.underline_color[idx] = cell.underline_color;
             self.cells.attrs[idx] = cell.attributes;
             self.cells.link_id[idx] = cell.link_id;

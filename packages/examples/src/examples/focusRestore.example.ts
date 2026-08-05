@@ -10,17 +10,11 @@
 //   5. Try minimizing and restoring the window too
 //   6. Press Escape to return to menu, Ctrl+C to exit
 
-import {
-  BoxRenderable,
-  type CliRenderer,
-  RGBA,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, RGBA, Text, createCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let container: BoxRenderable | null = null;
-let mouseArea: BoxRenderable | null = null;
+let container: Box | null = null;
+let mouseArea: Box | null = null;
 
 let mouseX = 0;
 let mouseY = 0;
@@ -42,12 +36,12 @@ const logEntries: Array<{ text: string; color: RGBA }> = [];
 const maxLogEntries = 20;
 
 // Renderable references for updates
-let focusStatus: TextRenderable | null = null;
-let mouseStatus: TextRenderable | null = null;
-let countersStatus: TextRenderable | null = null;
-let timestampStatus: TextRenderable | null = null;
-let logBox: BoxRenderable | null = null;
-const logRenderables: TextRenderable[] = [];
+let focusStatus: Text | null = null;
+let mouseStatus: Text | null = null;
+let countersStatus: Text | null = null;
+let timestampStatus: Text | null = null;
+let logBox: Box | null = null;
+const logRenderables: Text[] = [];
 
 function ts(): string {
   return new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -71,7 +65,7 @@ function addLogLine(renderer: CliRenderer, text: string, color: RGBA) {
   // Rebuild from entries
   for (let i = 0; i < logEntries.length; i++) {
     const entry = logEntries[i];
-    const line = new TextRenderable(renderer, {
+    const line = new Text(renderer, {
       id: `focus-demo-log-${i}`,
       content: entry.text,
       fg: entry.color,
@@ -116,7 +110,7 @@ export function run(renderer: CliRenderer): void {
   focused = true;
   logEntries.length = 0;
 
-  container = new BoxRenderable(renderer, {
+  container = new Box(renderer, {
     id: "focus-demo-main",
     flexDirection: "column",
     padding: 1,
@@ -124,7 +118,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(container);
 
   // Title
-  const title = new TextRenderable(renderer, {
+  const title = new Text(renderer, {
     id: "focus-demo-title",
     content: "Focus Restore Demo - Mouse Tracking + Terminal Mode Restore",
     fg: RGBA.fromInts(72, 209, 204),
@@ -133,7 +127,7 @@ export function run(renderer: CliRenderer): void {
   container.add(title);
 
   // Instructions
-  const instructions = new TextRenderable(renderer, {
+  const instructions = new Text(renderer, {
     id: "focus-demo-instructions",
     content:
       "Move mouse to see tracking. Alt-tab away and back. Mouse should resume.\n" +
@@ -144,7 +138,7 @@ export function run(renderer: CliRenderer): void {
   container.add(instructions);
 
   // Status box
-  const statusBox = new BoxRenderable(renderer, {
+  const statusBox = new Box(renderer, {
     id: "focus-demo-status-box",
     border: true,
     borderColor: "#4ECDC4",
@@ -157,7 +151,7 @@ export function run(renderer: CliRenderer): void {
   });
   container.add(statusBox);
 
-  focusStatus = new TextRenderable(renderer, {
+  focusStatus = new Text(renderer, {
     id: "focus-demo-focus-status",
     content: "Focus: YES  (terminal modes active)",
     fg: RGBA.fromInts(126, 231, 135),
@@ -165,7 +159,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(focusStatus);
 
-  mouseStatus = new TextRenderable(renderer, {
+  mouseStatus = new Text(renderer, {
     id: "focus-demo-mouse-status",
     content: "Mouse: (0, 0) | Events: 0",
     fg: RGBA.fromInts(165, 214, 255),
@@ -173,7 +167,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(mouseStatus);
 
-  countersStatus = new TextRenderable(renderer, {
+  countersStatus = new Text(renderer, {
     id: "focus-demo-counters",
     content: "Focus-in: 0 | Focus-out: 0 | Mode restores: 0",
     fg: RGBA.fromInts(210, 168, 255),
@@ -181,7 +175,7 @@ export function run(renderer: CliRenderer): void {
   });
   statusBox.add(countersStatus);
 
-  timestampStatus = new TextRenderable(renderer, {
+  timestampStatus = new Text(renderer, {
     id: "focus-demo-timestamps",
     content: "Last focus: -- | Last blur: -- | Last mouse: --",
     fg: RGBA.fromInts(139, 148, 158),
@@ -190,7 +184,7 @@ export function run(renderer: CliRenderer): void {
   statusBox.add(timestampStatus);
 
   // Event log box
-  logBox = new BoxRenderable(renderer, {
+  logBox = new Box(renderer, {
     id: "focus-demo-log-box",
     border: true,
     borderColor: "#6BCF7F",
@@ -205,7 +199,7 @@ export function run(renderer: CliRenderer): void {
   container.add(logBox);
 
   // Mouse tracking area (covers whole screen, behind everything)
-  mouseArea = new BoxRenderable(renderer, {
+  mouseArea = new Box(renderer, {
     id: "focus-demo-mouse-area",
     position: "absolute",
     left: 0,

@@ -1,10 +1,10 @@
 /**
- * TextRenderable — displays styled text content backed by a TextNode tree.
+ * Text — displays styled text content backed by a TextNode tree.
  *
  * Architecture:
- * - Owns a `RootTextNodeRenderable` that acts as the root of a composable
+ * - Owns a `RootTextNode` that acts as the root of a composable
  *   styled-text tree.
- * - `add(node)` attaches a TextNodeRenderable to the root
+ * - `add(node)` attaches a TextNode to the root
  *   (`demoText.add(containerNode)` API — no ANSI round-trip workaround needed).
  * - `onLifecyclePass()` is called once per frame by the `CliRenderer` lifecycle
  *   loop; it checks `rootTextNode.isDirty`, gathers chunks, serialises to ANSI,
@@ -22,8 +22,8 @@
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
 import { StyledText, styledTextToAnsi } from "../lib/styledText";
 import type { CliRenderer } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
-import { RootTextNodeRenderable, type TextNodeRenderable } from "./TextNode";
+import { Box, type BoxOptions } from "./Box";
+import { RootTextNode, type TextNode } from "./TextNode";
 
 export interface TextOptions extends BoxOptions {
   content?: StyledText | string;
@@ -48,7 +48,7 @@ export interface TextOptions extends BoxOptions {
 
 let _textCounter = 0;
 
-export class TextRenderable extends BoxRenderable {
+export class Text extends Box {
   private _fg: RGBA | null = null;
   private _bg: RGBA | null = null;
   private _textNodeId: number;
@@ -60,7 +60,7 @@ export class TextRenderable extends BoxRenderable {
    * lives here. The lifecycle pass reads `isDirty` and, when true, gathers
    * chunks from this tree and pushes them to the engine.
    */
-  public readonly rootTextNode: RootTextNodeRenderable;
+  public readonly rootTextNode: RootTextNode;
 
   /**
    * Bound lifecycle pass function, registered with the renderer so it is
@@ -87,7 +87,7 @@ export class TextRenderable extends BoxRenderable {
     renderer.appendChild(this._nodeId, this._textNodeId);
 
     // Create the root text node — marks itself dirty on any descendant change
-    this.rootTextNode = new RootTextNodeRenderable({}, () => {
+    this.rootTextNode = new RootTextNode({}, () => {
       // This callback fires when ANY descendant mutates; the lifecycle pass
       // will handle the actual re-push to the engine.
     });
@@ -110,24 +110,22 @@ export class TextRenderable extends BoxRenderable {
   // ── Content API ───────────────────────────────────────────────────────────
 
   /**
-   * Attach a TextNodeRenderable to the root text node.
+   * Attach a TextNode to the root text node.
    *
    * This is the canonical BetterTUI API (`demoText.add(containerNode)`).
    *
-   * NOTE: Named `addNode` rather than `add` because `TextRenderable` extends
-   * `BoxRenderable` whose `add(BoxRenderable)` has a different signature. The
-   * textNode.example was updated to use `addNode` in place of the workaround
-   * `demoText.content = containerNode.toString()`.
+   * NOTE: Named `addNode` rather than `add` because `Text` extends
+   * `Box` whose `add(Box)` has a different signature.
    */
-  addNode(node: TextNodeRenderable, index?: number): void {
+  addNode(node: TextNode, index?: number): void {
     this.rootTextNode.add(node, index);
     // isDirty is propagated through the tree; lifecycle pass will sync.
   }
 
   /**
-   * Convenience: remove a previously added TextNodeRenderable from the root.
+   * Convenience: remove a previously added TextNode from the root.
    */
-  removeNode(node: TextNodeRenderable): void {
+  removeNode(node: TextNode): void {
     this.rootTextNode.remove(node);
   }
 

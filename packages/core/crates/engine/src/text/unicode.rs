@@ -3,10 +3,64 @@ use unicode_width::UnicodeWidthChar;
 use unicode_width::UnicodeWidthStr;
 
 pub fn display_width(s: &str) -> usize {
-    s.width()
+    if !s.contains('\x1b') {
+        return s.width();
+    }
+    let mut width = 0;
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        if bytes[i] == 0x1b {
+            i += 1;
+            if i < len && bytes[i] == b'[' {
+                i += 1;
+                while i < len {
+                    let b = bytes[i];
+                    i += 1;
+                    if (0x40..=0x7e).contains(&b) {
+                        break;
+                    }
+                }
+            } else if i < len && bytes[i] == b']' {
+                i += 1;
+                while i < len {
+                    if bytes[i] == 0x07 {
+                        i += 1;
+                        break;
+                    }
+                    if bytes[i] == 0x1b && i + 1 < len && bytes[i + 1] == b'\\' {
+                        i += 2;
+                        break;
+                    }
+                    i += 1;
+                }
+            }
+            continue;
+        }
+
+        if bytes[i] >= 0x20 && bytes[i] <= 0x7e {
+            width += 1;
+            i += 1;
+            continue;
+        }
+
+        if let Some(c) = s[i..].chars().next() {
+            width += c.width().unwrap_or(0);
+            i += c.len_utf8();
+        } else {
+            i += 1;
+        }
+    }
+
+    width
 }
 
 pub fn grapheme_width(g: &str) -> usize {
+    if g.contains('\x1b') {
+        return display_width(g);
+    }
     g.width()
 }
 
@@ -135,6 +189,12 @@ mod tests {
     fn ascii_width() {
         assert_eq!(display_width("hello"), 5);
         assert_eq!(display_width(""), 0);
+    }
+
+    #[test]
+    fn ansi_width() {
+        assert_eq!(display_width("\x1b[38;2;255;255;255mhello\x1b[0m"), 5);
+        assert_eq!(display_width("\x1b[1m\x1b[31mWORLD\x1b[0m"), 5);
     }
 
     #[test]

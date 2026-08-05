@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   cyan,
@@ -12,13 +12,13 @@ import {
   underline,
   yellow,
 } from "@bettertui/core";
-import { TextNodeRenderable } from "@bettertui/core";
+import { TextNode } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let mainContainer: BoxRenderable | null = null;
-let demoText: TextRenderable | null = null;
-let instructionsText: TextRenderable | null = null;
-let statusText: TextRenderable | null = null;
+let mainContainer: Box | null = null;
+let demoText: Text | null = null;
+let instructionsText: Text | null = null;
+let statusText: Text | null = null;
 let updateInterval: ReturnType<typeof setInterval> | null = null;
 
 function clearUpdateInterval(): void {
@@ -31,7 +31,7 @@ function clearUpdateInterval(): void {
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("#0d1117");
 
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "mainContainer",
     width: 88,
     height: 32,
@@ -45,7 +45,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(mainContainer);
 
   // Create the main demo text area
-  demoText = new TextRenderable(renderer, {
+  demoText = new Text(renderer, {
     id: "demoText",
     width: 60,
     height: 20,
@@ -55,7 +55,7 @@ export function run(renderer: CliRenderer): void {
   mainContainer.add(demoText);
 
   // Create instructions
-  instructionsText = new TextRenderable(renderer, {
+  instructionsText = new Text(renderer, {
     id: "instructions",
     content: t`${bold(cyan("TextNode Demo"))}
 ${yellow("•")} Press ${green("1-4")} to see different examples
@@ -69,7 +69,7 @@ ${underline("Current:")} Example 1 - Basic TextNode Creation`,
   mainContainer.add(instructionsText);
 
   // Create status area
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "status",
     content: "Ready - Press 1-4 for examples",
     width: 84,
@@ -110,37 +110,37 @@ function showExample1(): void {
   demoText.clear();
 
   // Example 1: Basic TextNode Creation
-  const titleNode = TextNodeRenderable.fromString("Basic TextNode Demo", {
+  const titleNode = TextNode.fromString("Basic TextNode Demo", {
     fg: "#58a6ff",
     attributes: 1, // bold
   });
 
-  const subtitleNode = TextNodeRenderable.fromString(
+  const subtitleNode = TextNode.fromString(
     "\n\nCreating individual TextNodes with different styles:",
     {
       fg: "#8b949e",
     },
   );
 
-  const redNode = TextNodeRenderable.fromString("\n\nRed Text", {
+  const redNode = TextNode.fromString("\n\nRed Text", {
     fg: "#ff7b72",
   });
 
-  const blueNode = TextNodeRenderable.fromString(" | Blue Text", {
+  const blueNode = TextNode.fromString(" | Blue Text", {
     fg: "#79c0ff",
   });
 
-  const greenNode = TextNodeRenderable.fromString(" | Green Text", {
+  const greenNode = TextNode.fromString(" | Green Text", {
     fg: "#56d364",
   });
 
-  const yellowNode = TextNodeRenderable.fromString(" | Yellow Background", {
+  const yellowNode = TextNode.fromString(" | Yellow Background", {
     fg: "#000000",
     bg: "#d29922",
   });
 
   // Create a container node that holds all the styled nodes
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNode.fromNodes([
     titleNode,
     subtitleNode,
     redNode,
@@ -149,7 +149,7 @@ function showExample1(): void {
     yellowNode,
   ]);
 
-  // Add to TextRenderable
+  // Add to Text
   demoText.addNode(containerNode);
 
   updateInstructions(
@@ -168,20 +168,17 @@ function showExample2(): void {
   demoText.clear();
 
   // Example 2: Nested TextNode Composition
-  const titleNode = TextNodeRenderable.fromString("Nested Composition Demo", {
+  const titleNode = TextNode.fromString("Nested Composition Demo", {
     fg: "#58a6ff",
     attributes: 1, // bold
   });
 
-  const introNode = TextNodeRenderable.fromString(
-    "\n\nBuilding complex text by nesting TextNodes:",
-    {
-      fg: "#8b949e",
-    },
-  );
+  const introNode = TextNode.fromString("\n\nBuilding complex text by nesting TextNodes:", {
+    fg: "#8b949e",
+  });
 
   // Create nested structure
-  const codeBlock = TextNodeRenderable.fromString(
+  const codeBlock = TextNode.fromString(
     "\n\nfunction calculateTotal(items) {\n  return items.reduce((sum, item) => {\n    return sum + item.price;\n  }, 0);\n}",
     {
       fg: "#f0f6fc",
@@ -189,33 +186,33 @@ function showExample2(): void {
     },
   );
 
-  const commentNode = TextNodeRenderable.fromString("\n\n// This is a nested comment", {
+  const commentNode = TextNode.fromString("\n\n// This is a nested comment", {
     fg: "#8b949e",
   });
 
-  const highlightNode = TextNodeRenderable.fromString(" with ", {
+  const highlightNode = TextNode.fromString(" with ", {
     fg: "#79c0ff",
     attributes: 1, // bold
   });
 
-  const highlightNode2 = TextNodeRenderable.fromString("highlighting", {
+  const highlightNode2 = TextNode.fromString("highlighting", {
     fg: "#ff7b72",
     attributes: 4, // underline
   });
 
   // Create a sentence that combines multiple styled parts
-  const sentenceNode = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n\nThis demonstrates ", { fg: "#c9d1d9" }),
+  const sentenceNode = TextNode.fromNodes([
+    TextNode.fromString("\n\nThis demonstrates ", { fg: "#c9d1d9" }),
     highlightNode,
-    TextNodeRenderable.fromString("and ", { fg: "#c9d1d9" }),
+    TextNode.fromString("and ", { fg: "#c9d1d9" }),
     highlightNode2,
-    TextNodeRenderable.fromString(" within the same text flow.", {
+    TextNode.fromString(" within the same text flow.", {
       fg: "#c9d1d9",
     }),
   ]);
 
   // Create the main container
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNode.fromNodes([
     titleNode,
     introNode,
     codeBlock,
@@ -241,30 +238,30 @@ function showExample3(): void {
   demoText.clear();
 
   // Example 3: Dynamic TextNode Updates
-  const titleNode = TextNodeRenderable.fromString("Dynamic Updates Demo", {
+  const titleNode = TextNode.fromString("Dynamic Updates Demo", {
     fg: "#58a6ff",
     attributes: 1, // bold
   });
 
-  const introNode = TextNodeRenderable.fromString("\n\nTextNodes can be updated dynamically:", {
+  const introNode = TextNode.fromString("\n\nTextNodes can be updated dynamically:", {
     fg: "#8b949e",
   });
 
-  const counterNode = TextNodeRenderable.fromString("\n\nCounter: 0", {
+  const counterNode = TextNode.fromString("\n\nCounter: 0", {
     fg: "#56d364",
     attributes: 1, // bold
   });
 
-  const statusNode = TextNodeRenderable.fromString("\n\nStatus: Idle", {
+  const statusNode = TextNode.fromString("\n\nStatus: Idle", {
     fg: "#79c0ff",
   });
 
-  const progressNode = TextNodeRenderable.fromString("\n\nProgress: [          ]", {
+  const progressNode = TextNode.fromString("\n\nProgress: [          ]", {
     fg: "#d29922",
   });
 
   // Store references to nodes that will be updated
-  const containerNode = TextNodeRenderable.fromNodes([
+  const containerNode = TextNode.fromNodes([
     titleNode,
     introNode,
     counterNode,
@@ -318,58 +315,55 @@ function showExample4(): void {
   demoText.clear();
 
   // Example 4: Complex Document Structure
-  const titleNode = TextNodeRenderable.fromString("Complex Document Demo", {
+  const titleNode = TextNode.fromString("Complex Document Demo", {
     fg: "#58a6ff",
     attributes: 1, // bold
   });
 
-  const introNode = TextNodeRenderable.fromString(
-    "\n\nBuilding a complete document with TextNodes:",
-    {
-      fg: "#8b949e",
-    },
-  );
+  const introNode = TextNode.fromString("\n\nBuilding a complete document with TextNodes:", {
+    fg: "#8b949e",
+  });
 
   // Document sections
-  const headerNode = TextNodeRenderable.fromString("\n\n📋 Project Status Report", {
+  const headerNode = TextNode.fromString("\n\n📋 Project Status Report", {
     fg: "#ffffff",
     attributes: 1, // bold
   });
 
-  const section1Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n\n🚀 ", { fg: "#56d364" }),
-    TextNodeRenderable.fromString("Progress", { fg: "#58a6ff", attributes: 1 }),
-    TextNodeRenderable.fromString(": 85% complete", { fg: "#c9d1d9" }),
+  const section1Node = TextNode.fromNodes([
+    TextNode.fromString("\n\n🚀 ", { fg: "#56d364" }),
+    TextNode.fromString("Progress", { fg: "#58a6ff", attributes: 1 }),
+    TextNode.fromString(": 85% complete", { fg: "#c9d1d9" }),
   ]);
 
-  const section2Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n\n⚠️  ", { fg: "#d29922" }),
-    TextNodeRenderable.fromString("Issues", { fg: "#ff7b72", attributes: 1 }),
-    TextNodeRenderable.fromString(": 2 minor issues found", { fg: "#c9d1d9" }),
+  const section2Node = TextNode.fromNodes([
+    TextNode.fromString("\n\n⚠️  ", { fg: "#d29922" }),
+    TextNode.fromString("Issues", { fg: "#ff7b72", attributes: 1 }),
+    TextNode.fromString(": 2 minor issues found", { fg: "#c9d1d9" }),
   ]);
 
-  const section3Node = TextNodeRenderable.fromNodes([
-    TextNodeRenderable.fromString("\n\n✅ ", { fg: "#56d364" }),
-    TextNodeRenderable.fromString("Next Steps", {
+  const section3Node = TextNode.fromNodes([
+    TextNode.fromString("\n\n✅ ", { fg: "#56d364" }),
+    TextNode.fromString("Next Steps", {
       fg: "#58a6ff",
       attributes: 1,
     }),
-    TextNodeRenderable.fromString(": Code review and testing", {
+    TextNode.fromString(": Code review and testing", {
       fg: "#c9d1d9",
     }),
   ]);
 
-  const footerNode = TextNodeRenderable.fromString("\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", {
+  const footerNode = TextNode.fromString("\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", {
     fg: "#30363d",
   });
 
-  const signatureNode = TextNodeRenderable.fromString("\nGenerated by BetterTUI TextNode Demo", {
+  const signatureNode = TextNode.fromString("\nGenerated by BetterTUI TextNode Demo", {
     fg: "#8b949e",
     attributes: 2, // italic
   });
 
   // Combine all sections into the final document
-  const documentNode = TextNodeRenderable.fromNodes([
+  const documentNode = TextNode.fromNodes([
     titleNode,
     introNode,
     headerNode,

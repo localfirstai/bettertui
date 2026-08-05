@@ -1,15 +1,15 @@
 import {
   type BorderSide,
-  BoxRenderable,
+  Box,
   RGBA,
   type RawKeyEvent,
-  TextRenderable,
+  Text,
   createCliRenderer,
   parseColor,
 } from "@bettertui/core";
 import type { CliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
-import { TabControllerRenderable } from "../lib/tabController.js";
+import { TabController } from "../lib/tabController.js";
 
 // ── Local stubs for missing @bettertui/core exports ────────────────────────
 
@@ -89,14 +89,14 @@ function rgbToHex(color: RGBA): string {
 }
 // ────────────────────────────────────────────────────────────────────────────
 
-let globalTabController: TabControllerRenderable | null = null;
+let globalTabController: TabController | null = null;
 let globalKeyboardHandler: ((key: RawKeyEvent) => void) | null = null;
 
 export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor("#000028");
 
-  const tabController = new TabControllerRenderable("main-tabController", renderer, {
+  const tabController = new TabController("main-tabController", renderer, {
     position: "absolute",
     left: 0,
     top: 0,
@@ -105,7 +105,7 @@ export function run(renderer: CliRenderer): void {
     zIndex: 0,
   } as never);
   globalTabController = tabController;
-  renderer.root.add(tabController as unknown as BoxRenderable);
+  renderer.root.add(tabController as unknown as Box);
 
   // Tab: Text & Attributes
   const wheelRadius = 7;
@@ -116,8 +116,8 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Text & Attributes",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const textTitle = new TextRenderable(renderer, {
+      const g = tabGroup as Box;
+      const textTitle = new Text(renderer, {
         id: "text-title",
         content: "Text Styling & Color Gradients",
         position: "absolute",
@@ -129,7 +129,7 @@ export function run(renderer: CliRenderer): void {
       g.add(textTitle);
 
       // Text attributes
-      const attrBold = new TextRenderable(renderer, {
+      const attrBold = new Text(renderer, {
         id: "attr-bold",
         content: "Bold Text",
         position: "absolute",
@@ -140,7 +140,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(attrBold);
 
-      const attrItalic = new TextRenderable(renderer, {
+      const attrItalic = new Text(renderer, {
         id: "attr-italic",
         content: "Italic Text",
         position: "absolute",
@@ -151,7 +151,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(attrItalic);
 
-      const attrUnderline = new TextRenderable(renderer, {
+      const attrUnderline = new Text(renderer, {
         id: "attr-underline",
         content: "Underlined Text",
         position: "absolute",
@@ -162,7 +162,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(attrUnderline);
 
-      const attrDim = new TextRenderable(renderer, {
+      const attrDim = new Text(renderer, {
         id: "attr-dim",
         content: "Dim Text",
         position: "absolute",
@@ -173,7 +173,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(attrDim);
 
-      const attrCombined = new TextRenderable(renderer, {
+      const attrCombined = new Text(renderer, {
         id: "attr-combined",
         content: "Bold + Italic + Underline",
         position: "absolute",
@@ -185,7 +185,7 @@ export function run(renderer: CliRenderer): void {
       g.add(attrCombined);
 
       // Color gradient
-      const gradientTitle = new TextRenderable(renderer, {
+      const gradientTitle = new Text(renderer, {
         id: "gradient-title",
         content: "Rainbow Gradient:",
         position: "absolute",
@@ -201,7 +201,7 @@ export function run(renderer: CliRenderer): void {
         const color = hsvToRgb(hue, 1, 1);
         const hexColor = rgbToHex(color);
 
-        const gradientPixel = new TextRenderable(renderer, {
+        const gradientPixel = new Text(renderer, {
           id: `gradient-${i}`,
           content: "█",
           position: "absolute",
@@ -214,7 +214,7 @@ export function run(renderer: CliRenderer): void {
       }
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
+      const g = tabGroup as Box;
       // Animate the rotating color wheel
       const time = Date.now() / 1000;
       const rotationSpeed = 45; // degrees per second
@@ -240,12 +240,12 @@ export function run(renderer: CliRenderer): void {
             const pixelId = `wheel-${x}-${y}`;
             newWheelPixels.add(pixelId);
 
-            const existingPixel = g.getRenderable(pixelId) as TextRenderable;
+            const existingPixel = g.getRenderable(pixelId) as Text;
             if (existingPixel) {
               existingPixel.setPosition({ left: x, top: y });
               existingPixel.fg = color;
             } else {
-              const wheelPixel = new TextRenderable(renderer, {
+              const wheelPixel = new Text(renderer, {
                 id: pixelId,
                 content: "█",
                 position: "absolute",
@@ -288,9 +288,9 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Basics",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const title = new TextRenderable(renderer, {
-        id: "opentui-title",
+      const g = tabGroup as Box;
+      const title = new Text(renderer, {
+        id: "bettertui-title",
         content: "Basic CLI Renderer Demo",
         position: "absolute",
         left: 10,
@@ -300,7 +300,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(title);
 
-      const box1 = new BoxRenderable(renderer, {
+      const box1 = new Box(renderer, {
         id: "box1",
         position: "absolute",
         left: 10,
@@ -315,7 +315,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(box1);
 
-      const box1Title = new TextRenderable(renderer, {
+      const box1Title = new Text(renderer, {
         id: "box1-title",
         content: "Simple Box",
         position: "absolute",
@@ -326,7 +326,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(box1Title);
 
-      const box2 = new BoxRenderable(renderer, {
+      const box2 = new Box(renderer, {
         id: "box2",
         position: "absolute",
         left: 35,
@@ -341,7 +341,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(box2);
 
-      const box2Title = new TextRenderable(renderer, {
+      const box2Title = new Text(renderer, {
         id: "box2-title",
         content: "Double Border Box",
         position: "absolute",
@@ -352,7 +352,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(box2Title);
 
-      const description = new TextRenderable(renderer, {
+      const description = new Text(renderer, {
         id: "description",
         content: "This tab demonstrates basic box and text rendering with different border styles.",
         position: "absolute",
@@ -363,7 +363,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(description);
 
-      const cursorInfo = new TextRenderable(renderer, {
+      const cursorInfo = new Text(renderer, {
         id: "cursor-info",
         content: "Cursor: (0,0) - Style: block",
         position: "absolute",
@@ -375,7 +375,7 @@ export function run(renderer: CliRenderer): void {
       g.add(cursorInfo);
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
+      const g = tabGroup as Box;
       // Update cursor position (make it move in a small circle)
       const cursorTime = Date.now() / 1000;
       const cursorX = 15 + Math.floor(3 * Math.cos(cursorTime));
@@ -415,7 +415,7 @@ export function run(renderer: CliRenderer): void {
 
       // setCursorStyle/setCursorPosition not available — just display info
       // Display cursor position and style info
-      const cursorInfo = g.getRenderable("cursor-info") as TextRenderable;
+      const cursorInfo = g.getRenderable("cursor-info") as Text;
       if (cursorInfo) {
         cursorInfo.content = `Cursor: (${cursorX},${cursorY}) - Style: ${cursorStyle}${cursorBlinking ? " (blinking)" : ""}`;
       }
@@ -433,8 +433,8 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Borders",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const borderTitle = new TextRenderable(renderer, {
+      const g = tabGroup as Box;
+      const borderTitle = new Text(renderer, {
         id: "border-title",
         content: "Border Styles & Partial Borders",
         position: "absolute",
@@ -446,7 +446,7 @@ export function run(renderer: CliRenderer): void {
       g.add(borderTitle);
 
       // Different border styles
-      const singleBox = new BoxRenderable(renderer, {
+      const singleBox = new Box(renderer, {
         id: "single-box",
         position: "absolute",
         left: 10,
@@ -460,7 +460,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(singleBox);
-      const singleLabel = new TextRenderable(renderer, {
+      const singleLabel = new Text(renderer, {
         id: "single-label",
         content: "Single",
         position: "absolute",
@@ -471,7 +471,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(singleLabel);
 
-      const doubleBox = new BoxRenderable(renderer, {
+      const doubleBox = new Box(renderer, {
         id: "double-box",
         position: "absolute",
         left: 30,
@@ -485,7 +485,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(doubleBox);
-      const doubleLabel = new TextRenderable(renderer, {
+      const doubleLabel = new Text(renderer, {
         id: "double-label",
         content: "Double",
         position: "absolute",
@@ -496,7 +496,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(doubleLabel);
 
-      const roundedBox = new BoxRenderable(renderer, {
+      const roundedBox = new Box(renderer, {
         id: "rounded-box",
         position: "absolute",
         left: 50,
@@ -510,7 +510,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(roundedBox);
-      const roundedLabel = new TextRenderable(renderer, {
+      const roundedLabel = new Text(renderer, {
         id: "rounded-label",
         content: "Rounded",
         position: "absolute",
@@ -522,7 +522,7 @@ export function run(renderer: CliRenderer): void {
       g.add(roundedLabel);
 
       // Partial borders
-      const partialTitle = new TextRenderable(renderer, {
+      const partialTitle = new Text(renderer, {
         id: "partial-title",
         content: "Partial Borders:",
         position: "absolute",
@@ -533,7 +533,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(partialTitle);
 
-      const partialLeft = new BoxRenderable(renderer, {
+      const partialLeft = new Box(renderer, {
         id: "partial-left",
         position: "absolute",
         left: 10,
@@ -547,7 +547,7 @@ export function run(renderer: CliRenderer): void {
         border: ["left"],
       });
       g.add(partialLeft);
-      const partialLeftLabel = new TextRenderable(renderer, {
+      const partialLeftLabel = new Text(renderer, {
         id: "partial-left-label",
         content: "Left Only",
         position: "absolute",
@@ -558,7 +558,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(partialLeftLabel);
 
-      const partialAnimated = new BoxRenderable(renderer, {
+      const partialAnimated = new Box(renderer, {
         id: "partial-animated",
         position: "absolute",
         left: 30,
@@ -572,7 +572,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(partialAnimated);
-      const partialAnimatedLabel = new TextRenderable(renderer, {
+      const partialAnimatedLabel = new Text(renderer, {
         id: "partial-animated-label",
         content: "Animated Borders",
         position: "absolute",
@@ -583,7 +583,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(partialAnimatedLabel);
 
-      const partialPhase = new TextRenderable(renderer, {
+      const partialPhase = new Text(renderer, {
         id: "partial-phase",
         content: "Phase: 1/8",
         position: "absolute",
@@ -594,7 +594,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(partialPhase);
 
-      const customBorderTitle = new TextRenderable(renderer, {
+      const customBorderTitle = new Text(renderer, {
         id: "custom-border-title",
         content: "Custom Border Characters:",
         position: "absolute",
@@ -606,7 +606,7 @@ export function run(renderer: CliRenderer): void {
       g.add(customBorderTitle);
 
       // Note: customBorderChars not available in BoxOptions — using default borders
-      const asciiBox = new BoxRenderable(renderer, {
+      const asciiBox = new Box(renderer, {
         id: "ascii-box",
         position: "absolute",
         left: 10,
@@ -620,7 +620,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(asciiBox);
-      const asciiLabel = new TextRenderable(renderer, {
+      const asciiLabel = new Text(renderer, {
         id: "ascii-label",
         content: "ASCII Border",
         position: "absolute",
@@ -631,7 +631,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(asciiLabel);
 
-      const blockBox = new BoxRenderable(renderer, {
+      const blockBox = new Box(renderer, {
         id: "block-box",
         position: "absolute",
         left: 30,
@@ -645,7 +645,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(blockBox);
-      const blockLabel = new TextRenderable(renderer, {
+      const blockLabel = new Text(renderer, {
         id: "block-label",
         content: "Block Border",
         position: "absolute",
@@ -656,7 +656,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(blockLabel);
 
-      const starBox = new BoxRenderable(renderer, {
+      const starBox = new Box(renderer, {
         id: "star-box",
         position: "absolute",
         left: 50,
@@ -670,7 +670,7 @@ export function run(renderer: CliRenderer): void {
         border: true,
       });
       g.add(starBox);
-      const starLabel = new TextRenderable(renderer, {
+      const starLabel = new Text(renderer, {
         id: "star-label",
         content: "Star Border",
         position: "absolute",
@@ -682,7 +682,7 @@ export function run(renderer: CliRenderer): void {
       g.add(starLabel);
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
+      const g = tabGroup as Box;
       // Animate partial borders
       const time = Date.now() / 1000;
       const phase = Math.floor(time % 8);
@@ -697,13 +697,13 @@ export function run(renderer: CliRenderer): void {
           left: [4, 5, 6, 7].includes(phase),
         };
 
-        const partialAnimatedBox = g.getRenderable("partial-animated") as BoxRenderable;
+        const partialAnimatedBox = g.getRenderable("partial-animated") as Box;
         if (partialAnimatedBox) {
           partialAnimatedBox.border = getBorderFromSides(borderSides);
           partialAnimatedBox.borderStyle = "single";
         }
 
-        const partialPhaseText = g.getRenderable("partial-phase") as TextRenderable;
+        const partialPhaseText = g.getRenderable("partial-phase") as Text;
         if (partialPhaseText) {
           partialPhaseText.content = `Phase: ${phase + 1}/8`;
         }
@@ -718,8 +718,8 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Animation",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const animTitle = new TextRenderable(renderer, {
+      const g = tabGroup as Box;
+      const animTitle = new Text(renderer, {
         id: "anim-title",
         content: "Animation Demonstrations",
         position: "absolute",
@@ -730,7 +730,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(animTitle);
 
-      const movingText = new TextRenderable(renderer, {
+      const movingText = new Text(renderer, {
         id: "moving-text",
         content: "Moving Text",
         position: "absolute",
@@ -741,7 +741,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(movingText);
 
-      const animatedBox = new BoxRenderable(renderer, {
+      const animatedBox = new Box(renderer, {
         id: "animated-box",
         position: "absolute",
         left: animPosition,
@@ -756,7 +756,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(animatedBox);
 
-      const colorBox = new BoxRenderable(renderer, {
+      const colorBox = new Box(renderer, {
         id: "color-box",
         position: "absolute",
         left: 50,
@@ -771,7 +771,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(colorBox);
 
-      const colorBoxTitle = new TextRenderable(renderer, {
+      const colorBoxTitle = new Text(renderer, {
         id: "color-box-title",
         content: "Animated Color",
         position: "absolute",
@@ -783,7 +783,7 @@ export function run(renderer: CliRenderer): void {
       g.add(colorBoxTitle);
     },
     update: (deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
+      const g = tabGroup as Box;
       // Animate moving elements
       const deltaTime = Math.min(deltaMs / 1000, 0.1);
       animPosition += animSpeed * animDirection * deltaTime;
@@ -798,12 +798,12 @@ export function run(renderer: CliRenderer): void {
 
       const x = Math.round(animPosition);
 
-      const movingText = g.getRenderable("moving-text") as TextRenderable;
+      const movingText = g.getRenderable("moving-text") as Text;
       if (movingText) {
         movingText.setPosition({ left: x, top: 8 });
       }
 
-      const animatedBox = g.getRenderable("animated-box") as BoxRenderable;
+      const animatedBox = g.getRenderable("animated-box") as Box;
       if (animatedBox) {
         animatedBox.setPosition({ left: x, top: 10 });
       }
@@ -814,7 +814,7 @@ export function run(renderer: CliRenderer): void {
       const color = hsvToRgb(hue, 1, 0.7);
       const hexColor = rgbToHex(color);
 
-      const colorBox = g.getRenderable("color-box") as BoxRenderable;
+      const colorBox = g.getRenderable("color-box") as Box;
       if (colorBox) {
         colorBox.backgroundColor = parseColor(hexColor);
       }
@@ -825,8 +825,8 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Titles",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const layoutTitle = new TextRenderable(renderer, {
+      const g = tabGroup as Box;
+      const layoutTitle = new Text(renderer, {
         id: "layout-title",
         content: "Box Titles",
         position: "absolute",
@@ -838,7 +838,7 @@ export function run(renderer: CliRenderer): void {
       g.add(layoutTitle);
 
       // Boxes with titles and different alignments
-      const titledLeft = new BoxRenderable(renderer, {
+      const titledLeft = new Box(renderer, {
         id: "titled-left",
         position: "absolute",
         left: 10,
@@ -855,7 +855,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(titledLeft);
 
-      const titledCenter = new BoxRenderable(renderer, {
+      const titledCenter = new Box(renderer, {
         id: "titled-center",
         position: "absolute",
         left: 35,
@@ -872,7 +872,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(titledCenter);
 
-      const titledRight = new BoxRenderable(renderer, {
+      const titledRight = new Box(renderer, {
         id: "titled-right",
         position: "absolute",
         left: 60,
@@ -902,8 +902,8 @@ export function run(renderer: CliRenderer): void {
   tabController.addTab({
     title: "Interactive",
     init: (tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
-      const interactiveTitle = new TextRenderable(renderer, {
+      const g = tabGroup as Box;
+      const interactiveTitle = new Text(renderer, {
         id: "interactive-title",
         content: "Interactive Controls",
         position: "absolute",
@@ -914,7 +914,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(interactiveTitle);
 
-      const interactiveBorder = new BoxRenderable(renderer, {
+      const interactiveBorder = new Box(renderer, {
         id: "interactive-border",
         position: "absolute",
         left: 15,
@@ -929,7 +929,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(interactiveBorder);
 
-      const interactiveLabel = new TextRenderable(renderer, {
+      const interactiveLabel = new Text(renderer, {
         id: "interactive-label",
         content: "Press keys to toggle borders",
         position: "absolute",
@@ -940,7 +940,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(interactiveLabel);
 
-      const interactiveInstructions = new TextRenderable(renderer, {
+      const interactiveInstructions = new Text(renderer, {
         id: "interactive-instructions",
         content: "Keyboard Controls:",
         position: "absolute",
@@ -951,7 +951,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(interactiveInstructions);
 
-      const keyT = new TextRenderable(renderer, {
+      const keyT = new Text(renderer, {
         id: "key-t",
         content: "T - Toggle top border",
         position: "absolute",
@@ -962,7 +962,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(keyT);
 
-      const keyR = new TextRenderable(renderer, {
+      const keyR = new Text(renderer, {
         id: "key-r",
         content: "R - Toggle right border",
         position: "absolute",
@@ -973,7 +973,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(keyR);
 
-      const keyB = new TextRenderable(renderer, {
+      const keyB = new Text(renderer, {
         id: "key-b",
         content: "B - Toggle bottom border",
         position: "absolute",
@@ -984,7 +984,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(keyB);
 
-      const keyL = new TextRenderable(renderer, {
+      const keyL = new Text(renderer, {
         id: "key-l",
         content: "L - Toggle left border",
         position: "absolute",
@@ -995,7 +995,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(keyL);
 
-      const borderState = new TextRenderable(renderer, {
+      const borderState = new Text(renderer, {
         id: "border-state",
         content: "Active borders: All",
         position: "absolute",
@@ -1007,9 +1007,9 @@ export function run(renderer: CliRenderer): void {
       g.add(borderState);
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as BoxRenderable;
+      const g = tabGroup as Box;
       // Update interactive border state
-      const interactiveBorder = g.getRenderable("interactive-border") as BoxRenderable;
+      const interactiveBorder = g.getRenderable("interactive-border") as Box;
       if (interactiveBorder) {
         interactiveBorder.border = getBorderFromSides(interactiveBorderSides);
       }
@@ -1021,7 +1021,7 @@ export function run(renderer: CliRenderer): void {
       if (interactiveBorderSides.left) borderDesc += "Left ";
       if (!borderDesc) borderDesc = "None";
 
-      const borderState = g.getRenderable("border-state") as TextRenderable;
+      const borderState = g.getRenderable("border-state") as Text;
       if (borderState) {
         borderState.content = `Active borders: ${borderDesc}`;
       }
@@ -1057,7 +1057,7 @@ export function destroy(renderer: CliRenderer): void {
   }
 
   if (globalTabController) {
-    renderer.root.remove(globalTabController as unknown as BoxRenderable);
+    renderer.root.remove(globalTabController as unknown as Box);
     globalTabController = null;
   }
 

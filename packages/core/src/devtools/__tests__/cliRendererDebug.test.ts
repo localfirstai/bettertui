@@ -16,7 +16,7 @@ describe("CliRenderer debug wiring", () => {
     const r = new CliRenderer({ width: 40, height: 12 });
     expect(r.devtools.enabled).toBe(false);
     expect(r.debugEnabled).toBe(false);
-    r.stop();
+    r.destroy();
   });
 
   it("enables DevTools + overlay with debug: true", () => {
@@ -25,7 +25,7 @@ describe("CliRenderer debug wiring", () => {
     expect(r.debugEnabled).toBe(true);
     // debug: true starts with the performance panel visible.
     expect(r.devtools.isVisible(DebugPanel.Performance)).toBe(true);
-    r.stop();
+    r.destroy();
   });
 
   it("accepts a DevToolsOptions object", () => {
@@ -33,7 +33,7 @@ describe("CliRenderer debug wiring", () => {
     expect(r.devtools.enabled).toBe(true);
     // A configured (non-bare-true) debug option does not auto-show a panel.
     expect(r.devtools.visiblePanels.size).toBe(0);
-    r.stop();
+    r.destroy();
   });
 
   it("records frames into the performance tracker when enabled", () => {
@@ -42,7 +42,7 @@ describe("CliRenderer debug wiring", () => {
     r.render();
     r.render();
     expect(r.devtools.performance.count).toBeGreaterThanOrEqual(2);
-    r.stop();
+    r.destroy();
   });
 
   it("does not record frames when debug is disabled", () => {
@@ -50,7 +50,7 @@ describe("CliRenderer debug wiring", () => {
     const r = new CliRenderer({ width: 40, height: 12 });
     r.render();
     expect(r.devtools.performance.count).toBe(0);
-    r.stop();
+    r.destroy();
   });
 
   it("toggleDebugOverlay flips panel visibility", () => {
@@ -61,14 +61,14 @@ describe("CliRenderer debug wiring", () => {
     expect(r.devtools.isVisible(DebugPanel.Events)).toBe(true);
     r.toggleDebugOverlay(DebugPanel.Events);
     expect(r.devtools.isVisible(DebugPanel.Events)).toBe(false);
-    r.stop();
+    r.destroy();
   });
 
   it("toggleDebugOverlay is a no-op when debug is disabled", () => {
     const r = new CliRenderer({ width: 40, height: 12 });
     expect(() => r.toggleDebugOverlay()).not.toThrow();
     expect(r.devtools.visiblePanels.size).toBe(0);
-    r.stop();
+    r.destroy();
   });
 
   it("honors the BTUI_DEBUG env var", () => {
@@ -79,7 +79,7 @@ describe("CliRenderer debug wiring", () => {
       expect(r.devtools.enabled).toBe(true);
       expect(r.debugEnabled).toBe(true);
       expect(r.devtools.isVisible(DebugPanel.Performance)).toBe(true);
-      r.stop();
+      r.destroy();
     } finally {
       process.env.BTUI_DEBUG = prev ?? "";
     }
@@ -92,6 +92,6 @@ describe("CliRenderer debug wiring", () => {
     const written = spy.mock.calls.map((c) => String(c[0])).join("");
     // Overlay writes a DEC save-cursor before drawing panels.
     expect(written).toContain("\x1b7");
-    r.stop();
+    r.destroy();
   });
 });

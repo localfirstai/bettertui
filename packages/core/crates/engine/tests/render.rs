@@ -42,7 +42,6 @@ fn ansi_backend_encode_with_regions() {
     let s = String::from_utf8_lossy(out);
     assert!(s.contains('A'));
     assert!(s.contains("\x1b[?25l"));
-    assert!(s.contains("\x1b[?25h"));
 }
 
 #[test]

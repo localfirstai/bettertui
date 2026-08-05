@@ -197,5 +197,5 @@ export function parseColor(input: ColorInput): RGBA {
 export function rgbaToEngineColor(rgba: RGBA): string {
   if (rgba.a === 0) return "transparent";
   if (rgba.a === 255) return RGBA.toHex(rgba);
-  return RGBA.toCSS(rgba);
+  return RGBA.toHexAlpha(rgba);
 }

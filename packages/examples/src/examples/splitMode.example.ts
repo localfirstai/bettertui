@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type KeyEvent,
-  TextRenderable,
-  TextareaRenderable,
+  Text,
+  Textarea,
   type ThemeMode,
   createCliRenderer,
 } from "@bettertui/core";
@@ -18,7 +18,7 @@ type ScrollbackRenderContext = {
 };
 
 type ScrollbackSnapshot = {
-  root: BoxRenderable;
+  root: Box;
   width: number;
   height: number;
 };
@@ -403,7 +403,7 @@ function buildSimpleTextBoxSnapshot(
   const boxWidth = Math.min(ctx.width as number, Math.max(4, textWidth + 1));
   const boxHeight = Math.max(4, bodyLines.length + 3);
 
-  const box = new BoxRenderable(ctx.renderContext, {
+  const box = new Box(ctx.renderContext, {
     id: `split-simple-box-${snapshotNodeCounter++}`,
     position: "absolute",
     left: 0,
@@ -416,7 +416,7 @@ function buildSimpleTextBoxSnapshot(
     backgroundColor: "transparent",
   });
 
-  const headingText = new TextRenderable(ctx.renderContext, {
+  const headingText = new Text(ctx.renderContext, {
     id: `split-simple-heading-${snapshotNodeCounter++}`,
     position: "absolute",
     left: 1,
@@ -427,7 +427,7 @@ function buildSimpleTextBoxSnapshot(
     fg: roleHeadingColor(entry.role, entry.palette),
   } as import("@bettertui/core").TextOptions);
 
-  const bodyText = new TextRenderable(ctx.renderContext, {
+  const bodyText = new Text(ctx.renderContext, {
     id: `split-simple-body-${snapshotNodeCounter++}`,
     position: "absolute",
     left: 1,
@@ -449,17 +449,17 @@ function buildSimpleTextBoxSnapshot(
 }
 
 class SplitFooterDemo {
-  private shell: BoxRenderable;
-  private headerRow: BoxRenderable;
-  private titleText: TextRenderable;
-  private modeText: TextRenderable;
-  private composerBox: BoxRenderable;
-  private composer: TextareaRenderable;
-  private statusRow: BoxRenderable;
-  private statusText: TextRenderable;
-  private metaText: TextRenderable;
-  private controlsRow: BoxRenderable;
-  private controlsText: TextRenderable;
+  private shell: Box;
+  private headerRow: Box;
+  private titleText: Text;
+  private modeText: Text;
+  private composerBox: Box;
+  private composer: Textarea;
+  private statusRow: Box;
+  private statusText: Text;
+  private metaText: Text;
+  private controlsRow: Box;
+  private controlsText: Text;
 
   private palette: DemoPalette;
   private mode: DemoMode = "split-footer";
@@ -502,7 +502,7 @@ class SplitFooterDemo {
     this.mode = "split-footer";
     this.renderer.setBackgroundColor(this.palette.appBackground);
 
-    this.shell = new BoxRenderable(this.renderer, {
+    this.shell = new Box(this.renderer, {
       id: "split-footer-shell",
       width: "100%",
       height: "100%",
@@ -514,7 +514,7 @@ class SplitFooterDemo {
       zIndex: 10,
     });
 
-    this.headerRow = new BoxRenderable(this.renderer, {
+    this.headerRow = new Box(this.renderer, {
       id: "split-footer-header-row",
       width: "100%",
       height: 1,
@@ -523,19 +523,19 @@ class SplitFooterDemo {
       alignItems: "center",
     });
 
-    this.titleText = new TextRenderable(this.renderer, {
+    this.titleText = new Text(this.renderer, {
       id: "split-footer-title",
       content: "Split Footer Demo",
       fg: this.palette.titleText,
     });
 
-    this.modeText = new TextRenderable(this.renderer, {
+    this.modeText = new Text(this.renderer, {
       id: "split-footer-mode",
       content: "",
       fg: this.palette.modeText,
     });
 
-    this.composerBox = new BoxRenderable(this.renderer, {
+    this.composerBox = new Box(this.renderer, {
       id: "split-footer-composer-frame",
       width: "100%",
       minHeight: 4,
@@ -547,7 +547,7 @@ class SplitFooterDemo {
       flexDirection: "column",
     });
 
-    this.composer = new TextareaRenderable(this.renderer, {
+    this.composer = new Textarea(this.renderer, {
       id: "split-footer-composer",
       width: "100%",
       minHeight: 3,
@@ -563,7 +563,7 @@ class SplitFooterDemo {
       cursorColor: this.palette.inputCursor,
     } as import("@bettertui/core").TextareaOptions);
 
-    this.statusRow = new BoxRenderable(this.renderer, {
+    this.statusRow = new Box(this.renderer, {
       id: "split-footer-status-row",
       width: "100%",
       height: 1,
@@ -572,19 +572,19 @@ class SplitFooterDemo {
       alignItems: "center",
     });
 
-    this.statusText = new TextRenderable(this.renderer, {
+    this.statusText = new Text(this.renderer, {
       id: "split-footer-status",
       content: "",
       fg: this.palette.statusText,
     });
 
-    this.metaText = new TextRenderable(this.renderer, {
+    this.metaText = new Text(this.renderer, {
       id: "split-footer-meta",
       content: "",
       fg: this.palette.streamText,
     });
 
-    this.controlsRow = new BoxRenderable(this.renderer, {
+    this.controlsRow = new Box(this.renderer, {
       id: "split-footer-controls-row",
       width: "100%",
       height: 1,
@@ -593,7 +593,7 @@ class SplitFooterDemo {
       alignItems: "center",
     });
 
-    this.controlsText = new TextRenderable(this.renderer, {
+    this.controlsText = new Text(this.renderer, {
       id: "split-footer-controls",
       content: "",
       width: "100%",

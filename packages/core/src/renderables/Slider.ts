@@ -1,14 +1,14 @@
 /**
- * SliderRenderable — a horizontal or vertical slider widget.
+ * Slider — a horizontal or vertical slider widget.
  */
 
-import { RenderableEvents, SliderRenderableEvents } from "../lib/renderableEvents";
+import type { KeyEvent } from "../lib/keyHandler";
+import { RenderableEvents, SliderEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor } from "../lib/rgba";
 import type { CliRenderer } from "../platform/cliRenderer";
-import type { RawKeyEvent } from "../platform/cliRenderer";
-import { type BoxOptions, BoxRenderable } from "./Box";
+import { Box, type BoxOptions } from "./Box";
 
-export interface SliderRenderableOptions extends BoxOptions {
+export interface SliderOptions extends BoxOptions {
   orientation?: "horizontal" | "vertical";
   min?: number;
   max?: number;
@@ -21,9 +21,11 @@ export interface SliderRenderableOptions extends BoxOptions {
   onChange?: (value: number) => void;
 }
 
+export type SliderRenderableOptions = SliderOptions;
+
 let _sliderCounter = 0;
 
-export class SliderRenderable extends BoxRenderable {
+export class Slider extends Box {
   private _orientation: "horizontal" | "vertical";
   private _min: number;
   private _max: number;
@@ -35,9 +37,9 @@ export class SliderRenderable extends BoxRenderable {
   private _activeTrackColor: RGBA;
   private _onChange: ((value: number) => void) | undefined;
   private _contentNodeId: number;
-  private readonly _keyHandler: (key: RawKeyEvent) => void;
+  private readonly _keyHandler: (key: KeyEvent) => void;
 
-  constructor(renderer: CliRenderer, options: SliderRenderableOptions = {}) {
+  constructor(renderer: CliRenderer, options: SliderOptions = {}) {
     _sliderCounter++;
     super(renderer, {
       ...options,
@@ -73,7 +75,7 @@ export class SliderRenderable extends BoxRenderable {
       this._value = clamped;
       this._render();
       this._onChange?.(this._value);
-      this.emit(SliderRenderableEvents.CHANGE, this._value);
+      this.emit(SliderEvents.CHANGE, this._value);
     }
   }
 
@@ -110,22 +112,24 @@ export class SliderRenderable extends BoxRenderable {
   }
 
   override focus(): void {
-    if (this._isDestroyed) return;
+    if (this._isDestroyed || this._focused) return;
     this._focused = true;
     this._render();
     this.emit(RenderableEvents.FOCUSED, this);
-    this._renderer.keyInput.on("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    this._renderer.keyHandler.onInternal("keypress", this._keyHandler);
   }
 
   override blur(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
+    if (!this._focused) return;
     this._focused = false;
     this._render();
     this.emit(RenderableEvents.BLURRED, this);
   }
 
-  private _handleKey(key: RawKeyEvent): void {
+  private _handleKey(key: KeyEvent): void {
     if (!this._focused || this._isDestroyed) return;
 
     if (this._orientation === "horizontal") {
@@ -202,7 +206,7 @@ export class SliderRenderable extends BoxRenderable {
 
   override destroy(): void {
     if (this._isDestroyed) return;
-    this._renderer.keyInput.off("keypress", this._keyHandler);
+    this._renderer.keyHandler.offInternal("keypress", this._keyHandler);
     try {
       this._renderer.removeNode(this._contentNodeId);
     } catch {
@@ -212,4 +216,4 @@ export class SliderRenderable extends BoxRenderable {
   }
 }
 
-export { SliderRenderableEvents };
+export { SliderEvents };

@@ -1,12 +1,12 @@
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
   type KeyEvent,
   type MouseEvent,
-  ScrollBoxRenderable,
+  ScrollBox,
   type TerminalCapabilities,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   fg,
@@ -46,7 +46,7 @@ const actions: NotificationAction[] = [
     title: "Quick ping",
     subtitle: "Body-only notification",
     accent: P.cyan,
-    message: "BetterTUI notification ping sent.",
+    message: "BetterTUI notification ping delivered.",
   },
   {
     key: "2",
@@ -76,18 +76,18 @@ const actions: NotificationAction[] = [
 ];
 
 let renderer: CliRenderer | null = null;
-let root: BoxRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let logList: ScrollBoxRenderable | null = null;
+let root: Box | null = null;
+let statusText: Text | null = null;
+let logList: ScrollBox | null = null;
 let keyHandler: ((key: KeyEvent) => void) | null = null;
 let capabilityHandler: ((capabilities: TerminalCapabilities) => void) | null = null;
 let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 let cards: NotificationCard[] = [];
-let logRows: TextRenderable[] = [];
+let logRows: Text[] = [];
 let logEntryId = 0;
 const MAX_LOG_ENTRIES = 80;
 
-class NotificationCard extends BoxRenderable {
+class NotificationCard extends Box {
   private hovered = false;
   private readonly action: NotificationAction;
   private readonly actionHandler: (action: NotificationAction) => void;
@@ -120,7 +120,7 @@ class NotificationCard extends BoxRenderable {
     this.actionHandler = actionHandler;
 
     this.add(
-      new TextRenderable(ctx, {
+      new Text(ctx, {
         id: `notification-card-${action.key}-title`,
         content: t`${bold(fg(action.accent)(action.title))}`,
         fg: P.text,
@@ -129,7 +129,7 @@ class NotificationCard extends BoxRenderable {
       }),
     );
     this.add(
-      new TextRenderable(ctx, {
+      new Text(ctx, {
         id: `notification-card-${action.key}-subtitle`,
         content: t`${fg(P.muted)(action.subtitle)}`,
         fg: P.muted,
@@ -138,7 +138,7 @@ class NotificationCard extends BoxRenderable {
       }),
     );
     this.add(
-      new TextRenderable(ctx, {
+      new Text(ctx, {
         id: `notification-card-${action.key}-spacer`,
         content: "",
         flexGrow: 1,
@@ -146,7 +146,7 @@ class NotificationCard extends BoxRenderable {
       }),
     );
     this.add(
-      new TextRenderable(ctx, {
+      new Text(ctx, {
         id: `notification-card-${action.key}-cta`,
         content: t`${fg(action.accent)("Click")} ${fg(P.muted)("or press")} ${bold(fg(P.text)(action.key))}`,
         fg: P.text,
@@ -185,7 +185,7 @@ function addLog(message: string, color: string = P.muted): void {
   if (!renderer || !logList) return;
 
   const stamp = new Date().toLocaleTimeString();
-  const row = new TextRenderable(renderer, {
+  const row = new Text(renderer, {
     id: `notification-demo-log-entry-${logEntryId++}`,
     content: `${stamp}  ${message}`,
     fg: color,
@@ -259,7 +259,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor(P.bg);
 
-  root = new BoxRenderable(renderer, {
+  root = new Box(renderer, {
     id: "notification-demo-root",
     flexGrow: 1,
     maxWidth: "100%",
@@ -270,7 +270,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   });
   renderer.root.add(root);
 
-  const header = new BoxRenderable(renderer, {
+  const header = new Box(renderer, {
     id: "notification-demo-header",
     width: "100%",
     height: 6,
@@ -288,7 +288,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   });
 
   header.add(
-    new TextRenderable(renderer, {
+    new Text(renderer, {
       id: "notification-demo-title",
       content: t`${bold(fg(P.cyan)("System notifications"))} ${fg(P.muted)("from terminal OSC sequences")}`,
       flexGrow: 0,
@@ -296,7 +296,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     }),
   );
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "notification-demo-status",
     content: "",
     fg: P.text,
@@ -307,7 +307,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
 
   root.add(header);
 
-  const body = new BoxRenderable(renderer, {
+  const body = new Box(renderer, {
     id: "notification-demo-body",
     width: "100%",
     height: "auto",
@@ -318,7 +318,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   });
   root.add(body);
 
-  const cardsRow = new BoxRenderable(renderer, {
+  const cardsRow = new Box(renderer, {
     id: "notification-demo-cards",
     width: "100%",
     height: "auto",
@@ -334,7 +334,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   cards = actions.map((action) => new NotificationCard(rendererInstance, action, triggerAction));
   for (const card of cards) cardsRow.add(card);
 
-  const footer = new BoxRenderable(renderer, {
+  const footer = new Box(renderer, {
     id: "notification-demo-footer",
     width: "100%",
     height: 16,
@@ -346,7 +346,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
   });
   body.add(footer);
 
-  const controls = new BoxRenderable(renderer, {
+  const controls = new Box(renderer, {
     id: "notification-demo-controls",
     width: 38,
     height: "100%",
@@ -361,7 +361,7 @@ function buildLayout(rendererInstance: CliRenderer): void {
     title: " Controls ",
   });
   controls.add(
-    new TextRenderable(renderer, {
+    new Text(renderer, {
       id: "notification-demo-controls-text",
       content: t`${fg(P.cyan)("1")} Quick ping
 ${fg(P.lime)("2")} Build complete
@@ -373,7 +373,7 @@ ${fg(P.muted)("Esc")} Return to menu`,
   );
   footer.add(controls);
 
-  const log = new BoxRenderable(renderer, {
+  const log = new Box(renderer, {
     id: "notification-demo-log",
     width: "auto",
     height: "100%",
@@ -387,7 +387,7 @@ ${fg(P.muted)("Esc")} Return to menu`,
     borderColor: P.border,
     title: " Activity ",
   });
-  logList = new ScrollBoxRenderable(renderer, {
+  logList = new ScrollBox(renderer, {
     id: "notification-demo-log-list",
     stickyScroll: true,
     stickyStart: "bottom",

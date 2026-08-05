@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type ExtmarksController,
   type KeyEvent,
-  TextRenderable,
-  TextareaRenderable,
+  Text,
+  Textarea,
   createCliRenderer,
 } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
@@ -30,10 +30,10 @@ Press Ctrl+L to add a new [MARKER] at cursor position.
 Press ESC to return to main menu.`;
 
 let renderer: CliRenderer | null = null;
-let parentContainer: BoxRenderable | null = null;
-let editor: TextareaRenderable | null = null;
-let statusText: TextRenderable | null = null;
-let helpText: TextRenderable | null = null;
+let parentContainer: Box | null = null;
+let editor: Textarea | null = null;
+let statusText: Text | null = null;
+let helpText: Text | null = null;
 let extmarksController: ExtmarksController | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
 let virtualStyleId = 0;
@@ -49,14 +49,14 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     bg: RGBA.fromValues(0.1, 0.2, 0.3, 1.0),
   });
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  const editorBox = new BoxRenderable(renderer, {
+  const editorBox = new Box(renderer, {
     id: "editor-box",
     borderStyle: "single",
     borderColor: "#6BCF7F",
@@ -69,7 +69,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   });
   parentContainer.add(editorBox);
 
-  editor = new TextareaRenderable(renderer, {
+  editor = new Textarea(renderer, {
     id: "editor",
     initialValue: initialContent,
     textColor: "#F0F6FC",
@@ -89,7 +89,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
 
   findAndMarkVirtualRanges();
 
-  helpText = new TextRenderable(renderer, {
+  helpText = new Text(renderer, {
     id: "help",
     content: "Move cursor with arrows. Try backspacing at end of [VIRTUAL] markers!",
     fg: "#FFA657",
@@ -97,7 +97,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   });
   parentContainer.add(helpText);
 
-  statusText = new TextRenderable(renderer, {
+  statusText = new Text(renderer, {
     id: "status",
     content: "",
     fg: "#A5D6FF",

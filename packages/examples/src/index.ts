@@ -1,23 +1,23 @@
 #!/usr/bin/env bun
 
 import {
-  ASCIIFontRenderable,
-  BoxRenderable,
+  ASCIIFont,
+  Box,
   type CliRenderer,
-  InputRenderable,
-  InputRenderableEvents,
+  Input,
+  InputEvents,
   type KeyEvent,
+  type LogLevel,
   RGBA,
   RenderableEvents,
+  Select,
+  SelectEvents,
   type SelectOption,
-  SelectRenderable,
-  SelectRenderableEvents,
-  TextRenderable,
+  Text,
   type ThemeMode,
-  TimeToFirstDrawRenderable,
+  TimeToFirstDraw,
   createCliRenderer,
 } from "@bettertui/core";
-import { measureText } from "@bettertui/core";
 import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
 import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
 import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
@@ -80,8 +80,7 @@ type ExampleCategory =
   | "Text & Documents"
   | "Rendering & Effects"
   | "Runtime & Tooling"
-  | "Terminal & Native"
-  | "3D & Physics";
+  | "Terminal & Native";
 
 interface ExampleDefinition {
   name: string;
@@ -99,13 +98,6 @@ interface ExampleSection {
   category: ExampleCategory;
   examples: readonly ExampleDefinition[];
 }
-
-interface ExampleModule {
-  run?: (renderer: CliRenderer) => void | Promise<void>;
-  destroy?: (renderer: CliRenderer) => void;
-}
-
-declare const OPENTUI_BUN_ONLY_EXAMPLES: boolean | undefined;
 
 interface CategoryMenuValue {
   kind: "category";
@@ -130,6 +122,7 @@ type MenuOption = Omit<SelectOption, "value"> & { value: MenuOptionValue };
 type MenuFocusArea = "filter" | "list";
 
 interface ExampleTheme {
+  appBackgroundColor: string;
   titleColor: RGBA;
   borderColor: string;
   focusedBorderColor: string;
@@ -147,57 +140,19 @@ interface ExampleTheme {
 }
 
 const DEFAULT_THEME_MODE: ThemeMode = "dark";
-const isBunRuntime = typeof process !== "undefined" && typeof process.versions?.bun === "string";
-const includeThreeExamples =
-  typeof OPENTUI_BUN_ONLY_EXAMPLES === "boolean" ? OPENTUI_BUN_ONLY_EXAMPLES : isBunRuntime;
 const MENU_TERMINAL_TITLE = "BetterTUI Examples";
 const EXAMPLES_BOX_TITLE = "Examples";
 const EXAMPLE_NAME_INDENT = "  ";
 const EXAMPLE_DESCRIPTION_INDENT = "    ";
 const CATEGORY_LABELS: Record<ExampleCategory, string> = {
-  "Layout & Composition": "Layout",
-  "Input & Editing": "Input",
-  "Scroll & Navigation": "Scroll",
-  "Text & Documents": "Text",
-  "Rendering & Effects": "Rendering",
-  "Runtime & Tooling": "Runtime",
-  "Terminal & Native": "Terminal",
-  "3D & Physics": "3D",
+  "Layout & Composition": "Layout & Composition",
+  "Input & Editing": "Input & Editing",
+  "Scroll & Navigation": "Scroll & Navigation",
+  "Text & Documents": "Text & Documents",
+  "Rendering & Effects": "Rendering & Effects",
+  "Runtime & Tooling": "Runtime & Tooling",
+  "Terminal & Native": "Terminal & Native",
 };
-
-function unavailableThreeExample(name: string, description: string): ExampleDefinition {
-  return {
-    name,
-    description: `${description} (Requires @bettertui/core in Node.js)`,
-    unavailableMessage:
-      "This example requires @bettertui/core and remains disabled in the Node.js examples bundle.",
-  };
-}
-
-function threeExample(
-  name: string,
-  description: string,
-  load: () => Promise<ExampleModule>,
-): ExampleDefinition {
-  let loaded: ExampleModule | null = null;
-
-  async function loadModule(): Promise<ExampleModule> {
-    loaded ??= await load();
-    return loaded;
-  }
-
-  return {
-    name,
-    description,
-    async run(renderer) {
-      const module = await loadModule();
-      return module.run?.(renderer);
-    },
-    destroy(renderer) {
-      loaded?.destroy?.(renderer);
-    },
-  };
-}
 
 function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
   return [...examples].sort((left, right) => left.name.localeCompare(right.name));
@@ -213,116 +168,40 @@ function section(
   };
 }
 
-const THREE_EXAMPLES: ExampleDefinition[] = includeThreeExamples
-  ? [
-      threeExample(
-        "Draggable ThreeRenderable",
-        "Draggable WebGPU cube with live animation",
-        () => import("./examples/draggableThree.example.js"),
-      ),
-      threeExample(
-        "Fractal Shader",
-        "Fractal rendering with shaders",
-        () => import("./examples/fractalShader.example.js"),
-      ),
-      threeExample(
-        "Golden Star Demo",
-        "3D golden star with particle effects and animated text celebrating 5000 stars",
-        () => import("./examples/goldenStar.example.js"),
-      ),
-      threeExample(
-        "Physics Planck",
-        "2D physics with Planck.js",
-        () => import("./examples/physxPlanck2d.example.js"),
-      ),
-      threeExample(
-        "Physics Rapier",
-        "2D physics with Rapier",
-        () => import("./examples/physxRapier2d.example.js"),
-      ),
-      threeExample(
-        "Phong Lighting",
-        "Phong lighting model demo",
-        () => import("./examples/lightsPhong.example.js"),
-      ),
-      threeExample(
-        "Shader Cube",
-        "3D cube with custom shaders",
-        () => import("./examples/shaderCube.example.js"),
-      ),
-      threeExample(
-        "Sprite Animation",
-        "Animated sprite sequences",
-        () => import("./examples/spriteAnimation.example.js"),
-      ),
-      threeExample(
-        "Sprite Particles",
-        "Particle system with sprites",
-        () => import("./examples/spriteParticleGenerator.example.js"),
-      ),
-      threeExample(
-        "Static Sprite",
-        "Static sprite rendering demo",
-        () => import("./examples/staticSprite.example.js"),
-      ),
-      threeExample(
-        "Texture Loading",
-        "Loading and displaying textures",
-        () => import("./examples/textureLoading.example.js"),
-      ),
-    ]
-  : [
-      unavailableThreeExample(
-        "Draggable ThreeRenderable",
-        "Draggable WebGPU cube with live animation",
-      ),
-      unavailableThreeExample("Fractal Shader", "Fractal rendering with shaders"),
-      unavailableThreeExample(
-        "Golden Star Demo",
-        "3D golden star with particle effects and animated text celebrating 5000 stars",
-      ),
-      unavailableThreeExample("Physics Planck", "2D physics with Planck.js"),
-      unavailableThreeExample("Physics Rapier", "2D physics with Rapier"),
-      unavailableThreeExample("Phong Lighting", "Phong lighting model demo"),
-      unavailableThreeExample("Shader Cube", "3D cube with custom shaders"),
-      unavailableThreeExample("Sprite Animation", "Animated sprite sequences"),
-      unavailableThreeExample("Sprite Particles", "Particle system with sprites"),
-      unavailableThreeExample("Static Sprite", "Static sprite rendering demo"),
-      unavailableThreeExample("Texture Loading", "Loading and displaying textures"),
-    ];
-
 const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
   dark: {
-    titleColor: RGBA.fromInts(240, 248, 255, 255),
-    borderColor: "#475569",
-    focusedBorderColor: "#60A5FA",
-    inputTextColor: "#E2E8F0",
-    inputFocusedTextColor: "#F8FAFC",
-    inputPlaceholderColor: "#94A3B8",
-    inputCursorColor: "#60A5FA",
+    appBackgroundColor: "#181B24",
+    titleColor: RGBA.fromInts(248, 250, 252, 255),
+    borderColor: "#334155",
+    focusedBorderColor: "#38BDF8",
+    inputTextColor: "#F8FAFC",
+    inputFocusedTextColor: "#FFFFFF",
+    inputPlaceholderColor: "#64748B",
+    inputCursorColor: "#38BDF8",
     selectSelectedBackgroundColor: "#1E3A5F",
     selectTextColor: "#E2E8F0",
     selectSelectedTextColor: "#38BDF8",
     selectDescriptionColor: "#64748B",
     selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#94A3B8",
+    instructionsColor: "#64748B",
     notImplementedColor: "#FACC15",
   },
   light: {
-    titleColor: RGBA.fromInts(15, 23, 42, 255),
-    borderColor: "#CBD5E1",
-    focusedBorderColor: "#2563EB",
-    inputTextColor: "#0F172A",
-    inputFocusedTextColor: "#0B1221",
+    appBackgroundColor: "#181B24",
+    titleColor: RGBA.fromInts(248, 250, 252, 255),
+    borderColor: "#334155",
+    focusedBorderColor: "#38BDF8",
+    inputTextColor: "#F8FAFC",
+    inputFocusedTextColor: "#FFFFFF",
     inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#2563EB",
-    selectSelectedBackgroundColor: "#DBEAFE",
-    selectTextColor: "#0F172A",
-    selectSelectedTextColor: "#1D4ED8",
-    selectDescriptionColor: "#475569",
-    selectSelectedDescriptionColor: "#1E40AF",
-    instructionsColor: "#475569",
-    notImplementedColor: "#B45309",
+    inputCursorColor: "#38BDF8",
+    selectSelectedBackgroundColor: "#1E3A5F",
+    selectTextColor: "#E2E8F0",
+    selectSelectedTextColor: "#38BDF8",
+    selectDescriptionColor: "#64748B",
+    selectSelectedDescriptionColor: "#94A3B8",
+    instructionsColor: "#64748B",
+    notImplementedColor: "#FACC15",
   },
 };
 
@@ -347,7 +226,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "Multi-Tab Demo",
+      name: "BetterTUI Demo",
       description: "Multi-tab demo with various features",
       run: multitabDemo.run,
       destroy: multitabDemo.destroy,
@@ -388,8 +267,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     },
     {
       name: "Editor Demo",
-      description:
-        "Interactive text editor with TextareaRenderable - supports full editing capabilities",
+      description: "Interactive text editor with Textarea - supports full editing capabilities",
       run: editorDemo.run,
       destroy: editorDemo.destroy,
     },
@@ -481,7 +359,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     {
       name: "Code Demo",
       description:
-        "Code viewer with line numbers, diff highlights, and diagnostics using CodeRenderable + LineNumberRenderable",
+        "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
       run: codeDemo.run,
       destroy: codeDemo.destroy,
     },
@@ -675,7 +553,6 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: terminalTitleDemo.destroy,
     },
   ]),
-  section("3D & Physics", THREE_EXAMPLES),
 ];
 
 export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(({ category, examples }) =>
@@ -721,6 +598,12 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
       name: CATEGORY_LABELS[section.category].toUpperCase(),
       description: "",
       value: { kind: "category", category: section.category },
+    });
+
+    options.push({
+      name: "",
+      description: "",
+      value: { kind: "spacer" },
     });
 
     for (const example of sectionExamples) {
@@ -835,24 +718,24 @@ function findNearestExampleOptionIndex(
   return -1;
 }
 
-class ExampleSelector {
+export class ExampleSelector {
   private renderer: CliRenderer;
   private currentExample: Example | null = null;
   private inMenu = true;
   private themeMode: ThemeMode = DEFAULT_THEME_MODE;
 
-  private menuContainer: BoxRenderable | null = null;
-  private title: ASCIIFontRenderable | null = null;
+  private menuContainer: Box | null = null;
+  private title: ASCIIFont | null = null;
   private titleWidth = 0;
   private titleFont = "tiny";
   private titleText = "BETTERTUI EXAMPLES";
-  private filterBox: BoxRenderable | null = null;
-  private filterInput: InputRenderable | null = null;
-  private instructions: TextRenderable | null = null;
-  private timeToFirstDrawText: TimeToFirstDrawRenderable | null = null;
-  private selectElement: SelectRenderable | null = null;
-  private selectBox: BoxRenderable | null = null;
-  private notImplementedText: TextRenderable | null = null;
+  private filterBox: Box | null = null;
+  private filterInput: Input | null = null;
+  private instructions: Text | null = null;
+  private timeToFirstDrawText: TimeToFirstDraw | null = null;
+  private selectElement: Select | null = null;
+  private selectBox: Box | null = null;
+  private notImplementedText: Text | null = null;
   private readonly allExamples: Example[] = examples;
   private selectedExampleName: string | null = examples[0]?.name ?? null;
   private menuFocusArea: MenuFocusArea = "filter";
@@ -878,32 +761,27 @@ class ExampleSelector {
   }
 
   private createLayout(): void {
-    const width = this.renderer.terminalWidth;
     const theme = MENU_THEMES[this.themeMode];
 
     // Menu container with column layout
-    this.menuContainer = new BoxRenderable(this.renderer, {
+    this.menuContainer = new Box(this.renderer, {
       id: "example-menu-container",
       flexDirection: "column",
       width: "100%",
       height: "100%",
+      backgroundColor: theme.appBackgroundColor,
     });
     this.renderer.root.add(this.menuContainer);
 
     // Title
     const titleText = this.titleText;
     const titleFont = this.titleFont;
-    const { width: titleWidth } = measureText({
-      text: titleText,
-      font: titleFont,
-    });
-    this.titleWidth = titleWidth;
-    const centerX = Math.floor(width / 2) - Math.floor(titleWidth / 2);
 
-    this.title = new ASCIIFontRenderable(this.renderer, {
+    this.title = new ASCIIFont(this.renderer, {
       id: "example-index-title",
-      left: centerX,
-      margin: 1,
+      alignSelf: "center",
+      marginTop: 1,
+      marginBottom: 1,
       text: titleText,
       font: titleFont,
       color: theme.titleColor,
@@ -912,7 +790,7 @@ class ExampleSelector {
     this.menuContainer.add(this.title);
 
     // Filter box with border (grows with content)
-    this.filterBox = new BoxRenderable(this.renderer, {
+    this.filterBox = new Box(this.renderer, {
       id: "example-index-filter-box",
       marginLeft: 1,
       marginRight: 1,
@@ -925,7 +803,7 @@ class ExampleSelector {
     this.menuContainer.add(this.filterBox);
 
     // Filter input inside the box (transparent bg so box bg shows through)
-    this.filterInput = new InputRenderable(this.renderer, {
+    this.filterInput = new Input(this.renderer, {
       id: "example-index-filter-input",
       width: "100%",
       placeholder: "Filter examples...",
@@ -939,13 +817,13 @@ class ExampleSelector {
     });
     this.filterBox.add(this.filterInput);
 
-    this.filterInput.on(InputRenderableEvents.INPUT, (value: string) => {
+    this.filterInput.on(InputEvents.INPUT, (value: string) => {
       this.filterText = value;
       this.filterExamples();
     });
 
     // Select box (grows to fill remaining space)
-    this.selectBox = new BoxRenderable(this.renderer, {
+    this.selectBox = new Box(this.renderer, {
       id: "example-selector-box",
       marginLeft: 1,
       marginRight: 1,
@@ -965,7 +843,7 @@ class ExampleSelector {
     const selectOptions = createMenuOptions(this.allExamples);
     const initialSelectedIndex = Math.max(0, getFirstExampleOptionIndex(selectOptions));
 
-    this.selectElement = new SelectRenderable(this.renderer, {
+    this.selectElement = new Select(this.renderer, {
       id: "example-selector",
       height: "100%",
       options: selectOptions,
@@ -996,42 +874,37 @@ class ExampleSelector {
       this.updateMenuFocusStyles();
     });
 
-    this.selectElement.on(
-      SelectRenderableEvents.SELECTION_CHANGED,
-      (index: number, option: SelectOption) => {
-        const selectedExample = getExampleFromOption(option);
-        if (!selectedExample) {
-          this.focusNearestExampleOption(index, 1);
-          return;
-        }
+    this.selectElement.on(SelectEvents.SELECTION_CHANGED, (index: number, option: SelectOption) => {
+      const selectedExample = getExampleFromOption(option);
+      if (!selectedExample) {
+        this.focusNearestExampleOption(index, 1);
+        return;
+      }
 
-        this.selectedExampleName = selectedExample.name;
-      },
-    );
+      this.selectedExampleName = selectedExample.name;
+    });
 
-    this.selectElement.on(
-      SelectRenderableEvents.ITEM_SELECTED,
-      (index: number, option: SelectOption) => {
-        const selectedExample = getExampleFromOption(option);
-        if (!selectedExample) {
-          this.focusNearestExampleOption(index, 1);
-          return;
-        }
+    this.selectElement.on(SelectEvents.ITEM_SELECTED, (index: number, option: SelectOption) => {
+      const selectedExample = getExampleFromOption(option);
+      if (!selectedExample) {
+        this.focusNearestExampleOption(index, 1);
+        return;
+      }
 
-        void this.runSelected(selectedExample);
-      },
-    );
+      void this.runSelected(selectedExample);
+    });
 
     this.setMenuFocus("filter");
 
-    this.timeToFirstDrawText = new TimeToFirstDrawRenderable(this.renderer, {
+    this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
+      alignSelf: "center",
       fg: theme.instructionsColor,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
 
     // Instructions at the bottom
-    this.instructions = new TextRenderable(this.renderer, {
+    this.instructions = new Text(this.renderer, {
       id: "example-index-instructions",
       height: 1,
       flexShrink: 0,
@@ -1046,6 +919,11 @@ class ExampleSelector {
   private applyTheme(mode: ThemeMode | null): void {
     this.themeMode = mode ?? DEFAULT_THEME_MODE;
     const theme = MENU_THEMES[this.themeMode];
+
+    this.renderer.setBackgroundColor(theme.appBackgroundColor);
+    if (this.menuContainer) {
+      this.menuContainer.backgroundColor = theme.appBackgroundColor;
+    }
 
     if (this.title) {
       this.title.color = theme.titleColor;
@@ -1251,12 +1129,7 @@ class ExampleSelector {
     }
   }
 
-  private handleResize(width: number, _height: number): void {
-    if (this.title) {
-      const centerX = Math.floor(width / 2) - Math.floor(this.titleWidth / 2);
-      this.title.setPosition({ left: centerX });
-    }
-
+  private handleResize(_width: number, _height: number): void {
     this.renderer.requestRender();
   }
 
@@ -1285,18 +1158,6 @@ class ExampleSelector {
       const printableText = getPrintableKeyText(key);
 
       if (this.menuFocusArea === "list") {
-        if (key.name === "up" || key.name === "k") {
-          key.preventDefault();
-          this.moveSelection(-1, key.shift ? 5 : 1);
-          return;
-        }
-
-        if (key.name === "down" || key.name === "j") {
-          key.preventDefault();
-          this.moveSelection(1, key.shift ? 5 : 1);
-          return;
-        }
-
         if (printableText === "/") {
           key.preventDefault();
           this.setMenuFocus("filter");
@@ -1317,7 +1178,7 @@ class ExampleSelector {
           return;
         }
 
-        if (key.name === "return" || key.name === "linefeed") {
+        if (key.name === "return" || key.name === "linefeed" || key.name === "enter") {
           key.preventDefault();
           this.selectElement.selectCurrent();
           return;
@@ -1359,7 +1220,7 @@ class ExampleSelector {
         const theme = MENU_THEMES[this.themeMode];
         const unavailableMessage =
           selected.unavailableMessage ?? `${selected.name} is not implemented yet.`;
-        this.notImplementedText = new TextRenderable(this.renderer, {
+        this.notImplementedText = new Text(this.renderer, {
           id: "not-implemented",
           position: "absolute",
           left: 10,
@@ -1446,7 +1307,7 @@ class ExampleSelector {
     this.renderer.pause();
     this.renderer.auto();
     this.showMenuElements();
-    this.renderer.setBackgroundColor("transparent");
+    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].appBackgroundColor);
     this.renderer.requestRender();
   }
 
@@ -1467,11 +1328,18 @@ class ExampleSelector {
   }
 }
 
+const logLevel = (process.env.BTUI_LOG_LEVEL as LogLevel) ?? "info";
+const logFile = process.env.BTUI_LOG_FILE ?? "logs/examples.log";
+
 const renderer = await createCliRenderer({
   exitOnCtrlC: false,
   targetFps: 60,
-  // useAlternateScreen: false,
+  logger: {
+    dev: true,
+    level: logLevel,
+    file: logFile,
+  },
 });
 
-renderer.setBackgroundColor("transparent");
+renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].appBackgroundColor);
 new ExampleSelector(renderer);

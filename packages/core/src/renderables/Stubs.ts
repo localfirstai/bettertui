@@ -3,20 +3,21 @@
  * These provide type-correct APIs that compile, with simplified functionality.
  */
 
+import { renderFontToText } from "../lib/asciiFont";
 import { type ColorInput, RGBA, parseColor } from "../lib/rgba";
 import type { StyledText, TextChunk } from "../lib/styledText";
 import type { CliRenderer } from "../platform/cliRenderer";
-import { type BorderStyleKind, type BoxOptions, BoxRenderable } from "./Box";
-import { type TextOptions, TextRenderable } from "./Text";
+import { type BorderStyleKind, Box, type BoxOptions } from "./Box";
+import { Text, type TextOptions } from "./Text";
 
-// ── ASCIIFontRenderable ───────────────────────────────────────────────────────
+// ── ASCIIFont ─────────────────────────────────────────────────────────────────
 
-export type ASCIIFont = "tiny" | "block" | "shade" | "slick" | string;
+export type ASCIIFontKind = "tiny" | "block" | "shade" | "slick" | string;
 
 export interface ASCIIFontOptions extends BoxOptions {
   text?: string;
-  font?: ASCIIFont;
-  color?: RGBA | RGBA[];
+  font?: ASCIIFontKind;
+  color?: ColorInput | ColorInput[];
   backgroundColor?: ColorInput;
   selectionBg?: ColorInput;
   selectionFg?: ColorInput;
@@ -24,9 +25,9 @@ export interface ASCIIFontOptions extends BoxOptions {
 
 let _asciiCounter = 0;
 
-export class ASCIIFontRenderable extends BoxRenderable {
+export class ASCIIFont extends Box {
   private _text: string;
-  private _font: ASCIIFont;
+  private _font: ASCIIFontKind;
   private _color: RGBA[];
   private _contentNodeId: number;
 
@@ -49,10 +50,13 @@ export class ASCIIFontRenderable extends BoxRenderable {
 
     this._text = options.text ?? "";
     this._font = options.font ?? "block";
-    this._color = Array.isArray(options.color)
-      ? options.color
-      : options.color
-        ? [options.color]
+    const rawColor = options.color;
+    const toRGBA = (c: ColorInput): RGBA =>
+      c !== null && typeof c === "object" && "r" in c ? c : parseColor(c);
+    this._color = Array.isArray(rawColor)
+      ? rawColor.map(toRGBA)
+      : rawColor
+        ? [toRGBA(rawColor)]
         : [{ r: 255, g: 255, b: 255, a: 255 }];
 
     this._contentNodeId = renderer.createNode("Text");
@@ -69,11 +73,11 @@ export class ASCIIFontRenderable extends BoxRenderable {
     this._render();
   }
 
-  get font(): ASCIIFont {
+  get font(): ASCIIFontKind {
     return this._font;
   }
 
-  set font(v: ASCIIFont) {
+  set font(v: ASCIIFontKind) {
     this._font = v;
     this._render();
   }
@@ -87,12 +91,19 @@ export class ASCIIFontRenderable extends BoxRenderable {
     this._render();
   }
 
+  override getEstimatedHeight(): number {
+    const renderedText = renderFontToText(this._text, this._font, this._color);
+    const lines = renderedText ? renderedText.split("\n").length : 3;
+    let h = lines;
+    if (typeof this._options.marginTop === "number") h += this._options.marginTop;
+    if (typeof this._options.marginBottom === "number") h += this._options.marginBottom;
+    return h;
+  }
+
   private _render(): void {
     if (this._isDestroyed) return;
-    // For now, render as plain colored text with font indicators
-    const c = this._color[0] ?? { r: 255, g: 255, b: 255, a: 255 };
-    const ansi = `\x1b[38;2;${c.r};${c.g};${c.b}m${this._text}\x1b[0m`;
-    this._renderer.setText(this._contentNodeId, ansi);
+    const renderedText = renderFontToText(this._text, this._font, this._color);
+    this._renderer.setText(this._contentNodeId, renderedText);
   }
 
   override destroy(): void {
@@ -111,10 +122,10 @@ export class ASCIIFontRenderable extends BoxRenderable {
   }
 }
 
-// ── FrameBufferRenderable ─────────────────────────────────────────────────────
+// ── FrameBuffer ───────────────────────────────────────────────────────────────
 
 export interface FrameBufferOptions extends BoxOptions {
-  drawFn?: (buffer: FrameBufferLike, deltaTime: number, renderable: FrameBufferRenderable) => void;
+  drawFn?: (buffer: FrameBufferLike, deltaTime: number, renderable: FrameBuffer) => void;
 }
 
 export interface FrameBufferLike {
@@ -128,7 +139,7 @@ export interface FrameBufferLike {
 
 let _framebufferCounter = 0;
 
-export class FrameBufferRenderable extends BoxRenderable {
+export class FrameBuffer extends Box {
   private _drawFn: FrameBufferOptions["drawFn"];
   private _buffer: SimpleFrameBuffer;
   private _contentNodeId: number;
@@ -215,10 +226,10 @@ class SimpleFrameBuffer implements FrameBufferLike {
       for (let x = 0; x < this.width; x++) {
         const cell = this.cells[y * this.width + x];
         if (!cell) continue;
-        if (cell.fg) {
+        if (cell.fg && cell.fg.a > 0) {
           result += `\x1b[38;2;${cell.fg.r};${cell.fg.g};${cell.fg.b}m`;
         }
-        if (cell.bg) {
+        if (cell.bg && cell.bg.a > 0) {
           result += `\x1b[48;2;${cell.bg.r};${cell.bg.g};${cell.bg.b}m`;
         }
         result += cell.char;
@@ -230,7 +241,7 @@ class SimpleFrameBuffer implements FrameBufferLike {
   }
 }
 
-// ── CodeRenderable ────────────────────────────────────────────────────────────
+// ── Code ──────────────────────────────────────────────────────────────────────
 
 export interface CodeOptions extends TextOptions {
   language?: string;
@@ -244,7 +255,7 @@ export interface CodeOptions extends TextOptions {
 
 let _codeCounter = 0;
 
-export class CodeRenderable extends TextRenderable {
+export class Code extends Text {
   private _language: string;
   private _showLineNumbers: boolean;
   private _code: string;
@@ -303,7 +314,7 @@ export class CodeRenderable extends TextRenderable {
   }
 }
 
-// ── DiffRenderable ────────────────────────────────────────────────────────────
+// ── Diff ──────────────────────────────────────────────────────────────────────
 
 export interface DiffOptions extends TextOptions {
   oldText?: string;
@@ -313,7 +324,7 @@ export interface DiffOptions extends TextOptions {
 
 let _diffCounter = 0;
 
-export class DiffRenderable extends TextRenderable {
+export class Diff extends Text {
   constructor(renderer: CliRenderer, options: DiffOptions = {}) {
     _diffCounter++;
     super(renderer, {
@@ -354,7 +365,7 @@ export class DiffRenderable extends TextRenderable {
   }
 }
 
-// ── MarkdownRenderable ────────────────────────────────────────────────────────
+// ── Markdown ──────────────────────────────────────────────────────────────────
 
 export interface MarkdownOptions extends TextOptions {
   content?: string | StyledText;
@@ -362,7 +373,7 @@ export interface MarkdownOptions extends TextOptions {
 
 let _markdownCounter = 0;
 
-export class MarkdownRenderable extends TextRenderable {
+export class Markdown extends Text {
   constructor(renderer: CliRenderer, options: MarkdownOptions = {}) {
     _markdownCounter++;
     super(renderer, {
@@ -399,7 +410,7 @@ export class MarkdownRenderable extends TextRenderable {
   }
 }
 
-// ── TextTableRenderable ───────────────────────────────────────────────────────
+// ── TextTable ─────────────────────────────────────────────────────────────────
 
 export interface TableColumn {
   header: string;
@@ -436,7 +447,7 @@ export interface TextTableOptions extends BoxOptions {
 
 let _tableCounter = 0;
 
-export class TextTableRenderable extends BoxRenderable {
+export class TextTable extends Box {
   private _columns: TableColumn[];
   private _data: string[][];
   private _contentNodeId: number;
@@ -582,7 +593,7 @@ export class TextTableRenderable extends BoxRenderable {
   }
 }
 
-// ── LineNumberRenderable ──────────────────────────────────────────────────────
+// ── LineNumber ────────────────────────────────────────────────────────────────
 
 export interface LineNumberOptions extends BoxOptions {
   lineCount?: number;
@@ -595,7 +606,7 @@ export interface LineNumberOptions extends BoxOptions {
 
 let _lineNumCounter = 0;
 
-export class LineNumberRenderable extends BoxRenderable {
+export class LineNumber extends Box {
   private _lineCount: number;
   private _startLine: number;
   private _color: RGBA;
@@ -678,7 +689,7 @@ export class LineNumberRenderable extends BoxRenderable {
     super.destroy();
   }
 }
-// ── TimeToFirstDrawRenderable ─────────────────────────────────────────────────
+// ── TimeToFirstDraw ───────────────────────────────────────────────────────────
 
 export interface TimeToFirstDrawOptions extends TextOptions {
   fg?: ColorInput;
@@ -687,7 +698,7 @@ export interface TimeToFirstDrawOptions extends TextOptions {
 
 let _ttfdCounter = 0;
 
-export class TimeToFirstDrawRenderable extends BoxRenderable {
+export class TimeToFirstDraw extends Box {
   private _fg: RGBA;
   private _color: RGBA;
   private _contentNodeId: number;

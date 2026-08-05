@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   cyan,
@@ -15,38 +15,38 @@ import {
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 let renderer: CliRenderer | null = null;
-let mainContainer: BoxRenderable | null = null;
-let header: BoxRenderable | null = null;
-let headerText: TextRenderable | null = null;
-let leftColumn: BoxRenderable | null = null;
-let rightColumn: BoxRenderable | null = null;
-let footer: BoxRenderable | null = null;
-let footerText: TextRenderable | null = null;
-let selectionBox: BoxRenderable | null = null;
-let selectionStatusText: TextRenderable | null = null;
-let selectionStartText: TextRenderable | null = null;
-let selectionMiddleText: TextRenderable | null = null;
-let selectionEndText: TextRenderable | null = null;
+let mainContainer: Box | null = null;
+let header: Box | null = null;
+let headerText: Text | null = null;
+let leftColumn: Box | null = null;
+let rightColumn: Box | null = null;
+let footer: Box | null = null;
+let footerText: Text | null = null;
+let selectionBox: Box | null = null;
+let selectionStatusText: Text | null = null;
+let selectionStartText: Text | null = null;
+let selectionMiddleText: Text | null = null;
+let selectionEndText: Text | null = null;
 
 // Text elements to demonstrate truncation
-let singleLineText1: TextRenderable | null = null;
-let singleLineText2: TextRenderable | null = null;
-let singleLineText3: TextRenderable | null = null;
-let multilineText1: TextRenderable | null = null;
-let multilineText2: TextRenderable | null = null;
-let styledText: TextRenderable | null = null;
+let singleLineText1: Text | null = null;
+let singleLineText2: Text | null = null;
+let singleLineText3: Text | null = null;
+let multilineText1: Text | null = null;
+let multilineText2: Text | null = null;
+let styledText: Text | null = null;
 
 let truncateEnabled = false;
 let wrapMode: "none" | "char" | "word" = "none";
 
-const allTextElements: TextRenderable[] = [];
+const allTextElements: Text[] = [];
 
 function createLayout(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#0d1117");
 
   // Main container
-  mainContainer = new BoxRenderable(renderer, {
+  mainContainer = new Box(renderer, {
     id: "mainContainer",
     width: "auto",
     height: "auto",
@@ -57,7 +57,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   renderer.root.add(mainContainer);
 
   // Header
-  header = new BoxRenderable(renderer, {
+  header = new Box(renderer, {
     id: "header",
     width: "auto",
     height: 3,
@@ -70,7 +70,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   mainContainer.add(header);
 
-  headerText = new TextRenderable(renderer, {
+  headerText = new Text(renderer, {
     id: "headerText",
     content: "Text Truncation Demo - Press 'T' to toggle truncation",
     fg: "#58a6ff",
@@ -78,7 +78,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   header.add(headerText);
 
   // Content area with two columns
-  const contentArea = new BoxRenderable(renderer, {
+  const contentArea = new Box(renderer, {
     id: "contentArea",
     width: "auto",
     height: "auto",
@@ -90,7 +90,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   mainContainer.add(contentArea);
 
   // Left column
-  leftColumn = new BoxRenderable(renderer, {
+  leftColumn = new Box(renderer, {
     id: "leftColumn",
     width: "auto",
     height: "auto",
@@ -101,7 +101,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   contentArea.add(leftColumn);
 
   // Single line text boxes
-  const singleLineBox1 = new BoxRenderable(renderer, {
+  const singleLineBox1 = new Box(renderer, {
     id: "singleLineBox1",
     width: "auto",
     height: "auto",
@@ -115,7 +115,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   leftColumn.add(singleLineBox1);
 
-  singleLineText1 = new TextRenderable(renderer, {
+  singleLineText1 = new Text(renderer, {
     id: "singleLineText1",
     content:
       "This is a very long single line of text that will definitely exceed the width of most terminal windows and should be truncated when truncation is enabled",
@@ -125,7 +125,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   singleLineBox1.add(singleLineText1);
   allTextElements.push(singleLineText1);
 
-  const singleLineBox2 = new BoxRenderable(renderer, {
+  const singleLineBox2 = new Box(renderer, {
     id: "singleLineBox2",
     width: "auto",
     height: "auto",
@@ -139,7 +139,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   leftColumn.add(singleLineBox2);
 
-  singleLineText2 = new TextRenderable(renderer, {
+  singleLineText2 = new Text(renderer, {
     id: "singleLineText2",
     content: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz",
     fg: "#3fb950",
@@ -148,7 +148,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   singleLineBox2.add(singleLineText2);
   allTextElements.push(singleLineText2);
 
-  const singleLineBox3 = new BoxRenderable(renderer, {
+  const singleLineBox3 = new Box(renderer, {
     id: "singleLineBox3",
     width: "auto",
     height: "auto",
@@ -162,7 +162,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   leftColumn.add(singleLineBox3);
 
-  singleLineText3 = new TextRenderable(renderer, {
+  singleLineText3 = new Text(renderer, {
     id: "singleLineText3",
     content:
       "🌟 Unicode test: こんにちは世界 Hello World 你好世界 안녕하세요 🚀 More emoji: 🎨🎭🎪🎬🎮🎯",
@@ -173,7 +173,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   allTextElements.push(singleLineText3);
 
   // Right column
-  rightColumn = new BoxRenderable(renderer, {
+  rightColumn = new Box(renderer, {
     id: "rightColumn",
     width: "auto",
     height: "auto",
@@ -184,7 +184,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   contentArea.add(rightColumn);
 
   // Multiline text boxes
-  const multilineBox1 = new BoxRenderable(renderer, {
+  const multilineBox1 = new Box(renderer, {
     id: "multilineBox1",
     width: "auto",
     height: "auto",
@@ -198,7 +198,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   rightColumn.add(multilineBox1);
 
-  multilineText1 = new TextRenderable(renderer, {
+  multilineText1 = new Text(renderer, {
     id: "multilineText1",
     content:
       "This is a multiline text block that demonstrates how truncation works with word wrapping enabled. Each line that exceeds the viewport width will be truncated independently. Try resizing the terminal to see how it behaves!",
@@ -208,7 +208,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   multilineBox1.add(multilineText1);
   allTextElements.push(multilineText1);
 
-  const multilineBox2 = new BoxRenderable(renderer, {
+  const multilineBox2 = new Box(renderer, {
     id: "multilineBox2",
     width: "auto",
     height: "auto",
@@ -222,7 +222,7 @@ function createLayout(rendererInstance: CliRenderer): void {
   });
   rightColumn.add(multilineBox2);
 
-  multilineText2 = new TextRenderable(renderer, {
+  multilineText2 = new Text(renderer, {
     id: "multilineText2",
     content: `Line 1: This is a long line without wrapping
 Line 2: Another very long line that will be truncated when enabled
@@ -234,7 +234,7 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
   multilineBox2.add(multilineText2);
   allTextElements.push(multilineText2);
 
-  const styledBox = new BoxRenderable(renderer, {
+  const styledBox = new Box(renderer, {
     id: "styledBox",
     width: "auto",
     height: "auto",
@@ -248,7 +248,7 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
   });
   rightColumn.add(styledBox);
 
-  styledText = new TextRenderable(renderer, {
+  styledText = new Text(renderer, {
     id: "styledText",
     content: t`${bold(cyan("Bold Cyan:"))} ${yellow("Yellow text")} ${magenta("and magenta")} ${green("with green parts")} and more styled text that goes on and on`,
     fg: "#c9d1d9",
@@ -258,7 +258,7 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
   allTextElements.push(styledText);
 
   // Footer
-  footer = new BoxRenderable(renderer, {
+  footer = new Box(renderer, {
     id: "footer",
     width: "auto",
     height: 3,
@@ -271,14 +271,14 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
   });
   mainContainer.add(footer);
 
-  footerText = new TextRenderable(renderer, {
+  footerText = new Text(renderer, {
     id: "footerText",
     content: "",
     fg: "#8b949e",
   });
   footer.add(footerText);
 
-  selectionBox = new BoxRenderable(renderer, {
+  selectionBox = new Box(renderer, {
     id: "selectionBox",
     width: "auto",
     height: 7,
@@ -294,28 +294,28 @@ Line 4: Yet another extremely long line with lots of text to demonstrate middle 
   });
   mainContainer.add(selectionBox);
 
-  selectionStatusText = new TextRenderable(renderer, {
+  selectionStatusText = new Text(renderer, {
     id: "selectionStatusText",
     content: "Select text to see details here",
     fg: "#8b949e",
   });
   selectionBox.add(selectionStatusText);
 
-  selectionStartText = new TextRenderable(renderer, {
+  selectionStartText = new Text(renderer, {
     id: "selectionStartText",
     content: "",
     fg: "#7dd3fc",
   });
   selectionBox.add(selectionStartText);
 
-  selectionMiddleText = new TextRenderable(renderer, {
+  selectionMiddleText = new Text(renderer, {
     id: "selectionMiddleText",
     content: "",
     fg: "#94a3b8",
   });
   selectionBox.add(selectionMiddleText);
 
-  selectionEndText = new TextRenderable(renderer, {
+  selectionEndText = new Text(renderer, {
     id: "selectionEndText",
     content: "",
     fg: "#7dd3fc",

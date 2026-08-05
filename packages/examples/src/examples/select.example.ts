@@ -1,19 +1,19 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   RenderableEvents,
+  Select,
+  SelectEvents,
   type SelectOption,
-  SelectRenderable,
-  SelectRenderableEvents,
   bold,
   createCliRenderer,
   fg,
   t,
 } from "@bettertui/core";
-import { TextRenderable } from "@bettertui/core";
+import { Text } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let selectElement: SelectRenderable | null = null;
+let selectElement: Select | null = null;
 let renderer: CliRenderer | null = null;
 let keyboardHandler:
   | ((key: {
@@ -24,9 +24,9 @@ let keyboardHandler:
       shift?: boolean;
     }) => void)
   | null = null;
-let keyLegendDisplay: TextRenderable | null = null;
-let statusDisplay: TextRenderable | null = null;
-let lastActionText = "Welcome to SelectRenderable demo! Use the controls to test features.";
+let keyLegendDisplay: Text | null = null;
+let statusDisplay: Text | null = null;
+let lastActionText = "Welcome to Select demo! Use the controls to test features.";
 let lastActionColor = "#FFCC00";
 
 const selectOptions: SelectOption[] = [
@@ -103,13 +103,13 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#001122");
 
-  const parentContainer = new BoxRenderable(renderer, {
+  const parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
   });
   renderer.root.add(parentContainer);
 
-  selectElement = new SelectRenderable(renderer, {
+  selectElement = new Select(renderer, {
     id: "demo-select",
     position: "absolute",
     left: 5,
@@ -134,7 +134,7 @@ export function run(rendererInstance: CliRenderer): void {
 
   renderer.root.add(selectElement);
 
-  keyLegendDisplay = new TextRenderable(renderer, {
+  keyLegendDisplay = new Text(renderer, {
     id: "key-legend",
     content: t``,
     width: 40,
@@ -147,7 +147,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
   parentContainer.add(keyLegendDisplay);
 
-  statusDisplay = new TextRenderable(renderer, {
+  statusDisplay = new Text(renderer, {
     id: "status-display",
     content: t``,
     width: 80,
@@ -159,16 +159,13 @@ export function run(rendererInstance: CliRenderer): void {
   });
   parentContainer.add(statusDisplay);
 
-  selectElement.on(
-    SelectRenderableEvents.SELECTION_CHANGED,
-    (_index: number, option: SelectOption) => {
-      lastActionText = `Navigation: Moved to "${option.name}"`;
-      lastActionColor = "#FFCC00";
-      updateDisplays();
-    },
-  );
+  selectElement.on(SelectEvents.SELECTION_CHANGED, (_index: number, option: SelectOption) => {
+    lastActionText = `Navigation: Moved to "${option.name}"`;
+    lastActionColor = "#FFCC00";
+    updateDisplays();
+  });
 
-  selectElement.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, option: SelectOption) => {
+  selectElement.on(SelectEvents.ITEM_SELECTED, (_index: number, option: SelectOption) => {
     lastActionText = `*** ACTIVATED: ${option.name} (${option.value}) ***`;
     lastActionColor = "#FF00FF";
     updateDisplays();

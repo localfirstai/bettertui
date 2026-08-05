@@ -1,10 +1,10 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  FrameBufferRenderable,
+  FrameBuffer,
   type KeyEvent,
   RGBA,
-  TextRenderable,
+  Text,
   blue,
   bold,
   createCliRenderer,
@@ -26,7 +26,7 @@ const GRAPHEME_LINES: string[] = [
   "𝔘𝔫𝔦𝔠𝔬𝔡𝔢  𝒻𝓊𝓁𝓁 𝓌𝒾𝒹𝓉𝒽：ＡＢＣ  ½ ⅞ ⅓",
 ];
 
-class DraggableGraphemeBox extends FrameBufferRenderable {
+class DraggableGraphemeBox extends FrameBuffer {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -101,7 +101,7 @@ class DraggableGraphemeBox extends FrameBufferRenderable {
   }
 }
 
-class GraphemeBackground extends FrameBufferRenderable {
+class GraphemeBackground extends FrameBuffer {
   constructor(ctx: CliRenderer, id: string, width: number, height: number) {
     super(ctx, {
       id,
@@ -123,7 +123,7 @@ class GraphemeBackground extends FrameBufferRenderable {
   }
 }
 
-class DraggableStyledText extends TextRenderable {
+class DraggableStyledText extends Text {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -188,7 +188,7 @@ export function run(renderer: CliRenderer): void {
 
   let vignetteEnabled = false;
 
-  const rootGroup = new BoxRenderable(renderer, {
+  const rootGroup = new Box(renderer, {
     id: "full-unicode-root",
     zIndex: 1,
   });
@@ -237,7 +237,7 @@ export function run(renderer: CliRenderer): void {
   rootGroup.add(box2);
   rootGroup.add(box3);
 
-  // Draggable styled text using TextRenderable (grapheme-aware via TextBuffer)
+  // Draggable styled text using Text (grapheme-aware via TextBuffer)
   const styledText = new DraggableStyledText(renderer, "draggable-styled-text", 8, 12);
   rootGroup.add(styledText);
 
@@ -246,7 +246,7 @@ export function run(renderer: CliRenderer): void {
 ${underline("Drag me too:")} 🇺🇸  🇩🇪  🇯🇵  🇮🇳  a̐éö̲`;
   rootGroup.add(styledText2);
 
-  const hintText = new TextRenderable(renderer, {
+  const hintText = new Text(renderer, {
     id: "full-unicode-hint",
     position: "absolute",
     left: 2,

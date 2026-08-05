@@ -126,6 +126,7 @@ impl AnsiBackend {
 
     fn encode_cell(&mut self, cell: &Cell) {
         self.begin_sgr();
+        self.buffer.push(b'0');
         self.push_fg_sgr(cell.fg);
         self.push_bg_sgr(cell.bg);
         self.push_attrs_sgr(cell.attributes);
@@ -351,7 +352,8 @@ impl AnsiBackend {
 
 impl RenderBackend for AnsiBackend {
     fn encode(&mut self, buffer: &FrameBuffer, regions: &[DirtyRegion]) {
-        self.buffer.clear();
+        // NOTE: Do NOT clear self.buffer here — begin_frame() already wrote
+        // sync/mode sequences into it. Clearing would destroy that output.
         self.cursor_x = u16::MAX;
         self.cursor_y = u16::MAX;
         self.current_link = 0;
@@ -396,6 +398,10 @@ impl RenderBackend for AnsiBackend {
     }
 
     fn begin_frame(&mut self, screen_mode: &ScreenMode, _width: u16, height: u16) {
+        // Clear the output buffer at frame start so stale data from the
+        // previous frame is gone. encode() will append cell data after this.
+        self.buffer.clear();
+
         self.begin_sync();
 
         let mode_changed = *screen_mode != self.previous_mode;
@@ -727,6 +733,7 @@ impl RenderTree {
 
 pub struct Painter {
     buffer: FrameBuffer,
+    background_color: Color,
     opacity_stack: Vec<f32>,
     scissor_stack: Vec<ClipBounds>,
 }
@@ -741,9 +748,18 @@ impl Painter {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             buffer: FrameBuffer::new(width, height),
+            background_color: Color::Default,
             opacity_stack: Vec::with_capacity(8),
             scissor_stack: Vec::with_capacity(8),
         }
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.background_color
     }
 
     pub fn resize(&mut self, width: u16, height: u16) {
@@ -806,7 +822,7 @@ impl Painter {
 
     pub fn paint_with_clear(&mut self, tree: &RenderTree, ctx: &PaintContext, full_clear: bool) {
         if full_clear {
-            self.buffer.clear();
+            self.buffer.clear_with_bg(self.background_color);
         }
         let sorted = tree.sorted_by_z_index();
         for idx in &sorted {
@@ -817,7 +833,7 @@ impl Painter {
 
     /// Paint from render commands with proper stacking.
     pub fn paint_commands(&mut self, commands: &[RenderCommand], ctx: &PaintContext) {
-        self.buffer.clear();
+        self.buffer.clear_with_bg(self.background_color);
         self.opacity_stack.clear();
         self.scissor_stack.clear();
 
@@ -959,19 +975,95 @@ impl Painter {
                 break;
             }
             let mut col = line.x;
-            for g in unicode_segmentation::UnicodeSegmentation::graphemes(line.text.as_str(), true) {
-                if col >= content.x + content.width {
+            let mut active_fg = fg;
+            let mut active_bg = bg;
+            let mut active_attrs = attrs;
+
+            let line_str = line.text.as_str();
+            let bytes = line_str.as_bytes();
+            let len = bytes.len();
+            let mut byte_idx = 0;
+
+            while byte_idx < len {
+                if bytes[byte_idx] == 0x1b {
+                    byte_idx += 1;
+                    if byte_idx < len && bytes[byte_idx] == b'[' {
+                        byte_idx += 1;
+                        let param_start = byte_idx;
+                        while byte_idx < len && !(0x40..=0x7e).contains(&bytes[byte_idx]) {
+                            byte_idx += 1;
+                        }
+                        if byte_idx < len {
+                            let final_byte = bytes[byte_idx];
+                            let param_slice = &line_str[param_start..byte_idx];
+                            byte_idx += 1;
+                            if final_byte == b'm' {
+                                let params: Vec<u32> =
+                                    param_slice.split(';').filter_map(|p| p.parse::<u32>().ok()).collect();
+                                let sgr_attrs = crate::ansi::parse_sgr(&params);
+                                for sgr in sgr_attrs {
+                                    match sgr {
+                                        crate::ansi::SgrAttribute::Reset => {
+                                            active_fg = fg;
+                                            active_bg = bg;
+                                            active_attrs = attrs;
+                                        }
+                                        crate::ansi::SgrAttribute::Bold => active_attrs |= CellAttributes::BOLD,
+                                        crate::ansi::SgrAttribute::Dim => active_attrs |= CellAttributes::DIM,
+                                        crate::ansi::SgrAttribute::Italic => active_attrs |= CellAttributes::ITALIC,
+                                        crate::ansi::SgrAttribute::Underline => {
+                                            active_attrs |= CellAttributes::UNDERLINE
+                                        }
+                                        crate::ansi::SgrAttribute::Inverse => active_attrs |= CellAttributes::INVERSE,
+                                        crate::ansi::SgrAttribute::Hidden => active_attrs |= CellAttributes::HIDDEN,
+                                        crate::ansi::SgrAttribute::Strikethrough => {
+                                            active_attrs |= CellAttributes::STRIKETHROUGH
+                                        }
+                                        crate::ansi::SgrAttribute::Foreground(fg_val) => {
+                                            active_fg = Color::from(fg_val);
+                                        }
+                                        crate::ansi::SgrAttribute::Background(bg_val) => {
+                                            active_bg = Color::from(bg_val);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                    } else if byte_idx < len && bytes[byte_idx] == b']' {
+                        byte_idx += 1;
+                        while byte_idx < len {
+                            if bytes[byte_idx] == 0x07 {
+                                byte_idx += 1;
+                                break;
+                            }
+                            if bytes[byte_idx] == 0x1b && byte_idx + 1 < len && bytes[byte_idx + 1] == b'\\' {
+                                byte_idx += 2;
+                                break;
+                            }
+                            byte_idx += 1;
+                        }
+                    }
+                    continue;
+                }
+
+                let slice = &line_str[byte_idx..];
+                let g = match unicode_segmentation::UnicodeSegmentation::graphemes(slice, true).next() {
+                    Some(g) => g,
+                    None => break,
+                };
+                byte_idx += g.len();
+
+                if col >= content.x + content.width || col >= self.buffer.width() {
                     break;
                 }
-                if col >= self.buffer.width() {
-                    break;
-                }
+
                 let w = unicode_width::UnicodeWidthStr::width(g) as u16;
                 if let Some(ch) = g.chars().next() {
-                    let cell = Cell::new(ch).with_fg(fg).with_bg(bg).with_attrs(attrs);
+                    let cell = Cell::new(ch).with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
                     self.buffer.set(col, y, cell);
                     if w == 2 && col + 1 < self.buffer.width() {
-                        let space = Cell::new(' ').with_fg(fg).with_bg(bg).with_attrs(attrs);
+                        let space = Cell::new(' ').with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
                         self.buffer.set(col + 1, y, space);
                     }
                 }
@@ -1011,6 +1103,20 @@ impl Painter {
 
         // Draw top border
         if bounds.border_top > 0 {
+            let title_chars: Vec<char> = obj.text.as_deref().unwrap_or("").chars().collect();
+            let title_len = title_chars.len() as u16;
+            let avail = w.saturating_sub(2);
+            let draw_title = !title_chars.is_empty() && avail >= title_len;
+            let title_start = if draw_title {
+                match obj.text_align {
+                    crate::text::TextAlign::Center => 1 + (avail.saturating_sub(title_len)) / 2,
+                    crate::text::TextAlign::Right => 1 + avail.saturating_sub(title_len),
+                    _ => 1,
+                }
+            } else {
+                u16::MAX
+            };
+
             for row in 0..bounds.border_top {
                 for col in 0..w {
                     let ch = if row == 0 {
@@ -1018,6 +1124,8 @@ impl Painter {
                             tl
                         } else if col == w - 1 && bounds.border_right > 0 {
                             tr
+                        } else if col >= title_start && (col - title_start) < title_len {
+                            title_chars[(col - title_start) as usize]
                         } else if bounds.border_top > 1 && row < bounds.border_top - 1 {
                             ' '
                         } else {
@@ -1320,6 +1428,7 @@ fn node_id_to_u64(id: NodeId) -> u64 {
 pub struct Renderer {
     width: u16,
     height: u16,
+    background_color: Color,
     render_offset: u16,
     screen_mode: ScreenMode,
     layout_sync: LayoutTreeSync,
@@ -1351,6 +1460,7 @@ impl Renderer {
         Self {
             width,
             height,
+            background_color: Color::Default,
             render_offset: 0,
             screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
@@ -1376,6 +1486,7 @@ impl Renderer {
         Self {
             width,
             height,
+            background_color: Color::Default,
             render_offset: 0,
             screen_mode: ScreenMode::AlternateScreen,
             layout_sync: LayoutTreeSync::new(),
@@ -1392,6 +1503,16 @@ impl Renderer {
             cursor_state: CursorState::default(),
             hit_grid: HitGrid::new(vw, vh),
         }
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
+        self.painter.set_background_color(color);
+        self.needs_full_repaint = true;
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.background_color
     }
 
     pub fn with_fps(fps: u32) -> Self {
@@ -1546,10 +1667,7 @@ impl Renderer {
 
         let root_id = arena.root();
         for (id, _node) in arena.iter() {
-            let children = arena.children(id);
-            if !children.is_empty() {
-                self.layout_sync.sync_children(arena, id);
-            }
+            self.layout_sync.sync_children(arena, id);
         }
         let vp_height = self.viewport_height();
         let _ = self.layout_sync.compute(root_id, self.width, vp_height);

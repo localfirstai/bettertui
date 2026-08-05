@@ -1,11 +1,11 @@
 import {
   type BorderStyleKind,
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
-  ScrollBoxRenderable,
-  TextRenderable,
-  TextTableRenderable,
+  ScrollBox,
+  Text,
+  TextTable,
   bold,
   createCliRenderer,
   fg,
@@ -20,14 +20,14 @@ import type {
 import type { TextChunk } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let container: BoxRenderable | null = null;
-let primaryTable: TextTableRenderable | null = null;
-let unicodeTable: TextTableRenderable | null = null;
-let controlsText: TextRenderable | null = null;
-let tableAreaScrollBox: ScrollBoxRenderable | null = null;
-let selectionStatusText: TextRenderable | null = null;
-let selectionMetaText: TextRenderable | null = null;
-let selectionScrollBox: ScrollBoxRenderable | null = null;
+let container: Box | null = null;
+let primaryTable: TextTable | null = null;
+let unicodeTable: TextTable | null = null;
+let controlsText: Text | null = null;
+let tableAreaScrollBox: ScrollBox | null = null;
+let selectionStatusText: Text | null = null;
+let selectionMetaText: Text | null = null;
+let selectionScrollBox: ScrollBox | null = null;
 let keyboardHandler: ((key: KeyEvent) => void) | null = null;
 let selectionHandler: ((selection: Selection) => void) | null = null;
 
@@ -250,7 +250,7 @@ function applyTableState(): void {
 export function run(renderer: CliRenderer): void {
   renderer.setBackgroundColor("transparent");
 
-  container = new BoxRenderable(renderer, {
+  container = new Box(renderer, {
     id: "text-table-demo-container",
     width: "100%",
     height: "100%",
@@ -261,7 +261,7 @@ export function run(renderer: CliRenderer): void {
   });
   renderer.root.add(container);
 
-  controlsText = new TextRenderable(renderer, {
+  controlsText = new Text(renderer, {
     id: "text-table-demo-controls",
     content: "",
     fg: PALETTE.text,
@@ -269,7 +269,7 @@ export function run(renderer: CliRenderer): void {
     selectable: false,
   });
 
-  tableAreaScrollBox = new ScrollBoxRenderable(renderer, {
+  tableAreaScrollBox = new ScrollBox(renderer, {
     id: "text-table-demo-table-area-scroll",
     width: "100%",
     flexGrow: 1,
@@ -284,14 +284,14 @@ export function run(renderer: CliRenderer): void {
     },
   });
 
-  const primaryLabel = new TextRenderable(renderer, {
+  const primaryLabel = new Text(renderer, {
     id: "text-table-demo-primary-label",
     content: t`${bold("Operational Table")}`,
     fg: PALETTE.ember,
     selectable: false,
   });
 
-  primaryTable = new TextTableRenderable(renderer, {
+  primaryTable = new TextTable(renderer, {
     id: "text-table-demo-primary",
     width: "100%",
     wrapMode: currentWrapMode(),
@@ -303,14 +303,14 @@ export function run(renderer: CliRenderer): void {
     content: primaryContentSets[contentIndex] ?? primaryContentSets[0],
   });
 
-  const unicodeLabel = new TextRenderable(renderer, {
+  const unicodeLabel = new Text(renderer, {
     id: "text-table-demo-unicode-label",
     content: t`${bold("Unicode/CJK/Emoji Table")}`,
     fg: PALETTE.rose,
     selectable: false,
   });
 
-  unicodeTable = new TextTableRenderable(renderer, {
+  unicodeTable = new TextTable(renderer, {
     id: "text-table-demo-unicode",
     width: "100%",
     wrapMode: currentWrapMode(),
@@ -322,7 +322,7 @@ export function run(renderer: CliRenderer): void {
     content: unicodeContentSets[contentIndex] ?? unicodeContentSets[0],
   });
 
-  const selectionBox = new BoxRenderable(renderer, {
+  const selectionBox = new Box(renderer, {
     id: "text-table-demo-selection-box",
     width: "100%",
     height: 10,
@@ -337,14 +337,14 @@ export function run(renderer: CliRenderer): void {
     backgroundColor: PALETTE.panel,
   });
 
-  selectionMetaText = new TextRenderable(renderer, {
+  selectionMetaText = new Text(renderer, {
     id: "text-table-demo-selection-meta",
     content: "No selection yet",
     fg: PALETTE.eye,
     selectable: false,
   });
 
-  selectionScrollBox = new ScrollBoxRenderable(renderer, {
+  selectionScrollBox = new ScrollBox(renderer, {
     id: "text-table-demo-selection-scroll",
     width: "100%",
     flexGrow: 1,
@@ -358,7 +358,7 @@ export function run(renderer: CliRenderer): void {
   tableAreaScrollBox.verticalScrollBar.visible = false;
   selectionScrollBox.verticalScrollBar.visible = false;
 
-  selectionStatusText = new TextRenderable(renderer, {
+  selectionStatusText = new Text(renderer, {
     id: "text-table-demo-selection-text",
     content: "",
     fg: PALETTE.text,

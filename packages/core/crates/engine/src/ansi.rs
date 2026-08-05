@@ -994,6 +994,32 @@ pub enum ForegroundColor {
     Rgb(u8, u8, u8),
 }
 
+impl From<ForegroundColor> for Color {
+    fn from(fg: ForegroundColor) -> Self {
+        match fg {
+            ForegroundColor::Default => Color::Default,
+            ForegroundColor::Black => Color::Named(NamedColor::Black),
+            ForegroundColor::Red => Color::Named(NamedColor::Red),
+            ForegroundColor::Green => Color::Named(NamedColor::Green),
+            ForegroundColor::Yellow => Color::Named(NamedColor::Yellow),
+            ForegroundColor::Blue => Color::Named(NamedColor::Blue),
+            ForegroundColor::Magenta => Color::Named(NamedColor::Magenta),
+            ForegroundColor::Cyan => Color::Named(NamedColor::Cyan),
+            ForegroundColor::White => Color::Named(NamedColor::White),
+            ForegroundColor::BrightBlack => Color::Named(NamedColor::BrightBlack),
+            ForegroundColor::BrightRed => Color::Named(NamedColor::BrightRed),
+            ForegroundColor::BrightGreen => Color::Named(NamedColor::BrightGreen),
+            ForegroundColor::BrightYellow => Color::Named(NamedColor::BrightYellow),
+            ForegroundColor::BrightBlue => Color::Named(NamedColor::BrightBlue),
+            ForegroundColor::BrightMagenta => Color::Named(NamedColor::BrightMagenta),
+            ForegroundColor::BrightCyan => Color::Named(NamedColor::BrightCyan),
+            ForegroundColor::BrightWhite => Color::Named(NamedColor::BrightWhite),
+            ForegroundColor::Extended(idx) => Color::Indexed(idx),
+            ForegroundColor::Rgb(r, g, b) => Color::Rgb { r, g, b },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackgroundColor {
     Default,
@@ -1015,6 +1041,32 @@ pub enum BackgroundColor {
     BrightWhite,
     Extended(u8),
     Rgb(u8, u8, u8),
+}
+
+impl From<BackgroundColor> for Color {
+    fn from(bg: BackgroundColor) -> Self {
+        match bg {
+            BackgroundColor::Default => Color::Default,
+            BackgroundColor::Black => Color::Named(NamedColor::Black),
+            BackgroundColor::Red => Color::Named(NamedColor::Red),
+            BackgroundColor::Green => Color::Named(NamedColor::Green),
+            BackgroundColor::Yellow => Color::Named(NamedColor::Yellow),
+            BackgroundColor::Blue => Color::Named(NamedColor::Blue),
+            BackgroundColor::Magenta => Color::Named(NamedColor::Magenta),
+            BackgroundColor::Cyan => Color::Named(NamedColor::Cyan),
+            BackgroundColor::White => Color::Named(NamedColor::White),
+            BackgroundColor::BrightBlack => Color::Named(NamedColor::BrightBlack),
+            BackgroundColor::BrightRed => Color::Named(NamedColor::BrightRed),
+            BackgroundColor::BrightGreen => Color::Named(NamedColor::BrightGreen),
+            BackgroundColor::BrightYellow => Color::Named(NamedColor::BrightYellow),
+            BackgroundColor::BrightBlue => Color::Named(NamedColor::BrightBlue),
+            BackgroundColor::BrightMagenta => Color::Named(NamedColor::BrightMagenta),
+            BackgroundColor::BrightCyan => Color::Named(NamedColor::BrightCyan),
+            BackgroundColor::BrightWhite => Color::Named(NamedColor::BrightWhite),
+            BackgroundColor::Extended(idx) => Color::Indexed(idx),
+            BackgroundColor::Rgb(r, g, b) => Color::Rgb { r, g, b },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1170,7 +1222,7 @@ impl CsiCommand {
     }
 }
 
-fn parse_sgr(params: &[u32]) -> Vec<SgrAttribute> {
+pub fn parse_sgr(params: &[u32]) -> Vec<SgrAttribute> {
     let mut attrs = Vec::new();
     let mut i = 0;
 

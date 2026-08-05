@@ -1,10 +1,4 @@
-import {
-  BoxRenderable,
-  type CliRenderer,
-  type KeyEvent,
-  TextRenderable,
-  createCliRenderer,
-} from "@bettertui/core";
+import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
 // ── Local type stubs for core plugin/slot API (not yet exported from @bettertui/core) ──
@@ -32,7 +26,7 @@ interface CorePlugin<_TSlot = string, _TCtx = unknown, _TData = unknown> {
   slots?: Record<
     string,
     {
-      render(_ctx: _TCtx, data: _TData): BoxRenderable;
+      render(_ctx: _TCtx, data: _TData): Box;
       onActivate?(): void;
       onDeactivate?(): void;
       onDispose?(): void;
@@ -40,8 +34,8 @@ interface CorePlugin<_TSlot = string, _TCtx = unknown, _TData = unknown> {
   >;
 }
 
-// SlotRenderable stub that extends BoxRenderable
-class SlotRenderable<_TSlot = string, _TCtx = unknown, _TData = unknown> extends BoxRenderable {
+// SlotRenderable stub that extends Box
+class SlotRenderable<_TSlot = string, _TCtx = unknown, _TData = unknown> extends Box {
   mode: CoreSlotMode = "append";
   data: Record<string, unknown> = {};
 
@@ -85,11 +79,11 @@ interface PluginStats {
 }
 
 let renderer: CliRenderer | null = null;
-let rootContainer: BoxRenderable | null = null;
+let rootContainer: Box | null = null;
 let statusbarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null = null;
 let sidebarSlot: SlotRenderable<DemoSlot, DemoContext, DemoSlotData> | null = null;
-let infoPanel: BoxRenderable | null = null;
-let infoText: TextRenderable | null = null;
+let infoPanel: Box | null = null;
+let infoText: Text | null = null;
 
 let slotRegistry: CoreSlotRegistry<DemoSlot, DemoContext, DemoSlotData> | null = null;
 
@@ -151,10 +145,10 @@ function createPluginFailurePlaceholder(
   rendererInstance: CliRenderer,
   failure: PluginErrorEvent,
   color: string,
-): BoxRenderable {
+): Box {
   placeholderCreateCount++;
 
-  const container = new BoxRenderable(rendererInstance, {
+  const container = new Box(rendererInstance, {
     id: `plugin-error-${failure.pluginId}-${placeholderCreateCount}`,
     border: true,
     borderStyle: "single",
@@ -165,13 +159,13 @@ function createPluginFailurePlaceholder(
     backgroundColor: "#1f1115",
   });
 
-  const title = new TextRenderable(rendererInstance, {
+  const title = new Text(rendererInstance, {
     id: `plugin-error-title-${failure.pluginId}-${placeholderCreateCount}`,
     content: `Plugin error: ${failure.pluginId}`,
     fg: "#fecaca",
   });
 
-  const details = new TextRenderable(rendererInstance, {
+  const details = new Text(rendererInstance, {
     id: `plugin-error-details-${failure.pluginId}-${placeholderCreateCount}`,
     content: `${failure.phase}/${failure.source} @ ${failure.slot ?? "unknown"}`,
     fg: "#fca5a5",
@@ -249,10 +243,10 @@ function updateInfoPanel(): void {
 function createClockPlugin(
   rendererInstance: CliRenderer,
 ): CorePlugin<DemoSlot, DemoContext, DemoSlotData> {
-  let statusbarItem: BoxRenderable | null = null;
-  let statusText: TextRenderable | null = null;
-  let sidebarPanel: BoxRenderable | null = null;
-  let sidebarText: TextRenderable | null = null;
+  let statusbarItem: Box | null = null;
+  let statusText: Text | null = null;
+  let sidebarPanel: Box | null = null;
+  let sidebarText: Text | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   const activeSlots = new Set<DemoSlot>();
   let statusbarLabel = "status";
@@ -336,7 +330,7 @@ function createClockPlugin(
 
           clockStats.statusbarCreates++;
 
-          const item = new BoxRenderable(rendererInstance, {
+          const item = new Box(rendererInstance, {
             id: `clock-statusbar-${clockStats.statusbarCreates}`,
             border: true,
             borderStyle: "single",
@@ -349,7 +343,7 @@ function createClockPlugin(
           });
           statusbarItem = item;
 
-          statusText = new TextRenderable(rendererInstance, {
+          statusText = new Text(rendererInstance, {
             id: `clock-statusbar-text-${clockStats.statusbarCreates}`,
             content: `Clock plugin -> ${statusbarLabel}`,
             fg: "#93c5fd",
@@ -383,7 +377,7 @@ function createClockPlugin(
 
           clockStats.sidebarCreates++;
 
-          const panel = new BoxRenderable(rendererInstance, {
+          const panel = new Box(rendererInstance, {
             id: `clock-sidebar-${clockStats.sidebarCreates}`,
             border: true,
             borderStyle: "single",
@@ -396,14 +390,14 @@ function createClockPlugin(
           sidebarPanel = panel;
 
           panel.add(
-            new TextRenderable(rendererInstance, {
+            new Text(rendererInstance, {
               id: `clock-sidebar-title-${clockStats.sidebarCreates}`,
               content: `Clock Sidebar (${data.section ?? "left"})`,
               fg: "#38bdf8",
             }),
           );
 
-          sidebarText = new TextRenderable(rendererInstance, {
+          sidebarText = new Text(rendererInstance, {
             id: `clock-sidebar-text-${clockStats.sidebarCreates}`,
             content: "Last tick: --:--:--",
             fg: "#e2e8f0",
@@ -437,8 +431,8 @@ function createClockPlugin(
 function createActivityPlugin(
   rendererInstance: CliRenderer,
 ): CorePlugin<DemoSlot, DemoContext, DemoSlotData> {
-  let activityItem: BoxRenderable | null = null;
-  let activityText: TextRenderable | null = null;
+  let activityItem: Box | null = null;
+  let activityText: Text | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   let phase = 0;
   let statusbarActive = false;
@@ -509,7 +503,7 @@ function createActivityPlugin(
 
           activityStats.statusbarCreates++;
 
-          const item = new BoxRenderable(rendererInstance, {
+          const item = new Box(rendererInstance, {
             id: `activity-statusbar-${activityStats.statusbarCreates}`,
             border: true,
             borderStyle: "single",
@@ -522,7 +516,7 @@ function createActivityPlugin(
           });
           activityItem = item;
 
-          activityText = new TextRenderable(rendererInstance, {
+          activityText = new Text(rendererInstance, {
             id: `activity-statusbar-text-${activityStats.statusbarCreates}`,
             content: `Activity (${statusbarLabel})`,
             fg: "#86efac",
@@ -643,7 +637,7 @@ function handleKeyPress(key: KeyEvent): void {
 }
 
 function createLayout(rendererInstance: CliRenderer): void {
-  rootContainer = new BoxRenderable(rendererInstance, {
+  rootContainer = new Box(rendererInstance, {
     id: "core-plugin-demo-root",
     width: "100%",
     height: "100%",
@@ -652,14 +646,14 @@ function createLayout(rendererInstance: CliRenderer): void {
     backgroundColor: "#020617",
   });
 
-  const body = new BoxRenderable(rendererInstance, {
+  const body = new Box(rendererInstance, {
     id: "core-plugin-demo-body",
     width: "100%",
     flexGrow: 1,
     flexDirection: "row",
   });
 
-  infoPanel = new BoxRenderable(rendererInstance, {
+  infoPanel = new Box(rendererInstance, {
     id: "core-plugin-demo-info-panel",
     flexGrow: 1,
     border: true,
@@ -669,7 +663,7 @@ function createLayout(rendererInstance: CliRenderer): void {
     padding: 1,
   });
 
-  infoText = new TextRenderable(rendererInstance, {
+  infoText = new Text(rendererInstance, {
     id: "core-plugin-demo-info-text",
     fg: "#e2e8f0",
     content: "",
@@ -708,7 +702,7 @@ export function run(rendererInstance: CliRenderer): void {
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: reading runtime reference from widget instance
-  const body = (rootContainer as any).__body as BoxRenderable;
+  const body = (rootContainer as any).__body as Box;
 
   unregisterPluginErrorListener = slotRegistry.onPluginError((event) => {
     pushPluginError(event);
@@ -728,7 +722,7 @@ export function run(rendererInstance: CliRenderer): void {
     paddingLeft: 1,
     marginBottom: 1,
     fallback: () =>
-      new TextRenderable(rendererInstance, {
+      new Text(rendererInstance, {
         id: "statusbar-fallback",
         content: "Fallback statusbar content",
         fg: "#94a3b8",
@@ -753,7 +747,7 @@ export function run(rendererInstance: CliRenderer): void {
     padding: 1,
     marginRight: 1,
     fallback: () =>
-      new TextRenderable(rendererInstance, {
+      new Text(rendererInstance, {
         id: "sidebar-fallback",
         content: "No sidebar plugin active",
         fg: "#94a3b8",

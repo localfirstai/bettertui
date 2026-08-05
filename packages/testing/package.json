@@ -1,0 +1,38 @@
+{
+  "name": "@bettertui/testing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Headless testing utilities and event simulation for BetterTUI",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "format:check": "biome format src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@bettertui/core": "workspace:*",
+    "@bettertui/react": "workspace:*",
+    "@bettertui/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

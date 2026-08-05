@@ -1,12 +1,12 @@
 import {
-  BoxRenderable,
+  Box,
   CliRenderEvents,
   type CliRenderer,
-  CodeRenderable,
+  Code,
   type KeyEvent,
-  MarkdownRenderable,
-  TextRenderable,
-  TextTableRenderable,
+  Markdown,
+  Text,
+  TextTable,
   createCliRenderer,
 } from "@bettertui/core";
 import { RGBA, parseColor } from "@bettertui/core";
@@ -53,7 +53,7 @@ interface ActiveRun {
   id: number;
   scenario: ScenarioDefinition;
   surface: ScrollbackSurface;
-  renderable: TextRenderable | CodeRenderable | MarkdownRenderable;
+  renderable: Text | Code | Markdown;
   content: string;
   chunkIndex: number;
   committedRows: number;
@@ -189,9 +189,9 @@ function footerRow(label: string, value: string, valueColor: string): TextTableC
 }
 
 class SplitFooterStreamingDemo {
-  private shell: BoxRenderable;
-  private titleText: TextRenderable;
-  private footerTable: TextTableRenderable;
+  private shell: Box;
+  private titleText: Text;
+  private footerTable: TextTable;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer scrollback API
@@ -226,7 +226,7 @@ class SplitFooterStreamingDemo {
 
     this.renderer.setBackgroundColor(PALETTE.background);
 
-    this.shell = new BoxRenderable(this.renderer, {
+    this.shell = new Box(this.renderer, {
       id: "split-footer-streaming-demo-shell",
       width: "100%",
       height: "100%",
@@ -241,14 +241,14 @@ class SplitFooterStreamingDemo {
       flexDirection: "column",
     });
 
-    this.titleText = new TextRenderable(this.renderer, {
+    this.titleText = new Text(this.renderer, {
       id: "split-footer-streaming-demo-title",
       width: "100%",
       content: "Split Footer Surface Streaming Demo",
       fg: PALETTE.title,
     });
 
-    this.footerTable = new TextTableRenderable(this.renderer, {
+    this.footerTable = new TextTable(this.renderer, {
       id: "split-footer-streaming-demo-footer-table",
       width: "100%",
       wrapMode: "word",
@@ -393,10 +393,10 @@ class SplitFooterStreamingDemo {
       startOnNewLine: this.inlinePrefix ? false : !spaced,
     });
 
-    let renderable: TextRenderable | CodeRenderable | MarkdownRenderable;
+    let renderable: Text | Code | Markdown;
     switch (scenario.kind) {
       case "text":
-        renderable = new TextRenderable(surface.renderContext, {
+        renderable = new Text(surface.renderContext, {
           id: `split-footer-stream-text-${this.nextRunId}`,
           content: "",
           width: "100%",
@@ -405,7 +405,7 @@ class SplitFooterStreamingDemo {
         });
         break;
       case "code":
-        renderable = new CodeRenderable(surface.renderContext, {
+        renderable = new Code(surface.renderContext, {
           id: `split-footer-stream-code-${this.nextRunId}`,
           content: "",
           filetype: "typescript",
@@ -415,7 +415,7 @@ class SplitFooterStreamingDemo {
         } as import("@bettertui/core").CodeOptions);
         break;
       case "markdown":
-        renderable = new MarkdownRenderable(surface.renderContext, {
+        renderable = new Markdown(surface.renderContext, {
           id: `split-footer-stream-markdown-${this.nextRunId}`,
           content: "",
           width: "100%",
@@ -443,7 +443,7 @@ class SplitFooterStreamingDemo {
     // biome-ignore lint/suspicious/noExplicitAny: scrollback context type not exported
     this.ra.writeToScrollback((ctx: any) => {
       const width = Math.max(1, Math.trunc(ctx.width));
-      const root = new TextRenderable(ctx.renderContext, {
+      const root = new Text(ctx.renderContext, {
         id: `split-footer-stream-spacer-${this.nextRunId}`,
         position: "absolute",
         left: 0,
@@ -470,7 +470,7 @@ class SplitFooterStreamingDemo {
 
     // biome-ignore lint/suspicious/noExplicitAny: scrollback context type not exported
     this.ra.writeToScrollback((ctx: any) => {
-      const root = new TextRenderable(ctx.renderContext, {
+      const root = new Text(ctx.renderContext, {
         id: `split-footer-stream-prefix-${this.nextRunId}`,
         position: "absolute",
         left: 0,
@@ -574,7 +574,7 @@ class SplitFooterStreamingDemo {
   }
 
   private async flushTextRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as TextRenderable;
+    const renderable = run.renderable as Text;
     renderable.content = run.content;
     run.surface.render();
 
@@ -589,7 +589,7 @@ class SplitFooterStreamingDemo {
   }
 
   private async flushCodeRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as CodeRenderable;
+    const renderable = run.renderable as Code;
     renderable.content = run.content;
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal streaming property on renderable
     (renderable as any).streaming = !done;
@@ -606,7 +606,7 @@ class SplitFooterStreamingDemo {
   }
 
   private async flushMarkdownRun(run: ActiveRun, done: boolean): Promise<void> {
-    const renderable = run.renderable as MarkdownRenderable;
+    const renderable = run.renderable as Markdown;
     renderable.content = run.content as string;
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal streaming property on renderable
     (renderable as any).streaming = !done;

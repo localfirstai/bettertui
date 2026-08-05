@@ -1,4 +1,5 @@
 //! C ABI bindings for node:ffi.
+#![allow(clippy::missing_safety_doc, clippy::collapsible_if, clippy::manual_clamp)]
 //! Every function is `extern "C"` with `#[unsafe(no_mangle)]`.
 //! Handles are opaque u64 values into global type-safe stores.
 //! String returns are `*mut c_char` (caller must free with `ffi_free_string`).
@@ -1810,7 +1811,7 @@ impl From<ColorJson> for Color {
                 "light_yellow" | "lightyellow" => Color::Named(NamedColor::BrightYellow),
                 "light_cyan" | "lightcyan" => Color::Named(NamedColor::BrightCyan),
                 "light_magenta" | "lightmagenta" => Color::Named(NamedColor::BrightMagenta),
-                _ => Color::parse(&name).unwrap_or(Color::Named(NamedColor::White)),
+                _ => Color::parse(&name).unwrap_or(Color::Default),
             },
             ColorJson::Rgb { r, g, b } => Color::Rgb { r, g, b },
         }

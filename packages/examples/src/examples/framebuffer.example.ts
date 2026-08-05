@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
 import {
-  ASCIIFontRenderable,
-  BoxRenderable,
+  ASCIIFont,
+  Box,
   type CliRenderer,
-  FrameBufferRenderable,
+  FrameBuffer,
   RGBA,
-  TextRenderable,
+  Text,
   bold,
   createCliRenderer,
   t,
@@ -32,19 +32,19 @@ let growingWidth = true;
 let growingHeight = true;
 let lastResizeTime = 0;
 const resizeInterval = 0.1;
-let parentContainer: BoxRenderable | null = null;
+let parentContainer: Box | null = null;
 
 export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor(RGBA.toHex(RGBA.fromInts(10, 10, 30)));
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "framebuffer-container",
     zIndex: 10,
   });
   renderer.root.add(parentContainer);
 
-  const titleText = new TextRenderable(renderer, {
+  const titleText = new Text(renderer, {
     id: "framebuffer_title",
     content: t`${bold("FrameBuffer Demo")}`,
     position: "absolute",
@@ -55,7 +55,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(titleText);
 
-  const subtitleText = new TextRenderable(renderer, {
+  const subtitleText = new Text(renderer, {
     id: "framebuffer_subtitle",
     content: "Showcasing framebuffers with transparency and partial drawing",
     position: "absolute",
@@ -66,7 +66,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(subtitleText);
 
-  const instructionsText = new TextRenderable(renderer, {
+  const instructionsText = new Text(renderer, {
     id: "framebuffer_instructions",
     content: "Press Escape to return to menu",
     position: "absolute",
@@ -77,7 +77,7 @@ export function run(renderer: CliRenderer): void {
   });
   parentContainer.add(instructionsText);
 
-  const patternBufferRenderable = new FrameBufferRenderable(renderer, {
+  const patternBufferRenderable = new FrameBuffer(renderer, {
     id: "pattern",
     width: renderer.terminalWidth,
     height: renderer.terminalHeight,
@@ -95,7 +95,7 @@ export function run(renderer: CliRenderer): void {
     }
   }
 
-  const nestedBox = new BoxRenderable(renderer, {
+  const nestedBox = new Box(renderer, {
     id: "nested-box",
     width: 20,
     height: 10,
@@ -112,7 +112,7 @@ export function run(renderer: CliRenderer): void {
   const innerBoxWidth = 10;
   const innerBoxHeight = 4;
 
-  const nestedInnerBox = new BoxRenderable(renderer, {
+  const nestedInnerBox = new Box(renderer, {
     id: "nested-inner-box",
     width: innerBoxWidth,
     height: innerBoxHeight,
@@ -126,7 +126,7 @@ export function run(renderer: CliRenderer): void {
   });
   nestedBox.add(nestedInnerBox);
 
-  const boxObj = new BoxRenderable(renderer, {
+  const boxObj = new Box(renderer, {
     id: "moving-box",
     width: 20,
     height: 10,
@@ -140,7 +140,7 @@ export function run(renderer: CliRenderer): void {
   });
 
   boxObj.add(
-    new ASCIIFontRenderable(renderer, {
+    new ASCIIFont(renderer, {
       id: "moving-box-ascii",
       text: "ASCII",
       position: "relative",
@@ -150,7 +150,7 @@ export function run(renderer: CliRenderer): void {
     }),
   );
 
-  const boxFrame = new FrameBufferRenderable(renderer, {
+  const boxFrame = new FrameBuffer(renderer, {
     id: "moving-box-buffer",
     width: 20,
     height: 10,
@@ -183,7 +183,7 @@ export function run(renderer: CliRenderer): void {
 
   boxBuffer.drawText("Moving Box", 5, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(100, 40, 120));
 
-  const overlayBufferRenderable = new FrameBufferRenderable(renderer, {
+  const overlayBufferRenderable = new FrameBuffer(renderer, {
     id: "overlay",
     width: 40,
     height: 15,
@@ -238,7 +238,7 @@ export function run(renderer: CliRenderer): void {
     RGBA.fromInts(0, 120, 180, 180),
   );
 
-  const ballObj = new FrameBufferRenderable(renderer, {
+  const ballObj = new FrameBuffer(renderer, {
     id: "ball",
     width: 3,
     height: 3,
@@ -260,7 +260,7 @@ export function run(renderer: CliRenderer): void {
   ballBuffer.drawText(" ", 1, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
   ballBuffer.drawText(" ", 2, 2, RGBA.fromInts(255, 255, 255), RGBA.fromInts(200, 50, 50));
 
-  const resizableObj = new FrameBufferRenderable(renderer, {
+  const resizableObj = new FrameBuffer(renderer, {
     id: "resizable-box",
     width: 10,
     height: 5,
@@ -308,7 +308,7 @@ export function run(renderer: CliRenderer): void {
   drawResizableContent();
 
   // Create a large source framebuffer for partial drawing demonstration
-  const sourceObj = new FrameBufferRenderable(renderer, {
+  const sourceObj = new FrameBuffer(renderer, {
     id: "large-source",
     width: 40,
     height: 20,
@@ -332,7 +332,7 @@ export function run(renderer: CliRenderer): void {
   }
 
   // Create smaller framebuffers to demonstrate partial drawing
-  const cropBuffer1Renderable = new FrameBufferRenderable(renderer, {
+  const cropBuffer1Renderable = new FrameBuffer(renderer, {
     id: "crop-demo-1",
     width: 12,
     height: 8,
@@ -344,7 +344,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(cropBuffer1Renderable);
   const { frameBuffer: cropBuffer1 } = cropBuffer1Renderable;
 
-  const cropBuffer2Renderable = new FrameBufferRenderable(renderer, {
+  const cropBuffer2Renderable = new FrameBuffer(renderer, {
     id: "crop-demo-2",
     width: 15,
     height: 6,
@@ -356,7 +356,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(cropBuffer2Renderable);
   const { frameBuffer: cropBuffer2 } = cropBuffer2Renderable;
 
-  const cropBuffer3Renderable = new FrameBufferRenderable(renderer, {
+  const cropBuffer3Renderable = new FrameBuffer(renderer, {
     id: "crop-demo-3",
     width: 10,
     height: 10,
@@ -369,7 +369,7 @@ export function run(renderer: CliRenderer): void {
   const { frameBuffer: cropBuffer3 } = cropBuffer3Renderable;
 
   // Label for the crop demo
-  const cropDemoLabel = new TextRenderable(renderer, {
+  const cropDemoLabel = new Text(renderer, {
     id: "crop_demo_label",
     content: t`${bold("Partial FrameBuffer Drawing Demo:")}`,
     position: "absolute",
@@ -381,7 +381,7 @@ export function run(renderer: CliRenderer): void {
   parentContainer.add(cropDemoLabel);
 
   // Emoji demo using encodeUnicode and drawChar
-  const emojiBufferRenderable = new FrameBufferRenderable(renderer, {
+  const emojiBufferRenderable = new FrameBuffer(renderer, {
     id: "emoji-demo",
     width: 20,
     height: 5,
@@ -393,7 +393,7 @@ export function run(renderer: CliRenderer): void {
   renderer.root.add(emojiBufferRenderable);
   const { frameBuffer: emojiBuffer } = emojiBufferRenderable;
 
-  const emojiDemoLabel = new TextRenderable(renderer, {
+  const emojiDemoLabel = new Text(renderer, {
     id: "emoji_demo_label",
     content: t`${bold("encodeUnicode Demo:")}`,
     position: "absolute",
@@ -656,7 +656,7 @@ export function run(renderer: CliRenderer): void {
     }
   });
 
-  const debugInstructionsText = new TextRenderable(renderer, {
+  const debugInstructionsText = new Text(renderer, {
     id: "framebuffer_debug_instructions",
     content: "Press 1-4 to change corner | Escape: Back to menu",
     position: "absolute",

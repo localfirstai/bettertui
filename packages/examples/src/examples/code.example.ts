@@ -1,11 +1,11 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  CodeRenderable,
-  LineNumberRenderable,
+  Code,
+  LineNumber,
   type RawKeyEvent,
-  ScrollBoxRenderable,
-  TextRenderable,
+  ScrollBox,
+  Text,
   createCliRenderer,
 } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
@@ -121,7 +121,7 @@ function TodoApp() {
 
 ## Getting Started
 
-BetterTUI is a modern terminal UI framework built in Rust with TypeScript bindings.
+BetterTUI is a modern terminal UI framework built on **tree-sitter** and WebGPU.
 
 ### Features
 
@@ -140,10 +140,10 @@ pnpm add @bettertui/core
 ### Quick Example
 
 \`\`\`typescript
-import { createCliRenderer, BoxRenderable } from '@bettertui/core';
+import { createCliRenderer, Box } from '@bettertui/core';
 
 const renderer = await createCliRenderer();
-const box = new BoxRenderable(renderer, {
+const box = new Box(renderer, {
   border: true,
   title: "Hello World"
 });
@@ -152,9 +152,9 @@ renderer.root.add(box);
 
 ## API Reference
 
-### BoxRenderable
+### Box
 
-The \`BoxRenderable\` component provides styled boxes:
+The \`Box\` component provides styled boxes:
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -162,7 +162,7 @@ The \`BoxRenderable\` component provides styled boxes:
 | title | string | Box title |
 | padding | number | Inner padding |
 
-> **Note**: BetterTUI uses Taffy for layout computation.
+> **Note**: Tree-sitter parsers are loaded lazily for performance.
 
 CJK: 알겠습니다. Task 에이전트에 ktlint + detekt 검사를 위임하겠습니다.
 
@@ -516,13 +516,13 @@ function createSyntaxStyle(_theme: CodeDemoTheme): SyntaxStyle {
 
 let renderer: CliRenderer | null = null;
 let keyboardHandler: ((key: RawKeyEvent) => void) | null = null;
-let parentContainer: BoxRenderable | null = null;
-let codeScrollBox: ScrollBoxRenderable | null = null;
-let codeDisplay: CodeRenderable | null = null;
-let codeWithLineNumbers: LineNumberRenderable | null = null;
-let timingText: TextRenderable | null = null;
+let parentContainer: Box | null = null;
+let codeScrollBox: ScrollBox | null = null;
+let codeDisplay: Code | null = null;
+let codeWithLineNumbers: LineNumber | null = null;
+let timingText: Text | null = null;
 let syntaxStyle: SyntaxStyle | null = null;
-let helpModal: BoxRenderable | null = null;
+let helpModal: Box | null = null;
 let currentExampleIndex = 0;
 let currentThemeIndex = 0;
 let concealEnabled = true;
@@ -537,14 +537,14 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   const getCurrentTheme = () => themes[currentThemeIndex];
   renderer.setBackgroundColor(getCurrentTheme().backgroundColor);
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
     padding: 1,
   });
   renderer.root.add(parentContainer);
 
-  const titleBox = new BoxRenderable(renderer, {
+  const titleBox = new Box(renderer, {
     id: "title-box",
     height: 3,
     borderStyle: "double",
@@ -556,7 +556,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   });
   parentContainer.add(titleBox);
 
-  const instructionsText = new TextRenderable(renderer, {
+  const instructionsText = new Text(renderer, {
     id: "instructions",
     content: "ESC to return | Press ? for keybindings",
     fg: getCurrentTheme().instructionsColor,
@@ -564,7 +564,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
   titleBox.add(instructionsText);
 
   // Create help modal (hidden by default)
-  helpModal = new BoxRenderable(renderer, {
+  helpModal = new Box(renderer, {
     id: "help-modal",
     position: "absolute",
     left: 10,
@@ -584,7 +584,7 @@ export async function run(rendererInstance: CliRenderer): Promise<void> {
     visible: false,
   });
 
-  const helpContent = new TextRenderable(renderer, {
+  const helpContent = new Text(renderer, {
     id: "help-content",
     content: `Navigation:
   ← → : Switch between code examples
@@ -609,12 +609,12 @@ Other:
   helpModal.add(helpContent);
   renderer.root.add(helpModal);
 
-  codeScrollBox = new ScrollBoxRenderable(renderer, {
+  codeScrollBox = new ScrollBox(renderer, {
     id: "code-scroll-box",
     borderStyle: "single",
     borderColor: getCurrentTheme().codeBorderColor,
     backgroundColor: getCurrentTheme().panelBackgroundColor,
-    title: `${examples[currentExampleIndex].name} (CodeRenderable) - ${getCurrentTheme().name}`,
+    title: `${examples[currentExampleIndex].name} (Code) - ${getCurrentTheme().name}`,
     titleAlignment: "left",
     border: true,
     scrollY: true,
@@ -626,8 +626,8 @@ Other:
 
   syntaxStyle = createSyntaxStyle(getCurrentTheme());
 
-  // Create code display using CodeRenderable wrapped in LineNumberRenderable
-  codeDisplay = new CodeRenderable(renderer, {
+  // Create code display using Code wrapped in LineNumber
+  codeDisplay = new Code(renderer, {
     id: "code-display",
     content: examples[currentExampleIndex].code,
     filetype: examples[currentExampleIndex].filetype,
@@ -637,7 +637,7 @@ Other:
     width: "100%",
   });
 
-  codeWithLineNumbers = new LineNumberRenderable(renderer, {
+  codeWithLineNumbers = new LineNumber(renderer, {
     id: "code-with-lines",
     target: codeDisplay,
     minWidth: 3,
@@ -649,7 +649,7 @@ Other:
 
   codeScrollBox.add(codeWithLineNumbers);
 
-  timingText = new TextRenderable(renderer, {
+  timingText = new Text(renderer, {
     id: "timing-display",
     content: "Initializing...",
     fg: getCurrentTheme().timingColor,
@@ -662,7 +662,7 @@ Other:
     const example = examples[currentExampleIndex];
     const theme = getCurrentTheme();
     if (codeScrollBox) {
-      codeScrollBox.title = `${example.name} (CodeRenderable) - ${theme.name}`;
+      codeScrollBox.title = `${example.name} (Code) - ${theme.name}`;
     }
   };
 

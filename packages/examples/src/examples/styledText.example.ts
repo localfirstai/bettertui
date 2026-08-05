@@ -1,5 +1,5 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
   type KeyEvent,
   bgYellow,
@@ -13,25 +13,25 @@ import {
   t,
   underline,
 } from "@bettertui/core";
-import { TextRenderable } from "@bettertui/core";
+import { Text } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let parentContainer: BoxRenderable | null = null;
+let parentContainer: Box | null = null;
 let counter = 0;
 let frameCallback: ((deltaTime: number) => Promise<void>) | null = null;
 let updateFrequency = 1; // Updates per frame (1 = every frame, 2 = every 2 frames, etc.)
 let complexTemplateCounter = 0;
 let startTime = Date.now();
 let keyboardHandler: ((key: KeyEvent) => void) | null = null;
-let dashboardBox: BoxRenderable | null = null;
-let complexDisplay: TextRenderable | null = null;
+let dashboardBox: Box | null = null;
+let complexDisplay: Text | null = null;
 
 export function run(rendererInstance: CliRenderer): void {
   const renderer = rendererInstance;
   renderer.start();
   renderer.setBackgroundColor("#001122");
 
-  parentContainer = new BoxRenderable(renderer, {
+  parentContainer = new Box(renderer, {
     id: "styled-text-container",
     zIndex: 15,
   });
@@ -46,7 +46,7 @@ With a ${bold(blue("window"))},
 And a ${blue("corvette")}
 And everything is blue`;
 
-  const houseDisplay = new TextRenderable(renderer, {
+  const houseDisplay = new Text(renderer, {
     id: "house-text",
     content: houseText,
     width: 30,
@@ -64,7 +64,7 @@ ${bold(green("SUCCESS:"))} Data loaded
 ${bold(fg("#FFA500")("WARNING:"))} Low memory
 ${bgYellow(fg("black")(" NOTICE "))} System update available`;
 
-  const statusDisplay = new TextRenderable(renderer, {
+  const statusDisplay = new Text(renderer, {
     id: "status-text",
     content: statusText,
     width: 50,
@@ -77,7 +77,7 @@ ${bgYellow(fg("black")(" NOTICE "))} System update available`;
   parentContainer.add(statusDisplay);
 
   // Example 3 - Original dynamic text (updates every second)
-  dashboardBox = new BoxRenderable(renderer, {
+  dashboardBox = new Box(renderer, {
     id: "dashboard-box",
     width: 72,
     height: 21,
@@ -112,7 +112,7 @@ ${fg("#2ECC71")("Status:")} ${bold(fg("#E74C3C")("●"))} ${green("ALL SYSTEMS G
 
 ${bold(fg("#F1C40F")("Controls:"))} ${fg("#BDC3C7")("↑/↓ = Speed, ESC = Exit")}`;
 
-  complexDisplay = new TextRenderable(renderer, {
+  complexDisplay = new Text(renderer, {
     id: "complex-template",
     content: initialText,
     left: 1,
@@ -131,11 +131,11 @@ ${bold(fg("#F1C40F")("Controls:"))} ${fg("#BDC3C7")("↑/↓ = Speed, ESC = Exit
 ${blue("Time:")} ${(counter / 60).toFixed(1)}s
 ${underline("Dynamic:")} ${bold(fg("#FF6B6B")(Math.sin(counter * 0.1) > 0 ? "UP" : "DOWN"))}`;
 
-      const dynamicDisplay = parentContainer?.getRenderable("dynamic-text") as TextRenderable;
+      const dynamicDisplay = parentContainer?.getRenderable("dynamic-text") as Text;
       if (dynamicDisplay) {
         dynamicDisplay.content = dynamicText;
       } else {
-        const newDynamicDisplay = new TextRenderable(renderer, {
+        const newDynamicDisplay = new Text(renderer, {
           id: "dynamic-text",
           content: dynamicText,
           width: 40,
@@ -211,9 +211,9 @@ ${underline("Features demonstrated:")}
 • Custom hex colors like ${fg("#FF6B6B")("this red")}
 • Dynamic updates with ${green("controllable frequency")}
 • Complex templates with ${red("many variables")}
-• Hyperlinks: ${underline(blue(link("https://opentui.com")("opentui")))}`;
+• Hyperlinks: ${underline(blue(link("https://github.com/localfirstai/bettertui")("BetterTUI")))}`;
 
-  const instructionsDisplay = new TextRenderable(renderer, {
+  const instructionsDisplay = new Text(renderer, {
     id: "instructions",
     content: instructionsText,
     width: 60,
@@ -233,7 +233,7 @@ Boolean: ${red(true)}
 Float: ${blue(Math.PI.toFixed(2))}
 Calculated: ${fg("#00FFFF")(Math.floor(Math.random() * 100))}`;
 
-  const typesDisplay = new TextRenderable(renderer, {
+  const typesDisplay = new Text(renderer, {
     id: "types-text",
     content: typesText,
     width: 30,

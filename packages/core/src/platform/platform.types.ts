@@ -47,6 +47,7 @@ export interface NapiEngine {
   renderFull(): NapiRenderResult;
   resize(width: number, height: number): void;
   setScreenMode(mode: string, footerHeight?: number | null): void;
+  setBackgroundColor(color: string): void;
   beginFrame(): void;
   commitFrame(): void;
   nodeCount(): number;

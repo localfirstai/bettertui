@@ -1,9 +1,14 @@
 import { EventEmitter } from "node:events";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { LayoutConstraints, Style } from "@bettertui/shared";
 import type { DevTools, DevToolsOptions } from "../devtools";
 import { createDevTools } from "../devtools";
+import { type ConsoleLogEntry, terminalConsoleCache } from "../devtools/consoleCapture";
 import { OverlayHost } from "../devtools/overlay/overlayHost";
 import { DebugPanel } from "../devtools/overlay/panel.types";
+import { env } from "../lib/env";
+import { InternalKeyHandler } from "../lib/keyHandler";
 import { KeyInput } from "../lib/keyInput";
 import { CliRenderEvents } from "../lib/renderableEvents";
 import type { NapiEngine, NapiKeymap, TerminalCapabilities } from "./binding";
@@ -34,6 +39,7 @@ export interface RawKeyEvent {
 export interface CliRendererOptions {
   width?: number;
   height?: number;
+  autoStart?: boolean;
   exitOnCtrlC?: boolean;
   targetFps?: number;
   screenMode?: ScreenMode;
@@ -48,23 +54,74 @@ export interface CliRendererOptions {
   backgroundColor?: string;
 }
 
-/** Minimal console overlay stub. */
-export class TerminalConsole {
+/** Interactive terminal console overlay for capturing and inspecting console log output. */
+export class TerminalConsole extends EventEmitter {
   private _visible = false;
+  private _renderer: CliRenderer | null = null;
   keyBindings: Record<string, unknown> = {};
   onCopySelection?: () => void;
 
+  constructor(renderer?: CliRenderer) {
+    super();
+    this._renderer = renderer ?? null;
+    if (env.BTUI_USE_CONSOLE) {
+      terminalConsoleCache.activate();
+    }
+  }
+
+  attachRenderer(renderer: CliRenderer): void {
+    this._renderer = renderer;
+  }
+
   show(): void {
     this._visible = true;
+    terminalConsoleCache.activate();
+    this.emit("show");
   }
+
   hide(): void {
     this._visible = false;
+    this.emit("hide");
   }
+
   toggle(): void {
     this._visible = !this._visible;
+    if (this._visible) {
+      this.show();
+    } else {
+      this.hide();
+    }
   }
+
   get visible(): boolean {
     return this._visible;
+  }
+
+  clear(): void {
+    terminalConsoleCache.clearConsole();
+  }
+
+  entries(): readonly ConsoleLogEntry[] {
+    return terminalConsoleCache.cachedLogs;
+  }
+
+  saveLogsToFile(filepath?: string): string | null {
+    try {
+      const timestamp = Date.now();
+      const targetPath = filepath || join(process.cwd(), `_console_${timestamp}.log`);
+      const formatArg = (arg: unknown) =>
+        typeof arg === "object" && arg !== null ? JSON.stringify(arg) : String(arg);
+      const logs = terminalConsoleCache.cachedLogs
+        .map(
+          ([date, level, args]) =>
+            `[${date.toISOString()}] [${level}] ${args.map(formatArg).join(" ")}`,
+        )
+        .join("\n");
+      writeFileSync(targetPath, logs, "utf8");
+      return targetPath;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -73,21 +130,22 @@ export type ThemeMode = "light" | "dark";
 type FrameCallback = (deltaTime: number) => void | Promise<void>;
 
 // Lazy import to avoid circular at module level
-let _RootRenderable: typeof import("../renderables/Box").RootRenderable | undefined;
+let _Root: typeof import("../renderables/Box").Root | undefined;
 
-function getRootRenderable() {
-  if (!_RootRenderable) {
+function getRoot() {
+  if (!_Root) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    _RootRenderable = require("../renderables/Box").RootRenderable;
+    _Root = require("../renderables/Box").Root;
   }
-  if (!_RootRenderable) throw new Error("RootRenderable could not be loaded");
-  return _RootRenderable;
+  if (!_Root) throw new Error("Root could not be loaded");
+  return _Root;
 }
 
 export class CliRenderer extends EventEmitter {
   private engine: NapiEngine;
   private keymap: NapiKeymap;
   private _keyInput: KeyInput;
+  private _keyDispatch: InternalKeyHandler;
   private _capabilities: TerminalCapabilities;
   private width: number;
   private height: number;
@@ -105,7 +163,7 @@ export class CliRenderer extends EventEmitter {
   private _frameInterval: ReturnType<typeof setTimeout> | null = null;
   private _frameCallbacks: Set<FrameCallback> = new Set();
   private _lifecyclePasses: Set<() => void> = new Set();
-  private _root: import("../renderables/Box").RootRenderable | null = null;
+  private _root: import("../renderables/Box").Root | null = null;
   private _console: TerminalConsole = new TerminalConsole();
   private _themeMode: ThemeMode = "dark";
   private _targetFps: number;
@@ -125,7 +183,7 @@ export class CliRenderer extends EventEmitter {
     this._capabilities = detectCapabilities();
     this.width = options.width ?? this._capabilities.columns;
     this.height = options.height ?? this._capabilities.rows;
-    this._targetFps = options.targetFps ?? 30;
+    this._targetFps = options.targetFps ?? 60;
 
     this._screenMode = options.screenMode ?? "alternate-screen";
     this._externalOutputMode =
@@ -138,10 +196,22 @@ export class CliRenderer extends EventEmitter {
     this.engine = createEngine(this.width, this.height);
     this.keymap = createKeymap();
     this._keyInput = new KeyInput();
+    this._keyDispatch = new InternalKeyHandler();
     this._onDestroy = options.onDestroy;
+
+    // Bridge raw key/paste events from _keyInput through the priority dispatcher.
+    // Global handlers registered via renderer.keyHandler.on() (tier-1) fire first
+    // and can call key.preventDefault() / key.stopPropagation() before the focused
+    // widget's handler (tier-2, registered via onInternal()) sees the event.
+    this._keyInput.on("keypress", (key) => this._keyDispatch.processParsedKey(key));
+    this._keyInput.on("keyrelease", (key) => this._keyDispatch.processParsedKey(key));
+    this._keyInput.on("paste", (event) =>
+      this._keyDispatch.processPaste(event.bytes, event.metadata),
+    );
 
     const rootId = this.engine.root();
     this.nodes.set(rootId, { parent: null, children: [] });
+    this.setNodeLayout(rootId, { width: "100%", height: "100%" });
 
     // Debug tooling
     const envDebug =
@@ -164,15 +234,25 @@ export class CliRenderer extends EventEmitter {
       this._devtools = createDevTools();
     }
 
-    // Ctrl+C exit handler
-    if (options.exitOnCtrlC !== false) {
-      this._keyInput.on("keypress", (key) => {
-        if (key.ctrl && key.name === "c") {
-          this.destroy();
-          process.exit(0);
-        }
-      });
-    }
+    this._console.attachRenderer(this);
+
+    // Ctrl+C exit handler & Debug shortcut handlers (tier-1 global listener)
+    this._keyDispatch.on("keypress", (key) => {
+      if (options.exitOnCtrlC !== false && key.ctrl && key.name === "c") {
+        this.destroy();
+        process.exit(0);
+      }
+
+      // Backtick (` ` `) or Ctrl+F12 toggles console overlay
+      if (key.name === "`" || (key.ctrl && key.name === "f12")) {
+        this._console.toggle();
+      }
+
+      // F12 or Ctrl+Shift+D toggles performance debug overlay
+      if ((key.name === "f12" && !key.ctrl) || (key.ctrl && key.shift && key.name === "d")) {
+        this.toggleDebugOverlay();
+      }
+    });
 
     // Resize handling
     this._resizeHandler = () => {
@@ -184,6 +264,10 @@ export class CliRenderer extends EventEmitter {
       }
     };
     process.stdout.on("resize", this._resizeHandler);
+
+    if (options.autoStart !== false) {
+      this.start();
+    }
   }
 
   // ── Getters ─────────────────────────────────────────────────────────────────
@@ -216,9 +300,20 @@ export class CliRenderer extends EventEmitter {
     return this._keyInput;
   }
 
-  /** Alias for keyInput. */
-  get keyHandler(): KeyInput {
-    return this._keyInput;
+  /**
+   * Two-tier priority key dispatcher.
+   *
+   * - `.on("keypress", fn)` → tier-1 global handler (fires before any focused
+   *   widget).  Can call `key.preventDefault()` / `key.stopPropagation()`.
+   * - `.onInternal("keypress", fn)` → tier-2 renderable handler (used by
+   *   focusable widgets; only fires when no global handler stopped propagation).
+   *
+   * Example code that needs to intercept keys before the focused widget should
+   * use `renderer.keyHandler.on(...)`.  Widgets must use
+   * `renderer.keyHandler.onInternal(...)` inside `focus()`.
+   */
+  get keyHandler(): InternalKeyHandler {
+    return this._keyDispatch;
   }
 
   get version(): string {
@@ -230,9 +325,9 @@ export class CliRenderer extends EventEmitter {
   }
 
   /** The scene root renderable. All top-level renderables should be added here. */
-  get root(): import("../renderables/Box").RootRenderable {
+  get root(): import("../renderables/Box").Root {
     if (!this._root) {
-      const Ctor = getRootRenderable();
+      const Ctor = getRoot();
       this._root = new Ctor(this);
     }
     return this._root;
@@ -366,9 +461,9 @@ export class CliRenderer extends EventEmitter {
     const loop = () => {
       if (!this.running) return;
 
-      const now = performance.now();
-      const dt = now - lastTime;
-      lastTime = now;
+      const frameStart = performance.now();
+      const dt = frameStart - lastTime;
+      lastTime = frameStart;
 
       if (!this.paused) {
         // Run frame callbacks
@@ -384,7 +479,7 @@ export class CliRenderer extends EventEmitter {
         this._frameId++;
         this.emit(CliRenderEvents.FRAME, { frameId: this._frameId });
 
-        // Run lifecycle passes (e.g. TextRenderable syncing its node tree to the engine)
+        // Run lifecycle passes (e.g. Text syncing its node tree to the engine)
         for (const pass of this._lifecyclePasses) {
           try {
             pass();
@@ -401,10 +496,14 @@ export class CliRenderer extends EventEmitter {
         }
       }
 
-      this._frameInterval = setTimeout(loop, msPerFrame);
+      const processingTime = performance.now() - frameStart;
+      const delay = Math.max(0, msPerFrame - processingTime);
+      if (this.running) {
+        this._frameInterval = setTimeout(loop, Math.round(delay));
+      }
     };
 
-    this._frameInterval = setTimeout(loop, msPerFrame);
+    this._frameInterval = setTimeout(loop, 0);
   }
 
   private _stopFrameLoop(): void {
@@ -463,6 +562,7 @@ export class CliRenderer extends EventEmitter {
 
   setBackgroundColor(color: string): void {
     try {
+      this.engine.setBackgroundColor?.(color);
       this.engine.setStyle(this.engine.root(), JSON.stringify({ bg: color }));
     } catch {
       /* ignore */
@@ -755,7 +855,6 @@ export class CliRenderer extends EventEmitter {
 
 export async function createCliRenderer(options: CliRendererOptions = {}): Promise<CliRenderer> {
   const renderer = new CliRenderer(options);
-  renderer.start();
   return renderer;
 }
 

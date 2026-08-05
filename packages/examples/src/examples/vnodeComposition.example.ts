@@ -1,7 +1,7 @@
 import { type CliRenderer, createCliRenderer } from "@bettertui/core";
 import {
+  Box,
   type BoxOptions,
-  BoxRenderable,
   Generic,
   type VNode,
   VNodeBox,
@@ -75,7 +75,7 @@ function VNodeButton(
 ) {
   return Generic(
     {
-      render: (buffer: FrameBufferLike, deltaTime: number, renderable: BoxRenderable) =>
+      render: (buffer: FrameBufferLike, deltaTime: number, renderable: Box) =>
         demoRenderFn(props, buffer, deltaTime, renderable),
       maxWidth: props.title.length + 4,
       margin: 1,
@@ -99,7 +99,7 @@ class MyRoot {
     this.width = Math.max(props.title.length + 4, 12);
   }
 
-  render(buffer: FrameBufferLike, deltaTime: number, renderable: BoxRenderable) {
+  render(buffer: FrameBufferLike, deltaTime: number, renderable: Box) {
     demoRenderFn(this.props, buffer, deltaTime, renderable);
   }
 }
@@ -111,8 +111,7 @@ function ButtonWithClassRender(
   const myRoot = new MyRoot(props);
   return Generic(
     {
-      render: (buffer: FrameBufferLike, dt: number, r: BoxRenderable) =>
-        myRoot.render(buffer, dt, r),
+      render: (buffer: FrameBufferLike, dt: number, r: Box) => myRoot.render(buffer, dt, r),
       maxWidth: props.title.length + 4,
       margin: props.marginLeft ?? 1,
     },
@@ -148,8 +147,8 @@ function MyDelegateToRenderableComponent(
   renderer: CliRenderer,
   _props: Record<string, unknown>,
   children: VNode[] = [],
-): BoxRenderable {
-  // Instantiate directly (no delegate needed for BoxRenderable)
+): Box {
+  // Instantiate directly (no delegate needed for Box)
   return instantiate(
     renderer,
     VNodeBox(
@@ -214,7 +213,7 @@ function ExtendedBaseBox(props: BoxOptions, children: VNode[] = []) {
 
 export function run(renderer: CliRenderer) {
   renderer.start();
-  const mainGroup = new BoxRenderable(renderer, {
+  const mainGroup = new Box(renderer, {
     id: "main-group",
   });
   renderer.root.add(mainGroup);
@@ -425,7 +424,7 @@ function demoRenderFn(
   props: { title: string; borderColor?: RGBA },
   buffer: FrameBufferLike,
   _deltaTime: number,
-  renderable: BoxRenderable,
+  renderable: Box,
 ) {
   const x = renderable.x;
   const y = renderable.y;

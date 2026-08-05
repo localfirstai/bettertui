@@ -1,21 +1,21 @@
 import {
-  BoxRenderable,
+  Box,
   type CliRenderer,
-  InputRenderable,
-  InputRenderableEvents,
+  Input,
+  InputEvents,
   RenderableEvents,
   bold,
   createCliRenderer,
   fg,
   t,
 } from "@bettertui/core";
-import { TextRenderable } from "@bettertui/core";
+import { Text } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
 
-let nameInput: InputRenderable | null = null;
-let emailInput: InputRenderable | null = null;
-let passwordInput: InputRenderable | null = null;
-let commentInput: InputRenderable | null = null;
+let nameInput: Input | null = null;
+let emailInput: Input | null = null;
+let passwordInput: Input | null = null;
+let commentInput: Input | null = null;
 let renderer: CliRenderer | null = null;
 let keyboardHandler:
   | ((key: {
@@ -26,15 +26,15 @@ let keyboardHandler:
       shift?: boolean;
     }) => void)
   | null = null;
-let keyLegendDisplay: TextRenderable | null = null;
-let statusDisplay: TextRenderable | null = null;
-let lastActionText = "Welcome to InputRenderable demo! Use Tab to navigate between fields.";
+let keyLegendDisplay: Text | null = null;
+let statusDisplay: Text | null = null;
+let lastActionText = "Welcome to Input demo! Use Tab to navigate between fields.";
 let lastActionColor = "#FFCC00";
 let activeInputIndex = 0;
 
-const inputElements: InputRenderable[] = [];
+const inputElements: Input[] = [];
 
-function getActiveInput(): InputRenderable | null {
+function getActiveInput(): Input | null {
   return inputElements[activeInputIndex] || null;
 }
 
@@ -96,7 +96,7 @@ ${fg(lastActionColor)(lastActionText)}`;
   }
 }
 
-function getInputName(input: InputRenderable | null): string {
+function getInputName(input: Input | null): string {
   if (input === nameInput) return "Name";
   if (input === emailInput) return "Email";
   if (input === passwordInput) return "Password";
@@ -150,14 +150,14 @@ export function run(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   renderer.setBackgroundColor("#001122");
 
-  const parentContainer = new BoxRenderable(renderer, {
+  const parentContainer = new Box(renderer, {
     id: "parent-container",
     zIndex: 10,
   });
   renderer.root.add(parentContainer);
 
   // Create input elements
-  nameInput = new InputRenderable(renderer, {
+  nameInput = new Input(renderer, {
     id: "name-input",
     position: "absolute",
     left: 5,
@@ -174,7 +174,7 @@ export function run(rendererInstance: CliRenderer): void {
     maxLength: 50,
   });
 
-  emailInput = new InputRenderable(renderer, {
+  emailInput = new Input(renderer, {
     id: "email-input",
     position: "absolute",
     left: 5,
@@ -191,7 +191,7 @@ export function run(rendererInstance: CliRenderer): void {
     maxLength: 100,
   });
 
-  passwordInput = new InputRenderable(renderer, {
+  passwordInput = new Input(renderer, {
     id: "password-input",
     position: "absolute",
     left: 5,
@@ -208,7 +208,7 @@ export function run(rendererInstance: CliRenderer): void {
     maxLength: 50,
   });
 
-  commentInput = new InputRenderable(renderer, {
+  commentInput = new Input(renderer, {
     id: "comment-input",
     position: "absolute",
     left: 5,
@@ -232,7 +232,7 @@ export function run(rendererInstance: CliRenderer): void {
   renderer.root.add(passwordInput);
   renderer.root.add(commentInput);
 
-  keyLegendDisplay = new TextRenderable(renderer, {
+  keyLegendDisplay = new Text(renderer, {
     id: "key-legend",
     content: t``,
     width: 50,
@@ -245,7 +245,7 @@ export function run(rendererInstance: CliRenderer): void {
   });
   parentContainer.add(keyLegendDisplay);
 
-  statusDisplay = new TextRenderable(renderer, {
+  statusDisplay = new Text(renderer, {
     id: "status-display",
     content: t``,
     width: 80,
@@ -259,13 +259,13 @@ export function run(rendererInstance: CliRenderer): void {
 
   // Set up event handlers for all inputs
   inputElements.forEach((input, _index) => {
-    input.on(InputRenderableEvents.INPUT, (value: string) => {
+    input.on(InputEvents.INPUT, (value: string) => {
       lastActionText = `${getInputName(input)} input: "${value}"`;
       lastActionColor = "#00FFFF";
       updateDisplays();
     });
 
-    input.on(InputRenderableEvents.CHANGE, (value: string) => {
+    input.on(InputEvents.CHANGE, (value: string) => {
       lastActionText = `*** ${getInputName(input)} CHANGED: "${value}" ***`;
       lastActionColor = "#FF00FF";
       updateDisplays();
@@ -275,7 +275,7 @@ export function run(rendererInstance: CliRenderer): void {
       }, 1000);
     });
 
-    input.on(InputRenderableEvents.ENTER, (value: string) => {
+    input.on(InputEvents.ENTER, (value: string) => {
       const inputName = getInputName(input);
       const isValid =
         inputName === "Name"

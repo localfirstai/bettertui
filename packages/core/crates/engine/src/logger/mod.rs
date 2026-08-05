@@ -99,6 +99,7 @@ impl Level {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "trace" => Some(Level::Trace),
@@ -177,20 +178,20 @@ impl LoggerConfig {
     pub fn resolve_file_target(&self) -> Option<FileLogTarget> {
         use std::path::PathBuf;
 
-        if let Ok(dir) = std::env::var("BETTERTUI_LOG_DIR") {
-            if !dir.is_empty() {
-                let dir = PathBuf::from(dir);
-                let file = subscriber::daily_log_path(&dir);
-                return Some(FileLogTarget { dir, file });
-            }
+        if let Ok(dir) = std::env::var("BETTERTUI_LOG_DIR")
+            && !dir.is_empty()
+        {
+            let dir = PathBuf::from(dir);
+            let file = subscriber::daily_log_path(&dir);
+            return Some(FileLogTarget { dir, file });
         }
 
-        if let Some(explicit) = &self.file {
-            if !explicit.is_empty() {
-                let file = PathBuf::from(explicit);
-                let dir = file.parent().map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
-                return Some(FileLogTarget { dir, file });
-            }
+        if let Some(explicit) = &self.file
+            && !explicit.is_empty()
+        {
+            let file = PathBuf::from(explicit);
+            let dir = file.parent().map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
+            return Some(FileLogTarget { dir, file });
         }
 
         if self.dev {
