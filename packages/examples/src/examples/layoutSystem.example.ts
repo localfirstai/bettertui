@@ -61,6 +61,8 @@ interface DemoColors {
 }
 
 let renderer: CliRenderer | null = null;
+let header: Box | null = null;
+let headerText: Text | null = null;
 let contentArea: Box | null = null;
 let sidebar: Box | null = null;
 let sidebarText: Text | null = null;
@@ -109,20 +111,6 @@ function buildColors(mode: ThemeMode): DemoColors {
   };
 }
 
-function resetElementLayout(element: Box): void {
-  element.flexBasis = "auto";
-  element.flexGrow = 0;
-  element.width = "auto";
-  element.height = "auto";
-  element.setLayout({
-    flexShrink: 1,
-    minWidth: undefined,
-    maxWidth: undefined,
-    minHeight: undefined,
-    maxHeight: undefined,
-  });
-}
-
 function setupHorizontalLayout(): void {
   if (!contentArea || !sidebar || !mainContent || !rightSidebar) return;
 
@@ -130,16 +118,20 @@ function setupHorizontalLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = false;
 
-  resetElementLayout(sidebar);
-  resetElementLayout(mainContent);
-
-  contentArea.flexDirection = "row";
-  contentArea.setLayout({ alignItems: "stretch" });
+  contentArea.setLayout({
+    flexDirection: "row",
+    flexGrow: 1,
+    flexShrink: 1,
+    alignItems: "stretch",
+  });
 
   const sidebarWidth = Math.max(15, Math.floor((renderer?.terminalWidth ?? 80) * 0.2));
-  sidebar.flexBasis = sidebarWidth;
-  sidebar.flexGrow = 0;
-  sidebar.setLayout({ flexShrink: 0, minWidth: 15 });
+  sidebar.setLayout({
+    width: sidebarWidth,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 15,
+  });
   sidebar.backgroundColor = colors.slate;
   sidebar.title = "SIDEBAR";
   if (sidebarText) {
@@ -147,9 +139,7 @@ function setupHorizontalLayout(): void {
     sidebarText.fg = colors.textOnDark;
   }
 
-  mainContent.flexBasis = 0;
-  mainContent.flexGrow = 1;
-  mainContent.setLayout({ flexShrink: 1, minWidth: 20 });
+  mainContent.setLayout({ flexGrow: 1, flexShrink: 1, minWidth: 20 });
   mainContent.backgroundColor = colors.amber;
   mainContent.title = "CONTENT";
   if (mainContentText) {
@@ -165,17 +155,21 @@ function setupVerticalLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = false;
 
-  resetElementLayout(sidebar);
-  resetElementLayout(mainContent);
-
-  contentArea.flexDirection = "column";
-  contentArea.setLayout({ alignItems: "stretch" });
+  contentArea.setLayout({
+    flexDirection: "column",
+    flexGrow: 1,
+    flexShrink: 1,
+    alignItems: "stretch",
+  });
 
   const contentHeight = (renderer?.terminalHeight ?? 24) - 6;
   const topBarHeight = Math.max(3, Math.floor(contentHeight * 0.2));
-  sidebar.flexBasis = topBarHeight;
-  sidebar.flexGrow = 0;
-  sidebar.setLayout({ flexShrink: 0, minHeight: 3 });
+  sidebar.setLayout({
+    height: topBarHeight,
+    flexGrow: 0,
+    flexShrink: 0,
+    minHeight: 3,
+  });
   sidebar.backgroundColor = colors.green;
   sidebar.title = "TOP BAR";
   if (sidebarText) {
@@ -183,9 +177,7 @@ function setupVerticalLayout(): void {
     sidebarText.fg = colors.textOnDark;
   }
 
-  mainContent.flexBasis = 0;
-  mainContent.flexGrow = 1;
-  mainContent.setLayout({ flexShrink: 1, minHeight: 5 });
+  mainContent.setLayout({ flexGrow: 1, flexShrink: 1, minHeight: 5 });
   mainContent.backgroundColor = colors.amber;
   mainContent.title = "CONTENT";
   if (mainContentText) {
@@ -201,18 +193,22 @@ function setupCenteredLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = false;
 
-  resetElementLayout(mainContent);
+  contentArea.setLayout({
+    flexDirection: "row",
+    flexGrow: 1,
+    flexShrink: 1,
+    alignItems: "stretch",
+    justifyContent: "center",
+  });
 
-  contentArea.flexDirection = "row";
-  contentArea.setLayout({ alignItems: "stretch", justifyContent: "center" });
-
-  const centerWidth = Math.max(30, Math.floor((renderer?.terminalWidth ?? 80) * 0.6));
-  mainContent.flexBasis = centerWidth;
-  mainContent.flexGrow = 0;
+  const tw = renderer?.terminalWidth ?? 80;
+  const centerWidth = Math.max(30, Math.floor(tw * 0.6));
   mainContent.setLayout({
+    width: centerWidth,
+    flexGrow: 0,
     flexShrink: 0,
     minWidth: 30,
-    maxWidth: Math.floor((renderer?.terminalWidth ?? 80) * 0.8),
+    maxWidth: Math.floor(tw * 0.8),
   });
   mainContent.backgroundColor = colors.brand;
   mainContent.title = "CENTERED";
@@ -229,19 +225,21 @@ function setupThreeColumnLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = true;
 
-  resetElementLayout(sidebar);
-  resetElementLayout(mainContent);
-  resetElementLayout(rightSidebar);
+  contentArea.setLayout({
+    flexDirection: "row",
+    flexGrow: 1,
+    flexShrink: 1,
+    alignItems: "stretch",
+  });
 
-  contentArea.flexDirection = "row";
-  contentArea.setLayout({ alignItems: "stretch" });
+  const sidebarWidth = Math.max(12, Math.floor((renderer?.terminalWidth ?? 80) * 0.15));
 
-  const terminalWidth = renderer?.terminalWidth ?? 80;
-  const sidebarWidth = Math.max(12, Math.floor(terminalWidth * 0.15));
-
-  sidebar.flexBasis = sidebarWidth;
-  sidebar.flexGrow = 0;
-  sidebar.setLayout({ flexShrink: 0, minWidth: 12 });
+  sidebar.setLayout({
+    width: sidebarWidth,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 12,
+  });
   sidebar.backgroundColor = colors.red;
   sidebar.title = "LEFT";
   if (sidebarText) {
@@ -249,9 +247,7 @@ function setupThreeColumnLayout(): void {
     sidebarText.fg = colors.textOnDark;
   }
 
-  mainContent.flexBasis = 0;
-  mainContent.flexGrow = 1;
-  mainContent.setLayout({ flexShrink: 1, minWidth: 20 });
+  mainContent.setLayout({ flexGrow: 1, flexShrink: 1, minWidth: 20 });
   mainContent.backgroundColor = colors.green;
   mainContent.title = "CENTER";
   if (mainContentText) {
@@ -259,9 +255,12 @@ function setupThreeColumnLayout(): void {
     mainContentText.fg = colors.textOnDark;
   }
 
-  rightSidebar.flexBasis = sidebarWidth;
-  rightSidebar.flexGrow = 0;
-  rightSidebar.setLayout({ flexShrink: 0, minWidth: 12 });
+  rightSidebar.setLayout({
+    width: sidebarWidth,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 12,
+  });
   rightSidebar.backgroundColor = colors.blue;
   rightSidebar.title = "RIGHT";
   if (rightSidebarText) {
@@ -277,16 +276,14 @@ function setupEqualColumnsLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = true;
 
-  resetElementLayout(sidebar);
-  resetElementLayout(mainContent);
-  resetElementLayout(rightSidebar);
+  contentArea.setLayout({
+    flexDirection: "row",
+    flexGrow: 1,
+    flexShrink: 1,
+    alignItems: "stretch",
+  });
 
-  contentArea.flexDirection = "row";
-  contentArea.setLayout({ alignItems: "stretch" });
-
-  sidebar.flexBasis = 0;
-  sidebar.flexGrow = 1;
-  sidebar.setLayout({ flexShrink: 1, minWidth: 0 });
+  sidebar.setLayout({ flexGrow: 1, flexShrink: 1 });
   sidebar.backgroundColor = colors.blue;
   sidebar.title = "LEFT";
   if (sidebarText) {
@@ -294,9 +291,7 @@ function setupEqualColumnsLayout(): void {
     sidebarText.fg = colors.textOnDark;
   }
 
-  mainContent.flexBasis = 0;
-  mainContent.flexGrow = 1;
-  mainContent.setLayout({ flexShrink: 1, minWidth: 0 });
+  mainContent.setLayout({ flexGrow: 1, flexShrink: 1 });
   mainContent.backgroundColor = colors.amber;
   mainContent.title = "CENTER";
   if (mainContentText) {
@@ -304,9 +299,7 @@ function setupEqualColumnsLayout(): void {
     mainContentText.fg = colors.textOnBright;
   }
 
-  rightSidebar.flexBasis = 0;
-  rightSidebar.flexGrow = 1;
-  rightSidebar.setLayout({ flexShrink: 1, minWidth: 0 });
+  rightSidebar.setLayout({ flexGrow: 1, flexShrink: 1 });
   rightSidebar.backgroundColor = colors.green;
   rightSidebar.title = "RIGHT";
   if (rightSidebarText) {
@@ -322,21 +315,22 @@ function setupJustifyLayout(): void {
   mainContent.visible = true;
   rightSidebar.visible = true;
 
-  resetElementLayout(sidebar);
-  resetElementLayout(mainContent);
-  resetElementLayout(rightSidebar);
-
-  contentArea.flexDirection = "row";
   contentArea.setLayout({
+    flexDirection: "row",
+    flexGrow: 1,
+    flexShrink: 1,
     alignItems: "center",
     justifyContent: "space-between",
   });
 
   const sidebarWidth = Math.max(12, Math.floor((renderer?.terminalWidth ?? 80) * 0.12));
 
-  sidebar.flexBasis = sidebarWidth;
-  sidebar.flexGrow = 0;
-  sidebar.setLayout({ flexShrink: 0, minWidth: 12 });
+  sidebar.setLayout({
+    width: sidebarWidth,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 12,
+  });
   sidebar.backgroundColor = colors.brand;
   sidebar.title = "SIDE";
   if (sidebarText) {
@@ -344,9 +338,7 @@ function setupJustifyLayout(): void {
     sidebarText.fg = colors.textOnDark;
   }
 
-  mainContent.flexBasis = 0;
-  mainContent.flexGrow = 1;
-  mainContent.setLayout({ flexShrink: 1, minWidth: 20 });
+  mainContent.setLayout({ flexGrow: 1, flexShrink: 1, minWidth: 20 });
   mainContent.backgroundColor = colors.amber;
   mainContent.title = "MAIN";
   if (mainContentText) {
@@ -354,9 +346,12 @@ function setupJustifyLayout(): void {
     mainContentText.fg = colors.textOnBright;
   }
 
-  rightSidebar.flexBasis = sidebarWidth;
-  rightSidebar.flexGrow = 0;
-  rightSidebar.setLayout({ flexShrink: 0, minWidth: 12 });
+  rightSidebar.setLayout({
+    width: sidebarWidth,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 12,
+  });
   rightSidebar.backgroundColor = colors.blue;
   rightSidebar.title = "SIDE";
   if (rightSidebarText) {
@@ -402,6 +397,9 @@ function applyColors(): void {
   if (!renderer) return;
   renderer.setBackgroundColor(colors.appBg);
 
+  if (header) header.backgroundColor = colors.blue;
+  if (headerText) headerText.fg = colors.textOnBright;
+
   if (footer) {
     footer.backgroundColor = colors.footerBg;
     footer.borderColor = colors.border;
@@ -425,6 +423,31 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   renderer = rendererInstance;
   const mode: ThemeMode = renderer.themeMode ?? DEFAULT_THEME_MODE;
   colors = buildColors(mode);
+  renderer.setBackgroundColor(colors.appBg);
+
+  header = new Box(renderer, {
+    id: "header",
+    zIndex: 0,
+    width: "auto",
+    height: 3,
+    backgroundColor: colors.blue,
+    borderStyle: "single",
+    flexGrow: 0,
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    border: true,
+  });
+
+  headerText = new Text(renderer, {
+    id: "header-text",
+    content: "LAYOUT DEMO",
+    fg: colors.textOnBright,
+    bg: "transparent",
+    zIndex: 1,
+  });
+  header.add(headerText);
 
   contentArea = new Box(renderer, {
     id: "content-area",
@@ -590,6 +613,7 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   contentArea.add(rightSidebar);
   rightSidebar.visible = false;
 
+  renderer.root.add(header);
   renderer.root.add(contentArea);
   renderer.root.add(footer);
   renderer.root.add(moveableElement);
@@ -652,7 +676,7 @@ function toggleAutoplay(): void {
     }
   }
 
-  applyCurrentDemo();
+  updateFooterText();
 }
 
 function toggleMoveableElement(): void {
@@ -660,7 +684,7 @@ function toggleMoveableElement(): void {
 
   moveableElementVisible = !moveableElementVisible;
   moveableElement.visible = moveableElementVisible;
-  applyCurrentDemo();
+  updateFooterText();
 }
 
 function moveMoveableElement(deltaX: number, deltaY: number): void {
@@ -690,21 +714,22 @@ function centerMoveableElement(): void {
   });
 }
 
-function updateFooterText(): string {
+function updateFooterText(): void {
+  if (!footerText) return;
   const autoplayStatus = autoplayEnabled ? "ON" : "OFF";
   const moveableStatus = moveableElementVisible ? "ON" : "OFF";
-  return `SPACE: next | R: restart | P: autoplay (${autoplayStatus}) | V: overlay (${moveableStatus}) | WASD: move`;
+  footerText.content = `SPACE: next | R: restart | P: autoplay (${autoplayStatus}) | V: overlay (${moveableStatus}) | WASD: move`;
 }
 
 function applyCurrentDemo(): void {
   const demo = layoutDemos[currentDemoIndex];
-  if (!footerText) return;
+  if (!headerText) return;
 
   const autoplayStatus = autoplayEnabled ? "AUTO" : "MANUAL";
-  const controlsText = updateFooterText();
-  footerText.content = t`${bold(`${demo.name} (${currentDemoIndex + 1}/${layoutDemos.length})`)}  ${italic(`— ${demo.description}`)}  ${autoplayStatus}  |  ${controlsText}`;
+  headerText.content = t`${bold(`${demo.name}`)}  ${italic(`(${currentDemoIndex + 1}/${layoutDemos.length})`)}  —  ${demo.description}  [${autoplayStatus}]`;
   demo.setup();
   applyColors();
+  updateFooterText();
 
   if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
@@ -739,11 +764,14 @@ export function destroy(rendererInstance: CliRenderer): void {
     renderer.off("resize", handleResize);
   }
 
+  if (header) rendererInstance.root.remove(header);
   if (contentArea) rendererInstance.root.remove(contentArea);
   if (footer) rendererInstance.root.remove(footer);
   if (moveableElement) rendererInstance.root.remove(moveableElement);
   if (absolutePositionedBox) rendererInstance.root.remove(absolutePositionedBox);
 
+  header = null;
+  headerText = null;
   contentArea = null;
   sidebar = null;
   sidebarText = null;
