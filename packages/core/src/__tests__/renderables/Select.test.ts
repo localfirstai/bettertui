@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { KeyEvent } from "../lib/keyHandler";
-import type { ParsedKey } from "../lib/parseKeypress";
-import { SelectEvents } from "../lib/renderableEvents";
-import { CliRenderer } from "../platform/cliRenderer";
-import { createMockKeys } from "../testing/mockKeys";
-import { createTestStdin, createTestStdout } from "../testing/testStreams";
-import { Select, type SelectOption } from "./Select";
+import { KeyEvent } from "../../lib/keyHandler";
+import type { ParsedKey } from "../../lib/parseKeypress";
+import { SelectEvents } from "../../lib/renderableEvents";
+import { CliRenderer } from "../../platform/cliRenderer";
+import { Select, type SelectOption } from "../../renderables/Select";
+import { createMockKeys } from "../../testing/mockKeys";
+import { createTestStdin, createTestStdout } from "../../testing/testStreams";
 
 function muteStdout() {
   return vi.spyOn(process.stdout, "write").mockImplementation(() => true);
@@ -17,8 +17,16 @@ function setup(width = 80, height = 24) {
   const stdout = createTestStdout(width, height);
   const origStdin = process.stdin;
   const origStdout = process.stdout;
-  Object.defineProperty(process, "stdin", { value: stdin, writable: true, configurable: true });
-  Object.defineProperty(process, "stdout", { value: stdout, writable: true, configurable: true });
+  Object.defineProperty(process, "stdin", {
+    value: stdin,
+    writable: true,
+    configurable: true,
+  });
+  Object.defineProperty(process, "stdout", {
+    value: stdout,
+    writable: true,
+    configurable: true,
+  });
 
   const renderer = new CliRenderer({ width, height, autoStart: false });
   renderer.start();
@@ -102,7 +110,10 @@ describe("Select", () => {
 
     it("initializes with a custom selected index", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       expect(select.getSelectedIndex()).toBe(2);
       expect(select.getSelectedOption()).toEqual(sampleOptions[2]);
@@ -112,7 +123,10 @@ describe("Select", () => {
 
     it("clamps an out-of-range selected index", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 10 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 10,
+      });
 
       expect(select.getSelectedIndex()).toBe(sampleOptions.length - 1);
 
@@ -150,7 +164,10 @@ describe("Select", () => {
   describe("Options management", () => {
     it("updates options dynamically and clamps the selection", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       const newOptions: SelectOption[] = [
         { name: "New 1", description: "First" },
@@ -167,7 +184,10 @@ describe("Select", () => {
 
     it("handles setting empty options", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       select.options = [];
 
@@ -182,7 +202,10 @@ describe("Select", () => {
   describe("Selection management", () => {
     it("moves up and down", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       select.moveUp();
       expect(select.getSelectedIndex()).toBe(1);
@@ -205,7 +228,10 @@ describe("Select", () => {
 
     it("wraps selection when enabled", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, wrapSelection: true });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        wrapSelection: true,
+      });
 
       select.moveUp();
       expect(select.getSelectedIndex()).toBe(sampleOptions.length - 1);
@@ -229,7 +255,10 @@ describe("Select", () => {
 
     it("does not crash with empty options and wrap enabled", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: [], wrapSelection: true });
+      const select = createSelect(renderer, {
+        options: [],
+        wrapSelection: true,
+      });
 
       expect(() => select.moveUp()).not.toThrow();
       expect(() => select.moveDown()).not.toThrow();
@@ -260,7 +289,10 @@ describe("Select", () => {
 
     it("selects the current item", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       let selectedIndex = -1;
       let selectedOption: SelectOption | undefined;
@@ -296,7 +328,10 @@ describe("Select", () => {
   describe("Keyboard interaction", () => {
     it("handles arrow keys via handleKeyPress", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 1 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 1,
+      });
 
       expect(select.handleKeyPress(createKeyEvent("down"))).toBe(true);
       expect(select.getSelectedIndex()).toBe(2);
@@ -308,7 +343,10 @@ describe("Select", () => {
 
     it("handles vim-style j/k keys", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 1 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 1,
+      });
 
       expect(select.handleKeyPress(createKeyEvent("j"))).toBe(true);
       expect(select.getSelectedIndex()).toBe(2);
@@ -320,7 +358,10 @@ describe("Select", () => {
 
     it("handles enter/return/linefeed to select", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 2 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 2,
+      });
 
       let itemSelected = false;
       select.on(SelectEvents.ITEM_SELECTED, () => {
@@ -381,7 +422,10 @@ describe("Select", () => {
 
     it("ignores unhandled keys", () => {
       const { renderer, cleanup } = setup();
-      const select = createSelect(renderer, { options: sampleOptions, selectedIndex: 1 });
+      const select = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 1,
+      });
 
       expect(select.handleKeyPress(createKeyEvent("a"))).toBe(false);
       expect(select.getSelectedIndex()).toBe(1);
@@ -548,7 +592,10 @@ describe("Select", () => {
 
     it("does not reuse the same keypress after focusing another select", () => {
       const { renderer, mockInput, cleanup } = setup();
-      const first = createSelect(renderer, { options: sampleOptions, selectedIndex: 1 });
+      const first = createSelect(renderer, {
+        options: sampleOptions,
+        selectedIndex: 1,
+      });
       const second = createSelect(renderer, {
         options: [
           { name: "A", description: "A" },
