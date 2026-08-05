@@ -104,6 +104,7 @@ function buildBodyBoxOptions(opts: CanvasBodyOptions): BoxOptions {
     padding: opts.padding,
     paddingX: opts.paddingX,
     paddingY: opts.paddingY,
+    position: "relative",
   };
 }
 

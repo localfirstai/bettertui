@@ -122,7 +122,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "BetterTUI Demo",
+      name: "Multi-tab Demo",
       description: "Multi-tab demo with various features",
       run: multitabDemo.run,
       destroy: multitabDemo.destroy,

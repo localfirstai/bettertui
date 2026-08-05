@@ -47,7 +47,14 @@ export class TabController extends Box {
   private _renderer2: CliRenderer;
 
   constructor(id: string, renderer: CliRenderer, options: TabControllerOptions) {
-    super(renderer, { ...options, id });
+    super(renderer, {
+      ...options,
+      id,
+      flexDirection: options.flexDirection ?? "column",
+      flexGrow: options.flexGrow ?? 1,
+      flexShrink: options.flexShrink ?? 1,
+      height: options.height ?? "100%",
+    });
     this._renderer2 = renderer;
     this._tabBarHeight = options.tabBarHeight || 4;
 
@@ -55,6 +62,8 @@ export class TabController extends Box {
       id: `${id}-tabs`,
       width: "100%",
       height: this._tabBarHeight,
+      flexGrow: 0,
+      flexShrink: 0,
       options: [],
       selectedBackgroundColor: options.selectedBackgroundColor || "#333333",
       selectedTextColor: options.selectedTextColor || "#FFFF00",
@@ -81,12 +90,12 @@ export class TabController extends Box {
   public addTab(tabObject: TabObject): Tab {
     const tabGroup = new Box(this._renderer2, {
       id: `${this._id}-tab-${this.tabs.length}`,
-      left: 0,
-      top: this._tabBarHeight,
-      zIndex: (this._options.zIndex ?? 0) + 50,
+      flexDirection: "column",
+      flexGrow: 1,
+      flexShrink: 1,
       visible: false,
       width: "100%",
-      height: 1,
+      height: "100%",
     });
 
     this.add(tabGroup);
@@ -204,10 +213,6 @@ export class TabController extends Box {
 
     this.tabSelectElement.width = width;
     this.tabSelectElement.height = this._tabBarHeight;
-
-    for (const tab of this.tabs) {
-      tab.group.setLayout({ top: this._tabBarHeight, width, height: height - this._tabBarHeight });
-    }
   }
 
   override destroy(): void {
