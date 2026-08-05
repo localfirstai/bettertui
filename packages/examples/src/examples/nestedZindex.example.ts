@@ -14,12 +14,6 @@ let zIndexC = 20;
 export function run(renderer: CliRenderer): void {
   renderer.start();
   renderer.setBackgroundColor("#001122");
-
-  // Root container added directly to renderer.root — same pattern as transparency.example.ts.
-  // This ensures absolute-positioned children are positioned relative to the terminal viewport.
-  // Must have explicit dimensions so the Rust engine has a non-zero containing
-  // block for all the absolutely-positioned children. A zero-size relative
-  // container clips its absolute children away (confirmed by headless debug).
   const rootContainer = new Box(renderer, {
     id: "root-container",
     width: "100%",
@@ -45,10 +39,6 @@ export function run(renderer: CliRenderer): void {
   zIndexC = 20;
 
   // ── Parent groups ───────────────────────────────────────────────────────────
-  // Each group is position: "absolute" with explicit left/top/width/height,
-  // added directly to rootContainer. They are offset to overlap each other so
-  // z-index layering is clearly visible.
-
   // Group A — top-left, starts with highest z-index (z=100)
   const parentGroupA = new Box(renderer, {
     id: "parent-group-a",
