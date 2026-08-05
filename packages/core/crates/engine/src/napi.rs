@@ -428,8 +428,21 @@ impl NativeEngine {
     #[napi]
     pub fn set_layout(&self, id: i64, layout_json: String) {
         if let Ok(mut state) = self.state.lock() {
-            if let Ok(layout) = serde_json::from_str::<LayoutJson>(&layout_json) {
-                state.engine.set_layout(node_id(id as u64), layout.into_layout());
+            let node_id_val = node_id(id as u64);
+            if let Ok(raw) = serde_json::from_str::<serde_json::Value>(&layout_json) {
+                // z_index lives in node.transform, not LayoutProps — handle separately.
+                let maybe_z: Option<i32> = raw.get("z_index").and_then(|v| v.as_i64()).map(|z| z as i32);
+
+                // Apply layout properties (consumes raw).
+                if let Ok(layout) = serde_json::from_value::<LayoutJson>(raw) {
+                    state.engine.set_layout(node_id_val, layout.into_layout());
+                }
+
+                // Apply z_index to transform after layout is applied.
+                if let Some(z) = maybe_z {
+                    let _ =
+                        state.engine.processor_mut().process_single(Command::SetZIndex { id: node_id_val, value: z });
+                }
             }
         }
     }

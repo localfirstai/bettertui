@@ -373,10 +373,7 @@ export class Box extends EventEmitter {
 
   set zIndex(value: number) {
     this._options.zIndex = value;
-    this._renderer.setNodeLayout(this._nodeId, {
-      zIndex: value,
-      position: this._options.position, // Preserve existing position
-    });
+    this._applyLayout(this._options);
   }
 
   add(child: Box, index?: number): void {

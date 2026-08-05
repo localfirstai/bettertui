@@ -1,45 +1,67 @@
-import { Box, type KeyEvent, Text, bold, createCliRenderer, t, underline } from "@bettertui/core";
-import type { CliRenderer } from "@bettertui/core";
+import { Box, Screen, Text, bold, createCliRenderer, t, underline } from "@bettertui/core";
+import type { CliRenderer, KeyEvent } from "@bettertui/core";
+import { APP_THEME } from "../constants/theme";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
+// ── Module-level state ──────────────────────────────────────────────────────
+
 let globalKeyboardHandler: ((key: KeyEvent) => void) | null = null;
-let zIndexPhase = 0;
+let globalScreen: Screen | null = null;
+
+// Animation state — initialise to -1 so the first frame always applies the
+// correct phase rather than comparing against a stale "0".
+let zIndexPhase = -1;
 let animationSpeed = 2000;
 
-// Track current z-index values for display
+// Current z-index values (mutated by animation).
 let zIndexA = 100;
 let zIndexB = 50;
 let zIndexC = 20;
 
+// ── run ─────────────────────────────────────────────────────────────────────
+
 export function run(renderer: CliRenderer): void {
   renderer.start();
-  renderer.setBackgroundColor("#001122");
-  const rootContainer = new Box(renderer, {
-    id: "root-container",
-    width: "100%",
-    height: "100%",
-    zIndex: 1,
-  });
-  renderer.root.add(rootContainer);
 
-  // Title
+  const theme = APP_THEME.dark.saha;
+  const tokens = theme.tokens;
+
+  renderer.setBackgroundColor(tokens.background);
+
+  // Screen provides a full-terminal layout manager.
+  // body has position:"relative" and flexGrow:1, making it a proper containing
+  // block for absolutely-positioned children.
+  globalScreen = new Screen(renderer, {
+    id: "nestedZindex-screen",
+    backgroundColor: tokens.background,
+    body: {
+      id: "nestedZindex-body",
+      backgroundColor: tokens.background,
+    },
+  });
+
+  const body = globalScreen.body;
+
+  // ── Title ────────────────────────────────────────────────────────────────
+  // left:2 matches the footer baseline so all chrome is flush to the left edge.
+
   const title = new Text(renderer, {
     id: "main-title",
     content: t`${bold(underline("Nested Render Objects & Z-Index Demo"))}`,
     position: "absolute",
-    left: 10,
+    left: 2,
     top: 1,
-    fg: "#FFFF00",
+    fg: tokens.primary,
     zIndex: 1000,
   });
-  rootContainer.add(title);
+  body.add(title);
 
-  zIndexA = 100;
-  zIndexB = 50;
-  zIndexC = 20;
+  // ── Parent groups ────────────────────────────────────────────────────────
+  //
+  // Three overlapping groups.  Each group's z-index controls which group
+  // paints on top.  The animation cycles through four layering configurations.
 
-  // ── Parent groups ───────────────────────────────────────────────────────────
-  // Group A — top-left, starts with highest z-index (z=100)
+  // Group A — primary green, starts highest (z=100)
   const parentGroupA = new Box(renderer, {
     id: "parent-group-a",
     position: "absolute",
@@ -50,12 +72,14 @@ export function run(renderer: CliRenderer): void {
     zIndex: zIndexA,
     border: true,
     borderStyle: "single",
-    borderColor: "#9944FF",
-    backgroundColor: "#1a0a2e",
+    borderColor: tokens.primary,
+    backgroundColor: tokens.secondary,
+    title: "Group A  (z=100)",
+    titleAlignment: "center",
   });
-  rootContainer.add(parentGroupA);
+  body.add(parentGroupA);
 
-  // Group B — offset right+down so it overlaps A
+  // Group B — info blue, starts middle (z=50)
   const parentGroupB = new Box(renderer, {
     id: "parent-group-b",
     position: "absolute",
@@ -66,12 +90,14 @@ export function run(renderer: CliRenderer): void {
     zIndex: zIndexB,
     border: true,
     borderStyle: "single",
-    borderColor: "#44FF44",
-    backgroundColor: "#0a2e1a",
+    borderColor: tokens.info,
+    backgroundColor: tokens.muted,
+    title: "Group B  (z=50)",
+    titleAlignment: "center",
   });
-  rootContainer.add(parentGroupB);
+  body.add(parentGroupB);
 
-  // Group C — offset further so it overlaps both A and B
+  // Group C — warning amber, starts lowest (z=20)
   const parentGroupC = new Box(renderer, {
     id: "parent-group-c",
     position: "absolute",
@@ -82,12 +108,17 @@ export function run(renderer: CliRenderer): void {
     zIndex: zIndexC,
     border: true,
     borderStyle: "single",
-    borderColor: "#FFFF44",
-    backgroundColor: "#2e2a0a",
+    borderColor: tokens.warning,
+    backgroundColor: tokens.accent,
+    title: "Group C  (z=20)",
+    titleAlignment: "center",
   });
-  rootContainer.add(parentGroupC);
+  body.add(parentGroupC);
 
-  // ── Children inside Group A ──────────────────────────────────────────────────
+  // ── Children inside Group A ──────────────────────────────────────────────
+  // Each child box uses flex centering so its label sits in the body centre.
+  // The border title shows the child's own z-index for reference.
+
   const boxA1 = new Box(renderer, {
     id: "box-a1",
     position: "absolute",
@@ -95,26 +126,25 @@ export function run(renderer: CliRenderer): void {
     top: 2,
     width: 22,
     height: 5,
-    backgroundColor: "#441155",
+    backgroundColor: tokens.accent,
     zIndex: 10,
     border: true,
     borderStyle: "single",
-    borderColor: "#FF88FF",
-    title: "A (z=100)",
+    borderColor: tokens.ring,
+    title: "z=10",
     titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupA.add(boxA1);
 
   const textA1 = new Text(renderer, {
     id: "text-a1",
-    content: t`${bold("Child A1")}`,
-    position: "absolute",
-    left: 4,
-    top: 4,
-    fg: "#FFFFFF",
-    zIndex: 10,
+    content: t`${bold("A1")}`,
+    fg: tokens.primary,
   });
-  parentGroupA.add(textA1);
+  boxA1.add(textA1);
 
   const boxA2 = new Box(renderer, {
     id: "box-a2",
@@ -123,26 +153,28 @@ export function run(renderer: CliRenderer): void {
     top: 9,
     width: 14,
     height: 3,
-    backgroundColor: "#552244",
+    backgroundColor: tokens.secondary,
     zIndex: 5,
     border: true,
     borderStyle: "single",
-    borderColor: "#FFB8FF",
+    borderColor: tokens.border,
+    title: "z=5",
+    titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupA.add(boxA2);
 
   const textA2 = new Text(renderer, {
     id: "text-a2",
-    content: "A2",
-    position: "absolute",
-    left: 4,
-    top: 10,
-    fg: "#FFFFFF",
-    zIndex: 5,
+    content: t`${bold("A2")}`,
+    fg: tokens.mutedForeground,
   });
-  parentGroupA.add(textA2);
+  boxA2.add(textA2);
 
-  // ── Children inside Group B ──────────────────────────────────────────────────
+  // ── Children inside Group B ──────────────────────────────────────────────
+
   const boxB1 = new Box(renderer, {
     id: "box-b1",
     position: "absolute",
@@ -150,26 +182,25 @@ export function run(renderer: CliRenderer): void {
     top: 2,
     width: 22,
     height: 5,
-    backgroundColor: "#115522",
+    backgroundColor: tokens.secondary,
     zIndex: 20,
     border: true,
     borderStyle: "double",
-    borderColor: "#88FF88",
-    title: "B (z=50)",
+    borderColor: tokens.info,
+    title: "z=20",
     titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupB.add(boxB1);
 
   const textB1 = new Text(renderer, {
     id: "text-b1",
-    content: t`${bold("Child B1")}`,
-    position: "absolute",
-    left: 4,
-    top: 4,
-    fg: "#FFFFFF",
-    zIndex: 20,
+    content: t`${bold("B1")}`,
+    fg: tokens.info,
   });
-  parentGroupB.add(textB1);
+  boxB1.add(textB1);
 
   const boxB2 = new Box(renderer, {
     id: "box-b2",
@@ -178,26 +209,28 @@ export function run(renderer: CliRenderer): void {
     top: 9,
     width: 14,
     height: 3,
-    backgroundColor: "#226622",
+    backgroundColor: tokens.muted,
     zIndex: 15,
     border: true,
     borderStyle: "single",
-    borderColor: "#AAFFAA",
+    borderColor: tokens.border,
+    title: "z=15",
+    titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupB.add(boxB2);
 
   const textB2 = new Text(renderer, {
     id: "text-b2",
-    content: "B2",
-    position: "absolute",
-    left: 4,
-    top: 10,
-    fg: "#FFFFFF",
-    zIndex: 15,
+    content: t`${bold("B2")}`,
+    fg: tokens.mutedForeground,
   });
-  parentGroupB.add(textB2);
+  boxB2.add(textB2);
 
-  // ── Children inside Group C ──────────────────────────────────────────────────
+  // ── Children inside Group C ──────────────────────────────────────────────
+
   const boxC1 = new Box(renderer, {
     id: "box-c1",
     position: "absolute",
@@ -205,26 +238,25 @@ export function run(renderer: CliRenderer): void {
     top: 2,
     width: 22,
     height: 5,
-    backgroundColor: "#554411",
+    backgroundColor: tokens.secondary,
     zIndex: 30,
     border: true,
     borderStyle: "round",
-    borderColor: "#FFFF88",
-    title: "C (z=20)",
+    borderColor: tokens.warning,
+    title: "z=30",
     titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupC.add(boxC1);
 
   const textC1 = new Text(renderer, {
     id: "text-c1",
-    content: t`${bold("Child C1")}`,
-    position: "absolute",
-    left: 4,
-    top: 4,
-    fg: "#FFFFFF",
-    zIndex: 30,
+    content: t`${bold("C1")}`,
+    fg: tokens.warning,
   });
-  parentGroupC.add(textC1);
+  boxC1.add(textC1);
 
   const boxC2 = new Box(renderer, {
     id: "box-c2",
@@ -233,74 +265,84 @@ export function run(renderer: CliRenderer): void {
     top: 9,
     width: 14,
     height: 3,
-    backgroundColor: "#444422",
+    backgroundColor: tokens.muted,
     zIndex: 25,
     border: true,
     borderStyle: "single",
-    borderColor: "#FFFFAA",
+    borderColor: tokens.border,
+    title: "z=25",
+    titleAlignment: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   });
   parentGroupC.add(boxC2);
 
   const textC2 = new Text(renderer, {
     id: "text-c2",
-    content: "C2",
-    position: "absolute",
-    left: 4,
-    top: 10,
-    fg: "#FFFFFF",
-    zIndex: 25,
+    content: t`${bold("C2")}`,
+    fg: tokens.mutedForeground,
   });
-  parentGroupC.add(textC2);
+  boxC2.add(textC2);
 
-  // ── Explanation / status text at bottom ────────────────────────────────────
-  const termH = renderer.terminalHeight;
+  // ── Footer — status & explanation ───────────────────────────────────────
+  // All footer lines share left:2 — flush with the title above.
 
   const explanation1 = new Text(renderer, {
     id: "explanation1",
     content:
-      "Key Concept: Parent z-index determines group layering, child z-index determines order within group",
+      "A → A1 (z=10)  A2 (z=5)   ·   B → B1 (z=20)  B2 (z=15)   ·   C → C1 (z=30)  C2 (z=25)",
     position: "absolute",
     left: 2,
-    top: termH - 5,
-    fg: "#AAAAAA",
+    bottom: 4,
+    fg: tokens.mutedForeground,
     zIndex: 1000,
   });
-  rootContainer.add(explanation1);
+  body.add(explanation1);
 
   const explanation2 = new Text(renderer, {
     id: "explanation2",
-    content: "Even if Child C1 has z=30, it renders behind Parent A & B because Parent C has z=20",
+    content:
+      "Group z-index beats child z-index — C1 (z=30) is occluded by Group A (z=100) when Group C has z=20",
     position: "absolute",
     left: 2,
-    top: termH - 4,
-    fg: "#AAAAAA",
+    bottom: 3,
+    fg: tokens.mutedForeground,
     zIndex: 1000,
   });
-  rootContainer.add(explanation2);
+  body.add(explanation2);
 
   const phaseIndicator = new Text(renderer, {
     id: "phase-indicator",
     content: t`${bold("Animation Phase: 1/4")}`,
     position: "absolute",
     left: 2,
-    top: termH - 2,
-    fg: "#FFFFFF",
+    bottom: 1,
+    fg: tokens.foreground,
     zIndex: 1000,
   });
-  rootContainer.add(phaseIndicator);
+  body.add(phaseIndicator);
 
   const zIndexDisplay = new Text(renderer, {
     id: "zindex-display",
-    content: `Current Z-Indices - A:${zIndexA}, B:${zIndexB}, C:${zIndexC}`,
+    content: `Current Z-Indices — A:${zIndexA}  B:${zIndexB}  C:${zIndexC}`,
     position: "absolute",
-    left: 40,
-    top: termH - 2,
-    fg: "#FFFFFF",
+    left: 44,
+    bottom: 1,
+    fg: tokens.secondaryForeground,
     zIndex: 1000,
   });
-  rootContainer.add(zIndexDisplay);
+  body.add(zIndexDisplay);
 
-  // ── Animation loop ─────────────────────────────────────────────────────────
+  // ── Animation loop ──────────────────────────────────────────────────────
+
+  const phases = [
+    "Original Hierarchy",
+    "C Group on Top",
+    "B Group on Top",
+    "Equal Parents — child z-index decides",
+  ];
+
   renderer.setFrameCallback(async (_deltaMs) => {
     const time = Date.now();
     const newPhase = Math.floor((time % (animationSpeed * 4)) / animationSpeed);
@@ -309,62 +351,52 @@ export function run(renderer: CliRenderer): void {
       zIndexPhase = newPhase;
 
       switch (zIndexPhase) {
-        case 0: // Original: A=100, B=50, C=20
+        case 0: // A=100, B=50, C=20 — original
           zIndexA = 100;
           zIndexB = 50;
           zIndexC = 20;
-          parentGroupA.zIndex = zIndexA;
-          parentGroupB.zIndex = zIndexB;
-          parentGroupC.zIndex = zIndexC;
-          boxA1.title = "Parent A (z=100)";
-          boxB1.title = "Parent B (z=50)";
-          boxC1.title = "Parent C (z=20)";
+          parentGroupA.title = "Group A  (z=100)";
+          parentGroupB.title = "Group B  (z=50)";
+          parentGroupC.title = "Group C  (z=20)";
           break;
-        case 1: // C becomes highest: A=50, B=20, C=100
+        case 1: // C on top — A=50, B=20, C=100
           zIndexA = 50;
           zIndexB = 20;
           zIndexC = 100;
-          parentGroupA.zIndex = zIndexA;
-          parentGroupB.zIndex = zIndexB;
-          parentGroupC.zIndex = zIndexC;
-          boxA1.title = "Parent A (z=50)";
-          boxB1.title = "Parent B (z=20)";
-          boxC1.title = "Parent C (z=100)";
+          parentGroupA.title = "Group A  (z=50)";
+          parentGroupB.title = "Group B  (z=20)";
+          parentGroupC.title = "Group C  (z=100)";
           break;
-        case 2: // B becomes highest: A=20, B=100, C=50
+        case 2: // B on top — A=20, B=100, C=50
           zIndexA = 20;
           zIndexB = 100;
           zIndexC = 50;
-          parentGroupA.zIndex = zIndexA;
-          parentGroupB.zIndex = zIndexB;
-          parentGroupC.zIndex = zIndexC;
-          boxA1.title = "Parent A (z=20)";
-          boxB1.title = "Parent B (z=100)";
-          boxC1.title = "Parent C (z=50)";
+          parentGroupA.title = "Group A  (z=20)";
+          parentGroupB.title = "Group B  (z=100)";
+          parentGroupC.title = "Group C  (z=50)";
           break;
-        case 3: // All equal — child z-index matters: A=B=C=60
+        case 3: // All equal — A=B=C=60
           zIndexA = 60;
           zIndexB = 60;
           zIndexC = 60;
-          parentGroupA.zIndex = zIndexA;
-          parentGroupB.zIndex = zIndexB;
-          parentGroupC.zIndex = zIndexC;
-          boxA1.title = "Parent A (z=60)";
-          boxB1.title = "Parent B (z=60)";
-          boxC1.title = "Parent C (z=60)";
+          parentGroupA.title = "Group A  (z=60)";
+          parentGroupB.title = "Group B  (z=60)";
+          parentGroupC.title = "Group C  (z=60)";
           break;
       }
 
-      const phases = [
-        "Original Hierarchy",
-        "C Group on Top",
-        "B Group on Top",
-        "Equal Parents (Child z-index matters)",
-      ];
-      phaseIndicator.content = `Animation Phase: ${zIndexPhase + 1}/4 - ${phases[zIndexPhase]}`;
-      zIndexDisplay.content = `Current Z-Indices - A:${zIndexA}, B:${zIndexB}, C:${zIndexC}`;
+      // Apply z-index changes — the fixed zIndex setter re-applies the full
+      // layout so width/height/inset/border are never reset.
+      parentGroupA.zIndex = zIndexA;
+      parentGroupB.zIndex = zIndexB;
+      parentGroupC.zIndex = zIndexC;
+
+      phaseIndicator.content = `Animation Phase: ${zIndexPhase + 1}/4 — ${phases[zIndexPhase]}`;
+      zIndexDisplay.content = `Current Z-Indices — A:${zIndexA}  B:${zIndexB}  C:${zIndexC}`;
     }
   });
+
+  // ── Keyboard ─────────────────────────────────────────────────────────────
 
   globalKeyboardHandler = (key: KeyEvent) => {
     if (key.name === "+" || key.name === "=") {
@@ -377,20 +409,30 @@ export function run(renderer: CliRenderer): void {
   renderer.keyInput.on("keypress", globalKeyboardHandler);
 }
 
+// ── destroy ─────────────────────────────────────────────────────────────────
+
 export function destroy(renderer: CliRenderer): void {
   if (globalKeyboardHandler) {
     renderer.keyInput.off("keypress", globalKeyboardHandler);
     globalKeyboardHandler = null;
   }
 
-  const rootContainer = renderer.root.getRenderable("root-container");
-  if (rootContainer) {
-    rootContainer.destroyRecursively();
-    renderer.root.remove(rootContainer);
+  renderer.clearFrameCallbacks();
+
+  if (globalScreen) {
+    globalScreen.destroy();
+    globalScreen = null;
   }
 
-  renderer.clearFrameCallbacks();
+  // Reset animation state so the next run() starts cleanly.
+  zIndexPhase = -1;
+  animationSpeed = 2000;
+  zIndexA = 100;
+  zIndexB = 50;
+  zIndexC = 20;
 }
+
+// ── Standalone entry-point ───────────────────────────────────────────────────
 
 if (import.meta.main) {
   const renderer = await createCliRenderer({
