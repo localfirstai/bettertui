@@ -38,7 +38,11 @@ export { CommandRuntime } from "./runtime";
 export type { CommandRuntimeOptions } from "./runtime";
 
 export { Renderable } from "./renderable";
-export type { WidgetContext, WidgetLifecycle, ImperativeContext } from "./renderable";
+export type {
+  WidgetContext,
+  WidgetLifecycle,
+  ImperativeContext,
+} from "./renderable";
 
 // Keymap, clock, and validation utilities (includes styled text, RGBA, events, etc.)
 export * from "./lib";
@@ -107,11 +111,7 @@ export {
 export * from "./devtools";
 
 // Audio API (stub implementations; native playback requires native engine)
-export {
-  Audio,
-  AudioStream,
-  AudioStreamError,
-} from "./audio";
+export { Audio, AudioStream, AudioStreamError } from "./audio";
 export type {
   AudioGroup,
   AudioStreamAction,
@@ -149,7 +149,8 @@ export {
   Slider,
   TextNode,
   RootTextNode,
-  // Stub / specialized renderables
+  Screen,
+  ScreenEvents,
   ASCIIFont,
   FrameBuffer,
   Code,
@@ -194,6 +195,11 @@ export type {
   TextTableContent,
   LineNumberOptions,
   TimeToFirstDrawOptions,
+  CanvasOptions,
+  CanvasHeaderOptions,
+  CanvasFooterOptions,
+  CanvasBodyOptions,
+  ScreenResizeEvent,
 } from "./renderables";
 
 // ── Additional utility exports ─────────────────────────────────────────────────
@@ -255,7 +261,12 @@ export class SyntaxStyle {
   private _styles: Map<string, Record<string, unknown>> = new Map();
   private _cache: Map<string, unknown> = new Map();
 
-  constructor(opts?: { fg?: string; bg?: string; bold?: boolean; italic?: boolean }) {
+  constructor(opts?: {
+    fg?: string;
+    bg?: string;
+    bold?: boolean;
+    italic?: boolean;
+  }) {
     Object.assign(this, opts ?? {});
   }
 
