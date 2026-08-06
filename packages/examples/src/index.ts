@@ -59,7 +59,9 @@ import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example";
 import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example";
 import * as selectExample from "./examples/select.example";
 import * as sliderDemo from "./examples/slider.example";
+import * as splitFooterImageDemo from "./examples/splitFooterImage.example";
 import * as splitFooterPlasmaImageDemo from "./examples/splitFooterPlasmaImage.example";
+import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
 import * as splitModeExample from "./examples/splitMode.example";
 import * as stickyScrollExample from "./examples/stickyScrollExample.example";
 import * as styledTextExample from "./examples/styledText.example";
@@ -131,11 +133,32 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: relativePositioningDemo.destroy,
     },
     {
+      name: "Split Footer Image Demo",
+      description:
+        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block image",
+      run: splitFooterImageDemo.run,
+      destroy: splitFooterImageDemo.destroy,
+    },
+    {
       name: "Split Footer Plasma Image Demo",
       description:
         "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block plasma image that shifts colour with the active scenario",
       run: splitFooterPlasmaImageDemo.run,
       destroy: splitFooterPlasmaImageDemo.destroy,
+    },
+    {
+      name: "Split Footer Plasma Image Demo",
+      description:
+        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block plasma image that shifts colour with the active scenario",
+      run: splitFooterPlasmaImageDemo.run,
+      destroy: splitFooterPlasmaImageDemo.destroy,
+    },
+    {
+      name: "Split Footer Streaming Demo",
+      description:
+        "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
+      run: splitFooterStreamingDemo.run,
+      destroy: splitFooterStreamingDemo.destroy,
     },
     {
       name: "Split Mode Demo (Experimental)",
