@@ -31,8 +31,6 @@ import * as codeDemo from "./examples/code.example";
 import * as consoleExample from "./examples/console.example";
 import * as corePluginSlotsDemo from "./examples/corePluginSlots.example";
 import * as diffDemo from "./examples/diff.example";
-import * as editorDemo from "./examples/editor.example";
-import * as extmarksDemo from "./examples/extmarks.example";
 import * as focusRestoreDemo from "./examples/focusRestore.example";
 import * as boxExample from "./examples/fonts.example";
 import * as framebufferExample from "./examples/framebuffer.example";
@@ -61,7 +59,7 @@ import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example";
 import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example";
 import * as selectExample from "./examples/select.example";
 import * as sliderDemo from "./examples/slider.example";
-import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
+import * as splitFooterPlasmaImageDemo from "./examples/splitFooterPlasmaImage.example";
 import * as splitModeExample from "./examples/splitMode.example";
 import * as stickyScrollExample from "./examples/stickyScrollExample.example";
 import * as styledTextExample from "./examples/styledText.example";
@@ -134,11 +132,18 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: relativePositioningDemo.destroy,
     },
     {
-      name: "Split Footer Streaming Demo",
+      name: "Split Footer Plasma Image Demo",
       description:
         "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
-      run: splitFooterStreamingDemo.run,
-      destroy: splitFooterStreamingDemo.destroy,
+      run: splitFooterPlasmaImageDemo.run,
+      destroy: splitFooterPlasmaImageDemo.destroy,
+    },
+    {
+      name: "Split Footer Image Demo",
+      description:
+        "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
+      run: splitFooterPlasmaImageDemo.run,
+      destroy: splitFooterPlasmaImageDemo.destroy,
     },
     {
       name: "Split Mode Demo (Experimental)",
@@ -160,19 +165,6 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
         "Text selection with ASCII fonts - precise character-level selection across different font types",
       run: asciiFontSelectionExample.run,
       destroy: asciiFontSelectionExample.destroy,
-    },
-    {
-      name: "Editor Demo",
-      description: "Interactive text editor with Textarea - supports full editing capabilities",
-      run: editorDemo.run,
-      destroy: editorDemo.destroy,
-    },
-    {
-      name: "Extmarks Demo",
-      description:
-        "Virtual extmarks - text ranges that the cursor jumps over, with deletion handling",
-      run: extmarksDemo.run,
-      destroy: extmarksDemo.destroy,
     },
     {
       name: "Input Demo",
