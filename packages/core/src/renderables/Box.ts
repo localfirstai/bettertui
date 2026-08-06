@@ -313,6 +313,8 @@ export class Box extends EventEmitter {
 
   set border(value: boolean | BorderSide[]) {
     this._border = value;
+    this._options.border = value;
+    this._applyLayout(this._options);
     this._applyStyle();
   }
 
