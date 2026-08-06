@@ -17,7 +17,11 @@ import {
   createCliRenderer,
   fg,
 } from "@bettertui/core";
+import { mixColor } from "../lib/colorUtils";
+import { formatKeySequence } from "../lib/keyboardFormatting";
+import { clamp01, easeOut, lerpNumber } from "../lib/mathUtils";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { getMetadataText, trimCell } from "../lib/textUtils";
 
 // ── Local type stubs for APIs not exported from @bettertui/core ───────────────
 
@@ -93,16 +97,6 @@ const addons = {
   registerBackspacePopsPendingSequence: (_keymap: unknown) => () => {},
   registerManagedTextareaLayer: (_keymap: unknown, _renderer: unknown, _opts: unknown) => () => {},
 } as const;
-
-/** Format a key sequence for display */
-function formatKeySequence(sequence: unknown, _opts?: unknown): string {
-  if (!sequence) return "";
-  if (Array.isArray(sequence))
-    return sequence
-      .map((p: unknown) => String((p as Record<string, unknown>)?.match ?? p))
-      .join("");
-  return String(sequence);
-}
 
 /** Get the current keymap graph snapshot */
 function getGraphSnapshot(_keymap: unknown): GraphSnapshot<Renderable, KeyEvent> {
@@ -349,47 +343,6 @@ function styledLine(chunks: TextChunk[]): TextChunk[] {
   return chunks;
 }
 
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
-
-function lerpNumber(left: number, right: number, amount: number): number {
-  return left + (right - left) * clamp01(amount);
-}
-
-function easeOut(value: number): number {
-  const t = clamp01(value);
-  return 1 - (1 - t) * (1 - t);
-}
-
-function hexToRgb(color: string): [number, number, number] {
-  const normalized = color.startsWith("#") ? color.slice(1) : color;
-  const value = Number.parseInt(normalized, 16);
-  if (!Number.isFinite(value)) {
-    return [255, 255, 255];
-  }
-
-  return [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff];
-}
-
-function rgbToHex(red: number, green: number, blue: number): string {
-  const value =
-    ((Math.round(red) & 0xff) << 16) |
-    ((Math.round(green) & 0xff) << 8) |
-    (Math.round(blue) & 0xff);
-  return `#${value.toString(16).padStart(6, "0")}`;
-}
-
-function mixColor(left: string, right: string, amount: number): string {
-  const [lr, lg, lb] = hexToRgb(left);
-  const [rr, rg, rb] = hexToRgb(right);
-  return rgbToHex(
-    lerpNumber(lr, rr, amount),
-    lerpNumber(lg, rg, amount),
-    lerpNumber(lb, rb, amount),
-  );
-}
-
 function joinLines(lines: TextChunk[][]): StyledText {
   const allChunks: TextChunk[] = [];
 
@@ -404,15 +357,6 @@ function joinLines(lines: TextChunk[][]): StyledText {
   }
 
   return new StyledText(allChunks);
-}
-
-function getMetadataText(value: unknown): string | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  return trimmed || undefined;
 }
 
 function getCountPayload(payload: unknown): number {
@@ -786,18 +730,6 @@ function getActiveKeyLabel(activeKey: ActiveKey): string {
     (typeof activeKey.command === "string" ? activeKey.command : undefined) ??
     ""
   );
-}
-
-function trimCell(value: string, width: number): string {
-  if (value.length <= width) {
-    return value.padEnd(width);
-  }
-
-  if (width <= 1) {
-    return value.slice(0, width);
-  }
-
-  return `${value.slice(0, width - 1)}.`;
 }
 
 function cell(value: string, width: number, color: string, highlight = false): TextChunk {

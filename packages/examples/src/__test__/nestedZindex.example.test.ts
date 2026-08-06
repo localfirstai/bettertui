@@ -56,7 +56,7 @@ describe("nestedZindex example", () => {
 
   it("mounts without errors", async () => {
     setup = await createTestRenderer({ width: 120, height: 30 });
-    expect(() => run(setup?.renderer)).not.toThrow();
+    expect(() => run((setup as TestRendererSetup).renderer)).not.toThrow();
   });
 
   // ── tree structure ────────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ describe("nestedZindex example", () => {
     run(setup.renderer);
     await waitFrame();
     const savedCleanup = setup.cleanup;
-    expect(() => destroy(setup?.renderer)).not.toThrow();
+    expect(() => destroy((setup as TestRendererSetup).renderer)).not.toThrow();
     setup = undefined; // prevent afterEach double-destroy
     savedCleanup();
   });
@@ -223,11 +223,11 @@ describe("nestedZindex example", () => {
 
   it("can run → destroy → run again without errors", async () => {
     setup = await createTestRenderer({ width: 120, height: 30 });
-    expect(() => run(setup?.renderer)).not.toThrow();
+    expect(() => run((setup as TestRendererSetup).renderer)).not.toThrow();
     await waitFrame();
-    expect(() => destroy(setup?.renderer)).not.toThrow();
+    expect(() => destroy((setup as TestRendererSetup).renderer)).not.toThrow();
     // Second run on the same renderer
-    expect(() => run(setup?.renderer)).not.toThrow();
+    expect(() => run((setup as TestRendererSetup).renderer)).not.toThrow();
     await waitFrame();
   });
 });

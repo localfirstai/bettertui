@@ -1,5 +1,6 @@
 import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
+import { mixColor } from "../lib/colorUtils";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let scrollBox: ScrollBox | null = null;
@@ -45,26 +46,6 @@ function clearAllItems() {
   itemCount = 0;
 }
 
-// Color interpolation helper
-function interpolateColor(color1: string, color2: string, factor: number): string {
-  const c1 = Number.parseInt(color1.slice(1), 16);
-  const c2 = Number.parseInt(color2.slice(1), 16);
-
-  const r1 = (c1 >> 16) & 0xff;
-  const g1 = (c1 >> 8) & 0xff;
-  const b1 = c1 & 0xff;
-
-  const r2 = (c2 >> 16) & 0xff;
-  const g2 = (c2 >> 8) & 0xff;
-  const b2 = c2 & 0xff;
-
-  const r = Math.round(r1 + (r2 - r1) * factor);
-  const g = Math.round(g1 + (g2 - g1) * factor);
-  const b = Math.round(b1 + (b2 - b1) * factor);
-
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-}
-
 // Animation update function
 function updateAnimations() {
   const now = Date.now();
@@ -97,11 +78,11 @@ ${fg("#565f89")("Status:")} ${fg("#9ece6a")("ACTIVE")}`;
 
     // Interpolate background color (bright to normal)
     const brightBg = "#4c4f69";
-    item.box.backgroundColor = interpolateColor(brightBg, item.normalBgColor, easeProgress);
+    item.box.backgroundColor = mixColor(brightBg, item.normalBgColor, easeProgress);
 
     // Update text with flashy purple fading to normal blue
     const itemNumber = id.split("-")[1];
-    const currentTitleColor = interpolateColor("#bb9af7", "#7aa2f7", easeProgress);
+    const currentTitleColor = mixColor("#bb9af7", "#7aa2f7", easeProgress);
     const timeString = new Date(item.createdAt).toLocaleTimeString();
 
     // Reconstruct content with interpolated color

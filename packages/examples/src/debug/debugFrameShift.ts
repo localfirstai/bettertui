@@ -26,7 +26,8 @@ async function main() {
     inputSelectLayoutExample.run(renderer);
     renderer.render();
     log(`Children of root (run ${i}): ${renderer.getChildrenOf(renderer.rootNodeId).join(", ")}`);
-    log(`Tree summary (run ${i}):\n${renderer.engine.treeSummary()}`);
+    // @ts-expect-error – treeSummary lives on internal engine binding
+    log(`Tree summary (run ${i}):\n${renderer.treeSummary()}`);
 
     log(`\n=== RETURN TO MENU ${i} ===`);
     inputSelectLayoutExample.destroy(renderer);
