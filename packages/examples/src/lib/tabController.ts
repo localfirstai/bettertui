@@ -32,6 +32,9 @@ export interface TabControllerOptions extends BoxOptions {
   showDescription?: boolean;
   showUnderline?: boolean;
   showScrollArrows?: boolean;
+  tabPadding?: number;
+  tabGap?: number;
+  minTabWidth?: number;
 }
 
 export enum TabControllerEvents {
@@ -65,6 +68,10 @@ export class TabController extends Box {
       flexGrow: 0,
       flexShrink: 0,
       options: [],
+      tabWidth: 0, // Auto-width based on content
+      minTabWidth: 10,
+      tabPadding: 2,
+      tabGap: 2,
       selectedBackgroundColor: options.selectedBackgroundColor || "#333333",
       selectedTextColor: options.selectedTextColor || "#FFFF00",
       textColor: parseColor(options.textColor || "#FFFFFF"),
@@ -72,7 +79,7 @@ export class TabController extends Box {
       backgroundColor: options.tabBarBackgroundColor || options.backgroundColor || "transparent",
       showDescription: options.showDescription ?? true,
       showUnderline: options.showUnderline ?? true,
-      showScrollArrows: options.showScrollArrows ?? true,
+      showScrollArrows: options.showScrollArrows ?? false, // Disabled by default for full-width tabs
     });
 
     this.tabSelectElement.on(TabSelectEvents.SELECTION_CHANGED, (index: number) => {
@@ -91,11 +98,11 @@ export class TabController extends Box {
     const tabGroup = new Box(this._renderer2, {
       id: `${this._id}-tab-${this.tabs.length}`,
       flexDirection: "column",
-      flexGrow: 1,
-      flexShrink: 1,
+      flexGrow: 0, // Start with no flex weight; will be set to 1 when shown
+      flexShrink: 0,
       visible: false,
       width: "100%",
-      height: "100%",
+      height: "0%", // Start with no height; will be set to 100% when shown
     });
 
     this.add(tabGroup);
@@ -115,7 +122,7 @@ export class TabController extends Box {
   private updateTabSelectOptions(): void {
     const opts: TabOption[] = this.tabs.map((tab, index) => ({
       name: tab.title,
-      description: `Tab ${index + 1}/${this.tabs.length} - Use Left/Right arrows to navigate | Press Ctrl+C to exit | D: toggle debug`,
+      description: `Tab ${index + 1}/${this.tabs.length} — ←/→ to switch | Ctrl+C to exit`,
       value: index,
     }));
 
@@ -124,6 +131,8 @@ export class TabController extends Box {
     if (this.tabs.length === 1) {
       const firstTab = this.getCurrentTab();
       firstTab.group.visible = true;
+      firstTab.group.flexGrow = 1;
+      firstTab.group.height = "100%";
       this.initializeTab(firstTab);
 
       if (firstTab.tabObject.show) {
@@ -155,6 +164,8 @@ export class TabController extends Box {
 
     const currentTab = this.getCurrentTab();
     currentTab.group.visible = false;
+    currentTab.group.flexGrow = 0;
+    currentTab.group.height = "0%";
     if (currentTab.tabObject.hide) {
       currentTab.tabObject.hide();
     }
@@ -164,6 +175,8 @@ export class TabController extends Box {
 
     const newTab = this.getCurrentTab();
     newTab.group.visible = true;
+    newTab.group.flexGrow = 1;
+    newTab.group.height = "100%";
 
     this.initializeTab(newTab);
 

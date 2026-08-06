@@ -28,8 +28,6 @@ import { hsvToRgb, rgbaToHex } from "../lib/colorUtils";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 import { TabController } from "../lib/tabController";
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
 // ── Module-level state ─────────────────────────────────────────────────────────
 
 let globalScreen: Screen | null = null;
@@ -153,7 +151,7 @@ export function run(renderer: CliRenderer): void {
   let activeWheelPixels = new Set<string>();
 
   globalTabController.addTab({
-    title: "Text & Attributes",
+    title: "Text & Attrs",
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
 

@@ -17,7 +17,14 @@ export interface TabOption {
 export interface TabSelectOptions extends BoxOptions {
   options?: TabOption[];
   selectedIndex?: number;
+  /** Fixed width for each tab in characters. Set to 0 for auto-width based on content. */
   tabWidth?: number;
+  /** Minimum width for auto-sized tabs. Ignored when tabWidth > 0. */
+  minTabWidth?: number;
+  /** Padding added to each side of tab text in auto mode. Default: 2. */
+  tabPadding?: number;
+  /** Gap between tabs in characters. Default: 1. */
+  tabGap?: number;
   showDescription?: boolean;
   showUnderline?: boolean;
   showScrollArrows?: boolean;
@@ -37,10 +44,28 @@ export type TabSelectRenderableOptions = TabSelectOptions;
 
 let _tabSelectCounter = 0;
 
+/** Calculate display widths for each tab based on content and options. */
+function calculateTabWidths(
+  options: TabOption[],
+  tabWidth: number,
+  minTabWidth: number,
+  tabPadding: number,
+): number[] {
+  if (tabWidth > 0) {
+    // Fixed width mode
+    return options.map(() => tabWidth);
+  }
+  // Auto-width mode: content length + padding, with minimum
+  return options.map((opt) => Math.max(minTabWidth, opt.name.length + tabPadding * 2));
+}
+
 export class TabSelect extends Box {
   private _tabOptions: TabOption[];
   private _selectedIndex: number;
   private _tabWidth: number;
+  private _minTabWidth: number;
+  private _tabPadding: number;
+  private _tabGap: number;
   private _showDescription: boolean;
   private _showUnderline: boolean;
   private _showScrollArrows: boolean;
@@ -66,7 +91,10 @@ export class TabSelect extends Box {
 
     this._tabOptions = options.options ?? [];
     this._selectedIndex = options.selectedIndex ?? 0;
-    this._tabWidth = options.tabWidth ?? 12;
+    this._tabWidth = options.tabWidth ?? 0; // Default to auto-width (0 = auto)
+    this._minTabWidth = options.minTabWidth ?? 8; // Minimum width for auto mode
+    this._tabPadding = options.tabPadding ?? 2; // Padding on each side
+    this._tabGap = options.tabGap ?? 1; // Gap between tabs
     this._showDescription = options.showDescription !== false;
     this._showUnderline = options.showUnderline !== false;
     this._showScrollArrows = options.showScrollArrows !== false;
@@ -245,6 +273,14 @@ export class TabSelect extends Box {
     const lines: string[] = [];
     const tabLine: string[] = [];
 
+    // Calculate dynamic widths for each tab
+    const tabWidths = calculateTabWidths(
+      this._tabOptions,
+      this._tabWidth,
+      this._minTabWidth,
+      this._tabPadding,
+    );
+
     if (this._showScrollArrows) {
       tabLine.push(`\x1b[38;2;100;100;100m${this._scrollArrowLeft}\x1b[0m`);
     }
@@ -253,8 +289,10 @@ export class TabSelect extends Box {
       const opt = this._tabOptions[i];
       if (!opt) continue;
       const isSelected = i === this._selectedIndex;
+      const width = tabWidths[i] ?? this._minTabWidth;
 
-      const name = opt.name.slice(0, this._tabWidth).padEnd(this._tabWidth);
+      // Center the name within the tab width, padding on both sides
+      const name = opt.name.padEnd(width).slice(0, width);
       const textColor = isSelected ? this._selectedTextColor : this._textColor;
       const tc = `${textColor.r};${textColor.g};${textColor.b}`;
 
@@ -263,6 +301,11 @@ export class TabSelect extends Box {
         tabLine.push(`\x1b[48;2;${bc}m\x1b[38;2;${tc}m${name}\x1b[0m`);
       } else {
         tabLine.push(`\x1b[38;2;${tc}m${name}\x1b[0m`);
+      }
+
+      // Add gap between tabs (but not after the last one)
+      if (i < this._tabOptions.length - 1 && this._tabGap > 0) {
+        tabLine.push(" ".repeat(this._tabGap));
       }
     }
 
@@ -278,7 +321,12 @@ export class TabSelect extends Box {
         const isSelected = i === this._selectedIndex;
         const color = isSelected ? this._activeUnderlineColor : this._inactiveUnderlineColor;
         const cc = `${color.r};${color.g};${color.b}`;
-        underline.push(`\x1b[38;2;${cc}m${"─".repeat(this._tabWidth)}\x1b[0m`);
+        const width = tabWidths[i] ?? this._minTabWidth;
+        underline.push(`\x1b[38;2;${cc}m${"─".repeat(width)}\x1b[0m`);
+        // Add matching gap between underlines
+        if (i < this._tabOptions.length - 1 && this._tabGap > 0) {
+          underline.push(" ".repeat(this._tabGap));
+        }
       }
       lines.push(underline.join(""));
     }
