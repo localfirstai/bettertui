@@ -560,8 +560,10 @@ export function run(renderer: CliRenderer): void {
     },
   });
 
-  let animPos = 3;
-  let animDir = 1;
+  let animX = 3;
+  let animY = 2;
+  let animVX = 15;
+  let animVY = 8;
 
   globalTabController.addTab({
     title: "Motion",
@@ -583,6 +585,7 @@ export function run(renderer: CliRenderer): void {
         position: "relative",
         flexGrow: 1,
         flexShrink: 1,
+        overflow: "hidden",
         border: true,
         borderStyle: "round",
         borderColor: theme.border,
@@ -595,8 +598,8 @@ export function run(renderer: CliRenderer): void {
         position: "absolute",
         left: 3,
         top: 2,
-        width: 16,
-        height: 3,
+        width: 22,
+        height: 5,
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
@@ -623,21 +626,34 @@ export function run(renderer: CliRenderer): void {
       const traveler = stage.getRenderable("traveler") as Box;
       if (!traveler) return;
 
-      const delta = Math.min(deltaMs / 1000, 0.1);
-      animPos += 20 * animDir * delta;
+      const delta = Math.min(deltaMs / 1000, 0.05);
+      animX += animVX * delta;
+      animY += animVY * delta;
 
-      const maxPos = Math.max(10, renderer.terminalWidth - 22);
-      if (animPos > maxPos) {
-        animPos = maxPos;
-        animDir = -1;
-      } else if (animPos < 2) {
-        animPos = 2;
-        animDir = 1;
+      const innerW = Math.max(0, renderer.terminalWidth - 6);
+      const innerH = Math.max(0, renderer.terminalHeight - 15);
+      const maxX = Math.max(0, innerW - 22);
+      const maxY = Math.max(0, innerH - 5);
+
+      if (animX >= maxX) {
+        animX = maxX;
+        animVX = -Math.abs(animVX);
+      } else if (animX <= 0) {
+        animX = 0;
+        animVX = Math.abs(animVX);
       }
 
-      traveler.setPosition({ left: Math.round(animPos), top: 2 });
+      if (animY >= maxY) {
+        animY = maxY;
+        animVY = -Math.abs(animVY);
+      } else if (animY <= 0) {
+        animY = 0;
+        animVY = Math.abs(animVY);
+      }
 
-      const hue = (Date.now() / 20) % 360;
+      traveler.setLayout({ left: Math.round(animX), top: Math.round(animY) });
+
+      const hue = (Date.now() / 200) % 360;
       traveler.backgroundColor = hsvToRgb(hue, 0.8, 1);
     },
   });
