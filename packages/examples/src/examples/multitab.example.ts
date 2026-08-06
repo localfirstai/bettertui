@@ -27,6 +27,7 @@ import { TabController } from "../lib/tabController";
 let globalScreen: Screen | null = null;
 let globalTabController: TabController | null = null;
 let globalKeyboardHandler: ((key: RawKeyEvent) => void) | null = null;
+let colorDisplayText: Text | null = null;
 
 interface DemoTheme {
   bg: string;
@@ -162,8 +163,6 @@ export function run(renderer: CliRenderer): void {
   });
   globalScreen.body.add(globalTabController as unknown as Box);
 
-  let activeWheelPixels = new Set<string>();
-
   globalTabController.addTab({
     title: "Typography",
     init: (tabGroup: unknown) => {
@@ -179,6 +178,7 @@ export function run(renderer: CliRenderer): void {
       });
       g.add(content);
 
+      // ── Text Styles panel ──────────────────────────────────────────────────
       const attrCard = new Box(renderer, {
         id: "attr-card",
         flexDirection: "column",
@@ -211,22 +211,23 @@ export function run(renderer: CliRenderer): void {
           gap: 2,
         });
         attrCard.add(row);
-
-        const label = new Text(renderer, {
-          content: style.label,
-          fg: theme.text,
-          zIndex: 10,
-        });
-        row.add(label);
-
-        const desc = new Text(renderer, {
-          content: t`${dim(style.desc)}`,
-          fg: theme.textMuted,
-          zIndex: 10,
-        });
-        row.add(desc);
+        row.add(
+          new Text(renderer, {
+            content: style.label,
+            fg: theme.text,
+            zIndex: 10,
+          }),
+        );
+        row.add(
+          new Text(renderer, {
+            content: t`${dim(style.desc)}`,
+            fg: theme.textMuted,
+            zIndex: 10,
+          }),
+        );
       }
 
+      // ── Color Palette panel ────────────────────────────────────────────────
       const colorCard = new Box(renderer, {
         id: "color-card",
         flexDirection: "column",
@@ -243,27 +244,32 @@ export function run(renderer: CliRenderer): void {
       });
       content.add(colorCard);
 
+      // Static hue-spectrum bar
       const colorRow = new Box(renderer, {
+        id: "color-spectrum-row",
         flexDirection: "row",
+        flexGrow: 0,
+        flexShrink: 0,
         height: 1,
         alignItems: "center",
-        justifyContent: "center",
       });
       colorCard.add(colorRow);
-
       for (let i = 0; i < 48; i++) {
         const hue = (i / 48) * 360;
-        const pixel = new Text(renderer, {
-          content: "█",
-          fg: rgbaToHex(hsvToRgb(hue, 1, 1)),
-          zIndex: 10,
-        });
-        colorRow.add(pixel);
+        colorRow.add(
+          new Text(renderer, {
+            content: "█",
+            fg: rgbaToHex(hsvToRgb(hue, 1, 1)),
+            zIndex: 10,
+          }),
+        );
       }
 
-      const wheelContainer = new Box(renderer, {
-        id: "wheel-container",
-        position: "relative",
+      // Animated gradient — a single Text node updated every frame via ANSI codes.
+      // Using one node avoids per-pixel DOM allocation and the absolute-positioning
+      // complexity of the previous wheel approach.
+      const gradientBox = new Box(renderer, {
+        id: "gradient-box",
         flexGrow: 1,
         flexShrink: 1,
         marginTop: 1,
@@ -271,71 +277,50 @@ export function run(renderer: CliRenderer): void {
         borderStyle: "single",
         borderColor: theme.border,
         backgroundColor: theme.bg,
+        overflow: "hidden",
       });
-      colorCard.add(wheelContainer);
-    },
-    update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as Box;
-      const wheel = g.getRenderable("wheel-container") as Box;
-      if (!wheel) return;
+      colorCard.add(gradientBox);
 
-      const time = Date.now() / 1000;
-      const angle = ((time * 45) % 360) * (Math.PI / 180);
+      colorDisplayText = new Text(renderer, {
+        id: "gradient-text",
+        content: "",
+        flexGrow: 1,
+        flexShrink: 1,
+        zIndex: 5,
+      });
+      gradientBox.add(colorDisplayText);
+    },
+
+    update: (_deltaMs: number, _tabGroup: unknown) => {
+      if (!colorDisplayText) return;
+
       const tw = renderer.terminalWidth;
       const th = renderer.terminalHeight;
-      const wheelW = Math.max(4, tw - 46);
-      const wheelH = Math.max(2, th - 24);
-      const centerX = Math.floor(wheelW / 2);
-      const centerY = Math.floor(wheelH / 2);
-      const radius = Math.min(centerX, centerY) - 2;
+      // Approximate inner dimensions of gradientBox (border on each side + layout overhead)
+      const cols = Math.max(4, tw - 46);
+      const rows = Math.max(1, th - 26);
 
-      const newPixels = new Set<string>();
+      const hueOffset = ((Date.now() / 1000) * 60) % 360;
 
-      for (let y = centerY - radius; y <= centerY + radius; y++) {
-        for (let x = centerX - radius * 2; x <= centerX + radius * 2; x++) {
-          const dx = (x - centerX) / 2;
-          const dy = y - centerY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist <= radius) {
-            const ang = Math.atan2(dy, dx) + angle;
-            const hue = ((ang / Math.PI) * 180 + 360) % 360;
-            const sat = dist / radius;
-            const color = hsvToRgb(hue, sat, 1);
-            const pid = `p-${x}-${y}`;
-            newPixels.add(pid);
-
-            const existing = wheel.getRenderable(pid) as Text;
-            if (existing) {
-              existing.setPosition({ left: x, top: y });
-              existing.fg = color;
-            } else {
-              wheel.add(
-                new Text(renderer, {
-                  id: pid,
-                  content: "█",
-                  position: "absolute",
-                  left: x,
-                  top: y,
-                  fg: color,
-                  zIndex: 5,
-                }),
-              );
-            }
-          }
+      const lines: string[] = [];
+      for (let y = 0; y < rows; y++) {
+        const sat = 0.3 + 0.7 * (y / Math.max(1, rows - 1));
+        let line = "";
+        for (let x = 0; x < cols; x++) {
+          const hue = ((x / cols) * 360 + hueOffset) % 360;
+          const rgba = hsvToRgb(hue, sat, 1);
+          const r = Math.round(rgba.r * 255);
+          const gr = Math.round(rgba.g * 255);
+          const b = Math.round(rgba.b * 255);
+          line += `\x1b[38;2;${r};${gr};${b}m█`;
         }
+        lines.push(`${line}\x1b[0m`);
       }
-
-      for (const pid of activeWheelPixels) {
-        if (!newPixels.has(pid)) {
-          const p = wheel.getRenderable(pid);
-          if (p) wheel.remove(p);
-        }
-      }
-      activeWheelPixels = newPixels;
+      colorDisplayText.content = lines;
     },
+
     hide: () => {
-      activeWheelPixels.clear();
+      if (colorDisplayText) colorDisplayText.content = "";
     },
   });
 
@@ -850,6 +835,8 @@ export function destroy(renderer: CliRenderer): void {
     globalScreen.destroy();
     globalScreen = null;
   }
+
+  colorDisplayText = null;
 }
 
 if (import.meta.main) {
