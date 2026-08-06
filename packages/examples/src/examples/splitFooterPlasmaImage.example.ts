@@ -741,7 +741,7 @@ class SplitFooterStreamingDemo {
     if (key.name === "escape") {
       key.preventDefault();
       this.destroy();
-      process.exit(0);
+      return;
     }
     setupCommonDemoKeys(this.renderer);
   };
@@ -783,6 +783,7 @@ class SplitFooterStreamingDemo {
     this.renderer.off(CliRenderEvents.DESTROY, this.handleRendererDestroy);
 
     this.shell.destroy();
+    this.renderer.setScreenMode("alternate-screen");
   }
 }
 

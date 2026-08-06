@@ -73,7 +73,6 @@ import * as textTruncationDemo from "./examples/textTruncation.example";
 import * as textWrapExample from "./examples/textWrap.example";
 import * as timelineExample from "./examples/timelineExample.example";
 import * as transparencyDemo from "./examples/transparency.example";
-import * as vnodeCompositionDemo from "./examples/vnodeComposition.example";
 import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example";
 import { setupCommonDemoKeys } from "./lib/standaloneKeys";
 import type {
@@ -134,14 +133,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     {
       name: "Split Footer Plasma Image Demo",
       description:
-        "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
-      run: splitFooterPlasmaImageDemo.run,
-      destroy: splitFooterPlasmaImageDemo.destroy,
-    },
-    {
-      name: "Split Footer Image Demo",
-      description:
-        "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
+        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block plasma image that shifts colour with the active scenario",
       run: splitFooterPlasmaImageDemo.run,
       destroy: splitFooterPlasmaImageDemo.destroy,
     },
@@ -150,12 +142,6 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       description: "Renderer confined to bottom area with normal terminal output above",
       run: splitModeExample.run,
       destroy: splitModeExample.destroy,
-    },
-    {
-      name: "VNode Composition Demo",
-      description: "Declarative Box(Box(Box(children))) composition",
-      run: vnodeCompositionDemo.run,
-      destroy: vnodeCompositionDemo.destroy,
     },
   ]),
   section("Input & Editing", [
