@@ -147,13 +147,6 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: splitFooterPlasmaImageDemo.destroy,
     },
     {
-      name: "Split Footer Plasma Image Demo",
-      description:
-        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block plasma image that shifts colour with the active scenario",
-      run: splitFooterPlasmaImageDemo.run,
-      destroy: splitFooterPlasmaImageDemo.destroy,
-    },
-    {
       name: "Split Footer Streaming Demo",
       description:
         "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
