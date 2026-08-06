@@ -56,7 +56,6 @@ export class TabController extends Box {
       flexDirection: options.flexDirection ?? "column",
       flexGrow: options.flexGrow ?? 1,
       flexShrink: options.flexShrink ?? 1,
-      height: options.height ?? "100%",
     });
     this._renderer2 = renderer;
     this._tabBarHeight = options.tabBarHeight || 4;
@@ -98,11 +97,10 @@ export class TabController extends Box {
     const tabGroup = new Box(this._renderer2, {
       id: `${this._id}-tab-${this.tabs.length}`,
       flexDirection: "column",
-      flexGrow: 0, // Start with no flex weight; will be set to 1 when shown
+      flexGrow: 0,
       flexShrink: 0,
       visible: false,
       width: "100%",
-      height: "0%", // Start with no height; will be set to 100% when shown
     });
 
     this.add(tabGroup);
@@ -130,9 +128,8 @@ export class TabController extends Box {
 
     if (this.tabs.length === 1) {
       const firstTab = this.getCurrentTab();
+      firstTab.group.setLayout({ flexGrow: 1, flexShrink: 1 });
       firstTab.group.visible = true;
-      firstTab.group.flexGrow = 1;
-      firstTab.group.height = "100%";
       this.initializeTab(firstTab);
 
       if (firstTab.tabObject.show) {
@@ -164,8 +161,6 @@ export class TabController extends Box {
 
     const currentTab = this.getCurrentTab();
     currentTab.group.visible = false;
-    currentTab.group.flexGrow = 0;
-    currentTab.group.height = "0%";
     if (currentTab.tabObject.hide) {
       currentTab.tabObject.hide();
     }
@@ -174,9 +169,8 @@ export class TabController extends Box {
     this.tabSelectElement.selectedIndex = index;
 
     const newTab = this.getCurrentTab();
+    newTab.group.setLayout({ flexGrow: 1, flexShrink: 1 });
     newTab.group.visible = true;
-    newTab.group.flexGrow = 1;
-    newTab.group.height = "100%";
 
     this.initializeTab(newTab);
 
