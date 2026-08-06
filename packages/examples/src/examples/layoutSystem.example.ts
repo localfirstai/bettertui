@@ -55,7 +55,7 @@ interface DemoColors {
   footerBg: string;
   footerFg: string;
   footerBorder: string;
-  // BOTTOM RIGHT overlay (success green — distinct from footer)
+  // Absolute-positioned button (destructive red bg, white border + text)
   absoluteBg: string;
   absoluteFg: string;
   absoluteBorder: string;
@@ -101,9 +101,9 @@ function buildColors(mode: ThemeMode): DemoColors {
     footerBg: tokens.muted,
     footerFg: tokens.mutedForeground,
     footerBorder: comp.border,
-    absoluteBg: tokens.success,
-    absoluteFg: tokens.primaryForeground,
-    absoluteBorder: tokens.ring,
+    absoluteBg: tokens.destructive,
+    absoluteFg: tokens.destructiveForeground,
+    absoluteBorder: tokens.destructiveForeground,
   };
 }
 
@@ -522,12 +522,13 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
   screen.body.add(mainContent);
   screen.body.add(rightSidebar);
 
+  // Button-style box: transparent background, visible border, centered text
   absolutePositionedBox = new Box(renderer, {
     id: "absolute-positioned-box",
     zIndex: 150,
-    width: 20,
+    width: 16,
     height: 3,
-    backgroundColor: colors.slate,
+    backgroundColor: colors.absoluteBg,
     borderStyle: "single",
     borderColor: colors.absoluteBorder,
     position: "absolute",
@@ -538,15 +539,19 @@ function createLayoutElements(rendererInstance: CliRenderer): void {
     justifyContent: "center",
     border: true,
   });
+
+  // Outline-button text: transparent bg, ring-colored fg, fills inner area
   absolutePositionedText = new Text(renderer, {
     id: "absolute-positioned-text",
     content: "BOTTOM RIGHT",
     fg: colors.absoluteFg,
     bg: "transparent",
-    zIndex: 151,
+    flexGrow: 1,
+    flexShrink: 1,
+    textAlign: "center",
   });
-  absolutePositionedBox.add(absolutePositionedText);
 
+  absolutePositionedBox.add(absolutePositionedText);
   renderer.root.add(absolutePositionedBox);
 
   updateFooterText();
