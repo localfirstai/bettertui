@@ -725,6 +725,9 @@ export class CliRenderer extends EventEmitter {
       this._externalOutputMode = "passthrough";
       this.renderOffset = 0;
       this.engine.setScreenMode("alternate-screen");
+      if (oldMode === "split-footer") {
+        process.stdout.write("\x1b[2J\x1b[H");
+      }
       this.enterAlternateScreen();
     } else {
       this._externalOutputMode = "passthrough";

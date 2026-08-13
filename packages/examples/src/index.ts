@@ -24,58 +24,14 @@ import {
   MENU_TERMINAL_TITLE,
   MENU_THEMES,
 } from "./constants";
-import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example";
-import * as audioStreamingDemo from "./examples/audioStreaming.example";
-import * as clipboardPasteDemo from "./examples/clipboardPaste.example";
-import * as codeDemo from "./examples/code.example";
-import * as consoleExample from "./examples/console.example";
-import * as corePluginSlotsDemo from "./examples/corePluginSlots.example";
-import * as diffDemo from "./examples/diff.example";
-import * as focusRestoreDemo from "./examples/focusRestore.example";
-import * as boxExample from "./examples/fonts.example";
-import * as framebufferExample from "./examples/framebuffer.example";
-import * as fullUnicodeExample from "./examples/fullUnicode.example";
-import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example";
-import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example";
-import * as inputExample from "./examples/input.example";
 import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example";
-import * as keymapDemo from "./examples/keymap.example";
-import * as keypressDebugDemo from "./examples/keypressDebug.example";
 import * as layoutSystemExample from "./examples/layoutSystem.example";
-import * as linkDemo from "./examples/link.example";
-import * as liveStateExample from "./examples/liveState.example";
-import * as markdownDemo from "./examples/markdown.example";
-import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example";
-import * as mouseInteractionExample from "./examples/mouseInteraction.example";
 import * as multitabDemo from "./examples/multitab.example";
-import * as nativeAudioDemo from "./examples/nativeAudio.example";
 import * as nestedZIndexDemo from "./examples/nestedZindex.example";
-import * as notificationDemo from "./examples/notification.example";
-import * as opacityExample from "./examples/opacityExample.example";
-import * as qrcodeDemo from "./examples/qrcode.example";
 import * as relativePositioningDemo from "./examples/relativePositioning.example";
-import * as scrollExample from "./examples/scrollExample.example";
-import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example";
-import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example";
-import * as selectExample from "./examples/select.example";
-import * as sliderDemo from "./examples/slider.example";
 import * as splitFooterImageDemo from "./examples/splitFooterImage.example";
 import * as splitFooterPlasmaImageDemo from "./examples/splitFooterPlasmaImage.example";
 import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
-import * as splitModeExample from "./examples/splitMode.example";
-import * as stickyScrollExample from "./examples/stickyScrollExample.example";
-import * as styledTextExample from "./examples/styledText.example";
-import * as tabSelectExample from "./examples/tabSelect.example";
-import * as terminalDemo from "./examples/terminal.example";
-import * as terminalTitleDemo from "./examples/terminalTitle.example";
-import * as textNodeDemo from "./examples/textNode.example";
-import * as textSelectionExample from "./examples/textSelection.example";
-import * as textTableExample from "./examples/textTable.example";
-import * as textTruncationDemo from "./examples/textTruncation.example";
-import * as textWrapExample from "./examples/textWrap.example";
-import * as timelineExample from "./examples/timelineExample.example";
-import * as transparencyDemo from "./examples/transparency.example";
-import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example";
 import { setupCommonDemoKeys } from "./lib/standaloneKeys";
 import type {
   Example,
@@ -153,296 +109,308 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       run: splitFooterStreamingDemo.run,
       destroy: splitFooterStreamingDemo.destroy,
     },
-    {
-      name: "Split Mode Demo (Experimental)",
-      description: "Renderer confined to bottom area with normal terminal output above",
-      run: splitModeExample.run,
-      destroy: splitModeExample.destroy,
-    },
   ]),
-  section("Input & Editing", [
-    {
-      name: "ASCII Font Selection Demo",
-      description:
-        "Text selection with ASCII fonts - precise character-level selection across different font types",
-      run: asciiFontSelectionExample.run,
-      destroy: asciiFontSelectionExample.destroy,
-    },
-    {
-      name: "Input Demo",
-      description: "Interactive InputElement demo with validation and multiple fields",
-      run: inputExample.run,
-      destroy: inputExample.destroy,
-    },
-    {
-      name: "Keymap Demo",
-      description:
-        "Global and local bindings with counters, leader commands, a centered : prompt, and three switchable textareas",
-      run: keymapDemo.run,
-      destroy: keymapDemo.destroy,
-    },
-    {
-      name: "Mouse Interaction Demo",
-      description: "Interactive mouse trails and clickable cells demonstration",
-      run: mouseInteractionExample.run,
-      destroy: mouseInteractionExample.destroy,
-    },
-    {
-      name: "Select Demo",
-      description: "Interactive SelectElement demo with customizable options",
-      run: selectExample.run,
-      destroy: selectExample.destroy,
-    },
-    {
-      name: "Slider Demo",
-      description: "Interactive slider components with various orientations and configurations",
-      run: sliderDemo.run,
-      destroy: sliderDemo.destroy,
-    },
-    {
-      name: "Tab Select",
-      description: "Tab selection demo",
-      run: tabSelectExample.run,
-      destroy: tabSelectExample.destroy,
-    },
-    {
-      name: "Text Selection Demo",
-      description: "Text selection across multiple renderables with mouse drag",
-      run: textSelectionExample.run,
-      destroy: textSelectionExample.destroy,
-    },
-  ]),
-  section("Scroll & Navigation", [
-    {
-      name: "ScrollBox Demo",
-      description: "Scrollable container with customization",
-      run: scrollExample.run,
-      destroy: scrollExample.destroy,
-    },
-    {
-      name: "Scrollbox Mouse Test",
-      description: "Test scrollbox mouse hit detection with hover and click events",
-      run: scrollboxMouseTest.run,
-      destroy: scrollboxMouseTest.destroy,
-    },
-    {
-      name: "Scrollbox Overlay Hit Test",
-      description: "Test scrollbox hit detection with overlays and dialogs",
-      run: scrollboxOverlayHitTest.run,
-      destroy: scrollboxOverlayHitTest.destroy,
-    },
-    {
-      name: "Sticky Scroll Demo",
-      description:
-        "ScrollBox with sticky scroll behavior - maintains position at borders when content changes",
-      run: stickyScrollExample.run,
-      destroy: stickyScrollExample.destroy,
-    },
-  ]),
-  section("Text & Documents", [
-    {
-      name: "ASCII Font Demo",
-      description: "ASCII font rendering with various colors and text",
-      run: boxExample.run,
-      destroy: boxExample.destroy,
-    },
-    {
-      name: "Code Demo",
-      description:
-        "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
-      run: codeDemo.run,
-      destroy: codeDemo.destroy,
-    },
-    {
-      name: "Diff Demo",
-      description: "Unified and split diff views with syntax highlighting and multiple themes",
-      run: diffDemo.run,
-      destroy: diffDemo.destroy,
-    },
-    {
-      name: "Full Unicode Demo",
-      description: "Draggable boxes and background filled with complex graphemes",
-      run: fullUnicodeExample.run,
-      destroy: fullUnicodeExample.destroy,
-    },
-    {
-      name: "HAST Syntax Highlighting Demo",
-      description: "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
-      run: hastSyntaxHighlightingExample.run,
-      destroy: hastSyntaxHighlightingExample.destroy,
-    },
-    {
-      name: "Link Demo",
-      description:
-        "Hyperlink support with OSC 8 - clickable links and link inheritance in styled text",
-      run: linkDemo.run,
-      destroy: linkDemo.destroy,
-    },
-    {
-      name: "Markdown Demo",
-      description:
-        "Markdown rendering with table alignment, syntax highlighting, and theme switching",
-      run: markdownDemo.run,
-      destroy: markdownDemo.destroy,
-    },
-    {
-      name: "Markdown Code Block Renderer Demo",
-      description: "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
-      run: markdownCodeBlockRendererDemo.run,
-      destroy: markdownCodeBlockRendererDemo.destroy,
-    },
-    {
-      name: "QR Code Demo",
-      description:
-        "Intrinsic QR code renderable with manual scaling and terminal-friendly half-block output",
-      run: qrcodeDemo.run,
-      destroy: qrcodeDemo.destroy,
-    },
-    {
-      name: "Styled Text Demo",
-      description: "Template literals with styled text, colors, and formatting",
-      run: styledTextExample.run,
-      destroy: styledTextExample.destroy,
-    },
-    {
-      name: "Text Truncation Demo",
-      description:
-        "Middle truncation with ellipsis - toggle with 'T' key and resize to test responsive behavior",
-      run: textTruncationDemo.run,
-      destroy: textTruncationDemo.destroy,
-    },
-    {
-      name: "Text Wrap Demo",
-      description: "Text wrapping example",
-      run: textWrapExample.run,
-      destroy: textWrapExample.destroy,
-    },
-    {
-      name: "TextNode Demo",
-      description: "TextNode API for building complex styled text structures",
-      run: textNodeDemo.run,
-      destroy: textNodeDemo.destroy,
-    },
-    {
-      name: "TextTable Demo",
-      description:
-        "TextTable renderable with styled chunks, Unicode content, and wrap/border toggles",
-      run: textTableExample.run,
-      destroy: textTableExample.destroy,
-    },
-    {
-      name: "Wide Grapheme Overlay Demo",
-      description: "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
-      run: wideGraphemeOverlayDemo.run,
-      destroy: wideGraphemeOverlayDemo.destroy,
-    },
-  ]),
-  section("Rendering & Effects", [
-    {
-      name: "Framebuffer Demo",
-      description: "Framebuffer rendering techniques",
-      run: framebufferExample.run,
-      destroy: framebufferExample.destroy,
-    },
-    {
-      name: "Grayscale Buffer",
-      description: "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
-      run: grayscaleBufferDemo.run,
-      destroy: grayscaleBufferDemo.destroy,
-    },
-    {
-      name: "Opacity Demo",
-      description: "Box opacity and transparency effects with animated opacity transitions",
-      run: opacityExample.run,
-      destroy: opacityExample.destroy,
-    },
-    {
-      name: "Timeline Example",
-      description: "Animation timeline system",
-      run: timelineExample.run,
-      destroy: timelineExample.destroy,
-    },
-    {
-      name: "Transparency Demo",
-      description: "Alpha blending and transparency effects demonstration",
-      run: transparencyDemo.run,
-      destroy: transparencyDemo.destroy,
-    },
-  ]),
-  section("Runtime & Tooling", [
-    {
-      name: "Console Demo",
-      description: "Interactive console logging with clickable buttons for different log levels",
-      run: consoleExample.run,
-      destroy: consoleExample.destroy,
-    },
-    {
-      name: "Core Plugin Slots Demo",
-      description: "Framework-free plugin slots with cached renderables and deterministic ordering",
-      run: corePluginSlotsDemo.run,
-      destroy: corePluginSlotsDemo.destroy,
-    },
-    {
-      name: "Live State Management Demo",
-      description: "Test automatic renderer lifecycle management with live renderables",
-      run: liveStateExample.run,
-      destroy: liveStateExample.destroy,
-    },
-  ]),
-  section("Terminal & Native", [
-    {
-      name: "Audio Streaming Demo",
-      description:
-        "Live MP3 URL streaming with reconnect controls, telemetry, and master-mix FFT visualization",
-      run: audioStreamingDemo.run,
-      destroy: audioStreamingDemo.destroy,
-    },
-    {
-      name: "Audio Demo",
-      description: "WAV-based native mixer with sound groups and live meter stats",
-      run: nativeAudioDemo.run,
-      destroy: nativeAudioDemo.destroy,
-    },
-    {
-      name: "Clipboard & Paste Test Bed",
-      description:
-        "OSC 52 copy, paste transport, and editor semantics diagnostics with a selectable, copyable event log",
-      run: clipboardPasteDemo.run,
-      destroy: clipboardPasteDemo.destroy,
-    },
-    {
-      name: "Focus Restore Demo",
-      description: "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
-      run: focusRestoreDemo.run,
-      destroy: focusRestoreDemo.destroy,
-    },
-    {
-      name: "Keypress Debug Tool",
-      description: "Debug tool to inspect keypress events, raw input, and terminal capabilities",
-      run: keypressDebugDemo.run,
-      destroy: keypressDebugDemo.destroy,
-    },
-    {
-      name: "Notification Demo",
-      description:
-        "Standalone OSC terminal notification demo with capability detection and interactive triggers",
-      run: notificationDemo.run,
-      destroy: notificationDemo.destroy,
-    },
-    {
-      name: "Terminal Palette Demo",
-      description:
-        "Terminal color palette detection and visualization - fetch and display all 256 terminal colors",
-      run: terminalDemo.run,
-      destroy: terminalDemo.destroy,
-    },
-    {
-      name: "Terminal Title Demo",
-      description: "Set and update the terminal window title with OSC title sequences",
-      run: terminalTitleDemo.run,
-      destroy: terminalTitleDemo.destroy,
-    },
-  ]),
+  // TODO: VVI
+  // section("Input & Editing", [
+  //   {
+  //     name: "ASCII Font Selection Demo",
+  //     description:
+  //       "Text selection with ASCII fonts - precise character-level selection across different font types",
+  //     run: asciiFontSelectionExample.run,
+  //     destroy: asciiFontSelectionExample.destroy,
+  //   },
+  //   {
+  //     name: "Input Demo",
+  //     description:
+  //       "Interactive InputElement demo with validation and multiple fields",
+  //     run: inputExample.run,
+  //     destroy: inputExample.destroy,
+  //   },
+  //   {
+  //     name: "Keymap Demo",
+  //     description:
+  //       "Global and local bindings with counters, leader commands, a centered : prompt, and three switchable textareas",
+  //     run: keymapDemo.run,
+  //     destroy: keymapDemo.destroy,
+  //   },
+  //   {
+  //     name: "Mouse Interaction Demo",
+  //     description: "Interactive mouse trails and clickable cells demonstration",
+  //     run: mouseInteractionExample.run,
+  //     destroy: mouseInteractionExample.destroy,
+  //   },
+  //   {
+  //     name: "Select Demo",
+  //     description: "Interactive SelectElement demo with customizable options",
+  //     run: selectExample.run,
+  //     destroy: selectExample.destroy,
+  //   },
+  //   {
+  //     name: "Slider Demo",
+  //     description:
+  //       "Interactive slider components with various orientations and configurations",
+  //     run: sliderDemo.run,
+  //     destroy: sliderDemo.destroy,
+  //   },
+  //   {
+  //     name: "Tab Select",
+  //     description: "Tab selection demo",
+  //     run: tabSelectExample.run,
+  //     destroy: tabSelectExample.destroy,
+  //   },
+  //   {
+  //     name: "Text Selection Demo",
+  //     description: "Text selection across multiple renderables with mouse drag",
+  //     run: textSelectionExample.run,
+  //     destroy: textSelectionExample.destroy,
+  //   },
+  // ]),
+  // section("Scroll & Navigation", [
+  //   {
+  //     name: "ScrollBox Demo",
+  //     description: "Scrollable container with customization",
+  //     run: scrollExample.run,
+  //     destroy: scrollExample.destroy,
+  //   },
+  //   {
+  //     name: "Scrollbox Mouse Test",
+  //     description:
+  //       "Test scrollbox mouse hit detection with hover and click events",
+  //     run: scrollboxMouseTest.run,
+  //     destroy: scrollboxMouseTest.destroy,
+  //   },
+  //   {
+  //     name: "Scrollbox Overlay Hit Test",
+  //     description: "Test scrollbox hit detection with overlays and dialogs",
+  //     run: scrollboxOverlayHitTest.run,
+  //     destroy: scrollboxOverlayHitTest.destroy,
+  //   },
+  //   {
+  //     name: "Sticky Scroll Demo",
+  //     description:
+  //       "ScrollBox with sticky scroll behavior - maintains position at borders when content changes",
+  //     run: stickyScrollExample.run,
+  //     destroy: stickyScrollExample.destroy,
+  //   },
+  // ]),
+  // section("Text & Documents", [
+  //   {
+  //     name: "ASCII Font Demo",
+  //     description: "ASCII font rendering with various colors and text",
+  //     run: boxExample.run,
+  //     destroy: boxExample.destroy,
+  //   },
+  //   {
+  //     name: "Code Demo",
+  //     description:
+  //       "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
+  //     run: codeDemo.run,
+  //     destroy: codeDemo.destroy,
+  //   },
+  //   {
+  //     name: "Diff Demo",
+  //     description:
+  //       "Unified and split diff views with syntax highlighting and multiple themes",
+  //     run: diffDemo.run,
+  //     destroy: diffDemo.destroy,
+  //   },
+  //   {
+  //     name: "Full Unicode Demo",
+  //     description:
+  //       "Draggable boxes and background filled with complex graphemes",
+  //     run: fullUnicodeExample.run,
+  //     destroy: fullUnicodeExample.destroy,
+  //   },
+  //   {
+  //     name: "HAST Syntax Highlighting Demo",
+  //     description:
+  //       "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
+  //     run: hastSyntaxHighlightingExample.run,
+  //     destroy: hastSyntaxHighlightingExample.destroy,
+  //   },
+  //   {
+  //     name: "Link Demo",
+  //     description:
+  //       "Hyperlink support with OSC 8 - clickable links and link inheritance in styled text",
+  //     run: linkDemo.run,
+  //     destroy: linkDemo.destroy,
+  //   },
+  //   {
+  //     name: "Markdown Demo",
+  //     description:
+  //       "Markdown rendering with table alignment, syntax highlighting, and theme switching",
+  //     run: markdownDemo.run,
+  //     destroy: markdownDemo.destroy,
+  //   },
+  //   {
+  //     name: "Markdown Code Block Renderer Demo",
+  //     description:
+  //       "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
+  //     run: markdownCodeBlockRendererDemo.run,
+  //     destroy: markdownCodeBlockRendererDemo.destroy,
+  //   },
+  //   {
+  //     name: "QR Code Demo",
+  //     description:
+  //       "Intrinsic QR code renderable with manual scaling and terminal-friendly half-block output",
+  //     run: qrcodeDemo.run,
+  //     destroy: qrcodeDemo.destroy,
+  //   },
+  //   {
+  //     name: "Styled Text Demo",
+  //     description: "Template literals with styled text, colors, and formatting",
+  //     run: styledTextExample.run,
+  //     destroy: styledTextExample.destroy,
+  //   },
+  //   {
+  //     name: "Text Truncation Demo",
+  //     description:
+  //       "Middle truncation with ellipsis - toggle with 'T' key and resize to test responsive behavior",
+  //     run: textTruncationDemo.run,
+  //     destroy: textTruncationDemo.destroy,
+  //   },
+  //   {
+  //     name: "Text Wrap Demo",
+  //     description: "Text wrapping example",
+  //     run: textWrapExample.run,
+  //     destroy: textWrapExample.destroy,
+  //   },
+  //   {
+  //     name: "TextNode Demo",
+  //     description: "TextNode API for building complex styled text structures",
+  //     run: textNodeDemo.run,
+  //     destroy: textNodeDemo.destroy,
+  //   },
+  //   {
+  //     name: "TextTable Demo",
+  //     description:
+  //       "TextTable renderable with styled chunks, Unicode content, and wrap/border toggles",
+  //     run: textTableExample.run,
+  //     destroy: textTableExample.destroy,
+  //   },
+  //   {
+  //     name: "Wide Grapheme Overlay Demo",
+  //     description:
+  //       "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
+  //     run: wideGraphemeOverlayDemo.run,
+  //     destroy: wideGraphemeOverlayDemo.destroy,
+  //   },
+  // ]),
+  // section("Rendering & Effects", [
+  //   {
+  //     name: "Framebuffer Demo",
+  //     description: "Framebuffer rendering techniques",
+  //     run: framebufferExample.run,
+  //     destroy: framebufferExample.destroy,
+  //   },
+  //   {
+  //     name: "Grayscale Buffer",
+  //     description:
+  //       "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
+  //     run: grayscaleBufferDemo.run,
+  //     destroy: grayscaleBufferDemo.destroy,
+  //   },
+  //   {
+  //     name: "Opacity Demo",
+  //     description:
+  //       "Box opacity and transparency effects with animated opacity transitions",
+  //     run: opacityExample.run,
+  //     destroy: opacityExample.destroy,
+  //   },
+  //   {
+  //     name: "Timeline Example",
+  //     description: "Animation timeline system",
+  //     run: timelineExample.run,
+  //     destroy: timelineExample.destroy,
+  //   },
+  //   {
+  //     name: "Transparency Demo",
+  //     description: "Alpha blending and transparency effects demonstration",
+  //     run: transparencyDemo.run,
+  //     destroy: transparencyDemo.destroy,
+  //   },
+  // ]),
+  // section("Runtime & Tooling", [
+  //   {
+  //     name: "Console Demo",
+  //     description:
+  //       "Interactive console logging with clickable buttons for different log levels",
+  //     run: consoleExample.run,
+  //     destroy: consoleExample.destroy,
+  //   },
+  //   {
+  //     name: "Core Plugin Slots Demo",
+  //     description:
+  //       "Framework-free plugin slots with cached renderables and deterministic ordering",
+  //     run: corePluginSlotsDemo.run,
+  //     destroy: corePluginSlotsDemo.destroy,
+  //   },
+  //   {
+  //     name: "Live State Management Demo",
+  //     description:
+  //       "Test automatic renderer lifecycle management with live renderables",
+  //     run: liveStateExample.run,
+  //     destroy: liveStateExample.destroy,
+  //   },
+  // ]),
+  // section("Terminal & Native", [
+  //   {
+  //     name: "Audio Streaming Demo",
+  //     description:
+  //       "Live MP3 URL streaming with reconnect controls, telemetry, and master-mix FFT visualization",
+  //     run: audioStreamingDemo.run,
+  //     destroy: audioStreamingDemo.destroy,
+  //   },
+  //   {
+  //     name: "Audio Demo",
+  //     description:
+  //       "WAV-based native mixer with sound groups and live meter stats",
+  //     run: nativeAudioDemo.run,
+  //     destroy: nativeAudioDemo.destroy,
+  //   },
+  //   {
+  //     name: "Clipboard & Paste Test Bed",
+  //     description:
+  //       "OSC 52 copy, paste transport, and editor semantics diagnostics with a selectable, copyable event log",
+  //     run: clipboardPasteDemo.run,
+  //     destroy: clipboardPasteDemo.destroy,
+  //   },
+  //   {
+  //     name: "Focus Restore Demo",
+  //     description:
+  //       "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
+  //     run: focusRestoreDemo.run,
+  //     destroy: focusRestoreDemo.destroy,
+  //   },
+  //   {
+  //     name: "Keypress Debug Tool",
+  //     description:
+  //       "Debug tool to inspect keypress events, raw input, and terminal capabilities",
+  //     run: keypressDebugDemo.run,
+  //     destroy: keypressDebugDemo.destroy,
+  //   },
+  //   {
+  //     name: "Notification Demo",
+  //     description:
+  //       "Standalone OSC terminal notification demo with capability detection and interactive triggers",
+  //     run: notificationDemo.run,
+  //     destroy: notificationDemo.destroy,
+  //   },
+  //   {
+  //     name: "Terminal Palette Demo",
+  //     description:
+  //       "Terminal color palette detection and visualization - fetch and display all 256 terminal colors",
+  //     run: terminalDemo.run,
+  //     destroy: terminalDemo.destroy,
+  //   },
+  //   {
+  //     name: "Terminal Title Demo",
+  //     description:
+  //       "Set and update the terminal window title with OSC title sequences",
+  //     run: terminalTitleDemo.run,
+  //     destroy: terminalTitleDemo.destroy,
+  //   },
+  // ]),
 ];
 
 export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(({ category, examples }) =>
