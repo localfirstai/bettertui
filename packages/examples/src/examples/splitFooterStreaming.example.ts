@@ -1,18 +1,33 @@
 #!/usr/bin/env bun
 
+/**
+ * Split Footer Surface Streaming Demo
+ *
+ * Demonstrates progressive text, code, and markdown streaming in a split-footer
+ * layout. Content builds chunk-by-chunk across three edge-case scenarios, with
+ * live status rendered in the footer table.
+ *
+ * Adapted from the OpenTUI split-footer-streaming-demo reference. BetterTUI has
+ * no `createScrollbackSurface`, so content accumulates inside a contentBox that
+ * fills the engine viewport above the footerTable.
+ */
+
 import {
   Box,
+  CliRenderEvents,
   type CliRenderer,
-  FrameBuffer,
-  type FrameBufferLike,
-  type FrameBufferOptions,
+  Code,
+  type CodeOptions,
+  Markdown,
+  type MarkdownOptions,
   RGBA,
   Text,
   TextTable,
   createCliRenderer,
   parseColor,
 } from "@bettertui/core";
-import type { TextChunk, TextTableContent } from "@bettertui/core";
+import { SyntaxStyle } from "@bettertui/core";
+import type { KeyEvent, TextChunk, TextTableContent } from "@bettertui/core";
 import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const FOOTER_HEIGHT = 10;
@@ -20,8 +35,6 @@ const DEFAULT_INTERVAL_MS = 180;
 const MIN_INTERVAL_MS = 60;
 const MAX_INTERVAL_MS = 1000;
 const INTERVAL_STEP_MS = 40;
-const IMG_WIDTH_RATIO = 0.36;
-const UI_OVERHEAD_LINES = 7;
 
 type StreamKind = "text" | "code" | "markdown";
 
@@ -36,11 +49,11 @@ interface ScenarioDefinition {
 interface ActiveRun {
   id: number;
   scenario: ScenarioDefinition;
-  container: Box;
-  renderable: Text;
+  renderable: Text | Code | Markdown;
   content: string;
   chunkIndex: number;
   committedRows: number;
+  committedBlocks: number;
   cancelled: boolean;
   done: boolean;
 }
@@ -59,61 +72,84 @@ const PALETTE = {
   error: "#FF9B9B",
 } as const;
 
+const SURFACE_SYNTAX_STYLE = SyntaxStyle.fromStyles({
+  default: { fg: RGBA.fromInts(230, 237, 243, 255) },
+  keyword: { fg: RGBA.fromInts(255, 123, 114, 255), bold: true },
+  string: { fg: RGBA.fromInts(165, 214, 255, 255) },
+  comment: { fg: RGBA.fromInts(139, 148, 158, 255), italic: true },
+  number: { fg: RGBA.fromInts(121, 192, 255, 255) },
+  function: { fg: RGBA.fromInts(210, 168, 255, 255) },
+  type: { fg: RGBA.fromInts(255, 166, 87, 255) },
+  variable: { fg: RGBA.fromInts(230, 237, 243, 255) },
+  property: { fg: RGBA.fromInts(121, 192, 255, 255) },
+  "markup.heading": { fg: RGBA.fromInts(88, 166, 255, 255), bold: true },
+  "markup.heading.1": { fg: RGBA.fromInts(0, 255, 136, 255), bold: true },
+  "markup.strong": { fg: RGBA.fromInts(244, 248, 255, 255), bold: true },
+  "markup.italic": { fg: RGBA.fromInts(200, 210, 220, 255), italic: true },
+  "markup.list": { fg: RGBA.fromInts(121, 192, 255, 255) },
+  "markup.raw": { fg: RGBA.fromInts(255, 213, 128, 255) },
+  "markup.link": { fg: RGBA.fromInts(88, 166, 255, 255) },
+  "markup.link.label": { fg: RGBA.fromInts(88, 166, 255, 255) },
+  "markup.link.url": { fg: RGBA.fromInts(88, 166, 255, 255) },
+  conceal: { fg: RGBA.fromInts(98, 114, 130, 255) },
+});
+
 const SCENARIOS: Record<StreamKind, ScenarioDefinition> = {
   text: {
     kind: "text",
     title: "text",
     prefix: "text> ",
-    description: "Dummy text streaming with word boundaries and natural flow.",
+    description: "Chunks cut through words, spaces, newlines, long tokens, and repeated padding.",
     chunks: [
-      "Welcome to the streaming demo! ",
-      "This text is being streamed ",
-      "chunk by chunk to simulate ",
-      "real-time data flow. ",
-      "Each chunk arrives sequentially ",
-      "and gets appended to the display.\n\n",
-      "Features demonstrated:\n",
-      "• Smooth text streaming\n",
-      "• Word boundary handling\n",
-      "• Multi-paragraph support\n",
-      "• Real-time updates\n\n",
-      "Press keys to control the stream:",
+      "Text chunks can la",
+      "nd mid-word, mid-space, o",
+      "r mid-newline. LongTokenWithoutNatural",
+      "Breaks_1234567890_keeps_growing while previous wrap decisions stay under pressure.\n\n",
+      "Bullets can start before their content arrives:\n- first item keep",
+      "s expanding after later chunks\n- second item includes emoji 🚀 and CJK 漢",
+      "字 across chunk boundaries\n\nIndented columns: alpha    be",
+      "ta    gamma\nTrailing text lands in small fragments to expose unstable row endings.\n",
     ],
   },
   code: {
     kind: "code",
     title: "code",
     prefix: "code> ",
-    description: "Code streaming with syntax highlighting simulation.",
+    description: "Chunks cut through keywords, identifiers, comments, strings, and punctuation.",
     chunks: [
-      "function streamData() {\n",
-      "  const chunks = [\n",
-      "    'async ',\n",
-      "    'function ',\n",
-      "    'processStream ',\n",
-      "    '(data) {',\n",
-      "  ];\n\n",
-      "  return chunks\n",
-      "    .map((c, i) => `${i}: ${c}`)\n",
-      "    .join('');\n",
-      "}\n",
+      "export as",
+      "ync function buildSurfaceRepo",
+      "rt<TRecord extends Record<string, string>>(chunks: string[]) {\n",
+      '  const longIdentifier = "LongTokenWithoutNatural',
+      'Breaks_1234567890"\n',
+      "  /* block comments can also arrive in pie",
+      "ces while highlighting is still pending */\n",
+      "  return chunks\n    .map((chunk, index) => `${index}:${chunk.trim()}-${longId",
+      'entifier}`)\n    .join("\\n")\n}\n',
     ],
   },
   markdown: {
     kind: "markdown",
     title: "markdown",
     prefix: "md> ",
-    description: "Markdown streaming with headers and formatting.",
+    description: "Chunks cut through headings, emphasis, table rows, blockquotes, and fenced code.",
     chunks: [
-      "# Streaming Demo\n\n",
-      "This is a **markdown** streaming ",
-      "example that shows how formatted ",
-      "text can be streamed progressively.\n\n",
-      "## Features\n\n",
-      "- Bullet points\n",
-      "- Bold and *italic* text\n",
-      "- Code blocks\n\n",
-      "```\nStream complete!\n```",
+      "# Split Footer Ma",
+      "rkdown Edge Cases\n\nParag",
+      "raph with **bo",
+      "ld**, `inline c",
+      "ode`, emoji 🚀, CJK 漢",
+      "字, and a [li",
+      "nk](https://example.com/very/long/path) that arrives in pieces.\n\n",
+      "| Key | Statu",
+      "s | Notes |\n| --- | --- | --- |\n| text | partial | inline `LongTokenWithoutNatural",
+      "Breaks_1234567890` grows |\n| code | async | escaped pipe A\\|B stays in one cell |\n",
+      "| markdown | streaming | delimiter row and data rows arrived separately |\n\n| 甲 | 乙 | 丙 |\n| --- | --- | --- |\n| 漢 | 字 | 表 |\n",
+      "| 流 | 式 | 測 |\n| 邊 | 界 | 行 |\n\n| 😀 | 🚀 | 🧪 |\n| --- | --- | --- |\n| 🎯 | ✨ | 📦 |\n",
+      "| 🌊 | 🔥 | 🪄 |\n\n> Quote starts here and the rest of the block arrives",
+      ' in the next chunk. Unicode repeats: 🚀 漢字.\n\n```ts\nconst rows = ["text", "code", "markdown"]\n',
+      ".map((kind, index) => `${index}:${kind}`)\n```\n\n- list item opened",
+      " in one chunk\n- second item closes the sample\n",
     ],
   },
 };
@@ -126,8 +162,6 @@ function getScenarioAccent(kind: StreamKind): string {
       return PALETTE.codeAccent;
     case "markdown":
       return PALETTE.markdownAccent;
-    default:
-      return PALETTE.status;
   }
 }
 
@@ -150,134 +184,17 @@ function footerRow(label: string, value: string, valueColor: string): TextTableC
   ];
 }
 
-function hslToRgba(h: number, s: number, l: number): RGBA {
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (h < 60) {
-    r = c;
-    g = x;
-  } else if (h < 120) {
-    r = x;
-    g = c;
-  } else if (h < 180) {
-    g = c;
-    b = x;
-  } else if (h < 240) {
-    g = x;
-    b = c;
-  } else if (h < 300) {
-    r = x;
-    b = c;
-  } else {
-    r = c;
-    b = x;
-  }
-  return RGBA.fromInts(
-    Math.round((r + m) * 255),
-    Math.round((g + m) * 255),
-    Math.round((b + m) * 255),
-    255,
-  );
-}
-
-function plasmaPixel(x: number, y: number, width: number, height: number, time: number): RGBA {
-  const nx = x / width;
-  const ny = y / height;
-  const v =
-    Math.sin(nx * 10 + time) +
-    Math.sin(ny * 10 + time * 0.7) +
-    Math.sin((nx + ny) * 5 + time * 1.2) +
-    Math.sin(Math.sqrt(nx * nx + ny * ny) * 8 + time * 0.5);
-  const norm = (v + 4) / 8;
-  const hue = (norm * 360 + time * 30) % 360;
-  return hslToRgba(hue, 0.7, 0.3 + norm * 0.3);
-}
-
-function drawPlasmaFrame(
-  buffer: FrameBufferLike,
-  time: number,
-  _kind: StreamKind,
-  progress: number,
-): void {
-  const W = buffer.width;
-  const H = buffer.height;
-  const CH = Math.max(0, H - UI_OVERHEAD_LINES);
-  const PH = Math.max(1, CH - 2);
-  const _baseHue = (time * 30) % 360;
-  const bg = RGBA.fromInts(10, 15, 25, 255);
-  const fg = RGBA.fromInts(200, 210, 230, 255);
-
-  buffer.clear(bg);
-
-  // Draw plasma effect in main area
-  for (let y = 1; y < PH + 1; y++) {
-    for (let x = 1; x < W - 1; x++) {
-      const color = plasmaPixel(x - 1, y - 1, W - 2, PH, time);
-      buffer.setCell(x, y, "█", color, color);
-    }
-  }
-
-  // Draw border
-  const borderColor = RGBA.fromInts(59, 91, 130, 255);
-  for (let x = 0; x < W; x++) {
-    buffer.setCell(x, 0, "─", borderColor, bg);
-    buffer.setCell(x, H - 1, "─", borderColor, bg);
-  }
-  for (let y = 0; y < H; y++) {
-    buffer.setCell(0, y, "│", borderColor, bg);
-    buffer.setCell(W - 1, y, "│", borderColor, bg);
-  }
-  buffer.setCell(0, 0, "┌", borderColor, bg);
-  buffer.setCell(W - 1, 0, "┐", borderColor, bg);
-  buffer.setCell(0, H - 1, "└", borderColor, bg);
-  buffer.setCell(W - 1, H - 1, "┘", borderColor, bg);
-
-  // Draw title
-  const title = "Plasma Visualizer";
-  const titleX = Math.floor((W - title.length) / 2);
-  for (let i = 0; i < title.length; i++) {
-    buffer.setCell(titleX + i, 0, title[i] ?? "", fg, borderColor);
-  }
-
-  // Draw progress bar
-  const barY = H - 3;
-  const barWidth = W - 4;
-  const filledWidth = Math.floor(barWidth * progress);
-  const filledFg = RGBA.fromInts(100, 200, 255, 255);
-  const emptyFg = RGBA.fromInts(60, 60, 80, 255);
-  const barBg = RGBA.fromInts(20, 20, 30, 255);
-
-  buffer.setCell(1, barY, "[", fg, barBg);
-  for (let x = 0; x < barWidth; x++) {
-    const char = x < filledWidth ? "█" : "░";
-    const color = x < filledWidth ? filledFg : emptyFg;
-    buffer.setCell(2 + x, barY, char, color, barBg);
-  }
-  buffer.setCell(2 + barWidth, barY, "]", fg, barBg);
-
-  // Draw stats
-  const statsText = `Time: ${time.toFixed(1)}s | Progress: ${Math.floor(progress * 100)}%`;
-  const statsX = Math.max(1, Math.floor((W - statsText.length) / 2));
-  const statsColor = RGBA.fromInts(150, 170, 200, 255);
-  for (let i = 0; i < statsText.length && statsX + i < W - 1; i++) {
-    buffer.setCell(statsX + i, H - 2, statsText[i] ?? "", statsColor, bg);
-  }
-}
+type ContentWidget = Box | Text | Code | Markdown;
 
 class SplitFooterStreamingDemo {
   private shell: Box;
   private titleText: Text;
-  private mainRow: Box;
   private contentBox: Box;
-  private imageBox: Box;
-  private imagePanel: FrameBuffer | null = null;
   private footerTable: TextTable;
 
-  private currentKind: StreamKind = "text";
+  private readonly contentItems: ContentWidget[] = [];
+
+  private currentKind: StreamKind = "markdown";
   private inlinePrefix = false;
   private autoAdvance = true;
   private intervalMs = DEFAULT_INTERVAL_MS;
@@ -286,165 +203,74 @@ class SplitFooterStreamingDemo {
   private autoTimer: ReturnType<typeof setInterval> | null = null;
   private activeRun: ActiveRun | null = null;
   private nextRunId = 1;
-  private lastStatus = "";
+  private lastStatus = "Ready. Press R to replay the current sample.";
   private pendingReplayReason: string | null = null;
-  private animTime = 0;
-  private imgW = 30;
-  private imgH = FOOTER_HEIGHT - 2;
-  private frameCb: ((dt: number) => void) | null = null;
+  private wrote = false;
 
-  constructor(private readonly renderer: CliRenderer) {
-    this.shell = new Box(renderer, {
+  constructor(private renderer: CliRenderer) {
+    this.renderer.setScreenMode("split-footer", FOOTER_HEIGHT);
+    this.renderer.setBackgroundColor(PALETTE.background);
+
+    this.shell = new Box(this.renderer, {
       id: "sfs-shell",
       width: "100%",
       height: "100%",
-      border: false,
-      backgroundColor: PALETTE.background,
-      padding: 1,
-      gap: 1,
+      border: ["top"],
+      borderColor: PALETTE.border,
+      backgroundColor: PALETTE.panel,
+      paddingTop: 1,
+      paddingBottom: 0,
+      paddingLeft: 1,
+      paddingRight: 1,
+      gap: 0,
       flexDirection: "column",
-      zIndex: 1,
     });
 
-    const headerRow = new Box(renderer, {
-      id: "sfs-header",
+    this.titleText = new Text(this.renderer, {
+      id: "sfs-title",
       width: "100%",
       height: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    });
-
-    this.titleText = new Text(renderer, {
-      id: "sfs-title",
-      content: "Split Footer Streaming Demo",
+      content: "Split Footer Surface Streaming Demo",
       fg: PALETTE.title,
     });
 
-    const modeText = new Text(renderer, {
-      id: "sfs-mode-indicator",
-      content: "MODE: streaming",
-      fg: PALETTE.hint,
-    });
-
-    headerRow.add(this.titleText);
-    headerRow.add(modeText);
-
-    this.mainRow = new Box(renderer, {
-      id: "sfs-main-row",
+    this.contentBox = new Box(this.renderer, {
+      id: "sfs-content",
       width: "100%",
       flexGrow: 1,
-      flexDirection: "row",
-      gap: 1,
-      overflow: "hidden",
-    });
-
-    this.contentBox = new Box(renderer, {
-      id: "sfs-content-box",
-      flexGrow: 1,
       flexDirection: "column",
-      gap: 1,
+      gap: 0,
       overflow: "hidden",
       paddingTop: 1,
     });
 
-    this._computeImageDimensions();
-    this.imageBox = new Box(renderer, {
-      id: "sfs-image-box",
-      width: this.imgW,
-      flexDirection: "column",
-      gap: 1,
-      border: true,
-      borderColor: PALETTE.border,
-      paddingLeft: 1,
-    });
-
-    this.imagePanel = this._createImagePanel();
-    this.imageBox.add(this.imagePanel);
-    this.mainRow.add(this.contentBox);
-    this.mainRow.add(this.imageBox);
-
-    const footerRow = new Box(renderer, {
-      id: "sfs-footer",
-      width: "100%",
-      height: FOOTER_HEIGHT,
-      flexDirection: "column",
-      gap: 0,
-    });
-
-    this.footerTable = new TextTable(renderer, {
+    this.footerTable = new TextTable(this.renderer, {
       id: "sfs-footer-table",
       width: "100%",
-      wrapMode: "char",
+      wrapMode: "word",
       columnWidthMode: "content",
-      columnFitter: "balanced",
-      cellPadding: 1,
+      columnFitter: "proportional",
+      cellPadding: 0,
       border: false,
       outerBorder: false,
       showBorders: false,
-      backgroundColor: PALETTE.panel,
-      fg: PALETTE.status,
+      backgroundColor: "transparent",
+      fg: PALETTE.detail,
       content: [],
     });
 
-    footerRow.add(this.footerTable);
+    this.shell.add(this.titleText);
+    this.shell.add(this.contentBox);
+    this.shell.add(this.footerTable);
+    this.renderer.root.add(this.shell);
 
-    this.shell.add(headerRow);
-    this.shell.add(this.mainRow);
-    this.shell.add(footerRow);
-    renderer.root.add(this.shell);
-
-    this.frameCb = (dt: number) => {
-      if (this.imagePanel && !this.imagePanel.isDestroyed) {
-        this.imagePanel.draw(dt);
-      }
-    };
-    renderer.setFrameCallback(this.frameCb);
+    this.renderer.keyInput.on("keypress", this.handleKeyPress);
+    this.renderer.on(CliRenderEvents.RESIZE, this.handleResize);
+    this.renderer.on(CliRenderEvents.DESTROY, this.handleRendererDestroy);
 
     this.refreshFooter();
-    void this.replayCurrentScenario("Initial");
     this.syncAutoTimer();
-  }
-
-  private _computeImageDimensions(): void {
-    const W = this.renderer.terminalWidth;
-    const H = this.renderer.terminalHeight;
-    const CH = Math.max(1, H - FOOTER_HEIGHT - UI_OVERHEAD_LINES);
-    const IH = Math.max(1, CH - 2);
-    this.imgH = IH;
-    this.imgW = Math.max(10, Math.floor((W - 10) * IMG_WIDTH_RATIO));
-  }
-
-  private _createImagePanel(): FrameBuffer {
-    const { imgW, imgH } = this;
-    const panelW = Math.max(1, imgW - 2);
-    return new FrameBuffer(this.renderer, {
-      id: `sfs-image-panel-${Date.now()}`,
-      width: panelW,
-      height: imgH,
-      drawFn: (buffer, dt) => {
-        this.animTime += dt / 1000;
-        const run = this.activeRun;
-        const progress = run ? run.chunkIndex / this.currentScenario.chunks.length : 0;
-        drawPlasmaFrame(buffer, this.animTime, this.currentKind, progress);
-      },
-    } as FrameBufferOptions);
-  }
-
-  private _rebuildImagePanel(): void {
-    if (this.imagePanel && !this.imagePanel.isDestroyed) {
-      try {
-        this.imageBox.remove(this.imagePanel);
-      } catch {
-        // ignore
-      }
-      this.imagePanel.destroy();
-      this.imagePanel = null;
-    }
-    this._computeImageDimensions();
-    this.imageBox.setLayout({ width: this.imgW });
-    this.imagePanel = this._createImagePanel();
-    this.imageBox.add(this.imagePanel);
+    this.requestReplay("Started markdown sample.");
   }
 
   private get currentScenario(): ScenarioDefinition {
@@ -452,21 +278,39 @@ class SplitFooterStreamingDemo {
   }
 
   private refreshFooter(): void {
+    if (this.destroyed) {
+      return;
+    }
+
     const scenario = this.currentScenario;
     const run = this.activeRun;
-    const runState = run
-      ? `${run.done ? "done" : run.chunkIndex === 0 ? "starting" : "streaming"} ${run.chunkIndex}/${scenario.chunks.length}`
-      : "idle";
-    const committedState = run ? `${run.committedRows} rows` : "—";
+    const runState = !run
+      ? "idle"
+      : run.done
+        ? `done ${run.chunkIndex}/${run.scenario.chunks.length}`
+        : `chunk ${run.chunkIndex}/${run.scenario.chunks.length}`;
+    const committedState =
+      scenario.kind === "markdown"
+        ? `${run?.committedBlocks ?? 0} blocks committed`
+        : `${run?.committedRows ?? 0} rows committed`;
 
     this.footerTable.content = [
-      footerRow("mode", scenario.title, getScenarioAccent(scenario.kind)),
-      footerRow("auto", this.autoAdvance ? `${this.intervalMs}ms` : "paused", PALETTE.status),
-      footerRow("run", runState, PALETTE.detail),
-      footerRow("commit", committedState, PALETTE.detail),
       footerRow(
-        "keys",
-        "T=text | C=code | M=md | R=replay | A=auto | P=prefix | ±=speed | ESC=exit",
+        "mode",
+        `${scenario.title} · start ${this.inlinePrefix ? "inline-prefix" : "newline"} · auto ${this.autoAdvance ? `${this.intervalMs}ms` : "off"} · ${runState}`,
+        getScenarioAccent(this.currentKind),
+      ),
+      footerRow(
+        "status",
+        this.lastStatus,
+        this.lastStatus.startsWith("Error:") ? PALETTE.error : PALETTE.status,
+      ),
+      footerRow("stats", `${run?.content.length ?? 0} bytes · ${committedState}`, PALETTE.detail),
+      footerRow("about", scenario.description, PALETTE.detail),
+      footerRow("scene", "1 text · 2 code · 3 markdown · i inline-prefix", PALETTE.hint),
+      footerRow(
+        "flow",
+        "r replay · n next · a auto · [ slower · ] faster · resize -> r",
         PALETTE.hint,
       ),
     ];
@@ -477,13 +321,13 @@ class SplitFooterStreamingDemo {
       clearInterval(this.autoTimer);
       this.autoTimer = null;
     }
+
     if (!this.autoAdvance || this.destroyed) {
       return;
     }
+
     this.autoTimer = setInterval(() => {
-      if (!this.stepping) {
-        void this.stepCurrentRun();
-      }
+      void this.stepCurrentRun();
     }, this.intervalMs);
   }
 
@@ -491,184 +335,328 @@ class SplitFooterStreamingDemo {
     if (!this.activeRun) {
       return;
     }
+
     this.activeRun.cancelled = true;
-    try {
-      this.contentBox.remove(this.activeRun.container);
-    } catch {
-      // ignore
-    }
     this.activeRun = null;
+
+    for (const item of this.contentItems) {
+      try {
+        this.contentBox.remove(item);
+        item.destroy();
+      } catch {
+        // ignore teardown races
+      }
+    }
+    this.contentItems.length = 0;
+    this.wrote = false;
   }
 
   private requestReplay(reason: string): void {
-    if (this.pendingReplayReason) {
-      this.pendingReplayReason = reason;
-      return;
-    }
     this.pendingReplayReason = reason;
-    setTimeout(() => {
-      const nextReason = this.pendingReplayReason ?? "Replay";
+    this.destroyActiveRun();
+    this.lastStatus = reason;
+    this.refreshFooter();
+
+    if (!this.stepping) {
+      const nextReason = this.pendingReplayReason;
       this.pendingReplayReason = null;
-      void this.replayCurrentScenario(nextReason);
-    }, 50);
+      if (nextReason) {
+        void this.replayCurrentScenario(nextReason);
+      }
+    }
   }
 
   private async replayCurrentScenario(reason: string): Promise<void> {
+    if (this.destroyed) {
+      return;
+    }
+
     this.destroyActiveRun();
-    await this.flushRun(reason);
-    void this.createRun(reason);
+    this.lastStatus = reason;
+    this.activeRun = this.createRun(this.currentScenario);
+    this.refreshFooter();
+    await this.stepCurrentRun();
   }
 
-  private createRun(reason: string): ActiveRun {
-    const scenario = this.currentScenario;
-    const container = new Box(this.renderer, {
-      id: `sfs-run-container-${this.nextRunId}`,
-      width: "100%",
-      height: "100%",
-      flexDirection: "column",
-      gap: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-    });
+  private createRun(scenario: ScenarioDefinition): ActiveRun {
+    if (this.wrote) {
+      this.addSpacer();
+    }
 
-    const renderable = new Text(this.renderer, {
-      id: `sfs-run-text-${this.nextRunId}`,
-      content: this.inlinePrefix ? `${reason} | ${scenario.prefix}` : reason,
-      width: "100%",
-      wrapMode: "word",
-      fg: PALETTE.status,
-    });
+    if (this.inlinePrefix) {
+      this.addInlinePrefix(scenario);
+    }
 
-    container.add(renderable);
-    this.contentBox.add(container);
+    let renderable: Text | Code | Markdown;
+    switch (scenario.kind) {
+      case "text":
+        renderable = new Text(this.renderer, {
+          id: `sfs-stream-text-${this.nextRunId}`,
+          content: "",
+          width: "100%",
+          wrapMode: "char",
+          fg: PALETTE.title,
+        });
+        break;
+      case "code":
+        renderable = new Code(this.renderer, {
+          id: `sfs-stream-code-${this.nextRunId}`,
+          content: "",
+          filetype: "typescript",
+          syntaxStyle: SURFACE_SYNTAX_STYLE,
+          width: "100%",
+          wrapMode: "char",
+        } as CodeOptions);
+        break;
+      case "markdown":
+        renderable = new Markdown(this.renderer, {
+          id: `sfs-stream-markdown-${this.nextRunId}`,
+          content: "",
+          width: "100%",
+        } as MarkdownOptions);
+        break;
+    }
 
-    const run: ActiveRun = {
+    this.contentBox.add(renderable);
+    this.contentItems.push(renderable);
+    this.wrote = true;
+
+    return {
       id: this.nextRunId++,
       scenario,
-      container,
       renderable,
-      content: this.inlinePrefix ? `${reason} | ${scenario.prefix}` : reason,
+      content: "",
       chunkIndex: 0,
-      committedRows: 1,
+      committedRows: 0,
+      committedBlocks: 0,
       cancelled: false,
       done: false,
     };
+  }
 
-    this.activeRun = run;
-    this.refreshFooter();
-    return run;
+  private addSpacer(): void {
+    const spacer = new Text(this.renderer, {
+      id: `sfs-spacer-${this.nextRunId}`,
+      width: "100%",
+      height: 1,
+      content: "",
+    });
+    this.contentBox.add(spacer);
+    this.contentItems.push(spacer);
+  }
+
+  private addInlinePrefix(scenario: ScenarioDefinition): void {
+    const prefix = new Text(this.renderer, {
+      id: `sfs-prefix-${this.nextRunId}`,
+      width: scenario.prefix.length,
+      height: 1,
+      content: scenario.prefix,
+      fg: getScenarioAccent(scenario.kind),
+    });
+    this.contentBox.add(prefix);
+    this.contentItems.push(prefix);
   }
 
   private async stepCurrentRun(): Promise<void> {
-    if (this.destroyed || this.stepping) return;
-    const run = this.activeRun;
-    if (!run || run.cancelled || run.done) return;
+    if (this.destroyed || this.stepping) {
+      return;
+    }
 
-    this.stepping = true;
-    const _runId = run.id;
-    const scenario = run.scenario;
+    let run = this.activeRun;
+    if (!run) {
+      run = this.createRun(this.currentScenario);
+      this.activeRun = run;
+      this.lastStatus = `Started ${run.scenario.title} sample.`;
+      this.refreshFooter();
+    }
 
-    if (run.chunkIndex >= scenario.chunks.length) {
+    if (run.done || run.cancelled) {
+      return;
+    }
+
+    if (run.chunkIndex >= run.scenario.chunks.length) {
       run.done = true;
-      this.stepping = false;
+      this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`;
       this.refreshFooter();
       return;
     }
 
-    const chunk = scenario.chunks[run.chunkIndex];
-    run.chunkIndex++;
+    this.stepping = true;
+
+    const runId = run.id;
+    const chunk = run.scenario.chunks[run.chunkIndex] ?? "";
+    const isFinalChunk = run.chunkIndex === run.scenario.chunks.length - 1;
+    run.chunkIndex += 1;
     run.content += chunk;
-    run.renderable.content = run.content;
 
-    // Estimate rows based on content length and terminal width
-    const termWidth = this.renderer.terminalWidth;
-    const contentWidth = (this.contentBox.width as number) ?? termWidth;
-    const charsPerRow = Math.max(1, contentWidth - 4);
-    run.committedRows = Math.ceil(run.content.length / charsPerRow);
+    try {
+      await this.flushRun(run, isFinalChunk);
 
-    this.stepping = false;
-    this.refreshFooter();
+      if (run.cancelled || this.destroyed || this.activeRun?.id !== runId) {
+        return;
+      }
+
+      if (isFinalChunk) {
+        run.done = true;
+        this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`;
+      } else {
+        this.lastStatus = `${run.scenario.title} chunk ${run.chunkIndex}/${run.scenario.chunks.length} committed.`;
+      }
+    } catch (error) {
+      if (run.cancelled || this.destroyed) {
+        return;
+      }
+
+      this.lastStatus = `Error: ${run.scenario.title} sample failed.`;
+      console.error("split-footer-streaming-demo step failed", error);
+      this.destroyActiveRun();
+    } finally {
+      this.stepping = false;
+      this.refreshFooter();
+
+      if (this.pendingReplayReason && !this.destroyed) {
+        const reason = this.pendingReplayReason;
+        this.pendingReplayReason = null;
+        void this.replayCurrentScenario(reason);
+      }
+    }
   }
 
-  private async flushRun(reason: string): Promise<void> {
-    const run = this.activeRun;
-    if (!run) return;
-
-    const text = run.renderable;
-    const targetRows = run.committedRows + 1;
-
-    while (run.committedRows < targetRows && run.chunkIndex < run.scenario.chunks.length) {
-      run.content += run.scenario.chunks[run.chunkIndex];
-      run.chunkIndex++;
-      run.committedRows++;
+  private async flushRun(run: ActiveRun, done: boolean): Promise<void> {
+    switch (run.scenario.kind) {
+      case "text":
+        await this.flushTextRun(run);
+        return;
+      case "code":
+        await this.flushCodeRun(run);
+        return;
+      case "markdown":
+        await this.flushMarkdownRun(run, done);
+        return;
     }
+  }
 
-    run.done = true;
-    text.content = `${run.content}\n[${reason}]`;
-    this.refreshFooter();
+  private async flushTextRun(run: ActiveRun): Promise<void> {
+    const renderable = run.renderable as Text;
+    renderable.content = run.content;
+    const targetRows = Math.max(1, Math.ceil(run.content.length / 80));
+    run.committedRows = Math.max(run.committedRows, targetRows);
+  }
+
+  private async flushCodeRun(run: ActiveRun): Promise<void> {
+    const renderable = run.renderable as Code;
+    renderable.content = run.content;
+    const targetRows = Math.max(1, (run.content.match(/\n/g) ?? []).length + 1);
+    run.committedRows = Math.max(run.committedRows, targetRows);
+  }
+
+  private async flushMarkdownRun(run: ActiveRun, done: boolean): Promise<void> {
+    const renderable = run.renderable as Markdown;
+    renderable.content = run.content;
+    const headings = (run.content.match(/^#{1,6}\s/gm) ?? []).length;
+    const paragraphs = (run.content.match(/\n\n/g) ?? []).length + 1;
+    const targetBlocks = headings + paragraphs;
+    run.committedBlocks = done ? targetBlocks : Math.max(run.committedBlocks, targetBlocks - 1);
   }
 
   private setScenario(kind: StreamKind): void {
-    if (this.currentKind === kind) return;
+    if (this.currentKind === kind) {
+      this.requestReplay(`Replaying ${kind} sample.`);
+      return;
+    }
+
     this.currentKind = kind;
-    this.requestReplay("Switch");
-    this.refreshFooter();
+    this.requestReplay(`Switched to ${kind} sample.`);
   }
 
   private toggleAutoAdvance(): void {
     this.autoAdvance = !this.autoAdvance;
     this.syncAutoTimer();
-    const status = this.autoAdvance ? "resumed" : "paused";
-    this.lastStatus = `Auto ${status}`;
+
+    if (this.autoAdvance && (!this.activeRun || this.activeRun.done)) {
+      this.requestReplay(`Auto advance enabled at ${this.intervalMs}ms.`);
+      return;
+    }
+
+    this.lastStatus = this.autoAdvance
+      ? `Auto advance enabled at ${this.intervalMs}ms.`
+      : "Auto advance disabled.";
     this.refreshFooter();
   }
 
   private toggleInlinePrefix(): void {
     this.inlinePrefix = !this.inlinePrefix;
-    this.requestReplay("Prefix");
+    this.requestReplay(
+      this.inlinePrefix ? "Inline-prefix mode enabled." : "New-line mode enabled.",
+    );
   }
 
-  private adjustInterval(delta: number): void {
-    const next = Math.max(MIN_INTERVAL_MS, Math.min(MAX_INTERVAL_MS, this.intervalMs + delta));
-    if (next !== this.intervalMs) {
-      this.intervalMs = next;
-      this.syncAutoTimer();
+  private adjustInterval(deltaMs: number): void {
+    const next = Math.min(Math.max(this.intervalMs + deltaMs, MIN_INTERVAL_MS), MAX_INTERVAL_MS);
+    if (next === this.intervalMs) {
+      this.lastStatus = "Interval already at the limit.";
       this.refreshFooter();
+      return;
     }
+
+    this.intervalMs = next;
+    this.syncAutoTimer();
+    this.lastStatus = `Auto advance interval ${next}ms.`;
+    this.refreshFooter();
   }
 
-  private handleKeyPress = (key: {
-    name?: string;
-    sequence?: string;
-  }): void => {
-    const keyName = key.name;
-    const seq = key.sequence;
+  private handleKeyPress = (key: KeyEvent): void => {
+    if (key.ctrl || key.meta || key.option) {
+      return;
+    }
 
-    if (keyName === "t") {
-      this.setScenario("text");
-    } else if (keyName === "c") {
-      this.setScenario("code");
-    } else if (keyName === "m") {
-      this.setScenario("markdown");
-    } else if (keyName === "r") {
-      this.requestReplay("Replay");
-    } else if (keyName === "a") {
-      this.toggleAutoAdvance();
-    } else if (keyName === "p") {
-      this.toggleInlinePrefix();
-    } else if (seq === "=") {
-      this.adjustInterval(-INTERVAL_STEP_MS);
-    } else if (seq === "-") {
-      this.adjustInterval(INTERVAL_STEP_MS);
-    } else if (keyName === "space" && this.activeRun?.done) {
-      this.requestReplay("Replay");
-    } else if (!this.autoAdvance && (keyName === "n" || keyName === "return")) {
-      void this.stepCurrentRun();
+    switch (key.name) {
+      case "1":
+        key.preventDefault();
+        this.setScenario("text");
+        return;
+      case "2":
+        key.preventDefault();
+        this.setScenario("code");
+        return;
+      case "3":
+        key.preventDefault();
+        this.setScenario("markdown");
+        return;
+      case "r":
+        key.preventDefault();
+        this.requestReplay(`Replaying ${this.currentKind} sample.`);
+        return;
+      case "n":
+        key.preventDefault();
+        void this.stepCurrentRun();
+        return;
+      case "a":
+        key.preventDefault();
+        this.toggleAutoAdvance();
+        return;
+      case "i":
+        key.preventDefault();
+        this.toggleInlinePrefix();
+        return;
+      case "[":
+        key.preventDefault();
+        this.adjustInterval(INTERVAL_STEP_MS);
+        return;
+      case "]":
+        key.preventDefault();
+        this.adjustInterval(-INTERVAL_STEP_MS);
+        return;
     }
   };
 
   private handleResize = (): void => {
-    this._rebuildImagePanel();
+    if (this.destroyed) {
+      return;
+    }
+
+    this.lastStatus = "Renderer resized. Press R to replay at the new width.";
+    this.destroyActiveRun();
     this.refreshFooter();
   };
 
@@ -677,7 +665,10 @@ class SplitFooterStreamingDemo {
   };
 
   public destroy(): void {
-    if (this.destroyed) return;
+    if (this.destroyed) {
+      return;
+    }
+
     this.destroyed = true;
 
     if (this.autoTimer) {
@@ -687,52 +678,50 @@ class SplitFooterStreamingDemo {
 
     this.destroyActiveRun();
 
-    this.frameCb = null;
-    this.renderer.clearFrameCallbacks();
+    this.renderer.keyInput.off("keypress", this.handleKeyPress);
+    this.renderer.off(CliRenderEvents.RESIZE, this.handleResize);
+    this.renderer.off(CliRenderEvents.DESTROY, this.handleRendererDestroy);
 
-    if (this.imagePanel && !this.imagePanel.isDestroyed) {
-      this.imagePanel.destroy();
-      this.imagePanel = null;
+    if (!this.shell.isDestroyed) {
+      this.shell.destroyRecursively();
     }
-
-    try {
-      this.renderer.root.remove(this.shell);
-    } catch {
-      // ignore
-    }
-    this.shell.destroyRecursively();
+    this.renderer.setScreenMode("alternate-screen");
   }
 }
 
 let activeDemo: SplitFooterStreamingDemo | null = null;
 
 export function run(renderer: CliRenderer): void {
+  if (activeDemo) {
+    activeDemo.destroy();
+  }
+
   activeDemo = new SplitFooterStreamingDemo(renderer);
-  renderer.keyInput.on("keypress", activeDemo["handleKeyPress"]);
-  renderer.on("resize", activeDemo["handleResize"]);
-  renderer.on("destroy", activeDemo["handleRendererDestroy"]);
 }
 
-export function destroy(renderer: CliRenderer): void {
-  if (activeDemo) {
-    renderer.keyInput.off("keypress", activeDemo["handleKeyPress"]);
-    renderer.off("resize", activeDemo["handleResize"]);
-    renderer.off("destroy", activeDemo["handleRendererDestroy"]);
-    activeDemo.destroy();
-    activeDemo = null;
+export function destroy(_renderer: CliRenderer): void {
+  if (!activeDemo) {
+    return;
   }
+
+  activeDemo.destroy();
+  activeDemo = null;
 }
 
 if (import.meta.main) {
-  const renderer = await createCliRenderer({
+  const renderer = await (
+    createCliRenderer as (opts: Record<string, unknown>) => Promise<CliRenderer>
+  )({
     targetFps: 30,
     exitOnCtrlC: true,
-    useMouse: true,
+    useMouse: false,
     screenMode: "split-footer",
     footerHeight: FOOTER_HEIGHT,
     externalOutputMode: "capture-stdout",
+    consoleMode: "disabled",
   });
 
   run(renderer);
   setupCommonDemoKeys(renderer);
+  renderer.start();
 }
