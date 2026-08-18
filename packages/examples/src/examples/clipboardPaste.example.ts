@@ -18,7 +18,9 @@ import {
   stripAnsiSequences,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { byteLength, escapedPreview, hexPrefix, normalizeNewlines } from "../lib/textUtils";
+import { timestamp } from "../lib/timeUtils";
 
 const P = {
   bg: "#08111f",
@@ -95,8 +97,6 @@ const FIXTURES: readonly Fixture[] = [
   },
 ];
 
-const encoder = new TextEncoder();
-
 let container: Box | null = null;
 let tabsText: Text | null = null;
 let fixtureText: Text | null = null;
@@ -124,34 +124,6 @@ function fixture(): Fixture {
   const f = FIXTURES[selectedFixture];
   if (!f) throw new Error(`No fixture at index ${selectedFixture}`);
   return f;
-}
-
-function normalizeNewlines(value: string): string {
-  return value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-}
-
-function escapedPreview(value: string, maxLength = 64): string {
-  const escaped = JSON.stringify(value);
-  return escaped.length <= maxLength ? escaped : `${escaped.slice(0, maxLength - 3)}...`;
-}
-
-function byteLength(value: string): number {
-  return encoder.encode(value).length;
-}
-
-function hexPrefix(bytes: Uint8Array, count = 12): string {
-  const slice = bytes.slice(0, count);
-  const hex = Array.from(slice, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return bytes.length > count ? `${hex}…` : hex;
-}
-
-function timestamp(): string {
-  const now = new Date();
-  const hh = `${now.getHours()}`.padStart(2, "0");
-  const mm = `${now.getMinutes()}`.padStart(2, "0");
-  const ss = `${now.getSeconds()}`.padStart(2, "0");
-  const ms = `${now.getMilliseconds()}`.padStart(3, "0");
-  return `${hh}:${mm}:${ss}.${ms}`;
 }
 
 function capabilityStatus(renderer: CliRenderer): Status {

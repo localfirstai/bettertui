@@ -8,7 +8,7 @@ import {
 } from "@bettertui/core";
 import { type RGBA, parseColor } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 interface DiffTheme {
   name: string;
@@ -272,7 +272,7 @@ const contentExamples: ContentExample[] = [
  import * as diffDemo from "./diff-demo.js"
  import * as keypressDebugDemo from "./keypress-debug-demo.js"
 +import * as textTruncationDemo from "./text-truncation-demo.js"
- import { setupCommonDemoKeys } from "../lib/standaloneKeys.js"
+ import { setupCommonDemoKeys } from "../lib/standaloneKeys"
 
  interface Example {
 @@ -85,6 +86,12 @@

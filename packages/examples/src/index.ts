@@ -8,155 +8,43 @@ import {
   InputEvents,
   type KeyEvent,
   type LogLevel,
-  RGBA,
   RenderableEvents,
   Select,
   SelectEvents,
   type SelectOption,
   Text,
-  type ThemeMode,
   TimeToFirstDraw,
   createCliRenderer,
 } from "@bettertui/core";
-import * as asciiFontSelectionExample from "./examples/asciiFontSelection.example.js";
-import * as audioStreamingDemo from "./examples/audioStreaming.example.js";
-import * as clipboardPasteDemo from "./examples/clipboardPaste.example.js";
-import * as codeDemo from "./examples/code.example.js";
-import * as consoleExample from "./examples/console.example.js";
-import * as corePluginSlotsDemo from "./examples/corePluginSlots.example.js";
-import * as diffDemo from "./examples/diff.example.js";
-import * as editorDemo from "./examples/editor.example.js";
-import * as extmarksDemo from "./examples/extmarks.example.js";
-import * as focusRestoreDemo from "./examples/focusRestore.example.js";
-import * as boxExample from "./examples/fonts.example.js";
-import * as framebufferExample from "./examples/framebuffer.example.js";
-import * as fullUnicodeExample from "./examples/fullUnicode.example.js";
-import * as grayscaleBufferDemo from "./examples/grayscaleBuffer.example.js";
-import * as hastSyntaxHighlightingExample from "./examples/hastSyntaxHighlighting.example.js";
-import * as inputExample from "./examples/input.example.js";
-import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example.js";
-import * as keymapDemo from "./examples/keymap.example.js";
-import * as keypressDebugDemo from "./examples/keypressDebug.example.js";
-import * as linkDemo from "./examples/link.example.js";
-import * as liveStateExample from "./examples/liveState.example.js";
-import * as markdownDemo from "./examples/markdown.example.js";
-import * as markdownCodeBlockRendererDemo from "./examples/markdownCodeBlockRenderer.example.js";
-import * as mouseInteractionExample from "./examples/mouseInteraction.example.js";
-import * as multitabDemo from "./examples/multitab.example.js";
-import * as nativeAudioDemo from "./examples/nativeAudio.example.js";
-import * as nestedZIndexDemo from "./examples/nestedZindex.example.js";
-import * as notificationDemo from "./examples/notification.example.js";
-import * as opacityExample from "./examples/opacityExample.example.js";
-import * as qrcodeDemo from "./examples/qrcode.example.js";
-import * as relativePositioningDemo from "./examples/relativePositioning.example.js";
-import * as scrollExample from "./examples/scrollExample.example.js";
-import * as scrollboxMouseTest from "./examples/scrollboxMouseTest.example.js";
-import * as scrollboxOverlayHitTest from "./examples/scrollboxOverlayHitTest.example.js";
-import * as selectExample from "./examples/select.example.js";
-import * as layoutExample from "./examples/simpleLayoutExample.example.js";
-import * as sliderDemo from "./examples/slider.example.js";
-import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example.js";
-import * as splitModeExample from "./examples/splitMode.example.js";
-import * as stickyScrollExample from "./examples/stickyScrollExample.example.js";
-import * as styledTextExample from "./examples/styledText.example.js";
-import * as tabSelectExample from "./examples/tabSelect.example.js";
-import * as terminalDemo from "./examples/terminal.example.js";
-import * as terminalTitleDemo from "./examples/terminalTitle.example.js";
-import * as textNodeDemo from "./examples/textNode.example.js";
-import * as textSelectionExample from "./examples/textSelection.example.js";
-import * as textTableExample from "./examples/textTable.example.js";
-import * as textTruncationDemo from "./examples/textTruncation.example.js";
-import * as textWrapExample from "./examples/textWrap.example.js";
-import * as timelineExample from "./examples/timelineExample.example.js";
-import * as transparencyDemo from "./examples/transparency.example.js";
-import * as vnodeCompositionDemo from "./examples/vnodeComposition.example.js";
-import * as wideGraphemeOverlayDemo from "./examples/wideGraphemeOverlay.example.js";
-import { setupCommonDemoKeys } from "./lib/standaloneKeys.js";
+import {
+  CATEGORY_LABELS,
+  DEFAULT_THEME_MODE,
+  EXAMPLES_BOX_TITLE,
+  EXAMPLES_INDENT,
+  MENU_TERMINAL_TITLE,
+  MENU_THEMES,
+} from "./constants";
+import * as inputSelectLayoutExample from "./examples/inputSelectLayout.example";
+import * as layoutSystemExample from "./examples/layoutSystem.example";
+import * as multitabDemo from "./examples/multitab.example";
+import * as nestedZIndexDemo from "./examples/nestedZindex.example";
+import * as relativePositioningDemo from "./examples/relativePositioning.example";
+import * as splitFooterImageDemo from "./examples/splitFooterImage.example";
+import * as splitFooterPlasmaImageDemo from "./examples/splitFooterPlasmaImage.example";
+import * as splitFooterStreamingDemo from "./examples/splitFooterStreaming.example";
+import { setupCommonDemoKeys } from "./lib/standaloneKeys";
+import type {
+  Example,
+  ExampleDefinition,
+  ExampleMenuValue,
+  ExampleSection,
+  MenuFocusArea,
+  MenuOption,
+  MenuOptionValue,
+  ThemeMode,
+} from "./types/exampleList.types";
 
-type ExampleCategory =
-  | "Layout & Composition"
-  | "Input & Editing"
-  | "Scroll & Navigation"
-  | "Text & Documents"
-  | "Rendering & Effects"
-  | "Runtime & Tooling"
-  | "Terminal & Native";
-
-interface ExampleDefinition {
-  name: string;
-  description: string;
-  run?: (renderer: CliRenderer) => void | Promise<void>;
-  destroy?: (renderer: CliRenderer) => void;
-  unavailableMessage?: string;
-}
-
-interface Example extends ExampleDefinition {
-  category: ExampleCategory;
-}
-
-interface ExampleSection {
-  category: ExampleCategory;
-  examples: readonly ExampleDefinition[];
-}
-
-interface CategoryMenuValue {
-  kind: "category";
-  category: ExampleCategory;
-}
-
-interface SpacerMenuValue {
-  kind: "spacer";
-}
-
-interface MessageMenuValue {
-  kind: "message";
-}
-
-interface ExampleMenuValue {
-  kind: "example";
-  example: Example;
-}
-
-type MenuOptionValue = CategoryMenuValue | SpacerMenuValue | MessageMenuValue | ExampleMenuValue;
-type MenuOption = Omit<SelectOption, "value"> & { value: MenuOptionValue };
-type MenuFocusArea = "filter" | "list";
-
-interface ExampleTheme {
-  appBackgroundColor: string;
-  titleColor: RGBA;
-  borderColor: string;
-  focusedBorderColor: string;
-  inputTextColor: string;
-  inputFocusedTextColor: string;
-  inputPlaceholderColor: string;
-  inputCursorColor: string;
-  selectSelectedBackgroundColor: string;
-  selectTextColor: string;
-  selectSelectedTextColor: string;
-  selectDescriptionColor: string;
-  selectSelectedDescriptionColor: string;
-  instructionsColor: string;
-  notImplementedColor: string;
-}
-
-const DEFAULT_THEME_MODE: ThemeMode = "dark";
-const MENU_TERMINAL_TITLE = "BetterTUI Examples";
-const EXAMPLES_BOX_TITLE = "Examples";
-const EXAMPLE_NAME_INDENT = "  ";
-const EXAMPLE_DESCRIPTION_INDENT = "    ";
-const CATEGORY_LABELS: Record<ExampleCategory, string> = {
-  "Layout & Composition": "Layout & Composition",
-  "Input & Editing": "Input & Editing",
-  "Scroll & Navigation": "Scroll & Navigation",
-  "Text & Documents": "Text & Documents",
-  "Rendering & Effects": "Rendering & Effects",
-  "Runtime & Tooling": "Runtime & Tooling",
-  "Terminal & Native": "Terminal & Native",
-};
-
-function sortExampleDefinitions(examples: readonly ExampleDefinition[]): ExampleDefinition[] {
-  return [...examples].sort((left, right) => left.name.localeCompare(right.name));
-}
+import type { ExampleCategory } from "./types/exampleList.types";
 
 function section(
   category: ExampleCategory,
@@ -164,46 +52,9 @@ function section(
 ): ExampleSection {
   return {
     category,
-    examples: sortExampleDefinitions(examples),
+    examples: examples,
   };
 }
-
-const MENU_THEMES: Record<ThemeMode, ExampleTheme> = {
-  dark: {
-    appBackgroundColor: "#181B24",
-    titleColor: RGBA.fromInts(248, 250, 252, 255),
-    borderColor: "#334155",
-    focusedBorderColor: "#38BDF8",
-    inputTextColor: "#F8FAFC",
-    inputFocusedTextColor: "#FFFFFF",
-    inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#38BDF8",
-    selectSelectedBackgroundColor: "#1E3A5F",
-    selectTextColor: "#E2E8F0",
-    selectSelectedTextColor: "#38BDF8",
-    selectDescriptionColor: "#64748B",
-    selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#64748B",
-    notImplementedColor: "#FACC15",
-  },
-  light: {
-    appBackgroundColor: "#181B24",
-    titleColor: RGBA.fromInts(248, 250, 252, 255),
-    borderColor: "#334155",
-    focusedBorderColor: "#38BDF8",
-    inputTextColor: "#F8FAFC",
-    inputFocusedTextColor: "#FFFFFF",
-    inputPlaceholderColor: "#64748B",
-    inputCursorColor: "#38BDF8",
-    selectSelectedBackgroundColor: "#1E3A5F",
-    selectTextColor: "#E2E8F0",
-    selectSelectedTextColor: "#38BDF8",
-    selectDescriptionColor: "#64748B",
-    selectSelectedDescriptionColor: "#94A3B8",
-    instructionsColor: "#64748B",
-    notImplementedColor: "#FACC15",
-  },
-};
 
 const EXAMPLE_SECTIONS: ExampleSection[] = [
   section("Layout & Composition", [
@@ -216,8 +67,8 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
     {
       name: "Layout System Demo",
       description: "Flex layout system with multiple configurations",
-      run: layoutExample.run,
-      destroy: layoutExample.destroy,
+      run: layoutSystemExample.run,
+      destroy: layoutSystemExample.destroy,
     },
     {
       name: "Nested Z-Index Demo",
@@ -226,7 +77,7 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: nestedZIndexDemo.destroy,
     },
     {
-      name: "BetterTUI Demo",
+      name: "Multi-tab Demo",
       description: "Multi-tab demo with various features",
       run: multitabDemo.run,
       destroy: multitabDemo.destroy,
@@ -238,321 +89,328 @@ const EXAMPLE_SECTIONS: ExampleSection[] = [
       destroy: relativePositioningDemo.destroy,
     },
     {
+      name: "Split Footer Image Demo",
+      description:
+        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block image",
+      run: splitFooterImageDemo.run,
+      destroy: splitFooterImageDemo.destroy,
+    },
+    {
+      name: "Split Footer Plasma Image Demo",
+      description:
+        "Split-footer layout with side-by-side streaming (text/code/markdown) and a live half-block plasma image that shifts colour with the active scenario",
+      run: splitFooterPlasmaImageDemo.run,
+      destroy: splitFooterPlasmaImageDemo.destroy,
+    },
+    {
       name: "Split Footer Streaming Demo",
       description:
         "Focused split-footer surface demo for progressive text, code, and markdown scrollback",
       run: splitFooterStreamingDemo.run,
       destroy: splitFooterStreamingDemo.destroy,
     },
-    {
-      name: "Split Mode Demo (Experimental)",
-      description: "Renderer confined to bottom area with normal terminal output above",
-      run: splitModeExample.run,
-      destroy: splitModeExample.destroy,
-    },
-    {
-      name: "VNode Composition Demo",
-      description: "Declarative Box(Box(Box(children))) composition",
-      run: vnodeCompositionDemo.run,
-      destroy: vnodeCompositionDemo.destroy,
-    },
   ]),
-  section("Input & Editing", [
-    {
-      name: "ASCII Font Selection Demo",
-      description:
-        "Text selection with ASCII fonts - precise character-level selection across different font types",
-      run: asciiFontSelectionExample.run,
-      destroy: asciiFontSelectionExample.destroy,
-    },
-    {
-      name: "Editor Demo",
-      description: "Interactive text editor with Textarea - supports full editing capabilities",
-      run: editorDemo.run,
-      destroy: editorDemo.destroy,
-    },
-    {
-      name: "Extmarks Demo",
-      description:
-        "Virtual extmarks - text ranges that the cursor jumps over, with deletion handling",
-      run: extmarksDemo.run,
-      destroy: extmarksDemo.destroy,
-    },
-    {
-      name: "Input Demo",
-      description: "Interactive InputElement demo with validation and multiple fields",
-      run: inputExample.run,
-      destroy: inputExample.destroy,
-    },
-    {
-      name: "Keymap Demo",
-      description:
-        "Global and local bindings with counters, leader commands, a centered : prompt, and three switchable textareas",
-      run: keymapDemo.run,
-      destroy: keymapDemo.destroy,
-    },
-    {
-      name: "Mouse Interaction Demo",
-      description: "Interactive mouse trails and clickable cells demonstration",
-      run: mouseInteractionExample.run,
-      destroy: mouseInteractionExample.destroy,
-    },
-    {
-      name: "Select Demo",
-      description: "Interactive SelectElement demo with customizable options",
-      run: selectExample.run,
-      destroy: selectExample.destroy,
-    },
-    {
-      name: "Slider Demo",
-      description: "Interactive slider components with various orientations and configurations",
-      run: sliderDemo.run,
-      destroy: sliderDemo.destroy,
-    },
-    {
-      name: "Tab Select",
-      description: "Tab selection demo",
-      run: tabSelectExample.run,
-      destroy: tabSelectExample.destroy,
-    },
-    {
-      name: "Text Selection Demo",
-      description: "Text selection across multiple renderables with mouse drag",
-      run: textSelectionExample.run,
-      destroy: textSelectionExample.destroy,
-    },
-  ]),
-  section("Scroll & Navigation", [
-    {
-      name: "ScrollBox Demo",
-      description: "Scrollable container with customization",
-      run: scrollExample.run,
-      destroy: scrollExample.destroy,
-    },
-    {
-      name: "Scrollbox Mouse Test",
-      description: "Test scrollbox mouse hit detection with hover and click events",
-      run: scrollboxMouseTest.run,
-      destroy: scrollboxMouseTest.destroy,
-    },
-    {
-      name: "Scrollbox Overlay Hit Test",
-      description: "Test scrollbox hit detection with overlays and dialogs",
-      run: scrollboxOverlayHitTest.run,
-      destroy: scrollboxOverlayHitTest.destroy,
-    },
-    {
-      name: "Sticky Scroll Demo",
-      description:
-        "ScrollBox with sticky scroll behavior - maintains position at borders when content changes",
-      run: stickyScrollExample.run,
-      destroy: stickyScrollExample.destroy,
-    },
-  ]),
-  section("Text & Documents", [
-    {
-      name: "ASCII Font Demo",
-      description: "ASCII font rendering with various colors and text",
-      run: boxExample.run,
-      destroy: boxExample.destroy,
-    },
-    {
-      name: "Code Demo",
-      description:
-        "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
-      run: codeDemo.run,
-      destroy: codeDemo.destroy,
-    },
-    {
-      name: "Diff Demo",
-      description: "Unified and split diff views with syntax highlighting and multiple themes",
-      run: diffDemo.run,
-      destroy: diffDemo.destroy,
-    },
-    {
-      name: "Full Unicode Demo",
-      description: "Draggable boxes and background filled with complex graphemes",
-      run: fullUnicodeExample.run,
-      destroy: fullUnicodeExample.destroy,
-    },
-    {
-      name: "HAST Syntax Highlighting Demo",
-      description: "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
-      run: hastSyntaxHighlightingExample.run,
-      destroy: hastSyntaxHighlightingExample.destroy,
-    },
-    {
-      name: "Link Demo",
-      description:
-        "Hyperlink support with OSC 8 - clickable links and link inheritance in styled text",
-      run: linkDemo.run,
-      destroy: linkDemo.destroy,
-    },
-    {
-      name: "Markdown Demo",
-      description:
-        "Markdown rendering with table alignment, syntax highlighting, and theme switching",
-      run: markdownDemo.run,
-      destroy: markdownDemo.destroy,
-    },
-    {
-      name: "Markdown Code Block Renderer Demo",
-      description: "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
-      run: markdownCodeBlockRendererDemo.run,
-      destroy: markdownCodeBlockRendererDemo.destroy,
-    },
-    {
-      name: "QR Code Demo",
-      description:
-        "Intrinsic QR code renderable with manual scaling and terminal-friendly half-block output",
-      run: qrcodeDemo.run,
-      destroy: qrcodeDemo.destroy,
-    },
-    {
-      name: "Styled Text Demo",
-      description: "Template literals with styled text, colors, and formatting",
-      run: styledTextExample.run,
-      destroy: styledTextExample.destroy,
-    },
-    {
-      name: "Text Truncation Demo",
-      description:
-        "Middle truncation with ellipsis - toggle with 'T' key and resize to test responsive behavior",
-      run: textTruncationDemo.run,
-      destroy: textTruncationDemo.destroy,
-    },
-    {
-      name: "Text Wrap Demo",
-      description: "Text wrapping example",
-      run: textWrapExample.run,
-      destroy: textWrapExample.destroy,
-    },
-    {
-      name: "TextNode Demo",
-      description: "TextNode API for building complex styled text structures",
-      run: textNodeDemo.run,
-      destroy: textNodeDemo.destroy,
-    },
-    {
-      name: "TextTable Demo",
-      description:
-        "TextTable renderable with styled chunks, Unicode content, and wrap/border toggles",
-      run: textTableExample.run,
-      destroy: textTableExample.destroy,
-    },
-    {
-      name: "Wide Grapheme Overlay Demo",
-      description: "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
-      run: wideGraphemeOverlayDemo.run,
-      destroy: wideGraphemeOverlayDemo.destroy,
-    },
-  ]),
-  section("Rendering & Effects", [
-    {
-      name: "Framebuffer Demo",
-      description: "Framebuffer rendering techniques",
-      run: framebufferExample.run,
-      destroy: framebufferExample.destroy,
-    },
-    {
-      name: "Grayscale Buffer",
-      description: "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
-      run: grayscaleBufferDemo.run,
-      destroy: grayscaleBufferDemo.destroy,
-    },
-    {
-      name: "Opacity Demo",
-      description: "Box opacity and transparency effects with animated opacity transitions",
-      run: opacityExample.run,
-      destroy: opacityExample.destroy,
-    },
-    {
-      name: "Timeline Example",
-      description: "Animation timeline system",
-      run: timelineExample.run,
-      destroy: timelineExample.destroy,
-    },
-    {
-      name: "Transparency Demo",
-      description: "Alpha blending and transparency effects demonstration",
-      run: transparencyDemo.run,
-      destroy: transparencyDemo.destroy,
-    },
-  ]),
-  section("Runtime & Tooling", [
-    {
-      name: "Console Demo",
-      description: "Interactive console logging with clickable buttons for different log levels",
-      run: consoleExample.run,
-      destroy: consoleExample.destroy,
-    },
-    {
-      name: "Core Plugin Slots Demo",
-      description: "Framework-free plugin slots with cached renderables and deterministic ordering",
-      run: corePluginSlotsDemo.run,
-      destroy: corePluginSlotsDemo.destroy,
-    },
-    {
-      name: "Live State Management Demo",
-      description: "Test automatic renderer lifecycle management with live renderables",
-      run: liveStateExample.run,
-      destroy: liveStateExample.destroy,
-    },
-  ]),
-  section("Terminal & Native", [
-    {
-      name: "Audio Streaming Demo",
-      description:
-        "Live MP3 URL streaming with reconnect controls, telemetry, and master-mix FFT visualization",
-      run: audioStreamingDemo.run,
-      destroy: audioStreamingDemo.destroy,
-    },
-    {
-      name: "Audio Demo",
-      description: "WAV-based native mixer with sound groups and live meter stats",
-      run: nativeAudioDemo.run,
-      destroy: nativeAudioDemo.destroy,
-    },
-    {
-      name: "Clipboard & Paste Test Bed",
-      description:
-        "OSC 52 copy, paste transport, and editor semantics diagnostics with a selectable, copyable event log",
-      run: clipboardPasteDemo.run,
-      destroy: clipboardPasteDemo.destroy,
-    },
-    {
-      name: "Focus Restore Demo",
-      description: "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
-      run: focusRestoreDemo.run,
-      destroy: focusRestoreDemo.destroy,
-    },
-    {
-      name: "Keypress Debug Tool",
-      description: "Debug tool to inspect keypress events, raw input, and terminal capabilities",
-      run: keypressDebugDemo.run,
-      destroy: keypressDebugDemo.destroy,
-    },
-    {
-      name: "Notification Demo",
-      description:
-        "Standalone OSC terminal notification demo with capability detection and interactive triggers",
-      run: notificationDemo.run,
-      destroy: notificationDemo.destroy,
-    },
-    {
-      name: "Terminal Palette Demo",
-      description:
-        "Terminal color palette detection and visualization - fetch and display all 256 terminal colors",
-      run: terminalDemo.run,
-      destroy: terminalDemo.destroy,
-    },
-    {
-      name: "Terminal Title Demo",
-      description: "Set and update the terminal window title with OSC title sequences",
-      run: terminalTitleDemo.run,
-      destroy: terminalTitleDemo.destroy,
-    },
-  ]),
+  // TODO: VVI
+  // section("Input & Editing", [
+  //   {
+  //     name: "ASCII Font Selection Demo",
+  //     description:
+  //       "Text selection with ASCII fonts - precise character-level selection across different font types",
+  //     run: asciiFontSelectionExample.run,
+  //     destroy: asciiFontSelectionExample.destroy,
+  //   },
+  //   {
+  //     name: "Input Demo",
+  //     description:
+  //       "Interactive InputElement demo with validation and multiple fields",
+  //     run: inputExample.run,
+  //     destroy: inputExample.destroy,
+  //   },
+  //   {
+  //     name: "Keymap Demo",
+  //     description:
+  //       "Global and local bindings with counters, leader commands, a centered : prompt, and three switchable textareas",
+  //     run: keymapDemo.run,
+  //     destroy: keymapDemo.destroy,
+  //   },
+  //   {
+  //     name: "Mouse Interaction Demo",
+  //     description: "Interactive mouse trails and clickable cells demonstration",
+  //     run: mouseInteractionExample.run,
+  //     destroy: mouseInteractionExample.destroy,
+  //   },
+  //   {
+  //     name: "Select Demo",
+  //     description: "Interactive SelectElement demo with customizable options",
+  //     run: selectExample.run,
+  //     destroy: selectExample.destroy,
+  //   },
+  //   {
+  //     name: "Slider Demo",
+  //     description:
+  //       "Interactive slider components with various orientations and configurations",
+  //     run: sliderDemo.run,
+  //     destroy: sliderDemo.destroy,
+  //   },
+  //   {
+  //     name: "Tab Select",
+  //     description: "Tab selection demo",
+  //     run: tabSelectExample.run,
+  //     destroy: tabSelectExample.destroy,
+  //   },
+  //   {
+  //     name: "Text Selection Demo",
+  //     description: "Text selection across multiple renderables with mouse drag",
+  //     run: textSelectionExample.run,
+  //     destroy: textSelectionExample.destroy,
+  //   },
+  // ]),
+  // section("Scroll & Navigation", [
+  //   {
+  //     name: "ScrollBox Demo",
+  //     description: "Scrollable container with customization",
+  //     run: scrollExample.run,
+  //     destroy: scrollExample.destroy,
+  //   },
+  //   {
+  //     name: "Scrollbox Mouse Test",
+  //     description:
+  //       "Test scrollbox mouse hit detection with hover and click events",
+  //     run: scrollboxMouseTest.run,
+  //     destroy: scrollboxMouseTest.destroy,
+  //   },
+  //   {
+  //     name: "Scrollbox Overlay Hit Test",
+  //     description: "Test scrollbox hit detection with overlays and dialogs",
+  //     run: scrollboxOverlayHitTest.run,
+  //     destroy: scrollboxOverlayHitTest.destroy,
+  //   },
+  //   {
+  //     name: "Sticky Scroll Demo",
+  //     description:
+  //       "ScrollBox with sticky scroll behavior - maintains position at borders when content changes",
+  //     run: stickyScrollExample.run,
+  //     destroy: stickyScrollExample.destroy,
+  //   },
+  // ]),
+  // section("Text & Documents", [
+  //   {
+  //     name: "ASCII Font Demo",
+  //     description: "ASCII font rendering with various colors and text",
+  //     run: boxExample.run,
+  //     destroy: boxExample.destroy,
+  //   },
+  //   {
+  //     name: "Code Demo",
+  //     description:
+  //       "Code viewer with line numbers, diff highlights, and diagnostics using Code + LineNumber",
+  //     run: codeDemo.run,
+  //     destroy: codeDemo.destroy,
+  //   },
+  //   {
+  //     name: "Diff Demo",
+  //     description:
+  //       "Unified and split diff views with syntax highlighting and multiple themes",
+  //     run: diffDemo.run,
+  //     destroy: diffDemo.destroy,
+  //   },
+  //   {
+  //     name: "Full Unicode Demo",
+  //     description:
+  //       "Draggable boxes and background filled with complex graphemes",
+  //     run: fullUnicodeExample.run,
+  //     destroy: fullUnicodeExample.destroy,
+  //   },
+  //   {
+  //     name: "HAST Syntax Highlighting Demo",
+  //     description:
+  //       "Convert HAST trees to syntax-highlighted text with efficient chunk generation",
+  //     run: hastSyntaxHighlightingExample.run,
+  //     destroy: hastSyntaxHighlightingExample.destroy,
+  //   },
+  //   {
+  //     name: "Link Demo",
+  //     description:
+  //       "Hyperlink support with OSC 8 - clickable links and link inheritance in styled text",
+  //     run: linkDemo.run,
+  //     destroy: linkDemo.destroy,
+  //   },
+  //   {
+  //     name: "Markdown Demo",
+  //     description:
+  //       "Markdown rendering with table alignment, syntax highlighting, and theme switching",
+  //     run: markdownDemo.run,
+  //     destroy: markdownDemo.destroy,
+  //   },
+  //   {
+  //     name: "Markdown Code Block Renderer Demo",
+  //     description:
+  //       "Custom fenced-code rendering for a fake taskflow DSL inside markdown",
+  //     run: markdownCodeBlockRendererDemo.run,
+  //     destroy: markdownCodeBlockRendererDemo.destroy,
+  //   },
+  //   {
+  //     name: "QR Code Demo",
+  //     description:
+  //       "Intrinsic QR code renderable with manual scaling and terminal-friendly half-block output",
+  //     run: qrcodeDemo.run,
+  //     destroy: qrcodeDemo.destroy,
+  //   },
+  //   {
+  //     name: "Styled Text Demo",
+  //     description: "Template literals with styled text, colors, and formatting",
+  //     run: styledTextExample.run,
+  //     destroy: styledTextExample.destroy,
+  //   },
+  //   {
+  //     name: "Text Truncation Demo",
+  //     description:
+  //       "Middle truncation with ellipsis - toggle with 'T' key and resize to test responsive behavior",
+  //     run: textTruncationDemo.run,
+  //     destroy: textTruncationDemo.destroy,
+  //   },
+  //   {
+  //     name: "Text Wrap Demo",
+  //     description: "Text wrapping example",
+  //     run: textWrapExample.run,
+  //     destroy: textWrapExample.destroy,
+  //   },
+  //   {
+  //     name: "TextNode Demo",
+  //     description: "TextNode API for building complex styled text structures",
+  //     run: textNodeDemo.run,
+  //     destroy: textNodeDemo.destroy,
+  //   },
+  //   {
+  //     name: "TextTable Demo",
+  //     description:
+  //       "TextTable renderable with styled chunks, Unicode content, and wrap/border toggles",
+  //     run: textTableExample.run,
+  //     destroy: textTableExample.destroy,
+  //   },
+  //   {
+  //     name: "Wide Grapheme Overlay Demo",
+  //     description:
+  //       "Drag transparent boxes over CJK/emoji, toggle dimming scrim with D key",
+  //     run: wideGraphemeOverlayDemo.run,
+  //     destroy: wideGraphemeOverlayDemo.destroy,
+  //   },
+  // ]),
+  // section("Rendering & Effects", [
+  //   {
+  //     name: "Framebuffer Demo",
+  //     description: "Framebuffer rendering techniques",
+  //     run: framebufferExample.run,
+  //     destroy: framebufferExample.destroy,
+  //   },
+  //   {
+  //     name: "Grayscale Buffer",
+  //     description:
+  //       "Grayscale buffer rendering with 1x vs 2x supersampled intensity",
+  //     run: grayscaleBufferDemo.run,
+  //     destroy: grayscaleBufferDemo.destroy,
+  //   },
+  //   {
+  //     name: "Opacity Demo",
+  //     description:
+  //       "Box opacity and transparency effects with animated opacity transitions",
+  //     run: opacityExample.run,
+  //     destroy: opacityExample.destroy,
+  //   },
+  //   {
+  //     name: "Timeline Example",
+  //     description: "Animation timeline system",
+  //     run: timelineExample.run,
+  //     destroy: timelineExample.destroy,
+  //   },
+  //   {
+  //     name: "Transparency Demo",
+  //     description: "Alpha blending and transparency effects demonstration",
+  //     run: transparencyDemo.run,
+  //     destroy: transparencyDemo.destroy,
+  //   },
+  // ]),
+  // section("Runtime & Tooling", [
+  //   {
+  //     name: "Console Demo",
+  //     description:
+  //       "Interactive console logging with clickable buttons for different log levels",
+  //     run: consoleExample.run,
+  //     destroy: consoleExample.destroy,
+  //   },
+  //   {
+  //     name: "Core Plugin Slots Demo",
+  //     description:
+  //       "Framework-free plugin slots with cached renderables and deterministic ordering",
+  //     run: corePluginSlotsDemo.run,
+  //     destroy: corePluginSlotsDemo.destroy,
+  //   },
+  //   {
+  //     name: "Live State Management Demo",
+  //     description:
+  //       "Test automatic renderer lifecycle management with live renderables",
+  //     run: liveStateExample.run,
+  //     destroy: liveStateExample.destroy,
+  //   },
+  // ]),
+  // section("Terminal & Native", [
+  //   {
+  //     name: "Audio Streaming Demo",
+  //     description:
+  //       "Live MP3 URL streaming with reconnect controls, telemetry, and master-mix FFT visualization",
+  //     run: audioStreamingDemo.run,
+  //     destroy: audioStreamingDemo.destroy,
+  //   },
+  //   {
+  //     name: "Audio Demo",
+  //     description:
+  //       "WAV-based native mixer with sound groups and live meter stats",
+  //     run: nativeAudioDemo.run,
+  //     destroy: nativeAudioDemo.destroy,
+  //   },
+  //   {
+  //     name: "Clipboard & Paste Test Bed",
+  //     description:
+  //       "OSC 52 copy, paste transport, and editor semantics diagnostics with a selectable, copyable event log",
+  //     run: clipboardPasteDemo.run,
+  //     destroy: clipboardPasteDemo.destroy,
+  //   },
+  //   {
+  //     name: "Focus Restore Demo",
+  //     description:
+  //       "Test focus restore - alt-tab away and back to verify mouse tracking resumes",
+  //     run: focusRestoreDemo.run,
+  //     destroy: focusRestoreDemo.destroy,
+  //   },
+  //   {
+  //     name: "Keypress Debug Tool",
+  //     description:
+  //       "Debug tool to inspect keypress events, raw input, and terminal capabilities",
+  //     run: keypressDebugDemo.run,
+  //     destroy: keypressDebugDemo.destroy,
+  //   },
+  //   {
+  //     name: "Notification Demo",
+  //     description:
+  //       "Standalone OSC terminal notification demo with capability detection and interactive triggers",
+  //     run: notificationDemo.run,
+  //     destroy: notificationDemo.destroy,
+  //   },
+  //   {
+  //     name: "Terminal Palette Demo",
+  //     description:
+  //       "Terminal color palette detection and visualization - fetch and display all 256 terminal colors",
+  //     run: terminalDemo.run,
+  //     destroy: terminalDemo.destroy,
+  //   },
+  //   {
+  //     name: "Terminal Title Demo",
+  //     description:
+  //       "Set and update the terminal window title with OSC title sequences",
+  //     run: terminalTitleDemo.run,
+  //     destroy: terminalTitleDemo.destroy,
+  //   },
+  // ]),
 ];
 
 export const examples: Example[] = EXAMPLE_SECTIONS.flatMap(({ category, examples }) =>
@@ -608,8 +466,8 @@ function createMenuOptions(filteredExamples: readonly Example[]): MenuOption[] {
 
     for (const example of sectionExamples) {
       options.push({
-        name: `${EXAMPLE_NAME_INDENT}${example.name}`,
-        description: `${EXAMPLE_DESCRIPTION_INDENT}${example.description}`,
+        name: example.name,
+        description: `${EXAMPLES_INDENT}${example.description}`,
         value: { kind: "example", example },
       });
     }
@@ -761,59 +619,60 @@ export class ExampleSelector {
   }
 
   private createLayout(): void {
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
-    // Menu container with column layout
+    // ── Root column — fills the entire terminal ───────────────────────────
     this.menuContainer = new Box(this.renderer, {
       id: "example-menu-container",
       flexDirection: "column",
       width: "100%",
       height: "100%",
-      backgroundColor: theme.appBackgroundColor,
+      backgroundColor: theme.appBackground,
     });
     this.renderer.root.add(this.menuContainer);
 
-    // Title
+    // ── HEADER — product name ─────────────────────────────────────────────
     const titleText = this.titleText;
     const titleFont = this.titleFont;
 
     this.title = new ASCIIFont(this.renderer, {
       id: "example-index-title",
       alignSelf: "center",
+      flexShrink: 0,
       marginTop: 1,
       marginBottom: 1,
       text: titleText,
       font: titleFont,
-      color: theme.titleColor,
+      color: theme.title,
       backgroundColor: "transparent",
     });
     this.menuContainer.add(this.title);
 
-    // Filter box with border (grows with content)
+    // ── HERO — filter input ───────────────────────────────────────────────
     this.filterBox = new Box(this.renderer, {
       id: "example-index-filter-box",
-      marginLeft: 1,
-      marginRight: 1,
+      marginLeft: 2,
+      marginRight: 2,
+      marginBottom: 1,
       flexShrink: 0,
       backgroundColor: "transparent",
       border: true,
       borderStyle: "single",
-      borderColor: theme.borderColor,
+      borderColor: theme.border,
     });
     this.menuContainer.add(this.filterBox);
 
-    // Filter input inside the box (transparent bg so box bg shows through)
     this.filterInput = new Input(this.renderer, {
       id: "example-index-filter-input",
       width: "100%",
       placeholder: "Filter examples...",
-      placeholderColor: theme.inputPlaceholderColor,
+      placeholderColor: theme.inputPlaceholder,
       backgroundColor: "transparent",
       focusedBackgroundColor: "transparent",
-      textColor: theme.inputTextColor,
-      focusedTextColor: theme.inputFocusedTextColor,
+      textColor: theme.inputText,
+      focusedTextColor: theme.inputFocusedText,
       showCursor: true,
-      cursorColor: theme.inputCursorColor,
+      cursorColor: theme.inputCursor,
     });
     this.filterBox.add(this.filterInput);
 
@@ -822,40 +681,52 @@ export class ExampleSelector {
       this.filterExamples();
     });
 
-    // Select box (grows to fill remaining space)
+    // ── MAIN — example list ───────────────────────────────────────────────
+    // flexGrow: 1 fills all remaining space after header + hero + footer.
+    // flexBasis: 0 + minHeight: 0 are the bettertui equivalent of OpenTUI's
+    // shouldFill: true — they force the flex base-size to zero so Taffy never
+    // inflates this box to the terminal height during distribution (which would
+    // happen because selectElement uses height:"100%" and Taffy resolves that
+    // percentage up to the first ancestor with a definite size — menuContainer).
     this.selectBox = new Box(this.renderer, {
       id: "example-selector-box",
-      marginLeft: 1,
-      marginRight: 1,
+      marginLeft: 2,
+      marginRight: 2,
       marginBottom: 1,
       flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 0,
+      minHeight: 0,
       borderStyle: "single",
-      borderColor: theme.borderColor,
-      focusedBorderColor: theme.focusedBorderColor,
+      borderColor: theme.border,
+      focusedBorderColor: theme.focusedBorder,
       title: EXAMPLES_BOX_TITLE,
       titleAlignment: "center",
       backgroundColor: "transparent",
       border: true,
+      overflow: "hidden",
     });
     this.menuContainer.add(this.selectBox);
 
-    // Select element
     const selectOptions = createMenuOptions(this.allExamples);
     const initialSelectedIndex = Math.max(0, getFirstExampleOptionIndex(selectOptions));
 
     this.selectElement = new Select(this.renderer, {
       id: "example-selector",
-      height: "100%",
+      // No height here — syncSelectHeight() sets an explicit number after layout
+      // so _getViewHeight() uses the fast-path (typeof h === "number") instead of
+      // its parent-walk heuristic, which underestimates sibling heights and renders
+      // 3-4 extra rows that overflow the selectBox border.
       options: selectOptions,
       selectedIndex: initialSelectedIndex,
       backgroundColor: "transparent",
       focusedBackgroundColor: "transparent",
-      focusedTextColor: theme.selectTextColor,
-      selectedBackgroundColor: theme.selectSelectedBackgroundColor,
-      textColor: theme.selectTextColor,
-      selectedTextColor: theme.selectSelectedTextColor,
-      descriptionColor: theme.selectDescriptionColor,
-      selectedDescriptionColor: theme.selectSelectedDescriptionColor,
+      focusedTextColor: theme.selectText,
+      selectedBackgroundColor: theme.selectSelectedBackground,
+      textColor: theme.selectText,
+      selectedTextColor: theme.selectSelectedText,
+      descriptionColor: theme.selectDescription,
+      selectedDescriptionColor: theme.selectSelectedDescription,
       showScrollIndicator: true,
       wrapSelection: false,
       showDescription: true,
@@ -896,73 +767,85 @@ export class ExampleSelector {
 
     this.setMenuFocus("filter");
 
+    // ── FOOTER — navigation hints ────────────────────────────────────────
+    // Both items carry an explicit height: 1 + flexShrink: 0 so Taffy always
+    // reserves their rows before distributing free space to selectBox above.
+    // A nested wrapper box was tried but Taffy cannot resolve its height
+    // until its children lay out, giving it a hypothetical size of 0 during
+    // flex-grow distribution — so selectBox ate the entire screen.
     this.timeToFirstDrawText = new TimeToFirstDraw(this.renderer, {
       id: "example-index-time-to-first-draw",
+      height: 1,
+      flexShrink: 0,
       alignSelf: "center",
-      fg: theme.instructionsColor,
+      marginTop: 1,
+      fg: theme.instructions,
     });
     this.menuContainer.add(this.timeToFirstDrawText);
 
-    // Instructions at the bottom
     this.instructions = new Text(this.renderer, {
       id: "example-index-instructions",
       height: 1,
       flexShrink: 0,
       alignSelf: "center",
+      marginBottom: 1,
       content:
-        "Tab/Esc switch focus | Type in filter | ↑↓/j/k list | Enter run | / filter | ctrl+c quit",
-      fg: theme.instructionsColor,
+        "Tab/Esc switch focus | Type in filter | \u2191\u2193/j/k list | Enter run | / filter | ctrl+c quit",
+      fg: theme.instructions,
     });
     this.menuContainer.add(this.instructions);
+
+    // Sync the select element's row count with the actual available content area.
+    this.syncSelectHeight(this.renderer.terminalHeight);
   }
 
   private applyTheme(mode: ThemeMode | null): void {
     this.themeMode = mode ?? DEFAULT_THEME_MODE;
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
-    this.renderer.setBackgroundColor(theme.appBackgroundColor);
+    this.renderer.setBackgroundColor(theme.appBackground);
     if (this.menuContainer) {
-      this.menuContainer.backgroundColor = theme.appBackgroundColor;
+      this.menuContainer.backgroundColor = theme.appBackground;
     }
 
     if (this.title) {
-      this.title.color = theme.titleColor;
+      this.title.color = theme.title;
     }
 
     if (this.filterInput) {
-      this.filterInput.textColor = theme.inputTextColor;
-      this.filterInput.focusedTextColor = theme.inputFocusedTextColor;
-      this.filterInput.placeholderColor = theme.inputPlaceholderColor;
-      this.filterInput.cursorColor = theme.inputCursorColor;
+      this.filterInput.textColor = theme.inputText;
+      this.filterInput.focusedTextColor = theme.inputFocusedText;
+      this.filterInput.placeholderColor = theme.inputPlaceholder;
+      this.filterInput.cursorColor = theme.inputCursor;
     }
 
     if (this.filterBox) {
-      this.filterBox.borderColor = theme.borderColor;
+      this.filterBox.borderColor = theme.border;
     }
 
     if (this.selectBox) {
-      this.selectBox.focusedBorderColor = theme.focusedBorderColor;
+      this.selectBox.borderColor = theme.border;
     }
 
     if (this.selectElement) {
-      this.selectElement.selectedBackgroundColor = theme.selectSelectedBackgroundColor;
-      this.selectElement.textColor = theme.selectTextColor;
-      this.selectElement.focusedTextColor = theme.selectTextColor;
-      this.selectElement.selectedTextColor = theme.selectSelectedTextColor;
-      this.selectElement.descriptionColor = theme.selectDescriptionColor;
-      this.selectElement.selectedDescriptionColor = theme.selectSelectedDescriptionColor;
+      this.selectElement.selectedBackgroundColor = theme.selectSelectedBackground;
+      this.selectElement.textColor = theme.selectText;
+      this.selectElement.focusedTextColor = theme.selectText;
+      this.selectElement.selectedTextColor = theme.selectSelectedText;
+      this.selectElement.descriptionColor = theme.selectDescription;
+      this.selectElement.selectedDescriptionColor = theme.selectSelectedDescription;
     }
 
     if (this.instructions) {
-      this.instructions.fg = theme.instructionsColor;
+      this.instructions.fg = theme.instructions;
     }
 
     if (this.timeToFirstDrawText) {
-      this.timeToFirstDrawText.fg = theme.instructionsColor;
+      this.timeToFirstDrawText.fg = theme.instructions;
     }
 
     if (this.notImplementedText) {
-      this.notImplementedText.fg = theme.notImplementedColor;
+      this.notImplementedText.fg = theme.notImplemented;
     }
 
     this.updateMenuFocusStyles();
@@ -985,16 +868,16 @@ export class ExampleSelector {
   }
 
   private updateMenuFocusStyles(): void {
-    const theme = MENU_THEMES[this.themeMode];
+    const theme = MENU_THEMES[this.themeMode].components;
 
     if (this.filterBox) {
       this.filterBox.borderColor =
-        this.menuFocusArea === "filter" ? theme.focusedBorderColor : theme.borderColor;
+        this.menuFocusArea === "filter" ? theme.focusedBorder : theme.border;
     }
 
     if (this.selectBox) {
       this.selectBox.borderColor =
-        this.menuFocusArea === "list" ? theme.focusedBorderColor : theme.borderColor;
+        this.menuFocusArea === "list" ? theme.focusedBorder : theme.border;
     }
   }
 
@@ -1129,8 +1012,26 @@ export class ExampleSelector {
     }
   }
 
-  private handleResize(_width: number, _height: number): void {
+  private handleResize(_width: number, height: number): void {
+    this.syncSelectHeight(height);
     this.renderer.requestRender();
+  }
+
+  /**
+   * Set selectElement.height to an exact number so Select._getViewHeight() hits
+   * its fast-path and never runs its parent-walk heuristic.
+   *
+   * Formula (all in terminal rows):
+   *   titleH   = title.getEstimatedHeight()   → font(2) + marginTop(1) + marginBottom(1) = 4
+   *   heroH    = 4  → filterBox border(1) + input(1) + border(1) + marginBottom(1)
+   *   footerH  = 4  → ttfd.marginTop(1) + ttfd(1) + instructions(1) + instructions.marginBottom(1)
+   *   boxOver  = 3  → selectBox border-top(1) + border-bottom(1) + marginBottom(1)
+   */
+  private syncSelectHeight(terminalHeight: number): void {
+    if (!this.selectElement) return;
+    const titleH = this.title?.getEstimatedHeight() ?? 4;
+    const h = Math.max(1, terminalHeight - titleH - 4 - 4 - 3);
+    this.selectElement.height = h;
   }
 
   private setupKeyboardHandling(): void {
@@ -1217,7 +1118,7 @@ export class ExampleSelector {
       await selected.run(this.renderer);
     } else {
       if (!this.notImplementedText) {
-        const theme = MENU_THEMES[this.themeMode];
+        const theme = MENU_THEMES[this.themeMode].components;
         const unavailableMessage =
           selected.unavailableMessage ?? `${selected.name} is not implemented yet.`;
         this.notImplementedText = new Text(this.renderer, {
@@ -1226,7 +1127,7 @@ export class ExampleSelector {
           left: 10,
           top: 10,
           content: `${unavailableMessage} Press Escape to return.`,
-          fg: theme.notImplementedColor,
+          fg: theme.notImplemented,
           zIndex: 10,
         });
         this.renderer.root.add(this.notImplementedText);
@@ -1307,7 +1208,7 @@ export class ExampleSelector {
     this.renderer.pause();
     this.renderer.auto();
     this.showMenuElements();
-    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].appBackgroundColor);
+    this.renderer.setBackgroundColor(MENU_THEMES[this.themeMode].components.appBackground);
     this.renderer.requestRender();
   }
 
@@ -1341,5 +1242,5 @@ const renderer = await createCliRenderer({
   },
 });
 
-renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].appBackgroundColor);
+renderer.setBackgroundColor(MENU_THEMES[DEFAULT_THEME_MODE].components.appBackground);
 new ExampleSelector(renderer);

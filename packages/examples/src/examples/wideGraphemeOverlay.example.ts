@@ -10,7 +10,7 @@ import {
   fg,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const GRAPHEME_LINES: string[] = [
   "東京都  北京市  서울시  大阪府  名古屋  横浜市  上海市",

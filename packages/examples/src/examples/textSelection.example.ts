@@ -13,7 +13,7 @@ import {
   t,
   yellow,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let mainContainer: Box | null = null;
 let floatingBox: Box | null = null;

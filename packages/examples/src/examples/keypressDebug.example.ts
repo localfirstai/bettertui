@@ -12,7 +12,19 @@ import {
 } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
 import { env, registerEnvVar } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { formatScalar, safeJson } from "../lib/formatUtils";
+import {
+  type KeySnapshot,
+  type PasteSnapshot,
+  formatBaseCode,
+  formatBaseCodeBrief,
+  formatCombo,
+  formatInline,
+  formatModifiers,
+} from "../lib/keyboardFormatting";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { pad, truncate } from "../lib/textUtils";
+import { formatClock } from "../lib/timeUtils";
 
 registerEnvVar({
   name: "OTUI_KEYPRESS_DEBUG_SHOW_JSON",
@@ -28,33 +40,6 @@ type DebugEventType = "keypress" | "keyrelease" | "paste";
 interface RawInputRecord {
   timestamp: string;
   sequence: string;
-}
-
-interface KeySnapshot {
-  name: string;
-  ctrl: boolean;
-  meta: boolean;
-  shift: boolean;
-  option: boolean;
-  sequence: string;
-  raw: string;
-  eventType: string;
-  source: string;
-  number: boolean;
-  code?: string;
-  super?: boolean;
-  hyper?: boolean;
-  capsLock?: boolean;
-  numLock?: boolean;
-  baseCode?: number;
-  repeated?: boolean;
-}
-
-interface PasteSnapshot {
-  byteLength: number;
-  bytes: number[];
-  text: string;
-  metadata?: unknown;
 }
 
 type DebugSnapshot = KeySnapshot | PasteSnapshot;
@@ -97,121 +82,6 @@ let allRawInputs: RawInputRecord[] = [];
 let allKeyEvents: SavedEventRecord[] = [];
 let visibleEvents: DebugEntry[] = [];
 let lastRawInput: RawInputRecord | null = null;
-
-function truncate(text: string, maxLength: number): string {
-  if (maxLength <= 3 || text.length <= maxLength) {
-    return text;
-  }
-
-  return `${text.slice(0, maxLength - 3)}...`;
-}
-
-function pad(text: string, width: number): string {
-  return text.length >= width ? text : text.padEnd(width, " ");
-}
-
-function formatClock(timestamp: string): string {
-  const date = new Date(timestamp);
-  const hours = `${date.getHours()}`.padStart(2, "0");
-  const minutes = `${date.getMinutes()}`.padStart(2, "0");
-  const seconds = `${date.getSeconds()}`.padStart(2, "0");
-  const millis = `${date.getMilliseconds()}`.padStart(3, "0");
-  return `${hours}:${minutes}:${seconds}.${millis}`;
-}
-
-function safeJson(value: unknown, indent = 0): string {
-  try {
-    return JSON.stringify(value, null, indent) ?? String(value);
-  } catch {
-    return String(value);
-  }
-}
-
-function formatScalar(value: unknown): string {
-  if (value === undefined) return "-";
-  if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number" || typeof value === "boolean" || value === null)
-    return String(value);
-  return safeJson(value);
-}
-
-function formatCharName(name: string): string {
-  if (name === " ") return "Space";
-
-  const codePoint = name.codePointAt(0);
-  if (codePoint !== undefined && (codePoint < 32 || codePoint === 127)) {
-    return `U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}`;
-  }
-
-  switch (name) {
-    case "escape":
-      return "Escape";
-    case "return":
-      return "Return";
-    case "linefeed":
-      return "Linefeed";
-    case "backspace":
-      return "Backspace";
-    case "space":
-      return "Space";
-    case "tab":
-      return "Tab";
-    default:
-      return name;
-  }
-}
-
-function formatModifiers(snapshot: KeySnapshot): string {
-  const modifiers: string[] = [];
-  if (snapshot.ctrl) modifiers.push("Ctrl");
-  if (snapshot.meta) modifiers.push("Meta");
-  if (snapshot.shift) modifiers.push("Shift");
-  if (snapshot.option) modifiers.push("Option");
-  if (snapshot.super) modifiers.push("Super");
-  if (snapshot.hyper) modifiers.push("Hyper");
-  return modifiers.length > 0 ? modifiers.join("+") : "-";
-}
-
-function formatCombo(snapshot: KeySnapshot): string {
-  const modifiers = formatModifiers(snapshot);
-  const name = snapshot.name ? formatCharName(snapshot.name) : "-";
-  if (modifiers === "-") return name;
-  if (name === "-") return modifiers;
-  return `${modifiers}+${name}`;
-}
-
-function formatBaseCode(baseCode: number | undefined): string {
-  if (baseCode === undefined) return "-";
-
-  let rendered = `U+${baseCode.toString(16).toUpperCase().padStart(4, "0")}`;
-  if (baseCode >= 32 && baseCode !== 127) {
-    try {
-      rendered = JSON.stringify(String.fromCodePoint(baseCode));
-    } catch {
-      rendered = `U+${baseCode.toString(16).toUpperCase().padStart(4, "0")}`;
-    }
-  }
-
-  return `${baseCode} (${rendered})`;
-}
-
-function formatBaseCodeBrief(baseCode: number | undefined): string {
-  if (baseCode === undefined) return "-";
-
-  if (baseCode >= 32 && baseCode !== 127) {
-    try {
-      return JSON.stringify(String.fromCodePoint(baseCode));
-    } catch {
-      // Fall back to the codepoint form below.
-    }
-  }
-
-  return `U+${baseCode.toString(16).toUpperCase().padStart(4, "0")}`;
-}
-
-function formatInline(text: string | undefined, maxLength: number): string {
-  return truncate(formatScalar(text), maxLength);
-}
 
 function snapshotKeyEvent(event: KeyEvent): KeySnapshot {
   const e = event as unknown as Record<string, unknown>;

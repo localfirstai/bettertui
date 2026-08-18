@@ -8,7 +8,9 @@ import {
   type ThemeMode,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { truncateToWidth, wrapText } from "../lib/textUtils";
+import { formatTimestamp } from "../lib/timeUtils";
 
 // ── Local stubs for APIs not yet in @bettertui/core ──────────────────────────
 
@@ -235,94 +237,6 @@ interface BoxMessageEntry {
 }
 
 let snapshotNodeCounter = 0;
-
-function formatTimestamp(timestamp: Date): string {
-  const hh = timestamp.getHours().toString().padStart(2, "0");
-  const mm = timestamp.getMinutes().toString().padStart(2, "0");
-  const ss = timestamp.getSeconds().toString().padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
-}
-
-function truncateToWidth(text: string, width: number): string {
-  if (width <= 0) {
-    return "";
-  }
-
-  if (text.length <= width) {
-    return text;
-  }
-
-  if (width <= 3) {
-    return text.slice(0, width);
-  }
-
-  return `${text.slice(0, width - 3)}...`;
-}
-
-function splitLongToken(token: string, width: number): string[] {
-  const clampedWidth = Math.max(1, width);
-  const segments: string[] = [];
-
-  for (let offset = 0; offset < token.length; offset += clampedWidth) {
-    segments.push(token.slice(offset, offset + clampedWidth));
-  }
-
-  return segments;
-}
-
-function wrapText(text: string, width: number): string[] {
-  const clampedWidth = Math.max(1, width);
-  const normalized = text.replace(/\r/g, "");
-  const paragraphs = normalized.split("\n");
-  const wrapped: string[] = [];
-
-  for (const paragraph of paragraphs) {
-    if (paragraph.length === 0) {
-      wrapped.push("");
-      continue;
-    }
-
-    const words = paragraph.split(/\s+/);
-    let current = "";
-
-    for (const word of words) {
-      if (word.length === 0) {
-        continue;
-      }
-
-      if (current.length === 0) {
-        if (word.length <= clampedWidth) {
-          current = word;
-        } else {
-          const segments = splitLongToken(word, clampedWidth);
-          current = segments.pop() ?? "";
-          wrapped.push(...segments);
-        }
-        continue;
-      }
-
-      const candidate = `${current} ${word}`;
-      if (candidate.length <= clampedWidth) {
-        current = candidate;
-        continue;
-      }
-
-      wrapped.push(current);
-
-      if (word.length <= clampedWidth) {
-        current = word;
-      } else {
-        const segments = splitLongToken(word, clampedWidth);
-        current = segments.pop() ?? "";
-        wrapped.push(...segments);
-      }
-    }
-
-    wrapped.push(current);
-  }
-
-  return wrapped.length > 0 ? wrapped : [""];
-}
 
 function roleBorderColor(role: MessageRole, palette: DemoPalette): string {
   switch (role) {

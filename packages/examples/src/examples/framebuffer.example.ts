@@ -11,7 +11,7 @@ import {
   createCliRenderer,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 /**
  * This demo showcases framebuffers with multiple

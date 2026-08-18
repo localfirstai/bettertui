@@ -12,7 +12,13 @@ export { Input } from "./Input";
 export type { InputOptions, InputRenderableOptions } from "./Input";
 
 export { Select } from "./Select";
-export type { SelectOption, SelectOptions, SelectRenderableOptions } from "./Select";
+export type {
+  SelectOption,
+  SelectOptions,
+  SelectRenderableOptions,
+  SelectAction,
+  SelectKeyBinding,
+} from "./Select";
 
 export { ScrollBox, ScrollBar } from "./ScrollBox";
 export type { ScrollBoxOptions, ScrollBarOptions } from "./ScrollBox";
@@ -21,12 +27,25 @@ export { Textarea, ExtmarksControllerStub } from "./Textarea";
 export type { TextareaOptions, ExtmarksController } from "./Textarea";
 
 export { TabSelect } from "./TabSelect";
-export type { TabOption, TabSelectOptions, TabSelectRenderableOptions } from "./TabSelect";
+export type {
+  TabOption,
+  TabSelectOptions,
+  TabSelectRenderableOptions,
+} from "./TabSelect";
 
 export { Slider } from "./Slider";
 export type { SliderOptions, SliderRenderableOptions } from "./Slider";
 
 export { TextNode, RootTextNode } from "./TextNode";
+
+export { Screen, ScreenEvents } from "./Canvas";
+export type {
+  CanvasOptions,
+  CanvasHeaderOptions,
+  CanvasFooterOptions,
+  CanvasBodyOptions,
+  ScreenResizeEvent,
+} from "./Canvas";
 export type { TextNodeOptions } from "./TextNode";
 
 export {

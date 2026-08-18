@@ -313,6 +313,8 @@ export class Box extends EventEmitter {
 
   set border(value: boolean | BorderSide[]) {
     this._border = value;
+    this._options.border = value;
+    this._applyLayout(this._options);
     this._applyStyle();
   }
 
@@ -328,52 +330,52 @@ export class Box extends EventEmitter {
 
   set width(value: number | string) {
     this._options.width = value;
-    this._renderer.setNodeLayout(this._nodeId, { width: value });
+    this._applyLayout(this._options);
   }
 
   set height(value: number | string) {
     this._options.height = value;
-    this._renderer.setNodeLayout(this._nodeId, { height: value });
+    this._applyLayout(this._options);
   }
 
   set flexDirection(value: BoxOptions["flexDirection"]) {
     this._options.flexDirection = value;
-    if (value) this._renderer.setNodeLayout(this._nodeId, { flexDirection: value });
+    this._applyLayout(this._options);
   }
 
   set flexGrow(value: number) {
     this._options.flexGrow = value;
-    this._renderer.setNodeLayout(this._nodeId, { flexGrow: value });
+    this._applyLayout(this._options);
   }
 
   set flexBasis(value: number | string) {
     this._options.flexBasis = value;
-    this._renderer.setNodeLayout(this._nodeId, { flexBasis: value });
+    this._applyLayout(this._options);
   }
 
   set marginBottom(value: number) {
     this._options.marginBottom = value;
-    this._renderer.setNodeLayout(this._nodeId, { marginBottom: value });
+    this._applyLayout(this._options);
   }
 
   set marginTop(value: number) {
     this._options.marginTop = value;
-    this._renderer.setNodeLayout(this._nodeId, { marginTop: value });
+    this._applyLayout(this._options);
   }
 
   set marginLeft(value: number) {
     this._options.marginLeft = value;
-    this._renderer.setNodeLayout(this._nodeId, { marginLeft: value });
+    this._applyLayout(this._options);
   }
 
   set marginRight(value: number) {
     this._options.marginRight = value;
-    this._renderer.setNodeLayout(this._nodeId, { marginRight: value });
+    this._applyLayout(this._options);
   }
 
   set zIndex(value: number) {
     this._options.zIndex = value;
-    this._renderer.setNodeLayout(this._nodeId, { zIndex: value });
+    this._applyLayout(this._options);
   }
 
   add(child: Box, index?: number): void {
@@ -456,7 +458,8 @@ export class Box extends EventEmitter {
   // ── Layout setters ───────────────────────────────────────────────────────────
 
   setLayout(layout: Partial<BoxOptions>): void {
-    this._applyLayout(layout);
+    Object.assign(this._options, layout);
+    this._applyLayout(this._options);
   }
 
   setPosition(pos: {
@@ -530,7 +533,7 @@ export class Box extends EventEmitter {
     if (mb !== undefined) layout.marginBottom = mb;
     if (ml !== undefined) layout.marginLeft = ml;
 
-    if (options.visible === false || !this._visible) layout.display = "none";
+    if (!this._visible) layout.display = "none";
 
     // Border layout contribution: reserve space for border cells so the
     // engine's box-sizing accounts for the border width.

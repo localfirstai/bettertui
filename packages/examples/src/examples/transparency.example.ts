@@ -11,7 +11,7 @@ import {
   underline,
 } from "@bettertui/core";
 import type { ThemeMode } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let nextZIndex = 101;
 let draggableBoxes: DraggableTransparentBox[] = [];

@@ -17,7 +17,8 @@ import {
 import { TextNode } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
 import { Input, InputEvents } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { getResizeDirection } from "../lib/geometryUtils";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 /** Extended mouse event type matching the older API used in this example. */
 type AppMouseEvent = MouseEvent & {
@@ -47,44 +48,6 @@ let resizeStartLeft = 0;
 let resizeStartTop = 0;
 let resizeStartWidth = 0;
 let resizeStartHeight = 0;
-
-// Helper function to detect resize direction based on mouse position
-function getResizeDirection(
-  mouseX: number,
-  mouseY: number,
-  boxLeft: number,
-  boxTop: number,
-  boxWidth: number,
-  boxHeight: number,
-): "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e" | null {
-  // Check if mouse is exactly on the border (1 pixel wide)
-  // Border coordinates: left edge, right edge, top edge, bottom edge
-  const onLeftBorder = mouseX === boxLeft;
-  const onRightBorder = mouseX === boxLeft + boxWidth - 1;
-  const onTopBorder = mouseY === boxTop;
-  const onBottomBorder = mouseY === boxTop + boxHeight - 1;
-
-  // Check if mouse is within the box bounds (including border)
-  const withinHorizontalBounds = mouseX >= boxLeft && mouseX <= boxLeft + boxWidth - 1;
-  const withinVerticalBounds = mouseY >= boxTop && mouseY <= boxTop + boxHeight - 1;
-
-  // Only detect resize if mouse is on a border AND within bounds
-  const left = onLeftBorder && withinVerticalBounds;
-  const right = onRightBorder && withinVerticalBounds;
-  const top = onTopBorder && withinHorizontalBounds;
-  const bottom = onBottomBorder && withinHorizontalBounds;
-
-  if (top && left) return "nw";
-  if (top && right) return "ne";
-  if (bottom && left) return "sw";
-  if (bottom && right) return "se";
-  if (top) return "n";
-  if (bottom) return "s";
-  if (left) return "w";
-  if (right) return "e";
-
-  return null;
-}
 
 // Helper functions for file input
 function showFileInput(): void {

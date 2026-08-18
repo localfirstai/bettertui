@@ -10,7 +10,8 @@ import {
   t,
 } from "@bettertui/core";
 import { Text } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { validateEmail, validateName, validatePassword } from "../lib/validation";
 
 let nameInput: Input | null = null;
 let emailInput: Input | null = null;
@@ -102,19 +103,6 @@ function getInputName(input: Input | null): string {
   if (input === passwordInput) return "Password";
   if (input === commentInput) return "Comment";
   return "Unknown";
-}
-
-function validateName(value: string): boolean {
-  return value.length >= 2;
-}
-
-function validateEmail(value: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(value);
-}
-
-function validatePassword(value: string): boolean {
-  return value.length >= 6;
 }
 
 function navigateToInput(index: number): void {

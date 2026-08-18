@@ -11,7 +11,7 @@
 //   6. Press Escape to return to menu, Ctrl+C to exit
 
 import { Box, type CliRenderer, RGBA, Text, createCliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let container: Box | null = null;
 let mouseArea: Box | null = null;

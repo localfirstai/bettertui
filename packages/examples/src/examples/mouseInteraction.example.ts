@@ -12,7 +12,7 @@ import {
   createTimeline,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 interface TrailCell {
   x: number;

@@ -10,7 +10,7 @@ import {
 import { parseColor } from "@bettertui/core";
 import { Markdown } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // Rich markdown example showcasing various features
 const markdownContent = `# BetterTUI Markdown Demo

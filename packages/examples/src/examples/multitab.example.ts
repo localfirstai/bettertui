@@ -1,1047 +1,833 @@
+/**
+ * Multi-Tab Demo — Polished showcase of BetterTUI components.
+ *
+ * Demonstrates: Screen, TabController, flexbox layouts, text styling,
+ * border variants, animations, and interactive controls.
+ */
 import {
-  type BorderSide,
   Box,
-  RGBA,
   type RawKeyEvent,
+  Screen,
   Text,
+  bold,
   createCliRenderer,
-  parseColor,
+  dim,
+  fg,
+  italic,
+  t,
+  underline,
 } from "@bettertui/core";
-import type { CliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
-import { TabController } from "../lib/tabController.js";
+import type { CliRenderer, ThemeMode } from "@bettertui/core";
+import { DEFAULT_THEME_MODE, getComponentTheme, getThemeTokens } from "../constants/theme";
+import { getBorderFromSides } from "../lib/borderSides";
+import { hsvToRgb, rgbaToHex } from "../lib/colorUtils";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { TabController } from "../lib/tabController";
 
-// ── Local stubs for missing @bettertui/core exports ────────────────────────
-
-// biome-ignore lint/correctness/noUnusedVariables: stub for future API compatibility
-interface BorderCharacters {
-  topLeft: string;
-  topRight: string;
-  bottomLeft: string;
-  bottomRight: string;
-  horizontal: string;
-  vertical: string;
-  topT: string;
-  bottomT: string;
-  leftT: string;
-  rightT: string;
-  cross: string;
-}
-
-interface BorderSidesConfig {
-  top: boolean;
-  right: boolean;
-  bottom: boolean;
-  left: boolean;
-}
-
-function getBorderFromSides(sides: BorderSidesConfig): boolean | BorderSide[] {
-  const result: BorderSide[] = [];
-  if (sides.top) result.push("top");
-  if (sides.right) result.push("right");
-  if (sides.bottom) result.push("bottom");
-  if (sides.left) result.push("left");
-  if (result.length === 4) return true;
-  if (result.length === 0) return false;
-  return result;
-}
-
-function hsvToRgb(h: number, s: number, v: number): RGBA {
-  const c = v * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = v - c;
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (h < 60) {
-    r = c;
-    g = x;
-  } else if (h < 120) {
-    r = x;
-    g = c;
-  } else if (h < 180) {
-    g = c;
-    b = x;
-  } else if (h < 240) {
-    g = x;
-    b = c;
-  } else if (h < 300) {
-    r = x;
-    b = c;
-  } else {
-    r = c;
-    b = x;
-  }
-  return RGBA.fromValues(r + m, g + m, b + m, 1);
-}
-
-function rgbToHex(color: RGBA): string {
-  const r = Math.round(color.r * 255)
-    .toString(16)
-    .padStart(2, "0");
-  const g = Math.round(color.g * 255)
-    .toString(16)
-    .padStart(2, "0");
-  const b = Math.round(color.b * 255)
-    .toString(16)
-    .padStart(2, "0");
-  return `#${r}${g}${b}`;
-}
-// ────────────────────────────────────────────────────────────────────────────
-
+let globalScreen: Screen | null = null;
 let globalTabController: TabController | null = null;
 let globalKeyboardHandler: ((key: RawKeyEvent) => void) | null = null;
+let colorDisplayText: Text | null = null;
+
+interface DemoTheme {
+  bg: string;
+  surface: string;
+  surfaceHighlight: string;
+  headerBg: string;
+  headerFg: string;
+  footerBg: string;
+  footerFg: string;
+  border: string;
+  borderHighlight: string;
+  primary: string;
+  success: string;
+  warning: string;
+  danger: string;
+  info: string;
+  text: string;
+  textMuted: string;
+}
+
+let theme: DemoTheme = buildTheme(DEFAULT_THEME_MODE);
+
+function buildTheme(mode: ThemeMode): DemoTheme {
+  const tokens = getThemeTokens(mode);
+  const comp = getComponentTheme(mode);
+  return {
+    bg: tokens.background,
+    surface: tokens.secondary,
+    surfaceHighlight: tokens.primary,
+    headerBg: tokens.secondary,
+    headerFg: tokens.primary,
+    footerBg: tokens.muted,
+    footerFg: tokens.mutedForeground,
+    border: comp.border,
+    borderHighlight: tokens.primary,
+    primary: tokens.primary,
+    success: tokens.success,
+    warning: tokens.warning,
+    danger: tokens.destructive,
+    info: tokens.info,
+    text: tokens.foreground,
+    textMuted: tokens.mutedForeground,
+  };
+}
 
 export function run(renderer: CliRenderer): void {
+  theme = buildTheme(renderer.themeMode ?? DEFAULT_THEME_MODE);
+
   renderer.start();
-  renderer.setBackgroundColor("#000028");
+  renderer.setBackgroundColor(theme.bg);
 
-  const tabController = new TabController("main-tabController", renderer, {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    width: renderer.terminalWidth,
-    height: renderer.terminalHeight,
-    zIndex: 0,
-  } as never);
-  globalTabController = tabController;
-  renderer.root.add(tabController as unknown as Box);
-
-  // Tab: Text & Attributes
-  const wheelRadius = 7;
-  const wheelCenterX = 70;
-  const wheelCenterY = 15;
-  let activeWheelPixels = new Set<string>();
-
-  tabController.addTab({
-    title: "Text & Attributes",
-    init: (tabGroup: unknown) => {
-      const g = tabGroup as Box;
-      const textTitle = new Text(renderer, {
-        id: "text-title",
-        content: "Text Styling & Color Gradients",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
-      });
-      g.add(textTitle);
-
-      // Text attributes
-      const attrBold = new Text(renderer, {
-        id: "attr-bold",
-        content: "Bold Text",
-        position: "absolute",
-        left: 10,
-        top: 8,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(attrBold);
-
-      const attrItalic = new Text(renderer, {
-        id: "attr-italic",
-        content: "Italic Text",
-        position: "absolute",
-        left: 10,
-        top: 9,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(attrItalic);
-
-      const attrUnderline = new Text(renderer, {
-        id: "attr-underline",
-        content: "Underlined Text",
-        position: "absolute",
-        left: 10,
-        top: 10,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(attrUnderline);
-
-      const attrDim = new Text(renderer, {
-        id: "attr-dim",
-        content: "Dim Text",
-        position: "absolute",
-        left: 10,
-        top: 11,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(attrDim);
-
-      const attrCombined = new Text(renderer, {
-        id: "attr-combined",
-        content: "Bold + Italic + Underline",
-        position: "absolute",
-        left: 10,
-        top: 12,
-        fg: "#FF6464",
-        zIndex: 10,
-      });
-      g.add(attrCombined);
-
-      // Color gradient
-      const gradientTitle = new Text(renderer, {
-        id: "gradient-title",
-        content: "Rainbow Gradient:",
-        position: "absolute",
-        left: 10,
-        top: 15,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(gradientTitle);
-
-      for (let i = 0; i < 40; i++) {
-        const hue = (i / 40) * 360;
-        const color = hsvToRgb(hue, 1, 1);
-        const hexColor = rgbToHex(color);
-
-        const gradientPixel = new Text(renderer, {
-          id: `gradient-${i}`,
-          content: "█",
-          position: "absolute",
-          left: 10 + i,
-          top: 17,
-          fg: hexColor,
-          zIndex: 10,
-        });
-        g.add(gradientPixel);
-      }
+  globalScreen = new Screen(renderer, {
+    id: "multitab-screen",
+    backgroundColor: theme.bg,
+    header: {
+      id: "multitab-header",
+      height: 3,
+      backgroundColor: theme.headerBg,
+      border: true,
+      borderStyle: "double",
+      borderColor: theme.borderHighlight,
+      title: " BetterTUI — Component Showcase ",
+      titleAlignment: "center",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      paddingX: 2,
     },
-    update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as Box;
-      // Animate the rotating color wheel
-      const time = Date.now() / 1000;
-      const rotationSpeed = 45; // degrees per second
-      const rotationAngle = (time * rotationSpeed) % 360;
-      const rotationRadians = rotationAngle * (Math.PI / 180);
-
-      // Track new wheel pixels for this frame
-      const newWheelPixels = new Set<string>();
-
-      for (let y = wheelCenterY - wheelRadius; y <= wheelCenterY + wheelRadius; y++) {
-        for (let x = wheelCenterX - wheelRadius * 2; x <= wheelCenterX + wheelRadius * 2; x++) {
-          const dx = (x - wheelCenterX) / 2; // Adjust for terminal character aspect ratio
-          const dy = y - wheelCenterY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance <= wheelRadius) {
-            const angle = Math.atan2(dy, dx);
-            const rotatedAngle = angle + rotationRadians;
-            const hue = ((rotatedAngle / Math.PI) * 180 + 180) % 360;
-            const saturation = distance / wheelRadius;
-            const color = hsvToRgb(hue, saturation, 1);
-
-            const pixelId = `wheel-${x}-${y}`;
-            newWheelPixels.add(pixelId);
-
-            const existingPixel = g.getRenderable(pixelId) as Text;
-            if (existingPixel) {
-              existingPixel.setPosition({ left: x, top: y });
-              existingPixel.fg = color;
-            } else {
-              const wheelPixel = new Text(renderer, {
-                id: pixelId,
-                content: "█",
-                position: "absolute",
-                left: x,
-                top: y,
-                fg: color,
-                zIndex: 10,
-              });
-              g.add(wheelPixel);
-              activeWheelPixels.add(pixelId);
-            }
-          }
-        }
-      }
-
-      // Remove any wheel pixels that are no longer part of the wheel
-      for (const pixelId of activeWheelPixels) {
-        if (!newWheelPixels.has(pixelId)) {
-          const pixel = g.getRenderable(pixelId);
-          if (pixel) g.remove(pixel);
-          activeWheelPixels.delete(pixelId);
-        }
-      }
-
-      activeWheelPixels = newWheelPixels;
+    body: {
+      id: "multitab-body",
+      flexDirection: "column",
+      padding: 0,
     },
-    show: () => {
-      activeWheelPixels.clear();
-    },
-    hide: () => {
-      for (const pixelId of activeWheelPixels) {
-        const pixel = renderer.root.getRenderable(pixelId);
-        if (pixel) renderer.root.remove(pixel);
-      }
-      activeWheelPixels.clear();
+    footer: {
+      id: "multitab-footer",
+      height: 3,
+      backgroundColor: theme.footerBg,
+      border: true,
+      borderStyle: "single",
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
     },
   });
 
-  // Tab: Basics
-  tabController.addTab({
-    title: "Basics",
+  const headerLeft = new Text(renderer, {
+    id: "multitab-header-left",
+    content: t`${dim("←/→")} Navigate Tabs`,
+    fg: theme.textMuted,
+    bg: "transparent",
+    zIndex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    textAlign: "left",
+  });
+  globalScreen.header?.add(headerLeft);
+
+  const headerRight = new Text(renderer, {
+    id: "multitab-header-right",
+    content: t`${dim("Ctrl+C")} Exit`,
+    fg: theme.textMuted,
+    bg: "transparent",
+    zIndex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
+    textAlign: "right",
+  });
+  globalScreen.header?.add(headerRight);
+
+  const footerText = new Text(renderer, {
+    id: "multitab-footer-text",
+    content: t`${fg(theme.primary)("●")} Multi-Tab Demo  ${fg(theme.textMuted)("│")}  ${dim("← →")} navigate  ${fg(theme.textMuted)("│")}  ${dim("Ctrl+C")} exit  ${fg(theme.textMuted)("│ v1.0.0")}`,
+    fg: theme.footerFg,
+    bg: "transparent",
+    zIndex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    textAlign: "center",
+  });
+  globalScreen.footer?.add(footerText);
+
+  globalTabController = new TabController("main-controller", renderer, {
+    id: "tab-controller",
+    flexGrow: 1,
+    flexShrink: 1,
+    tabBarHeight: 3,
+    tabBarBackgroundColor: theme.surface,
+    selectedBackgroundColor: theme.surfaceHighlight,
+    selectedTextColor: theme.bg,
+    textColor: theme.text,
+    selectedDescriptionColor: theme.textMuted,
+    tabPadding: 3,
+    tabGap: 1,
+  });
+  globalScreen.body.add(globalTabController as unknown as Box);
+
+  globalTabController.addTab({
+    title: "Typography",
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
-      const title = new Text(renderer, {
-        id: "bettertui-title",
-        content: "Basic CLI Renderer Demo",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
+
+      const content = new Box(renderer, {
+        id: "text-content",
+        flexDirection: "row",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
       });
-      g.add(title);
+      g.add(content);
+
+      // ── Text Styles panel ──────────────────────────────────────────────────
+      const attrCard = new Box(renderer, {
+        id: "attr-card",
+        flexDirection: "column",
+        flexGrow: 0,
+        flexShrink: 0,
+        width: 32,
+        border: true,
+        borderStyle: "round",
+        borderColor: theme.border,
+        backgroundColor: theme.surface,
+        title: "Text Styles",
+        titleAlignment: "center",
+        padding: 2,
+        gap: 1,
+      });
+      content.add(attrCard);
+
+      const styles = [
+        { label: t`${bold("Bold")}`, desc: "Bold weight" },
+        { label: t`${italic("Italic")}`, desc: "Italic style" },
+        { label: t`${underline("Underline")}`, desc: "Underlined" },
+        { label: t`${dim("Dim")}`, desc: "Reduced opacity" },
+        { label: t`${bold(italic("Bold+Italic"))}`, desc: "Combined" },
+      ];
+
+      for (const style of styles) {
+        const row = new Box(renderer, {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 2,
+        });
+        attrCard.add(row);
+        row.add(
+          new Text(renderer, {
+            content: style.label,
+            fg: theme.text,
+            zIndex: 10,
+          }),
+        );
+        row.add(
+          new Text(renderer, {
+            content: t`${dim(style.desc)}`,
+            fg: theme.textMuted,
+            zIndex: 10,
+          }),
+        );
+      }
+
+      // ── Color Palette panel ────────────────────────────────────────────────
+      const colorCard = new Box(renderer, {
+        id: "color-card",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        border: true,
+        borderStyle: "round",
+        borderColor: theme.border,
+        backgroundColor: theme.surface,
+        title: "Color Palette / Gradient",
+        titleAlignment: "center",
+        padding: 2,
+        gap: 1,
+      });
+      content.add(colorCard);
+
+      // Static hue-spectrum bar
+      const colorRow = new Box(renderer, {
+        id: "color-spectrum-row",
+        flexDirection: "row",
+        flexGrow: 0,
+        flexShrink: 0,
+        height: 1,
+        alignItems: "center",
+      });
+      colorCard.add(colorRow);
+      for (let i = 0; i < 48; i++) {
+        const hue = (i / 48) * 360;
+        colorRow.add(
+          new Text(renderer, {
+            content: "█",
+            fg: rgbaToHex(hsvToRgb(hue, 1, 1)),
+            zIndex: 10,
+          }),
+        );
+      }
+
+      // Animated gradient — a single Text node updated every frame via ANSI codes.
+      // Using one node avoids per-pixel DOM allocation and the absolute-positioning
+      // complexity of the previous wheel approach.
+      const gradientBox = new Box(renderer, {
+        id: "gradient-box",
+        flexGrow: 1,
+        flexShrink: 1,
+        marginTop: 1,
+        border: true,
+        borderStyle: "single",
+        borderColor: theme.border,
+        backgroundColor: theme.bg,
+        overflow: "hidden",
+      });
+      colorCard.add(gradientBox);
+
+      colorDisplayText = new Text(renderer, {
+        id: "gradient-text",
+        content: "",
+        flexGrow: 1,
+        flexShrink: 1,
+        zIndex: 5,
+      });
+      gradientBox.add(colorDisplayText);
+    },
+
+    update: (_deltaMs: number, _tabGroup: unknown) => {
+      if (!colorDisplayText) return;
+
+      const tw = renderer.terminalWidth;
+      const th = renderer.terminalHeight;
+      // Approximate inner dimensions of gradientBox (border on each side + layout overhead)
+      const cols = Math.max(4, tw - 46);
+      const rows = Math.max(1, th - 26);
+
+      const hueOffset = ((Date.now() / 1000) * 60) % 360;
+
+      const lines: string[] = [];
+      for (let y = 0; y < rows; y++) {
+        const sat = 0.3 + 0.7 * (y / Math.max(1, rows - 1));
+        let line = "";
+        for (let x = 0; x < cols; x++) {
+          const hue = ((x / cols) * 360 + hueOffset) % 360;
+          const rgba = hsvToRgb(hue, sat, 1);
+          const r = Math.round(rgba.r * 255);
+          const gr = Math.round(rgba.g * 255);
+          const b = Math.round(rgba.b * 255);
+          line += `\x1b[38;2;${r};${gr};${b}m█`;
+        }
+        lines.push(`${line}\x1b[0m`);
+      }
+      colorDisplayText.content = lines;
+    },
+
+    hide: () => {
+      if (colorDisplayText) colorDisplayText.content = "";
+    },
+  });
+
+  globalTabController.addTab({
+    title: "Layouts",
+    init: (tabGroup: unknown) => {
+      const g = tabGroup as Box;
+
+      const content = new Box(renderer, {
+        id: "layout-content",
+        flexDirection: "row",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
+      });
+      g.add(content);
+
+      const leftCol = new Box(renderer, {
+        id: "layout-left",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        overflow: "hidden",
+        gap: 1,
+      });
+      content.add(leftCol);
 
       const box1 = new Box(renderer, {
         id: "box1",
-        position: "absolute",
-        left: 10,
-        top: 8,
-        width: 20,
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
         height: 8,
-        backgroundColor: "#333366",
-        zIndex: 0,
+        backgroundColor: theme.surface,
         borderStyle: "single",
-        borderColor: "#FFFFFF",
+        borderColor: theme.border,
+        title: "Single Border",
+        titleAlignment: "center",
         border: true,
       });
-      g.add(box1);
-
-      const box1Title = new Text(renderer, {
-        id: "box1-title",
-        content: "Simple Box",
-        position: "absolute",
-        left: 12,
-        top: 10,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(box1Title);
+      leftCol.add(box1);
+      box1.add(
+        new Text(renderer, {
+          content: "Classic",
+          fg: theme.text,
+          zIndex: 10,
+        }),
+      );
 
       const box2 = new Box(renderer, {
         id: "box2",
-        position: "absolute",
-        left: 35,
-        top: 10,
-        width: 25,
-        height: 6,
-        backgroundColor: "#663333",
-        zIndex: 1,
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 8,
+        backgroundColor: theme.surface,
         borderStyle: "double",
-        borderColor: "#FFFF00",
+        borderColor: theme.primary,
+        title: "Double Border",
+        titleAlignment: "center",
         border: true,
       });
-      g.add(box2);
+      leftCol.add(box2);
+      box2.add(
+        new Text(renderer, {
+          content: "Elegant",
+          fg: theme.text,
+          zIndex: 10,
+        }),
+      );
 
-      const box2Title = new Text(renderer, {
-        id: "box2-title",
-        content: "Double Border Box",
-        position: "absolute",
-        left: 37,
-        top: 12,
-        fg: "#FFFFFF",
-        zIndex: 10,
+      const rightCol = new Box(renderer, {
+        id: "layout-right",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        overflow: "hidden",
+        gap: 1,
       });
-      g.add(box2Title);
+      content.add(rightCol);
 
-      const description = new Text(renderer, {
-        id: "description",
-        content: "This tab demonstrates basic box and text rendering with different border styles.",
-        position: "absolute",
-        left: 10,
-        top: 18,
-        fg: "#CCCCCC",
-        zIndex: 10,
+      const box3 = new Box(renderer, {
+        id: "box3",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 8,
+        backgroundColor: theme.surface,
+        borderStyle: "round",
+        borderColor: theme.success,
+        title: "Rounded",
+        titleAlignment: "center",
+        border: true,
       });
-      g.add(description);
+      rightCol.add(box3);
+      box3.add(
+        new Text(renderer, {
+          content: "Modern",
+          fg: theme.text,
+          zIndex: 10,
+        }),
+      );
 
-      const cursorInfo = new Text(renderer, {
-        id: "cursor-info",
-        content: "Cursor: (0,0) - Style: block",
-        position: "absolute",
-        left: 10,
-        top: 20,
-        fg: "#FFFFFF",
-        zIndex: 10,
+      const box4 = new Box(renderer, {
+        id: "box4",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 8,
+        backgroundColor: theme.surface,
+        borderStyle: "thick",
+        borderColor: theme.warning,
+        title: "Thick",
+        titleAlignment: "center",
+        border: true,
       });
-      g.add(cursorInfo);
-    },
-    update: (_deltaMs: number, tabGroup: unknown) => {
-      const g = tabGroup as Box;
-      // Update cursor position (make it move in a small circle)
-      const cursorTime = Date.now() / 1000;
-      const cursorX = 15 + Math.floor(3 * Math.cos(cursorTime));
-      const cursorY = 13 + Math.floor(2 * Math.sin(cursorTime));
-
-      // Change cursor style every few seconds
-      const cursorStyleIndex = Math.floor(cursorTime / 2) % 6;
-      let cursorStyle: "block" | "line" | "underline" = "block";
-      let cursorBlinking = false;
-
-      switch (cursorStyleIndex) {
-        case 0:
-          cursorStyle = "block";
-          cursorBlinking = false;
-          break;
-        case 1:
-          cursorStyle = "block";
-          cursorBlinking = true;
-          break;
-        case 2:
-          cursorStyle = "line";
-          cursorBlinking = false;
-          break;
-        case 3:
-          cursorStyle = "line";
-          cursorBlinking = true;
-          break;
-        case 4:
-          cursorStyle = "underline";
-          cursorBlinking = false;
-          break;
-        case 5:
-          cursorStyle = "underline";
-          cursorBlinking = true;
-          break;
-      }
-
-      // setCursorStyle/setCursorPosition not available — just display info
-      // Display cursor position and style info
-      const cursorInfo = g.getRenderable("cursor-info") as Text;
-      if (cursorInfo) {
-        cursorInfo.content = `Cursor: (${cursorX},${cursorY}) - Style: ${cursorStyle}${cursorBlinking ? " (blinking)" : ""}`;
-      }
-    },
-    show: () => {
-      // setCursorPosition not available
-    },
-    hide: () => {
-      // setCursorPosition not available
+      rightCol.add(box4);
+      box4.add(
+        new Text(renderer, {
+          content: "Bold",
+          fg: theme.text,
+          zIndex: 10,
+        }),
+      );
     },
   });
 
-  // Tab: Borders
-  let partialBorderPhase = 0;
-  tabController.addTab({
+  let borderPhase = 0;
+
+  globalTabController.addTab({
     title: "Borders",
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
-      const borderTitle = new Text(renderer, {
-        id: "border-title",
-        content: "Border Styles & Partial Borders",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
-      });
-      g.add(borderTitle);
 
-      // Different border styles
-      const singleBox = new Box(renderer, {
-        id: "single-box",
-        position: "absolute",
-        left: 10,
-        top: 8,
-        width: 15,
-        height: 5,
-        backgroundColor: "#222244",
-        zIndex: 0,
-        borderStyle: "single",
-        borderColor: "#FFFFFF",
-        border: true,
+      const content = new Box(renderer, {
+        id: "border-content",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
       });
-      g.add(singleBox);
-      const singleLabel = new Text(renderer, {
-        id: "single-label",
-        content: "Single",
-        position: "absolute",
-        left: 12,
-        top: 10,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(singleLabel);
+      g.add(content);
 
-      const doubleBox = new Box(renderer, {
-        id: "double-box",
-        position: "absolute",
-        left: 30,
-        top: 8,
-        width: 15,
-        height: 5,
-        backgroundColor: "#442222",
-        zIndex: 0,
+      const grid = new Box(renderer, {
+        id: "border-grid",
+        flexDirection: "row",
+        flexShrink: 1,
+        flexWrap: "wrap",
+        gap: 2,
+      });
+      content.add(grid);
+
+      const styles: Array<{
+        id: string;
+        name: string;
+        style: "single" | "double" | "round" | "ascii" | "thick" | "dashed";
+        color: string;
+      }> = [
+        { id: "single", name: "Single", style: "single", color: theme.border },
+        { id: "double", name: "Double", style: "double", color: theme.primary },
+        { id: "round", name: "Rounded", style: "round", color: theme.success },
+        { id: "thick", name: "Thick", style: "thick", color: theme.warning },
+        { id: "ascii", name: "ASCII", style: "ascii", color: theme.info },
+        { id: "dashed", name: "Dashed", style: "dashed", color: theme.danger },
+      ];
+
+      for (const s of styles) {
+        const box = new Box(renderer, {
+          id: s.id,
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 14,
+          height: 6,
+          backgroundColor: theme.surface,
+          borderStyle: s.style,
+          borderColor: s.color,
+          title: s.name,
+          titleAlignment: "center",
+          border: true,
+        });
+        grid.add(box);
+      }
+
+      const animBox = new Box(renderer, {
+        id: "border-anim-box",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        flexGrow: 1,
+        flexShrink: 1,
+        backgroundColor: theme.surface,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
+        borderColor: theme.borderHighlight,
+        title: "Animated Borders",
+        titleAlignment: "center",
         border: true,
       });
-      g.add(doubleBox);
-      const doubleLabel = new Text(renderer, {
-        id: "double-label",
-        content: "Double",
-        position: "absolute",
-        left: 32,
-        top: 10,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(doubleLabel);
+      content.add(animBox);
 
-      const roundedBox = new Box(renderer, {
-        id: "rounded-box",
-        position: "absolute",
-        left: 50,
-        top: 8,
-        width: 15,
-        height: 5,
-        backgroundColor: "#224422",
-        zIndex: 0,
-        borderStyle: "round",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(roundedBox);
-      const roundedLabel = new Text(renderer, {
-        id: "rounded-label",
-        content: "Rounded",
-        position: "absolute",
-        left: 52,
-        top: 10,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(roundedLabel);
-
-      // Partial borders
-      const partialTitle = new Text(renderer, {
-        id: "partial-title",
-        content: "Partial Borders:",
-        position: "absolute",
-        left: 10,
-        top: 15,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(partialTitle);
-
-      const partialLeft = new Box(renderer, {
-        id: "partial-left",
-        position: "absolute",
-        left: 10,
-        top: 17,
-        width: 12,
-        height: 4,
-        backgroundColor: "#222244",
-        zIndex: 0,
-        borderStyle: "single",
-        borderColor: "#FFFFFF",
-        border: ["left"],
-      });
-      g.add(partialLeft);
-      const partialLeftLabel = new Text(renderer, {
-        id: "partial-left-label",
-        content: "Left Only",
-        position: "absolute",
-        left: 12,
-        top: 18,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(partialLeftLabel);
-
-      const partialAnimated = new Box(renderer, {
-        id: "partial-animated",
-        position: "absolute",
-        left: 30,
-        top: 17,
-        width: 20,
-        height: 4,
-        backgroundColor: "#334455",
-        zIndex: 0,
-        borderStyle: "single",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(partialAnimated);
-      const partialAnimatedLabel = new Text(renderer, {
-        id: "partial-animated-label",
-        content: "Animated Borders",
-        position: "absolute",
-        left: 32,
-        top: 18,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(partialAnimatedLabel);
-
-      const partialPhase = new Text(renderer, {
-        id: "partial-phase",
-        content: "Phase: 1/8",
-        position: "absolute",
-        left: 30,
-        top: 22,
-        fg: "#AAAAAA",
-        zIndex: 10,
-      });
-      g.add(partialPhase);
-
-      const customBorderTitle = new Text(renderer, {
-        id: "custom-border-title",
-        content: "Custom Border Characters:",
-        position: "absolute",
-        left: 10,
-        top: 25,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(customBorderTitle);
-
-      // Note: customBorderChars not available in BoxOptions — using default borders
-      const asciiBox = new Box(renderer, {
-        id: "ascii-box",
-        position: "absolute",
-        left: 10,
-        top: 27,
-        width: 15,
-        height: 5,
-        backgroundColor: "#222244",
-        zIndex: 0,
-        borderStyle: "ascii",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(asciiBox);
-      const asciiLabel = new Text(renderer, {
-        id: "ascii-label",
-        content: "ASCII Border",
-        position: "absolute",
-        left: 12,
-        top: 29,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(asciiLabel);
-
-      const blockBox = new Box(renderer, {
-        id: "block-box",
-        position: "absolute",
-        left: 30,
-        top: 27,
-        width: 15,
-        height: 5,
-        backgroundColor: "#442222",
-        zIndex: 0,
-        borderStyle: "thick",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(blockBox);
-      const blockLabel = new Text(renderer, {
-        id: "block-label",
-        content: "Block Border",
-        position: "absolute",
-        left: 32,
-        top: 29,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(blockLabel);
-
-      const starBox = new Box(renderer, {
-        id: "star-box",
-        position: "absolute",
-        left: 50,
-        top: 27,
-        width: 15,
-        height: 5,
-        backgroundColor: "#224422",
-        zIndex: 0,
-        borderStyle: "dashed",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(starBox);
-      const starLabel = new Text(renderer, {
-        id: "star-label",
-        content: "Star Border",
-        position: "absolute",
-        left: 52,
-        top: 29,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(starLabel);
+      animBox.add(
+        new Text(renderer, {
+          id: "border-phase-text",
+          content: "Phase: 1/8",
+          fg: theme.textMuted,
+          zIndex: 10,
+        }),
+      );
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
       const g = tabGroup as Box;
-      // Animate partial borders
       const time = Date.now() / 1000;
       const phase = Math.floor(time % 8);
 
-      if (phase !== partialBorderPhase) {
-        partialBorderPhase = phase;
+      if (phase !== borderPhase) {
+        borderPhase = phase;
 
-        const borderSides: BorderSidesConfig = {
+        const sides = {
           top: [0, 3, 5, 7].includes(phase),
           right: [1, 3, 6, 7].includes(phase),
           bottom: [2, 3, 5, 7].includes(phase),
           left: [4, 5, 6, 7].includes(phase),
         };
 
-        const partialAnimatedBox = g.getRenderable("partial-animated") as Box;
-        if (partialAnimatedBox) {
-          partialAnimatedBox.border = getBorderFromSides(borderSides);
-          partialAnimatedBox.borderStyle = "single";
+        const box = g.getRenderable("border-anim-box") as Box;
+        if (box) {
+          box.border = getBorderFromSides(sides);
         }
 
-        const partialPhaseText = g.getRenderable("partial-phase") as Text;
-        if (partialPhaseText) {
-          partialPhaseText.content = `Phase: ${phase + 1}/8`;
+        const text = g.getRenderable("border-phase-text") as Text;
+        if (text) {
+          text.content = `Phase: ${phase + 1}/8`;
         }
       }
     },
   });
 
-  // Tab: Animation
-  let animPosition = 5;
-  let animDirection = 1;
-  const animSpeed = 15;
-  tabController.addTab({
-    title: "Animation",
+  let animX = 3;
+  let animY = 2;
+  let animVX = 15;
+  let animVY = 8;
+
+  globalTabController.addTab({
+    title: "Motion",
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
-      const animTitle = new Text(renderer, {
-        id: "anim-title",
-        content: "Animation Demonstrations",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
-      });
-      g.add(animTitle);
 
-      const movingText = new Text(renderer, {
-        id: "moving-text",
-        content: "Moving Text",
-        position: "absolute",
-        left: animPosition,
-        top: 8,
-        fg: "#00FF00",
-        zIndex: 10,
+      const content = new Box(renderer, {
+        id: "anim-content",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
       });
-      g.add(movingText);
+      g.add(content);
 
-      const animatedBox = new Box(renderer, {
-        id: "animated-box",
-        position: "absolute",
-        left: animPosition,
-        top: 10,
-        width: 10,
-        height: 3,
-        backgroundColor: "#550055",
-        zIndex: 0,
+      const stage = new Box(renderer, {
+        id: "anim-stage",
+        position: "relative",
+        flexGrow: 1,
+        flexShrink: 1,
+        overflow: "hidden",
+        border: true,
         borderStyle: "round",
-        borderColor: "#FF00FF",
-        border: true,
+        borderColor: theme.border,
+        backgroundColor: theme.surface,
       });
-      g.add(animatedBox);
+      content.add(stage);
 
-      const colorBox = new Box(renderer, {
-        id: "color-box",
+      const traveler = new Box(renderer, {
+        id: "traveler",
         position: "absolute",
-        left: 50,
-        top: 12,
-        width: 18,
+        left: 3,
+        top: 2,
+        width: 22,
         height: 5,
-        backgroundColor: "#550055",
-        zIndex: 0,
-        borderStyle: "double",
-        borderColor: "#FFFFFF",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.primary,
+        borderStyle: "round",
+        borderColor: theme.borderHighlight,
         border: true,
       });
-      g.add(colorBox);
+      stage.add(traveler);
 
-      const colorBoxTitle = new Text(renderer, {
-        id: "color-box-title",
-        content: "Animated Color",
-        position: "absolute",
-        left: 52,
-        top: 14,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(colorBoxTitle);
+      traveler.add(
+        new Text(renderer, {
+          content: t`${bold("Moving Box")}`,
+          fg: theme.bg,
+          zIndex: 10,
+        }),
+      );
     },
     update: (deltaMs: number, tabGroup: unknown) => {
       const g = tabGroup as Box;
-      // Animate moving elements
-      const deltaTime = Math.min(deltaMs / 1000, 0.1);
-      animPosition += animSpeed * animDirection * deltaTime;
+      const stage = g.getRenderable("anim-stage") as Box;
+      if (!stage) return;
 
-      if (animPosition > 40) {
-        animPosition = 40;
-        animDirection = -1;
-      } else if (animPosition < 5) {
-        animPosition = 5;
-        animDirection = 1;
+      const traveler = stage.getRenderable("traveler") as Box;
+      if (!traveler) return;
+
+      const delta = Math.min(deltaMs / 1000, 0.05);
+      animX += animVX * delta;
+      animY += animVY * delta;
+
+      const innerW = Math.max(0, renderer.terminalWidth - 6);
+      const innerH = Math.max(0, renderer.terminalHeight - 15);
+      const maxX = Math.max(0, innerW - 22);
+      const maxY = Math.max(0, innerH - 5);
+
+      if (animX >= maxX) {
+        animX = maxX;
+        animVX = -Math.abs(animVX);
+      } else if (animX <= 0) {
+        animX = 0;
+        animVX = Math.abs(animVX);
       }
 
-      const x = Math.round(animPosition);
-
-      const movingText = g.getRenderable("moving-text") as Text;
-      if (movingText) {
-        movingText.setPosition({ left: x, top: 8 });
+      if (animY >= maxY) {
+        animY = maxY;
+        animVY = -Math.abs(animVY);
+      } else if (animY <= 0) {
+        animY = 0;
+        animVY = Math.abs(animVY);
       }
 
-      const animatedBox = g.getRenderable("animated-box") as Box;
-      if (animatedBox) {
-        animatedBox.setPosition({ left: x, top: 10 });
-      }
+      traveler.setLayout({ left: Math.round(animX), top: Math.round(animY) });
 
-      // Animate color-changing box
-      const time = Date.now() / 1000;
-      const hue = (time * 30) % 360;
-      const color = hsvToRgb(hue, 1, 0.7);
-      const hexColor = rgbToHex(color);
+      const hue = (Date.now() / 200) % 360;
+      traveler.backgroundColor = hsvToRgb(hue, 0.8, 1);
+    },
+  });
 
-      const colorBox = g.getRenderable("color-box") as Box;
-      if (colorBox) {
-        colorBox.backgroundColor = parseColor(hexColor);
+  globalTabController.addTab({
+    title: "Alignment",
+    init: (tabGroup: unknown) => {
+      const g = tabGroup as Box;
+
+      const content = new Box(renderer, {
+        id: "align-content",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
+        alignItems: "center",
+        justifyContent: "center",
+      });
+      g.add(content);
+
+      content.add(
+        new Text(renderer, {
+          content: t`${fg(theme.textMuted)("Title alignment options for bordered boxes:")}`,
+          fg: theme.textMuted,
+          zIndex: 10,
+        }),
+      );
+
+      const row = new Box(renderer, {
+        flexDirection: "row",
+        gap: 2,
+        marginTop: 1,
+      });
+      content.add(row);
+
+      const alignments: Array<{
+        align: "left" | "center" | "right";
+        color: string;
+      }> = [
+        { align: "left", color: theme.danger },
+        { align: "center", color: theme.success },
+        { align: "right", color: theme.info },
+      ];
+
+      for (const a of alignments) {
+        const box = new Box(renderer, {
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 20,
+          height: 5,
+          backgroundColor: theme.surface,
+          borderStyle: "round",
+          borderColor: a.color,
+          title: `${a.align.charAt(0).toUpperCase()}${a.align.slice(1)}`,
+          titleAlignment: a.align,
+          border: true,
+        });
+        row.add(box);
       }
     },
   });
 
-  // Tab: Titles
-  tabController.addTab({
-    title: "Titles",
+  const borderSides = { top: true, right: true, bottom: true, left: true };
+
+  globalTabController.addTab({
+    title: "Controls",
     init: (tabGroup: unknown) => {
       const g = tabGroup as Box;
-      const layoutTitle = new Text(renderer, {
-        id: "layout-title",
-        content: "Box Titles",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
-      });
-      g.add(layoutTitle);
 
-      // Boxes with titles and different alignments
-      const titledLeft = new Box(renderer, {
-        id: "titled-left",
-        position: "absolute",
-        left: 10,
-        top: 8,
-        width: 20,
-        height: 5,
-        backgroundColor: "#222244",
-        zIndex: 0,
-        borderStyle: "single",
-        borderColor: "#FFFFFF",
-        title: "Left Aligned",
-        titleAlignment: "left",
-        border: true,
+      const content = new Box(renderer, {
+        id: "ctrl-content",
+        flexDirection: "row",
+        flexGrow: 1,
+        flexShrink: 1,
+        padding: 2,
+        gap: 2,
       });
-      g.add(titledLeft);
+      g.add(content);
 
-      const titledCenter = new Box(renderer, {
-        id: "titled-center",
-        position: "absolute",
-        left: 35,
-        top: 8,
-        width: 20,
-        height: 5,
-        backgroundColor: "#442222",
-        zIndex: 0,
+      const previewCol = new Box(renderer, {
+        id: "preview-col",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        gap: 1,
+      });
+      content.add(previewCol);
+
+      const demoBox = new Box(renderer, {
+        id: "demo-box",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        flexGrow: 1,
+        backgroundColor: theme.surface,
         borderStyle: "double",
-        borderColor: "#FFFFFF",
-        title: "Centered Title",
-        titleAlignment: "center",
+        borderColor: theme.borderHighlight,
         border: true,
       });
-      g.add(titledCenter);
+      previewCol.add(demoBox);
 
-      const titledRight = new Box(renderer, {
-        id: "titled-right",
-        position: "absolute",
-        left: 60,
-        top: 8,
-        width: 20,
-        height: 5,
-        backgroundColor: "#224422",
-        zIndex: 0,
+      demoBox.add(
+        new Text(renderer, {
+          id: "demo-text",
+          content: t`${fg(theme.text)("Border Demo")}`,
+          zIndex: 10,
+        }),
+      );
+
+      const ctrlCol = new Box(renderer, {
+        id: "ctrl-col",
+        flexDirection: "column",
+        flexGrow: 0,
+        flexShrink: 0,
+        width: 28,
+        gap: 1,
+        padding: 1,
+        border: true,
         borderStyle: "round",
-        borderColor: "#FFFFFF",
-        title: "Right Aligned",
-        titleAlignment: "right",
-        border: true,
+        borderColor: theme.border,
+        backgroundColor: theme.surface,
+        title: "Keyboard Controls",
+        titleAlignment: "center",
       });
-      g.add(titledRight);
-    },
-  });
+      content.add(ctrlCol);
 
-  // Tab: Interactive
-  const interactiveBorderSides = {
-    top: true,
-    right: true,
-    bottom: true,
-    left: true,
-  };
+      const controls: Array<[string, string]> = [
+        ["t", "Toggle top border"],
+        ["r", "Toggle right border"],
+        ["b", "Toggle bottom border"],
+        ["l", "Toggle left border"],
+      ];
 
-  tabController.addTab({
-    title: "Interactive",
-    init: (tabGroup: unknown) => {
-      const g = tabGroup as Box;
-      const interactiveTitle = new Text(renderer, {
-        id: "interactive-title",
-        content: "Interactive Controls",
-        position: "absolute",
-        left: 10,
-        top: 5,
-        fg: "#FFFF00",
-        zIndex: 10,
-      });
-      g.add(interactiveTitle);
+      for (const [key, desc] of controls) {
+        const line = new Box(renderer, {
+          flexDirection: "row",
+          gap: 2,
+          alignItems: "center",
+        });
+        ctrlCol.add(line);
 
-      const interactiveBorder = new Box(renderer, {
-        id: "interactive-border",
-        position: "absolute",
-        left: 15,
-        top: 8,
-        width: 40,
-        height: 8,
-        backgroundColor: "#333344",
-        zIndex: 0,
-        borderStyle: "double",
-        borderColor: "#FFFFFF",
-        border: true,
-      });
-      g.add(interactiveBorder);
+        const keyLabel = new Text(renderer, {
+          content: t`${bold(fg(theme.primary)(key.toUpperCase()))}`,
+          zIndex: 10,
+        });
+        line.add(keyLabel);
 
-      const interactiveLabel = new Text(renderer, {
-        id: "interactive-label",
-        content: "Press keys to toggle borders",
-        position: "absolute",
-        left: 22,
-        top: 12,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(interactiveLabel);
-
-      const interactiveInstructions = new Text(renderer, {
-        id: "interactive-instructions",
-        content: "Keyboard Controls:",
-        position: "absolute",
-        left: 10,
-        top: 18,
-        fg: "#FFFFFF",
-        zIndex: 10,
-      });
-      g.add(interactiveInstructions);
-
-      const keyT = new Text(renderer, {
-        id: "key-t",
-        content: "T - Toggle top border",
-        position: "absolute",
-        left: 10,
-        top: 19,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(keyT);
-
-      const keyR = new Text(renderer, {
-        id: "key-r",
-        content: "R - Toggle right border",
-        position: "absolute",
-        left: 10,
-        top: 20,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(keyR);
-
-      const keyB = new Text(renderer, {
-        id: "key-b",
-        content: "B - Toggle bottom border",
-        position: "absolute",
-        left: 10,
-        top: 21,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(keyB);
-
-      const keyL = new Text(renderer, {
-        id: "key-l",
-        content: "L - Toggle left border",
-        position: "absolute",
-        left: 10,
-        top: 22,
-        fg: "#CCCCCC",
-        zIndex: 10,
-      });
-      g.add(keyL);
-
-      const borderState = new Text(renderer, {
-        id: "border-state",
-        content: "Active borders: All",
-        position: "absolute",
-        left: 10,
-        top: 24,
-        fg: "#AAAAAA",
-        zIndex: 10,
-      });
-      g.add(borderState);
+        const description = new Text(renderer, {
+          content: desc,
+          fg: theme.textMuted,
+          zIndex: 10,
+        });
+        line.add(description);
+      }
     },
     update: (_deltaMs: number, tabGroup: unknown) => {
       const g = tabGroup as Box;
-      // Update interactive border state
-      const interactiveBorder = g.getRenderable("interactive-border") as Box;
-      if (interactiveBorder) {
-        interactiveBorder.border = getBorderFromSides(interactiveBorderSides);
-      }
-
-      let borderDesc = "";
-      if (interactiveBorderSides.top) borderDesc += "Top ";
-      if (interactiveBorderSides.right) borderDesc += "Right ";
-      if (interactiveBorderSides.bottom) borderDesc += "Bottom ";
-      if (interactiveBorderSides.left) borderDesc += "Left ";
-      if (!borderDesc) borderDesc = "None";
-
-      const borderState = g.getRenderable("border-state") as Text;
-      if (borderState) {
-        borderState.content = `Active borders: ${borderDesc}`;
+      const box = g.getRenderable("demo-box") as Box;
+      if (box) {
+        box.border = getBorderFromSides(borderSides);
       }
     },
   });
 
-  tabController.focus();
+  globalTabController.focus();
 
   globalKeyboardHandler = (key: RawKeyEvent) => {
-    // Interactive border controls (only active in Interactive tab)
-    if (tabController.getCurrentTab().title === "Interactive") {
-      if (key.name === "t" || key.name === "T") {
-        interactiveBorderSides.top = !interactiveBorderSides.top;
-      } else if (key.name === "r" || key.name === "R") {
-        interactiveBorderSides.right = !interactiveBorderSides.right;
-      } else if (key.name === "b" || key.name === "B") {
-        interactiveBorderSides.bottom = !interactiveBorderSides.bottom;
-      } else if (key.name === "l" || key.name === "L") {
-        interactiveBorderSides.left = !interactiveBorderSides.left;
-      }
+    if (globalTabController?.getCurrentTab().title === "Controls") {
+      if (key.name === "t") borderSides.top = !borderSides.top;
+      else if (key.name === "r") borderSides.right = !borderSides.right;
+      else if (key.name === "b") borderSides.bottom = !borderSides.bottom;
+      else if (key.name === "l") borderSides.left = !borderSides.left;
     }
   };
 
@@ -1057,11 +843,16 @@ export function destroy(renderer: CliRenderer): void {
   }
 
   if (globalTabController) {
-    renderer.root.remove(globalTabController as unknown as Box);
+    globalScreen?.body.remove(globalTabController as unknown as Box);
     globalTabController = null;
   }
 
-  // setCursorPosition not available in this renderer implementation
+  if (globalScreen) {
+    globalScreen.destroy();
+    globalScreen = null;
+  }
+
+  colorDisplayText = null;
 }
 
 if (import.meta.main) {

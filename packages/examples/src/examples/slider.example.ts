@@ -1,6 +1,6 @@
 import { Box, type CliRenderer, Text, bold, createCliRenderer, fg, t } from "@bettertui/core";
 import { Slider } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let horizontalSlider1: Slider | null = null;
 let horizontalSlider2: Slider | null = null;

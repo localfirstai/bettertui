@@ -16,7 +16,7 @@ import {
   t,
 } from "@bettertui/core";
 import type { BoxOptions } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let mainGroup: Box | null = null;
 let titleText: Text | null = null;

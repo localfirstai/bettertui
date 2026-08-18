@@ -10,7 +10,7 @@ import {
   Textarea,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── QR code stub types (not exported from @bettertui/core) ─────────────────
 enum ErrorCorrectionLevel {

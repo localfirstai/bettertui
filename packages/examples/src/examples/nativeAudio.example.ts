@@ -20,7 +20,9 @@ import {
 } from "@bettertui/core";
 import type { OptimizedBuffer } from "@bettertui/core";
 import FFT from "fft.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { formatSigned, meterBar, rangeBar } from "../lib/formatUtils";
+import { clamp } from "../lib/mathUtils";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 type SoundPreset = {
   name: string;
@@ -62,7 +64,6 @@ const MAX_VOLUME = 2;
 const FFT_SIZE = 2048;
 const FFT_BINS = 28;
 const FFT_BANDS = 8;
-const FFT_BAR_WIDTH = 6;
 const FFT_BAND_CENTERS = [63, 160, 400, 1000, 2500, 6000, 12000, 16000];
 const FFT_400_INDEX = 2;
 const FFT_12K_INDEX = 6;
@@ -253,10 +254,6 @@ function buildMonoPcm16Wav(options: {
   return out;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
 function clampVolume(value: number): number {
   return clamp(value, MIN_VOLUME, MAX_VOLUME);
 }
@@ -278,11 +275,6 @@ function mixTargetLabel(target: MixTarget): string {
     case "bgm":
       return "BGM";
   }
-}
-
-function formatSigned(value: number): string {
-  const normalized = Math.abs(value) < 0.005 ? 0 : value;
-  return normalized >= 0 ? `+${normalized.toFixed(2)}` : normalized.toFixed(2);
 }
 
 function formatMixTarget(target: MixTarget, volume: number, pan: number): string {
@@ -375,18 +367,6 @@ function adjustSelectedPan(delta: number): void {
   }
 
   updateHeader();
-}
-
-function meterBar(value: number, width = 28): string {
-  const clamped = Math.max(0, Math.min(1, value));
-  const filled = Math.floor(clamped * width);
-  return `[${"#".repeat(filled)}${"-".repeat(width - filled)}]`;
-}
-
-function rangeBar(value: number, width: number = FFT_BAR_WIDTH): string {
-  const clamped = Math.max(0, Math.min(1, value));
-  const filled = Math.round(clamped * width);
-  return `[${"#".repeat(filled)}${"-".repeat(width - filled)}]`;
 }
 
 function computeSpectrum(pcm: Float32Array, channels: number): string {

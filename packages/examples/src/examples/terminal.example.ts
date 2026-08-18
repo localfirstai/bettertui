@@ -12,9 +12,10 @@ import {
   rgbaToEngineColor,
 } from "@bettertui/core";
 import { ScrollBox } from "@bettertui/core";
-import { HexList } from "../lib/HexList.js";
-import { PaletteGrid } from "../lib/PaletteGrid.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { HexList } from "../lib/HexList";
+import { PaletteGrid } from "../lib/PaletteGrid";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
+import { formatHex, inferModeFromHex, isColorOscResponse, visibleOsc } from "../lib/terminalOsc";
 
 // Local stub for TerminalColors (not exported from @bettertui/core)
 type TerminalColors = {
@@ -408,36 +409,6 @@ function drawAnsiComparison(renderer: CliRenderer, colors: TerminalColors): void
     mutedTextColor,
     bgColor,
   );
-}
-
-function isColorOscResponse(sequence: string): boolean {
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: OSC response detection requires ESC
-  return /^\x1b\](?:4;0|10|11);/.test(sequence);
-}
-
-function formatHex(value: string | null): string {
-  return value?.toUpperCase() ?? "N/A";
-}
-
-function inferModeFromHex(value: string | null): "dark" | "light" | "unknown" {
-  if (!value) return "unknown";
-  const rgba = RGBA.fromHex(value);
-  const r = Math.round(rgba.r * 255);
-  const g = Math.round(rgba.g * 255);
-  const b = Math.round(rgba.b * 255);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 128 ? "light" : "dark";
-}
-
-function visibleOsc(sequence: string): string {
-  let result = sequence;
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: OSC visible representation requires ESC/BEL chars
-  result = result.replace(/\x1b\\/g, " ST");
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: OSC visible representation requires ESC chars
-  result = result.replace(/\x1b/g, "ESC");
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: OSC visible representation requires BEL chars
-  result = result.replace(/\x07/g, " BEL");
-  return result;
 }
 
 function updateDiagnostics(renderer: CliRenderer, colors: TerminalColors): void {

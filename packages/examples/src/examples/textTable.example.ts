@@ -18,7 +18,7 @@ import type {
   TextTableContent,
 } from "@bettertui/core";
 import type { TextChunk } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let container: Box | null = null;
 let primaryTable: TextTable | null = null;

@@ -2,7 +2,7 @@
 
 import { Box, type CliRenderer, RGBA, Text, createCliRenderer } from "@bettertui/core";
 import { ASCIIFont } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let mainContainer: Box | null = null;
 let fontGroup: Box | null = null;

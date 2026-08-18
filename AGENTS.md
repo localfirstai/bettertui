@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Comments and Documentation
+
+- **Avoid code-explanation comments.** Do not write comments that restate or explain what the code does (e.g. `// set x to 1` next to `x = 1`). Keep inline comments minimal or omit them entirely.
+- **Documentation goes in doc comments only:** use **JSDoc** (`/** ... */`) for TypeScript and **rustdoc** (`///`, `//!`, `#[doc]`) for Rust — this is **mandatory**.
+- **No comments inside the code body** to explain logic; if a concept needs explaining, write it as a proper doc comment on the relevant function, type, or module instead of an inline `//` comment.
+
 ## Naming Conventions
 
 **When creating any new file, always follow `.claude/rules/naming-convension.md`.** Summary:

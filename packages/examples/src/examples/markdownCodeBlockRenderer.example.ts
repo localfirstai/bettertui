@@ -6,7 +6,7 @@ import {
   Text,
   createCliRenderer,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 /** Local stub type for a markdown code block renderer callback. */
 type MarkdownCodeBlockRenderer = (token: {

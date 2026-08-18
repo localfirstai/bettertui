@@ -14,7 +14,7 @@ import {
   underline,
 } from "@bettertui/core";
 import { Text } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let parentContainer: Box | null = null;
 let counter = 0;

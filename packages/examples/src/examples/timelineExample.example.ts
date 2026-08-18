@@ -1,6 +1,6 @@
 import { type Timeline, createTimeline } from "@bettertui/core";
 import { Box, type CliRenderer, type KeyEvent, Text, createCliRenderer } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // Local type extensions for APIs not yet in the core Timeline
 type ExtendedTimeline = Timeline & {

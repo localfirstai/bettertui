@@ -693,10 +693,8 @@ impl RenderTree {
     /// 6. Pop opacity
     pub fn collect_commands(&self) -> Vec<RenderCommand> {
         let mut commands = Vec::with_capacity(self.objects.len() * 2);
-        let sorted = self.sorted_by_z_index();
 
-        for &idx in &sorted {
-            let obj = &self.objects[idx];
+        for obj in &self.objects {
             if !obj.is_visible() {
                 continue;
             }
@@ -824,9 +822,7 @@ impl Painter {
         if full_clear {
             self.buffer.clear_with_bg(self.background_color);
         }
-        let sorted = tree.sorted_by_z_index();
-        for idx in &sorted {
-            let obj = &tree.objects()[*idx];
+        for obj in tree.objects() {
             self.paint_object(obj, ctx);
         }
     }
@@ -951,6 +947,7 @@ impl Painter {
         let content = bounds.content_rect();
         let fg = obj.style.fg.unwrap_or(Color::Default);
         let bg = obj.style.bg.unwrap_or(Color::Default);
+        let inherit_bg = matches!(obj.style.bg, None | Some(Color::Default));
         let attrs = style_to_attrs(&obj.style);
 
         if text.is_empty() {
@@ -978,6 +975,7 @@ impl Painter {
             let mut active_fg = fg;
             let mut active_bg = bg;
             let mut active_attrs = attrs;
+            let mut ansi_bg_override = false;
 
             let line_str = line.text.as_str();
             let bytes = line_str.as_bytes();
@@ -1007,6 +1005,7 @@ impl Painter {
                                             active_fg = fg;
                                             active_bg = bg;
                                             active_attrs = attrs;
+                                            ansi_bg_override = false;
                                         }
                                         crate::ansi::SgrAttribute::Bold => active_attrs |= CellAttributes::BOLD,
                                         crate::ansi::SgrAttribute::Dim => active_attrs |= CellAttributes::DIM,
@@ -1024,6 +1023,7 @@ impl Painter {
                                         }
                                         crate::ansi::SgrAttribute::Background(bg_val) => {
                                             active_bg = Color::from(bg_val);
+                                            ansi_bg_override = true;
                                         }
                                         _ => {}
                                     }
@@ -1060,10 +1060,14 @@ impl Painter {
 
                 let w = unicode_width::UnicodeWidthStr::width(g) as u16;
                 if let Some(ch) = g.chars().next() {
-                    let cell = Cell::new(ch).with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
+                    let effective_bg =
+                        if inherit_bg && !ansi_bg_override { self.buffer.get(col, y).bg } else { active_bg };
+                    let cell = Cell::new(ch).with_fg(active_fg).with_bg(effective_bg).with_attrs(active_attrs);
                     self.buffer.set(col, y, cell);
                     if w == 2 && col + 1 < self.buffer.width() {
-                        let space = Cell::new(' ').with_fg(active_fg).with_bg(active_bg).with_attrs(active_attrs);
+                        let effective_bg2 =
+                            if inherit_bg && !ansi_bg_override { self.buffer.get(col + 1, y).bg } else { active_bg };
+                        let space = Cell::new(' ').with_fg(active_fg).with_bg(effective_bg2).with_attrs(active_attrs);
                         self.buffer.set(col + 1, y, space);
                     }
                 }

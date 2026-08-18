@@ -47,6 +47,24 @@ export { KeyHandler, InternalKeyHandler, PasteEvent } from "./keyHandler";
 export { KeyEvent as KeyboardEvent, KeyEvent } from "./keyHandler";
 export type { KeyHandlerEventMap } from "./keyHandler";
 
+export {
+  defaultKeyAliases,
+  mergeKeyAliases,
+  mergeKeyBindings,
+  getKeyBindingKey,
+  getKeyBindingKeys,
+  getKeyBindingAction,
+  matchesKeyBinding,
+  buildKeyBindingsMap,
+  keyBindingToString,
+} from "./renderableKeyBindings";
+export type {
+  KeyBinding,
+  KeyBindingLike,
+  KeyBindingLookup,
+  KeyAliasMap,
+} from "./renderableKeyBindings";
+
 export { KeyInput } from "./keyInput";
 
 export { StdinParser } from "./stdinParser";

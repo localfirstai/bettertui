@@ -11,7 +11,7 @@ import {
   t,
 } from "@bettertui/core";
 import { Text } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 let tabSelect: TabSelect | null = null;
 let renderer: CliRenderer | null = null;

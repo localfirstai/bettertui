@@ -1,6 +1,3 @@
-#!/usr/bin/env bun
-// @ts-nocheck
-
 import {
   Audio,
   type AudioGroup,
@@ -23,7 +20,9 @@ import {
   t,
 } from "@bettertui/core";
 import FFT from "fft.js";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { displayMetadata, formatBytes, formatFrequency } from "../lib/formatUtils";
+import { clamp } from "../lib/mathUtils";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const DEMO_STATIONS = [
   { name: "FIP", url: "https://icecast.radiofrance.fr/fip-midfi.mp3" },
@@ -75,28 +74,6 @@ const PALETTE = {
   muted: "#7C91A3",
   purple: "#C4B5FD",
 };
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.max(minimum, Math.min(maximum, value));
-}
-
-function formatBytes(value: bigint): string {
-  const bytes = Number(value);
-  if (!Number.isFinite(bytes)) return `${value.toString()} B`;
-  if (bytes < 1024) return `${bytes.toFixed(0)} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
-}
-
-function formatFrequency(value: number): string {
-  return value >= 1000 ? `${value / 1000}k` : value.toString();
-}
-
-function displayMetadata(value: string | undefined): string {
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: strip ASCII control characters
-  const sanitized = value?.replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").trim();
-  return sanitized || "-";
-}
 
 function writeBufferRgb(
   buffer: Uint16Array,
@@ -223,7 +200,7 @@ class AudioStreamingDemo {
         alignItems: "center",
         justifyContent: "center",
         onMouseDown: (event) => {
-          event.stopPropagation();
+          (event as { stopPropagation(): void }).stopPropagation();
           this.selectStation(index);
         },
       });
@@ -264,7 +241,7 @@ class AudioStreamingDemo {
       flexBasis: 0,
       minWidth: 0,
       renderAfter(buffer) {
-        demo.renderSpectrum(buffer, this);
+        demo.renderSpectrum(buffer as OptimizedBuffer, this);
       },
     });
 
@@ -709,8 +686,8 @@ class AudioStreamingDemo {
   private renderSpectrum(buffer: OptimizedBuffer, panel: Box): void {
     const innerX = panel.x + 1;
     const innerY = panel.y + 1;
-    const innerWidth = Math.max(0, panel.width - 2);
-    const innerHeight = Math.max(0, panel.height - 2);
+    const innerWidth = Math.max(0, Number(panel.width) - 2);
+    const innerHeight = Math.max(0, Number(panel.height) - 2);
     if (innerWidth < 8 || innerHeight < 4) return;
 
     const backgrounds = buffer.buffers.bg;

@@ -1,37 +1,34 @@
+#!/usr/bin/env bun
+
+/**
+ * Split Footer Surface Streaming Demo
+ *
+ * Demonstrates progressive text, code, and markdown streaming in a split-footer
+ * layout. Content builds chunk-by-chunk across three edge-case scenarios, with
+ * live status rendered in the footer table.
+ *
+ * Adapted from the OpenTUI split-footer-streaming-demo reference. BetterTUI has
+ * no `createScrollbackSurface`, so content accumulates inside a contentBox that
+ * fills the engine viewport above the footerTable.
+ */
+
 import {
   Box,
   CliRenderEvents,
   type CliRenderer,
   Code,
-  type KeyEvent,
+  type CodeOptions,
   Markdown,
+  type MarkdownOptions,
+  RGBA,
   Text,
   TextTable,
   createCliRenderer,
+  parseColor,
 } from "@bettertui/core";
-import { RGBA, parseColor } from "@bettertui/core";
-import type { TextTableContent } from "@bettertui/core";
 import { SyntaxStyle } from "@bettertui/core";
-import type { TextChunk } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
-
-// ── Stubs for APIs not yet in @bettertui/core ────────────────────────────────
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// biome-ignore lint/suspicious/noExplicitAny: ScrollbackSurface type not exported from core
-type ScrollbackSurface = any;
-
-function getTreeSitterClient(): unknown {
-  return null;
-}
-
-// Helper for non-standard CliRenderer access (same pattern as splitMode)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer properties
-// biome-ignore lint/correctness/noUnusedVariables: utility function for internal API access
-function asAny<T>(x: T): any {
-  return x;
-}
+import type { KeyEvent, TextChunk, TextTableContent } from "@bettertui/core";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 const FOOTER_HEIGHT = 10;
 const DEFAULT_INTERVAL_MS = 180;
@@ -52,7 +49,6 @@ interface ScenarioDefinition {
 interface ActiveRun {
   id: number;
   scenario: ScenarioDefinition;
-  surface: ScrollbackSurface;
   renderable: Text | Code | Markdown;
   content: string;
   chunkIndex: number;
@@ -188,18 +184,16 @@ function footerRow(label: string, value: string, valueColor: string): TextTableC
   ];
 }
 
+type ContentWidget = Box | Text | Code | Markdown;
+
 class SplitFooterStreamingDemo {
   private shell: Box;
   private titleText: Text;
+  private contentBox: Box;
   private footerTable: TextTable;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // biome-ignore lint/suspicious/noExplicitAny: accessing internal renderer scrollback API
-  private get ra(): any {
-    return this.renderer;
-  }
+  private readonly contentItems: ContentWidget[] = [];
 
-  private readonly treeSitterClient = getTreeSitterClient();
   private currentKind: StreamKind = "markdown";
   private inlinePrefix = false;
   private autoAdvance = true;
@@ -214,20 +208,11 @@ class SplitFooterStreamingDemo {
   private wrote = false;
 
   constructor(private renderer: CliRenderer) {
-    if (this.ra.screenMode !== "split-footer") {
-      this.ra.screenMode = "split-footer";
-    }
-
-    this.ra.footerHeight = FOOTER_HEIGHT;
-
-    if (this.ra.externalOutputMode !== "capture-stdout") {
-      this.ra.externalOutputMode = "capture-stdout";
-    }
-
+    this.renderer.setScreenMode("split-footer", FOOTER_HEIGHT);
     this.renderer.setBackgroundColor(PALETTE.background);
 
     this.shell = new Box(this.renderer, {
-      id: "split-footer-streaming-demo-shell",
+      id: "sfs-shell",
       width: "100%",
       height: "100%",
       border: ["top"],
@@ -242,14 +227,25 @@ class SplitFooterStreamingDemo {
     });
 
     this.titleText = new Text(this.renderer, {
-      id: "split-footer-streaming-demo-title",
+      id: "sfs-title",
       width: "100%",
+      height: 1,
       content: "Split Footer Surface Streaming Demo",
       fg: PALETTE.title,
     });
 
+    this.contentBox = new Box(this.renderer, {
+      id: "sfs-content",
+      width: "100%",
+      flexGrow: 1,
+      flexDirection: "column",
+      gap: 0,
+      overflow: "hidden",
+      paddingTop: 1,
+    });
+
     this.footerTable = new TextTable(this.renderer, {
-      id: "split-footer-streaming-demo-footer-table",
+      id: "sfs-footer-table",
       width: "100%",
       wrapMode: "word",
       columnWidthMode: "content",
@@ -264,6 +260,7 @@ class SplitFooterStreamingDemo {
     });
 
     this.shell.add(this.titleText);
+    this.shell.add(this.contentBox);
     this.shell.add(this.footerTable);
     this.renderer.root.add(this.shell);
 
@@ -340,16 +337,18 @@ class SplitFooterStreamingDemo {
     }
 
     this.activeRun.cancelled = true;
+    this.activeRun = null;
 
-    if (!this.activeRun.surface.isDestroyed) {
+    for (const item of this.contentItems) {
       try {
-        this.activeRun.surface.destroy();
+        this.contentBox.remove(item);
+        item.destroy();
       } catch {
-        // Ignore teardown races while replaying.
+        // ignore teardown races
       }
     }
-
-    this.activeRun = null;
+    this.contentItems.length = 0;
+    this.wrote = false;
   }
 
   private requestReplay(reason: string): void {
@@ -380,24 +379,19 @@ class SplitFooterStreamingDemo {
   }
 
   private createRun(scenario: ScenarioDefinition): ActiveRun {
-    const spaced = this.wrote;
-    if (spaced) {
-      this.writeSpacer();
+    if (this.wrote) {
+      this.addSpacer();
     }
 
     if (this.inlinePrefix) {
-      this.writeInlinePrefix(scenario, !spaced);
+      this.addInlinePrefix(scenario);
     }
-
-    const surface = this.ra.createScrollbackSurface({
-      startOnNewLine: this.inlinePrefix ? false : !spaced,
-    });
 
     let renderable: Text | Code | Markdown;
     switch (scenario.kind) {
       case "text":
-        renderable = new Text(surface.renderContext, {
-          id: `split-footer-stream-text-${this.nextRunId}`,
+        renderable = new Text(this.renderer, {
+          id: `sfs-stream-text-${this.nextRunId}`,
           content: "",
           width: "100%",
           wrapMode: "char",
@@ -405,30 +399,31 @@ class SplitFooterStreamingDemo {
         });
         break;
       case "code":
-        renderable = new Code(surface.renderContext, {
-          id: `split-footer-stream-code-${this.nextRunId}`,
+        renderable = new Code(this.renderer, {
+          id: `sfs-stream-code-${this.nextRunId}`,
           content: "",
           filetype: "typescript",
           syntaxStyle: SURFACE_SYNTAX_STYLE,
           width: "100%",
           wrapMode: "char",
-        } as import("@bettertui/core").CodeOptions);
+        } as CodeOptions);
         break;
       case "markdown":
-        renderable = new Markdown(surface.renderContext, {
-          id: `split-footer-stream-markdown-${this.nextRunId}`,
+        renderable = new Markdown(this.renderer, {
+          id: `sfs-stream-markdown-${this.nextRunId}`,
           content: "",
           width: "100%",
-        } as import("@bettertui/core").MarkdownOptions);
+        } as MarkdownOptions);
         break;
     }
 
-    surface.root.add(renderable);
+    this.contentBox.add(renderable);
+    this.contentItems.push(renderable);
+    this.wrote = true;
 
     return {
       id: this.nextRunId++,
       scenario,
-      surface,
       renderable,
       content: "",
       chunkIndex: 0,
@@ -439,58 +434,27 @@ class SplitFooterStreamingDemo {
     };
   }
 
-  private writeSpacer(): void {
-    // biome-ignore lint/suspicious/noExplicitAny: scrollback context type not exported
-    this.ra.writeToScrollback((ctx: any) => {
-      const width = Math.max(1, Math.trunc(ctx.width));
-      const root = new Text(ctx.renderContext, {
-        id: `split-footer-stream-spacer-${this.nextRunId}`,
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width,
-        height: 1,
-        content: "",
-      });
-
-      return {
-        root,
-        width,
-        height: 1,
-        startOnNewLine: true,
-        trailingNewline: true,
-      };
+  private addSpacer(): void {
+    const spacer = new Text(this.renderer, {
+      id: `sfs-spacer-${this.nextRunId}`,
+      width: "100%",
+      height: 1,
+      content: "",
     });
-
-    this.wrote = true;
+    this.contentBox.add(spacer);
+    this.contentItems.push(spacer);
   }
 
-  private writeInlinePrefix(scenario: ScenarioDefinition, startOnNewLine: boolean): void {
-    const prefix = scenario.prefix;
-
-    // biome-ignore lint/suspicious/noExplicitAny: scrollback context type not exported
-    this.ra.writeToScrollback((ctx: any) => {
-      const root = new Text(ctx.renderContext, {
-        id: `split-footer-stream-prefix-${this.nextRunId}`,
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width: prefix.length,
-        height: 1,
-        content: prefix,
-        fg: getScenarioAccent(scenario.kind),
-      } as import("@bettertui/core").TextOptions);
-
-      return {
-        root,
-        width: prefix.length,
-        height: 1,
-        startOnNewLine,
-        trailingNewline: false,
-      };
+  private addInlinePrefix(scenario: ScenarioDefinition): void {
+    const prefix = new Text(this.renderer, {
+      id: `sfs-prefix-${this.nextRunId}`,
+      width: scenario.prefix.length,
+      height: 1,
+      content: scenario.prefix,
+      fg: getScenarioAccent(scenario.kind),
     });
-
-    this.wrote = true;
+    this.contentBox.add(prefix);
+    this.contentItems.push(prefix);
   }
 
   private async stepCurrentRun(): Promise<void> {
@@ -534,7 +498,6 @@ class SplitFooterStreamingDemo {
 
       if (isFinalChunk) {
         run.done = true;
-        run.surface.destroy();
         this.lastStatus = `${run.scenario.title} sample finished. Press R to replay.`;
       } else {
         this.lastStatus = `${run.scenario.title} chunk ${run.chunkIndex}/${run.scenario.chunks.length} committed.`;
@@ -562,10 +525,10 @@ class SplitFooterStreamingDemo {
   private async flushRun(run: ActiveRun, done: boolean): Promise<void> {
     switch (run.scenario.kind) {
       case "text":
-        await this.flushTextRun(run, done);
+        await this.flushTextRun(run);
         return;
       case "code":
-        await this.flushCodeRun(run, done);
+        await this.flushCodeRun(run);
         return;
       case "markdown":
         await this.flushMarkdownRun(run, done);
@@ -573,63 +536,27 @@ class SplitFooterStreamingDemo {
     }
   }
 
-  private async flushTextRun(run: ActiveRun, done: boolean): Promise<void> {
+  private async flushTextRun(run: ActiveRun): Promise<void> {
     const renderable = run.renderable as Text;
     renderable.content = run.content;
-    run.surface.render();
-
-    const targetRows = done
-      ? run.surface.height
-      : Math.max(run.committedRows, run.surface.height - 1);
-    if (targetRows > run.committedRows) {
-      run.surface.commitRows(run.committedRows, targetRows);
-      run.committedRows = targetRows;
-      this.wrote = true;
-    }
+    const targetRows = Math.max(1, Math.ceil(run.content.length / 80));
+    run.committedRows = Math.max(run.committedRows, targetRows);
   }
 
-  private async flushCodeRun(run: ActiveRun, done: boolean): Promise<void> {
+  private async flushCodeRun(run: ActiveRun): Promise<void> {
     const renderable = run.renderable as Code;
     renderable.content = run.content;
-    // biome-ignore lint/suspicious/noExplicitAny: accessing internal streaming property on renderable
-    (renderable as any).streaming = !done;
-    await run.surface.settle();
-
-    const targetRows = done
-      ? run.surface.height
-      : Math.max(run.committedRows, run.surface.height - 1);
-    if (targetRows > run.committedRows) {
-      run.surface.commitRows(run.committedRows, targetRows);
-      run.committedRows = targetRows;
-      this.wrote = true;
-    }
+    const targetRows = Math.max(1, (run.content.match(/\n/g) ?? []).length + 1);
+    run.committedRows = Math.max(run.committedRows, targetRows);
   }
 
   private async flushMarkdownRun(run: ActiveRun, done: boolean): Promise<void> {
     const renderable = run.renderable as Markdown;
-    renderable.content = run.content as string;
-    // biome-ignore lint/suspicious/noExplicitAny: accessing internal streaming property on renderable
-    (renderable as any).streaming = !done;
-    await run.surface.settle();
-
-    // biome-ignore lint/suspicious/noExplicitAny: accessing internal block state properties
-    const md = renderable as any;
-    const targetBlockCount = done ? md._blockStates.length : md._stableBlockCount;
-    if (targetBlockCount <= run.committedBlocks) {
-      return;
-    }
-
-    const firstState = md._blockStates[run.committedBlocks] ?? md._blockStates[0];
-    const lastState =
-      md._blockStates[targetBlockCount - 1] ?? md._blockStates[md._blockStates.length - 1];
-    const nextState = md._blockStates[targetBlockCount];
-    const endRow = nextState
-      ? nextState.renderable.y
-      : lastState.renderable.y + lastState.renderable.height + (lastState.marginBottom ?? 0);
-
-    run.surface.commitRows(firstState.renderable.y, endRow);
-    run.committedBlocks = targetBlockCount;
-    this.wrote = true;
+    renderable.content = run.content;
+    const headings = (run.content.match(/^#{1,6}\s/gm) ?? []).length;
+    const paragraphs = (run.content.match(/\n\n/g) ?? []).length + 1;
+    const targetBlocks = headings + paragraphs;
+    run.committedBlocks = done ? targetBlocks : Math.max(run.committedBlocks, targetBlocks - 1);
   }
 
   private setScenario(kind: StreamKind): void {
@@ -679,7 +606,7 @@ class SplitFooterStreamingDemo {
   }
 
   private handleKeyPress = (key: KeyEvent): void => {
-    if (key.ctrl || key.meta || (key as unknown as Record<string, unknown>).option) {
+    if (key.ctrl || key.meta || key.option) {
       return;
     }
 
@@ -750,6 +677,7 @@ class SplitFooterStreamingDemo {
     }
 
     this.destroyActiveRun();
+
     this.renderer.keyInput.off("keypress", this.handleKeyPress);
     this.renderer.off(CliRenderEvents.RESIZE, this.handleResize);
     this.renderer.off(CliRenderEvents.DESTROY, this.handleRendererDestroy);
@@ -757,11 +685,7 @@ class SplitFooterStreamingDemo {
     if (!this.shell.isDestroyed) {
       this.shell.destroyRecursively();
     }
-
-    if (!this.ra.isDestroyed) {
-      this.ra.externalOutputMode = "passthrough";
-      this.ra.screenMode = "main-screen";
-    }
+    this.renderer.setScreenMode("alternate-screen");
   }
 }
 

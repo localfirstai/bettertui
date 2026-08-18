@@ -15,7 +15,7 @@ import {
   fg,
   t,
 } from "@bettertui/core";
-import { setupCommonDemoKeys } from "../lib/standaloneKeys.js";
+import { setupCommonDemoKeys } from "../lib/standaloneKeys";
 
 // ── Layout height constants ────────────────────────────────────────────────────
 //
@@ -544,7 +544,7 @@ function buildLayout(r: CliRenderer): void {
 
   footerText = new Text(r, {
     id: "isl-footer-text",
-    content: t`${fg("#64748b")("TAB")} next  ${fg("#64748b")("SHIFT+TAB")} prev  ${fg("#64748b")("↑↓/jk")} navigate  ${fg("#64748b")("ENTER")} select  ${fg("#64748b")("MOUSE")} click·scroll  ${fg("#64748b")("ESC")} quit`,
+    content: t`${fg("#64748b")("TAB")} next  ${fg("#64748b")("SHIFT+TAB")} prev  ${fg("#64748b")("↑↓/jk")} navigate  ${fg("#64748b")("ENTER")} select  ${fg("#64748b")("MOUSE")} click·scroll  ${fg("#64748b")("ESC")} back`,
     fg: "#64748b",
     bg: "transparent",
     flexGrow: 1,
@@ -604,10 +604,6 @@ function wireEvents(r: CliRenderer): void {
     if (key.name === "tab") {
       focusIndex(key.shift ? currentFocusIndex - 1 : currentFocusIndex + 1);
       return;
-    }
-    if (key.name === "escape" || (key.ctrl && key.name === "q")) {
-      r.destroy();
-      process.exit(0);
     }
   };
   r.keyInput.on("keypress", keyHandler);
@@ -695,5 +691,11 @@ if (import.meta.main) {
   });
   run(r);
   setupCommonDemoKeys(r);
+  r.keyInput.on("keypress", (key: KeyEvent) => {
+    if (key.name === "escape") {
+      r.destroy();
+      process.exit(0);
+    }
+  });
   r.start();
 }
