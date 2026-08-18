@@ -1,37 +1,34 @@
 ---
 title: Dialog
-description: Modal dialog component
+description: Modal dialog component — planned for @bettertui/react
 ---
 
-The `Dialog` component creates a modal overlay with content.
+> **Status: Planned** — `Dialog` is designed for the upcoming `@bettertui/react` adapter. It is not yet available in `@bettertui/core`.
 
-## Usage
+`Dialog` will create a modal overlay with focus trapping and an accessible title.
+
+## Planned API
 
 ```tsx
 import { Dialog, Button, Text } from '@bettertui/react';
+import { useState } from 'react';
 
 function App() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <Box>
-      <Button onPress={() => setIsOpen(true)}>
-        Open Dialog
-      </Button>
+      <Button onPress={() => setOpen(true)}>Open Dialog</Button>
 
       <Dialog
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        isOpen={open}
+        onClose={() => setOpen(false)}
         title="Confirm Action"
       >
         <Text>Are you sure you want to continue?</Text>
         <Box flexDirection="row" gap={1} marginTop={1}>
-          <Button onPress={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button onPress={handleConfirm} color="red">
-            Confirm
-          </Button>
+          <Button onPress={() => setOpen(false)}>Cancel</Button>
+          <Button onPress={handleConfirm} variant="danger">Confirm</Button>
         </Box>
       </Dialog>
     </Box>
@@ -39,25 +36,62 @@ function App() {
 }
 ```
 
-## Props
+## Planned Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `isOpen` | `boolean` | — | Control visibility |
+| `isOpen` | `boolean` | — | Control dialog visibility |
 | `onClose` | `() => void` | — | Close handler |
-| `title` | `string` | — | Dialog title |
-| `children` | `ReactNode` | — | Dialog content |
-| `width` | `number` | `60` | Dialog width |
+| `title` | `string` | — | Dialog title text |
+| `children` | `ReactNode` | — | Dialog body content |
+| `width` | `number` | `60` | Dialog width in columns |
 
-## Keyboard Interaction
+## Planned Keyboard Interaction
 
-- **Escape**: Close dialog
-- **Tab**: Move focus within dialog
-- **Enter**: Confirm (if focused on confirm button)
+| Key | Action |
+|-----|--------|
+| `Escape` | Close the dialog |
+| `Tab` | Move focus within dialog |
+| `Enter` | Confirm (if confirm button is focused) |
 
-## Accessibility
+## Vanilla Alternative
 
-- Focus is trapped within the dialog
-- Background content is inert
-- Screen readers announce the dialog
-- Focus returns to trigger on close
+Build a modal overlay using an absolutely positioned `Box`:
+
+```ts
+import { Box, Text, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+function createModal(title: string, message: string) {
+  const overlay = new Box(renderer, {
+    position: 'absolute',
+    top: 5,
+    left: '50%',
+    width: 50,
+    border: true,
+    borderStyle: 'round',
+    borderColor: '#7aa2f7',
+    flexDirection: 'column',
+    padding: 1,
+    gap: 1,
+    backgroundColor: '#1a1b26',
+    zIndex: 1000,
+  });
+
+  overlay.add(new Text(renderer, { content: title, fg: '#7aa2f7' }));
+  overlay.add(new Text(renderer, { content: message, fg: '#c0caf5', wrapMode: 'word' }));
+
+  renderer.root.add(overlay);
+
+  renderer.keyInput.on('keypress', (key) => {
+    if (key.name === 'escape') {
+      renderer.root.remove(overlay);
+      overlay.destroy();
+    }
+  });
+}
+
+createModal('Confirm', 'Press Escape to dismiss this dialog.');
+renderer.start();
+```

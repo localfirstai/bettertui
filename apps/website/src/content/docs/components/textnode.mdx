@@ -1,0 +1,156 @@
+---
+title: TextNode
+description: Composable styled-text node for building rich inline markup trees
+---
+
+`TextNode` is the building block for complex styled text in BetterTUI. It forms a tree of styled chunks that is serialised to ANSI once per render frame. Use it when you need deeply nested or dynamically updating styled text structures inside a `Text` renderable.
+
+## Usage
+
+```ts
+import { Text, TextNode, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const display = new Text(renderer, { width: 60, wrapMode: 'word' });
+
+const header = new TextNode({ fg: '#7aa2f7', bold: true });
+header.add('Status: ');
+
+const status = new TextNode({ fg: '#9ece6a' });
+status.add('OK');
+
+header.add(status);
+display.rootTextNode.add(header);
+
+renderer.root.add(display);
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new TextNode(options?: TextNodeOptions)
+```
+
+## Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `id` | `string` | Optional identifier |
+| `fg` | `string` | Foreground color for this node and its descendants |
+| `bg` | `string` | Background color for this node |
+| `bold` | `boolean` | Bold attribute |
+| `italic` | `boolean` | Italic attribute |
+| `underline` | `boolean` | Underline attribute |
+| `dim` | `boolean` | Dim / muted attribute |
+| `strikethrough` | `boolean` | Strikethrough attribute |
+| `blink` | `boolean` | Blink attribute |
+
+## Methods
+
+```ts
+node.add(child: string | TextNode): TextNode
+node.clear(): void        // Remove all children
+node.toAnsi(): string     // Serialise to an ANSI string
+node.isDirty              // True when the subtree has unsaved changes
+```
+
+## Dynamic Updates
+
+Mutating a `TextNode`'s children marks the tree dirty; the `Text` lifecycle pass picks up the change and pushes an updated ANSI string to the engine on the next frame:
+
+```ts
+const counter = new TextNode({ fg: '#f7768e', bold: true });
+counter.add('0');
+display.rootTextNode.add(counter);
+
+let n = 0;
+setInterval(() => {
+  counter.clear();
+  counter.add(String(++n));
+}, 1000);
+```
+
+## Factory Methods
+
+```ts
+// Create a node with inline children
+const node = TextNode.fromNodes(
+  [
+    new TextNode({ bold: true }).add('Bold'),
+    ' and ',
+    new TextNode({ fg: '#9ece6a' }).add('green'),
+  ],
+  { fg: '#c0caf5' }
+);
+```
+
+## Attaching to Text
+
+TextNodes are attached through `text.rootTextNode`:
+
+```ts
+const text = new Text(renderer, { width: 80 });
+
+const root = text.rootTextNode;   // RootTextNode extends TextNode
+
+root.add(new TextNode({ bold: true }).add('Title'));
+root.add('\n');
+root.add(new TextNode({ fg: '#a9b1d6' }).add('Description paragraph'));
+```
+
+## Examples
+
+### Status Line
+
+```ts
+const statusLine = new Text(renderer, { width: '100%', height: 1 });
+
+const icon  = new TextNode({ fg: '#9ece6a' });
+const label = new TextNode({ fg: '#a9b1d6' });
+const value = new TextNode({ fg: '#7aa2f7', bold: true });
+
+icon.add('● ');
+label.add('Connected — ');
+value.add('127.0.0.1:3000');
+
+statusLine.rootTextNode.add(icon);
+statusLine.rootTextNode.add(label);
+statusLine.rootTextNode.add(value);
+renderer.root.add(statusLine);
+```
+
+### Live Counter
+
+```ts
+const text  = new Text(renderer, { width: 30 });
+const count = new TextNode({ fg: '#e0af68', bold: true });
+count.add('0');
+
+text.rootTextNode.add(new TextNode({ fg: '#a9b1d6' }).add('Frame: '));
+text.rootTextNode.add(count);
+
+let frame = 0;
+setInterval(() => {
+  count.clear();
+  count.add(String(++frame));
+}, 100);
+
+renderer.root.add(text);
+```
+
+### Nested Style Inheritance
+
+```ts
+// Inner nodes inherit and override ancestor styles
+const outer = new TextNode({ fg: '#c0caf5' });
+const inner = new TextNode({ fg: '#7aa2f7', bold: true });
+
+inner.add('highlighted');
+outer.add('plain ');
+outer.add(inner);
+outer.add(' plain again');
+
+display.rootTextNode.add(outer);
+```

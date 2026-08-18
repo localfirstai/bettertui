@@ -1,66 +1,184 @@
 ---
 title: Box
-description: Flexbox container component
+description: Flexbox container — the primary layout primitive in BetterTUI
 ---
 
-The `Box` component is the primary layout container. It uses CSS Flexbox.
+`Box` is the fundamental layout container. Every component in BetterTUI is (or extends) a `Box`. It uses [Taffy](https://github.com/DioxusLabs/taffy) (Rust flexbox/grid) for layout.
 
 ## Usage
 
-```tsx
-import { Box, Text } from '@bettertui/react';
+```ts
+import { Box, Text, createCliRenderer } from '@bettertui/core';
 
-function App() {
-  return (
-    <Box flexDirection="row" gap={1}>
-      <Text>Left</Text>
-      <Text>Right</Text>
-    </Box>
-  );
-}
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const container = new Box(renderer, {
+  flexDirection: 'row',
+  gap: 2,
+  padding: 1,
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#7aa2f7',
+});
+
+container.add(new Text(renderer, { content: 'Left', fg: '#a9b1d6' }));
+container.add(new Text(renderer, { content: 'Right', fg: '#a9b1d6' }));
+renderer.root.add(container);
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Box(renderer: CliRenderer, options?: BoxOptions)
 ```
 
 ## Props
 
+### Layout
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `flexDirection` | `'row' \| 'column'` | `'column'` | Main axis direction |
-| `justifyContent` | `string` | — | Main axis alignment |
-| `alignItems` | `string` | — | Cross axis alignment |
-| `flexWrap` | `string` | — | Wrap behavior |
-| `flexGrow` | `number` | — | Grow factor |
-| `flexShrink` | `number` | — | Shrink factor |
-| `width` | `number \| string` | — | Width in columns |
-| `height` | `number \| string` | — | Height in rows |
-| `padding` | `number \| object` | `0` | Inner spacing |
-| `margin` | `number \| object` | `0` | Outer spacing |
+| `flexDirection` | `'row' \| 'column' \| 'row-reverse' \| 'column-reverse'` | `'row'` | Main axis direction |
+| `justifyContent` | `'flex-start' \| 'center' \| 'flex-end' \| 'space-between' \| 'space-around' \| 'space-evenly'` | `'flex-start'` | Main axis alignment |
+| `alignItems` | `'flex-start' \| 'center' \| 'flex-end' \| 'stretch' \| 'baseline'` | `'stretch'` | Cross axis alignment |
+| `alignSelf` | same as `alignItems` | — | Override for this box |
+| `flexGrow` | `number` | `0` | Grow factor |
+| `flexShrink` | `number` | `1` | Shrink factor |
+| `flexBasis` | `number \| string` | `'auto'` | Base size before grow/shrink |
+| `flexWrap` | `'nowrap' \| 'wrap'` | `'nowrap'` | Wrap children |
+| `overflow` | `'visible' \| 'hidden' \| 'scroll'` | `'visible'` | Clip overflow |
 | `gap` | `number` | `0` | Gap between children |
-| `borderStyle` | `string` | — | Border style |
+| `rowGap` | `number` | `0` | Row gap |
+| `columnGap` | `number` | `0` | Column gap |
+
+### Sizing
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number \| string` | `'auto'` | Width in columns or `'100%'` |
+| `height` | `number \| string` | `'auto'` | Height in rows or `'100%'` |
+| `minWidth` | `number \| string` | — | Minimum width |
+| `maxWidth` | `number \| string` | — | Maximum width |
+| `minHeight` | `number \| string` | — | Minimum height |
+| `maxHeight` | `number \| string` | — | Maximum height |
+
+### Spacing
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `padding` | `number` | `0` | All sides |
+| `paddingX` | `number` | — | Left + right |
+| `paddingY` | `number` | — | Top + bottom |
+| `paddingTop` | `number` | — | Top only |
+| `paddingRight` | `number` | — | Right only |
+| `paddingBottom` | `number` | — | Bottom only |
+| `paddingLeft` | `number` | — | Left only |
+| `margin` | `number` | `0` | All sides |
+| `marginX` | `number` | — | Left + right |
+| `marginY` | `number` | — | Top + bottom |
+| `marginTop` | `number` | — | Top only |
+| `marginRight` | `number` | — | Right only |
+| `marginBottom` | `number` | — | Bottom only |
+| `marginLeft` | `number` | — | Left only |
+
+### Appearance
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `backgroundColor` | `string` | — | CSS color or hex |
+| `border` | `boolean \| BorderSide[]` | `false` | Enable border |
+| `borderStyle` | `'single' \| 'double' \| 'round' \| 'thick' \| 'dashed' \| 'ascii'` | `'single'` | Border style |
 | `borderColor` | `string` | — | Border color |
+| `focusedBorderColor` | `string` | — | Border color when focused |
+| `title` | `string` | — | Title in the top border |
+| `titleAlignment` | `'left' \| 'center' \| 'right'` | `'left'` | Title alignment |
+| `bottomTitle` | `string` | — | Title in the bottom border |
+| `opacity` | `number` | `1` | `0`–`1` |
+| `visible` | `boolean` | `true` | Show or hide |
+| `zIndex` | `number` | `0` | Paint order |
+
+### Positioning
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `position` | `'relative' \| 'absolute'` | `'relative'` | Positioning mode |
+| `top` | `number \| string` | — | Top offset (absolute only) |
+| `right` | `number \| string` | — | Right offset |
+| `bottom` | `number \| string` | — | Bottom offset |
+| `left` | `number \| string` | — | Left offset |
+
+## Methods
+
+```ts
+box.add(child: Box): void         // Append a child
+box.remove(child: Box): void      // Remove a child
+box.destroy(): void               // Destroy the box and release engine nodes
+```
 
 ## Examples
 
 ### Row Layout
 
-```tsx
-<Box flexDirection="row" gap={2}>
-  <Box flexGrow={1}><Text>Left</Text></Box>
-  <Box flexGrow={1}><Text>Right</Text></Box>
-</Box>
+```ts
+const row = new Box(renderer, {
+  flexDirection: 'row',
+  gap: 2,
+  width: '100%',
+});
+
+const left  = new Box(renderer, { flexGrow: 1, backgroundColor: '#1a1b26' });
+const right = new Box(renderer, { flexGrow: 1, backgroundColor: '#24283b' });
+
+row.add(left);
+row.add(right);
+renderer.root.add(row);
 ```
 
 ### Centered Content
 
-```tsx
-<Box justifyContent="center" alignItems="center" width="100%" height="100%">
-  <Text>Centered</Text>
-</Box>
+```ts
+const centered = new Box(renderer, {
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '100%',
+  height: '100%',
+});
+
+centered.add(new Text(renderer, { content: 'Centered!', fg: '#9ece6a' }));
+renderer.root.add(centered);
 ```
 
-### Bordered Container
+### Bordered Container with Title
 
-```tsx
-<Box borderStyle="round" padding={1}>
-  <Text>Content</Text>
-</Box>
+```ts
+const panel = new Box(renderer, {
+  flexDirection: 'column',
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#565f89',
+  title: ' My Panel ',
+  titleAlignment: 'center',
+  padding: 1,
+  gap: 1,
+});
+
+renderer.root.add(panel);
+```
+
+### Absolute Positioning
+
+```ts
+const overlay = new Box(renderer, {
+  position: 'absolute',
+  top: 5,
+  left: 10,
+  width: 40,
+  height: 10,
+  backgroundColor: '#1a1b26',
+  border: true,
+  zIndex: 100,
+});
+
+renderer.root.add(overlay);
 ```

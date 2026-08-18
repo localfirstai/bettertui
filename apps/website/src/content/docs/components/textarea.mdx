@@ -1,0 +1,154 @@
+---
+title: Textarea
+description: Multi-line text editor with cursor, word-wrap, syntax support and selection
+---
+
+`Textarea` is a multi-line text editor widget. It supports cursor movement across lines, word-wrap modes, text selection, and optional read-only mode.
+
+## Usage
+
+```ts
+import { Textarea, InputEvents, RenderableEvents, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const editor = new Textarea(renderer, {
+  width: '100%',
+  height: 10,
+  initialValue: 'Type here…',
+  placeholder: 'Start typing…',
+  placeholderColor: '#565f89',
+  textColor: '#c0caf5',
+  cursorColor: '#7aa2f7',
+  wrapMode: 'word',
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#414868',
+});
+
+editor.on(InputEvents.CHANGE, (value: string) => {
+  console.log('Changed:', value);
+});
+
+renderer.root.add(editor);
+editor.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Textarea(renderer: CliRenderer, options?: TextareaOptions)
+```
+
+## Props
+
+`TextareaOptions` extends `BoxOptions` with:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `initialValue` | `string` | `''` | Initial text content |
+| `placeholder` | `string` | `''` | Placeholder shown when empty |
+| `placeholderColor` | `string` | — | Placeholder text color |
+| `textColor` | `string` | — | Text color |
+| `focusedTextColor` | `string` | — | Text color when focused |
+| `cursorColor` | `string` | — | Cursor highlight color |
+| `backgroundColor` | `string` | — | Background color |
+| `focusedBackgroundColor` | `string` | — | Background color when focused |
+| `wrapMode` | `'none' \| 'char' \| 'word'` | `'none'` | Line-wrapping strategy |
+| `showCursor` | `boolean` | `true` | Show cursor when focused |
+| `readonly` | `boolean` | `false` | Disable editing |
+| `selectionBg` | `string` | — | Selection highlight background |
+| `selectionFg` | `string` | — | Selection highlight foreground |
+
+## Properties
+
+```ts
+editor.value       // Get / set the full text content
+editor.focused     // Whether the editor has focus
+```
+
+## Methods
+
+```ts
+editor.focus(): void
+editor.blur(): void
+editor.destroy(): void
+```
+
+## Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `InputEvents.INPUT` | `string` | Every keystroke |
+| `InputEvents.CHANGE` | `string` | Value committed on blur |
+| `InputEvents.ENTER` | `string` | Enter key in non-wrap mode |
+| `RenderableEvents.FOCUSED` | — | Editor gains focus |
+| `RenderableEvents.BLURRED` | — | Editor loses focus |
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `←` / `→` | Move cursor left / right |
+| `↑` / `↓` | Move cursor up / down |
+| `Home` / `End` | Start / end of line |
+| `Page Up` / `Page Down` | Move by viewport height |
+| `Backspace` | Delete character before cursor |
+| `Delete` | Delete character at cursor |
+| `Enter` | Insert newline |
+
+## Examples
+
+### Read-only Text Display
+
+```ts
+const viewer = new Textarea(renderer, {
+  width: '100%',
+  height: 20,
+  initialValue: longText,
+  readonly: true,
+  wrapMode: 'word',
+  textColor: '#c0caf5',
+  border: true,
+  borderStyle: 'single',
+});
+
+renderer.root.add(viewer);
+viewer.focus();
+```
+
+### Multi-line Input Form
+
+```ts
+import { Box, Text, Textarea, InputEvents, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const form = new Box(renderer, {
+  flexDirection: 'column',
+  padding: 1,
+  gap: 1,
+  width: 60,
+});
+
+form.add(new Text(renderer, { content: 'Notes:', fg: '#a9b1d6' }));
+
+const notes = new Textarea(renderer, {
+  width: '100%',
+  height: 8,
+  wrapMode: 'word',
+  placeholder: 'Enter your notes here…',
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#565f89',
+  focusedBorderColor: '#7aa2f7',
+});
+
+notes.on(InputEvents.CHANGE, (v) => console.log('Notes:', v));
+
+form.add(notes);
+renderer.root.add(form);
+notes.focus();
+renderer.start();
+```

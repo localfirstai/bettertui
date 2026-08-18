@@ -16,6 +16,16 @@ import {
   TimeToFirstDraw,
   createCliRenderer,
 } from "@bettertui/core";
+import * as boxComponentExample from "./component-examples/box.example";
+import * as canvasComponentExample from "./component-examples/canvas.example";
+import * as inputComponentExample from "./component-examples/input.example";
+import * as scrollBoxComponentExample from "./component-examples/scrollBox.example";
+import * as selectComponentExample from "./component-examples/select.example";
+import * as sliderComponentExample from "./component-examples/slider.example";
+import * as tabSelectComponentExample from "./component-examples/tabSelect.example";
+import * as textComponentExample from "./component-examples/text.example";
+import * as textNodeComponentExample from "./component-examples/textNode.example";
+import * as textareaComponentExample from "./component-examples/textarea.example";
 import {
   CATEGORY_LABELS,
   DEFAULT_THEME_MODE,
@@ -57,6 +67,68 @@ function section(
 }
 
 const EXAMPLE_SECTIONS: ExampleSection[] = [
+  section("Components", [
+    {
+      name: "Box — Layouts",
+      description: "Flexbox containers: row/column, centered, bordered, titled, absolute",
+      run: boxComponentExample.run,
+      destroy: boxComponentExample.destroy,
+    },
+    {
+      name: "Text — Styled Content",
+      description: "Styled text: color helpers, wrapping, truncation, live TextNode updates",
+      run: textComponentExample.run,
+      destroy: textComponentExample.destroy,
+    },
+    {
+      name: "Input — Text Field",
+      description: "Single-line input with cursor, placeholder, password masking and events",
+      run: inputComponentExample.run,
+      destroy: inputComponentExample.destroy,
+    },
+    {
+      name: "Select — List Picker",
+      description: "Keyboard-navigable list with descriptions and a detail pane",
+      run: selectComponentExample.run,
+      destroy: selectComponentExample.destroy,
+    },
+    {
+      name: "Slider — Range Input",
+      description: "Horizontal and vertical sliders with live value display",
+      run: sliderComponentExample.run,
+      destroy: sliderComponentExample.destroy,
+    },
+    {
+      name: "TabSelect — Tab Navigation",
+      description: "Horizontal tab bar with underline and content pane switching",
+      run: tabSelectComponentExample.run,
+      destroy: tabSelectComponentExample.destroy,
+    },
+    {
+      name: "ScrollBox — Scrollable List",
+      description: "Scrollable container with column headers and dynamic row insertion",
+      run: scrollBoxComponentExample.run,
+      destroy: scrollBoxComponentExample.destroy,
+    },
+    {
+      name: "Canvas (Screen) — App Shell",
+      description: "Full-viewport layout with header, sidebar, body and footer slots",
+      run: canvasComponentExample.run,
+      destroy: canvasComponentExample.destroy,
+    },
+    {
+      name: "Textarea — Multi-line Editor",
+      description: "Multi-line text editor with word-wrap, cursor and live character stats",
+      run: textareaComponentExample.run,
+      destroy: textareaComponentExample.destroy,
+    },
+    {
+      name: "TextNode — Rich Inline Markup",
+      description: "Composable styled-text nodes: nesting, attributes, live mutations",
+      run: textNodeComponentExample.run,
+      destroy: textNodeComponentExample.destroy,
+    },
+  ]),
   section("Layout & Composition", [
     {
       name: "Input & Select Layout Demo",

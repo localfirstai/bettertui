@@ -1,0 +1,164 @@
+---
+title: Canvas (Screen)
+description: Full-viewport layout manager with header, body and footer slots
+---
+
+`Screen` (exported from `@bettertui/core`) creates a full-terminal layout with optional `header`, `body`, and `footer` slots. The body always fills the remaining height using `flexGrow: 1`.
+
+## Usage
+
+```ts
+import { Screen, Text, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const screen = new Screen(renderer, {
+  backgroundColor: '#1a1b26',
+  header: {
+    height: 3,
+    backgroundColor: '#24283b',
+    border: true,
+    borderStyle: 'single',
+    borderColor: '#414868',
+    title: ' My App ',
+    titleAlignment: 'center',
+  },
+  body: {
+    flexDirection: 'column',
+    padding: 1,
+    gap: 1,
+  },
+  footer: {
+    height: 1,
+    backgroundColor: '#414868',
+    alignItems: 'center',
+  },
+});
+
+screen.body.add(new Text(renderer, { content: 'Main content area', fg: '#c0caf5' }));
+screen.header?.add(new Text(renderer, { content: 'v1.0.0', fg: '#565f89' }));
+screen.footer?.add(new Text(renderer, { content: ' Press ctrl+c to quit', fg: '#a9b1d6' }));
+
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Screen(renderer: CliRenderer, options?: CanvasOptions)
+```
+
+## Props
+
+### CanvasOptions
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `id` | `string` | Optional element ID |
+| `backgroundColor` | `string` | Full-screen background color |
+| `header` | `CanvasHeaderOptions` | Header slot configuration |
+| `body` | `CanvasBodyOptions` | Body slot configuration |
+| `footer` | `CanvasFooterOptions` | Footer slot configuration |
+
+### CanvasHeaderOptions / CanvasFooterOptions
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `id` | `string` | — | Element ID |
+| `height` | `number` | `3` | Row height |
+| `backgroundColor` | `string` | — | Slot background color |
+| `border` | `boolean \| BorderSide[]` | — | Enable border |
+| `borderStyle` | `string` | — | Border style |
+| `borderColor` | `string` | — | Border color |
+| `title` | `string` | — | Title in top border |
+| `titleAlignment` | `'left' \| 'center' \| 'right'` | `'left'` | Title alignment |
+| `alignItems` | `string` | `'center'` | Cross-axis alignment |
+| `justifyContent` | `string` | `'flex-start'` | Main-axis alignment |
+| `padding` | `number` | — | Inner padding |
+| `paddingX` | `number` | — | Left + right padding |
+
+### CanvasBodyOptions
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `id` | `string` | — | Element ID |
+| `backgroundColor` | `string` | — | Body background color |
+| `flexDirection` | `'row' \| 'column'` | `'column'` | Main axis direction |
+| `alignItems` | `string` | `'stretch'` | Cross-axis alignment |
+| `justifyContent` | `string` | — | Main-axis alignment |
+| `overflow` | `string` | — | Overflow strategy |
+| `gap` | `number` | — | Gap between children |
+| `padding` | `number` | — | Inner padding |
+
+## Properties
+
+```ts
+screen.container  // The root Box (full-screen)
+screen.header     // Header Box or null
+screen.body       // Body Box (always present)
+screen.footer     // Footer Box or null
+```
+
+## Events
+
+```ts
+import { ScreenEvents } from '@bettertui/core';
+
+screen.on(ScreenEvents.RESIZE, ({ width, height }) => {
+  console.log('Terminal resized:', width, height);
+});
+```
+
+## Examples
+
+### Minimal App Shell
+
+```ts
+const screen = new Screen(renderer, {
+  backgroundColor: '#1a1b26',
+  header: { height: 3, title: ' BetterTUI App ' },
+  footer: { height: 1 },
+});
+
+screen.footer?.add(new Text(renderer, { content: ' q: quit  ?: help', fg: '#565f89' }));
+```
+
+### Split Body (Sidebar + Main)
+
+```ts
+const screen = new Screen(renderer, {
+  backgroundColor: '#1a1b26',
+  body: { flexDirection: 'row' },
+});
+
+const sidebar = new Box(renderer, {
+  width: 24,
+  flexShrink: 0,
+  backgroundColor: '#24283b',
+  border: ['right'],
+  borderColor: '#414868',
+  flexDirection: 'column',
+  padding: 1,
+});
+
+const main = new Box(renderer, {
+  flexGrow: 1,
+  padding: 1,
+  flexDirection: 'column',
+});
+
+screen.body.add(sidebar);
+screen.body.add(main);
+```
+
+### Respond to Resize
+
+```ts
+import { ScreenEvents } from '@bettertui/core';
+
+const screen = new Screen(renderer, { /* ... */ });
+
+screen.on(ScreenEvents.RESIZE, ({ width, height }) => {
+  console.log(`Terminal is now ${width}×${height}`);
+});
+```

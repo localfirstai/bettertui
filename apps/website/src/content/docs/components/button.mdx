@@ -1,11 +1,13 @@
 ---
 title: Button
-description: Interactive button component
+description: Interactive button component — planned for @bettertui/react
 ---
 
-The `Button` component provides an interactive button with focus and press states.
+> **Status: Planned** — `Button` is designed for the upcoming `@bettertui/react` adapter. It is not yet available in `@bettertui/core`. Check [Select](/docs/components/select) for a keyboard-navigable alternative today.
 
-## Usage
+`Button` will provide an interactive, focusable button with press and focus states.
+
+## Planned API
 
 ```tsx
 import { Button } from '@bettertui/react';
@@ -16,7 +18,7 @@ function App() {
       <Button onPress={() => console.log('clicked')}>
         Click me
       </Button>
-      <Button onPress={() => process.exit(0)} color="red">
+      <Button onPress={() => process.exit(0)} variant="danger">
         Quit
       </Button>
     </Box>
@@ -24,7 +26,7 @@ function App() {
 }
 ```
 
-## Props
+## Planned Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -32,21 +34,40 @@ function App() {
 | `onFocus` | `() => void` | — | Focus handler |
 | `onBlur` | `() => void` | — | Blur handler |
 | `isDisabled` | `boolean` | `false` | Disable interaction |
-| `color` | `string` | — | Button color |
+| `variant` | `'default' \| 'danger' \| 'primary'` | `'default'` | Visual variant |
 
-## Keyboard Interaction
+## Keyboard Interaction (planned)
 
-- **Enter** / **Space**: Press the button
-- **Tab**: Move focus to next focusable element
-- **Shift+Tab**: Move focus to previous focusable element
+- **Enter** / **Space** — Press the button
+- **Tab** — Move focus forward
+- **Shift+Tab** — Move focus backward
 
-## Focus Styling
+## Vanilla Alternative
 
-```tsx
-<Button
-  onPress={handlePress}
-  focusStyle={{ borderStyle: 'double', borderColor: 'cyan' }}
->
-  Focusable Button
-</Button>
+Until the React adapter ships, use a focusable `Box` with a `keydown` handler:
+
+```ts
+import { Box, Text, RenderableEvents, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const btn = new Box(renderer, {
+  border: true,
+  borderStyle: 'round',
+  padding: 1,
+  focusable: true,
+  focusedBorderColor: '#7aa2f7',
+});
+
+btn.add(new Text(renderer, { content: 'Press Enter', fg: '#c0caf5' }));
+
+btn.on(RenderableEvents.FOCUSED, () => {
+  btn.onKeyDown = (key) => {
+    if (key.name === 'return') console.log('Button pressed!');
+  };
+});
+
+renderer.root.add(btn);
+btn.focus();
+renderer.start();
 ```

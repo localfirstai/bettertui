@@ -1,11 +1,13 @@
 ---
 title: Tree
-description: Hierarchical tree view component
+description: Hierarchical tree view component — planned for @bettertui/react
 ---
 
-The `Tree` component displays hierarchical data with expand/collapse.
+> **Status: Planned** — `Tree` is designed for the upcoming `@bettertui/react` adapter. It is not yet available in `@bettertui/core`.
 
-## Usage
+`Tree` will display hierarchical data with expand / collapse and keyboard navigation.
+
+## Planned API
 
 ```tsx
 import { Tree } from '@bettertui/react';
@@ -20,9 +22,7 @@ const data = {
         { name: 'index.tsx' },
       ],
     },
-    {
-      name: 'package.json',
-    },
+    { name: 'package.json' },
   ],
 };
 
@@ -36,15 +36,15 @@ function App() {
 }
 ```
 
-## Props
+## Planned Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `data` | `TreeNode` | — | Tree data |
-| `onSelect` | `(node: TreeNode) => void` | — | Selection handler |
-| `onToggle` | `(node: TreeNode) => void` | — | Toggle handler |
+| `data` | `TreeNode` | — | Tree data (root node) |
+| `onSelect` | `(node: TreeNode) => void` | — | Node selection handler |
+| `onToggle` | `(node: TreeNode) => void` | — | Expand / collapse handler |
 
-## Tree Node
+## Planned TreeNode Type
 
 ```ts
 interface TreeNode {
@@ -55,10 +55,49 @@ interface TreeNode {
 }
 ```
 
-## Keyboard Navigation
+## Planned Keyboard Navigation
 
-- **Up/Down**: Navigate nodes
-- **Left**: Collapse node or move to parent
-- **Right**: Expand node or move to child
-- **Enter**: Select node
-- **Home/End**: Jump to first/last node
+| Key | Action |
+|-----|--------|
+| `Up` / `Down` | Navigate nodes |
+| `Left` | Collapse or move to parent |
+| `Right` | Expand or move to first child |
+| `Enter` | Select node |
+| `Home` / `End` | Jump to first / last node |
+
+## Vanilla Alternative
+
+Build a tree view using `Box` and `Text` with expand / collapse state:
+
+```ts
+import { Box, Text, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+function buildTree(
+  renderer: typeof renderer,
+  nodes: Array<{ name: string; children?: Array<{ name: string }> }>,
+  depth = 0,
+) {
+  const container = new Box(renderer, { flexDirection: 'column' });
+  for (const node of nodes) {
+    const indent = '  '.repeat(depth);
+    const prefix = node.children ? '▼ ' : '  ';
+    const item = new Text(renderer, {
+      content: `${indent}${prefix}${node.name}`,
+      fg: node.children ? '#7aa2f7' : '#c0caf5',
+    });
+    container.add(item);
+    if (node.children) {
+      container.add(buildTree(renderer, node.children, depth + 1));
+    }
+  }
+  return container;
+}
+
+renderer.root.add(buildTree(renderer, [
+  { name: 'src', children: [{ name: 'App.tsx' }, { name: 'index.tsx' }] },
+  { name: 'package.json' },
+]));
+renderer.start();
+```

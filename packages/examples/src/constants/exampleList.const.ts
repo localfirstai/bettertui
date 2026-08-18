@@ -16,6 +16,7 @@ export const EXAMPLES_BOX_TITLE = "Examples";
 export const EXAMPLES_INDENT = "  ";
 
 export const CATEGORY_LABELS: Record<ExampleCategory, string> = {
+  Components: "Components",
   "Layout & Composition": "Layout & Composition",
   "Input & Editing": "Input & Editing",
   "Scroll & Navigation": "Scroll & Navigation",
