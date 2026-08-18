@@ -429,6 +429,36 @@ impl Viewport {
             self.height.saturating_add(padding * 2),
         )
     }
+
+    /// Intersect with a rectangle whose origin may be negative (signed coordinates).
+    /// Nodes whose layout positions are off-screen (scrolled above the top) have
+    /// negative absolute positions; this variant handles them without clamping.
+    pub fn intersect_signed(&self, x: i32, y: i32, w: u16, h: u16) -> Option<Viewport> {
+        let vx = self.x as i32;
+        let vy = self.y as i32;
+        let vr = vx + self.width as i32;
+        let vb = vy + self.height as i32;
+        let ix = x.max(vx);
+        let iy = y.max(vy);
+        let ir = (x + w as i32).min(vr);
+        let ib = (y + h as i32).min(vb);
+        if ir > ix && ib > iy {
+            Some(Viewport::new(ix as u16, iy as u16, (ir - ix) as u16, (ib - iy) as u16))
+        } else {
+            None
+        }
+    }
+
+    /// Overlap test for a rectangle whose origin may be negative (signed coordinates).
+    pub fn contains_rect_signed(&self, x: i32, y: i32, w: u16, h: u16) -> bool {
+        let vx = self.x as i32;
+        let vy = self.y as i32;
+        let vr = vx + self.width as i32;
+        let vb = vy + self.height as i32;
+        let x2 = x + w as i32;
+        let y2 = y + h as i32;
+        x2 > vx && x < vr && y2 > vy && y < vb
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1751,11 +1781,33 @@ fn build_node(
 
     let layout = layout_results.get(&id).cloned().unwrap_or_default();
 
+    // Absolute screen coordinates for this node, accounting for accumulated
+    // parent translations.  Two variants:
+    //   - raw (signed i32): used for culling so that off-screen nodes with
+    //     negative positions are correctly rejected.
+    //   - clamped (u16): used for paint clip bounds which require non-negative.
+    let node_raw_abs_x: i32 = layout.x as i32 + accum_tx + node.transform.translate_x;
+    let node_raw_abs_y: i32 = layout.y as i32 + accum_ty + node.transform.translate_y;
+    let node_abs_x = node_raw_abs_x.max(0) as u16;
+    let node_abs_y = node_raw_abs_y.max(0) as u16;
+
+    // Child accumulator: absolute offset passed to direct children so that
+    // child.layout.x/y + child_accum = child's absolute screen position.
+    // Subtracting scroll offsets here means children that are scrolled into
+    // view land at the correct screen coordinates automatically.
+    let child_accum_tx = accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
+    let child_accum_ty = accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
+
     let (_current_viewport, child_viewport) = match viewport {
         None => (None, None),
         Some(vp) => {
+            // Narrow the incoming viewport using this node's *absolute* bounds.
+            // Taffy layout positions are parent-relative, so using layout.x/y
+            // directly would mix coordinate spaces and produce wrong intersections
+            // for nested containers.  Signed intersection handles nodes that are
+            // partially or fully above the visible area (negative raw_abs positions).
             let narrowed = if flags_need_clip(node) {
-                vp.intersect(&Viewport::new(layout.x, layout.y, layout.width, layout.height))
+                vp.intersect_signed(node_raw_abs_x, node_raw_abs_y, layout.width, layout.height)
             } else {
                 Some(*vp)
             };
@@ -1763,15 +1815,14 @@ fn build_node(
             match narrowed {
                 None => return, // outside clip → cull entire subtree
                 Some(nv) => {
-                    if !nv.contains_rect(layout.x, layout.y, layout.width, layout.height) {
+                    if !nv.contains_rect_signed(node_raw_abs_x, node_raw_abs_y, layout.width, layout.height) {
                         return; // outside viewport → cull subtree
                     }
-                    let cv = if node.overflow == Overflow::Scroll {
-                        nv.offset(node.state.scroll_x, node.state.scroll_y)
-                    } else {
-                        nv
-                    };
-                    (Some(nv), Some(cv))
+                    // Pass the absolute viewport to children unchanged.  Because
+                    // child_accum already subtracts any scroll offset, each child's
+                    // absolute screen position (layout.xy + child_accum) is compared
+                    // directly against this absolute viewport — no separate offset step.
+                    (Some(nv), Some(nv))
                 }
             }
         }
@@ -1803,7 +1854,7 @@ fn build_node(
     bounds = bounds.with_border(layout.border_top, layout.border_right, layout.border_bottom, layout.border_left);
 
     let clip = if flags.contains(PaintFlags::NEEDS_CLIP) {
-        Some(ClipBounds::new(layout.x, layout.y, layout.width, layout.height))
+        Some(ClipBounds::new(node_abs_x, node_abs_y, layout.width, layout.height))
     } else {
         None
     };
@@ -1836,10 +1887,19 @@ fn build_node(
                 .children
                 .iter()
                 .filter_map(|&cid| {
-                    let layout = layout_results.get(&cid)?;
+                    let child_layout = layout_results.get(&cid)?;
+                    // Compute each child's absolute screen position using child_accum so
+                    // that the binary search operates in the same coordinate space as the
+                    // absolute viewport passed in `vp`.
                     let (start, size) = match primary {
-                        PrimaryAxis::Column => (layout.y, layout.height),
-                        PrimaryAxis::Row => (layout.x, layout.width),
+                        PrimaryAxis::Column => {
+                            let abs = (child_layout.y as i32 + child_accum_ty).max(0) as u16;
+                            (abs, child_layout.height)
+                        }
+                        PrimaryAxis::Row => {
+                            let abs = (child_layout.x as i32 + child_accum_tx).max(0) as u16;
+                            (abs, child_layout.width)
+                        }
                     };
                     Some(PositionedChild { id: cid, start, size })
                 })
@@ -1853,9 +1913,6 @@ fn build_node(
             children
         }
     };
-
-    let child_accum_tx = accum_tx + layout.x as i32 - node.state.scroll_x + node.transform.translate_x;
-    let child_accum_ty = accum_ty + layout.y as i32 - node.state.scroll_y + node.transform.translate_y;
 
     let accumulated_parent_style = crate::tree::Style {
         fg: resolved_style.fg,
