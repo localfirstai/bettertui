@@ -324,12 +324,11 @@ impl Color {
                 let g = parts[1].parse::<u8>().ok();
                 let b = parts[2].parse::<u8>().ok();
                 if let (Some(r), Some(g), Some(b)) = (r, g, b) {
-                    if parts.len() >= 4 {
-                        if let Some(a) = parts[3].parse::<f32>().ok() {
-                            if a == 0.0 {
-                                return Some(Self::Default);
-                            }
-                        }
+                    if parts.len() >= 4
+                        && let Ok(a) = parts[3].parse::<f32>()
+                        && a == 0.0
+                    {
+                        return Some(Self::Default);
                     }
                     return Some(Self::Rgb { r, g, b });
                 }

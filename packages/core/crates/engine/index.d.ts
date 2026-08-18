@@ -30,6 +30,14 @@ export declare class NativeEngine {
   insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
+  /**
+   * Set the scroll offset on a node.
+   *
+   * The offset is applied during render-tree building: all children of the
+   * node are shifted by `(-scroll_x, -scroll_y)` in screen coordinates.
+   * Combine with `overflow: "hidden"` on the same node to achieve clipping.
+   */
+  setScrollOffset(id: number, scrollX: number, scrollY: number): void;
   hitGridCheck(x: number, y: number): number;
   hitGridIsDirty(): boolean;
   hitGridClearCurrent(): void;

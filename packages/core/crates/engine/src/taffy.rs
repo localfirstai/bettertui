@@ -1824,6 +1824,8 @@ fn build_node(
 
     tree.push(obj);
 
+    let self_idx = tree.len() - 1;
+
     let child_clip_x = if flags.contains(PaintFlags::NEEDS_CLIP) { layout.x } else { clip_x };
     let child_clip_y = if flags.contains(PaintFlags::NEEDS_CLIP) { layout.y } else { clip_y };
 
@@ -1884,6 +1886,12 @@ fn build_node(
             child_viewport.as_ref(),
             tree,
         );
+    }
+
+    // Back-fill subtree_size now that all descendants have been pushed.
+    let subtree_size = tree.len() - self_idx - 1;
+    if let Some(obj) = tree.objects_mut().get_mut(self_idx) {
+        obj.subtree_size = subtree_size;
     }
 }
 

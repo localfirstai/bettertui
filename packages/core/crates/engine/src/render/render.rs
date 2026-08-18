@@ -461,6 +461,10 @@ pub struct RenderObject {
     pub text_wrap: bool,
     pub overflow: Overflow,
     pub flags: PaintFlags,
+    /// Number of descendants in the flat DFS render list.
+    /// Used by the paint loop to know the range of each node's children
+    /// so scissor rects can be pushed before children and popped after.
+    pub subtree_size: usize,
 }
 
 impl RenderObject {
@@ -479,6 +483,7 @@ impl RenderObject {
             text_wrap: false,
             overflow: Overflow::Visible,
             flags: PaintFlags::empty(),
+            subtree_size: 0,
         }
     }
 
@@ -822,8 +827,34 @@ impl Painter {
         if full_clear {
             self.buffer.clear_with_bg(self.background_color);
         }
-        for obj in tree.objects() {
-            self.paint_object(obj, ctx);
+        self.scissor_stack.clear();
+
+        // Each entry is the flat-list index at which its scissor should be popped.
+        // Entries are in DFS order so the innermost scope always has the smallest
+        // pop index and sits at the back of the Vec.
+        let mut scissor_ends: Vec<usize> = Vec::new();
+        let objects = tree.objects();
+
+        for (i, obj) in objects.iter().enumerate() {
+            // Pop any scissors whose subtree has ended before this index.
+            while scissor_ends.last().is_some_and(|&end| i >= end) {
+                self.pop_scissor();
+                scissor_ends.pop();
+            }
+
+            self.paint_object_with_scissor(obj, ctx);
+
+            // Push scissor AFTER painting the node itself so its own background/
+            // border paint is not clipped, but its children are.
+            if let Some(clip) = &obj.clip {
+                self.push_scissor(clip.x, clip.y, clip.width, clip.height);
+                scissor_ends.push(i + obj.subtree_size + 1);
+            }
+        }
+
+        // Pop any scissors that outlast the last node.
+        for _ in &scissor_ends {
+            self.pop_scissor();
         }
     }
 
@@ -881,35 +912,6 @@ impl Painter {
         }
 
         if let Some(clipped) = ctx.clipped_bounds(&effective_bounds) {
-            self.paint_background(obj, &clipped);
-            self.paint_border(obj, &clipped);
-            self.paint_text(obj, &clipped);
-        }
-    }
-
-    fn paint_object(&mut self, obj: &RenderObject, ctx: &PaintContext) {
-        if !obj.is_visible() {
-            return;
-        }
-
-        if let Some(clip) = &obj.clip {
-            let mut child_ctx = ctx.clone();
-            child_ctx.push_clip(*clip);
-            self.paint_with_clip(obj, &child_ctx);
-        } else {
-            self.paint_with_clip(obj, ctx);
-        }
-    }
-
-    fn paint_with_clip(&mut self, obj: &RenderObject, ctx: &PaintContext) {
-        let translated = obj.translated_bounds();
-        let bounds = &translated;
-
-        if !ctx.is_visible(bounds) {
-            return;
-        }
-
-        if let Some(clipped) = ctx.clipped_bounds(bounds) {
             self.paint_background(obj, &clipped);
             self.paint_border(obj, &clipped);
             self.paint_text(obj, &clipped);
