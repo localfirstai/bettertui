@@ -210,7 +210,7 @@ vi.mock("bettertui_bindings", () => {
       });
     },
     getVersion() {
-      return "0.0.0-test";
+      return "0.1.0-test";
     },
   };
 });

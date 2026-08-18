@@ -1,7 +1,7 @@
 {
   "name": "bettertui",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "High-performance terminal UI framework powered by Rust and TypeScript",
   "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
