@@ -401,7 +401,7 @@ class SplitFooterStreamingDemo {
       case "code":
         renderable = new Code(this.renderer, {
           id: `sfs-stream-code-${this.nextRunId}`,
-          content: "",
+          code: "",
           filetype: "typescript",
           syntaxStyle: SURFACE_SYNTAX_STYLE,
           width: "100%",
@@ -545,14 +545,14 @@ class SplitFooterStreamingDemo {
 
   private async flushCodeRun(run: ActiveRun): Promise<void> {
     const renderable = run.renderable as Code;
-    renderable.content = run.content;
+    renderable.code = run.content;
     const targetRows = Math.max(1, (run.content.match(/\n/g) ?? []).length + 1);
     run.committedRows = Math.max(run.committedRows, targetRows);
   }
 
   private async flushMarkdownRun(run: ActiveRun, done: boolean): Promise<void> {
     const renderable = run.renderable as Markdown;
-    renderable.content = run.content;
+    renderable.markdown = run.content;
     const headings = (run.content.match(/^#{1,6}\s/gm) ?? []).length;
     const paragraphs = (run.content.match(/\n\n/g) ?? []).length + 1;
     const targetBlocks = headings + paragraphs;
