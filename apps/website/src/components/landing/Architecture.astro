@@ -18,7 +18,7 @@
     <div class="mx-auto max-w-3xl">
 
       <!-- ── Layer 1: Framework Adapters ──────────────────── -->
-      <div class="arch-glow-card arch-card-1 relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm">
+      <div class="arch-glow-card arch-card-1 relative rounded-2xl border bg-card p-6 shadow-sm">
         <div class="arch-glow-ring" aria-hidden="true"></div>
 
         <div
@@ -71,9 +71,13 @@
       </div>
 
       <!-- ── Layer 2: @bettertui/core ─────────────────────── -->
-      <div class="arch-glow-card arch-card-2 relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm">
+      <div class="arch-glow-card arch-card-2 relative rounded-2xl border bg-card p-6 shadow-sm">
         <div class="arch-glow-ring" aria-hidden="true"></div>
-        <div class="arch-left-bar bg-blue-500/50" aria-hidden="true" />
+
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"
+          aria-hidden="true"
+        />
 
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="flex items-center gap-3">
@@ -112,17 +116,16 @@
       </div>
 
       <!-- ── Layer 3: Rust Engine ──────────────────────────── -->
-      <div class="arch-glow-card arch-card-3 relative overflow-hidden rounded-2xl border bg-card p-6">
+      <div class="arch-glow-card arch-card-3 relative rounded-2xl border bg-card p-6">
         <div class="arch-glow-ring" aria-hidden="true"></div>
 
         <div
-          class="pointer-events-none absolute inset-0"
-          style="background: radial-gradient(ellipse 80% 60% at 0% 0%, oklch(0.54 0.17 152 / 0.12), transparent 60%)"
+          class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-terminal/50 to-transparent"
           aria-hidden="true"
         />
-        <div class="arch-left-bar bg-terminal/60" aria-hidden="true" />
         <div
-          class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/50 to-transparent"
+          class="pointer-events-none absolute inset-0"
+          style="background: radial-gradient(ellipse 80% 60% at 0% 0%, oklch(0.54 0.17 152 / 0.12), transparent 60%)"
           aria-hidden="true"
         />
 
@@ -172,6 +175,7 @@
           deterministic, predictable memory behaviour.
         </p>
       </div>
+
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="font-mono text-3xl font-bold tracking-tight text-sky">0 bytes</p>
         <p class="mt-1 text-sm font-semibold text-foreground">Engine in your bundle</p>
@@ -180,6 +184,7 @@
           native addon — entirely outside your bundle.
         </p>
       </div>
+
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="font-mono text-3xl font-bold tracking-tight text-violet-500 dark:text-violet-400">
           100%
@@ -233,13 +238,21 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    border: 1px solid color-mix(in oklch, var(--gc) 80%, transparent);
+    border: 1px solid color-mix(in oklch, var(--gc) 90%, transparent);
     box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--gc) 35%, transparent),
-      0 0 18px color-mix(in oklch, var(--gc) 20%, transparent),
-      0 0 40px color-mix(in oklch, var(--gc) 10%, transparent);
+      0 0 0 1px color-mix(in oklch, var(--gc) 55%, transparent),
+      0 0 20px 4px color-mix(in oklch, var(--gc) 48%, transparent),
+      0 0 60px 0px color-mix(in oklch, var(--gc) 32%, transparent),
+      0 0 110px -6px color-mix(in oklch, var(--gc) 20%, transparent);
     opacity: 0;
     pointer-events: none;
+  }
+  :global(.dark) .arch-glow-ring {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--gc) 65%, transparent),
+      0 0 24px 6px color-mix(in oklch, var(--gc) 58%, transparent),
+      0 0 80px 0px color-mix(in oklch, var(--gc) 42%, transparent),
+      0 0 140px -8px color-mix(in oklch, var(--gc) 28%, transparent);
   }
 
   /* ── Numbered layer badges ──────────────────────────────── */
@@ -301,16 +314,6 @@
     opacity: 0.75;
   }
 
-  /* ── Card left accent bar ───────────────────────────────── */
-  .arch-left-bar {
-    position: absolute;
-    left: 0;
-    top: 1rem;
-    bottom: 1rem;
-    width: 3px;
-    border-radius: 9999px;
-  }
-
   /* ── Dashed connector lines ─────────────────────────────── */
   .arch-dash {
     width: 1px;
@@ -347,17 +350,15 @@
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   ) {
     function runGlow() {
-      const animations = rings.map((ring, i) =>
-        animate(
+      let last;
+      rings.forEach((ring, i) => {
+        last = animate(
           ring,
           { opacity: [0, 1, 0] },
-          { duration: 2, delay: i * 3 },
-        )
-      );
-
-      animations[animations.length - 1].finished.then(() => {
-        setTimeout(runGlow, 2000);
+          { duration: 1.8, delay: i * 1.4 },
+        );
       });
+      last.finished.then(() => setTimeout(runGlow, 1500));
     }
 
     const stop = inView(section, () => {
