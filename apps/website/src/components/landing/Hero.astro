@@ -157,7 +157,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
           <div class="h-3 w-3 rounded-full bg-yellow-400/80"></div>
           <div class="h-3 w-3 rounded-full bg-green-400/80 terminal-dot-pulse"></div>
           <span class="ml-2 font-mono text-xs text-muted-foreground">app.tsx</span>
-          <span class="ml-auto font-mono text-[10px] text-muted-foreground/40">@bettertui/react</span>
+          <span class="ml-auto font-mono text-[10px] text-muted-foreground">@bettertui/react</span>
         </div>
         <pre class="overflow-x-auto p-4 text-left"
           ><code class="font-mono text-code leading-relaxed" set:html={codeHtml} /></pre>
@@ -298,43 +298,12 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
     background: var(--code-bg);
     box-shadow:
       0 32px 80px -12px oklch(0 0 0 / 0.12),
-      0 0 0 1px oklch(0.65 0.22 145 / 0.15),
       inset 0 1px 0 oklch(1 0 0 / 0.06);
   }
   :global(.dark) .code-window {
     box-shadow:
       0 32px 80px -12px oklch(0 0 0 / 0.6),
       0 0 80px -8px oklch(0.78 0.20 145 / 0.28),
-      0 0 0 1px oklch(0.78 0.20 145 / 0.38),
       inset 0 1px 0 oklch(1 0 0 / 0.06);
-  }
-
-  /* Gradient border using ::before — adds an indigo-to-green shimmer */
-  .code-window::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      135deg,
-      oklch(0.55 0.22 275 / 0.2) 0%,
-      oklch(0.65 0.22 145 / 0.15) 50%,
-      oklch(0.55 0.22 275 / 0.05) 100%
-    );
-    /* mask trick: show only the 1px border */
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-  :global(.dark) .code-window::before {
-    background: linear-gradient(
-      135deg,
-      oklch(0.55 0.22 275 / 0.35) 0%,
-      oklch(0.65 0.22 145 / 0.25) 50%,
-      oklch(0.72 0.14 200 / 0.15) 100%
-    );
   }
 </style>
