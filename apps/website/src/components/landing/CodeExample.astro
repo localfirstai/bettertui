@@ -83,7 +83,7 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
         </button>
       </div>
 
-      <div class="code-window overflow-hidden rounded-xl border border-code-border">
+      <div class="code-window relative overflow-hidden rounded-xl">
         <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
           <div class="h-3 w-3 rounded-full bg-red-400/80"></div>
           <div class="h-3 w-3 rounded-full bg-yellow-400/80"></div>
@@ -131,6 +131,47 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
 </section>
 
 <style>
+  .code-window {
+    box-shadow:
+      0 32px 80px -12px oklch(0 0 0 / 0.12),
+      0 0 0 1px oklch(0.54 0.17 152 / 0.18),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
+  }
+  :global(.dark) .code-window {
+    box-shadow:
+      0 32px 80px -12px oklch(0 0 0 / 0.65),
+      0 0 80px -8px oklch(0.78 0.20 145 / 0.28),
+      0 0 0 1px oklch(0.78 0.20 145 / 0.38),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
+  }
+
+  .code-window::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      oklch(0.55 0.22 275 / 0.20) 0%,
+      oklch(0.54 0.17 152 / 0.15) 50%,
+      oklch(0.55 0.22 275 / 0.05) 100%
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  :global(.dark) .code-window::before {
+    background: linear-gradient(
+      135deg,
+      oklch(0.55 0.22 275 / 0.40) 0%,
+      oklch(0.78 0.20 145 / 0.30) 50%,
+      oklch(0.72 0.14 200 / 0.18) 100%
+    );
+  }
+
   .code-tab[data-active="true"] {
     background-color: var(--background);
     color: var(--foreground);
