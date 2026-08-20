@@ -241,9 +241,9 @@
     --sky: oklch(0.72 0.18 215);
     --sky-muted: oklch(0.72 0.18 215 / 0.12);
 
-    /* ─── Code blocks ─────────────────────────────────────── */
+    /* ── Code blocks ──────────────────────────────────── */
     --code-bg: oklch(0.08 0.018 268);
-    --code-border: oklch(0.22 0.022 265);
+    --code-border: oklch(0.36 0.025 262);
 
     /* ─── Hero gradient ───────────────────────────────────── */
     --hero-gradient-start: oklch(0.10 0.022 265);
@@ -299,7 +299,7 @@
     background-color: var(--code-bg);
     --foreground: oklch(0.94 0.008 250);
     --muted-foreground: oklch(0.65 0.015 252);
-    --border: oklch(0.265 0.022 262);
+    --border: oklch(0.36 0.025 262);
   }
 
   /* ── Animations ─────────────────────────────────────────── */
