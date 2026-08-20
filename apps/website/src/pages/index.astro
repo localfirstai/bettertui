@@ -1,6 +1,7 @@
 ---
 import Footer from "../components/Footer.astro";
 import Navbar from "../components/Navbar.astro";
+import Architecture from "../components/landing/Architecture.astro";
 import CTA from "../components/landing/CTA.astro";
 import CodeExample from "../components/landing/CodeExample.astro";
 import Features from "../components/landing/Features.astro";
@@ -11,7 +12,10 @@ import Testimonials from "../components/landing/Testimonials.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="BetterTUI — Terminal UIs for Any Framework">
+<BaseLayout
+  title="BetterTUI — Rust-Backed Terminal UIs for Node.js"
+  description="A memory-safe Rust engine wrapped in a TypeScript-first API. Build terminal interfaces with React or SolidJS — no GC pauses, no memory leaks, no bundle bloat. Node-first. Currently in early beta."
+>
   <Navbar />
   <main class="pt-16">
     <Hero />
@@ -19,6 +23,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <Features />
     <CodeExample />
     <TerminalDemo />
+    <Architecture />
     <Testimonials />
     <CTA />
   </main>

@@ -1,36 +1,48 @@
 ---
-import { CursorClick, Feather, Globe, Keyboard, Palette, ShieldCheck } from "@phosphor-icons/react";
+import { Atom, Code, Cpu, Feather, Lightning, ShieldCheck } from "@phosphor-icons/react";
 
 const features = [
   {
-    icon: Globe,
-    title: "Framework Agnostic",
-    description: "Use React, SolidJS, Astro, or any framework. One API, infinite possibilities.",
+    icon: Cpu,
+    title: "Rust-Backed Engine",
+    description:
+      "Layout and ANSI rendering run natively in a Rust .node addon. No JavaScript on the hot render path. No GC pauses mid-frame.",
+    accent: false,
+  },
+  {
+    icon: Lightning,
+    title: "Node.js First",
+    description:
+      "Designed for Node.js ≥ 24 with stability as the first priority. Bun compatible when you need it — no runtime surprises, no polyfills.",
+    accent: false,
+  },
+  {
+    icon: Atom,
+    title: "React & SolidJS First-Class",
+    description:
+      "Proper reconciler adapters for React 19 and SolidJS — not thin wrappers, not adapters bolted on. Framework primitives map directly to the engine.",
+    accent: false,
   },
   {
     icon: ShieldCheck,
-    title: "Type-Safe",
-    description: "Full TypeScript support with autocomplete and compile-time safety.",
-  },
-  {
-    icon: CursorClick,
-    title: "Interactive Components",
-    description: "Buttons, inputs, selects, tables, and more — all terminal-native.",
-  },
-  {
-    icon: Palette,
-    title: "Theming",
-    description: "Built-in dark mode and custom theme support with CSS variables.",
-  },
-  {
-    icon: Keyboard,
-    title: "Keyboard Navigation",
-    description: "Full keyboard support with focus management and shortcuts.",
+    title: "Memory-Safe Rendering",
+    description:
+      "The Rust engine uses arena allocation with generational indices. Memory leaks in the render pipeline are impossible by construction.",
+    accent: true,
   },
   {
     icon: Feather,
-    title: "Lightweight",
-    description: "Zero runtime overhead. Tree-shakeable and dependency-free core.",
+    title: "Minimal JS Bundle",
+    description:
+      "The heavy lifting lives in the native addon — entirely outside your JS bundle. The TypeScript layer is deliberately thin and tree-shakeable.",
+    accent: false,
+  },
+  {
+    icon: Code,
+    title: "TypeScript Throughout",
+    description:
+      "Complete type inference from JSX props to the native bridge. No `any`, no guessing. Autocomplete and compile-time safety everywhere.",
+    accent: false,
   },
 ];
 ---
@@ -39,22 +51,44 @@ const features = [
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
       <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">Features</p>
-      <h2 class="text-section mt-2">Everything you need for terminal UIs</h2>
-      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
-        From interactive forms to real-time dashboards, BetterTUI provides the primitives you need.
+      <h2 class="text-section mt-2">Everything you need. Nothing you don't.</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Built from first principles — not as a feature list, but as a coherent set of technical decisions.
       </p>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
       {features.map((feature) => (
-        <article class="group relative overflow-hidden rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border hover:-translate-y-0.5 hover:shadow-lg">
+        <article
+          class={[
+            "group relative overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+            feature.accent
+              ? "border-terminal/30 bg-terminal-muted/20 hover:border-terminal/50 hover:shadow-terminal/5"
+              : "border-border/60 bg-card/50 backdrop-blur-sm hover:border-border",
+          ].join(" ")}
+        >
           <div class="p-6">
-            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
-              <feature.icon class="h-5 w-5" weight="bold" aria-hidden="true" />
+            <div
+              class={[
+                "mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg",
+                feature.accent
+                  ? "bg-terminal/15 text-terminal"
+                  : "bg-terminal-muted text-terminal",
+              ].join(" ")}
+            >
+              <feature.icon class="h-5 w-5" weight="duotone" aria-hidden="true" />
             </div>
-            <h3 class="text-lg font-semibold">{feature.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+            <h3 class="text-base font-semibold">{feature.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {feature.description}
+            </p>
           </div>
+          {feature.accent && (
+            <div
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/30 to-transparent"
+              aria-hidden="true"
+            />
+          )}
         </article>
       ))}
     </div>

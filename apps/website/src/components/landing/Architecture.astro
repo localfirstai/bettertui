@@ -1,0 +1,161 @@
+---
+---
+
+<section class="relative overflow-hidden border-t border-border bg-muted/20 py-24">
+  <div class="dot-grid pointer-events-none absolute inset-0 opacity-60" />
+  <div class="arch-bg-glow pointer-events-none absolute inset-0" />
+
+  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto mb-16 max-w-2xl text-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">How It Works</p>
+      <h2 class="text-section mt-2">Built different from the ground up</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        A memory-safe Rust engine underneath a TypeScript-first API. Every layer has a single
+        responsibility.
+      </p>
+    </div>
+
+    <div class="mx-auto max-w-3xl">
+
+      <!-- Layer 1: Framework Adapters -->
+      <div class="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+        <div class="mb-4 text-center">
+          <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+            Layer 1
+          </p>
+          <p class="mt-0.5 font-mono text-sm font-semibold">Framework Adapters</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-4 py-3.5">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-cyan-400" aria-hidden="true" />
+            <span class="font-mono text-sm font-medium">@bettertui/react</span>
+          </div>
+          <div class="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-4 py-3.5">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
+            <span class="font-mono text-sm font-medium">@bettertui/solid</span>
+          </div>
+        </div>
+        <p class="mt-3 text-center text-xs text-muted-foreground">
+          React 19 + SolidJS · First-class reconcilers
+        </p>
+      </div>
+
+      <!-- Arrow: Layer 1 → Layer 2 -->
+      <div class="flex flex-col items-center py-1" aria-hidden="true">
+        <div class="h-5 w-px bg-border/50" />
+        <span class="rounded-full border border-border/50 bg-background/80 px-3 py-0.5 font-mono text-[11px] text-muted-foreground/60 backdrop-blur-sm">
+          Component tree → commands
+        </span>
+        <div class="h-4 w-px bg-border/50" />
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" class="text-border/50">
+          <path d="M5 6L0 0h10z" />
+        </svg>
+      </div>
+
+      <!-- Layer 2: @bettertui/core -->
+      <div class="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              Layer 2
+            </p>
+            <p class="mt-0.5 font-mono text-base font-semibold">@bettertui/core</p>
+          </div>
+          <span class="mt-0.5 rounded-full border border-blue-500/25 bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs text-blue-600 dark:text-blue-400">
+            TypeScript
+          </span>
+        </div>
+        <p class="mt-2 font-mono text-xs text-muted-foreground">
+          CommandBuffer · Runtime · Tree Reconciliation
+        </p>
+        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+          A thin, intentional TypeScript layer. Orchestrates the bridge between your framework and
+          the native engine.
+        </p>
+      </div>
+
+      <!-- Arrow: Layer 2 → Layer 3 -->
+      <div class="flex flex-col items-center py-1" aria-hidden="true">
+        <div class="h-5 w-px bg-border/50" />
+        <span class="rounded-full border border-border/50 bg-background/80 px-3 py-0.5 font-mono text-[11px] text-muted-foreground/60 backdrop-blur-sm">
+          Layout commands → render output
+        </span>
+        <div class="h-4 w-px bg-border/50" />
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" class="text-border/50">
+          <path d="M5 6L0 0h10z" />
+        </svg>
+      </div>
+
+      <!-- Layer 3: Rust Engine -->
+      <div class="arch-layer-glow rounded-2xl border border-terminal/30 bg-card p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal/60">
+              Layer 3
+            </p>
+            <p class="mt-0.5 font-mono text-base font-semibold text-terminal">Rust Engine (.node)</p>
+          </div>
+          <span class="mt-0.5 rounded-full border border-terminal/25 bg-terminal-muted px-2.5 py-0.5 font-mono text-xs text-terminal">
+            🦀 Rust · Native Node Addon
+          </span>
+        </div>
+        <p class="mt-2 font-mono text-xs text-muted-foreground">
+          Taffy Layout · ANSI Renderer · Arena Allocator
+        </p>
+        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+          The hot render path runs natively. No GC pressure. Arena allocation with generational
+          indices means no memory leaks possible.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="rounded-full border border-terminal/20 bg-terminal-muted px-3 py-1 font-mono text-xs text-terminal">
+            Zero GC pauses
+          </span>
+          <span class="rounded-full border border-terminal/20 bg-terminal-muted px-3 py-1 font-mono text-xs text-terminal">
+            Arena allocation
+          </span>
+          <span class="rounded-full border border-terminal/20 bg-terminal-muted px-3 py-1 font-mono text-xs text-terminal">
+            Taffy flexbox
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-3">
+      <div class="rounded-xl border border-border/60 bg-card/50 p-5">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          The Rust engine processes layout and rendering 10–50× faster than a pure-JS equivalent —
+          with deterministic memory behavior.
+        </p>
+      </div>
+      <div class="rounded-xl border border-border/60 bg-card/50 p-5">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          The TypeScript layer never touches the render hot path. It only orchestrates.
+        </p>
+      </div>
+      <div class="rounded-xl border border-border/60 bg-card/50 p-5">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          Your React/SolidJS components describe <em>what</em> to render. Rust decides <em>how</em>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .arch-bg-glow {
+    background: radial-gradient(
+      ellipse 60% 40% at 50% 100%,
+      oklch(0.65 0.22 145 / 0.08),
+      transparent 70%
+    );
+  }
+
+  :global(.dark) .arch-bg-glow,
+  :global([data-theme="dark"]) .arch-bg-glow {
+    background: radial-gradient(
+      ellipse 60% 40% at 50% 100%,
+      oklch(0.75 0.18 145 / 0.1),
+      transparent 70%
+    );
+  }
+</style>

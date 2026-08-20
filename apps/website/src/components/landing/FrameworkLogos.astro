@@ -1,100 +1,173 @@
 ---
-const frameworks = [
-  { name: "React", lightId: "react-light", darkId: "react-dark" },
-  { name: "SolidJS", lightId: "solidjs-light", darkId: "solidjs-dark" },
-  { name: "Astro", lightId: "astro-light", darkId: "astro-dark" },
-  { name: "Vue", lightId: "vue-light", darkId: "vue-dark" },
-  { name: "Svelte", lightId: "svelte-light", darkId: "svelte-dark" },
-  { name: "Preact", lightId: "preact-light", darkId: "preact-dark" },
-];
 ---
 
-<section class="border-b border-border py-8">
+<section class="border-b border-border py-10">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <p
-      class="mb-6 text-center font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      class="mb-8 text-center font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground"
     >
-      Works with
+      Runtime & Framework Support
     </p>
-    <div class="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+
+    <!-- Runtime row -->
+    <div class="mb-8 flex flex-wrap items-center justify-center gap-3">
+      <div
+        class="flex items-center gap-2 rounded-full border border-terminal/30 bg-terminal-muted px-3.5 py-1.5 text-sm font-medium text-terminal"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 1.85c-.27 0-.55.07-.78.2L3.78 6.35c-.48.28-.78.8-.78 1.36v8.58c0 .56.3 1.08.78 1.36l1.95 1.12c.95.46 1.57.47 2.1.47 1.69 0 2.66-1.02 2.66-2.82V8.27c0-.12-.1-.22-.22-.22h-.96c-.13 0-.22.1-.22.22v8.65c0 .79-.82 1.57-2.14.9L5.2 16.4c-.08-.05-.12-.12-.12-.2V7.7c0-.08.04-.16.12-.2l7.44-4.28c.08-.04.18-.04.26 0l7.44 4.28c.08.04.12.12.12.2v8.5c0 .08-.04.16-.12.2l-7.44 4.28c-.08.04-.18.04-.26 0l-1.95-1.12c-.06-.04-.15-.04-.22 0-.62.35-.75.4-1.35.57.15.08.31.16.44.24l1.95 1.12c.24.14.5.2.77.2.28 0 .54-.06.78-.2l7.44-4.3c.48-.28.78-.8.78-1.36V7.7c0-.56-.3-1.08-.78-1.36L12.78 2.05c-.23-.13-.5-.2-.78-.2z"
+          ></path>
+        </svg>
+        Node.js ≥ 24
+        <span class="rounded-full bg-terminal/20 px-1.5 py-0.5 font-mono text-[10px]"
+          >Primary</span
+        >
+      </div>
+      <div
+        class="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3.5 py-1.5 text-sm font-medium text-muted-foreground"
+      >
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M3 6l9-4 9 4v12l-9 4-9-4V6z"></path>
+          <path d="M12 2v20M3 6l9 4 9-4"></path>
+        </svg>
+        Bun
+        <span class="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px]">Compatible</span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="mb-6 flex items-center gap-4">
+      <div class="h-px flex-1 bg-border/50"></div>
+      <span class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50"
+        >First-class adapters</span
+      >
+      <div class="h-px flex-1 bg-border/50"></div>
+    </div>
+
+    <!-- First-class frameworks -->
+    <div class="mb-4 flex flex-wrap items-center justify-center gap-4">
       <!-- React -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="React">
-        <svg class="icon-light h-7 w-auto md:h-9" viewBox="0 0 569 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g fill-rule="evenodd">
-            <g fill="#087EA4" fill-rule="nonzero">
-              <path d="M285.5,201 C255.4,201 231,225.4 231,255.5 C231,285.6 255.4,310 285.5,310 C315.6,310 340,285.6 340,255.5 C340,225.4 315.6,201 285.5,201"/>
-              <path d="M569,256 C569,213.2 529.3,175.7 466.3,151 C467.1,145.4 467.9,139.9 468.4,134.5 C474.6,73 459.8,28.7 426.7,9.6 C389.7,-11.8 337.4,3.7 284.5,46 C231.6,3.7 179.3,-11.8 142.3,9.6 C109.2,28.7 94.3,73 100.6,134.5 C101.1,139.9 101.8,145.4 102.7,151 C97.4,153 92.3,155.2 87.3,157.4 C31,182.7 0,217.8 0,256 C0,298.8 39.6,336.3 102.7,361 C101.8,366.6 101.1,372.1 100.6,377.5 C94.3,438.9 109.2,483.3 142.3,502.4 C153.6,508.9 166.5,512.2 179.6,512 C211,512 247.6,495.5 284.5,466 C321.4,495.5 358,512 389.4,512 C402.5,512.2 415.4,508.9 426.8,502.4 C459.8,483.3 474.7,438.9 468.4,377.5 C467.9,372.1 467.1,366.6 466.3,361 C529.4,336.3 569,298.8 569,256"/>
-            </g>
-          </g>
+      <div
+        class="icon-pair group flex items-center gap-2.5 rounded-lg border border-terminal/20 bg-terminal-muted/30 px-4 py-2.5 text-sm font-medium transition-all hover:border-terminal/40 hover:bg-terminal-muted/50"
+        title="React — first-class"
+      >
+        <svg
+          class="icon-light h-5 w-auto"
+          viewBox="0 0 569 512"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <g fill-rule="evenodd"
+            ><g fill="#087EA4" fill-rule="nonzero">
+              <path
+                d="M285.5,201 C255.4,201 231,225.4 231,255.5 C231,285.6 255.4,310 285.5,310 C315.6,310 340,285.6 340,255.5 C340,225.4 315.6,201 285.5,201"
+              ></path>
+              <path
+                d="M569,256 C569,213.2 529.3,175.7 466.3,151 C467.1,145.4 467.9,139.9 468.4,134.5 C474.6,73 459.8,28.7 426.7,9.6 C389.7,-11.8 337.4,3.7 284.5,46 C231.6,3.7 179.3,-11.8 142.3,9.6 C109.2,28.7 94.3,73 100.6,134.5 C101.1,139.9 101.8,145.4 102.7,151 C97.4,153 92.3,155.2 87.3,157.4 C31,182.7 0,217.8 0,256 C0,298.8 39.6,336.3 102.7,361 C101.8,366.6 101.1,372.1 100.6,377.5 C94.3,438.9 109.2,483.3 142.3,502.4 C153.6,508.9 166.5,512.2 179.6,512 C211,512 247.6,495.5 284.5,466 C321.4,495.5 358,512 389.4,512 C402.5,512.2 415.4,508.9 426.8,502.4 C459.8,483.3 474.7,438.9 468.4,377.5 C467.9,372.1 467.1,366.6 466.3,361 C529.4,336.3 569,298.8 569,256"
+              ></path>
+            </g></g
+          >
         </svg>
-        <svg class="icon-dark hidden h-7 w-auto md:h-9" viewBox="0 0 569 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g fill-rule="evenodd">
-            <g fill="#58C4DC" fill-rule="nonzero">
-              <path d="M285.5,201 C255.4,201 231,225.4 231,255.5 C231,285.6 255.4,310 285.5,310 C315.6,310 340,285.6 340,255.5 C340,225.4 315.6,201 285.5,201"/>
-              <path d="M569,256 C569,213.2 529.3,175.7 466.3,151 C467.1,145.4 467.9,139.9 468.4,134.5 C474.6,73 459.8,28.7 426.7,9.6 C389.7,-11.8 337.4,3.7 284.5,46 C231.6,3.7 179.3,-11.8 142.3,9.6 C109.2,28.7 94.3,73 100.6,134.5 C101.1,139.9 101.8,145.4 102.7,151 C97.4,153 92.3,155.2 87.3,157.4 C31,182.7 0,217.8 0,256 C0,298.8 39.6,336.3 102.7,361 C101.8,366.6 101.1,372.1 100.6,377.5 C94.3,438.9 109.2,483.3 142.3,502.4 C153.6,508.9 166.5,512.2 179.6,512 C211,512 247.6,495.5 284.5,466 C321.4,495.5 358,512 389.4,512 C402.5,512.2 415.4,508.9 426.8,502.4 C459.8,483.3 474.7,438.9 468.4,377.5 C467.9,372.1 467.1,366.6 466.3,361 C529.4,336.3 569,298.8 569,256"/>
-            </g>
-          </g>
+        <svg
+          class="icon-dark hidden h-5 w-auto"
+          viewBox="0 0 569 512"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <g fill-rule="evenodd"
+            ><g fill="#58C4DC" fill-rule="nonzero">
+              <path
+                d="M285.5,201 C255.4,201 231,225.4 231,255.5 C231,285.6 255.4,310 285.5,310 C315.6,310 340,285.6 340,255.5 C340,225.4 315.6,201 285.5,201"
+              ></path>
+              <path
+                d="M569,256 C569,213.2 529.3,175.7 466.3,151 C467.1,145.4 467.9,139.9 468.4,134.5 C474.6,73 459.8,28.7 426.7,9.6 C389.7,-11.8 337.4,3.7 284.5,46 C231.6,3.7 179.3,-11.8 142.3,9.6 C109.2,28.7 94.3,73 100.6,134.5 C101.1,139.9 101.8,145.4 102.7,151 C97.4,153 92.3,155.2 87.3,157.4 C31,182.7 0,217.8 0,256 C0,298.8 39.6,336.3 102.7,361 C101.8,366.6 101.1,372.1 100.6,377.5 C94.3,438.9 109.2,483.3 142.3,502.4 C153.6,508.9 166.5,512.2 179.6,512 C211,512 247.6,495.5 284.5,466 C321.4,495.5 358,512 389.4,512 C402.5,512.2 415.4,508.9 426.8,502.4 C459.8,483.3 474.7,438.9 468.4,377.5 C467.9,372.1 467.1,366.6 466.3,361 C529.4,336.3 569,298.8 569,256"
+              ></path>
+            </g></g
+          >
         </svg>
+        <span>React 19</span>
+        <span
+          class="rounded-full bg-terminal/20 px-1.5 py-0.5 font-mono text-[10px] text-terminal"
+          >first-class</span
+        >
       </div>
 
       <!-- SolidJS -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="SolidJS">
-        <svg class="h-7 w-auto md:h-9" viewBox="0 0 256 239" xmlns="http://www.w3.org/2000/svg">
+      <div
+        class="group flex items-center gap-2.5 rounded-lg border border-terminal/20 bg-terminal-muted/30 px-4 py-2.5 text-sm font-medium transition-all hover:border-terminal/40 hover:bg-terminal-muted/50"
+        title="SolidJS — first-class"
+      >
+        <svg
+          class="h-5 w-auto"
+          viewBox="0 0 256 239"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
           <defs>
-            <linearGradient id="sa" x1="-5.859%" y1="38.27%" x2="91.406%" y2="60.924%"><stop stop-color="#76B3E1" offset="10%"/><stop stop-color="#DCF2FD" offset="30%"/><stop stop-color="#76B3E1" offset="100%"/></linearGradient>
-            <linearGradient id="sb" x1="56.996%" y1="38.44%" x2="37.941%" y2="68.375%"><stop stop-color="#76B3E1" offset="0%"/><stop stop-color="#4377BB" offset="50%"/><stop stop-color="#1F3B77" offset="100%"/></linearGradient>
-            <linearGradient id="sc" x1="10.709%" y1="34.532%" x2="104.337%" y2="70.454%"><stop stop-color="#315AA9" offset="0%"/><stop stop-color="#518AC8" offset="50%"/><stop stop-color="#315AA9" offset="100%"/></linearGradient>
-            <linearGradient id="sd" x1="61.993%" y1="29.58%" x2="17.762%" y2="105.119%"><stop stop-color="#4377BB" offset="0%"/><stop stop-color="#1A336B" offset="50%"/><stop stop-color="#1A336B" offset="100%"/></linearGradient>
+            <linearGradient id="solid-a" x1="-5.859%" y1="38.27%" x2="91.406%" y2="60.924%"
+              ><stop stop-color="#76B3E1" offset="10%"></stop><stop
+                stop-color="#DCF2FD"
+                offset="30%"></stop><stop stop-color="#76B3E1" offset="100%"></stop></linearGradient
+            >
+            <linearGradient id="solid-b" x1="56.996%" y1="38.44%" x2="37.941%" y2="68.375%"
+              ><stop stop-color="#76B3E1" offset="0%"></stop><stop
+                stop-color="#4377BB"
+                offset="50%"></stop><stop stop-color="#1F3B77" offset="100%"></stop></linearGradient
+            >
+            <linearGradient id="solid-c" x1="10.709%" y1="34.532%" x2="104.337%" y2="70.454%"
+              ><stop stop-color="#315AA9" offset="0%"></stop><stop
+                stop-color="#518AC8"
+                offset="50%"></stop><stop stop-color="#315AA9" offset="100%"></stop></linearGradient
+            >
+            <linearGradient id="solid-d" x1="61.993%" y1="29.58%" x2="17.762%" y2="105.119%"
+              ><stop stop-color="#4377BB" offset="0%"></stop><stop
+                stop-color="#1A336B"
+                offset="50%"></stop><stop stop-color="#1A336B" offset="100%"></stop></linearGradient
+            >
           </defs>
-          <path d="M256 50.5S170.7-12.3 104.7 2.2l-4.8 1.6c-9.7 3.2-17.7 8-22.5 14.5l-3.2 4.8-24.2 41.9 41.9 8c17.7 11.3 40.3 16.1 61.2 11.3l74.1 14.5L256 50.5Z" fill="#76B3E1"/>
-          <path d="M256 50.5S170.7-12.3 104.7 2.2l-4.8 1.6c-9.7 3.2-17.7 8-22.5 14.5l-3.2 4.8-24.2 41.9 41.9 8c17.7 11.3 40.3 16.1 61.2 11.3l74.1 14.5L256 50.5Z" fill="url(#sa)" opacity=".3"/>
-          <path d="m77.3 50.5-6.4 1.6c-27.4 8-35.4 33.8-20.9 56.4 16.1 20.9 49.9 32.2 77.3 24.2l99.8-33.8S141.7 36 77.3 50.5Z" fill="#518AC8"/>
-          <path d="m77.3 50.5-6.4 1.6c-27.4 8-35.4 33.8-20.9 56.4 16.1 20.9 49.9 32.2 77.3 24.2l99.8-33.8S141.7 36 77.3 50.5Z" fill="url(#sb)" opacity=".3"/>
-          <path d="M209.3 122.9c-18.4-23-49-32.6-77.3-24.2L32.2 131l-32.2 55.9 180.3 30.6 32.2-58c6.4-11.3 4.8-24.2-3.2-37Z" fill="url(#sc)"/>
-          <path d="M177.1 179.3c-18.4-23-49-32.6-77.3-24.2L0 187.3s85.3 64.4 151.3 48.3l4.8-1.6c27.4-8 37-33.8 20.9-54.7Z" fill="url(#sd)"/>
+          <path
+            d="M256 50.5S170.7-12.3 104.7 2.2l-4.8 1.6c-9.7 3.2-17.7 8-22.5 14.5l-3.2 4.8-24.2 41.9 41.9 8c17.7 11.3 40.3 16.1 61.2 11.3l74.1 14.5L256 50.5Z"
+            fill="#76B3E1"></path>
+          <path
+            d="M256 50.5S170.7-12.3 104.7 2.2l-4.8 1.6c-9.7 3.2-17.7 8-22.5 14.5l-3.2 4.8-24.2 41.9 41.9 8c17.7 11.3 40.3 16.1 61.2 11.3l74.1 14.5L256 50.5Z"
+            fill="url(#solid-a)"
+            opacity=".3"></path>
+          <path
+            d="m77.3 50.5-6.4 1.6c-27.4 8-35.4 33.8-20.9 56.4 16.1 20.9 49.9 32.2 77.3 24.2l99.8-33.8S141.7 36 77.3 50.5Z"
+            fill="#518AC8"></path>
+          <path
+            d="m77.3 50.5-6.4 1.6c-27.4 8-35.4 33.8-20.9 56.4 16.1 20.9 49.9 32.2 77.3 24.2l99.8-33.8S141.7 36 77.3 50.5Z"
+            fill="url(#solid-b)"
+            opacity=".3"></path>
+          <path
+            d="M209.3 122.9c-18.4-23-49-32.6-77.3-24.2L32.2 131l-32.2 55.9 180.3 30.6 32.2-58c6.4-11.3 4.8-24.2-3.2-37Z"
+            fill="url(#solid-c)"></path>
+          <path
+            d="M177.1 179.3c-18.4-23-49-32.6-77.3-24.2L0 187.3s85.3 64.4 151.3 48.3l4.8-1.6c27.4-8 37-33.8 20.9-54.7Z"
+            fill="url(#solid-d)"></path>
         </svg>
-      </div>
-
-      <!-- Astro -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="Astro">
-        <svg class="icon-light h-7 w-auto md:h-9" viewBox="0 0 85 107" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#17191E" d="M27.6 91.1c-4.8-4.4-6.2-13.7-4.2-20.4 3.5 4.2 8.3 5.6 13.3 6.3 7.7 1.2 15.3.7 22.5-2.8.8-.4 1.6-.9 2.5-1.5.7 2 .9 3.9.6 5.9-.6 4.9-3 8.7-6.9 11.5-1.5 1.1-3.2 2.2-4.8 3.3-4.9 3.3-6.2 7.2-4.4 12.9.1.1.1.3.2.6-2.5-1.1-4.3-2.8-5.7-4.9-1.5-2.3-2.2-4.8-2.2-7.5 0-1.3 0-2.7-.2-4-.4-3.2-1.9-4.6-4.7-4.7-2.9-.1-5.2 1.7-5.8 4.5 0 .2-.1.4-.2.7l.1 0ZM0 69.6s14.3-7 28.7-7L39.5 29.1c.4-1.6 1.6-2.7 2.9-2.7s2.5 1.1 2.9 2.7L56.2 62.6c17 0 28.7 7 28.7 7S60.5 3.4 60.5 3.2C59.8 1.3 58.6 0 57 0H27.8c-1.6 0-2.7 1.3-3.5 3.2C24.3 3.4 0 69.6 0 69.6Z"/>
-        </svg>
-        <svg class="icon-dark hidden h-7 w-auto md:h-9" viewBox="0 0 85 107" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#fff" d="M27.6 91.1c-4.8-4.4-6.2-13.7-4.2-20.4 3.5 4.2 8.3 5.6 13.3 6.3 7.7 1.2 15.3.7 22.5-2.8.8-.4 1.6-.9 2.5-1.5.7 2 .9 3.9.6 5.9-.6 4.9-3 8.7-6.9 11.5-1.5 1.1-3.2 2.2-4.8 3.3-4.9 3.3-6.2 7.2-4.4 12.9.1.1.1.3.2.6-2.5-1.1-4.3-2.8-5.7-4.9-1.5-2.3-2.2-4.8-2.2-7.5 0-1.3 0-2.7-.2-4-.4-3.2-1.9-4.6-4.7-4.7-2.9-.1-5.2 1.7-5.8 4.5 0 .2-.1.4-.2.7l.1 0Z"/>
-          <path fill="url(#astro-grad)" d="M27.6 91.1c-4.8-4.4-6.2-13.7-4.2-20.4 3.5 4.2 8.3 5.6 13.3 6.3 7.7 1.2 15.3.7 22.5-2.8.8-.4 1.6-.9 2.5-1.5.7 2 .9 3.9.6 5.9-.6 4.9-3 8.7-6.9 11.5-1.5 1.1-3.2 2.2-4.8 3.3-4.9 3.3-6.2 7.2-4.4 12.9.1.1.1.3.2.6-2.5-1.1-4.3-2.8-5.7-4.9-1.5-2.3-2.2-4.8-2.2-7.5 0-1.3 0-2.7-.2-4-.4-3.2-1.9-4.6-4.7-4.7-2.9-.1-5.2 1.7-5.8 4.5 0 .2-.1.4-.2.7l.1 0Z"/>
-          <path fill="#fff" d="M0 69.6s14.3-7 28.7-7L39.5 29.1c.4-1.6 1.6-2.7 2.9-2.7s2.5 1.1 2.9 2.7L56.2 62.6c17 0 28.7 7 28.7 7S60.5 3.4 60.5 3.2C59.8 1.3 58.6 0 57 0H27.8c-1.6 0-2.7 1.3-3.5 3.2C24.3 3.4 0 69.6 0 69.6Z"/>
-          <defs><linearGradient id="astro-grad" x1="22.5" x2="69.1" y1="107" y2="84.9" gradientUnits="userSpaceOnUse"><stop stop-color="#D83333"/><stop offset="1" stop-color="#F041FF"/></linearGradient></defs>
-        </svg>
-      </div>
-
-      <!-- Vue -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="Vue">
-        <svg class="h-7 w-auto md:h-9" viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
-          <path d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0h47.36Z" fill="#41B883"/>
-          <path d="m0 0 128 220.8L256 0h-51.2L128 132.48 50.56 0H0Z" fill="#41B883"/>
-          <path d="M50.56 0 128 133.12 204.8 0h-47.36L128 51.2 97.92 0H50.56Z" fill="#35495E"/>
-        </svg>
-      </div>
-
-      <!-- Svelte -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="Svelte">
-        <svg class="h-7 w-auto md:h-9" viewBox="0 0 256 308" xmlns="http://www.w3.org/2000/svg">
-          <path d="M239.7 40.7C211.1-0.2 154.7-12.3 113.9 13.7L42.2 59.4a82.2 82.2 0 0 0-37.1 55.1 86.6 86.6 0 0 0 8.5 55.6 82.4 82.4 0 0 0-12.3 30.7 87.6 87.6 0 0 0 15 66.2c28.6 40.9 85 53 125.8 27l71.6-45.7a82.2 82.2 0 0 0 37.1-55.1 86.6 86.6 0 0 0-8.5-55.6 82.4 82.4 0 0 0 12.3-30.7 87.6 87.6 0 0 0-15-66.2z" fill="#FF3E00"/>
-          <path d="M106.9 270.8c-23.1 6-47.5-3-61.1-22.6a52.7 52.7 0 0 1-9-39.8 50 50 0 0 1 1.7-6.7l1.4-4.1 3.7 2.7a92.4 92.4 0 0 0 28 14l2.7.8-.3 2.7a16.1 16.1 0 0 0 2.9 10.6 17.1 17.1 0 0 0 18.4 6.8 15.8 15.8 0 0 0 4.4-1.9l71.7-45.7a14.9 14.9 0 0 0 6.7-10 15.9 15.9 0 0 0-2.7-12 17.2 17.2 0 0 0-18.4-6.8 15.8 15.8 0 0 0-4.4 1.9l-27.4 17.4a52.3 52.3 0 0 1-14.5 6.4c-23.1 6-47.5-3-61.1-22.6a52.7 52.7 0 0 1-9-39.9 49.4 49.4 0 0 1 22.3-33.1l71.7-45.7a52.2 52.2 0 0 1 14.6-6.4c23.1-6 47.5 3 61.1 22.6a52.7 52.7 0 0 1 9 39.9 50.6 50.6 0 0 1-1.7 6.7l-1.4 4.1-3.7-2.7a92.4 92.4 0 0 0-28-14l-2.7-.8.3-2.7a16.1 16.1 0 0 0-2.9-10.6 17.1 17.1 0 0 0-18.4-6.8 15.8 15.8 0 0 0-4.4 1.9l-71.7 45.7a14.9 14.9 0 0 0-6.7 10 15.9 15.9 0 0 0 2.7 12 17.2 17.2 0 0 0 18.4 6.8 15.8 15.8 0 0 0 4.4-1.9l27.4-17.4a52.1 52.1 0 0 1 14.6-6.4c23.1-6 47.5 3 61.1 22.6a52.7 52.7 0 0 1 9 39.9 49.5 49.5 0 0 1-22.3 33.1l-71.7 45.7a52.2 52.2 0 0 1-14.6 6.4z" fill="#FFF"/>
-        </svg>
-      </div>
-
-      <!-- Preact -->
-      <div class="icon-pair flex items-center opacity-70 transition-opacity hover:opacity-100" title="Preact">
-        <svg class="h-7 w-auto md:h-9" viewBox="0 0 256 296" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#673AB8" d="m128 0 128 73.9v147.8l-128 73.9L0 221.7V73.9z"/>
-          <path d="M34.9 220.5c17 21.8 71.1 5.2 122.2-34.7 51.1-39.9 80.2-88.3 63.2-110.1-17-21.8-71.1-5.2-122.2 34.7-51.1 39.9-80.2 88.3-63.2 110.1Zm7.3-5.7c-5.6-7.2-3.2-21.4 7.6-39.3 11.3-18.8 30.5-39.5 54.1-57.9 23.5-18.4 48.3-32 69.3-38.4 19.9-6.1 34.3-5.1 39.9 2.1 5.6 7.2 3.2 21.4-7.6 39.3-11.3 18.8-30.5 39.5-54.1 57.9-23.5 18.4-48.3 32-69.3 38.4-19.9 6.1-34.3 5.1-39.9-2.1Z" fill="#FFF"/>
-          <path d="M220.2 220.5c17-21.8-12.2-70.2-63.2-110.1C106 70.5 51.9 53.9 34.9 75.6c-17 21.8 12.2 70.2 63.2 110.1 51.1 39.9 105.1 56.5 122.1 34.7Zm-7.3-5.7c-5.6 7.2-20 8.3-39.9 2.1-21-6.4-45.8-20.1-69.3-38.4-23.5-18.4-42.7-39.1-54.1-57.9-10.7-17.9-13.2-32.1-7.6-39.3 5.6-7.2 20-8.3 39.9-2.1 21 6.4 45.8 20.1 69.3 38.4 23.5 18.4 42.7 39.1 54.1 57.9 10.7 17.9 13.2 32.1 7.6 39.3Z" fill="#FFF"/>
-          <circle cx="127.6" cy="167.7" r="19.6" fill="#FFF"/>
-        </svg>
+        <span>SolidJS</span>
+        <span
+          class="rounded-full bg-terminal/20 px-1.5 py-0.5 font-mono text-[10px] text-terminal"
+          >first-class</span
+        >
       </div>
     </div>
+
+    <!-- Planned frameworks note -->
+    <p class="text-center font-mono text-[11px] text-muted-foreground/60">
+      Vue · Svelte · Preact · and more — planned for future releases
+    </p>
   </div>
 </section>
 
@@ -102,17 +175,15 @@ const frameworks = [
   function updateIcons() {
     const isDark = document.documentElement.classList.contains("dark");
     document.querySelectorAll(".icon-pair").forEach((pair) => {
-      const light = pair.querySelector(".icon-light") as HTMLElement;
-      const dark = pair.querySelector(".icon-dark") as HTMLElement;
+      const light = pair.querySelector(".icon-light") as HTMLElement | null;
+      const dark = pair.querySelector(".icon-dark") as HTMLElement | null;
       if (light) light.style.display = isDark ? "none" : "block";
       if (dark) dark.style.display = isDark ? "block" : "none";
     });
   }
 
-  // Run on load
   updateIcons();
 
-  // Watch for theme changes
   const observer = new MutationObserver(updateIcons);
   observer.observe(document.documentElement, {
     attributes: true,
