@@ -6,7 +6,7 @@ const features = [
     icon: Cpu,
     title: "Rust-Backed Engine",
     description:
-      "Layout and ANSI rendering run natively in a Rust .node addon. No JavaScript on the hot render path. No GC pauses mid-frame.",
+      "Layout and ANSI rendering run natively in a Rust .node addon. No JavaScript on the hot render path. No garbage collection pauses mid-frame.",
     accent: false,
   },
   {
@@ -47,7 +47,7 @@ const features = [
 ];
 ---
 
-<section class="py-24">
+<section class="border-t border-border bg-muted/40 py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
       <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">Features</p>
@@ -61,10 +61,10 @@ const features = [
       {features.map((feature) => (
         <article
           class={[
-            "group relative overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+            "group relative overflow-hidden rounded-xl border shadow-sm card-hover",
             feature.accent
-              ? "border-terminal/30 bg-terminal-muted/20 hover:border-terminal/50 hover:shadow-terminal/5"
-              : "border-border/60 bg-card/50 backdrop-blur-sm hover:border-border",
+              ? "border-terminal/40 bg-terminal-muted/25"
+              : "border-border bg-card",
           ].join(" ")}
         >
           <div class="p-6">
@@ -72,8 +72,8 @@ const features = [
               class={[
                 "mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg",
                 feature.accent
-                  ? "bg-terminal/15 text-terminal"
-                  : "bg-terminal-muted text-terminal",
+                  ? "bg-terminal/20 text-terminal"
+                  : "bg-terminal-muted/60 text-terminal",
               ].join(" ")}
             >
               <feature.icon class="h-5 w-5" weight="duotone" aria-hidden="true" />

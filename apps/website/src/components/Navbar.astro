@@ -14,7 +14,7 @@ import { GITHUB_URL } from "@lib/constants";
 
   <!-- ── Gradient separator (fades at edges, like Tailwind) -->
   <div
-    class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent"
+    class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent"
     aria-hidden="true"
   ></div>
 
@@ -57,7 +57,7 @@ import { GITHUB_URL } from "@lib/constants";
       <ThemeToggle client:load />
 
       <div class="hidden items-center gap-2 sm:flex">
-        <div class="h-4 w-px bg-border/60"></div>
+        <div class="h-4 w-px bg-border"></div>
 
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
           <Button variant="outline" size="sm" className="gap-1.5 bg-transparent">
@@ -127,7 +127,7 @@ import { GITHUB_URL } from "@lib/constants";
     transition: background 250ms ease;
   }
   :global(.dark) .navbar-glass {
-    background: oklch(0.145 0 0 / 0);
+    background: oklch(0.10 0.022 265 / 0);
   }
 
   /* Scrolled — more opaque */
@@ -135,7 +135,7 @@ import { GITHUB_URL } from "@lib/constants";
     background: oklch(1 0 0 / 0.82);
   }
   :global(.dark) #navbar[data-scrolled="true"] .navbar-glass {
-    background: oklch(0.145 0 0 / 0.82);
+    background: oklch(0.10 0.022 265 / 0.88);
   }
 
   /* ── Mobile panel — always opaque enough to be usable ── */
@@ -145,7 +145,7 @@ import { GITHUB_URL } from "@lib/constants";
     background: oklch(1 0 0 / 0.92);
   }
   :global(.dark) .navbar-mobile {
-    background: oklch(0.145 0 0 / 0.92);
+    background: oklch(0.10 0.022 265 / 0.96);
   }
 </style>
 

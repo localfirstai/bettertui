@@ -5,11 +5,11 @@ import { GitFork, Package, Warning } from "@phosphor-icons/react";
 const problems = [
   {
     icon: Warning,
-    title: "GC Pauses",
+    title: "Garbage Collection Pauses",
     problem:
-      "Pure-JS TUI renderers compete with your app for the GC. A 50ms GC pause in a real-time dashboard is visible and jarring.",
+      "Pure-JS TUI renderers compete with your app for the garbage collector. A 50ms garbage collection pause in a real-time dashboard is visible and jarring.",
     solution:
-      "The Rust engine never touches the JS heap. Layout and rendering are GC-free by construction.",
+      "The Rust engine never touches the JS heap. Layout and rendering are garbage collection–free by construction.",
   },
   {
     icon: Package,
@@ -42,7 +42,7 @@ const problems = [
 
     <div class="grid gap-6 md:grid-cols-3">
       {problems.map((item) => (
-        <article class="comparison-card-hover flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/50">
+        <article class="card-hover flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div class="flex-1 p-6">
             <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
               <item.icon class="h-5 w-5" weight="duotone" aria-hidden="true" />
@@ -50,7 +50,7 @@ const problems = [
             <h3 class="text-base font-semibold">{item.title}</h3>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.problem}</p>
           </div>
-          <div class="border-t border-terminal/15 bg-terminal-muted/40 px-6 py-4">
+          <div class="border-t border-terminal/20 bg-terminal-muted/50 px-6 py-4">
             <p class="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal">
               Our solution
             </p>
@@ -61,11 +61,11 @@ const problems = [
     </div>
 
     <div class="mx-auto mt-12 max-w-2xl">
-      <div class="rounded-xl border border-amber-400/30 bg-amber-400/10 px-6 py-5 text-center">
+      <div class="rounded-xl border border-amber-400/40 bg-amber-400/15 px-6 py-5 text-center">
         <p class="font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">
           ⚠ Early Beta — v0.0.0
         </p>
-        <p class="mt-2 text-sm leading-relaxed text-amber-700/70 dark:text-amber-400/70">
+        <p class="mt-2 text-sm leading-relaxed text-amber-700 dark:text-amber-300">
           BetterTUI is not production-ready. The API is unstable and actively evolving. We're sharing
           early to collect feedback from the community.
         </p>

@@ -89,7 +89,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
       BetterTUI wraps a <strong class="font-semibold text-foreground">memory-safe Rust engine</strong>{" "}
       in a thin TypeScript API. Build terminal interfaces with{" "}
       <strong class="font-semibold text-foreground">React or SolidJS</strong>
-      {" "}— no GC pauses, no memory leaks, no bundle bloat. Designed for{" "}
+      {" "}— no garbage collection pauses, no memory leaks, no bundle bloat. Designed for{" "}
       <strong class="font-semibold text-foreground">Node.js first</strong>, Bun compatible.
     </p>
 
@@ -111,7 +111,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
 
     <!-- Install command -->
     <div
-      class="hero-fade-up mt-6 flex items-center gap-2 rounded-lg border bg-muted/80 px-4 py-2.5 font-mono text-sm backdrop-blur-sm"
+      class="hero-fade-up mt-6 glass flex items-center gap-2 rounded-lg px-4 py-2.5 font-mono text-sm"
       style="animation-delay:0.3s"
     >
       <span class="select-none text-muted-foreground">$</span>
@@ -125,7 +125,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
       style="animation-delay:0.36s"
     >
       <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-sm"
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
       >
         <svg class="h-3 w-3 text-green-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 1.85c-.27 0-.55.07-.78.2L3.78 6.35c-.48.28-.78.8-.78 1.36v8.58c0 .56.3 1.08.78 1.36l1.95 1.12c.95.46 1.57.47 2.1.47 1.69 0 2.66-1.02 2.66-2.82V8.27c0-.12-.1-.22-.22-.22h-.96c-.13 0-.22.1-.22.22v8.65c0 .79-.82 1.57-2.14.9L5.2 16.4c-.08-.05-.12-.12-.12-.2V7.7c0-.08.04-.16.12-.2l7.44-4.28c.08-.04.18-.04.26 0l7.44 4.28c.08.04.12.12.12.2v8.5c0 .08-.04.16-.12.2l-7.44 4.28c-.08.04-.18.04-.26 0l-1.95-1.12c-.06-.04-.15-.04-.22 0-.62.35-.75.4-1.35.57.15.08.31.16.44.24l1.95 1.12c.24.14.5.2.77.2.28 0 .54-.06.78-.2l7.44-4.3c.48-.28.78-.8.78-1.36V7.7c0-.56-.3-1.08-.78-1.36L12.78 2.05c-.23-.13-.5-.2-.78-.2z"></path>
@@ -133,7 +133,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
         Node.js ≥ 24
       </span>
       <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-sm"
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
       >
         <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M3 6l9-4 9 4v12l-9 4-9-4V6z"></path>
@@ -142,7 +142,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
         Bun compatible
       </span>
       <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-sm"
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
       >
         🦀 Rust engine
       </span>
@@ -193,8 +193,8 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
   }
   :global(.dark) .hero-orb-indigo {
     background: radial-gradient(circle at 50% 50%,
-      oklch(0.55 0.22 275 / 0.38) 0%,
-      oklch(0.55 0.22 275 / 0.14) 40%,
+      oklch(0.55 0.22 275 / 0.50) 0%,
+      oklch(0.55 0.22 275 / 0.18) 40%,
       transparent 68%
     );
   }
@@ -215,8 +215,8 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
   }
   :global(.dark) .hero-orb-green {
     background: radial-gradient(circle at 50% 50%,
-      oklch(0.65 0.22 145 / 0.35) 0%,
-      oklch(0.65 0.22 145 / 0.13) 40%,
+      oklch(0.65 0.22 145 / 0.48) 0%,
+      oklch(0.65 0.22 145 / 0.17) 40%,
       transparent 68%
     );
   }
@@ -237,8 +237,8 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
   }
   :global(.dark) .hero-orb-cyan {
     background: radial-gradient(circle at 50% 50%,
-      oklch(0.72 0.14 200 / 0.22) 0%,
-      oklch(0.72 0.14 200 / 0.08) 40%,
+      oklch(0.72 0.14 200 / 0.30) 0%,
+      oklch(0.72 0.14 200 / 0.12) 40%,
       transparent 68%
     );
   }
@@ -304,8 +304,8 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
   :global(.dark) .code-window {
     box-shadow:
       0 32px 80px -12px oklch(0 0 0 / 0.6),
-      0 0 80px -8px oklch(0.65 0.22 145 / 0.18),
-      0 0 0 1px oklch(0.75 0.18 145 / 0.28),
+      0 0 80px -8px oklch(0.78 0.20 145 / 0.28),
+      0 0 0 1px oklch(0.78 0.20 145 / 0.38),
       inset 0 1px 0 oklch(1 0 0 / 0.06);
   }
 

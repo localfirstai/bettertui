@@ -7,17 +7,19 @@ import { GITHUB_DISCUSSIONS_URL, GITHUB_URL } from "@lib/constants";
 <section class="border-t border-border py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div
-      class="relative overflow-hidden rounded-2xl border border-terminal/20 bg-gradient-to-br from-background via-background to-terminal-muted/30 p-12 text-center md:p-16"
+      class="relative overflow-hidden rounded-2xl border border-terminal/30 bg-gradient-to-br from-background via-muted/60 to-terminal-muted/40 p-12 text-center shadow-xl md:p-16"
     >
-      <div class="dot-grid pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
+      <div class="dot-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
       <div
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/40 to-transparent"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/60 to-transparent"
         aria-hidden="true"
       />
 
+      <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-terminal-muted/30 to-transparent" aria-hidden="true" />
+
       <div class="relative">
         <div
-          class="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400"
+          class="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400"
         >
           <span aria-hidden="true">⚠</span>
           Early Beta — not production-ready
@@ -41,7 +43,7 @@ import { GITHUB_DISCUSSIONS_URL, GITHUB_URL } from "@lib/constants";
           </a>
         </div>
 
-        <p class="mt-6 font-mono text-xs text-muted-foreground/60">
+        <p class="mt-6 font-mono text-xs text-muted-foreground">
           Apache 2.0 licensed · Built in public on{" "}
           <a
             href={GITHUB_URL}

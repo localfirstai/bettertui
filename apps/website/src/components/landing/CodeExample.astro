@@ -49,7 +49,7 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
 <span class="${fg}">${R}</span>`;
 ---
 
-<section class="py-24">
+<section class="border-t border-border bg-muted/40 py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
       <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
@@ -64,7 +64,7 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
 
     <!-- Tab switcher -->
     <div class="mx-auto max-w-3xl">
-      <div class="mb-4 flex items-center gap-1 rounded-lg border border-border/60 bg-muted/50 p-1 backdrop-blur-sm">
+      <div class="mb-4 flex items-center gap-1 rounded-lg border border-border bg-muted p-1">
         <button
           id="tab-react"
           class="code-tab flex-1 rounded-md px-4 py-2 font-mono text-sm font-medium transition-all"
@@ -83,7 +83,7 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
         </button>
       </div>
 
-      <div class="overflow-hidden rounded-xl border border-code-border bg-code-bg">
+      <div class="code-window overflow-hidden rounded-xl border border-code-border">
         <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
           <div class="h-3 w-3 rounded-full bg-red-400/80"></div>
           <div class="h-3 w-3 rounded-full bg-yellow-400/80"></div>
@@ -110,18 +110,18 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
     <!-- Output preview -->
     <div class="mx-auto mt-12 max-w-3xl">
       <p
-        class="mb-4 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50"
+        class="mb-4 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
       >
         Terminal output
       </p>
-      <div class="overflow-hidden rounded-xl border-2 border-terminal/25 bg-code-bg shadow-lg">
+      <div class="code-window overflow-hidden rounded-xl border-2 border-terminal/30 shadow-lg">
         <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
           <div class="h-2.5 w-2.5 rounded-full bg-red-400/80"></div>
           <div class="h-2.5 w-2.5 rounded-full bg-yellow-400/80"></div>
           <div class="h-2.5 w-2.5 rounded-full bg-green-400/80 terminal-dot-pulse"></div>
           <span class="ml-2 font-mono text-xs text-muted-foreground/60">my-app</span>
         </div>
-        <div class="rounded border border-border bg-background p-4 font-mono text-sm m-4">
+        <div class="rounded border border-border bg-card p-4 font-mono text-sm m-4">
           <div class="font-bold text-terminal">● Count: 0</div>
           <div class="mt-1 text-muted-foreground">Press q to quit</div>
         </div>
@@ -134,7 +134,7 @@ const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L
   .code-tab[data-active="true"] {
     background-color: var(--background);
     color: var(--foreground);
-    box-shadow: 0 1px 3px oklch(0 0 0 / 0.08);
+    box-shadow: 0 1px 4px oklch(0 0 0 / 0.12), 0 0 0 1px var(--border);
   }
   .code-tab[data-active="false"] {
     color: var(--muted-foreground);
