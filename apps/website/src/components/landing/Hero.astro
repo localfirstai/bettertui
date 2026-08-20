@@ -34,7 +34,7 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
 <span class="${fn_}">render</span><span class="${fg}">(</span><span class="${op}">&lt;</span><span class="${tag}">App</span><span class="${fg}"> /&gt;);</span>`;
 ---
 
-<section class="hero-section relative min-h-[90vh] pt-16">
+<section class="relative min-h-screen pt-16">
 
   <!-- ── Gradient orbs ────────────────────────────── -->
   <div class="pointer-events-none absolute inset-0 -z-20" aria-hidden="true">
@@ -168,6 +168,13 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
 
 <style>
   /* ─────────────────────────────────────────────────────────
+     Hero section — no border
+  ───────────────────────────────────────────────────────── */
+  .hero-section {
+    border: none;
+  }
+
+  /* ─────────────────────────────────────────────────────────
      Gradient orbs  (Tailwind-CSS-style atmospheric lighting)
   ───────────────────────────────────────────────────────── */
   .hero-orb {
@@ -263,7 +270,6 @@ const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box
       linear-gradient(oklch(0.4 0 0 / 0.08) 1px, transparent 1px),
       linear-gradient(90deg, oklch(0.4 0 0 / 0.08) 1px, transparent 1px);
     background-size: 48px 48px;
-    /* spotlight mask: visible in the middle, fades at edges & bottom */
     mask-image: radial-gradient(
       ellipse 85% 60% at 50% 30%,
       black 0%,

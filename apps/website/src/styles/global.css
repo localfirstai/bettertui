@@ -259,10 +259,6 @@
     --syntax-string: var(--terminal);
   }
 
-  * {
-    @apply border-border outline-ring/50;
-  }
-
   html {
     overflow-x: hidden;
   }
