@@ -119,9 +119,11 @@
 /* Site title / logo area — tighten up the branding */
 .site-title {
 	font-family: var(--sl-font);
+	font-size: var(--sl-text-sm);
 	font-weight: 600;
 	letter-spacing: -0.02em;
 	gap: 0.5rem;
+	color: var(--sl-color-white);
 }
 
 .site-title img {
