@@ -101,6 +101,11 @@
           A thin, intentional TypeScript layer. Orchestrates the bridge between your framework and
           the native engine.
         </p>
+        <div class="mt-5 flex items-baseline gap-2 border-t border-blue-500/15 pt-4">
+          <span class="font-mono text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">100%</span>
+          <span class="text-sm font-semibold text-foreground">type-safe</span>
+          <span class="ml-auto font-mono text-xs text-muted-foreground">from JSX props to native bridge</span>
+        </div>
       </div>
 
       <!-- ── Connector 2 → 3 ───────────────────────────────── -->
@@ -162,38 +167,11 @@
             Taffy flexbox
           </span>
         </div>
-      </div>
-    </div>
-
-    <!-- ── Stat cards ──────────────────────────────────────── -->
-    <div class="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-3">
-      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="font-mono text-3xl font-bold tracking-tight text-terminal">10–50×</p>
-        <p class="mt-1 text-sm font-semibold text-foreground">Faster rendering</p>
-        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Rust processes layout and rendering faster than any pure-JS equivalent — with
-          deterministic, predictable memory behaviour.
-        </p>
-      </div>
-
-      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="font-mono text-3xl font-bold tracking-tight text-sky">0 bytes</p>
-        <p class="mt-1 text-sm font-semibold text-foreground">Engine in your bundle</p>
-        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-          The TypeScript layer never touches the render hot path. The heavy work lives in the
-          native addon — entirely outside your bundle.
-        </p>
-      </div>
-
-      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="font-mono text-3xl font-bold tracking-tight text-violet-500 dark:text-violet-400">
-          100%
-        </p>
-        <p class="mt-1 text-sm font-semibold text-foreground">Type-safe</p>
-        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Your components describe <em>what</em> to render — Rust decides <em>how</em>. Fully
-          typed from JSX props to the native bridge.
-        </p>
+        <div class="relative mt-5 flex items-baseline gap-2 border-t border-terminal/15 pt-4">
+          <span class="font-mono text-2xl font-bold tracking-tight text-terminal">10–50×</span>
+          <span class="text-sm font-semibold text-foreground">faster rendering</span>
+          <span class="ml-auto font-mono text-xs text-muted-foreground">vs pure-JS equivalent</span>
+        </div>
       </div>
     </div>
   </div>
