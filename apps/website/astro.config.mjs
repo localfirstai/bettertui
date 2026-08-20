@@ -16,6 +16,7 @@ export default defineConfig({
         src: "./src/assets/logo.svg",
         alt: "BetterTUI",
       },
+      customCss: ["./src/styles/docs.css"],
       social: [{ icon: "github", label: "GitHub", href: GITHUB_URL }],
       sidebar: [
         {
