@@ -99,21 +99,13 @@
 
 /* ── Header — frosted glass matching landing page navbar ──────── */
 .header {
-	background: oklch(0.145 0.022 265 / 0.92) !important;
 	backdrop-filter: blur(20px) saturate(1.8);
 	-webkit-backdrop-filter: blur(20px) saturate(1.8);
 	border-color: oklch(1 0 0 / 0.08);
-	box-shadow:
-		0 4px 20px oklch(0 0 0 / 0.28),
-		0 1px 4px oklch(0 0 0 / 0.18);
 }
 
 :root[data-theme="light"] .header {
-	background: oklch(1 0 0 / 0.88) !important;
-	border-bottom: 1px solid oklch(0.88 0.012 252 / 0.60) !important;
-	box-shadow:
-		0 4px 20px oklch(0 0 0 / 0.07),
-		0 1px 4px oklch(0 0 0 / 0.04);
+	border-color: oklch(0.88 0.012 252 / 0.60) !important;
 }
 
 /* Site title / logo area — tighten up the branding */
