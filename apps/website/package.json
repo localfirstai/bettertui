@@ -10,8 +10,9 @@
   },
   "scripts": {
     "dev": "ASTRO_DEV_BACKGROUND=0 astro dev",
-    "stop": "astro dev stop",
+    "stop": "astro dev stop 2>/dev/null; lsof -ti :4321 | xargs kill 2>/dev/null; echo 'Dev server stopped'",
     "build": "astro build",
+    "build:search": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "bench": "bun run src/lib/bench/frameworks.ts",
