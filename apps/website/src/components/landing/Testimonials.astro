@@ -1,10 +1,10 @@
 ---
 import { GITHUB_DISCUSSIONS_URL } from "@lib/constants";
-import { Bug, GitFork, Heart, Package, Trophy, Warning } from "@phosphor-icons/react";
+import { BugIcon, GitForkIcon, HeartIcon, PackageIcon, TrophyIcon, WarningIcon } from "@phosphor-icons/react";
 
 const problems = [
   {
-    icon: Bug,
+    icon: BugIcon,
     title: "Runtime Instability",
     problem:
       "Bun is fast but experimental — unpredictable behavior, incomplete Node.js compatibility, and sharp production edges. Zig-backed terminals carry known memory hazards that surface under load.",
@@ -12,7 +12,7 @@ const problems = [
       "Node.js ≥ 24 as the primary target. The Rust engine eliminates memory hazards by construction — no manual allocations, no use-after-free, no runtime surprises.",
   },
   {
-    icon: Warning,
+    icon: WarningIcon,
     title: "Garbage Collection Pauses",
     problem:
       "Pure-JS TUI renderers compete with your app for the garbage collector. A 50ms GC pause in a real-time dashboard is visible and jarring.",
@@ -20,7 +20,7 @@ const problems = [
       "The Rust engine never touches the JS heap. Layout and rendering are garbage collection–free by construction.",
   },
   {
-    icon: Package,
+    icon: PackageIcon,
     title: "Bundle Bloat",
     problem:
       "Traditional TUI libs ship the full rendering engine in JS — parsing, layout, ANSI encoding. That's hundreds of kB in your bundle.",
@@ -28,7 +28,7 @@ const problems = [
       "The JS layer is a thin orchestration bridge. All the heavy work lives in the native addon — entirely outside your bundle.",
   },
   {
-    icon: GitFork,
+    icon: GitForkIcon,
     title: "Framework Lock-in",
     problem:
       "Ink is React-only. Blessed has no modern framework adapters. You either fight your framework or give up features.",
@@ -118,7 +118,7 @@ const comparisons = [
         <article class="card-hover flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div class="flex-1 p-6">
             <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-              <item.icon class="h-5 w-5" weight="duotone" aria-hidden="true" />
+              <item.icon className="h-5 w-5" weight="duotone" aria-hidden="true" />
             </div>
             <h3 class="text-base font-semibold">{item.title}</h3>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.problem}</p>
@@ -137,7 +137,7 @@ const comparisons = [
     <div class="mt-8 grid gap-6 md:grid-cols-2">
       <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div class="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
-          <Trophy class="h-4 w-4" weight="duotone" aria-hidden="true" />
+          <TrophyIcon className="h-4 w-4" weight="duotone" aria-hidden="true" />
         </div>
         <h3 class="text-base font-semibold">OpenTUI as the benchmark</h3>
         <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -149,7 +149,7 @@ const comparisons = [
 
       <div class="rounded-xl border border-terminal/20 bg-terminal-muted/15 p-6">
         <div class="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
-          <Heart class="h-4 w-4" weight="duotone" aria-hidden="true" />
+          <HeartIcon className="h-4 w-4" weight="duotone" aria-hidden="true" />
         </div>
         <h3 class="text-base font-semibold">Standing on the shoulders of giants</h3>
         <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
