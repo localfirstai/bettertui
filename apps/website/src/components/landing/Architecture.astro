@@ -1,7 +1,7 @@
 ---
 ---
 
-<section class="relative overflow-hidden border-t border-border bg-muted/50 py-24">
+<section data-arch-section class="relative overflow-hidden border-t border-border bg-muted/50 py-24">
   <div class="dot-grid pointer-events-none absolute inset-0 opacity-60" />
   <div class="arch-bg-glow pointer-events-none absolute inset-0" />
 
@@ -17,96 +17,138 @@
 
     <div class="mx-auto max-w-3xl">
 
-      <!-- Layer 1: Framework Adapters -->
-      <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-        <div class="mb-4 text-center">
-          <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Layer 1
-          </p>
-          <p class="mt-0.5 font-mono text-sm font-semibold">Framework Adapters</p>
+      <!-- ── Layer 1: Framework Adapters ──────────────────── -->
+      <div class="arch-glow-card arch-card-1 relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm">
+        <div class="arch-glow-ring" aria-hidden="true"></div>
+
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"
+          aria-hidden="true"
+        />
+
+        <div class="mb-5 flex items-center gap-3">
+          <span class="arch-num arch-num-sky">01</span>
+          <div>
+            <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Layer 1
+            </p>
+            <p class="mt-0.5 font-mono text-sm font-semibold">Framework Adapters</p>
+          </div>
         </div>
+
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex items-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3.5">
-            <span class="h-2 w-2 shrink-0 rounded-full bg-cyan-400" aria-hidden="true" />
-            <span class="font-mono text-sm font-medium">@bettertui/react</span>
+          <div class="relative overflow-hidden rounded-xl border border-border bg-background px-4 py-3.5">
+            <div class="arch-adapter-strip bg-cyan-400" aria-hidden="true" />
+            <div class="flex items-center gap-2.5">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-400" aria-hidden="true" />
+              <span class="font-mono text-sm font-medium">@bettertui/react</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2.5 rounded-xl border border-border bg-background px-4 py-3.5">
-            <span class="h-2 w-2 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
-            <span class="font-mono text-sm font-medium">@bettertui/solid</span>
+          <div class="relative overflow-hidden rounded-xl border border-border bg-background px-4 py-3.5">
+            <div class="arch-adapter-strip bg-sky-500" aria-hidden="true" />
+            <div class="flex items-center gap-2.5">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
+              <span class="font-mono text-sm font-medium">@bettertui/solid</span>
+            </div>
           </div>
         </div>
-        <p class="mt-3 text-center text-xs text-muted-foreground">
+
+        <p class="mt-4 text-center text-xs text-muted-foreground">
           React 19 + SolidJS · First-class reconcilers
         </p>
       </div>
 
-      <!-- Arrow: Layer 1 → Layer 2 -->
-      <div class="flex flex-col items-center py-1" aria-hidden="true">
-        <div class="h-5 w-px bg-border" />
-        <span class="rounded-full border border-border bg-background px-3 py-0.5 font-mono text-[11px] text-muted-foreground backdrop-blur-sm">
+      <!-- ── Connector 1 → 2 ───────────────────────────────── -->
+      <div class="flex flex-col items-center py-2" aria-hidden="true">
+        <div class="arch-dash arch-dash-sky h-7" />
+        <span class="rounded-full border border-sky-500/20 bg-sky-500/8 px-3 py-1 font-mono text-[11px] text-sky-600 dark:text-sky-400">
           Component tree → commands
         </span>
-        <div class="h-4 w-px bg-border" />
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" class="text-border">
-          <path d="M5 6L0 0h10z" />
+        <div class="arch-dash arch-dash-sky h-6" />
+        <svg width="12" height="7" viewBox="0 0 12 7" fill="currentColor" class="text-sky-500 dark:text-sky-400">
+          <path d="M6 7L0 0h12z" />
         </svg>
       </div>
 
-      <!-- Layer 2: @bettertui/core -->
-      <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <!-- ── Layer 2: @bettertui/core ─────────────────────── -->
+      <div class="arch-glow-card arch-card-2 relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm">
+        <div class="arch-glow-ring" aria-hidden="true"></div>
+        <div class="arch-left-bar bg-blue-500/50" aria-hidden="true" />
+
         <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Layer 2
-            </p>
-            <p class="mt-0.5 font-mono text-base font-semibold">@bettertui/core</p>
+          <div class="flex items-center gap-3">
+            <span class="arch-num arch-num-blue">02</span>
+            <div>
+              <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Layer 2
+              </p>
+              <p class="mt-0.5 font-mono text-base font-semibold">@bettertui/core</p>
+            </div>
           </div>
-          <span class="mt-0.5 rounded-full border border-blue-500/25 bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs text-blue-600 dark:text-blue-400">
+          <span class="mt-1 rounded-full border border-blue-500/25 bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs text-blue-600 dark:text-blue-400">
             TypeScript
           </span>
         </div>
-        <p class="mt-2 font-mono text-xs text-muted-foreground">
+
+        <p class="mt-3 font-mono text-xs text-muted-foreground">
           CommandBuffer · Runtime · Tree Reconciliation
         </p>
-        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
           A thin, intentional TypeScript layer. Orchestrates the bridge between your framework and
           the native engine.
         </p>
       </div>
 
-      <!-- Arrow: Layer 2 → Layer 3 -->
-      <div class="flex flex-col items-center py-1" aria-hidden="true">
-        <div class="h-5 w-px bg-border" />
-        <span class="rounded-full border border-border bg-background px-3 py-0.5 font-mono text-[11px] text-muted-foreground backdrop-blur-sm">
+      <!-- ── Connector 2 → 3 ───────────────────────────────── -->
+      <div class="flex flex-col items-center py-2" aria-hidden="true">
+        <div class="arch-dash arch-dash-green h-7" />
+        <span class="rounded-full border border-terminal/25 bg-terminal-muted/50 px-3 py-1 font-mono text-[11px] text-terminal">
           Layout commands → render output
         </span>
-        <div class="h-4 w-px bg-border" />
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" class="text-border">
-          <path d="M5 6L0 0h10z" />
+        <div class="arch-dash arch-dash-green h-6" />
+        <svg width="12" height="7" viewBox="0 0 12 7" fill="currentColor" class="text-terminal">
+          <path d="M6 7L0 0h12z" />
         </svg>
       </div>
 
-      <!-- Layer 3: Rust Engine -->
-      <div class="arch-layer-glow rounded-2xl border border-terminal/30 bg-card p-6">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal/60">
-              Layer 3
-            </p>
-            <p class="mt-0.5 font-mono text-base font-semibold text-terminal">Rust Engine (.node)</p>
+      <!-- ── Layer 3: Rust Engine ──────────────────────────── -->
+      <div class="arch-glow-card arch-card-3 relative overflow-hidden rounded-2xl border bg-card p-6">
+        <div class="arch-glow-ring" aria-hidden="true"></div>
+
+        <div
+          class="pointer-events-none absolute inset-0"
+          style="background: radial-gradient(ellipse 80% 60% at 0% 0%, oklch(0.54 0.17 152 / 0.12), transparent 60%)"
+          aria-hidden="true"
+        />
+        <div class="arch-left-bar bg-terminal/60" aria-hidden="true" />
+        <div
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/50 to-transparent"
+          aria-hidden="true"
+        />
+
+        <div class="relative flex flex-wrap items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="arch-num arch-num-green">03</span>
+            <div>
+              <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal/70">
+                Layer 3
+              </p>
+              <p class="mt-0.5 font-mono text-base font-semibold text-terminal">Rust Engine (.node)</p>
+            </div>
           </div>
-          <span class="mt-0.5 rounded-full border border-terminal/25 bg-terminal-muted px-2.5 py-0.5 font-mono text-xs text-terminal">
+          <span class="mt-1 rounded-full border border-terminal/25 bg-terminal-muted px-2.5 py-0.5 font-mono text-xs text-terminal">
             🦀 Rust · Native Node Addon
           </span>
         </div>
-        <p class="mt-2 font-mono text-xs text-muted-foreground">
+
+        <p class="relative mt-3 font-mono text-xs text-muted-foreground">
           Taffy Layout · ANSI Renderer · Arena Allocator
         </p>
-        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
-          The hot render path runs natively. No garbage collector pressure. Arena allocation with generational
-          indices means no memory leaks possible.
+        <p class="relative mt-2 text-sm leading-relaxed text-muted-foreground">
+          The hot render path runs natively. No garbage collector pressure. Arena allocation with
+          generational indices means no memory leaks possible.
         </p>
-        <div class="mt-4 flex flex-wrap gap-2">
+        <div class="relative mt-4 flex flex-wrap gap-2">
           <span class="rounded-full border border-terminal/20 bg-terminal-muted px-3 py-1 font-mono text-xs text-terminal">
             Zero garbage collection pauses
           </span>
@@ -120,21 +162,32 @@
       </div>
     </div>
 
+    <!-- ── Stat cards ──────────────────────────────────────── -->
     <div class="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-3">
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="text-sm leading-relaxed text-muted-foreground">
-          The Rust engine processes layout and rendering 10–50× faster than a pure-JS equivalent —
-          with deterministic memory behavior.
+        <p class="font-mono text-3xl font-bold tracking-tight text-terminal">10–50×</p>
+        <p class="mt-1 text-sm font-semibold text-foreground">Faster rendering</p>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Rust processes layout and rendering faster than any pure-JS equivalent — with
+          deterministic, predictable memory behaviour.
         </p>
       </div>
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="text-sm leading-relaxed text-muted-foreground">
-          The TypeScript layer never touches the render hot path. It only orchestrates.
+        <p class="font-mono text-3xl font-bold tracking-tight text-sky">0 bytes</p>
+        <p class="mt-1 text-sm font-semibold text-foreground">Engine in your bundle</p>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+          The TypeScript layer never touches the render hot path. The heavy work lives in the
+          native addon — entirely outside your bundle.
         </p>
       </div>
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <p class="text-sm leading-relaxed text-muted-foreground">
-          Your React/SolidJS components describe <em>what</em> to render. Rust decides <em>how</em>.
+        <p class="font-mono text-3xl font-bold tracking-tight text-violet-500 dark:text-violet-400">
+          100%
+        </p>
+        <p class="mt-1 text-sm font-semibold text-foreground">Type-safe</p>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Your components describe <em>what</em> to render — Rust decides <em>how</em>. Fully
+          typed from JSX props to the native bridge.
         </p>
       </div>
     </div>
@@ -142,6 +195,7 @@
 </section>
 
 <style>
+  /* ── Section background glow ────────────────────────────── */
   .arch-bg-glow {
     background: radial-gradient(
       ellipse 60% 40% at 50% 100%,
@@ -149,13 +203,166 @@
       transparent 70%
     );
   }
-
-  :global(.dark) .arch-bg-glow,
-  :global([data-theme="dark"]) .arch-bg-glow {
+  :global(.dark) .arch-bg-glow {
     background: radial-gradient(
       ellipse 60% 40% at 50% 100%,
       oklch(0.75 0.18 145 / 0.18),
       transparent 70%
     );
   }
+
+  /* ── Per-card glow color (--gc) ─────────────────────────── */
+  .arch-card-1 { --gc: oklch(0.62 0.18 222); }
+  .arch-card-2 { --gc: oklch(0.52 0.17 258); }
+  .arch-card-3 { --gc: oklch(0.54 0.17 152); }
+
+  :global(.dark) .arch-card-1 { --gc: oklch(0.72 0.18 215); }
+  :global(.dark) .arch-card-2 { --gc: oklch(0.62 0.17 258); }
+  :global(.dark) .arch-card-3 { --gc: oklch(0.78 0.20 145); }
+
+  /* ── Base card border — identical on all three cards ───── */
+  .arch-glow-card {
+    border-color: var(--border);
+  }
+  :global(.dark) .arch-glow-card {
+    border-color: oklch(1 0 0 / 0.18);
+  }
+
+  /* ── Glow ring — animated by Motion ────────────────────── */
+  .arch-glow-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid color-mix(in oklch, var(--gc) 80%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--gc) 35%, transparent),
+      0 0 18px color-mix(in oklch, var(--gc) 20%, transparent),
+      0 0 40px color-mix(in oklch, var(--gc) 10%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── Numbered layer badges ──────────────────────────────── */
+  .arch-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 9999px;
+    border: 1px solid;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .arch-num-sky {
+    border-color: oklch(0.62 0.18 222 / 0.35);
+    background: oklch(0.62 0.18 222 / 0.10);
+    color: oklch(0.62 0.18 222);
+  }
+  :global(.dark) .arch-num-sky {
+    border-color: oklch(0.72 0.18 215 / 0.35);
+    background: oklch(0.72 0.18 215 / 0.12);
+    color: oklch(0.72 0.18 215);
+  }
+
+  .arch-num-blue {
+    border-color: oklch(0.52 0.17 258 / 0.35);
+    background: oklch(0.52 0.17 258 / 0.10);
+    color: oklch(0.52 0.17 258);
+  }
+  :global(.dark) .arch-num-blue {
+    border-color: oklch(0.62 0.17 258 / 0.35);
+    background: oklch(0.62 0.17 258 / 0.12);
+    color: oklch(0.62 0.17 258);
+  }
+
+  .arch-num-green {
+    border-color: oklch(0.54 0.17 152 / 0.45);
+    background: oklch(0.54 0.17 152 / 0.12);
+    color: oklch(0.54 0.17 152);
+  }
+  :global(.dark) .arch-num-green {
+    border-color: oklch(0.78 0.20 145 / 0.45);
+    background: oklch(0.78 0.20 145 / 0.14);
+    color: oklch(0.78 0.20 145);
+  }
+
+  /* ── Adapter left accent strip ──────────────────────────── */
+  .arch-adapter-strip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 9999px 0 0 9999px;
+    opacity: 0.75;
+  }
+
+  /* ── Card left accent bar ───────────────────────────────── */
+  .arch-left-bar {
+    position: absolute;
+    left: 0;
+    top: 1rem;
+    bottom: 1rem;
+    width: 3px;
+    border-radius: 9999px;
+  }
+
+  /* ── Dashed connector lines ─────────────────────────────── */
+  .arch-dash {
+    width: 1px;
+    background-repeat: repeat-y;
+    background-size: 1px 7px;
+  }
+
+  .arch-dash-sky {
+    background-image: linear-gradient(to bottom, oklch(0.62 0.18 222 / 0.55) 50%, transparent 50%);
+  }
+  :global(.dark) .arch-dash-sky {
+    background-image: linear-gradient(to bottom, oklch(0.72 0.18 215 / 0.55) 50%, transparent 50%);
+  }
+
+  .arch-dash-green {
+    background-image: linear-gradient(to bottom, oklch(0.54 0.17 152 / 0.60) 50%, transparent 50%);
+  }
+  :global(.dark) .arch-dash-green {
+    background-image: linear-gradient(to bottom, oklch(0.78 0.20 145 / 0.60) 50%, transparent 50%);
+  }
 </style>
+
+<script>
+  import { animate, inView } from "motion";
+
+  const section = document.querySelector("[data-arch-section]");
+  const rings = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-arch-section] .arch-glow-ring"),
+  );
+
+  if (
+    section &&
+    rings.length === 3 &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    function runGlow() {
+      const animations = rings.map((ring, i) =>
+        animate(
+          ring,
+          { opacity: [0, 1, 0] },
+          { duration: 2, delay: i * 3 },
+        )
+      );
+
+      animations[animations.length - 1].finished.then(() => {
+        setTimeout(runGlow, 2000);
+      });
+    }
+
+    const stop = inView(section, () => {
+      stop();
+      runGlow();
+    });
+  }
+</script>
