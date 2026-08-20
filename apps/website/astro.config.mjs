@@ -17,6 +17,7 @@ export default defineConfig({
         alt: "BetterTUI",
       },
       customCss: ["./src/styles/docs.css"],
+      head: [{ tag: "script", attrs: { defer: true, src: "/theme-sync.js" } }],
       social: [{ icon: "github", label: "GitHub", href: GITHUB_URL }],
       sidebar: [
         {

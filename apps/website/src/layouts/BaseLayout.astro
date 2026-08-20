@@ -65,6 +65,8 @@ const currentURL = canonicalURL || Astro.url.href;
         document.documentElement.classList.remove("dark");
       }
     </script>
+
+    <script is:inline defer src="/theme-sync.js"></script>
   </head>
   <body class="min-h-screen bg-background text-foreground antialiased">
     <slot />
