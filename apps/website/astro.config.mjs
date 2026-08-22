@@ -1,3 +1,5 @@
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { resolve } from "node:path";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
@@ -12,9 +14,6 @@ function devSearchSync() {
     name: "dev-search-sync",
     hooks: {
       "astro:server:start": async ({ logger }) => {
-        const { existsSync, cpSync, mkdirSync, rmSync } = await import("node:fs");
-        const { resolve } = await import("node:path");
-
         const distIndex = resolve("./dist/pagefind");
         const publicIndex = resolve("./public/pagefind");
 
