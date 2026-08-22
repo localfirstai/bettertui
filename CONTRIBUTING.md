@@ -11,7 +11,7 @@
 ### Getting started
 
 ```bash
-git clone https://github.com/bettertui/bettertui.git
+git clone https://github.com/localfirstai/bettertui.git
 cd bettertui
 pnpm install
 pnpm build

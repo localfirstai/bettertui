@@ -1,6 +1,6 @@
 # bettertui_engine
 
-High-performance terminal UI engine written in Rust. The native core of [BetterTUI](https://www.bettertui.dev): layout, rendering, text editing, input, animation, terminal emulation, PTY management, font/glyph handling, and syntax highlighting - all in a single dependency.
+High-performance terminal UI engine written in Rust. The native core of [BetterTUI](https://bettertui.dev): layout, rendering, text editing, input, animation, terminal emulation, PTY management, font/glyph handling, and syntax highlighting - all in a single dependency.
 
 [![crates.io](https://img.shields.io/crates/v/bettertui_engine.svg)](https://crates.io/crates/bettertui_engine)
 [![docs.rs](https://img.shields.io/docsrs/bettertui_engine)](https://docs.rs/bettertui_engine)
@@ -96,12 +96,12 @@ fn main() {
 ## Documentation
 
 - API reference: https://docs.rs/bettertui_engine
-- Project home: https://www.bettertui.dev
-- Source: https://github.com/bettertui/bettertui
+- Project home: https://bettertui.dev
+- Source: https://github.com/localfirstai/bettertui
 
 ## Ecosystem
 
-`bettertui_engine` powers [BetterTUI](https://www.bettertui.dev). It works standalone in any pure-Rust project, and the same crate compiles into the Node.js addon used by the npm package `@bettertui/core` when the optional `napi` feature is enabled.
+`bettertui_engine` powers [BetterTUI](https://bettertui.dev). It works standalone in any pure-Rust project, and the same crate compiles into the Node.js addon used by the npm package `@bettertui/core` when the optional `napi` feature is enabled.
 
 ## Minimum supported Rust version
 

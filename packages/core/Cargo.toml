@@ -9,10 +9,10 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/bettertui/bettertui"
+repository = "https://github.com/localfirstai/bettertui"
 description = "High-performance terminal UI framework"
 rust-version = "1.88"
-homepage = "https://www.bettertui.dev"
+homepage = "https://bettertui.dev"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }

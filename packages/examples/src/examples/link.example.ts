@@ -144,9 +144,9 @@ export function run(renderer: CliRenderer): void {
     RGBA.fromHex("#1e293be6"), // Dark slate
     t`${bold(fg("#f472b6")("♥ Project Info"))}
 
-${fg("#e2e8f0")("Source:")} ${link("https://github.com/anomalyco/bettertui")(underline(fg("#38bdf8")("GitHub Repository")))}
+${fg("#e2e8f0")("Source:")} ${link("https://github.com/localfirstai/bettertui")(underline(fg("#38bdf8")("GitHub Repository")))}
 ${fg("#e2e8f0")("Web:")}    ${link("https://bettertui.dev")(underline(fg("#34d399")("Official Website")))}
-${fg("#e2e8f0")("License:")} ${link("https://github.com/anomalyco/bettertui/blob/main/LICENSE")(underline(fg("#fbbf24")("MIT")))}`,
+${fg("#e2e8f0")("License:")} ${link("https://github.com/localfirstai/bettertui/blob/main/LICENSE")(underline(fg("#fbbf24")("MIT")))}`,
   );
 
   // Card 2: Documentation
@@ -162,9 +162,9 @@ ${fg("#e2e8f0")("License:")} ${link("https://github.com/anomalyco/bettertui/blob
     t`${bold(fg("#a78bfa")("📚 Documentation"))}
 
 ${fg("#cbd5e1")("Get started with:")}
-• ${link("https://github.com/anomalyco/bettertui#readme")(bold(fg("#fff")("Quick Start")))}
-• ${link("https://github.com/anomalyco/bettertui/tree/main/packages/examples")(fg("#fff")("Examples"))}
-• ${link("https://github.com/anomalyco/bettertui/issues")(fg("#fff")("Known Issues"))}`,
+• ${link("https://github.com/localfirstai/bettertui#readme")(bold(fg("#fff")("Quick Start")))}
+• ${link("https://github.com/localfirstai/bettertui/tree/main/packages/examples")(fg("#fff")("Examples"))}
+• ${link("https://github.com/localfirstai/bettertui/issues")(fg("#fff")("Known Issues"))}`,
   );
 
   // Card 3: Socials

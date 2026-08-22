@@ -88,7 +88,7 @@ interface PresetUrl {
 const PRESET_URLS: PresetUrl[] = [
   { label: "BetterTUI", url: "https://github.com/localfirstai/bettertui" },
   { label: "GitHub", url: "https://github.com/localfirstai/bettertui" },
-  { label: "Docs", url: "https://github.com/localfirstai/bettertui/tree/main/docs" },
+  { label: "Docs", url: "https://bettertui.dev/docs" },
   {
     label: "Examples",
     url: "https://github.com/localfirstai/bettertui/tree/main/packages/examples",

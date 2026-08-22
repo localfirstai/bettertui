@@ -99,7 +99,7 @@ Final paragraph after a second fence with \`inline code\`, **bold text**, and _e
 + const renderer = experimentalMarkdown
 \`\`\`
 
-Final paragraph with [docs](https://github.com/localfirstai/bettertui/tree/main/docs) and \`https://example.com/from-code\`.
+Final paragraph with [docs](https://bettertui.dev/docs) and \`https://example.com/from-code\`.
 
 ---
 

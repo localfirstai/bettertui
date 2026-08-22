@@ -5,11 +5,11 @@
   "keywords": ["tui", "terminal", "terminal-ui", "cli", "rust", "napi", "reconciler"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bettertui/bettertui.git",
+    "url": "https://github.com/localfirstai/bettertui.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/bettertui/bettertui/issues"
+    "url": "https://github.com/localfirstai/bettertui/issues"
   },
   "homepage": "https://bettertui.dev",
   "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",

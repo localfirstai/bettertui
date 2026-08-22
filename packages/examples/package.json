@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "BetterTUI vanilla TypeScript examples and standalone executable",
+  "homepage": "https://bettertui.dev",
   "author": {
     "name": "SOUMITRO-SAHA",
     "email": "soumitrosahaofficial@gmail.com"

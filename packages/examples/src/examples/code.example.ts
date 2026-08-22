@@ -168,7 +168,7 @@ CJK: 알겠습니다. Task 에이전트에 ktlint + detekt 검사를 위임하�
 
 ---
 
-For more info, visit [github.com/anomalyco/bettertui](https://github.com/anomalyco/bettertui)`,
+For more info, visit [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)`,
   },
   {
     name: "Zig",
