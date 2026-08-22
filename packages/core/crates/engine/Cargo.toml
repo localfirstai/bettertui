@@ -1,10 +1,19 @@
 [package]
-name = "bettertui-engine"
+name = "bettertui_engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "BetterTUI native rendering engine"
+description.workspace = true
+rust-version.workspace = true
+readme = "README.md"
+documentation = "https://docs.rs/bettertui_engine"
+keywords = ["tui", "terminal", "console", "cli", "rendering"]
+categories = ["command-line-interface", "graphics", "text-processing"]
+exclude = ["index.d.ts", ".DS_Store"]
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [lib]
 name = "bettertui_engine"
