@@ -6,6 +6,7 @@ license.workspace = true
 repository.workspace = true
 description.workspace = true
 rust-version.workspace = true
+homepage.workspace = true
 readme = "README.md"
 documentation = "https://docs.rs/bettertui_engine"
 keywords = ["tui", "terminal", "console", "cli", "rendering"]

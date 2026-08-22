@@ -12,6 +12,7 @@ license = "MIT"
 repository = "https://github.com/bettertui/bettertui"
 description = "High-performance terminal UI framework"
 rust-version = "1.88"
+homepage = "https://www.bettertui.dev"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }

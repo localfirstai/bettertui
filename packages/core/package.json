@@ -30,6 +30,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "publish": "node scripts/publish.ts",
+    "release:rust": "export PATH=\"$HOME/.cargo/bin:$PATH\"; cargo publish --locked --manifest-path crates/engine/Cargo.toml",
     "clean": "rm -rf dist"
   },
   "dependencies": {
