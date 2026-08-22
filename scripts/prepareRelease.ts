@@ -200,7 +200,7 @@ function incrementVersion(version: string, releaseType: ReleaseType): string {
 
 function getLockstepPackages(): WorkspacePackage[] {
   const rootPackageJson = readJson<RootPackageJson>(join(rootDir, "package.json"));
-  const workspacePatterns = rootPackageJson.workspaces ?? [];
+  const workspacePatterns = rootPackageJson.workspaces ?? readPnpmWorkspacePatterns();
 
   const workspaceDirs = [...new Set(workspacePatterns.flatMap(expandWorkspacePattern))];
   const packages = workspaceDirs
@@ -240,25 +240,62 @@ function getLockstepPackages(): WorkspacePackage[] {
   });
 }
 
+function readPnpmWorkspacePatterns(): string[] {
+  const yamlPath = join(rootDir, "pnpm-workspace.yaml");
+  if (!existsSync(yamlPath)) {
+    return [];
+  }
+  const patterns: string[] = [];
+  let inPackagesSection = false;
+  for (const line of readFileSync(yamlPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+    if (/^packages:\s*$/.test(trimmed)) {
+      inPackagesSection = true;
+      continue;
+    }
+    if (!trimmed.startsWith("-")) {
+      inPackagesSection = false;
+      continue;
+    }
+    if (!inPackagesSection) {
+      continue;
+    }
+    const value = trimmed
+      .slice(1)
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
+    if (value) {
+      patterns.push(value);
+    }
+  }
+  return patterns;
+}
+
 function expandWorkspacePattern(pattern: string): string[] {
   if (!pattern.includes("*")) {
     return [join(rootDir, pattern)];
   }
+  return expandGlobSegments(rootDir, pattern.split("/"));
+}
 
-  if (pattern.endsWith("/*") && pattern.indexOf("*") === pattern.length - 1) {
-    const baseDir = join(rootDir, pattern.slice(0, -2));
-
-    if (!existsSync(baseDir)) {
-      return [];
-    }
-
-    return readdirSync(baseDir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => join(baseDir, entry.name));
+function expandGlobSegments(baseDir: string, segments: string[]): string[] {
+  const [head, ...rest] = segments;
+  if (!existsSync(baseDir)) {
+    return [];
   }
-
-  console.error(`Error: Unsupported workspace pattern: ${pattern}`);
-  process.exit(1);
+  if (head !== "*") {
+    return rest.length > 0 ? expandGlobSegments(join(baseDir, head), rest) : [join(baseDir, head)];
+  }
+  const matches = readdirSync(baseDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(baseDir, entry.name));
+  if (rest.length === 0) {
+    return matches;
+  }
+  return matches.flatMap((match) => expandGlobSegments(match, rest));
 }
 
 function readJson<T>(filePath: string): T {
