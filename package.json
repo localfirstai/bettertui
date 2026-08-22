@@ -35,7 +35,7 @@
     "cargo:test": "cargo test --manifest-path packages/core/Cargo.toml",
     "cargo:fmt": "cargo fmt --manifest-path packages/core/Cargo.toml --all",
     "cargo:clippy": "cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings",
-    "cargo:build": "cargo build --manifest-path packages/core/Cargo.toml -p bettertui-engine",
+    "cargo:build": "cargo build --manifest-path packages/core/Cargo.toml -p bettertui_engine",
     "prepare-release": "node scripts/prepareRelease.ts",
     "pre-publish": "node scripts/prePublish.ts",
     "publish": "node scripts/publish.ts",
