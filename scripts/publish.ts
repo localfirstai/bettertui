@@ -3,11 +3,16 @@
 /**
  * Publish Script
  *
- * Publishes all BetterTUI packages to npm.
- * Must run pre-publish validation first.
+ * Publishes BetterTUI packages to npm in dependency order:
+ *   1. @bettertui/shared (pure types, no deps)
+ *   2. Native platform packages (@bettertui/core-<triple>)
+ *   3. @bettertui/core (depends on shared + native)
+ *
+ * Skips any package with "private": true.
  *
  * Usage:
  *   node scripts/publish.ts
+ *   pnpm release
  */
 
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
@@ -19,6 +24,7 @@ import { fileURLToPath } from "node:url";
 interface PackageJson {
   name: string;
   version: string;
+  private?: boolean;
   optionalDependencies?: Record<string, string>;
 }
 
@@ -26,47 +32,55 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, "..");
 
-const packageJson: PackageJson = JSON.parse(
-  readFileSync(join(rootDir, "packages", "core", "package.json"), "utf8"),
-);
+/** Ordered list of [directory, packageJson] to publish. */
+const publishQueue: Array<[string, PackageJson]> = [];
 
-console.log(`Publishing @bettertui/core@${packageJson.version}...`);
-console.log("Make sure you've run the pre-publish validation script first!");
+function loadPkg(dir: string): PackageJson | null {
+  const p = join(dir, "package.json");
+  if (!existsSync(p)) return null;
+  return JSON.parse(readFileSync(p, "utf8"));
+}
 
+// 1. Shared (must go first — core depends on it)
+const sharedDir = join(rootDir, "packages", "shared", "dist");
+const sharedPkg = loadPkg(sharedDir);
+if (sharedPkg && !sharedPkg.private) {
+  publishQueue.push([sharedDir, sharedPkg]);
+}
+
+// 2. Native platform packages
 const coreDir = join(rootDir, "packages", "core");
 const distDir = join(coreDir, "dist");
-const packageJsons: Record<string, PackageJson> = {
-  [distDir]: JSON.parse(readFileSync(join(distDir, "package.json"), "utf8")),
-};
+const corePkg = loadPkg(distDir);
 
-// Load all native package.json files
-const optionalDeps = packageJsons[distDir].optionalDependencies;
-if (optionalDeps) {
-  for (const pkgName of Object.keys(optionalDeps).filter((x) => x.startsWith(packageJson.name))) {
+if (corePkg?.optionalDependencies) {
+  for (const pkgName of Object.keys(corePkg.optionalDependencies).filter((x) =>
+    x.startsWith(corePkg.name),
+  )) {
     const nativeDir = join(coreDir, "node_modules", pkgName);
-    if (existsSync(nativeDir)) {
-      packageJsons[nativeDir] = JSON.parse(readFileSync(join(nativeDir, "package.json"), "utf8"));
+    const nativePkg = loadPkg(nativeDir);
+    if (nativePkg && !nativePkg.private) {
+      publishQueue.push([nativeDir, nativePkg]);
     } else {
       console.warn(`WARNING: Native package not found: ${nativeDir}`);
     }
   }
 }
 
-// Also publish @bettertui/shared and @bettertui/react
-const sharedDir = join(rootDir, "packages", "shared", "dist");
-const reactDir = join(rootDir, "packages", "react", "dist");
-
-if (existsSync(join(sharedDir, "package.json"))) {
-  packageJsons[sharedDir] = JSON.parse(readFileSync(join(sharedDir, "package.json"), "utf8"));
+// 3. Core (depends on shared + native)
+if (corePkg && !corePkg.private) {
+  publishQueue.push([distDir, corePkg]);
 }
 
-if (existsSync(join(reactDir, "package.json"))) {
-  packageJsons[reactDir] = JSON.parse(readFileSync(join(reactDir, "package.json"), "utf8"));
+if (publishQueue.length === 0) {
+  console.error("No packages to publish. Did you run `pnpm build` first?");
+  process.exit(1);
 }
 
-// Publish all packages (main + native packages)
-for (const [dir, { name, version }] of Object.entries(packageJsons)) {
-  console.log(`\nPublishing ${name}@${version}...`);
+console.log(`Publishing ${publishQueue.length} package(s)...\n`);
+
+for (const [dir, { name, version }] of publishQueue) {
+  console.log(`Publishing ${name}@${version}...`);
 
   const isSnapshot = version.includes("-snapshot") || /^0\.0\.0-\d{8}-[a-f0-9]{8}$/.test(version);
   const publishArgs = ["publish", "--access=public"];
@@ -86,7 +100,7 @@ for (const [dir, { name, version }] of Object.entries(packageJsons)) {
     process.exit(1);
   }
 
-  console.log(`Successfully published '${name}@${version}'`);
+  console.log(`  ✅ ${name}@${version} published\n`);
 }
 
-console.log("\nAll @bettertui packages published successfully!");
+console.log("All @bettertui packages published successfully!");
