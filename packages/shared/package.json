@@ -31,6 +31,7 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsdown",
+    "postbuild": "node ../../scripts/generateDistManifest.ts",
     "dev": "tsdown --watch",
     "lint": "biome check src/",
     "format": "biome format --write src/",

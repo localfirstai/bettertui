@@ -28,9 +28,10 @@
       "import": "./dist/index.mjs"
     }
   },
-  "files": ["dist", "bettertui_engine.node"],
+  "files": ["dist"],
   "scripts": {
     "build": "tsdown && pnpm run build:native",
+    "postbuild": "node ../../scripts/generateDistManifest.ts",
     "build:native": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --release --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "build:native:debug": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "dev": "tsdown --watch",
