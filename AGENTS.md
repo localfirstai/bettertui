@@ -92,6 +92,12 @@
 - The only Rust crate with a unit-test suite co-located in `#[cfg(test)]` blocks is `bettertui-engine`. (The engine test build currently has a compilation issue in `terminal/vt.rs` that must be fixed before the suite is green.)
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.
 
+## Research Findings
+
+- **Location:** ALL research findings — analyses, audits, comparisons, gap studies, spike results, investigation reports — must be dumped inside `tasks/research/` ONLY. Never leave them loose in `tasks/` root, the repo root, or scattered elsewhere. (Note: `tasks/` is gitignored via `tasks/.gitignore`, so research stays out of version control by design.)
+- **File naming:** lowercase kebab-case, descriptive `<subject>-<kind>.md` (e.g. `opentui-packaging-analysis.md`, `rust-engine-audit-report.md`, `opentui-gap-analysis-original.md`). No spaces, no parentheses, no ALL-CAPS names.
+- **Not research:** execution plans (`*-plan.md`), prompts (`tasks/prompts/`), PRDs (`tasks/prd/`), and generated reports (`tasks/reports/`) have their own locations — do not mix them into `tasks/research/`.
+
 ## Debugging and Logging Conventions
 
 - **Debugging Code:** ALL debugging scripts and tools must be placed inside `packages/examples/src/debug/` ONLY. Never write standalone debug scripts in the root directory or under `scripts/`.
