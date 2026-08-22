@@ -43,8 +43,7 @@ interface PackageJson {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, "..");
-const cratesDir = join(rootDir, "crates");
-const bindingsDir = join(cratesDir, "bindings");
+const engineManifestPath = join(rootDir, "crates", "engine", "Cargo.toml");
 const licensePath = resolve(__dirname, "../../../LICENSE");
 
 const packageJson: PackageJson = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
@@ -55,14 +54,14 @@ const variants: Variant[] = [
     platform: "darwin",
     arch: "x64",
     rustTarget: "x86_64-apple-darwin",
-    binaryName: "bettertui_bindings.darwin-x64.node",
+    binaryName: "bettertui_engine.darwin-x64.node",
     extension: ".node",
   },
   {
     platform: "darwin",
     arch: "arm64",
     rustTarget: "aarch64-apple-darwin",
-    binaryName: "bettertui_bindings.darwin-arm64.node",
+    binaryName: "bettertui_engine.darwin-arm64.node",
     extension: ".node",
   },
   {
@@ -70,7 +69,7 @@ const variants: Variant[] = [
     arch: "x64",
     abi: "gnu",
     rustTarget: "x86_64-unknown-linux-gnu",
-    binaryName: "bettertui_bindings.linux-x64-gnu.node",
+    binaryName: "bettertui_engine.linux-x64-gnu.node",
     extension: ".node",
   },
   {
@@ -78,7 +77,7 @@ const variants: Variant[] = [
     arch: "arm64",
     abi: "gnu",
     rustTarget: "aarch64-unknown-linux-gnu",
-    binaryName: "bettertui_bindings.linux-arm64-gnu.node",
+    binaryName: "bettertui_engine.linux-arm64-gnu.node",
     extension: ".node",
   },
   {
@@ -86,7 +85,7 @@ const variants: Variant[] = [
     arch: "x64",
     abi: "musl",
     rustTarget: "x86_64-unknown-linux-musl",
-    binaryName: "bettertui_bindings.linux-x64-musl.node",
+    binaryName: "bettertui_engine.linux-x64-musl.node",
     extension: ".node",
   },
   {
@@ -94,21 +93,21 @@ const variants: Variant[] = [
     arch: "arm64",
     abi: "musl",
     rustTarget: "aarch64-unknown-linux-musl",
-    binaryName: "bettertui_bindings.linux-arm64-musl.node",
+    binaryName: "bettertui_engine.linux-arm64-musl.node",
     extension: ".node",
   },
   {
     platform: "win32",
     arch: "x64",
     rustTarget: "x86_64-pc-windows-msvc",
-    binaryName: "bettertui_bindings.win32-x64.node",
+    binaryName: "bettertui_engine.win32-x64.node",
     extension: ".node",
   },
   {
     platform: "win32",
     arch: "arm64",
     rustTarget: "aarch64-pc-windows-msvc",
-    binaryName: "bettertui_bindings.win32-arm64.node",
+    binaryName: "bettertui_engine.win32-arm64.node",
     extension: ".node",
   },
 ];
@@ -195,7 +194,9 @@ for (const variant of variantsToBuild) {
   const cargoArgs = [
     "build",
     "--manifest-path",
-    join(bindingsDir, "Cargo.toml"),
+    engineManifestPath,
+    "--features",
+    "napi",
     "--target",
     variant.rustTarget,
     "--lib",
@@ -207,14 +208,15 @@ for (const variant of variantsToBuild) {
 
   runCommand("cargo", cargoArgs, rootDir, `Error: Cargo build failed for ${variant.rustTarget}`);
 
-  // Find the compiled binary
+  // Find the compiled cdylib (crate-type includes cdylib, so the stem matches
+  // the crate name bettertui_engine across platforms)
   const targetDir = join(rootDir, "target", variant.rustTarget, profile);
   const possibleNames = [
-    "bettertui_bindings.node",
-    "libbettertui_bindings.node",
-    "libbettertui_bindings.dylib",
-    "libbettertui_bindings.so",
-    "bettertui_bindings.dll",
+    "bettertui_engine.node",
+    "libbettertui_engine.node",
+    "libbettertui_engine.dylib",
+    "libbettertui_engine.so",
+    "bettertui_engine.dll",
   ];
 
   let sourceBinary: string | null = null;
@@ -241,22 +243,15 @@ for (const variant of variantsToBuild) {
   rmSync(nativeDir, { recursive: true, force: true });
   mkdirSync(nativeDir, { recursive: true });
 
-  // Copy the compiled binary
+  // Copy the compiled binary (renamed to carry the platform triple)
   const destBinary = join(nativeDir, variant.binaryName);
   copyFileSync(sourceBinary, destBinary);
   console.log(`  Copied binary to: ${destBinary}`);
 
-  // Create index.js - CommonJS exports the path to the native binary
-  const indexJsContent = `"use strict";
-const path = require("node:path");
-module.exports = path.join(__dirname || ".", "${variant.binaryName}");
-`;
-  writeFileSync(join(nativeDir, "index.js"), indexJsContent);
-
-  // Create index.d.ts - TypeScript declaration
-  writeFileSync(join(nativeDir, "index.d.ts"), "export = path;\ndeclare const path: string;\n");
-
-  // Create package.json for the native package (CommonJS for sync require support)
+  // Create package.json for the native package; main/exports point directly at
+  // the .node binary so require()/import() loads the addon itself (napi-rs
+  // convention used by @napi-rs/* platform packages)
+  const libc = variant.abi === "musl" ? "musl" : variant.abi === "gnu" ? "glibc" : undefined;
   writeFileSync(
     join(nativeDir, "package.json"),
     JSON.stringify(
@@ -264,29 +259,20 @@ module.exports = path.join(__dirname || ".", "${variant.binaryName}");
         name: nativePackageName,
         version: packageJson.version,
         description: `Prebuilt ${variant.platform}-${variant.arch}${variant.abi ? `-${variant.abi}` : ""} binary for ${packageJson.name}`,
-        main: "index.js",
-        types: "index.d.ts",
+        type: "module",
+        main: `./${variant.binaryName}`,
+        exports: {
+          ".": `./${variant.binaryName}`,
+        },
         license: packageJson.license,
         author: packageJson.author,
         homepage: packageJson.homepage,
         repository: packageJson.repository,
         bugs: packageJson.bugs,
         keywords: [...(packageJson.keywords ?? []), "prebuild", "prebuilt", "native"],
-        exports: {
-          ".": {
-            require: "./index.js",
-            types: "./index.d.ts",
-          },
-        },
-        os: [
-          variant.platform === "win32"
-            ? "win32"
-            : variant.platform === "darwin"
-              ? "darwin"
-              : "linux",
-        ],
+        os: [variant.platform],
         cpu: [variant.arch],
-        ...(variant.abi ? { libc: [variant.abi] } : {}),
+        ...(libc ? { libc: [libc] } : {}),
       },
       null,
       2,

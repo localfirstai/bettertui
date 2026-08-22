@@ -1,6 +1,6 @@
 {
   "name": "@bettertui/solid",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "SolidJS renderer adapter for BetterTUI",
   "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",

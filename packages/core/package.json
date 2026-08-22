@@ -1,22 +1,37 @@
 {
   "name": "@bettertui/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
+  "description": "High-performance terminal UI framework powered by a Rust engine - framework-agnostic core (CommandBuffer, Runtime, tree reconciliation)",
+  "keywords": ["tui", "terminal", "terminal-ui", "cli", "rust", "napi", "reconciler"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bettertui/bettertui.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/bettertui/bettertui/issues"
+  },
+  "homepage": "https://github.com/bettertui/bettertui/tree/main/packages/core#readme",
   "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=24.15.0"
+  },
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     }
   },
-  "files": ["dist", "bettertui_engine.node"],
+  "files": ["dist"],
   "scripts": {
     "build": "tsdown && pnpm run build:native",
+    "postbuild": "node ../../scripts/generateDistManifest.ts",
     "build:native": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --release --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "build:native:debug": "export PATH=\"$HOME/.cargo/bin:$PATH\"; napi build --manifest-path crates/engine/Cargo.toml --features napi --output-dir ./dist --dts ../crates/engine/index.d.ts && cp crates/engine/index.d.ts ./dist/",
     "dev": "tsdown --watch",

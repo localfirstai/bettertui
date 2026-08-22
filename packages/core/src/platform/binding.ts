@@ -215,13 +215,68 @@ export interface TerminalCapabilities {
   rows: number;
 }
 
-let native: NativeModule;
+/**
+ * npm `libc` values understood by package managers (`glibc` / `musl`), mapped
+ * from the Rust target ABI suffix used by our platform package names.
+ */
+const SUPPORTED_NATIVE_TRIPLES = [
+  "darwin-x64",
+  "darwin-arm64",
+  "linux-x64-gnu",
+  "linux-arm64-gnu",
+  "linux-x64-musl",
+  "linux-arm64-musl",
+  "win32-x64",
+  "win32-arm64",
+] as const;
 
-try {
-  native = require("./bettertui_engine.node");
-} catch {
-  native = require("../../dist/bettertui_engine.node");
+interface ProcessReport {
+  getReport(): { header: { glibcVersionRuntime?: string } };
 }
+
+/** Resolve the platform-package triple matching the current host. */
+function detectNativeTriple(): string | null {
+  const { platform, arch } = process;
+  if (platform === "darwin" || platform === "win32") {
+    return `${platform}-${arch}`;
+  }
+  if (platform === "linux") {
+    const report = (process as unknown as { report?: ProcessReport }).report;
+    const libc = report?.getReport().header.glibcVersionRuntime ? "gnu" : "musl";
+    return `linux-${arch}-${libc}`;
+  }
+  return null;
+}
+
+/**
+ * Load the napi-rs engine addon: prefer the platform-specific optional
+ * dependency resolved through node_modules, then the dev-tree fallbacks.
+ */
+function loadNativeModule(): NativeModule {
+  const triple = detectNativeTriple();
+  if (triple && (SUPPORTED_NATIVE_TRIPLES as readonly string[]).includes(triple)) {
+    try {
+      return require(`@bettertui/core-${triple}`);
+    } catch {
+      // Platform package not installed (development checkout) — fall through.
+    }
+  }
+  try {
+    return require("./bettertui_engine.node");
+  } catch {
+    // Not adjacent to source during test/dev runs.
+  }
+  try {
+    return require("../../dist/bettertui_engine.node");
+  } catch {
+    // Not built yet.
+  }
+  throw new Error(
+    `@bettertui/core: no native engine binary found for ${process.platform}/${process.arch}. Supported platforms: ${SUPPORTED_NATIVE_TRIPLES.join(", ")}. Install the matching "@bettertui/core-<platform>" package or rebuild locally with "pnpm build".`,
+  );
+}
+
+const native: NativeModule = loadNativeModule();
 
 export interface CommandResult {
   success: number;
