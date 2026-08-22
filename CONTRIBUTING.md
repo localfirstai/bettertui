@@ -31,7 +31,7 @@ cargo clippy --manifest-path packages/core/Cargo.toml -- -D warnings
 
 ## Project structure
 
-- `packages/core/crates/engine/` — Rust rendering engine (`bettertui-engine`, lib + cdylib)
+- `packages/core/crates/engine/` — Rust rendering engine (`bettertui_engine`, lib + cdylib)
 - `packages/core/crates/benchmark/` — Rust benchmarks (`bettertui-benchmark`)
 - `packages/` — TypeScript packages:
   - `@bettertui/core` — framework-agnostic public API
