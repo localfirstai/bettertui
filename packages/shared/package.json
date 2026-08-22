@@ -1,7 +1,6 @@
 {
   "name": "@bettertui/shared",
   "version": "0.1.0",
-  "private": true,
   "description": "Shared type definitions and protocols for the BetterTUI terminal UI framework",
   "keywords": ["types", "tui", "terminal", "protocol", "definitions"],
   "repository": {
