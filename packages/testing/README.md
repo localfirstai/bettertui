@@ -1,5 +1,7 @@
 # `@bettertui/testing`
 
+> **Website:** [bettertui.dev](https://bettertui.dev)
+
 A specification-first testing framework and headless driver suite for BetterTUI applications.
 
 `@bettertui/testing` provides everything needed to unit test, integration test, and end-to-end (E2E) test terminal user interfaces (TUIs)—including React 19 component rendering, headless 2D cell grid inspection, user event simulation, custom Vitest matchers, and real pseudo-terminal (`node-pty`) process testing.

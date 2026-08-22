@@ -1,5 +1,7 @@
 # @bettertui/examples
 
+> **Website:** [bettertui.dev](https://bettertui.dev)
+
 BetterTUI vanilla TypeScript examples and standalone executable.
 
 64 examples covering rendering, layout, input, widgets, animation, performance, terminal features, and more. Each example is a self-contained module under `src/examples/` that exports `meta` + `Example` + `run(keyInput)` + `destroy(keyInput)`.

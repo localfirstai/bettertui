@@ -1,5 +1,7 @@
 # @bettertui/performance
 
+> **Website:** [bettertui.dev](https://bettertui.dev)
+
 Micro and end-to-end benchmark suite for BetterTUI.
 
 ## Benchmarks

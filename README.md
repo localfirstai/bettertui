@@ -1,5 +1,7 @@
 # BetterTUI
 
+> **Website:** [bettertui.dev](https://bettertui.dev)
+
 A framework-agnostic terminal UI rendering engine powered by **Rust** and exposed to **TypeScript** with first-class **React** support.
 
 BetterTUI is a **terminal UI framework**, not an application, IDE, or AI tool. It provides the rendering engine, layout engine, input system, and widget primitives that other frameworks build on top of.
@@ -85,6 +87,7 @@ docs/
 
 ## Documentation
 
+- [Website](https://bettertui.dev)
 - [Architecture](docs/architecture/README.md)
 - [Documentation index](docs/README.md)
 - [API reference](docs/api/README.md)

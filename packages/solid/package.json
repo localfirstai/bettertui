@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "SolidJS renderer adapter for BetterTUI",
+  "homepage": "https://bettertui.dev",
   "author": "SOUMITRO-SAHA <soumitrosahaofficial@gmail.com>",
   "license": "MIT",
   "type": "module",

@@ -1,5 +1,7 @@
 # @bettertui/core
 
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Docs:** [bettertui.dev/docs](https://bettertui.dev/docs)
+
 **Framework-agnostic command protocol, tree manipulation, reconciler wrapper, and runtime.** Framework package for vanilla / native TypeScript. No React dependency.
 
 ## Overview
@@ -52,6 +54,7 @@ Re-exports all types from `@bettertui/shared` (internal — don't install separa
 
 ## Related Documentation
 
+- [Website](https://bettertui.dev)
 - [Architecture overview](../../docs/architecture/overview.md)
 - [API reference](../../docs/api/packages/core.md)
 - [Guides](../../docs/guides/getting-started.md)

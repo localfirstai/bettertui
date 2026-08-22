@@ -1,5 +1,7 @@
 # @bettertui/shared
 
+> **Website:** [bettertui.dev](https://bettertui.dev)
+
 **Type-only package. Zero runtime code.** The shared vocabulary used by every other package.
 
 ## Exports

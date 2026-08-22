@@ -1,5 +1,7 @@
 # @bettertui/react
 
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Docs:** [bettertui.dev/docs](https://bettertui.dev/docs)
+
 **React 19 adapter for BetterTUI.** React apps install **only** `@bettertui/react` — it depends on `@bettertui/core` and resolves it automatically.
 
 ## Overview
@@ -38,6 +40,7 @@ const { root, runtime } = createRoot(<App />);
 
 ## Related Documentation
 
+- [Website](https://bettertui.dev)
 - [API reference](../../docs/api/packages/react.md)
 - [Architecture overview](../../docs/architecture/overview.md)
 - [Getting started](../../docs/guides/getting-started.md)
