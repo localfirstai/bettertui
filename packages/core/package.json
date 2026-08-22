@@ -1,7 +1,6 @@
 {
   "name": "@bettertui/core",
   "version": "0.1.0",
-  "private": true,
   "description": "High-performance terminal UI framework powered by a Rust engine - framework-agnostic core (CommandBuffer, Runtime, tree reconciliation)",
   "keywords": ["tui", "terminal", "terminal-ui", "cli", "rust", "napi", "reconciler"],
   "repository": {
