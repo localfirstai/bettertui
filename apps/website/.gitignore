@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# wrangler local state
+.wrangler/
 
 # pagefind index synced from dist for dev-mode search
 public/pagefind/
