@@ -14,6 +14,8 @@
     "build": "astro build",
     "build:search": "astro build",
     "preview": "astro preview",
+    "deploy": "astro build && wrangler deploy",
+    "preview:cf": "wrangler dev",
     "astro": "astro",
     "bench": "bun run src/lib/bench/frameworks.ts",
     "lint": "biome check src/",
@@ -48,6 +50,7 @@
     "@astrojs/check": "^0.9.9",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.125.0"
   }
 }
