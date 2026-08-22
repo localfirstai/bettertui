@@ -1,72 +1,105 @@
 ---
 title: Components Overview
-description: BetterTUI widget library
+description: BetterTUI widget library — vanilla TypeScript components from @bettertui/core
 ---
 
-BetterTUI provides a rich set of terminal UI components. All components are accessible, typed, and composable.
+BetterTUI provides a rich set of terminal UI components. All components are imperative TypeScript classes that extend `Box` and integrate with the `CliRenderer`.
 
-## Core Components
+> **React adapter**: A `@bettertui/react` adapter is planned. The JSX examples in
+> this section will work once it ships. Today, use the vanilla `@bettertui/core` API.
+
+## Available Components
+
+| Component | Class | Description |
+|-----------|-------|-------------|
+| [Box](/docs/components/box) | `Box` | Flexbox container — the building block for all layouts |
+| [Text](/docs/components/text) | `Text` | Styled text with wrapping, truncation and rich markup |
+| [Input](/docs/components/input) | `Input` | Single-line text input with cursor and validation events |
+| [Select](/docs/components/select) | `Select` | Keyboard-navigable list selector with descriptions |
+| [TabSelect](/docs/components/tabselect) | `TabSelect` | Horizontal tab navigation widget |
+| [Slider](/docs/components/slider) | `Slider` | Horizontal or vertical range slider |
+| [ScrollBox](/docs/components/scrollbox) | `ScrollBox` | Scrollable container with optional scroll bars |
+| [Canvas](/docs/components/canvas) | `Screen` | Full-viewport layout with header / body / footer slots |
+| [Textarea](/docs/components/textarea) | `Textarea` | Multi-line text editor |
+| [TextNode](/docs/components/textnode) | `TextNode` | Composable styled-text node for rich inline markup |
+
+## Planned Components (React adapter)
+
+The following components are designed for `@bettertui/react` and will ship with the React adapter:
 
 | Component | Description |
 |-----------|-------------|
-| [Text](/components/text) | Display text with styles |
-| [Box](/components/box) | Flexbox container |
-| [Button](/components/button) | Interactive button |
-| [Input](/components/input) | Text input field |
-| [Table](/components/table) | Data table |
-| [Tree](/components/tree) | Hierarchical data |
-| [Dialog](/components/dialog) | Modal dialog |
+| [Button](/docs/components/button) | Interactive button with focus and press states |
+| [Table](/docs/components/table) | Data table with sorting and row selection |
+| [Tree](/docs/components/tree) | Hierarchical tree view with expand / collapse |
+| [Dialog](/docs/components/dialog) | Modal overlay dialog |
 
-## Using Components
+## Basic Usage — vanilla TypeScript
 
-```tsx
-import { Box, Text, Button } from '@bettertui/react';
+```ts
+import { Box, Text, createCliRenderer } from '@bettertui/core';
 
-function App() {
-  return (
-    <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Hello, World!</Text>
-      <Button onPress={() => console.log('clicked')}>
-        Click me
-      </Button>
-    </Box>
-  );
-}
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const container = new Box(renderer, {
+  flexDirection: 'column',
+  padding: 1,
+  gap: 1,
+});
+
+const heading = new Text(renderer, { content: 'Hello, BetterTUI!', fg: '#7aa2f7' });
+const body    = new Text(renderer, { content: 'Build fast terminal UIs.' });
+
+container.add(heading);
+container.add(body);
+renderer.root.add(container);
+renderer.start();
 ```
 
-## Composition
+## Component Tree
 
-Components compose naturally:
+Every component is a `Box` (or a subclass). Components form a parent–child tree:
 
-```tsx
-<Box borderStyle="round" padding={1}>
-  <Box flexDirection="column">
-    <Text bold>Title</Text>
-    <Text dimColor>Description</Text>
-  </Box>
-  <Button>Action</Button>
-</Box>
+```ts
+const root   = new Box(renderer, { flexDirection: 'column' });
+const header = new Box(renderer, { height: 3, backgroundColor: '#1a1b26' });
+const body   = new Box(renderer, { flexGrow: 1 });
+
+root.add(header);
+root.add(body);
+renderer.root.add(root);
 ```
 
-## Styling
+## Shared Style Props
 
-All components accept style props:
+All components inherit `BoxOptions` and accept these layout / visual props:
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `color` | `string` | Foreground color |
-| `bgColor` | `string` | Background color |
-| `bold` | `boolean` | Bold text |
-| `dimColor` | `boolean` | Dimmed text |
-| `italic` | `boolean` | Italic text |
-| `underline` | `boolean` | Underlined text |
-| `strikethrough` | `boolean` | Strikethrough text |
+| `width` | `number \| string` | Width in columns or `'100%'` |
+| `height` | `number \| string` | Height in rows or `'100%'` |
+| `flexDirection` | `'row' \| 'column'` | Main axis direction |
+| `flexGrow` | `number` | Grow factor |
+| `flexShrink` | `number` | Shrink factor |
+| `flexBasis` | `number \| string` | Base size |
+| `padding` | `number` | Inner spacing |
+| `margin` | `number` | Outer spacing |
+| `gap` | `number` | Gap between children |
+| `border` | `boolean` | Show border |
+| `borderStyle` | `string` | `'single' \| 'double' \| 'round' \| 'thick' \| 'dashed' \| 'ascii'` |
+| `borderColor` | `string` | Border color |
+| `backgroundColor` | `string` | Background color |
+| `opacity` | `number` | `0`–`1` |
+| `visible` | `boolean` | Show / hide the component |
+| `zIndex` | `number` | Stack order |
 
-## Accessibility
+## Focus Management
 
-All components follow WAI-ARIA best practices:
+Focusable components (Input, Select, Slider, TabSelect, Textarea) expose `.focus()` / `.blur()`:
 
-- Semantic HTML equivalents
-- Keyboard navigation
-- Screen reader support
-- Focus management
+```ts
+input.focus();
+input.on(InputEvents.ENTER, (value) => {
+  console.log('Submitted:', value);
+});
+```

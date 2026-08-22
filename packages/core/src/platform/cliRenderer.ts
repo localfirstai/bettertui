@@ -698,6 +698,12 @@ export class CliRenderer extends EventEmitter {
     this.engine.setText(id, text);
   }
 
+  /** Set the scroll offset on a node so its children are shifted during rendering.
+   *  Use with `overflow: "hidden"` on the same node for clipped scrolling. */
+  setScrollOffset(nodeId: number, scrollX: number, scrollY: number): void {
+    this.engine.setScrollOffset(nodeId, scrollX, scrollY);
+  }
+
   clearTree(): void {
     const rootId = this.engine.root();
     const rootNode = this.nodes.get(rootId);

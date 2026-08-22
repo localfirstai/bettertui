@@ -1,63 +1,156 @@
 ---
 title: Input
-description: Text input field component
+description: Single-line text input field with cursor, validation and keyboard events
 ---
 
-The `Input` component provides a text input field with cursor support.
+`Input` provides a single-line editable text field with cursor movement, placeholder text, password masking, and length constraints. It extends `Box` so all layout props apply.
 
 ## Usage
 
-```tsx
-import { Input } from '@bettertui/react';
+```ts
+import { Box, Input, InputEvents, Text, t, fg, bold, createCliRenderer } from '@bettertui/core';
 
-function App() {
-  const [value, setValue] = useState('');
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
 
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text>Name:</Text>
-      <Input
-        value={value}
-        onChange={setValue}
-        placeholder="Enter your name"
-      />
-      <Text>You typed: {value}</Text>
-    </Box>
-  );
-}
+const input = new Input(renderer, {
+  width: 40,
+  height: 1,
+  placeholder: 'Type something…',
+  placeholderColor: '#565f89',
+  textColor: '#c0caf5',
+  cursorColor: '#7aa2f7',
+});
+
+input.on(InputEvents.CHANGE, (value: string) => {
+  console.log('Changed:', value);
+});
+
+input.on(InputEvents.ENTER, (value: string) => {
+  console.log('Submitted:', value);
+});
+
+renderer.root.add(input);
+input.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Input(renderer: CliRenderer, options?: InputOptions)
 ```
 
 ## Props
 
+`InputOptions` extends `BoxOptions` with:
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `value` | `string` | `''` | Controlled value |
-| `onChange` | `(value: string) => void` | — | Change handler |
-| `onSubmit` | `(value: string) => void` | — | Submit handler (Enter) |
-| `onFocus` | `() => void` | — | Focus handler |
-| `onBlur` | `() => void` | — | Blur handler |
-| `placeholder` | `string` | — | Placeholder text |
-| `mask` | `string` | — | Input mask (e.g., `*` for passwords) |
-| `isDisabled` | `boolean` | `false` | Disable input |
-| `width` | `number` | — | Input width |
+| `value` | `string` | `''` | Initial / controlled value |
+| `placeholder` | `string` | `''` | Placeholder text shown when empty |
+| `placeholderColor` | `string` | `'#666666'` | Placeholder text color |
+| `textColor` | `string` | `'#ffffff'` | Input text color |
+| `focusedTextColor` | `string` | `'#ffffff'` | Text color when focused |
+| `cursorColor` | `string` | `'#ffff00'` | Cursor highlight color |
+| `backgroundColor` | `string` | — | Background color |
+| `focusedBackgroundColor` | `string` | — | Background color when focused |
+| `maxLength` | `number` | `1000` | Maximum character count |
+| `minLength` | `number` | `0` | Minimum character count |
+| `showCursor` | `boolean` | `true` | Show cursor when focused |
+| `password` | `boolean` | `false` | Mask input with `*` |
+
+## Properties
+
+```ts
+input.value        // Get/set the current text
+input.cursorOffset // Get/set cursor position (character index)
+input.focused      // Whether the input has focus
+```
+
+## Methods
+
+```ts
+input.focus(): void   // Request focus
+input.blur(): void    // Release focus
+input.destroy(): void // Destroy and release engine nodes
+```
+
+## Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `InputEvents.INPUT` | `string` | Every keystroke (raw edit) |
+| `InputEvents.CHANGE` | `string` | After value is committed (e.g. blur) |
+| `InputEvents.ENTER` | `string` | `Enter` key pressed |
+| `RenderableEvents.FOCUSED` | — | Input gains focus |
+| `RenderableEvents.BLURRED` | — | Input loses focus |
 
 ## Keyboard Shortcuts
 
-- **Left/Right**: Move cursor
-- **Home/End**: Move to start/end
-- **Backspace/Delete**: Delete characters
-- **Enter**: Submit (if `onSubmit` provided)
-- **Ctrl+A**: Select all
-- **Ctrl+C**: Copy
-- **Ctrl+V**: Paste
+| Key | Action |
+|-----|--------|
+| `Left` / `Right` | Move cursor |
+| `Home` / `End` | Jump to start / end |
+| `Backspace` | Delete character before cursor |
+| `Delete` | Delete character at cursor |
+| `Enter` | Emit `ENTER` event |
 
-## Password Input
+## Examples
 
-```tsx
-<Input
-  value={password}
-  onChange={setPassword}
-  mask="*"
-  placeholder="Enter password"
-/>
+### Basic Input
+
+```ts
+const input = new Input(renderer, {
+  width: 40,
+  placeholder: 'Enter your name…',
+  textColor: '#c0caf5',
+  cursorColor: '#7aa2f7',
+});
+
+input.on(InputEvents.ENTER, (v) => console.log('Name:', v));
+renderer.root.add(input);
+input.focus();
+```
+
+### Password Field
+
+```ts
+const pass = new Input(renderer, {
+  width: 30,
+  placeholder: 'Password',
+  password: true,
+  maxLength: 64,
+});
+renderer.root.add(pass);
+```
+
+### Labelled Field
+
+```ts
+const row = new Box(renderer, { flexDirection: 'row', gap: 1, alignItems: 'center' });
+
+row.add(new Text(renderer, { content: 'Email:', fg: '#a9b1d6', width: 8 }));
+
+const emailInput = new Input(renderer, {
+  flexGrow: 1,
+  placeholder: 'user@example.com',
+  textColor: '#c0caf5',
+  cursorColor: '#7aa2f7',
+});
+
+row.add(emailInput);
+renderer.root.add(row);
+emailInput.focus();
+```
+
+### Controlled Value
+
+```ts
+const input = new Input(renderer, { value: 'initial value', width: 40 });
+
+// Read value at any time
+console.log(input.value);
+
+// Set value programmatically
+input.value = 'new value';
 ```

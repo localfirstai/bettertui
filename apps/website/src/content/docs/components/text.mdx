@@ -1,62 +1,152 @@
 ---
 title: Text
-description: Display styled text in the terminal
+description: Styled text renderable with wrapping, truncation and rich inline markup
 ---
 
-The `Text` component displays text with optional styling.
+`Text` displays styled text content. It extends `Box` so it inherits all layout props, and adds content, color, and wrapping props. Use the `t` template tag and style helpers (`bold`, `fg`, `italic`, etc.) to build rich inline markup.
 
 ## Usage
 
-```tsx
-import { Text } from '@bettertui/react';
+```ts
+import { Text, bold, fg, italic, t, createCliRenderer } from '@bettertui/core';
 
-function App() {
-  return (
-    <Box flexDirection="column">
-      <Text>Plain text</Text>
-      <Text bold>Bold text</Text>
-      <Text color="cyan">Colored text</Text>
-      <Text dimColor>Dimmed text</Text>
-    </Box>
-  );
-}
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const text = new Text(renderer, {
+  content: 'Hello, BetterTUI!',
+  fg: '#7aa2f7',
+  wrapMode: 'word',
+});
+
+renderer.root.add(text);
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Text(renderer: CliRenderer, options?: TextOptions)
 ```
 
 ## Props
 
+`TextOptions` extends `BoxOptions` with:
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `color` | `string` | — | Foreground color |
-| `bgColor` | `string` | — | Background color |
-| `bold` | `boolean` | `false` | Bold weight |
-| `dimColor` | `boolean` | `false` | Dimmed appearance |
-| `italic` | `boolean` | `false` | Italic style |
-| `underline` | `boolean` | `false` | Underline decoration |
-| `strikethrough` | `boolean` | `false` | Strikethrough decoration |
-| `inverse` | `boolean` | `false` | Inverted colors |
+| `content` | `string \| StyledText` | `''` | Text content (plain string or styled) |
+| `fg` | `string` | — | Foreground (text) color |
+| `bg` | `string` | — | Background color (alias for `backgroundColor`) |
+| `wrapMode` | `'none' \| 'char' \| 'word'` | `'none'` | Line-wrapping strategy |
+| `truncate` | `boolean` | `false` | Truncate long lines with `…` |
+| `textAlign` | `'left' \| 'center' \| 'right'` | `'left'` | Horizontal alignment |
+| `selectable` | `boolean` | `false` | Enable text selection |
+| `selectionBg` | `string` | — | Selection highlight background |
+| `selectionFg` | `string` | — | Selection highlight foreground |
 
-## Colors
+All `BoxOptions` props (width, height, padding, margin, border, etc.) are also accepted.
 
-```tsx
-<Text color="red">Red</Text>
-<Text color="#ff6600">Hex color</Text>
-<Text color="rgb(255,0,0)">RGB color</Text>
+## Setting Content Dynamically
+
+```ts
+text.content = 'Updated text';
 ```
 
-## Children
+Or with styled markup:
 
-`Text` accepts string children:
+```ts
+import { t, bold, fg, italic, underline } from '@bettertui/core';
 
-```tsx
-<Text>{`Count: ${count}`}</Text>
+text.content = t`${bold(fg('#f7768e')('Error:'))} Something went wrong`;
 ```
 
-## Truncation
+## Styled Text Helpers
 
-Long text is truncated to fit the container:
+| Helper | Example | Effect |
+|--------|---------|--------|
+| `fg(color)(text)` | `fg('#ff6600')('text')` | Foreground color |
+| `bg(color)(text)` | `bg('#1a1b26')('text')` | Background color |
+| `bold(text)` | `bold('text')` | Bold |
+| `italic(text)` | `italic('text')` | Italic |
+| `underline(text)` | `underline('text')` | Underline |
+| `dim(text)` | `dim('text')` | Dim / muted |
+| `strikethrough(text)` | `strikethrough('text')` | Strikethrough |
+| `blink(text)` | `blink('text')` | Blink |
 
-```tsx
-<Box width={10}>
-  <Text>This is a very long text that gets truncated</Text>
-</Box>
+## TextNode Tree
+
+For complex layouts, attach `TextNode` children directly to the root:
+
+```ts
+import { TextNode } from '@bettertui/core';
+
+const text = new Text(renderer, { width: 60 });
+
+const header = new TextNode({ bold: true, fg: '#7aa2f7' });
+header.add('Section title');
+
+const body = new TextNode({ fg: '#a9b1d6' });
+body.add(' — description text');
+
+text.rootTextNode.add(header);
+text.rootTextNode.add(body);
+```
+
+## Examples
+
+### Plain Text
+
+```ts
+const plain = new Text(renderer, {
+  content: 'Plain text, no styling.',
+  fg: '#c0caf5',
+});
+renderer.root.add(plain);
+```
+
+### Colored Text
+
+```ts
+import { t, fg, bold } from '@bettertui/core';
+
+const colored = new Text(renderer, {
+  content: t`Status: ${fg('#9ece6a')(bold('OK'))}`,
+});
+renderer.root.add(colored);
+```
+
+### Word-wrapped Text
+
+```ts
+const wrapped = new Text(renderer, {
+  width: 40,
+  content: 'This is a long paragraph that will wrap at word boundaries.',
+  wrapMode: 'word',
+  fg: '#a9b1d6',
+});
+renderer.root.add(wrapped);
+```
+
+### Truncated Text
+
+```ts
+const truncated = new Text(renderer, {
+  width: 20,
+  content: 'Very long label that should be cut off',
+  truncate: true,
+  fg: '#565f89',
+});
+renderer.root.add(truncated);
+```
+
+### Centered Text in a Box
+
+```ts
+const label = new Text(renderer, {
+  textAlign: 'center',
+  width: '100%',
+  content: t`${bold(fg('#bb9af7')('BetterTUI'))}`,
+  fg: '#c0caf5',
+});
+renderer.root.add(label);
 ```

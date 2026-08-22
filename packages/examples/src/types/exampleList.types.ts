@@ -9,6 +9,7 @@ export type {
 } from "../constants/theme";
 
 export type ExampleCategory =
+  | "Components"
   | "Layout & Composition"
   | "Input & Editing"
   | "Scroll & Navigation"

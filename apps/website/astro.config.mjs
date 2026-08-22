@@ -1,3 +1,5 @@
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { resolve } from "node:path";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
@@ -5,6 +7,31 @@ import starlight from "@astrojs/starlight";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { GITHUB_URL } from "./src/lib/constants.ts";
+
+/** Copies the pagefind index from `dist/` into `public/` so Vite serves it in dev mode. */
+function devSearchSync() {
+  return {
+    name: "dev-search-sync",
+    hooks: {
+      "astro:server:start": async ({ logger }) => {
+        const distIndex = resolve("./dist/pagefind");
+        const publicIndex = resolve("./public/pagefind");
+
+        if (!existsSync(distIndex)) {
+          logger.warn(
+            "[search] No index found — run `pnpm build:search` once to enable search in dev.",
+          );
+          return;
+        }
+
+        if (existsSync(publicIndex)) rmSync(publicIndex, { recursive: true });
+        mkdirSync(publicIndex, { recursive: true });
+        cpSync(distIndex, publicIndex, { recursive: true });
+        logger.info("[search] Pagefind index synced — search is available.");
+      },
+    },
+  };
+}
 
 export default defineConfig({
   site: "https://bettertui.dev",
@@ -16,6 +43,8 @@ export default defineConfig({
         src: "./src/assets/logo.svg",
         alt: "BetterTUI",
       },
+      customCss: ["./src/styles/docs.css"],
+      head: [{ tag: "script", attrs: { defer: true, src: "/theme-sync.js" } }],
       social: [{ icon: "github", label: "GitHub", href: GITHUB_URL }],
       sidebar: [
         {
@@ -73,6 +102,7 @@ export default defineConfig({
     react(),
     mdx(),
     sitemap(),
+    devSearchSync(),
   ],
   vite: {
     plugins: [tailwindcss()],

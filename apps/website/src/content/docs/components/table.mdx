@@ -1,27 +1,29 @@
 ---
 title: Table
-description: Data table component
+description: Data table component — planned for @bettertui/react
 ---
 
-The `Table` component displays tabular data with sorting and selection.
+> **Status: Planned** — `Table` is designed for the upcoming `@bettertui/react` adapter. It is not yet available in `@bettertui/core`.
 
-## Usage
+`Table` will display tabular data with optional sorting and row selection.
+
+## Planned API
 
 ```tsx
 import { Table } from '@bettertui/react';
 
 const data = [
   { name: 'Alice', role: 'Engineer', status: 'Active' },
-  { name: 'Bob', role: 'Designer', status: 'Active' },
-  { name: 'Charlie', role: 'Manager', status: 'Away' },
+  { name: 'Bob',   role: 'Designer', status: 'Active' },
+  { name: 'Carol', role: 'Manager',  status: 'Away'   },
 ];
 
 function App() {
   return (
     <Table
       columns={[
-        { key: 'name', title: 'Name' },
-        { key: 'role', title: 'Role' },
+        { key: 'name',   title: 'Name'   },
+        { key: 'role',   title: 'Role'   },
         { key: 'status', title: 'Status' },
       ]}
       data={data}
@@ -33,19 +35,19 @@ function App() {
 }
 ```
 
-## Props
+## Planned Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `columns` | `Column[]` | — | Column definitions |
 | `data` | `Row[]` | — | Row data |
-| `bordered` | `boolean` | `false` | Show borders |
+| `bordered` | `boolean` | `false` | Show cell borders |
 | `selectable` | `boolean` | `false` | Enable row selection |
-| `onSelect` | `(row: Row) => void` | — | Selection handler |
-| `sortBy` | `string` | — | Sort column |
+| `onSelect` | `(row: Row) => void` | — | Row selection handler |
+| `sortBy` | `string` | — | Column key to sort by |
 | `sortOrder` | `'asc' \| 'desc'` | `'asc'` | Sort direction |
 
-## Column Definition
+## Planned Column Definition
 
 ```ts
 interface Column {
@@ -53,13 +55,38 @@ interface Column {
   title: string;
   width?: number;
   align?: 'left' | 'center' | 'right';
-  render?: (value: any, row: any) => string;
+  render?: (value: unknown, row: unknown) => string;
 }
 ```
 
-## Keyboard Navigation
+## Vanilla Alternative
 
-- **Up/Down**: Navigate rows
-- **Enter**: Select row
-- **Space**: Toggle selection
-- **Page Up/Down**: Scroll by page
+Build a table using `Box` grids until the React adapter ships:
+
+```ts
+import { Box, Text, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const rows = [
+  ['Alice', 'Engineer', 'Active'],
+  ['Bob',   'Designer', 'Active'],
+];
+
+const table = new Box(renderer, {
+  flexDirection: 'column',
+  border: true,
+  borderStyle: 'single',
+});
+
+for (const [name, role, status] of rows) {
+  const row = new Box(renderer, { flexDirection: 'row' });
+  row.add(new Text(renderer, { content: name,   width: 12, fg: '#c0caf5' }));
+  row.add(new Text(renderer, { content: role,   width: 12, fg: '#a9b1d6' }));
+  row.add(new Text(renderer, { content: status, width: 10, fg: '#9ece6a' }));
+  table.add(row);
+}
+
+renderer.root.add(table);
+renderer.start();
+```

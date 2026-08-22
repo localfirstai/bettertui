@@ -1,0 +1,167 @@
+---
+title: Slider
+description: Horizontal or vertical range slider with keyboard and change events
+---
+
+`Slider` renders a horizontal or vertical range slider. It supports keyboard navigation, mouse interaction, and change callbacks.
+
+## Usage
+
+```ts
+import { Slider, SliderEvents, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const slider = new Slider(renderer, {
+  orientation: 'horizontal',
+  width: 40,
+  height: 1,
+  min: 0,
+  max: 100,
+  value: 50,
+  step: 5,
+  trackColor: '#333333',
+  thumbColor: '#7aa2f7',
+  activeTrackColor: '#364A82',
+});
+
+slider.on(SliderEvents.CHANGE, (value: number) => {
+  console.log('Value:', value);
+});
+
+renderer.root.add(slider);
+slider.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Slider(renderer: CliRenderer, options?: SliderOptions)
+```
+
+## Props
+
+`SliderOptions` extends `BoxOptions` with:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Slider direction |
+| `min` | `number` | `0` | Minimum value |
+| `max` | `number` | `100` | Maximum value |
+| `value` | `number` | `0` | Initial value |
+| `step` | `number` | `1` | Increment / decrement step |
+| `viewPortSize` | `number` | `1` | Thumb size as a fraction of range |
+| `trackColor` | `string` | `'#333333'` | Empty track color |
+| `thumbColor` | `string` | `'#0088ff'` | Thumb / handle color |
+| `activeTrackColor` | `string` | `'#0055cc'` | Filled track color |
+
+## Properties
+
+```ts
+slider.value  // Get / set current value (clamped to min..max)
+slider.min    // Get / set minimum
+slider.max    // Get / set maximum
+slider.step   // Get / set step
+```
+
+## Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `SliderEvents.CHANGE` | `number` | Value changes |
+| `RenderableEvents.FOCUSED` | — | Slider gains focus |
+| `RenderableEvents.BLURRED` | — | Slider loses focus |
+
+## Keyboard Shortcuts
+
+### Horizontal
+
+| Key | Action |
+|-----|--------|
+| `←` | Decrease by `step` |
+| `→` | Increase by `step` |
+| `Home` | Jump to `min` |
+| `End` | Jump to `max` |
+
+### Vertical
+
+| Key | Action |
+|-----|--------|
+| `↑` | Increase by `step` |
+| `↓` | Decrease by `step` |
+| `Home` | Jump to `min` |
+| `End` | Jump to `max` |
+
+## Examples
+
+### Horizontal Volume Slider
+
+```ts
+import { Box, Text, Slider, SliderEvents, t, fg, bold, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const container = new Box(renderer, {
+  flexDirection: 'column',
+  padding: 1,
+  gap: 1,
+});
+
+const label = new Text(renderer, { content: 'Volume: 50', fg: '#c0caf5' });
+
+const vol = new Slider(renderer, {
+  width: 40,
+  height: 1,
+  min: 0,
+  max: 100,
+  value: 50,
+  step: 1,
+  thumbColor: '#7aa2f7',
+  activeTrackColor: '#364A82',
+});
+
+vol.on(SliderEvents.CHANGE, (v) => {
+  label.content = `Volume: ${v}`;
+});
+
+container.add(label);
+container.add(vol);
+renderer.root.add(container);
+vol.focus();
+renderer.start();
+```
+
+### Vertical Slider
+
+```ts
+const vSlider = new Slider(renderer, {
+  orientation: 'vertical',
+  width: 1,
+  height: 20,
+  min: 0,
+  max: 100,
+  value: 30,
+  step: 5,
+  thumbColor: '#9ece6a',
+  activeTrackColor: '#41a6b5',
+});
+
+renderer.root.add(vSlider);
+vSlider.focus();
+```
+
+### Multiple Sliders
+
+```ts
+const form = new Box(renderer, { flexDirection: 'column', gap: 2, padding: 1 });
+
+for (const [label, initVal] of [['Brightness', 80], ['Contrast', 50], ['Saturation', 60]] as const) {
+  const row = new Box(renderer, { flexDirection: 'row', gap: 2, alignItems: 'center' });
+  row.add(new Text(renderer, { content: label, width: 12, fg: '#a9b1d6' }));
+  row.add(new Slider(renderer, { width: 30, height: 1, value: initVal }));
+  form.add(row);
+}
+
+renderer.root.add(form);
+```

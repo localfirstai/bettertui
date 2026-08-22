@@ -9,7 +9,7 @@ const L = "{";
 const R = "}";
 
 const kw = "text-syntax-keyword";
-const fn = "text-syntax-function";
+const fn_ = "text-syntax-function";
 const num = "text-syntax-number";
 const tag = "text-syntax-tag";
 const attr = "text-syntax-attr";
@@ -17,72 +17,296 @@ const op = "text-syntax-operator";
 const str = "text-syntax-string";
 const fg = "text-foreground";
 
-const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> { Box, Text, useInput } </span><span class="${kw}">from</span><span class="${str}"> "bettertui"</span><span class="${fg}">;</span>
+const codeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box, Text, useInput ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/react"</span><span class="${fg}">;</span>
+<span class="${kw}">import</span><span class="${fg}"> ${L} render ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/core"</span><span class="${fg}">;</span>
 <span></span>
-<span class="${kw}">function</span><span class="${fg}"> </span><span class="${fn}">App</span><span class="${fg}">() ${L}</span>
-<span class="${fg}">  </span><span class="${kw}">const</span><span class="${fg}"> [count, setCount] = </span><span class="${fn}">useState</span><span class="${fg}">(</span><span class="${num}">0</span><span class="${fg}">);</span>
-<span></span>
-<span class="${fg}">  </span><span class="${fn}">useInput</span><span class="${fg}">((input) </span><span class="${op}">=&gt;</span><span class="${fg}"> ${L}</span>
-<span class="${fg}">    </span><span class="${kw}">if</span><span class="${fg}"> (input === </span><span class="${str}">"q"</span><span class="${fg}">) </span><span class="${fn}">process.exit</span><span class="${fg}">();</span>
-<span class="${fg}">  ${R});</span>
+<span class="${kw}">function</span><span class="${fg}"> </span><span class="${fn_}">App</span><span class="${fg}">() ${L}</span>
+<span class="${fg}">  </span><span class="${fn_}">useInput</span><span class="${fg}">((key) </span><span class="${op}">=&gt;</span><span class="${fg}"> ${L} </span><span class="${kw}">if</span><span class="${fg}"> (key === </span><span class="${str}">"q"</span><span class="${fg}">) process.</span><span class="${fn_}">exit</span><span class="${fg}">(</span><span class="${num}">0</span><span class="${fg}">); ${R});</span>
 <span></span>
 <span class="${fg}">  </span><span class="${kw}">return</span><span class="${fg}"> (</span>
-<span class="${fg}">    </span><span class="${op}">&lt;</span><span class="${tag}">Box</span><span class="${fg}"> </span><span class="${attr}">borderStyle</span><span class="${fg}">=</span><span class="${str}">"round"</span><span class="${fg}"> </span><span class="${attr}">padding</span><span class="${fg}">=${L}</span><span class="${num}">1</span><span class="${fg}">${R}&gt;</span>
-<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">color</span><span class="${fg}">=</span><span class="${str}">"green"</span><span class="${fg}">&gt;Count: ${L}count${R}&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
-<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">dimColor</span><span class="${fg}">&gt;Press 'q' to quit&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
+<span class="${fg}">    </span><span class="${op}">&lt;</span><span class="${tag}">Box</span><span class="${fg}"> </span><span class="${attr}">flexDirection</span><span class="${fg}">=</span><span class="${str}">"column"</span><span class="${fg}"> </span><span class="${attr}">padding</span><span class="${fg}">=${L}</span><span class="${num}">1</span><span class="${fg}">${R}&gt;</span>
+<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">bold</span><span class="${fg}"> </span><span class="${attr}">color</span><span class="${fg}">=</span><span class="${str}">"green"</span><span class="${fg}">&gt;● BetterTUI — Rust-powered TUI&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
+<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">dimColor</span><span class="${fg}">&gt;Node-first · Memory-safe · v0.0.0-beta&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
 <span class="${fg}">    </span><span class="${op}">&lt;/</span><span class="${tag}">Box</span><span class="${fg}">&gt;</span>
 <span class="${fg}">  );</span>
-<span class="${fg}">${R}</span>`;
+<span class="${fg}">${R}</span>
+<span></span>
+<span class="${fn_}">render</span><span class="${fg}">(</span><span class="${op}">&lt;</span><span class="${tag}">App</span><span class="${fg}"> /&gt;);</span>`;
 ---
 
-<section class="relative min-h-[80vh] overflow-hidden pt-16">
-  <div class="dot-grid absolute inset-0 -z-10" />
-  <div class="absolute inset-0 -z-10 bg-gradient-to-b from-hero-gradient-start/0 via-hero-gradient-start/50 to-background" />
+<section class="relative min-h-screen pt-16">
 
-  <div class="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-4 text-center sm:px-6">
-    <Badge variant="secondary" class="mb-6 rounded-full px-3 py-1 text-xs font-medium">
-      <span class="mr-1.5 text-terminal">●</span>
-      v1.0 is now available
-    </Badge>
+  <!-- ── Gradient orbs ────────────────────────────── -->
+  <div class="pointer-events-none absolute inset-0 -z-20" aria-hidden="true">
+    <!-- Indigo / violet — top-left anchor -->
+    <div class="hero-orb hero-orb-indigo"></div>
+    <!-- Terminal green — top-right anchor -->
+    <div class="hero-orb hero-orb-green"></div>
+    <!-- Cyan — soft center depth layer -->
+    <div class="hero-orb hero-orb-cyan"></div>
+  </div>
 
-    <h1 class="text-hero text-balance">
-      Build Terminal UIs with
+  <!-- ── Grid lines ────────────────────────────────── -->
+  <div class="hero-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+
+  <!-- ── Bottom fade to next section ──────────────── -->
+  <div
+    class="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-background to-transparent"
+    aria-hidden="true"
+  ></div>
+
+  <!-- ── Content ───────────────────────────────────── -->
+  <div
+    class="mx-auto flex min-h-[90vh] max-w-4xl flex-col items-center justify-center px-4 py-24 text-center sm:px-6"
+  >
+
+    <!-- Badges -->
+    <div class="hero-fade-up mb-6 flex flex-wrap items-center justify-center gap-2">
+      <div
+        class="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-400/10 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400"
+      >
+        <span aria-hidden="true">⚠</span>
+        Early Beta · v0.0.0
+      </div>
+      <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
+        <span class="mr-1.5 text-terminal">●</span>
+        Node-first · Rust-powered
+      </Badge>
+    </div>
+
+    <!-- Headline -->
+    <h1 class="hero-fade-up text-hero text-balance" style="animation-delay:0.08s">
+      Terminal UIs that don't
       <br />
-      <span class="text-terminal">Any</span> Framework
+      <span class="text-terminal hero-text-glow">fight your runtime</span>
     </h1>
 
-    <p class="text-hero-sub mt-6 max-w-2xl text-balance text-muted-foreground">
-      BetterTUI is the TypeScript-first toolkit for building beautiful, interactive terminal interfaces. Works with React, SolidJS, Astro, Vue, Svelte, and more.
+    <!-- Sub -->
+    <p
+      class="hero-fade-up text-hero-sub mt-6 max-w-2xl text-balance text-muted-foreground"
+      style="animation-delay:0.16s"
+    >
+      BetterTUI wraps a <strong class="font-semibold text-foreground">memory-safe Rust engine</strong>{" "}
+      in a thin TypeScript API. Build terminal interfaces with{" "}
+      <strong class="font-semibold text-foreground">React or SolidJS</strong>
+      {" "}— no garbage collection pauses, no memory leaks, no bundle bloat. Designed for{" "}
+      <strong class="font-semibold text-foreground">Node.js first</strong>, Bun compatible.
     </p>
 
-    <div class="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+    <!-- CTAs -->
+    <div
+      class="hero-fade-up mt-10 flex flex-col items-center gap-4 sm:flex-row"
+      style="animation-delay:0.24s"
+    >
       <a href="/docs/getting-started/quick-start">
-        <Button size="lg">Get Started</Button>
+        <Button size="lg">Get Started →</Button>
       </a>
       <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
         <Button variant="outline" size="lg">
           <GithubIcon class="h-4 w-4" />
-          View on GitHub
+          Star on GitHub
         </Button>
       </a>
     </div>
 
-    <div class="mt-6 flex items-center gap-2 rounded-lg border bg-muted px-4 py-2.5 font-mono text-sm">
-      <span class="text-muted-foreground">$</span>
-      <span>npm install bettertui@latest</span>
-      <CopyButton text="npm install bettertui@latest" client:load />
+    <!-- Install command -->
+    <div
+      class="hero-fade-up mt-6 glass flex items-center gap-2 rounded-lg px-4 py-2.5 font-mono text-sm"
+      style="animation-delay:0.3s"
+    >
+      <span class="select-none text-muted-foreground">$</span>
+      <span>npm install @bettertui/core</span>
+      <CopyButton text="npm install @bettertui/core" client:load />
     </div>
 
-    <div class="mt-16 w-full max-w-3xl">
-      <div class="overflow-hidden rounded-xl border border-border bg-code-bg shadow-2xl shadow-black/5 dark:shadow-black/20">
+    <!-- Runtime pills -->
+    <div
+      class="hero-fade-up mt-4 flex flex-wrap items-center justify-center gap-2"
+      style="animation-delay:0.36s"
+    >
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
+      >
+        <svg class="h-3 w-3 text-green-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 1.85c-.27 0-.55.07-.78.2L3.78 6.35c-.48.28-.78.8-.78 1.36v8.58c0 .56.3 1.08.78 1.36l1.95 1.12c.95.46 1.57.47 2.1.47 1.69 0 2.66-1.02 2.66-2.82V8.27c0-.12-.1-.22-.22-.22h-.96c-.13 0-.22.1-.22.22v8.65c0 .79-.82 1.57-2.14.9L5.2 16.4c-.08-.05-.12-.12-.12-.2V7.7c0-.08.04-.16.12-.2l7.44-4.28c.08-.04.18-.04.26 0l7.44 4.28c.08.04.12.12.12.2v8.5c0 .08-.04.16-.12.2l-7.44 4.28c-.08.04-.18.04-.26 0l-1.95-1.12c-.06-.04-.15-.04-.22 0-.62.35-.75.4-1.35.57.15.08.31.16.44.24l1.95 1.12c.24.14.5.2.77.2.28 0 .54-.06.78-.2l7.44-4.3c.48-.28.78-.8.78-1.36V7.7c0-.56-.3-1.08-.78-1.36L12.78 2.05c-.23-.13-.5-.2-.78-.2z"></path>
+        </svg>
+        Node.js ≥ 24
+      </span>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
+      >
+        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 6l9-4 9 4v12l-9 4-9-4V6z"></path>
+          <path d="M12 2v20M3 6l9 4 9-4"></path>
+        </svg>
+        Bun compatible
+      </span>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-border glass px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
+      >
+        🦀 Rust engine
+      </span>
+    </div>
+
+    <!-- Code window -->
+    <div class="hero-fade-up mt-16 w-full max-w-3xl" style="animation-delay:0.44s">
+      <div
+        class="code-window relative z-10 overflow-hidden rounded-xl border border-code-border"
+      >
         <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
-          <div class="h-3 w-3 rounded-full bg-red-400/80" />
-          <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
-          <div class="h-3 w-3 rounded-full bg-green-400/80 terminal-dot-pulse" />
-          <span class="ml-2 font-mono text-xs text-muted-foreground">App.tsx</span>
+          <div class="h-3 w-3 rounded-full bg-red-400/80"></div>
+          <div class="h-3 w-3 rounded-full bg-yellow-400/80"></div>
+          <div class="h-3 w-3 rounded-full bg-green-400/80 terminal-dot-pulse"></div>
+          <span class="ml-2 font-mono text-xs text-muted-foreground">app.tsx</span>
+          <span class="ml-auto font-mono text-[10px] text-muted-foreground">@bettertui/react</span>
         </div>
-        <pre class="overflow-x-auto p-4 text-left"><code class="font-mono text-code leading-relaxed" set:html={codeHtml} /></pre>
+        <pre class="overflow-x-auto p-4 text-left"
+          ><code class="font-mono text-code leading-relaxed" set:html={codeHtml} /></pre>
       </div>
     </div>
   </div>
 </section>
+
+<style>
+  /* ─────────────────────────────────────────────────────────
+     Hero section — no border
+  ───────────────────────────────────────────────────────── */
+  .hero-section {
+    border: none;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     Gradient orbs  (Tailwind-CSS-style atmospheric lighting)
+  ───────────────────────────────────────────────────────── */
+  .hero-orb {
+    position: absolute;
+    border-radius: 9999px;
+    animation: orb-float 12s ease-in-out infinite;
+  }
+
+  /* Indigo / violet — anchored top-left, bleeds off-screen (html overflow-x:hidden stops scrollbar) */
+  .hero-orb-indigo {
+    width: min(1000px, 100vw);
+    height: min(1000px, 100vw);
+    top: -35%;
+    left: -22%;
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.55 0.22 275 / 0.20) 0%,
+      oklch(0.55 0.22 275 / 0.08) 40%,
+      transparent 68%
+    );
+    animation-duration: 14s;
+  }
+  :global(.dark) .hero-orb-indigo {
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.55 0.22 275 / 0.50) 0%,
+      oklch(0.55 0.22 275 / 0.18) 40%,
+      transparent 68%
+    );
+  }
+
+  /* Terminal green — anchored top-right, center intentionally off-screen */
+  .hero-orb-green {
+    width: min(1000px, 100vw);
+    height: min(1000px, 100vw);
+    top: -25%;
+    right: -28%;
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.65 0.22 145 / 0.18) 0%,
+      oklch(0.65 0.22 145 / 0.07) 40%,
+      transparent 68%
+    );
+    animation-duration: 17s;
+    animation-delay: -5s;
+  }
+  :global(.dark) .hero-orb-green {
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.65 0.22 145 / 0.48) 0%,
+      oklch(0.65 0.22 145 / 0.17) 40%,
+      transparent 68%
+    );
+  }
+
+  /* Cyan / teal — soft center depth */
+  .hero-orb-cyan {
+    width: min(800px, 80vw);
+    height: min(800px, 80vw);
+    top: 5%;
+    left: 50%;
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.72 0.14 200 / 0.12) 0%,
+      oklch(0.72 0.14 200 / 0.04) 40%,
+      transparent 68%
+    );
+    animation: orb-float-centered 20s ease-in-out infinite;
+    animation-delay: -10s;
+  }
+  :global(.dark) .hero-orb-cyan {
+    background: radial-gradient(circle at 50% 50%,
+      oklch(0.72 0.14 200 / 0.30) 0%,
+      oklch(0.72 0.14 200 / 0.12) 40%,
+      transparent 68%
+    );
+  }
+
+  @keyframes orb-float {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.1); }
+  }
+  @keyframes orb-float-centered {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50%       { transform: translateX(-50%) scale(1.08); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-orb { animation: none !important; }
+    .hero-orb-cyan { transform: translateX(-50%) !important; }
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     Grid overlay — fine lines fading out at the edges
+  ───────────────────────────────────────────────────────── */
+  .hero-grid {
+    background-image:
+      linear-gradient(oklch(0.4 0 0 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.4 0 0 / 0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(
+      ellipse 85% 60% at 50% 30%,
+      black 0%,
+      black 30%,
+      transparent 100%
+    );
+  }
+  :global(.dark) .hero-grid {
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 0.055) 1px, transparent 1px);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     Code window — gradient border + ambient glow
+  ───────────────────────────────────────────────────────── */
+  /* ── Headline glow ── */
+  .hero-text-glow {
+    text-shadow: 0 0 28px oklch(0.65 0.22 145 / 0.35);
+  }
+  :global(.dark) .hero-text-glow {
+    text-shadow:
+      0 0 24px oklch(0.75 0.18 145 / 0.65),
+      0 0 60px oklch(0.75 0.18 145 / 0.28),
+      0 0 120px oklch(0.75 0.18 145 / 0.12);
+  }
+
+  /* ── Code window ── */
+  .code-window {
+    background: var(--code-bg);
+    box-shadow:
+      0 32px 80px -12px oklch(0 0 0 / 0.12),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
+  }
+  :global(.dark) .code-window {
+    box-shadow: 0 32px 80px -12px oklch(0 0 0 / 0.65);
+  }
+
+</style>

@@ -1,52 +1,193 @@
 ---
-const testimonials = [
+import { GITHUB_DISCUSSIONS_URL } from "@lib/constants";
+import { BugIcon, GitForkIcon, HeartIcon, PackageIcon, TrophyIcon, WarningIcon } from "@phosphor-icons/react";
+
+const problems = [
   {
-    name: "Sarah Chen",
-    handle: "@sarahchen",
-    avatar: "SC",
-    text: "BetterTUI is exactly what the terminal ecosystem needed. React components that render in the terminal with actual proper layout and theming? Finally.",
-    time: "2d ago",
+    icon: BugIcon,
+    title: "Runtime Instability",
+    problem:
+      "Bun is fast but experimental — unpredictable behavior, incomplete Node.js compatibility, and sharp production edges. Zig-backed terminals carry known memory hazards that surface under load.",
+    solution:
+      "Node.js ≥ 24 as the primary target. The Rust engine eliminates memory hazards by construction — no manual allocations, no use-after-free, no runtime surprises.",
   },
   {
-    name: "Marcus Johnson",
-    handle: "@marcusj",
-    avatar: "MJ",
-    text: "The framework-agnostic approach is brilliant. We migrated our CLI tool from Ink to BetterTUI in an afternoon. The TypeScript support is incredible.",
-    time: "1w ago",
+    icon: WarningIcon,
+    title: "Garbage Collection Pauses",
+    problem:
+      "Pure-JS TUI renderers compete with your app for the garbage collector. A 50ms GC pause in a real-time dashboard is visible and jarring.",
+    solution:
+      "The Rust engine never touches the JS heap. Layout and rendering are garbage collection–free by construction.",
   },
   {
-    name: "Akira Tanaka",
-    handle: "@akiradev",
-    avatar: "AT",
-    text: "Been building a terminal dashboard for our deployment pipeline. The keyboard navigation and table components alone are worth the switch. Amazing DX.",
-    time: "3d ago",
+    icon: PackageIcon,
+    title: "Bundle Bloat",
+    problem:
+      "Traditional TUI libs ship the full rendering engine in JS — parsing, layout, ANSI encoding. That's hundreds of kB in your bundle.",
+    solution:
+      "The JS layer is a thin orchestration bridge. All the heavy work lives in the native addon — entirely outside your bundle.",
   },
+  {
+    icon: GitForkIcon,
+    title: "Framework Lock-in",
+    problem:
+      "Ink is React-only. Blessed has no modern framework adapters. You either fight your framework or give up features.",
+    solution:
+      "First-class adapters for React 19 and SolidJS. Same Rust engine, same API, different reconciler.",
+  },
+];
+
+const comparisons = [
+  { label: "Runtime", bad: "Bun — experimental", good: "Node.js ≥ 24 — stable" },
+  { label: "System Layer", bad: "Zig — memory hazards", good: "Rust — safe by design" },
+  { label: "Memory Model", bad: "GC pauses mid-frame", good: "Arena allocation, no GC" },
 ];
 ---
 
 <section class="border-t border-border py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+    <!-- Section Header -->
     <div class="mx-auto mb-16 max-w-2xl text-center">
-      <p class="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">Loved by developers</p>
-      <h2 class="text-section mt-2">What the community says</h2>
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">Why BetterTUI</p>
+      <h2 class="text-section mt-2">Stability is the feature nobody ships</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Built from the ground up on memory-safe Rust — because existing tools made the wrong tradeoffs,
+        and production TUIs deserve better.
+      </p>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-3">
-      {testimonials.map((t) => (
-        <article class="rounded-xl border border-border/60 bg-card p-6">
-          <div class="mb-4 flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-terminal-muted font-mono text-sm font-medium text-terminal">
-              {t.avatar}
-            </div>
-            <div>
-              <div class="text-sm font-semibold">{t.name}</div>
-              <div class="text-xs text-muted-foreground">{t.handle}</div>
-            </div>
+    <!-- Origin Story -->
+    <div class="mx-auto mb-16 max-w-4xl">
+      <div
+        class="relative overflow-hidden rounded-2xl border border-terminal/20 border-l-[3px] border-l-terminal bg-terminal-muted/10 shadow-sm"
+      >
+        <div class="px-8 py-8 sm:px-10">
+          <p class="font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal mb-5">
+            The Origin
+          </p>
+
+          <div class="space-y-4 text-[15px] leading-relaxed text-foreground/80">
+            <p>
+              BetterTUI was born from direct experience with{" "}
+              <span class="font-semibold text-foreground">OpenTUI</span> — an impressive library that proved the
+              TypeScript ecosystem deserves a first-class TUI framework. But using it in real applications
+              revealed two hard constraints: a{" "}
+              <span class="font-semibold text-foreground">Bun runtime requirement</span> and a{" "}
+              <span class="font-semibold text-foreground">Zig-backed terminal layer</span>. Both are remarkable
+              engineering achievements. Neither is a foundation you'd build production software on when
+              stability is non-negotiable — Bun is still experimental with known compatibility gaps, and Zig's
+              memory model brings hazards that compound under real workloads.
+            </p>
+            <p>
+              That raised a single question:{" "}
+              <em class="font-medium text-terminal">
+                what if we built this right, from scratch, on the most memory-safe foundation available?
+              </em>{" "}
+              The answer is Rust — not as a trend, but as the only language where memory leaks and data races
+              are{" "}
+              <span class="font-semibold text-foreground">impossible by construction</span>.
+            </p>
           </div>
-          <p class="text-sm leading-relaxed text-muted-foreground">{t.text}</p>
-          <div class="mt-3 text-xs text-muted-foreground/60">{t.time}</div>
+
+          <!-- Comparison grid -->
+          <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {comparisons.map((c) => (
+              <div class="rounded-lg border border-border bg-card/80 px-4 py-3.5">
+                <p class="mb-3 font-mono text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {c.label}
+                </p>
+                <p class="mb-1.5 flex items-start gap-1.5 text-xs text-destructive/70">
+                  <span class="mt-px shrink-0" aria-hidden="true">✕</span>
+                  <span class="line-through">{c.bad}</span>
+                </p>
+                <p class="flex items-start gap-1.5 text-xs font-medium text-terminal">
+                  <span class="mt-px shrink-0" aria-hidden="true">✓</span>
+                  <span>{c.good}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem / Solution Cards — 2×2 grid -->
+    <div class="grid gap-6 sm:grid-cols-2">
+      {problems.map((item) => (
+        <article class="card-hover flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div class="flex-1 p-6">
+            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <item.icon className="h-5 w-5" weight="duotone" aria-hidden="true" />
+            </div>
+            <h3 class="text-base font-semibold">{item.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.problem}</p>
+          </div>
+          <div class="border-t border-terminal/20 bg-terminal-muted/50 px-6 py-4">
+            <p class="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-terminal">
+              Our solution
+            </p>
+            <p class="text-sm leading-relaxed text-muted-foreground">{item.solution}</p>
+          </div>
         </article>
       ))}
     </div>
+
+    <!-- Benchmark + Acknowledgment -->
+    <div class="mt-8 grid gap-6 md:grid-cols-2">
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div class="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
+          <TrophyIcon className="h-4 w-4" weight="duotone" aria-hidden="true" />
+        </div>
+        <h3 class="text-base font-semibold">OpenTUI as the benchmark</h3>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Every feature BetterTUI ships is validated against OpenTUI's complete example suite. If OpenTUI
+          can demonstrate it, BetterTUI must match or exceed it on a stable, memory-safe foundation. Their
+          examples are our acceptance criteria and our definition of done.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-terminal/20 bg-terminal-muted/15 p-6">
+        <div class="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
+          <HeartIcon className="h-4 w-4" weight="duotone" aria-hidden="true" />
+        </div>
+        <h3 class="text-base font-semibold">Standing on the shoulders of giants</h3>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+          A sincere thank you to every contributor who built OpenTUI. Your work demonstrated what was
+          possible in the TypeScript ecosystem, gave us our benchmark, and motivated building something
+          the entire community can rely on. This project exists because of your effort.
+        </p>
+      </div>
+    </div>
+
+    <!-- Early Beta -->
+    <div class="mx-auto mt-10 max-w-2xl">
+      <div class="rounded-xl border border-amber-400/40 bg-amber-400/15 px-6 py-5 text-center">
+        <p class="font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">
+          ⚠ Early Beta — v0.0.0
+        </p>
+        <p class="mt-2 text-sm leading-relaxed text-amber-700 dark:text-amber-300">
+          BetterTUI is not production-ready. The API is unstable and actively evolving. We're sharing
+          early to collect feedback from the community.
+        </p>
+        <div class="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="/roadmap"
+            class="rounded-md border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-400/10 dark:border-amber-400/30 dark:text-amber-400"
+          >
+            View Roadmap →
+          </a>
+          <a
+            href={GITHUB_DISCUSSIONS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-md border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-400/10 dark:border-amber-400/30 dark:text-amber-400"
+          >
+            Join Discussion →
+          </a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>

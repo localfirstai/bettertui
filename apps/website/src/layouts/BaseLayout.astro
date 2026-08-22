@@ -57,9 +57,6 @@ const currentURL = canonicalURL || Astro.url.href;
         if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
           return localStorage.getItem("theme");
         }
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          return "dark";
-        }
         return "light";
       })();
       if (theme === "dark") {
@@ -68,6 +65,8 @@ const currentURL = canonicalURL || Astro.url.href;
         document.documentElement.classList.remove("dark");
       }
     </script>
+
+    <script is:inline defer src="/theme-sync.js"></script>
   </head>
   <body class="min-h-screen bg-background text-foreground antialiased">
     <slot />

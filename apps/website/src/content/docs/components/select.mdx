@@ -1,0 +1,159 @@
+---
+title: Select
+description: Keyboard-navigable list selector with descriptions and scroll indicator
+---
+
+`Select` renders a scrollable option list with selection highlighting, optional descriptions, and a scroll indicator. Navigation is keyboard-driven via a configurable keybinding map.
+
+## Usage
+
+```ts
+import { Select, SelectEvents, type SelectOption, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const options: SelectOption[] = [
+  { name: 'Home',     description: 'Go to the home screen',   value: 'home'     },
+  { name: 'Settings', description: 'Open application settings', value: 'settings' },
+  { name: 'Quit',     description: 'Exit the application',    value: 'quit'     },
+];
+
+const list = new Select(renderer, {
+  options,
+  width: 50,
+  height: 10,
+  showDescription: true,
+  showScrollIndicator: true,
+  selectedBackgroundColor: '#364A82',
+  selectedTextColor: '#7aa2f7',
+  textColor: '#c0caf5',
+  descriptionColor: '#565f89',
+});
+
+list.on(SelectEvents.ITEM_SELECTED, (_index, option) => {
+  console.log('Selected:', option.value);
+});
+
+renderer.root.add(list);
+list.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new Select(renderer: CliRenderer, options?: SelectOptions)
+```
+
+## Props
+
+`SelectOptions` extends `BoxOptions` with:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `options` | `SelectOption[]` | `[]` | List of selectable items |
+| `selectedIndex` | `number` | `0` | Initially highlighted index |
+| `textColor` | `string` | — | Default item text color |
+| `focusedTextColor` | `string` | — | Text color when focused |
+| `focusedBackgroundColor` | `string` | — | Background color when focused |
+| `selectedBackgroundColor` | `string` | — | Row background when selected |
+| `selectedTextColor` | `string` | — | Row text color when selected |
+| `descriptionColor` | `string` | — | Description text color |
+| `selectedDescriptionColor` | `string` | — | Description color when selected |
+| `showScrollIndicator` | `boolean` | `true` | Show `▲▼` scroll indicator |
+| `showDescription` | `boolean` | `true` | Show item descriptions |
+| `showSelectionIndicator` | `boolean` | `false` | Show prefix indicator glyph |
+| `selectionIndicator` | `string` | `'▶'` | Indicator glyph when selected |
+| `wrapSelection` | `boolean` | `false` | Wrap at top / bottom |
+| `fastScrollStep` | `number` | `5` | Rows to jump with `Shift+Up/Down` |
+| `itemSpacing` | `number` | `0` | Blank rows between items |
+
+## SelectOption
+
+```ts
+interface SelectOption {
+  name: string;         // Display label
+  description: string;  // Secondary description line
+  value?: unknown;      // Arbitrary payload returned on selection
+}
+```
+
+## Methods
+
+```ts
+list.focus(): void
+list.blur(): void
+list.getSelectedIndex(): number
+list.getSelectedOption(): SelectOption | null
+list.selectCurrent(): void   // Trigger selection programmatically
+```
+
+## Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `SelectEvents.SELECTION_CHANGED` | `(index, option)` | Highlighted row changes |
+| `SelectEvents.ITEM_SELECTED` | `(index, option)` | User confirms selection (Enter) |
+| `RenderableEvents.FOCUSED` | — | Select receives focus |
+| `RenderableEvents.BLURRED` | — | Select loses focus |
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `↑` / `k` | Move up one row |
+| `↓` / `j` | Move down one row |
+| `Shift+↑` | Move up by `fastScrollStep` |
+| `Shift+↓` | Move down by `fastScrollStep` |
+| `Page Up` | Move up one page |
+| `Page Down` | Move down one page |
+| `Home` | Jump to first item |
+| `End` | Jump to last item |
+| `Enter` | Confirm selection |
+
+## Examples
+
+### Basic List
+
+```ts
+const list = new Select(renderer, {
+  options: [
+    { name: 'Option A', description: 'First choice', value: 'a' },
+    { name: 'Option B', description: 'Second choice', value: 'b' },
+  ],
+  width: 40,
+  height: 6,
+});
+
+list.on(SelectEvents.ITEM_SELECTED, (_, opt) => {
+  console.log('Chose:', opt.value);
+});
+
+renderer.root.add(list);
+list.focus();
+```
+
+### Wrapped in a Bordered Box
+
+```ts
+const panel = new Box(renderer, {
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#565f89',
+  focusedBorderColor: '#7aa2f7',
+  title: ' Choose an option ',
+  titleAlignment: 'center',
+  flexGrow: 1,
+});
+
+const list = new Select(renderer, {
+  options,
+  width: '100%',
+  height: '100%',
+  selectedBackgroundColor: '#364A82',
+});
+
+panel.add(list);
+renderer.root.add(panel);
+list.focus();
+```

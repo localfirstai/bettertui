@@ -1,26 +1,59 @@
 ---
+import { GithubIcon } from "@components/icon";
 import { Button } from "@components/ui/button";
+import { GITHUB_DISCUSSIONS_URL, GITHUB_URL } from "@lib/constants";
 ---
 
 <section class="border-t border-border py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background via-background to-terminal-muted/20 p-12 text-center md:p-16">
-      <div class="dot-grid pointer-events-none absolute inset-0 opacity-50" />
+    <div
+      class="relative overflow-hidden rounded-2xl border border-terminal/30 bg-gradient-to-br from-background via-muted/60 to-terminal-muted/40 p-12 text-center shadow-xl md:p-16"
+    >
+      <div class="dot-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
+      <div
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-terminal/60 to-transparent"
+        aria-hidden="true"
+      />
+
+      <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-terminal-muted/30 to-transparent" aria-hidden="true" />
 
       <div class="relative">
-        <h2 class="text-section text-balance">Ready to build better terminal apps?</h2>
-        <p class="text-section-sub mt-4 text-muted-foreground">
-          Get started in minutes with our CLI installer.
+        <div
+          class="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400"
+        >
+          <span aria-hidden="true">⚠</span>
+          Early Beta — not production-ready
+        </div>
+
+        <h2 class="text-section text-balance">Help shape what BetterTUI becomes</h2>
+        <p class="text-section-sub mx-auto mt-4 max-w-lg text-muted-foreground">
+          We're in early beta and actively refining the API with early adopters. Star the repo, try
+          it out, and tell us what's broken.
         </p>
 
         <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a href="/docs/getting-started/quick-start">
-            <Button size="lg">Get Started</Button>
+            <Button size="lg">Try the Beta →</Button>
           </a>
-          <a href="/docs">
-            <Button variant="outline" size="lg">Read the Docs</Button>
+          <a href={GITHUB_DISCUSSIONS_URL} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="lg">
+              <GithubIcon class="h-4 w-4" />
+              Join the Discussion
+            </Button>
           </a>
         </div>
+
+        <p class="mt-6 font-mono text-xs text-muted-foreground">
+          Apache 2.0 licensed · Built in public on{" "}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline-offset-2 hover:underline"
+          >
+            GitHub
+          </a>
+        </p>
       </div>
     </div>
   </div>

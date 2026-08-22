@@ -3,7 +3,7 @@ const L = "{";
 const R = "}";
 
 const kw = "text-syntax-keyword";
-const fn = "text-syntax-function";
+const fn_ = "text-syntax-function";
 const num = "text-syntax-number";
 const tag = "text-syntax-tag";
 const attr = "text-syntax-attr";
@@ -12,148 +12,169 @@ const str = "text-syntax-string";
 const fg = "text-foreground";
 const cm = "text-muted-foreground";
 
-const code1Html = `<span class="${kw}">import</span><span class="${fg}"> { Box, Text, useInput } </span><span class="${kw}">from</span><span class="${str}"> "bettertui"</span><span class="${fg}">;</span>
+const reactCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box, Text, useInput ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/react"</span><span class="${fg}">;</span>
+<span class="${kw}">import</span><span class="${fg}"> ${L} render ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/core"</span><span class="${fg}">;</span>
 <span></span>
-<span class="${kw}">function</span><span class="${fg}"> </span><span class="${fn}">App</span><span class="${fg}">() ${L}</span>
-<span class="${fg}">  </span><span class="${kw}">const</span><span class="${fg}"> [count, setCount] = </span><span class="${fn}">useState</span><span class="${fg}">(</span><span class="${num}">0</span><span class="${fg}">);</span>
-<span></span>
-<span class="${fg}">  </span><span class="${fn}">useInput</span><span class="${fg}">((input) </span><span class="${op}">=&gt;</span><span class="${fg}"> ${L}</span>
-<span class="${fg}">    </span><span class="${kw}">if</span><span class="${fg}"> (input === </span><span class="${str}">"q"</span><span class="${fg}">) </span><span class="${fn}">process.exit</span><span class="${fg}">();</span>
+<span class="${kw}">function</span><span class="${fg}"> </span><span class="${fn_}">App</span><span class="${fg}">() ${L}</span>
+<span class="${fg}">  </span><span class="${fn_}">useInput</span><span class="${fg}">((key) </span><span class="${op}">=&gt;</span><span class="${fg}"> ${L}</span>
+<span class="${fg}">    </span><span class="${kw}">if</span><span class="${fg}"> (key === </span><span class="${str}">"q"</span><span class="${fg}">) process.</span><span class="${fn_}">exit</span><span class="${fg}">(</span><span class="${num}">0</span><span class="${fg}">);</span>
 <span class="${fg}">  ${R});</span>
 <span></span>
 <span class="${fg}">  </span><span class="${kw}">return</span><span class="${fg}"> (</span>
-<span class="${fg}">    </span><span class="${op}">&lt;</span><span class="${tag}">Box</span><span class="${fg}"> </span><span class="${attr}">borderStyle</span><span class="${fg}">=</span><span class="${str}">"round"</span><span class="${fg}"> </span><span class="${attr}">padding</span><span class="${fg}">=${L}</span><span class="${num}">1</span><span class="${fg}">${R}&gt;</span>
-<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">color</span><span class="${fg}">=</span><span class="${str}">"green"</span><span class="${fg}">&gt;Count: ${L}count${R}&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
-<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">dimColor</span><span class="${fg}">&gt;Press 'q' to quit&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
+<span class="${fg}">    </span><span class="${op}">&lt;</span><span class="${tag}">Box</span><span class="${fg}"> </span><span class="${attr}">flexDirection</span><span class="${fg}">=</span><span class="${str}">"column"</span><span class="${fg}"> </span><span class="${attr}">padding</span><span class="${fg}">=${L}</span><span class="${num}">1</span><span class="${fg}">${R}&gt;</span>
+<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">bold</span><span class="${fg}"> </span><span class="${attr}">color</span><span class="${fg}">=</span><span class="${str}">"green"</span><span class="${fg}">&gt;Count: ${L}count${R}&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
+<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">dimColor</span><span class="${fg}">&gt;Press q to quit&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
+<span class="${fg}">    </span><span class="${op}">&lt;/</span><span class="${tag}">Box</span><span class="${fg}">&gt;</span>
+<span class="${fg}">  );</span>
+<span class="${fg}">${R}</span>
+<span></span>
+<span class="${fn_}">render</span><span class="${fg}">(</span><span class="${op}">&lt;</span><span class="${tag}">App</span><span class="${fg}"> /&gt;);</span>`;
+
+const solidCodeHtml = `<span class="${kw}">import</span><span class="${fg}"> ${L} Box, Text, useInput ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/solid"</span><span class="${fg}">;</span>
+<span class="${kw}">import</span><span class="${fg}"> ${L} render ${R} </span><span class="${kw}">from</span><span class="${str}"> "@bettertui/core"</span><span class="${fg}">;</span>
+<span class="${kw}">import</span><span class="${fg}"> ${L} createSignal ${R} </span><span class="${kw}">from</span><span class="${str}"> "solid-js"</span><span class="${fg}">;</span>
+<span></span>
+<span class="${kw}">function</span><span class="${fg}"> </span><span class="${fn_}">App</span><span class="${fg}">() ${L}</span>
+<span class="${fg}">  </span><span class="${kw}">const</span><span class="${fg}"> [count, setCount] = </span><span class="${fn_}">createSignal</span><span class="${fg}">(</span><span class="${num}">0</span><span class="${fg}">);</span>
+<span></span>
+<span class="${fg}">  </span><span class="${fn_}">useInput</span><span class="${fg}">((key) </span><span class="${op}">=&gt;</span><span class="${fg}"> ${L}</span>
+<span class="${fg}">    </span><span class="${kw}">if</span><span class="${fg}"> (key === </span><span class="${str}">"+"</span><span class="${fg}">) </span><span class="${fn_}">setCount</span><span class="${fg}">((n) </span><span class="${op}">=&gt;</span><span class="${fg}"> n + </span><span class="${num}">1</span><span class="${fg}">);</span>
+<span class="${fg}">  ${R});</span>
+<span></span>
+<span class="${fg}">  </span><span class="${kw}">return</span><span class="${fg}"> (</span>
+<span class="${fg}">    </span><span class="${op}">&lt;</span><span class="${tag}">Box</span><span class="${fg}"> </span><span class="${attr}">padding</span><span class="${fg}">=${L}</span><span class="${num}">1</span><span class="${fg}">${R}&gt;</span>
+<span class="${fg}">      </span><span class="${op}">&lt;</span><span class="${tag}">Text</span><span class="${fg}"> </span><span class="${attr}">color</span><span class="${fg}">=</span><span class="${str}">"cyan"</span><span class="${fg}">&gt;Count: ${L}</span><span class="${fn_}">count</span><span class="${fg}">()${R}&lt;/</span><span class="${tag}">Text</span><span class="${fg}">&gt;</span>
 <span class="${fg}">    </span><span class="${op}">&lt;/</span><span class="${tag}">Box</span><span class="${fg}">&gt;</span>
 <span class="${fg}">  );</span>
 <span class="${fg}">${R}</span>`;
-
-const code2Html = `<span class="${cm}">// React</span>
-<span class="${kw}">import</span><span class="${fg}"> { render } </span><span class="${kw}">from</span><span class="${str}"> "bettertui/react"</span><span class="${fg}">;</span>
-<span></span>
-<span class="${cm}">// SolidJS</span>
-<span class="${kw}">import</span><span class="${fg}"> { render } </span><span class="${kw}">from</span><span class="${str}"> "bettertui/solid"</span><span class="${fg}">;</span>
-<span></span>
-<span class="${cm}">// Astro</span>
-<span class="${kw}">import</span><span class="${fg}"> BetterTUI </span><span class="${kw}">from</span><span class="${str}"> "bettertui/astro"</span><span class="${fg}">;</span>`;
 ---
 
-<section class="py-24">
+<section class="border-t border-border bg-muted/40 py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="mx-auto mb-16 max-w-2xl text-center">
-      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">How it works</p>
-      <h2 class="text-section mt-2">Define your UI</h2>
-      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
-        Familiar component patterns. Write once, run in any terminal.
+      <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">
+        How it works
+      </p>
+      <h2 class="text-section mt-2">Familiar patterns. Native speed.</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Write components exactly like you would for the web. BetterTUI translates them to the
+        terminal through its Rust engine.
       </p>
     </div>
 
-    <div class="grid items-center gap-12 lg:grid-cols-2">
-      <div>
-        <div class="relative overflow-hidden rounded-xl border border-code-border bg-code-bg">
-          <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
-            <div class="h-3 w-3 rounded-full bg-red-400/80" />
-            <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
-            <div class="h-3 w-3 rounded-full bg-green-400/80" />
-            <span class="ml-2 font-mono text-xs text-muted-foreground">App.tsx</span>
-          </div>
-          <pre class="overflow-x-auto p-4"><code class="font-mono text-code leading-relaxed" set:html={code1Html} /></pre>
-        </div>
-      </div>
-
-      <div class="flex flex-col items-center justify-center">
-        <div class="w-full max-w-sm rounded-xl border-2 border-terminal/30 bg-code-bg p-6 shadow-lg">
-          <div class="mb-3 flex items-center gap-1.5">
-            <div class="h-2.5 w-2.5 rounded-full bg-red-400/80" />
-            <div class="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
-            <div class="h-2.5 w-2.5 rounded-full bg-green-400/80" />
-          </div>
-          <div class="rounded border border-border bg-background p-4 font-mono text-sm">
-            <div class="text-terminal font-semibold">Count: 0</div>
-            <div class="mt-1 text-muted-foreground">Press 'q' to quit</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="border-t border-border py-24">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="mx-auto mb-16 max-w-2xl text-center">
-      <h2 class="text-section">Any Framework</h2>
-      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
-        One engine. Your favorite framework.
-      </p>
-    </div>
-
+    <!-- Tab switcher -->
     <div class="mx-auto max-w-3xl">
-      <div class="mb-8 flex flex-wrap items-center justify-center gap-4">
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 569 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g fill-rule="evenodd"><g fill="#087EA4" fill-rule="nonzero">
-              <path d="M285.5,201 C255.4,201 231,225.4 231,255.5 C231,285.6 255.4,310 285.5,310 C315.6,310 340,285.6 340,255.5 C340,225.4 315.6,201 285.5,201"/>
-              <path d="M569,256 C569,213.2 529.3,175.7 466.3,151 C467.1,145.4 467.9,139.9 468.4,134.5 C474.6,73 459.8,28.7 426.7,9.6 C389.7,-11.8 337.4,3.7 284.5,46 C231.6,3.7 179.3,-11.8 142.3,9.6 C109.2,28.7 94.3,73 100.6,134.5 C101.1,139.9 101.8,145.4 102.7,151 C97.4,153 92.3,155.2 87.3,157.4 C31,182.7 0,217.8 0,256 C0,298.8 39.6,336.3 102.7,361 C101.8,366.6 101.1,372.1 100.6,377.5 C94.3,438.9 109.2,483.3 142.3,502.4 C153.6,508.9 166.5,512.2 179.6,512 C211,512 247.6,495.5 284.5,466 C321.4,495.5 358,512 389.4,512 C402.5,512.2 415.4,508.9 426.8,502.4 C459.8,483.3 474.7,438.9 468.4,377.5 C467.9,372.1 467.1,366.6 466.3,361 C529.4,336.3 569,298.8 569,256"/>
-            </g></g>
-          </svg>
-          <span>React</span>
-        </div>
-
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 256 239" xmlns="http://www.w3.org/2000/svg">
-            <path d="M256 50.5S170.7-12.3 104.7 2.2l-4.8 1.6c-9.7 3.2-17.7 8-22.5 14.5l-3.2 4.8-24.2 41.9 41.9 8c17.7 11.3 40.3 16.1 61.2 11.3l74.1 14.5L256 50.5Z" fill="#76B3E1"/>
-            <path d="m77.3 50.5-6.4 1.6c-27.4 8-35.4 33.8-20.9 56.4 16.1 20.9 49.9 32.2 77.3 24.2l99.8-33.8S141.7 36 77.3 50.5Z" fill="#518AC8"/>
-            <path d="M209.3 122.9c-18.4-23-49-32.6-77.3-24.2L32.2 131l-32.2 55.9 180.3 30.6 32.2-58c6.4-11.3 4.8-24.2-3.2-37Z" fill="#4377BB"/>
-            <path d="M177.1 179.3c-18.4-23-49-32.6-77.3-24.2L0 187.3s85.3 64.4 151.3 48.3l4.8-1.6c27.4-8 37-33.8 20.9-54.7Z" fill="#1A336B"/>
-          </svg>
-          <span>SolidJS</span>
-        </div>
-
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 85 107" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#17191E" d="M27.6 91.1c-4.8-4.4-6.2-13.7-4.2-20.4 3.5 4.2 8.3 5.6 13.3 6.3 7.7 1.2 15.3.7 22.5-2.8.8-.4 1.6-.9 2.5-1.5.7 2 .9 3.9.6 5.9-.6 4.9-3 8.7-6.9 11.5-1.5 1.1-3.2 2.2-4.8 3.3-4.9 3.3-6.2 7.2-4.4 12.9.1.1.1.3.2.6-2.5-1.1-4.3-2.8-5.7-4.9-1.5-2.3-2.2-4.8-2.2-7.5 0-1.3 0-2.7-.2-4-.4-3.2-1.9-4.6-4.7-4.7-2.9-.1-5.2 1.7-5.8 4.5 0 .2-.1.4-.2.7l.1 0ZM0 69.6s14.3-7 28.7-7L39.5 29.1c.4-1.6 1.6-2.7 2.9-2.7s2.5 1.1 2.9 2.7L56.2 62.6c17 0 28.7 7 28.7 7S60.5 3.4 60.5 3.2C59.8 1.3 58.6 0 57 0H27.8c-1.6 0-2.7 1.3-3.5 3.2C24.3 3.4 0 69.6 0 69.6Z"/>
-          </svg>
-          <span>Astro</span>
-        </div>
-
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
-            <path d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0h47.36Z" fill="#41B883"/>
-            <path d="m0 0 128 220.8L256 0h-51.2L128 132.48 50.56 0H0Z" fill="#41B883"/>
-            <path d="M50.56 0 128 133.12 204.8 0h-47.36L128 51.2 97.92 0H50.56Z" fill="#35495E"/>
-          </svg>
-          <span>Vue</span>
-        </div>
-
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 256 308" xmlns="http://www.w3.org/2000/svg">
-            <path d="M239.7 40.7C211.1-0.2 154.7-12.3 113.9 13.7L42.2 59.4a82.2 82.2 0 0 0-37.1 55.1 86.6 86.6 0 0 0 8.5 55.6 82.4 82.4 0 0 0-12.3 30.7 87.6 87.6 0 0 0 15 66.2c28.6 40.9 85 53 125.8 27l71.6-45.7a82.2 82.2 0 0 0 37.1-55.1 86.6 86.6 0 0 0-8.5-55.6 82.4 82.4 0 0 0 12.3-30.7 87.6 87.6 0 0 0-15-66.2z" fill="#FF3E00"/>
-            <path d="M106.9 270.8c-23.1 6-47.5-3-61.1-22.6a52.7 52.7 0 0 1-9-39.8 50 50 0 0 1 1.7-6.7l1.4-4.1 3.7 2.7a92.4 92.4 0 0 0 28 14l2.7.8-.3 2.7a16.1 16.1 0 0 0 2.9 10.6 17.1 17.1 0 0 0 18.4 6.8 15.8 15.8 0 0 0 4.4-1.9l71.7-45.7a14.9 14.9 0 0 0 6.7-10 15.9 15.9 0 0 0-2.7-12 17.2 17.2 0 0 0-18.4-6.8 15.8 15.8 0 0 0-4.4 1.9l-27.4 17.4a52.3 52.3 0 0 1-14.5 6.4c-23.1 6-47.5-3-61.1-22.6a52.7 52.7 0 0 1-9-39.9 49.4 49.4 0 0 1 22.3-33.1l71.7-45.7a52.2 52.2 0 0 1 14.6-6.4c23.1-6 47.5 3 61.1 22.6a52.7 52.7 0 0 1 9 39.9 50.6 50.6 0 0 1-1.7 6.7l-1.4 4.1-3.7-2.7a92.4 92.4 0 0 0-28-14l-2.7-.8.3-2.7a16.1 16.1 0 0 0-2.9-10.6 17.1 17.1 0 0 0-18.4-6.8 15.8 15.8 0 0 0-4.4 1.9l-71.7 45.7a14.9 14.9 0 0 0-6.7 10 15.9 15.9 0 0 0 2.7 12 17.2 17.2 0 0 0 18.4 6.8 15.8 15.8 0 0 0 4.4-1.9l27.4-17.4a52.1 52.1 0 0 1 14.6-6.4c23.1-6 47.5 3 61.1 22.6a52.7 52.7 0 0 1 9 39.9 49.5 49.5 0 0 1-22.3 33.1l-71.7 45.7a52.2 52.2 0 0 1-14.6 6.4z" fill="#FFF"/>
-          </svg>
-          <span>Svelte</span>
-        </div>
-
-        <div class="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/50 px-4 py-2.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-card">
-          <svg class="h-5 w-auto" viewBox="0 0 256 296" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#673AB8" d="m128 0 128 73.9v147.8l-128 73.9L0 221.7V73.9z"/>
-            <path d="M34.9 220.5c17 21.8 71.1 5.2 122.2-34.7 51.1-39.9 80.2-88.3 63.2-110.1-17-21.8-71.1-5.2-122.2 34.7-51.1 39.9-80.2 88.3-63.2 110.1Zm7.3-5.7c-5.6-7.2-3.2-21.4 7.6-39.3 11.3-18.8 30.5-39.5 54.1-57.9 23.5-18.4 48.3-32 69.3-38.4 19.9-6.1 34.3-5.1 39.9 2.1 5.6 7.2 3.2 21.4-7.6 39.3-11.3 18.8-30.5 39.5-54.1 57.9-23.5 18.4-48.3 32-69.3 38.4-19.9 6.1-34.3 5.1-39.9-2.1Z" fill="#FFF"/>
-            <path d="M220.2 220.5c17-21.8-12.2-70.2-63.2-110.1C106 70.5 51.9 53.9 34.9 75.6c-17 21.8 12.2 70.2 63.2 110.1 51.1 39.9 105.1 56.5 122.1 34.7Zm-7.3-5.7c-5.6 7.2-20 8.3-39.9 2.1-21-6.4-45.8-20.1-69.3-38.4-23.5-18.4-42.7-39.1-54.1-57.9-10.7-17.9-13.2-32.1-7.6-39.3 5.6-7.2 20-8.3 39.9-2.1 21 6.4 45.8 20.1 69.3 38.4 23.5 18.4 42.7 39.1 54.1 57.9 10.7 17.9 13.2 32.1 7.6 39.3Z" fill="#FFF"/>
-            <circle cx="127.6" cy="167.7" r="19.6" fill="#FFF"/>
-          </svg>
-          <span>Preact</span>
-        </div>
+      <div class="mb-4 flex items-center gap-1 rounded-lg border border-white/15 bg-muted p-1">
+        <button
+          id="tab-react"
+          class="code-tab flex-1 rounded-md px-4 py-2 font-mono text-sm font-medium transition-all"
+          data-active="true"
+          aria-selected="true"
+        >
+          React
+        </button>
+        <button
+          id="tab-solid"
+          class="code-tab flex-1 rounded-md px-4 py-2 font-mono text-sm font-medium transition-all"
+          data-active="false"
+          aria-selected="false"
+        >
+          SolidJS
+        </button>
       </div>
 
-      <div class="relative overflow-hidden rounded-xl border border-code-border bg-code-bg">
+      <div
+        class="code-window relative overflow-hidden rounded-xl border border-code-border"
+      >
         <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
-          <div class="h-3 w-3 rounded-full bg-red-400/80" />
-          <div class="h-3 w-3 rounded-full bg-yellow-400/80" />
-          <div class="h-3 w-3 rounded-full bg-green-400/80" />
-          <span class="ml-2 font-mono text-xs text-muted-foreground">adapters.tsx</span>
+          <div class="h-3 w-3 rounded-full bg-red-400/80"></div>
+          <div class="h-3 w-3 rounded-full bg-yellow-400/80"></div>
+          <div class="h-3 w-3 rounded-full bg-green-400/80"></div>
+          <span id="code-filename" class="ml-2 font-mono text-xs text-muted-foreground"
+            >app.tsx</span
+          >
         </div>
-        <pre class="overflow-x-auto p-4"><code class="font-mono text-code leading-relaxed" set:html={code2Html} /></pre>
+        <div id="code-react" class="code-panel">
+          <pre class="overflow-x-auto p-4"><code
+              class="font-mono text-code leading-relaxed"
+              set:html={reactCodeHtml}
+            /></pre>
+        </div>
+        <div id="code-solid" class="code-panel hidden">
+          <pre class="overflow-x-auto p-4"><code
+              class="font-mono text-code leading-relaxed"
+              set:html={solidCodeHtml}
+            /></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output preview -->
+    <div class="mx-auto mt-12 max-w-3xl">
+      <p
+        class="mb-4 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+      >
+        Terminal output
+      </p>
+      <div class="code-window overflow-hidden rounded-xl border-2 border-terminal/30 shadow-lg">
+        <div class="flex items-center gap-1.5 border-b border-code-border px-4 py-3">
+          <div class="h-2.5 w-2.5 rounded-full bg-red-400/80"></div>
+          <div class="h-2.5 w-2.5 rounded-full bg-yellow-400/80"></div>
+          <div class="h-2.5 w-2.5 rounded-full bg-green-400/80 terminal-dot-pulse"></div>
+          <span class="ml-2 font-mono text-xs text-muted-foreground/60">my-app</span>
+        </div>
+        <div class="rounded border border-border bg-card p-4 font-mono text-sm m-4">
+          <div class="font-bold text-terminal">● Count: 0</div>
+          <div class="mt-1 text-muted-foreground">Press q to quit</div>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<style>
+  .code-window {
+    box-shadow:
+      0 32px 80px -12px oklch(0 0 0 / 0.12),
+      inset 0 1px 0 oklch(1 0 0 / 0.06);
+  }
+  :global(.dark) .code-window {
+    box-shadow: 0 32px 80px -12px oklch(0 0 0 / 0.65);
+  }
+
+
+
+  .code-tab[data-active="true"] {
+    background-color: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 1px 4px oklch(0 0 0 / 0.12), 0 0 0 1px var(--border);
+  }
+  .code-tab[data-active="false"] {
+    color: var(--muted-foreground);
+  }
+  .code-tab[data-active="false"]:hover {
+    color: var(--foreground);
+  }
+</style>
+
+<script>
+  const tabReact = document.getElementById("tab-react");
+  const tabSolid = document.getElementById("tab-solid");
+  const panelReact = document.getElementById("code-react");
+  const panelSolid = document.getElementById("code-solid");
+  const filename = document.getElementById("code-filename");
+
+  function activateTab(tab: "react" | "solid") {
+    const isReact = tab === "react";
+    tabReact?.setAttribute("data-active", String(isReact));
+    tabReact?.setAttribute("aria-selected", String(isReact));
+    tabSolid?.setAttribute("data-active", String(!isReact));
+    tabSolid?.setAttribute("aria-selected", String(!isReact));
+    panelReact?.classList.toggle("hidden", !isReact);
+    panelSolid?.classList.toggle("hidden", isReact);
+    if (filename) filename.textContent = isReact ? "app.tsx" : "app.tsx";
+  }
+
+  tabReact?.addEventListener("click", () => activateTab("react"));
+  tabSolid?.addEventListener("click", () => activateTab("solid"));
+</script>

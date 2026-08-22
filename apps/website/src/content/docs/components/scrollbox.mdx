@@ -1,0 +1,159 @@
+---
+title: ScrollBox
+description: Scrollable container with optional vertical and horizontal scroll bars
+---
+
+`ScrollBox` provides a clipped viewport over a larger content area. It supports independent vertical and horizontal scrolling, sticky-scroll behaviour, and configurable scroll bars.
+
+## Usage
+
+```ts
+import { Box, ScrollBox, Text, createCliRenderer } from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const scroll = new ScrollBox(renderer, {
+  width: 60,
+  height: 15,
+  scrollY: true,
+  border: true,
+  borderStyle: 'round',
+});
+
+// Add many items to scroll.content (the inner container)
+for (let i = 0; i < 50; i++) {
+  const row = new Box(renderer, { paddingY: 0, marginBottom: 0 });
+  row.add(new Text(renderer, { content: `Row ${i + 1}`, fg: '#a9b1d6' }));
+  scroll.add(row);
+}
+
+renderer.root.add(scroll);
+scroll.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new ScrollBox(renderer: CliRenderer, options?: ScrollBoxOptions)
+```
+
+## Props
+
+`ScrollBoxOptions` extends `BoxOptions` with:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `scrollY` | `boolean` | `true` | Enable vertical scrolling |
+| `scrollX` | `boolean` | `false` | Enable horizontal scrolling |
+| `stickyScroll` | `boolean` | `false` | Auto-scroll when content grows |
+| `stickyStart` | `'bottom' \| 'top' \| 'left' \| 'right'` | `'bottom'` | Sticky-scroll anchor edge |
+| `viewportCulling` | `boolean` | `true` | Skip rendering off-screen items |
+| `scrollbarOptions` | `ScrollBarOptions` | — | Options for both scroll bars |
+| `verticalScrollbarOptions` | `ScrollBarOptions` | — | Vertical bar options |
+| `horizontalScrollbarOptions` | `ScrollBarOptions` | — | Horizontal bar options |
+
+### ScrollBarOptions
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `orientation` | `'vertical' \| 'horizontal'` | — | Bar orientation |
+| `showArrows` | `boolean` | `true` | Show `▲▼` / `◄►` arrow buttons |
+| `thumbColor` | `string` | — | Thumb color |
+| `trackColor` | `string` | — | Track color |
+
+## Properties
+
+```ts
+scroll.scrollTop      // Get / set vertical scroll position (rows)
+scroll.scrollLeft     // Get / set horizontal scroll position (columns)
+scroll.content        // Inner Box — add children here
+scroll.viewport       // Viewport Box
+scroll.verticalScrollBar    // Vertical ScrollBar instance
+scroll.horizontalScrollBar  // Horizontal ScrollBar instance
+```
+
+## Methods
+
+```ts
+scroll.add(child: Box): void        // Append to the content area
+scroll.scrollTo(top: number): void  // Scroll to a vertical position
+scroll.scrollToBottom(): void       // Scroll to the end
+```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `↑` / `k` | Scroll up |
+| `↓` / `j` | Scroll down |
+| `Page Up` | Scroll up one viewport |
+| `Page Down` | Scroll down one viewport |
+| `Home` | Scroll to top |
+| `End` | Scroll to bottom |
+
+## Examples
+
+### Basic Vertical Scroll
+
+```ts
+const scroll = new ScrollBox(renderer, {
+  width: '100%',
+  height: 20,
+  scrollY: true,
+  border: true,
+  borderStyle: 'single',
+  borderColor: '#565f89',
+});
+
+for (let i = 0; i < 100; i++) {
+  scroll.add(new Text(renderer, { content: `Line ${i + 1}`, fg: '#c0caf5' }));
+}
+
+renderer.root.add(scroll);
+scroll.focus();
+```
+
+### Sticky-Scroll Log View
+
+```ts
+const log = new ScrollBox(renderer, {
+  width: '100%',
+  height: 10,
+  scrollY: true,
+  stickyScroll: true,
+  stickyStart: 'bottom',
+  border: true,
+  borderStyle: 'round',
+  borderColor: '#9ece6a',
+  title: ' Log ',
+});
+
+function appendLog(msg: string) {
+  log.add(new Text(renderer, { content: msg, fg: '#a9b1d6' }));
+}
+
+renderer.root.add(log);
+```
+
+### Two-Dimensional Scroll
+
+```ts
+const grid = new ScrollBox(renderer, {
+  width: 40,
+  height: 15,
+  scrollX: true,
+  scrollY: true,
+});
+
+for (let row = 0; row < 50; row++) {
+  const line = new Text(renderer, {
+    content: Array.from({ length: 30 }, (_, col) => `[${row},${col}]`).join(' '),
+    fg: '#c0caf5',
+  });
+  grid.add(line);
+}
+
+renderer.root.add(grid);
+grid.focus();
+```

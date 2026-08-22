@@ -9,7 +9,7 @@ use bettertui_engine::render::{
     RenderTree, Renderer,
 };
 use bettertui_engine::taffy::{LayoutEngine, PaintContext, Sizing, build_render_tree};
-use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, RenderNode};
+use bettertui_engine::tree::{Color, Display, NamedColor, NodeArena, NodeKind, Overflow, RenderNode};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // === Tests from ansi.rs ===
@@ -750,6 +750,62 @@ fn renderer_pipeline_passthrough_empty() {
     let mut arena = make_arena();
     let frame = r.render(&mut arena);
     assert!(!frame.is_empty());
+}
+
+#[test]
+fn renderer_clips_nested_overflow_children_to_screen_bounds() {
+    let mut r = Renderer::new(20, 10);
+    let mut arena = make_arena();
+    let root = arena.root();
+
+    {
+        let root_node = arena.get_mut(root).unwrap();
+        root_node.layout.width = Some(Sizing::Points(20.0));
+        root_node.layout.height = Some(Sizing::Points(10.0));
+    }
+
+    let header = arena.insert({
+        let mut n = RenderNode::new(NodeKind::Box);
+        n.layout.width = Some(Sizing::Points(20.0));
+        n.layout.height = Some(Sizing::Points(2.0));
+        n
+    });
+    arena.append_child(root, header).unwrap();
+
+    let container = arena.insert({
+        let mut n = RenderNode::new(NodeKind::Box);
+        n.layout.width = Some(Sizing::Points(10.0));
+        n.layout.height = Some(Sizing::Points(5.0));
+        n
+    });
+    arena.append_child(root, container).unwrap();
+
+    let viewport = arena.insert({
+        let mut n = RenderNode::new(NodeKind::Box);
+        n.overflow = Overflow::Hidden;
+        n.layout.width = Some(Sizing::Points(10.0));
+        n.layout.height = Some(Sizing::Points(3.0));
+        n
+    });
+    arena.append_child(container, viewport).unwrap();
+
+    for row in 0..5 {
+        let child = arena.insert({
+            let mut n = RenderNode::new(NodeKind::Text);
+            n.text = Some(row.to_string().into());
+            n.layout.width = Some(Sizing::Points(1.0));
+            n.layout.height = Some(Sizing::Points(1.0));
+            n
+        });
+        arena.append_child(viewport, child).unwrap();
+    }
+
+    let frame = r.render_full(&mut arena);
+    assert!(!frame.is_empty());
+    assert_eq!(r.framebuffer().get(0, 2).ch, '0');
+    assert_eq!(r.framebuffer().get(0, 3).ch, '1');
+    assert_eq!(r.framebuffer().get(0, 4).ch, '2');
+    assert!(r.framebuffer().get(0, 5).is_empty());
 }
 
 #[test]

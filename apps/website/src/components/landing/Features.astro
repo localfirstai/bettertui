@@ -1,62 +1,191 @@
 ---
-import { CursorClick, Feather, Globe, Keyboard, Palette, ShieldCheck } from "@phosphor-icons/react";
+import { Atom, Code, Cpu, Feather, Lightning, ShieldCheck } from "@phosphor-icons/react";
 
 const features = [
   {
-    icon: Globe,
-    title: "Framework Agnostic",
-    description: "Use React, SolidJS, Astro, or any framework. One API, infinite possibilities.",
+    icon: Cpu,
+    title: "Rust-Backed Engine",
+    description:
+      "Layout and ANSI rendering run natively in a Rust .node addon. No JavaScript on the hot render path. No garbage collection pauses mid-frame.",
+    color: "oklch(0.72 0.19 45)",
+    accent: false,
+  },
+  {
+    icon: Lightning,
+    title: "Node.js First",
+    description:
+      "Designed for Node.js ≥ 24 with stability as the first priority. Bun compatible when you need it — no runtime surprises, no polyfills.",
+    color: "oklch(0.78 0.20 145)",
+    accent: false,
+  },
+  {
+    icon: Atom,
+    title: "React & SolidJS First-Class",
+    description:
+      "Proper reconciler adapters for React 19 and SolidJS — not thin wrappers, not adapters bolted on. Framework primitives map directly to the engine.",
+    color: "oklch(0.72 0.18 215)",
+    accent: false,
   },
   {
     icon: ShieldCheck,
-    title: "Type-Safe",
-    description: "Full TypeScript support with autocomplete and compile-time safety.",
-  },
-  {
-    icon: CursorClick,
-    title: "Interactive Components",
-    description: "Buttons, inputs, selects, tables, and more — all terminal-native.",
-  },
-  {
-    icon: Palette,
-    title: "Theming",
-    description: "Built-in dark mode and custom theme support with CSS variables.",
-  },
-  {
-    icon: Keyboard,
-    title: "Keyboard Navigation",
-    description: "Full keyboard support with focus management and shortcuts.",
+    title: "Memory-Safe Rendering",
+    description:
+      "The Rust engine uses arena allocation with generational indices. Memory leaks in the render pipeline are impossible by construction.",
+    color: "oklch(0.78 0.20 145)",
+    accent: true,
   },
   {
     icon: Feather,
-    title: "Lightweight",
-    description: "Zero runtime overhead. Tree-shakeable and dependency-free core.",
+    title: "Minimal JS Bundle",
+    description:
+      "The heavy lifting lives in the native addon — entirely outside your JS bundle. The TypeScript layer is deliberately thin and tree-shakeable.",
+    color: "oklch(0.68 0.20 295)",
+    accent: false,
+  },
+  {
+    icon: Code,
+    title: "TypeScript Throughout",
+    description:
+      "Complete type inference from JSX props to the native bridge. No `any`, no guessing. Autocomplete and compile-time safety everywhere.",
+    color: "oklch(0.62 0.20 256)",
+    accent: false,
   },
 ];
 ---
 
-<section class="py-24">
+<section class="border-t border-border bg-muted/50 py-24">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="mx-auto mb-16 max-w-2xl text-center">
+
+    <div class="mx-auto mb-12 max-w-2xl text-center">
       <p class="font-mono text-xs font-medium uppercase tracking-wider text-terminal">Features</p>
-      <h2 class="text-section mt-2">Everything you need for terminal UIs</h2>
-      <p class="text-section-sub mt-4 max-w-2xl text-muted-foreground">
-        From interactive forms to real-time dashboards, BetterTUI provides the primitives you need.
+      <h2 class="text-section mt-2">Everything you need. Nothing you don't.</h2>
+      <p class="text-section-sub mt-4 text-muted-foreground">
+        Built from first principles — not as a feature list, but as a coherent set of technical decisions.
       </p>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
       {features.map((feature) => (
-        <article class="group relative overflow-hidden rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border hover:-translate-y-0.5 hover:shadow-lg">
-          <div class="p-6">
-            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-terminal-muted text-terminal">
-              <feature.icon class="h-5 w-5" weight="bold" aria-hidden="true" />
+        <article
+          style={`--fc: ${feature.color}`}
+          class={[
+            "feat-card group relative overflow-hidden rounded-xl border shadow-sm card-hover bg-card",
+            feature.accent ? "feat-accent-card" : "",
+          ].join(" ")}
+        >
+          <!-- Colored top strip -->
+          <div class="feat-strip" aria-hidden="true" />
+
+          <div class="relative p-6 pt-7">
+            <!-- Icon -->
+            <div class="feat-icon mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl">
+              <feature.icon className="h-6 w-6" weight="duotone" aria-hidden="true" />
             </div>
-            <h3 class="text-lg font-semibold">{feature.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+
+            <h3 class="text-lg font-semibold tracking-tight">{feature.title}</h3>
+            <p class="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+              {feature.description}
+            </p>
+
+            {feature.accent && (
+              <div class="mt-5 inline-flex items-center gap-1.5 rounded-full border border-terminal/30 bg-terminal-muted/50 px-3 py-1 font-mono text-xs text-terminal">
+                <span aria-hidden="true">✓</span>
+                Rust guarantee
+              </div>
+            )}
           </div>
+
+          <!-- Radial glow on hover (and always-on for accent) -->
+          <div class="feat-glow" aria-hidden="true" />
         </article>
       ))}
     </div>
+
   </div>
 </section>
+
+<style>
+  /* ── Colored top strip ──────────────────────────────────── */
+  .feat-strip {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--fc) 85%, transparent) 20%,
+      color-mix(in oklch, var(--fc) 85%, transparent) 80%,
+      transparent
+    );
+  }
+
+  /* ── Per-card colored border derived from --fc ──────────── */
+  .feat-card {
+    border-color: color-mix(in oklch, var(--fc) 22%, transparent);
+    transition: border-color 200ms ease;
+  }
+
+  .feat-card:hover {
+    border-color: color-mix(in oklch, var(--fc) 48%, transparent);
+  }
+
+  .feat-accent-card {
+    border-color: color-mix(in oklch, var(--fc) 38%, transparent);
+  }
+
+  .feat-accent-card:hover {
+    border-color: color-mix(in oklch, var(--fc) 60%, transparent);
+  }
+
+  /* ── Color-matched icon container ───────────────────────── */
+  .feat-icon {
+    background: color-mix(in oklch, var(--fc) 14%, transparent);
+    color: var(--fc);
+  }
+
+  :global(.dark) .feat-icon {
+    background: color-mix(in oklch, var(--fc) 18%, transparent);
+  }
+
+  /* ── Radial hover glow ──────────────────────────────────── */
+  .feat-glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 85% 50% at 50% 0%,
+      color-mix(in oklch, var(--fc) 7%, transparent),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+
+  .group:hover .feat-glow {
+    opacity: 1;
+  }
+
+  :global(.dark) .feat-glow {
+    background: radial-gradient(
+      ellipse 85% 50% at 50% 0%,
+      color-mix(in oklch, var(--fc) 12%, transparent),
+      transparent 70%
+    );
+  }
+
+  /* ── Accent card — glow always partially visible ─────────── */
+  .feat-accent-card .feat-glow {
+    opacity: 0.7;
+  }
+
+  .feat-accent-card:hover .feat-glow {
+    opacity: 1;
+  }
+
+  /* Thicker glow for accent card */
+  .feat-accent-card .feat-strip {
+    height: 2px;
+    opacity: 0.95;
+  }
+</style>

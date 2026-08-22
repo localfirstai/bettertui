@@ -1,0 +1,159 @@
+---
+title: TabSelect
+description: Horizontal tab navigation widget with underline, scroll arrows and descriptions
+---
+
+`TabSelect` displays a row of tabs. It supports auto-width or fixed-width tabs, an active underline, scroll arrows when tabs overflow, and optional per-tab descriptions.
+
+## Usage
+
+```ts
+import {
+  TabSelect,
+  TabSelectEvents,
+  type TabOption,
+  createCliRenderer,
+} from '@bettertui/core';
+
+const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+const tabs: TabOption[] = [
+  { name: 'Overview',  description: 'Summary view',       value: 'overview'  },
+  { name: 'Files',     description: 'File browser',        value: 'files'     },
+  { name: 'Settings',  description: 'App configuration',   value: 'settings'  },
+];
+
+const tabBar = new TabSelect(renderer, {
+  options: tabs,
+  width: '100%',
+  height: 3,
+  showUnderline: true,
+  showDescription: true,
+  activeUnderlineColor: '#7aa2f7',
+  selectedTextColor: '#7aa2f7',
+  textColor: '#565f89',
+});
+
+tabBar.on(TabSelectEvents.ITEM_SELECTED, (_index, option) => {
+  console.log('Tab selected:', option.value);
+});
+
+renderer.root.add(tabBar);
+tabBar.focus();
+renderer.start();
+```
+
+## Constructor
+
+```ts
+new TabSelect(renderer: CliRenderer, options?: TabSelectOptions)
+```
+
+## Props
+
+`TabSelectOptions` extends `BoxOptions` with:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `options` | `TabOption[]` | `[]` | Tab definitions |
+| `selectedIndex` | `number` | `0` | Initially selected tab |
+| `tabWidth` | `number` | `0` | Fixed tab width (`0` = auto) |
+| `minTabWidth` | `number` | `8` | Minimum width in auto mode |
+| `tabPadding` | `number` | `2` | Padding on each side of label |
+| `tabGap` | `number` | `1` | Gap between tabs |
+| `showDescription` | `boolean` | `true` | Show description below tab bar |
+| `showUnderline` | `boolean` | `true` | Show active tab underline |
+| `showScrollArrows` | `boolean` | `true` | Show `◄ ►` when tabs overflow |
+| `scrollArrowLeft` | `string` | `'◄'` | Left scroll arrow glyph |
+| `scrollArrowRight` | `string` | `'►'` | Right scroll arrow glyph |
+| `wrapSelection` | `boolean` | `false` | Wrap around at edges |
+| `textColor` | `string` | — | Inactive tab text color |
+| `selectedTextColor` | `string` | — | Active tab text color |
+| `selectedBackgroundColor` | `string` | — | Active tab background color |
+| `activeUnderlineColor` | `string` | — | Underline color for active tab |
+| `inactiveUnderlineColor` | `string` | — | Underline color for inactive tabs |
+| `descriptionColor` | `string` | — | Description text color |
+
+## TabOption
+
+```ts
+interface TabOption {
+  name: string;         // Tab label
+  description?: string; // Description shown below the bar
+  value?: unknown;      // Arbitrary payload
+}
+```
+
+## Methods
+
+```ts
+tabBar.focus(): void
+tabBar.blur(): void
+tabBar.getSelectedIndex(): number
+tabBar.getSelectedOption(): TabOption | null
+```
+
+## Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `TabSelectEvents.SELECTION_CHANGED` | `(index, option)` | Highlighted tab changes |
+| `TabSelectEvents.ITEM_SELECTED` | `(index, option)` | User confirms with Enter |
+| `RenderableEvents.FOCUSED` | — | TabSelect gains focus |
+| `RenderableEvents.BLURRED` | — | TabSelect loses focus |
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `←` / `[` | Previous tab |
+| `→` / `]` | Next tab |
+| `Enter` | Confirm selection |
+
+## Examples
+
+### Basic Tab Bar
+
+```ts
+const tabs = new TabSelect(renderer, {
+  options: [
+    { name: 'Files',   value: 'files'   },
+    { name: 'Preview', value: 'preview' },
+    { name: 'Output',  value: 'output'  },
+  ],
+  width: '100%',
+  showDescription: false,
+  activeUnderlineColor: '#9ece6a',
+  selectedTextColor: '#9ece6a',
+});
+
+renderer.root.add(tabs);
+tabs.focus();
+```
+
+### Tab Bar + Content Pane
+
+```ts
+const layout = new Box(renderer, { flexDirection: 'column', width: '100%', height: '100%' });
+
+const tabBar = new TabSelect(renderer, {
+  options: [
+    { name: 'Tab 1', value: 0 },
+    { name: 'Tab 2', value: 1 },
+    { name: 'Tab 3', value: 2 },
+  ],
+  width: '100%',
+  height: 3,
+});
+
+const content = new Text(renderer, { content: 'Tab 1 content', flexGrow: 1 });
+
+tabBar.on(TabSelectEvents.SELECTION_CHANGED, (_i, opt) => {
+  content.content = `Tab ${(opt.value as number) + 1} content`;
+});
+
+layout.add(tabBar);
+layout.add(content);
+renderer.root.add(layout);
+tabBar.focus();
+```

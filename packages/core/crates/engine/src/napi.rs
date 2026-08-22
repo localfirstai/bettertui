@@ -518,6 +518,23 @@ impl NativeEngine {
         }
     }
 
+    /// Set the scroll offset on a node.
+    ///
+    /// The offset is applied during render-tree building: all children of the
+    /// node are shifted by `(-scroll_x, -scroll_y)` in screen coordinates.
+    /// Combine with `overflow: "hidden"` on the same node to achieve clipping.
+    #[napi]
+    pub fn set_scroll_offset(&self, id: i64, scroll_x: i32, scroll_y: i32) {
+        if let Ok(mut state) = self.state.lock() {
+            let nid = node_id(id as u64);
+            if let Some(node) = state.engine.arena_mut().get_mut(nid) {
+                node.state.scroll_x = scroll_x;
+                node.state.scroll_y = scroll_y;
+            }
+            state.engine.arena_mut().mark_changed();
+        }
+    }
+
     // ─── Hit Grid Methods ───────────────────────────────────────────
 
     #[napi]

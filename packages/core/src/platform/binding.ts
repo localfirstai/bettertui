@@ -96,6 +96,7 @@ interface NativeEngine {
   insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
+  setScrollOffset(id: number, scrollX: number, scrollY: number): void;
   hitGridCheck(x: number, y: number): number;
   hitGridIsDirty(): boolean;
   hitGridClearCurrent(): void;
@@ -256,6 +257,7 @@ export interface NapiEngine {
   insertBefore(before: number, child: number): boolean;
   removeNode(id: number): void;
   setText(id: number, text: string): void;
+  setScrollOffset(id: number, scrollX: number, scrollY: number): void;
   root(): number;
   validate(): boolean;
   printTree(): string;
@@ -413,6 +415,9 @@ class EngineWrapper implements NapiEngine {
   }
   setText(id: number, text: string): void {
     this.engine.setText(id, text);
+  }
+  setScrollOffset(id: number, scrollX: number, scrollY: number): void {
+    this.engine.setScrollOffset(id, scrollX, scrollY);
   }
   root(): number {
     return this.engine.root();

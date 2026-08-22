@@ -5,120 +5,171 @@ import { Button } from "@components/ui/button";
 import { GITHUB_URL } from "@lib/constants";
 ---
 
-<header
-  class="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl"
->
-  <div
-    class="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+<!--
+  Outer wrapper is `pointer-events-none` so clicks pass through the
+  invisible regions of the fixed overlay; the pill and dropdown
+  restore interactivity with `pointer-events-auto`.
+-->
+<div class="pointer-events-none fixed left-0 right-0 top-4 z-50 flex flex-col items-center gap-2 px-4">
+
+  <header
+    id="navbar"
+    data-scrolled="false"
+    class="pointer-events-auto relative flex h-16 w-full max-w-5xl items-center justify-between rounded-xl px-3"
   >
-    <a href="/" class="flex items-center gap-2.5">
-      <span class="block h-6 w-6 text-terminal [&>svg]:h-full [&>svg]:w-full">
+    <!-- Glass fill -->
+    <div class="navbar-glass absolute inset-0 rounded-xl" aria-hidden="true"></div>
+    <!-- Border ring -->
+    <div class="absolute inset-0 rounded-xl ring-1 ring-inset ring-border/60" aria-hidden="true"></div>
+
+    <!-- Logo -->
+    <a href="/" class="relative flex shrink-0 items-center gap-2 pl-1">
+      <span class="block h-5 w-5 text-terminal [&>svg]:h-full [&>svg]:w-full">
         <LogoIcon />
       </span>
-      <span class="font-sans text-lg font-semibold tracking-tight"
-        >BetterTUI</span
-      >
+      <span class="font-sans text-sm font-semibold tracking-tight">BetterTUI</span>
     </a>
 
-    <nav
-      class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex"
-    >
+    <!-- Center nav links -->
+    <nav class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 md:flex">
       <a
         href="/getting-started/introduction"
-        class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >Docs</a
-      >
-      <a
-        href="/performance"
-        class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >Performance</a
-      >
+        class="rounded-xl px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >Docs</a>
       <a
         href="/blog"
-        class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >Blog</a
-      >
+        class="rounded-xl px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >Blog</a>
     </nav>
 
-    <div class="flex items-center gap-3">
+    <!-- Right actions -->
+    <div class="relative flex shrink-0 items-center gap-1">
       <ThemeToggle client:load />
 
-      <div class="hidden items-center gap-2 sm:flex">
-        <div class="h-5 w-px bg-border"></div>
+      <div class="hidden items-center gap-1 sm:flex">
+        <div class="mx-0.5 h-4 w-px bg-border/70"></div>
 
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="ghost" size="sm" className="rounded-md gap-1.5 text-xs">
             <GithubIcon class="h-3.5 w-3.5" />
-            Star on GitHub
+            <span class="hidden lg:inline">Star</span>
           </Button>
         </a>
 
         <a href="/getting-started/quick-start">
-          <Button size="sm">Get Started</Button>
+          <Button size="sm" className="rounded-md px-4 text-xs">Get Started</Button>
         </a>
       </div>
 
-      <!-- Mobile menu toggle -->
+      <!-- Mobile hamburger -->
       <button
         id="mobile-menu-toggle"
-        class="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+        class="relative flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground md:hidden"
         aria-label="Toggle menu"
         aria-expanded="false"
       >
-        <span class="block h-5 w-5 [&>svg]:h-full [&>svg]:w-full">
+        <span class="block h-4 w-4 [&>svg]:h-full [&>svg]:w-full">
           <MenuIcon />
         </span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Mobile menu panel -->
+  <!-- Mobile dropdown panel -->
   <div
     id="mobile-menu"
-    class="hidden border-t border-border bg-background px-4 py-4 md:hidden"
+    class="navbar-mobile pointer-events-auto hidden w-full max-w-5xl rounded-2xl border border-border/60 p-2 md:hidden"
   >
-    <nav class="flex flex-col gap-3">
+    <nav class="flex flex-col">
       <a
         href="/getting-started/introduction"
-        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >Docs</a
-      >
-      <a
-        href="/performance"
-        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >Performance</a
-      >
+        class="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >Docs</a>
       <a
         href="/blog"
-        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >Blog</a
-      >
-      <hr class="border-border" />
+        class="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >Blog</a>
+      <div class="my-1.5 h-px bg-border/40"></div>
       <a
         href={GITHUB_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >GitHub</a
-      >
+        class="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >GitHub</a>
       <a
         href="/getting-started/quick-start"
-        class="rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >Get Started</a
-      >
+        class="rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+      >Get Started</a>
     </nav>
   </div>
-</header>
+</div>
+
+<style>
+  /* At page top: lightly frosted so the hero orbs bleed through.
+     On scroll: solidifies to stay readable over page content. */
+  .navbar-glass {
+    background: oklch(1 0 0 / 0.72);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    box-shadow:
+      0 8px 32px oklch(0 0 0 / 0.07),
+      0 1px 4px oklch(0 0 0 / 0.04);
+    transition: background 250ms ease, box-shadow 250ms ease;
+  }
+  :global(.dark) .navbar-glass {
+    background: oklch(0.14 0.022 265 / 0.80);
+    box-shadow:
+      0 8px 32px oklch(0 0 0 / 0.30),
+      0 1px 4px oklch(0 0 0 / 0.18);
+  }
+
+  #navbar[data-scrolled="true"] .navbar-glass {
+    background: oklch(1 0 0 / 0.88);
+    box-shadow:
+      0 8px 40px oklch(0 0 0 / 0.12),
+      0 2px 8px oklch(0 0 0 / 0.06);
+  }
+  :global(.dark) #navbar[data-scrolled="true"] .navbar-glass {
+    background: oklch(0.14 0.022 265 / 0.93);
+    box-shadow:
+      0 8px 40px oklch(0 0 0 / 0.40),
+      0 2px 8px oklch(0 0 0 / 0.28);
+  }
+
+  .navbar-mobile {
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    background: oklch(1 0 0 / 0.92);
+    box-shadow:
+      0 8px 32px oklch(0 0 0 / 0.10),
+      0 1px 4px oklch(0 0 0 / 0.05);
+  }
+  :global(.dark) .navbar-mobile {
+    background: oklch(0.14 0.022 265 / 0.96);
+    box-shadow:
+      0 8px 32px oklch(0 0 0 / 0.45),
+      0 1px 4px oklch(0 0 0 / 0.30);
+  }
+</style>
 
 <script>
+  const navbar = document.getElementById("navbar");
   const toggle = document.getElementById("mobile-menu-toggle");
   const menu = document.getElementById("mobile-menu");
+
+  if (navbar) {
+    const onScroll = () => {
+      navbar.setAttribute("data-scrolled", window.scrollY > 24 ? "true" : "false");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
+
   if (toggle && menu) {
     toggle.addEventListener("click", () => {
       const expanded = toggle.getAttribute("aria-expanded") === "true";
       toggle.setAttribute("aria-expanded", String(!expanded));
       menu.classList.toggle("hidden");
-      menu.classList.toggle("flex");
     });
   }
 </script>
