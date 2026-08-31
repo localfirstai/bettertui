@@ -9,17 +9,6 @@ These rules are **critical** and apply to every change:
 - **TypeScript:** follow **JSDoc style only** — `/** ... */` doc comments. No other documentation style.
 - **No comments inside the code body** to explain logic; if a concept genuinely needs explaining, write it as a proper doc comment (rustdoc for Rust, JSDoc for TypeScript) on the relevant function, type, or module instead of an inline `//` comment.
 
-## Naming Conventions
-
-**When creating any new file, always follow `~/.agents/rules/naming-convention.md` (org-level rule).** Summary:
-
-- **Rust:** standard Rust nomenclature — `snake_case` files/modules, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
-- **TypeScript:** camelCase identifiers and camelCase file names for services, utils, and plain modules (e.g. `userService.ts`).
-  - Types: `*.types.ts` (e.g. `demo.types.ts`).
-  - Examples: `*.example.ts` (e.g. `demo.example.ts`).
-  - TS widgets (non-React): `PascalCase.ts` (e.g. `Button.ts`).
-- **React:** components are `kebab-case.tsx` (e.g. `text-input.tsx`); hooks are `useHookName.ts` (e.g. `useFocus.ts`).
-
 ## TurboRepo
 
 - Build outputs must be `["dist/**"]`, not `[".next/**"]` — the default starter is Next.js-specific.
