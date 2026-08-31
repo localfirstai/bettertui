@@ -241,6 +241,42 @@ pub struct KeyInput {
     pub modifiers: KeyModifiers,
 }
 
+impl KeyInput {
+    /// Converts this raw terminal input into an [`crate::event_bus::KeyEvent`]
+    /// usable with the keybinding system. Returns `None` for unrecognised
+    /// keys that have no keymap representation.
+    pub fn to_key_event(&self) -> Option<crate::event_bus::KeyEvent> {
+        use crate::event_bus::{Key as BusKey, Modifiers as BusModifiers};
+        use crossterm::event::KeyModifiers as CM;
+
+        let key = match self.code {
+            Key::Char(' ') => BusKey::Space,
+            Key::Char(c) => BusKey::Character(c),
+            Key::Enter => BusKey::Enter,
+            Key::Esc => BusKey::Escape,
+            Key::Backspace => BusKey::Backspace,
+            Key::Tab => BusKey::Tab,
+            Key::Up => BusKey::ArrowUp,
+            Key::Down => BusKey::ArrowDown,
+            Key::Left => BusKey::ArrowLeft,
+            Key::Right => BusKey::ArrowRight,
+            Key::Home => BusKey::Home,
+            Key::End => BusKey::End,
+            Key::PageUp => BusKey::PageUp,
+            Key::PageDown => BusKey::PageDown,
+            Key::F(n) => BusKey::F(n),
+            Key::Other => return None,
+        };
+        let modifiers = BusModifiers {
+            ctrl: self.modifiers.contains(CM::CONTROL),
+            shift: self.modifiers.contains(CM::SHIFT),
+            alt: self.modifiers.contains(CM::ALT),
+            meta: self.modifiers.contains(CM::SUPER),
+        };
+        Some(crate::event_bus::KeyEvent::new(key, crate::tree::NodeId::default()).with_modifiers(modifiers))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Key {
     Char(char),

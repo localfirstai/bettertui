@@ -1,6 +1,7 @@
 import type { KeyEvent } from "../lib/keyHandler";
 import { InputEvents, RenderableEvents } from "../lib/renderableEvents";
 import { type ColorInput, type RGBA, parseColor, rgbaToEngineColor } from "../lib/rgba";
+import { wordBoundaryLeft, wordBoundaryRight } from "../lib/wordBoundary";
 import type { CliRenderer } from "../platform/cliRenderer";
 import { Box, type BoxOptions } from "./Box";
 
@@ -179,6 +180,20 @@ export class Input extends Box {
       return;
     }
 
+    // Alt+Left / Alt+B: move cursor one word backward
+    if ((key.name === "left" && key.alt) || (key.name === "b" && key.alt)) {
+      this._cursorPos = wordBoundaryLeft(this._value, this._cursorPos);
+      this._render();
+      return;
+    }
+
+    // Alt+Right / Alt+F: move cursor one word forward
+    if ((key.name === "right" && key.alt) || (key.name === "f" && key.alt)) {
+      this._cursorPos = wordBoundaryRight(this._value, this._cursorPos);
+      this._render();
+      return;
+    }
+
     if (key.name === "left") {
       this._cursorPos = Math.max(0, this._cursorPos - 1);
       this._render();
@@ -200,6 +215,29 @@ export class Input extends Box {
     if (key.name === "end" || (key.ctrl && key.name === "e")) {
       this._cursorPos = this._value.length;
       this._render();
+      return;
+    }
+
+    // Ctrl+W / Alt+Backspace: delete word backward
+    if ((key.name === "w" && key.ctrl) || (key.name === "backspace" && key.alt)) {
+      const start = wordBoundaryLeft(this._value, this._cursorPos);
+      if (start < this._cursorPos) {
+        this._value = this._value.slice(0, start) + this._value.slice(this._cursorPos);
+        this._cursorPos = start;
+        this._render();
+        this.emit(InputEvents.INPUT, this._value);
+      }
+      return;
+    }
+
+    // Alt+D / Alt+Delete: delete word forward
+    if ((key.name === "d" && key.alt) || (key.name === "delete" && key.alt)) {
+      const end = wordBoundaryRight(this._value, this._cursorPos);
+      if (end > this._cursorPos) {
+        this._value = this._value.slice(0, this._cursorPos) + this._value.slice(end);
+        this._render();
+        this.emit(InputEvents.INPUT, this._value);
+      }
       return;
     }
 

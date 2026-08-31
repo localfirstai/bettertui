@@ -12,6 +12,7 @@ import {
   finalizeInitialChildren,
   generateId,
   insertBefore,
+  measureText,
   prepareUpdate,
   removeChild,
   resetAfterCommit,
@@ -85,7 +86,10 @@ describe("generateId", () => {
 
 describe("tree operations", () => {
   it("createInstance creates an instance with props", () => {
-    const instance = createInstance("Box", { padding: 1, style: { bold: true } });
+    const instance = createInstance("Box", {
+      padding: 1,
+      style: { bold: true },
+    });
     expect(instance.type).toBe("Box");
     expect(instance.props).toEqual({ padding: 1 });
     expect(instance.style).toEqual({ bold: true });
@@ -431,7 +435,9 @@ describe("createReconciler", () => {
   it("createInstance emits CreateNode command", () => {
     const buffer = new CommandBuffer();
     const reconciler = createReconciler(buffer);
-    const instance = reconciler.createInstance("Box", { style: { bold: true } });
+    const instance = reconciler.createInstance("Box", {
+      style: { bold: true },
+    });
     const commands = buffer.drain();
     expect(commands.some((c) => c.type === "CreateNode")).toBe(true);
     expect(instance.type).toBe("Box");
@@ -527,7 +533,9 @@ describe("createReconciler", () => {
     reconciler.commitTextUpdate(text, "world");
     const commands = buffer.drain();
     expect(commands.some((c) => c.type === "SetText")).toBe(true);
-    expect(commands.find((c) => c.type === "SetText")).toMatchObject({ text: "world" });
+    expect(commands.find((c) => c.type === "SetText")).toMatchObject({
+      text: "world",
+    });
   });
 
   it("createTextInstance emits CreateNode and SetText", () => {
@@ -619,5 +627,13 @@ describe("createReconciler", () => {
     const buffer = new CommandBuffer();
     const reconciler = createReconciler(buffer);
     expect(() => reconciler.resetAfterCommit()).not.toThrow();
+  });
+});
+
+describe("measureText", () => {
+  it("returns zero width and one line for empty text", () => {
+    const result = measureText({ text: "" });
+    expect(result.width).toBe(0);
+    expect(result.height).toBe(1);
   });
 });
