@@ -1,10 +1,13 @@
 # AGENTS.md
 
-## Comments and Documentation
+## Critical Rules — Comments and Documentation
 
-- **Avoid code-explanation comments.** Do not write comments that restate or explain what the code does (e.g. `// set x to 1` next to `x = 1`). Keep inline comments minimal or omit them entirely.
-- **Documentation goes in doc comments only:** use **JSDoc** (`/** ... */`) for TypeScript and **rustdoc** (`///`, `//!`, `#[doc]`) for Rust — this is **mandatory**.
-- **No comments inside the code body** to explain logic; if a concept needs explaining, write it as a proper doc comment on the relevant function, type, or module instead of an inline `//` comment.
+These rules are **critical** and apply to every change:
+
+- **Always avoid writing unnecessary comments.** Never write comments that restate what the code already says (e.g. `// set x to 1` next to `x = 1`). Self-explanatory code gets no comment at all.
+- **Rust:** follow **standard rustdoc style only** — `///` doc comments on items, `//!` for module/crate-level docs, `#[doc]` where appropriate. No other documentation style.
+- **TypeScript:** follow **JSDoc style only** — `/** ... */` doc comments. No other documentation style.
+- **No comments inside the code body** to explain logic; if a concept genuinely needs explaining, write it as a proper doc comment (rustdoc for Rust, JSDoc for TypeScript) on the relevant function, type, or module instead of an inline `//` comment.
 
 ## Naming Conventions
 
