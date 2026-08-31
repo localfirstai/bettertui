@@ -28,8 +28,6 @@ These rules are **critical** and apply to every change:
 - Union types must be single-line if they fit — biome rejects multi-line unions that fit on one line.
 - Function signatures: biome formats single-line params when they fit on one line (e.g., `function foo(a: string, b: number): void` not multi-line).
 - Biome is the **only** formatter and linter for TypeScript/JavaScript/JSON. No Prettier, no ESLint.
-- VCS integration is enabled: `biome.json` has `vcs.enabled = true` with `useIgnoreFile = true`, so `.gitignore` is respected automatically.
-- The `.husky/pre-commit` hook runs `biome check --write --staged .` on staged files only.
 
 ## Rust + TypeScript Interop
 
@@ -42,13 +40,6 @@ These rules are **critical** and apply to every change:
 - **Unsafe blocks inside unsafe fns required.** Even inside an `unsafe fn`, you need an explicit `unsafe { }` block for unsafe operations. This is a 2024 edition change.
 - **`div_ceil` is stable since 1.73.** No need to manually reimplement `(a + b - 1) / b` — use `a.div_ceil(b)`.
 - **`sort_by_key` requires `Ord`.** The key function must return a type that implements `Ord`.
-
-## Husky
-
-- Installed as a dev dependency. Initialized via `pnpm exec husky init`.
-- `prepare` script in root `package.json` runs `husky` to install git hooks.
-- Pre-commit hook runs `biome check --write --staged` then `pnpm run cargo:fmt` (which passes `--manifest-path packages/core/Cargo.toml`) then `git update-index --again`.
-- **Pre-commit requires node in PATH.** The shell doesn't have node unless configured. Prepend `$HOME/.nvm/versions/node/v24.15.0/bin` before git commands that trigger hooks, or commit will fail with `exec: node: not found`.
 
 ## GitHub Actions
 
@@ -72,7 +63,6 @@ These rules are **critical** and apply to every change:
 ## Rust Workspace
 
 - **There is no root `Cargo.toml`.** The Rust workspace root is `packages/core/Cargo.toml`. All cargo commands from the project root must pass `--manifest-path packages/core/Cargo.toml`. Root `package.json` scripts (`cargo:*`) include this flag automatically.
-- **Pre-commit runs `pnpm run cargo:fmt` (not bare `cargo fmt`)** because there's no root Cargo.toml. The script passes `--manifest-path packages/core/Cargo.toml`.
 
 ## Rust Engine Testing
 
