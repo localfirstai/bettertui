@@ -2044,8 +2044,8 @@ mod render_tests {
     #[test]
     fn renderer_hit_grid_populate_and_check() {
         let mut renderer = Renderer::new(80, 24);
-        let vw = 80u32;
-        let vh = 24u32;
+        let _vw = 80u32;
+        let _vh = 24u32;
 
         // Add some renderable areas
         renderer.hit_grid_add(0, 0, 10, 10, 1001);
@@ -2114,7 +2114,7 @@ mod render_tests {
         renderer.hit_grid_add(0, 0, 1, 1, 101);
         renderer.hit_grid.swap();
         let dump = renderer.hit_grid_dump();
-        assert!(dump.len() > 0);
+        assert!(!dump.is_empty());
         // Should contain the ID we added (101 -> '1')
         assert!(dump.starts_with('1'), "first cell should be '1': {dump}");
     }

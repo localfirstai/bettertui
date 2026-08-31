@@ -603,7 +603,6 @@ impl EventQueue {
 mod tests {
     use super::*;
     use crate::tree::NodeId;
-    use std::sync::atomic::{AtomicPtr, Ordering};
 
     thread_local! {
         static LAST_EVENT_NAME: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };

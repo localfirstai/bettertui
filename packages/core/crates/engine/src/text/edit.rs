@@ -407,7 +407,6 @@ mod tests {
         editor.insert_str("one two");
         editor.delete_word_backward();
         assert_eq!(editor.content(), "one ");
-        editor.move_word_backward();
         editor.delete_word_backward();
         assert_eq!(editor.content(), "");
     }

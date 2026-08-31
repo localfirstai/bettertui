@@ -620,7 +620,7 @@ mod tests {
     #[test]
     fn scheduler_with_clock_tracks_time() {
         let mut clock = crate::clock::ManualClock::new();
-        let mut scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
+        let scheduler = Scheduler::with_clock(60, Box::new(clock.clone()));
         let t0 = scheduler.now();
         clock.advance(100);
         let t1 = scheduler.now();
@@ -659,7 +659,7 @@ mod tests {
 
     #[test]
     fn coalesced_request_single_pending() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.request_render_coalesced();
@@ -673,7 +673,7 @@ mod tests {
 
     #[test]
     fn coalesced_request_promotes_priority() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.request_render_coalesced_with_priority(Priority::Low);
@@ -692,7 +692,7 @@ mod tests {
 
     #[test]
     fn coalesced_request_defers_during_render() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.begin_render();
@@ -723,7 +723,7 @@ mod tests {
 
     #[test]
     fn immediate_request_bypasses_coalescing() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.request_render_coalesced_with_priority(Priority::Normal);
@@ -737,7 +737,7 @@ mod tests {
 
     #[test]
     fn immediate_request_defers_during_render() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.begin_render();
@@ -749,7 +749,7 @@ mod tests {
 
     #[test]
     fn non_coalesced_request_still_works() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         // Legacy request_frame() always pushes (no coalescing)
@@ -875,7 +875,7 @@ mod tests {
 
     #[test]
     fn coalescing_preserves_highest_priority() {
-        let mut clock = crate::clock::ManualClock::new();
+        let clock = crate::clock::ManualClock::new();
         let mut s = Scheduler::with_clock(60, Box::new(clock.clone()));
 
         s.request_render_coalesced_with_priority(Priority::Idle);
