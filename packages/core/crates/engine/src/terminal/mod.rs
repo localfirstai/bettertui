@@ -105,6 +105,7 @@ impl Terminal {
         if !self.raw_mode {
             info!("Terminal::enter_raw_mode() - entering raw mode");
             enable_raw_mode()?;
+            execute!(stdout(), event::EnableBracketedPaste)?;
             self.raw_mode = true;
         }
         Ok(())
@@ -116,6 +117,7 @@ impl Terminal {
         }
         if self.raw_mode {
             info!("Terminal::leave_raw_mode() - leaving raw mode");
+            let _ = execute!(stdout(), event::DisableBracketedPaste);
             disable_raw_mode()?;
             self.raw_mode = false;
         }
@@ -211,6 +213,10 @@ impl Terminal {
                     debug!(width = w, height = h, "Terminal::poll_event() - resize event received");
                     Ok(Some(TerminalEvent::Resize(w, h)))
                 }
+                Event::Paste(text) => {
+                    debug!(bytes = text.len(), "Terminal::poll_event() - paste event received");
+                    Ok(Some(TerminalEvent::Paste(text)))
+                }
                 _ => Ok(None),
             }
         } else {
@@ -233,6 +239,7 @@ pub enum TerminalEvent {
     Key(KeyInput),
     Mouse(crossterm::event::MouseEvent),
     Resize(u16, u16),
+    Paste(String),
 }
 
 #[derive(Debug, Clone)]
@@ -352,6 +359,15 @@ mod tests {
         let ev2 = ev.clone();
         match ev2 {
             TerminalEvent::Key(k) => assert_eq!(k.code, Key::Char('x')),
+            _ => panic!("wrong variant"),
+        }
+    }
+
+    #[test]
+    fn terminal_event_paste_carries_text() {
+        let ev = TerminalEvent::Paste("pasted\ncontent".to_string());
+        match ev.clone() {
+            TerminalEvent::Paste(text) => assert_eq!(text, "pasted\ncontent"),
             _ => panic!("wrong variant"),
         }
     }
