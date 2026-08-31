@@ -11,7 +11,7 @@ These rules are **critical** and apply to every change:
 
 ## Naming Conventions
 
-**When creating any new file, always follow `.claude/rules/naming-convension.md`.** Summary:
+**When creating any new file, always follow `~/.agents/rules/naming-convention.md` (org-level rule).** Summary:
 
 - **Rust:** standard Rust nomenclature — `snake_case` files/modules, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
 - **TypeScript:** camelCase identifiers and camelCase file names for services, utils, and plain modules (e.g. `userService.ts`).
@@ -94,12 +94,6 @@ These rules are **critical** and apply to every change:
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
 - The only Rust crate with a unit-test suite co-located in `#[cfg(test)]` blocks is `bettertui-engine`. (The engine test build currently has a compilation issue in `terminal/vt.rs` that must be fixed before the suite is green.)
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.
-
-## Research Findings
-
-- **Location:** ALL research findings — analyses, audits, comparisons, gap studies, spike results, investigation reports — must be dumped inside `tasks/research/` ONLY. Never leave them loose in `tasks/` root, the repo root, or scattered elsewhere. (Note: `tasks/` is gitignored via `tasks/.gitignore`, so research stays out of version control by design.)
-- **File naming:** lowercase kebab-case, descriptive `<subject>-<kind>.md` (e.g. `opentui-packaging-analysis.md`, `rust-engine-audit-report.md`, `opentui-gap-analysis-original.md`). No spaces, no parentheses, no ALL-CAPS names.
-- **Not research:** execution plans (`*-plan.md`), prompts (`tasks/prompts/`), PRDs (`tasks/prd/`), and generated reports (`tasks/reports/`) have their own locations — do not mix them into `tasks/research/`.
 
 ## Debugging and Logging Conventions
 
