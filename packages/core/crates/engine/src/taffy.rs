@@ -840,6 +840,10 @@ impl From<taffy::TaffyError> for LayoutError {
 /// - Zero-width joiners and combining marks
 /// - Multi-codepoint graphemes (flag emojis, skin tone modifiers)
 ///
+/// Empty text measures zero columns wide but still one line tall, so blank
+/// text nodes keep their line in the layout flow without occupying a cell
+/// that would push sibling content sideways.
+///
 /// Returns (intrinsic_width, line_count).
 ///
 /// # Arguments
@@ -851,7 +855,7 @@ impl From<taffy::TaffyError> for LayoutError {
 /// * `line_count` - Number of lines after wrapping
 fn measure_text(text: &str, available_width: f32) -> (f32, usize) {
     if text.is_empty() {
-        return (1.0, 1);
+        return (0.0, 1);
     }
 
     let line_widths: Vec<usize> = text.lines().map(text::display_width).collect();
@@ -1970,7 +1974,7 @@ mod measure_tests {
     #[test]
     fn measure_empty_text() {
         let (width, lines) = measure_text("", f32::INFINITY);
-        assert_eq!(width, 1.0);
+        assert_eq!(width, 0.0);
         assert_eq!(lines, 1);
     }
 

@@ -782,9 +782,7 @@ mod tests {
     use super::*;
     use std::sync::{Arc, Mutex};
 
-    use crate::event_bus::{
-        Event, EventPhase, EventQueue, EventResult, Key, KeyEvent, Modifiers, MouseButton, MouseEvent,
-    };
+    use crate::event_bus::{Event, EventPhase, EventResult, Key, KeyEvent};
     use crate::tree::NodeId;
 
     #[test]

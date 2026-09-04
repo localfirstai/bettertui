@@ -1,21 +1,13 @@
 # AGENTS.md
 
-## Comments and Documentation
+## Critical Rules — Comments and Documentation
 
-- **Avoid code-explanation comments.** Do not write comments that restate or explain what the code does (e.g. `// set x to 1` next to `x = 1`). Keep inline comments minimal or omit them entirely.
-- **Documentation goes in doc comments only:** use **JSDoc** (`/** ... */`) for TypeScript and **rustdoc** (`///`, `//!`, `#[doc]`) for Rust — this is **mandatory**.
-- **No comments inside the code body** to explain logic; if a concept needs explaining, write it as a proper doc comment on the relevant function, type, or module instead of an inline `//` comment.
+These rules are **critical** and apply to every change:
 
-## Naming Conventions
-
-**When creating any new file, always follow `.claude/rules/naming-convension.md`.** Summary:
-
-- **Rust:** standard Rust nomenclature — `snake_case` files/modules, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
-- **TypeScript:** camelCase identifiers and camelCase file names for services, utils, and plain modules (e.g. `userService.ts`).
-  - Types: `*.types.ts` (e.g. `demo.types.ts`).
-  - Examples: `*.example.ts` (e.g. `demo.example.ts`).
-  - TS widgets (non-React): `PascalCase.ts` (e.g. `Button.ts`).
-- **React:** components are `kebab-case.tsx` (e.g. `text-input.tsx`); hooks are `useHookName.ts` (e.g. `useFocus.ts`).
+- **Always avoid writing unnecessary comments.** Never write comments that restate what the code already says (e.g. `// set x to 1` next to `x = 1`). Self-explanatory code gets no comment at all.
+- **Rust:** follow **standard rustdoc style only** — `///` doc comments on items, `//!` for module/crate-level docs, `#[doc]` where appropriate. No other documentation style.
+- **TypeScript:** follow **JSDoc style only** — `/** ... */` doc comments. No other documentation style.
+- **No comments inside the code body** to explain logic; if a concept genuinely needs explaining, write it as a proper doc comment (rustdoc for Rust, JSDoc for TypeScript) on the relevant function, type, or module instead of an inline `//` comment.
 
 ## TurboRepo
 
@@ -36,8 +28,6 @@
 - Union types must be single-line if they fit — biome rejects multi-line unions that fit on one line.
 - Function signatures: biome formats single-line params when they fit on one line (e.g., `function foo(a: string, b: number): void` not multi-line).
 - Biome is the **only** formatter and linter for TypeScript/JavaScript/JSON. No Prettier, no ESLint.
-- VCS integration is enabled: `biome.json` has `vcs.enabled = true` with `useIgnoreFile = true`, so `.gitignore` is respected automatically.
-- The `.husky/pre-commit` hook runs `biome check --write --staged .` on staged files only.
 
 ## Rust + TypeScript Interop
 
@@ -50,13 +40,6 @@
 - **Unsafe blocks inside unsafe fns required.** Even inside an `unsafe fn`, you need an explicit `unsafe { }` block for unsafe operations. This is a 2024 edition change.
 - **`div_ceil` is stable since 1.73.** No need to manually reimplement `(a + b - 1) / b` — use `a.div_ceil(b)`.
 - **`sort_by_key` requires `Ord`.** The key function must return a type that implements `Ord`.
-
-## Husky
-
-- Installed as a dev dependency. Initialized via `pnpm exec husky init`.
-- `prepare` script in root `package.json` runs `husky` to install git hooks.
-- Pre-commit hook runs `biome check --write --staged` then `pnpm run cargo:fmt` (which passes `--manifest-path packages/core/Cargo.toml`) then `git update-index --again`.
-- **Pre-commit requires node in PATH.** The shell doesn't have node unless configured. Prepend `$HOME/.nvm/versions/node/v24.15.0/bin` before git commands that trigger hooks, or commit will fail with `exec: node: not found`.
 
 ## GitHub Actions
 
@@ -80,7 +63,6 @@
 ## Rust Workspace
 
 - **There is no root `Cargo.toml`.** The Rust workspace root is `packages/core/Cargo.toml`. All cargo commands from the project root must pass `--manifest-path packages/core/Cargo.toml`. Root `package.json` scripts (`cargo:*`) include this flag automatically.
-- **Pre-commit runs `pnpm run cargo:fmt` (not bare `cargo fmt`)** because there's no root Cargo.toml. The script passes `--manifest-path packages/core/Cargo.toml`.
 
 ## Rust Engine Testing
 
@@ -91,12 +73,6 @@
 - Module inception lint: `foo/foo.rs` triggers it — rename inner file (e.g., `foo/core.rs`).
 - The only Rust crate with a unit-test suite co-located in `#[cfg(test)]` blocks is `bettertui-engine`. (The engine test build currently has a compilation issue in `terminal/vt.rs` that must be fixed before the suite is green.)
 - **Orphaned `tests.rs` files** — if `mod.rs` already has `#[cfg(test)] mod tests { ... }` with inline tests AND a separate `tests.rs` file exists, delete the `tests.rs`. Rustc fails with duplicate module definitions.
-
-## Research Findings
-
-- **Location:** ALL research findings — analyses, audits, comparisons, gap studies, spike results, investigation reports — must be dumped inside `tasks/research/` ONLY. Never leave them loose in `tasks/` root, the repo root, or scattered elsewhere. (Note: `tasks/` is gitignored via `tasks/.gitignore`, so research stays out of version control by design.)
-- **File naming:** lowercase kebab-case, descriptive `<subject>-<kind>.md` (e.g. `opentui-packaging-analysis.md`, `rust-engine-audit-report.md`, `opentui-gap-analysis-original.md`). No spaces, no parentheses, no ALL-CAPS names.
-- **Not research:** execution plans (`*-plan.md`), prompts (`tasks/prompts/`), PRDs (`tasks/prd/`), and generated reports (`tasks/reports/`) have their own locations — do not mix them into `tasks/research/`.
 
 ## Debugging and Logging Conventions
 

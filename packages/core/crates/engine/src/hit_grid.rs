@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn hit_grid_out_of_bounds() {
-        let mut grid = HitGrid::new(10, 10);
+        let grid = HitGrid::new(10, 10);
         assert_eq!(grid.check(10, 10), HIT_EMPTY);
         assert_eq!(grid.check(0, 10), HIT_EMPTY);
     }

@@ -181,19 +181,49 @@ impl EditBuffer {
     }
 
     /// Deletes the word before the cursor.
+    ///
+    /// Deletes from the start of the previous word (per
+    /// [`TextBuffer::word_boundary_left`]) through the cursor.
     pub fn delete_word_backward(&mut self) {
         if self.config.read_only {
             return;
         }
         let pos = self.engine.cursor().position();
-        let text = self.engine.buffer().to_string();
-        let chars: Vec<char> = text.chars().collect();
-        let char_idx = chars.iter().take(pos).filter(|c| !c.is_whitespace()).count();
-        if char_idx > 0 {
-            let range = SelectionRange::new(char_idx.saturating_sub(1), pos);
-            self.engine.delete_range(range);
+        let start = self.engine.buffer().word_boundary_left(pos);
+        if start < pos {
+            self.engine.delete_range(SelectionRange::new(start, pos));
             self.dirty = true;
         }
+    }
+
+    /// Deletes the word after the cursor.
+    ///
+    /// Deletes from the cursor through the end of the next word (per
+    /// [`TextBuffer::word_boundary_right`]).
+    pub fn delete_word_forward(&mut self) {
+        if self.config.read_only {
+            return;
+        }
+        let pos = self.engine.cursor().position();
+        let end = self.engine.buffer().word_boundary_right(pos);
+        if end > pos {
+            self.engine.delete_range(SelectionRange::new(pos, end));
+            self.dirty = true;
+        }
+    }
+
+    /// Moves the cursor to the start of the previous word.
+    pub fn move_word_backward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let target = self.engine.buffer().word_boundary_left(pos);
+        self.engine.cursor_mut().set_position(target);
+    }
+
+    /// Moves the cursor past the end of the next word.
+    pub fn move_word_forward(&mut self) {
+        let pos = self.engine.cursor().position();
+        let target = self.engine.buffer().word_boundary_right(pos);
+        self.engine.cursor_mut().set_position(target);
     }
 
     /// Inserts a newline.
@@ -369,5 +399,35 @@ mod tests {
         editor.set_content("new");
         assert_eq!(editor.content(), "new");
         assert!(!editor.is_dirty());
+    }
+
+    #[test]
+    fn delete_word_backward_removes_whole_previous_word() {
+        let mut editor = EditBuffer::new();
+        editor.insert_str("one two");
+        editor.delete_word_backward();
+        assert_eq!(editor.content(), "one ");
+        editor.delete_word_backward();
+        assert_eq!(editor.content(), "");
+    }
+
+    #[test]
+    fn delete_word_forward_removes_whole_next_word() {
+        let mut editor = EditBuffer::new();
+        editor.insert_str("say hello now");
+        editor.engine_mut().cursor_mut().set_position("say ".len());
+        editor.delete_word_forward();
+        assert_eq!(editor.content(), "say  now");
+    }
+
+    #[test]
+    fn move_word_navigates_between_words() {
+        let mut editor = EditBuffer::new();
+        editor.insert_str("alpha beta");
+        editor.engine_mut().cursor_mut().move_to_start();
+        editor.move_word_forward();
+        assert_eq!(editor.engine().cursor().position(), "alpha".len());
+        editor.move_word_backward();
+        assert_eq!(editor.engine().cursor().position(), 0);
     }
 }

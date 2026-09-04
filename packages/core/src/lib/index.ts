@@ -161,6 +161,8 @@ export type { EnvVarConfig } from "./env";
 export { Timeline, createTimeline } from "./timeline";
 export type { TimelineOptions, TweenConfig } from "./timeline";
 
+export { wordBoundaryLeft, wordBoundaryRight } from "./wordBoundary";
+
 export {
   h,
   instantiate,

@@ -1,6 +1,6 @@
 # @bettertui/performance
 
-> **Website:** [bettertui.dev](https://bettertui.dev)
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
 
 Micro and end-to-end benchmark suite for BetterTUI.
 

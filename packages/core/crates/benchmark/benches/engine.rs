@@ -8,10 +8,11 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 use bettertui_engine::ansi::AnsiParser;
 use bettertui_engine::engine::{Engine, Inspector};
+use bettertui_engine::event_bus::{Event, Key, KeyEvent};
 use bettertui_engine::font::{FontMetrics, FontMetricsCache, FontProvider, measure_text};
 use bettertui_engine::framebuffer::{Cell, CellAttributes, FrameBuffer};
 use bettertui_engine::graphics::{DrawStyle, GraphicsContext, Rect};
-use bettertui_engine::input::{Event, FocusManager, Key, KeyEvent};
+use bettertui_engine::input::FocusManager;
 use bettertui_engine::protocol::{Command, CommandProcessor};
 use bettertui_engine::pty::{PtyConfig, PtyReader, PtySize, PtyWriter};
 use bettertui_engine::render::effects::{BrightnessPass, GrayscalePass, InvertPass, RainbowPass, VignettePass};

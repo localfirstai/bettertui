@@ -206,7 +206,6 @@ impl Default for ManualClock {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
     #[test]

@@ -101,7 +101,7 @@ fn main() {
 
 ## Ecosystem
 
-`bettertui_engine` powers [BetterTUI](https://bettertui.dev). It works standalone in any pure-Rust project, and the same crate compiles into the Node.js addon used by the npm package `@bettertui/core` when the optional `napi` feature is enabled.
+`bettertui_engine` powers [BetterTUI](https://bettertui.dev). It works standalone in any pure-Rust project, and the same crate compiles into the Node.js addon used by the npm package [`@bettertui/core`](https://www.npmjs.com/package/@bettertui/core) when the optional `napi` feature is enabled.
 
 ## Minimum supported Rust version
 

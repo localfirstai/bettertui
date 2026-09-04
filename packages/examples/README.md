@@ -1,6 +1,6 @@
 # @bettertui/examples
 
-> **Website:** [bettertui.dev](https://bettertui.dev)
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
 
 BetterTUI vanilla TypeScript examples and standalone executable.
 

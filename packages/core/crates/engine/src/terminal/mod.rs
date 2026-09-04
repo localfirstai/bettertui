@@ -105,6 +105,7 @@ impl Terminal {
         if !self.raw_mode {
             info!("Terminal::enter_raw_mode() - entering raw mode");
             enable_raw_mode()?;
+            execute!(stdout(), event::EnableBracketedPaste)?;
             self.raw_mode = true;
         }
         Ok(())
@@ -116,6 +117,7 @@ impl Terminal {
         }
         if self.raw_mode {
             info!("Terminal::leave_raw_mode() - leaving raw mode");
+            let _ = execute!(stdout(), event::DisableBracketedPaste);
             disable_raw_mode()?;
             self.raw_mode = false;
         }
@@ -211,6 +213,10 @@ impl Terminal {
                     debug!(width = w, height = h, "Terminal::poll_event() - resize event received");
                     Ok(Some(TerminalEvent::Resize(w, h)))
                 }
+                Event::Paste(text) => {
+                    debug!(bytes = text.len(), "Terminal::poll_event() - paste event received");
+                    Ok(Some(TerminalEvent::Paste(text)))
+                }
                 _ => Ok(None),
             }
         } else {
@@ -233,12 +239,49 @@ pub enum TerminalEvent {
     Key(KeyInput),
     Mouse(crossterm::event::MouseEvent),
     Resize(u16, u16),
+    Paste(String),
 }
 
 #[derive(Debug, Clone)]
 pub struct KeyInput {
     pub code: Key,
     pub modifiers: KeyModifiers,
+}
+
+impl KeyInput {
+    /// Converts this raw terminal input into an [`crate::event_bus::KeyEvent`]
+    /// usable with the keybinding system. Returns `None` for unrecognised
+    /// keys that have no keymap representation.
+    pub fn to_key_event(&self) -> Option<crate::event_bus::KeyEvent> {
+        use crate::event_bus::{Key as BusKey, Modifiers as BusModifiers};
+        use crossterm::event::KeyModifiers as CM;
+
+        let key = match self.code {
+            Key::Char(' ') => BusKey::Space,
+            Key::Char(c) => BusKey::Character(c),
+            Key::Enter => BusKey::Enter,
+            Key::Esc => BusKey::Escape,
+            Key::Backspace => BusKey::Backspace,
+            Key::Tab => BusKey::Tab,
+            Key::Up => BusKey::ArrowUp,
+            Key::Down => BusKey::ArrowDown,
+            Key::Left => BusKey::ArrowLeft,
+            Key::Right => BusKey::ArrowRight,
+            Key::Home => BusKey::Home,
+            Key::End => BusKey::End,
+            Key::PageUp => BusKey::PageUp,
+            Key::PageDown => BusKey::PageDown,
+            Key::F(n) => BusKey::F(n),
+            Key::Other => return None,
+        };
+        let modifiers = BusModifiers {
+            ctrl: self.modifiers.contains(CM::CONTROL),
+            shift: self.modifiers.contains(CM::SHIFT),
+            alt: self.modifiers.contains(CM::ALT),
+            meta: self.modifiers.contains(CM::SUPER),
+        };
+        Some(crate::event_bus::KeyEvent::new(key, crate::tree::NodeId::default()).with_modifiers(modifiers))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -316,6 +359,15 @@ mod tests {
         let ev2 = ev.clone();
         match ev2 {
             TerminalEvent::Key(k) => assert_eq!(k.code, Key::Char('x')),
+            _ => panic!("wrong variant"),
+        }
+    }
+
+    #[test]
+    fn terminal_event_paste_carries_text() {
+        let ev = TerminalEvent::Paste("pasted\ncontent".to_string());
+        match ev.clone() {
+            TerminalEvent::Paste(text) => assert_eq!(text, "pasted\ncontent"),
             _ => panic!("wrong variant"),
         }
     }

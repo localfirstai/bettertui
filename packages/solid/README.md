@@ -1,6 +1,6 @@
 # @bettertui/solid
 
-> **Website:** [bettertui.dev](https://bettertui.dev)
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
 
 **Placeholder — SolidJS adapter not yet implemented.**
 

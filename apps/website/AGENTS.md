@@ -6,6 +6,14 @@ This is an Astro project. The primary goals are:
 - **shadcn UI Components** — Use shadcn standard UI components for both Astro and React. All base UI components live in `src/components/ui/`.
 - **SEO Optimization** — Maximize SEO using Astro's built-in features (static page generation, sitemap, canonical URLs, meta tags, structured data). Prefer `.astro` components over `.tsx` for content-oriented pages since they are server-rendered with zero client JS.
 
+## Critical Rules — Comments
+
+These rules are **critical** and apply to every change:
+
+- **Always avoid writing unnecessary comments.** Never write comments that restate what the code already says (e.g. `// set x to 1` next to `x = 1`). Self-explanatory code gets no comment at all.
+- **TypeScript:** follow **JSDoc style only** — `/** ... */` doc comments. No other documentation style.
+- **No comments inside the code body** to explain logic; if a concept genuinely needs explaining, write it as a proper JSDoc comment on the relevant function, type, or module instead of an inline `//` comment.
+
 ## Development
 
 Start dev server:
