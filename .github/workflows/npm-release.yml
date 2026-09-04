@@ -1,0 +1,144 @@
+name: NPM Snapshot Release
+
+on:
+  push:
+    tags:
+      - "*snapshot*"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 24.15.0
+
+jobs:
+  generate-version:
+    name: Generate Snapshot Version
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate snapshot version
+        id: version
+        run: |
+          COMMIT_SHA=$(git rev-parse --short=8 HEAD)
+          VERSION="0.0.0-$(date +%Y%m%d)-${COMMIT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using snapshot version: $VERSION"
+
+  prepare-packages:
+    name: Prepare Package Versions
+    needs: generate-version
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Prepare release versions
+        run: node scripts/prepare-release.ts "${{ needs.generate-version.outputs.version }}" --no-install
+
+      - name: Upload prepared packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: prepared-packages
+          path: |
+            packages/*/package.json
+            pnpm-lock.yaml
+          retention-days: 1
+
+  build-native:
+    name: Build Native
+    needs: [generate-version, prepare-packages]
+    uses: ./.github/workflows/build-native.yml
+    with:
+      version: ${{ needs.generate-version.outputs.version }}
+
+  publish:
+    name: Publish Snapshot
+    needs: [generate-version, build-native]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download prepared packages
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-packages
+          path: .
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Download npm packages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages-${{ needs.generate-version.outputs.version }}
+
+      - name: Extract npm packages
+        run: |
+          echo "Extracting npm packages..."
+          unzip -q -o npm-packages.zip
+
+          if [ -d "npm-packages/core-dist" ]; then
+            cp -r npm-packages/core-dist packages/core/dist
+            echo "Copied core dist"
+          fi
+
+          if [ -d "npm-packages/shared-dist" ]; then
+            cp -r npm-packages/shared-dist packages/shared/dist
+            echo "Copied shared dist"
+          fi
+
+          if [ -d "npm-packages/react-dist" ]; then
+            cp -r npm-packages/react-dist packages/react/dist
+            echo "Copied react dist"
+          fi
+
+          if [ -d "npm-packages/core-native-packages" ]; then
+            mkdir -p packages/core/node_modules/@bettertui
+            rm -rf packages/core/node_modules/@bettertui/core-*
+            cp -r npm-packages/core-native-packages/* packages/core/node_modules/@bettertui/
+            echo "Copied native packages"
+          fi
+
+          echo "Package extraction complete"
+
+      - name: Publish packages
+        run: node scripts/publish.ts
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CI: true

@@ -1,0 +1,480 @@
+name: Build Native
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version being released"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 24.15.0
+
+jobs:
+  build-darwin:
+    name: Build macOS (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-13
+            rustTarget: x86_64-apple-darwin
+          - arch: arm64
+            runner: macos-14
+            rustTarget: aarch64-apple-darwin
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTarget }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/core
+          key: darwin-${{ matrix.arch }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Build native binary
+        run: |
+          cd packages/core
+          node scripts/buildNative.ts --target=darwin-${{ matrix.arch }}
+
+      - name: Verify build output
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-darwin-${{ matrix.arch }}"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          
+          echo "Checking for native package: ${PACKAGE_NAME}"
+          test -d "${NATIVE_DIR}" || (echo "❌ Native package directory not found!" && exit 1)
+          ls -la "${NATIVE_DIR}"
+          
+          NODE_FILE=$(ls "${NATIVE_DIR}"/*.node 2>/dev/null | head -1)
+          test -f "${NODE_FILE}" || (echo "❌ .node binary not found!" && exit 1)
+          echo "✅ Found binary: ${NODE_FILE}"
+          file "${NODE_FILE}"
+
+      - name: Package native binary
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-darwin-${{ matrix.arch }}"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          mkdir -p artifacts
+          cd "${NATIVE_DIR}"
+          zip -r "../../artifacts/${PACKAGE_NAME}.zip" .
+          cd ../..
+          echo "✅ Packaged ${PACKAGE_NAME}"
+          ls -la "artifacts/${PACKAGE_NAME}.zip"
+
+      - name: Upload native binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-darwin-${{ matrix.arch }}-${{ inputs.version }}
+          path: artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-linux-gnu:
+    name: Build Linux glibc (${{ matrix.arch }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            rustTarget: x86_64-unknown-linux-gnu
+          - arch: arm64
+            rustTarget: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTarget }}
+
+      - name: Install cross-compilation tools (arm64)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/core
+          key: linux-gnu-${{ matrix.arch }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Build native binary
+        run: |
+          cd packages/core
+          node scripts/buildNative.ts --target=linux-${{ matrix.arch }}-gnu
+
+      - name: Verify build output
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-linux-${{ matrix.arch }}-gnu"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          
+          echo "Checking for native package: ${PACKAGE_NAME}"
+          test -d "${NATIVE_DIR}" || (echo "❌ Native package directory not found!" && exit 1)
+          ls -la "${NATIVE_DIR}"
+          
+          NODE_FILE=$(ls "${NATIVE_DIR}"/*.node 2>/dev/null | head -1)
+          test -f "${NODE_FILE}" || (echo "❌ .node binary not found!" && exit 1)
+          echo "✅ Found binary: ${NODE_FILE}"
+          file "${NODE_FILE}"
+
+      - name: Package native binary
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-linux-${{ matrix.arch }}-gnu"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          mkdir -p artifacts
+          cd "${NATIVE_DIR}"
+          zip -r "../../artifacts/${PACKAGE_NAME}.zip" .
+          cd ../..
+          echo "✅ Packaged ${PACKAGE_NAME}"
+          ls -la "artifacts/${PACKAGE_NAME}.zip"
+
+      - name: Upload native binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-${{ matrix.arch }}-gnu-${{ inputs.version }}
+          path: artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-linux-musl:
+    name: Build Linux musl (${{ matrix.arch }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            rustTarget: x86_64-unknown-linux-musl
+          - arch: arm64
+            rustTarget: aarch64-unknown-linux-musl
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTarget }}
+
+      - name: Install musl cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools musl-dev
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          fi
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/core
+          key: linux-musl-${{ matrix.arch }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Build native binary
+        run: |
+          cd packages/core
+          node scripts/buildNative.ts --target=linux-${{ matrix.arch }}-musl
+
+      - name: Verify build output
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-linux-${{ matrix.arch }}-musl"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          
+          echo "Checking for native package: ${PACKAGE_NAME}"
+          test -d "${NATIVE_DIR}" || (echo "❌ Native package directory not found!" && exit 1)
+          ls -la "${NATIVE_DIR}"
+          
+          NODE_FILE=$(ls "${NATIVE_DIR}"/*.node 2>/dev/null | head -1)
+          test -f "${NODE_FILE}" || (echo "❌ .node binary not found!" && exit 1)
+          echo "✅ Found binary: ${NODE_FILE}"
+          file "${NODE_FILE}"
+
+      - name: Package native binary
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-linux-${{ matrix.arch }}-musl"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          mkdir -p artifacts
+          cd "${NATIVE_DIR}"
+          zip -r "../../artifacts/${PACKAGE_NAME}.zip" .
+          cd ../..
+          echo "✅ Packaged ${PACKAGE_NAME}"
+          ls -la "artifacts/${PACKAGE_NAME}.zip"
+
+      - name: Upload native binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-${{ matrix.arch }}-musl-${{ inputs.version }}
+          path: artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-windows:
+    name: Build Windows (${{ matrix.arch }})
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            rustTarget: x86_64-pc-windows-msvc
+          - arch: arm64
+            rustTarget: aarch64-pc-windows-msvc
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTarget }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/core
+          key: windows-${{ matrix.arch }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Build native binary
+        run: |
+          cd packages/core
+          node scripts/buildNative.ts --target=win32-${{ matrix.arch }}
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-win32-${{ matrix.arch }}"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          
+          echo "Checking for native package: ${PACKAGE_NAME}"
+          test -d "${NATIVE_DIR}" || (echo "❌ Native package directory not found!" && exit 1)
+          ls -la "${NATIVE_DIR}"
+          
+          NODE_FILE=$(ls "${NATIVE_DIR}"/*.node 2>/dev/null | head -1)
+          test -f "${NODE_FILE}" || (echo "❌ .node binary not found!" && exit 1)
+          echo "✅ Found binary: ${NODE_FILE}"
+          file "${NODE_FILE}" || true
+
+      - name: Package native binary
+        shell: bash
+        run: |
+          set -e
+          PACKAGE_NAME="@bettertui/core-win32-${{ matrix.arch }}"
+          NATIVE_DIR="packages/core/node_modules/${PACKAGE_NAME}"
+          mkdir -p artifacts
+          cd "${NATIVE_DIR}"
+          7z a "../../artifacts/${PACKAGE_NAME}.zip" .
+          cd ../..
+          echo "✅ Packaged ${PACKAGE_NAME}"
+          ls -la "artifacts/${PACKAGE_NAME}.zip"
+
+      - name: Upload native binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-win32-${{ matrix.arch }}-${{ inputs.version }}
+          path: artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-npm-packages:
+    name: Build TypeScript Packages
+    runs-on: ubuntu-22.04
+    needs: [build-darwin, build-linux-gnu, build-linux-musl, build-windows]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Download all native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: native-*
+          merge-multiple: true
+
+      - name: Extract native packages
+        run: |
+          set -e
+          mkdir -p packages/core/node_modules/@bettertui
+          
+          for zip_file in artifacts/*.zip; do
+            if [ -f "$zip_file" ]; then
+              PACKAGE_NAME=$(basename "$zip_file" .zip)
+              echo "Extracting ${PACKAGE_NAME}..."
+              mkdir -p "packages/core/node_modules/${PACKAGE_NAME}"
+              unzip -q -o "$zip_file" -d "packages/core/node_modules/${PACKAGE_NAME}"
+            fi
+          done
+          
+          echo "✅ All native packages extracted"
+          ls -la packages/core/node_modules/@bettertui/
+
+      - name: Verify all 8 native packages
+        run: |
+          set -e
+          echo "Verifying all 8 native packages..."
+          
+          expected_packages=(
+            "@bettertui/core-darwin-x64"
+            "@bettertui/core-darwin-arm64"
+            "@bettertui/core-linux-x64-gnu"
+            "@bettertui/core-linux-arm64-gnu"
+            "@bettertui/core-linux-x64-musl"
+            "@bettertui/core-linux-arm64-musl"
+            "@bettertui/core-win32-x64"
+            "@bettertui/core-win32-arm64"
+          )
+          
+          for pkg in "${expected_packages[@]}"; do
+            if [ ! -d "packages/core/node_modules/${pkg}" ]; then
+              echo "❌ Missing: ${pkg}"
+              exit 1
+            fi
+            echo "✅ Found: ${pkg}"
+          done
+          
+          echo ""
+          echo "✅ All 8 native packages verified!"
+
+      - name: Package npm packages
+        run: |
+          set -e
+          mkdir -p artifacts/npm-packages
+          
+          cp -r packages/core/dist artifacts/npm-packages/core-dist
+          test -f artifacts/npm-packages/core-dist/package.json || (echo "❌ core dist/package.json missing!" && exit 1)
+          
+          cp -r packages/shared/dist artifacts/npm-packages/shared-dist
+          test -f artifacts/npm-packages/shared-dist/package.json || (echo "❌ shared dist/package.json missing!" && exit 1)
+          
+          cp -r packages/react/dist artifacts/npm-packages/react-dist
+          test -f artifacts/npm-packages/react-dist/package.json || (echo "❌ react dist/package.json missing!" && exit 1)
+          
+          mkdir -p artifacts/npm-packages/core-native-packages
+          cp -r packages/core/node_modules/@bettertui/core-* artifacts/npm-packages/core-native-packages/
+          
+          cd artifacts
+          zip -r npm-packages.zip npm-packages/
+          test -f npm-packages.zip || (echo "❌ Failed to create npm-packages zip" && exit 1)
+          echo "✅ npm packages packaged successfully"
+
+      - name: Upload npm packages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages-${{ inputs.version }}
+          path: artifacts/npm-packages.zip
+          if-no-files-found: error
+          retention-days: 30

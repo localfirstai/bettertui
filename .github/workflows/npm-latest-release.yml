@@ -1,0 +1,193 @@
+name: NPM Publish
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version being published"
+        required: true
+        type: string
+      isDryRun:
+        description: "Whether this is a dry run (npm publish --dry-run)"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      NPM_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 24.15.0
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: pnpm build
+
+      - name: Download npm packages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages-${{ inputs.version }}
+
+      - name: Extract npm packages
+        run: |
+          echo "Extracting npm packages..."
+          unzip -q -o npm-packages.zip
+
+          # Copy core dist
+          if [ -d "npm-packages/core-dist" ]; then
+            cp -r npm-packages/core-dist packages/core/dist
+            echo "Copied core dist"
+          fi
+
+          # Copy shared dist
+          if [ -d "npm-packages/shared-dist" ]; then
+            cp -r npm-packages/shared-dist packages/shared/dist
+            echo "Copied shared dist"
+          fi
+
+          # Copy react dist
+          if [ -d "npm-packages/react-dist" ]; then
+            cp -r npm-packages/react-dist packages/react/dist
+            echo "Copied react dist"
+          fi
+
+          # Copy native packages to core's node_modules
+          if [ -d "npm-packages/core-native-packages" ]; then
+            mkdir -p packages/core/node_modules/@bettertui
+
+            # Remove existing native packages
+            rm -rf packages/core/node_modules/@bettertui/core-*
+
+            cp -r npm-packages/core-native-packages/* packages/core/node_modules/@bettertui/
+            echo "Copied native packages"
+          fi
+
+          echo "Package extraction complete"
+
+      - name: Run packed Node smoke tests
+        run: |
+          set -e
+          SMOKE_DIR=$(mktemp -d)
+          echo "Packing tarballs into $SMOKE_DIR..."
+          for pkg in shared core react; do
+            cd "packages/$pkg/dist"
+            npm pack --pack-destination "$SMOKE_DIR"
+            cd ../../..
+          done
+
+          echo ""
+          echo "Tarball contents:"
+          for tgz in "$SMOKE_DIR"/*.tgz; do
+            echo "--- $(basename "$tgz") ---"
+            tar -tzf "$tgz"
+          done
+
+          echo ""
+          echo "Importing dist entries..."
+          node --input-type=module -e "
+            const core = await import('./packages/core/dist/index.mjs');
+            if (!core || Object.keys(core).length === 0) throw new Error('core exports empty');
+            console.log('core ok, exports:', Object.keys(core).length);
+            await import('./packages/shared/dist/index.mjs');
+            console.log('shared ok');
+            await import('./packages/react/dist/index.mjs');
+            console.log('react ok');
+          "
+
+      - name: Publish packages (dry-run)
+        if: ${{ inputs.isDryRun }}
+        run: |
+          echo "=========================================="
+          echo "DRY RUN MODE - Not publishing to npm"
+          echo "=========================================="
+          echo ""
+
+          # Show what would be published
+          echo "Packages that would be published:"
+          echo ""
+
+          echo "📦 Checking @bettertui/shared..."
+          cd packages/shared/dist && npm pack --dry-run
+
+          echo ""
+          echo "📦 Checking @bettertui/core..."
+          cd ../../core/dist && npm pack --dry-run
+
+          echo ""
+          echo "📦 Checking @bettertui/react..."
+          cd ../../react/dist && npm pack --dry-run
+
+          echo ""
+          echo "=========================================="
+          echo "DRY RUN COMPLETE - All packages validated"
+          echo "=========================================="
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+          CI: true
+
+      - name: Publish packages (production)
+        if: ${{ !inputs.isDryRun }}
+        run: |
+          echo "=========================================="
+          echo "PRODUCTION MODE - Publishing to npm"
+          echo "=========================================="
+
+          # Publish @bettertui/shared first (dependency)
+          echo ""
+          echo "📦 Publishing @bettertui/shared..."
+          cd packages/shared/dist
+          npm publish --access=public
+          cd ../../..
+
+          # Publish @bettertui/core (with native packages)
+          echo ""
+          echo "📦 Publishing @bettertui/core and native packages..."
+          cd packages/core
+          node ../../scripts/publish.ts
+          cd ../..
+
+          # Publish @bettertui/react
+          echo ""
+          echo "📦 Publishing @bettertui/react..."
+          cd packages/react/dist
+          npm publish --access=public
+          cd ../../..
+
+          echo ""
+          echo "=========================================="
+          echo "PUBLISH COMPLETE"
+          echo "=========================================="
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+          CI: true
