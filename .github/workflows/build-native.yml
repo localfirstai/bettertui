@@ -24,10 +24,10 @@ jobs:
       matrix:
         include:
           - arch: x64
-            runner: macos-13
+            runner: macos-15
             rustTarget: x86_64-apple-darwin
           - arch: arm64
-            runner: macos-14
+            runner: macos-15
             rustTarget: aarch64-apple-darwin
 
     steps:
