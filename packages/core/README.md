@@ -5,7 +5,7 @@
 [![docs.rs](https://img.shields.io/docsrs/bettertui_engine)](https://docs.rs/bettertui_engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Website:** [bettertui.dev](https://bettertui.dev) | **Docs:** [bettertui.dev/docs](https://bettertui.dev/docs) | **npm:** [npmjs.com/package/@bettertui/core](https://www.npmjs.com/package/@bettertui/core)
+> **Website:** [bettertui.dev](https://bettertui.dev)
 
 **Framework-agnostic command protocol, tree manipulation, reconciler wrapper, and runtime.** Framework package for vanilla / native TypeScript. No React dependency.
 

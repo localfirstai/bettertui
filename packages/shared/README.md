@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@bettertui/shared.svg)](https://www.npmjs.com/package/@bettertui/shared)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Website:** [bettertui.dev](https://bettertui.dev) | **npm:** [npmjs.com/package/@bettertui/shared](https://www.npmjs.com/package/@bettertui/shared) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
+> **Website:** [bettertui.dev](https://bettertui.dev)
 
 **Type-only package. Zero runtime code.** The shared vocabulary used by every other package.
 
