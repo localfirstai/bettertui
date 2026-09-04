@@ -1,6 +1,6 @@
 {
   "name": "@bettertui/testing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Headless testing utilities and event simulation for BetterTUI",
   "type": "module",
