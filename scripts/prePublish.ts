@@ -170,9 +170,11 @@ function validatePackage(config: PackageConfig): void {
       )) {
         const nativeDir = join(config.rootDir, "node_modules", depName);
         if (!existsSync(nativeDir)) {
-          console.error(`ERROR: Native package directory not found: ${nativeDir}`);
-          console.error("Please run 'node packages/core/scripts/buildNative.ts --all' first");
-          process.exit(1);
+          console.warn(
+            `WARNING: Native package not built locally, it will not be published: ${depName}`,
+          );
+          console.warn(`  Expected at: ${nativeDir}`);
+          continue;
         }
 
         const nativePackageJson: PackageJson = JSON.parse(

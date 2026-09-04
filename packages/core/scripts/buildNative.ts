@@ -11,6 +11,7 @@
  * Usage:
  *   node scripts/buildNative.ts --all          # Build for all platforms
  *   node scripts/buildNative.ts --target darwin-arm64  # Build for specific target
+ *   node scripts/buildNative.ts --cross --target linux-x64-gnu  # Cross-compile via cargo-zigbuild (linux) / cargo-xwin (win32)
  */
 
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
@@ -117,6 +118,7 @@ const args = process.argv.slice(2);
 const buildAll = args.includes("--all");
 const targetArg = args.find((arg) => arg.startsWith("--target="))?.split("=")[1];
 const isDev = args.includes("--dev");
+const useCross = args.includes("--cross");
 
 if (!buildAll && !targetArg) {
   console.error("Error: Specify --all or --target=<platform-arch> (e.g., --target=darwin-arm64)");
@@ -134,8 +136,16 @@ const getHostVariant = (): Variant => {
   return hostVariant;
 };
 
+const variantTarget = (v: Variant): string => `${v.platform}-${v.arch}${v.abi ? `-${v.abi}` : ""}`;
+
 const getVariantByTarget = (target: string): Variant | undefined => {
-  return variants.find((v) => `${v.platform}-${v.arch}` === target);
+  return variants.find((v) => variantTarget(v) === target);
+};
+
+const crossSubcommand = (variant: Variant, enabled: boolean): string[] => {
+  if (!enabled || variant.platform === "darwin") return ["build"];
+  if (variant.platform === "linux") return ["zigbuild"];
+  return ["xwin", "build"];
 };
 
 const runCommand = (
@@ -143,6 +153,7 @@ const runCommand = (
   commandArgs: string[],
   cwd: string,
   errorMessage: string,
+  rustflags = process.env.RUSTFLAGS || "",
 ): void => {
   console.log(`  Running: ${command} ${commandArgs.join(" ")}`);
   const result: SpawnSyncReturns<Buffer> = spawnSync(command, commandArgs, {
@@ -150,7 +161,7 @@ const runCommand = (
     stdio: "inherit",
     env: {
       ...process.env,
-      RUSTFLAGS: process.env.RUSTFLAGS || "",
+      RUSTFLAGS: rustflags,
     },
   });
 
@@ -172,9 +183,7 @@ const variantsToBuild = buildAll
         const v = getVariantByTarget(targetArg);
         if (!v) {
           console.error(`Error: Unknown target: ${targetArg}`);
-          console.error(
-            `Available targets: ${variants.map((v) => `${v.platform}-${v.arch}`).join(", ")}`,
-          );
+          console.error(`Available targets: ${variants.map(variantTarget).join(", ")}`);
           process.exit(1);
         }
         return [v];
@@ -192,7 +201,7 @@ for (const variant of variantsToBuild) {
 
   const profile = isDev ? "debug" : "release";
   const cargoArgs = [
-    "build",
+    ...crossSubcommand(variant, useCross),
     "--manifest-path",
     engineManifestPath,
     "--features",
@@ -206,7 +215,18 @@ for (const variant of variantsToBuild) {
     cargoArgs.push("--release");
   }
 
-  runCommand("cargo", cargoArgs, rootDir, `Error: Cargo build failed for ${variant.rustTarget}`);
+  const rustflags =
+    variant.abi === "musl"
+      ? `${process.env.RUSTFLAGS || ""} -C target-feature=-crt-static`.trim()
+      : process.env.RUSTFLAGS || "";
+
+  runCommand(
+    "cargo",
+    cargoArgs,
+    rootDir,
+    `Error: Cargo build failed for ${variant.rustTarget}`,
+    rustflags,
+  );
 
   // Find the compiled cdylib (crate-type includes cdylib, so the stem matches
   // the crate name bettertui_engine across platforms)
