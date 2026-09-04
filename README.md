@@ -1,6 +1,12 @@
 # BetterTUI
 
-> **Website:** [bettertui.dev](https://bettertui.dev)
+[![npm @bettertui/core](https://img.shields.io/npm/v/@bettertui/core.svg)](https://www.npmjs.com/package/@bettertui/core)
+[![npm @bettertui/shared](https://img.shields.io/npm/v/@bettertui/shared.svg)](https://www.npmjs.com/package/@bettertui/shared)
+[![crates.io bettertui_engine](https://img.shields.io/crates/v/bettertui_engine.svg)](https://crates.io/crates/bettertui_engine)
+[![docs.rs](https://img.shields.io/docsrs/bettertui_engine)](https://docs.rs/bettertui_engine)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
 
 A framework-agnostic terminal UI rendering engine powered by **Rust** and exposed to **TypeScript** with first-class **React** support.
 
@@ -70,12 +76,13 @@ docs/
 
 | Package | Status | Description |
 |---------|--------|-------------|
-| `@bettertui/core` | ✅ Implemented | Framework-agnostic: command protocol, reconciler, runtime, native bridge, DevTools, testing utilities, widgets, keymap |
-| `@bettertui/react` | ✅ Implemented | React 19 adapter: `createRoot()`, reconciler, hooks (`useRuntime`, `useFocus`, `useKeyboard`, `useTheme`, `useTimeline`, `useTerminalDimensions`), JSX types, runtime context |
-| `@bettertui/solid` | ⏳ Placeholder | SolidJS adapter — `packages/solid` is a placeholder directory with stub structure |
-| `@bettertui/shared` | ✅ Implemented | Type-only foundation (internal, re-exported by core) |
-| `@bettertui/performance` | ✅ Implemented | Vitest benchmark suite |
-| `@bettertui/examples` | ✅ Implemented | 64 TypeScript examples runnable on `@bettertui/core` |
+| [`@bettertui/core`](https://www.npmjs.com/package/@bettertui/core) | ✅ Implemented | Framework-agnostic: command protocol, reconciler, runtime, native bridge, DevTools, testing utilities, widgets, keymap |
+| [`@bettertui/react`](https://github.com/localfirstai/bettertui/tree/main/packages/react) | ✅ Implemented | React 19 adapter: `createRoot()`, reconciler, hooks (`useRuntime`, `useFocus`, `useKeyboard`, `useTheme`, `useTimeline`, `useTerminalDimensions`), JSX types, runtime context |
+| [`@bettertui/solid`](https://github.com/localfirstai/bettertui/tree/main/packages/solid) | ⏳ Placeholder | SolidJS adapter — `packages/solid` is a placeholder directory with stub structure |
+| [`@bettertui/shared`](https://www.npmjs.com/package/@bettertui/shared) | ✅ Implemented | Type-only foundation (internal, re-exported by core) |
+| [`@bettertui/performance`](https://github.com/localfirstai/bettertui/tree/main/packages/performance) | ✅ Implemented | Vitest benchmark suite |
+| [`@bettertui/examples`](https://github.com/localfirstai/bettertui/tree/main/packages/examples) | ✅ Implemented | 64 TypeScript examples runnable on `@bettertui/core` |
+| [`bettertui_engine`](https://crates.io/crates/bettertui_engine) ([docs.rs](https://docs.rs/bettertui_engine)) | ✅ Implemented | Rust engine: rendering, layout, text, input, animation, PTY, syntax highlighting |
 
 ## Tech stack
 

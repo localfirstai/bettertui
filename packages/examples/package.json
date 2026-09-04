@@ -12,7 +12,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/localfirstai/bettertui.git",
-    "directory": "packages/examples/typescript"
+    "directory": "packages/examples"
   },
   "type": "module",
   "scripts": {

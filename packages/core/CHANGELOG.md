@@ -6,7 +6,7 @@ All notable changes to `@bettertui/core` are documented here. This project adher
 
 ### Added
 - Word-level editing in the `Input` widget: Alt+Left / Alt+B (move word backward), Alt+Right / Alt+F (move word forward), Ctrl+W / Alt+Backspace (delete word backward), Alt+D / Alt+Delete (delete word forward).
-- `wordBoundaryLeft()` and `wordBoundaryRight()` utility functions exported from `@bettertui/core/lib` — TypeScript ports of the Rust `TextBuffer` word-boundary algorithms.
+- `wordBoundaryLeft()` and `wordBoundaryRight()` utility functions exported from `@bettertui/core` — TypeScript ports of the Rust `TextBuffer` word-boundary algorithms.
 - `measureText` empty-text test locking in the `{ width: 0, height: 1 }` contract.
 - Word boundary test suite (13 tests).
 

@@ -1,6 +1,6 @@
 # `@bettertui/testing`
 
-> **Website:** [bettertui.dev](https://bettertui.dev)
+> **Website:** [bettertui.dev](https://bettertui.dev) | **Source:** [github.com/localfirstai/bettertui](https://github.com/localfirstai/bettertui)
 
 A specification-first testing framework and headless driver suite for BetterTUI applications.
 
